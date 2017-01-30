@@ -2,7 +2,7 @@ use square;
 use square::Square;
 use bitboard::Bitboard;
 
-fn sliding_attack(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
+pub fn sliding_attack(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     let mut attack = Bitboard(0);
 
     for delta in deltas {
@@ -25,6 +25,14 @@ fn sliding_attack(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     attack
 }
 
+pub fn step_attack(sq: Square, deltas: &[i8]) -> Bitboard {
+    sliding_attack(sq, Bitboard::all(), deltas)
+}
+
+fn magic_index(indexes: &[usize], masks: &[Bitboard], Square(sq): Square, occupied: Bitboard) -> usize {
+    indexes[sq as usize] + occupied.pext(masks[sq as usize]) as usize
+}
+
 const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 
 const ROOK_INDEXES: [usize; 64] = [
@@ -36,12 +44,12 @@ const ROOK_INDEXES: [usize; 64] = [
 
 pub struct Table {
     rook_masks: [Bitboard; 64],
-    rook_table: [Bitboard; 0x19000],
+    rook_table: Vec<Bitboard>,
 }
 
 impl Table {
     pub fn new() -> Table {
-        let mut table = Table { rook_masks: [Bitboard(0); 64], rook_table: [Bitboard(0); 0x19000] };
+        let mut table = Table { rook_masks: [Bitboard(0); 64], rook_table: vec![Bitboard(0); 0x19000] };
 
         for sq in Bitboard::all() {
             let edges = ((Bitboard::rank(0) | Bitboard::rank(7)) & !Bitboard::rank(sq.rank())) |
@@ -63,10 +71,6 @@ impl Table {
     pub fn rook_attacks(self, sq: Square, occupied: Bitboard) -> Bitboard {
         self.rook_table[magic_index(&ROOK_INDEXES, &self.rook_masks, sq, occupied)]
     }
-}
-
-fn magic_index(indexes: &[usize], masks: &[Bitboard], Square(sq): Square, occupied: Bitboard) -> usize {
-    indexes[sq as usize] + occupied.pext(masks[sq as usize]) as usize
 }
 
 mod test {
