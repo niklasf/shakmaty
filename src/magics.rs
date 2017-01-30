@@ -27,51 +27,52 @@ fn sliding_attack(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
 
 const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 
-static mut rook_masks: [Bitboard; 64] = [Bitboard(0); 64];
-
-static rook_indexes : [usize; 64] =
-    [0, 4096, 6144, 8192, 10240, 12288, 14336, 16384, 20480, 22528, 23552, 24576, 25600, 26624,
+const ROOK_INDEXES: [usize; 64] = [
+    0, 4096, 6144, 8192, 10240, 12288, 14336, 16384, 20480, 22528, 23552, 24576, 25600, 26624,
     27648, 28672, 30720, 32768, 33792, 34816, 35840, 36864, 37888, 38912, 40960, 43008, 44032,
     45056, 46080, 47104, 48128, 49152, 51200, 53248, 54272, 55296, 56320, 57344, 58368, 59392,
     61440, 63488, 64512, 65536, 66560, 67584, 68608, 69632, 71680, 73728, 74752, 75776, 76800,
     77824, 78848, 79872, 81920, 86016, 88064, 90112, 92160, 94208, 96256, 98304];
 
-static mut rook_table : [Bitboard; 0x19000] = [Bitboard(0); 0x19000];
+pub struct Table {
+    rook_masks: [Bitboard; 64],
+    rook_table: [Bitboard; 0x19000],
+}
+
+impl Table {
+    pub fn new() -> Table {
+        let mut table = Table { rook_masks: [Bitboard(0); 64], rook_table: [Bitboard(0); 0x19000] };
+
+        for sq in Bitboard::all() {
+            let edges = ((Bitboard::rank(0) | Bitboard::rank(7)) & !Bitboard::rank(sq.rank())) |
+                        ((Bitboard::file(0) | Bitboard::file(7)) & !Bitboard::file(sq.file()));
+
+            let mask = sliding_attack(sq, Bitboard(0), &ROOK_DELTAS) & !edges;
+            table.rook_masks[sq.0 as usize] = mask;
+
+            for subset in mask.subsets() {
+                let attacks = sliding_attack(sq, subset, &ROOK_DELTAS);
+                let index = magic_index(&ROOK_INDEXES, &table.rook_masks, sq, subset);
+                table.rook_table[index] = attacks;
+            }
+        }
+
+        table
+    }
+
+    pub fn rook_attacks(self, sq: Square, occupied: Bitboard) -> Bitboard {
+        self.rook_table[magic_index(&ROOK_INDEXES, &self.rook_masks, sq, occupied)]
+    }
+}
 
 fn magic_index(indexes: &[usize], masks: &[Bitboard], Square(sq): Square, occupied: Bitboard) -> usize {
     indexes[sq as usize] + occupied.pext(masks[sq as usize]) as usize
 }
 
-pub fn init_rook_tables() {
-    for s in 0..64 {
-        let sq = Square(s);
-
-        let edges = ((Bitboard::rank(0) | Bitboard::rank(7)) & !Bitboard::rank(sq.rank())) |
-                    ((Bitboard::file(0) | Bitboard::file(7)) & !Bitboard::file(sq.file()));
-
-        let mask = sliding_attack(sq, Bitboard(0), &ROOK_DELTAS) & !edges;
-        unsafe { rook_masks[s as usize] = mask; }
-
-        for subset in mask.subsets() {
-            let attacks = sliding_attack(sq, subset, &ROOK_DELTAS);
-            let index = magic_index(&rook_indexes, unsafe { &rook_masks }, sq, subset);
-
-            unsafe { rook_table[index] = attacks; }
-        }
-    }
-}
-
-fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-   unsafe {
-       rook_table[magic_index(&rook_indexes, &rook_masks, sq, occupied)]
-   }
-}
-
 mod test {
     use magics::ROOK_DELTAS;
-    use magics::init_rook_tables;
-    use magics::rook_attacks;
     use magics::sliding_attack;
+    use magics::Table;
     use bitboard::Bitboard;
     use square;
 
@@ -83,7 +84,7 @@ mod test {
 
     #[test]
     fn test_rook_attacks() {
-        init_rook_tables();
-        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
+        let table = Table::new();
+        assert_eq!(table.rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
     }
 }
