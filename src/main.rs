@@ -3,7 +3,7 @@
 
 mod square;
 mod bitboard;
-mod magics;
+mod attacks;
 
 fn main() {
 }
