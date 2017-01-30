@@ -74,7 +74,6 @@ mod test {
     use magics::sliding_attack;
     use bitboard::Bitboard;
     use square;
-    use square::Square;
 
     #[test]
     fn test_sliding_rook_attacks() {

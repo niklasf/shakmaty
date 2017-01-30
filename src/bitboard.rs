@@ -79,12 +79,6 @@ impl Bitboard {
     }
 }
 
-impl num::Zero for Bitboard {
-    fn zero() -> Bitboard {
-        Bitboard(0)
-    }
-}
-
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
@@ -143,7 +137,7 @@ impl Iterator for Bitboard {
     }
 }
 
-struct CarryRippler {
+pub struct CarryRippler {
     bb: u64,
     subset: u64,
     first: bool,
@@ -171,7 +165,6 @@ impl Iterator for CarryRippler {
 }
 
 mod test {
-    use std::num::Zero;
     use bitboard::Bitboard;
     use square;
 
@@ -179,7 +172,7 @@ mod test {
     fn test_lsb() {
         assert_eq!(Bitboard::from_square(square::A1).lsb(), Some(square::A1));
         assert_eq!(Bitboard::from_square(square::D2).lsb(), Some(square::D2));
-        assert_eq!(Bitboard::zero().lsb(), None);
+        assert_eq!(Bitboard(0).lsb(), None);
     }
 
     #[test]
