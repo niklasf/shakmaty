@@ -85,6 +85,6 @@ mod test {
     #[test]
     fn test_rook_attacks() {
         init_rook_tables();
-        assert_eq!(rook_attacks(Square(43), Bitboard(4575420277326280121)), Bitboard(2312307447169024));
+        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
     }
 }

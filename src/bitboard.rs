@@ -13,7 +13,7 @@ impl Bitboard {
     }
 
     pub fn all() -> Bitboard {
-        Bitboard(!0)
+        Bitboard(!0u64)
     }
 
     pub fn rank(rank: i8) -> Bitboard {
@@ -60,14 +60,14 @@ impl Bitboard {
     pub fn pext(self, Bitboard(mut mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
         let mut result = 0;
-        let mut bit = 0;
+        let mut bit = 1;
 
         while mask != 0 {
             if src & mask & 0u64.wrapping_sub(mask) != 0 {
-                result = result | bit;
+                result |= bit;
             }
 
-            mask = mask & mask.wrapping_sub(1);
+            mask &= mask.wrapping_sub(1);
             bit <<= 1;
         }
 
@@ -180,5 +180,12 @@ mod test {
         assert_eq!(Bitboard::from_square(square::A1).lsb(), Some(square::A1));
         assert_eq!(Bitboard::from_square(square::D2).lsb(), Some(square::D2));
         assert_eq!(Bitboard::zero().lsb(), None);
+    }
+
+    #[test]
+    fn test_pext() {
+        assert_eq!(Bitboard::all().pext(Bitboard(0)), 0);
+        assert_eq!(Bitboard::all().pext(Bitboard::all()), !0u64);
+        assert_eq!(Bitboard(7).pext(Bitboard(1)), 1);
     }
 }
