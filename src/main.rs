@@ -7,5 +7,4 @@ mod bitboard;
 mod magics;
 
 fn main() {
-    magics::init_rook_tables();
 }

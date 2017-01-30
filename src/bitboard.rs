@@ -17,7 +17,7 @@ impl Bitboard {
     }
 
     pub fn rank(rank: i8) -> Bitboard {
-        Bitboard(0xff << rank)
+        Bitboard(0xff << (8 * rank))
     }
 
     pub fn file(file: i8) -> Bitboard {
@@ -160,7 +160,7 @@ impl Iterator for CarryRippler {
 
     fn next(&mut self) -> Option<Bitboard> {
         let subset = self.subset;
-        if self.first || subset != 0 {
+        if subset != 0 || self.first {
             self.first = false;
             self.subset = self.subset.wrapping_sub(self.bb) & self.bb;
             Some(Bitboard(subset))
@@ -187,5 +187,10 @@ mod test {
         assert_eq!(Bitboard::all().pext(Bitboard(0)), 0);
         assert_eq!(Bitboard::all().pext(Bitboard::all()), !0u64);
         assert_eq!(Bitboard(7).pext(Bitboard(1)), 1);
+    }
+
+    #[test]
+    fn test_rank() {
+        assert_eq!(Bitboard::rank(3), Bitboard(0xff000000));
     }
 }
