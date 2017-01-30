@@ -1,4 +1,5 @@
 use std::cmp::max;
+use std::fmt;
 
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Square(pub i8);
@@ -21,12 +22,30 @@ impl Square {
     }
 }
 
+impl fmt::Display for Square {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", ('a' as u8 + self.file() as u8) as char, ('1' as u8 + self.rank() as u8) as char)
+    }
+}
+
+impl fmt::Debug for Square {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "square::{}", self.to_string().to_uppercase())
+    }
+}
+
 pub fn distance(a: Square, b: Square) -> i8 {
     max((a.file() - b.file()).abs(), (a.rank() - b.rank()).abs())
 }
 
+pub const A1: Square = Square(0);
+pub const D2: Square = Square(11);
+pub const G3: Square = Square(22);
+
 mod test {
+    use square;
     use square::Square;
+    use square::distance;
 
     #[test]
     fn test_square() {
@@ -37,5 +56,10 @@ mod test {
                 assert_eq!(square.rank(), rank);
             }
         }
+    }
+
+    #[test]
+    fn test_distance() {
+        assert_eq!(distance(square::D2, square::G3), 3);
     }
 }
