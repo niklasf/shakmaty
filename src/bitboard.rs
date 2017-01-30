@@ -1,6 +1,6 @@
 use std::ops;
-use std::num;
 use std::fmt;
+use std::fmt::Write;
 
 use square::Square;
 
@@ -84,20 +84,20 @@ impl fmt::Debug for Bitboard {
         for rank in (0..8).rev() {
             for file in 0..8 {
                 if self.contains(Square::new(file, rank)) {
-                    write!(f, "1");
+                    try!(f.write_char('1'));
                 } else {
-                    write!(f, ".");
+                    try!(f.write_char('.'));
                 }
 
                 if file < 7 {
-                    write!(f, " ");
+                    try!(f.write_char(' '));
                 } else {
-                    write!(f, "\n");
+                    try!(f.write_char('\n'));
                 }
             }
         }
 
-        return write!(f, ""); // TODO
+        Ok(())
     }
 }
 
