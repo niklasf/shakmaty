@@ -51,6 +51,10 @@ impl Bitboard {
         self.0 |= 1 << sq;
     }
 
+    pub fn flip(&mut self, Square(sq): Square) {
+        self.0 ^= 1 << sq;
+    }
+
     pub fn lsb(self) -> Option<Square> {
         if self.is_empty() {
             None
