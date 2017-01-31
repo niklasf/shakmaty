@@ -12,15 +12,8 @@ mod board;
 use board::Board;
 
 fn main() {
+    let precomp = attacks::Precomp::new();
+
     let board = Board::new();
-
-    let bb = board.select()
-        .side(board::Color::White)
-        .get();
-
-    println!("{:?}", bb);
-
-    println!("---");
-
-    println!("{:?}", board.by_type(board::Role::Knight));
+    board.pseudo_legal_moves(&precomp);
 }

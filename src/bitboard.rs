@@ -3,6 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 
 use square::Square;
+use board::Color;
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bitboard(pub u64);
@@ -22,6 +23,20 @@ impl Bitboard {
 
     pub fn file(file: i8) -> Bitboard {
         Bitboard(0x101010101010101 << file)
+    }
+
+    pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
+        match color {
+            Color::White => Bitboard(0xff << (8 * rank)),
+            Color::Black => Bitboard(0xff00000000000000 >> (8 * rank))
+        }
+    }
+
+    pub fn relative_shift(self, color: Color, shift: u8) -> Bitboard {
+        match color {
+            Color::White => Bitboard(self.0 << shift),
+            Color::Black => Bitboard(self.0 >> shift)
+        }
     }
 
     pub fn is_empty(self) -> bool {

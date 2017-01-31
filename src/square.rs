@@ -1,5 +1,6 @@
 use std::cmp::max;
 use std::fmt;
+use std::ops;
 
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Square(pub i8);

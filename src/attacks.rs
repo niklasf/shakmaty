@@ -1,11 +1,14 @@
 use square;
 use square::Square;
 use bitboard::Bitboard;
+use board::Color;
 
 pub const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 pub const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
 pub const KING_DELTAS: [i8; 8] = [9, 8, 7, 1, -9, -8, -7, -1];
 pub const KNIGHT_DELTAS: [i8; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
+pub const WHITE_PAWN_DELTAS: [i8; 2] = [7, 9];
+pub const BLACK_PAWN_DELTAS: [i8; 2] = [-7, -9];
 
 pub fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     let mut attack = Bitboard(0);
@@ -64,6 +67,8 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], attacks: &mut Vec<Bi
 pub struct Precomp {
     knight_attacks: [Bitboard; 64],
     king_attacks: [Bitboard; 64],
+    white_pawn_attacks: [Bitboard; 64],
+    black_pawn_attacks: [Bitboard; 64],
 
     rook_indexes: [usize; 64],
     rook_masks: [Bitboard; 64],
@@ -79,6 +84,8 @@ impl Precomp {
         let mut precomp = Precomp {
             knight_attacks: [Bitboard(0); 64],
             king_attacks: [Bitboard(0); 64],
+            white_pawn_attacks: [Bitboard(0); 64],
+            black_pawn_attacks: [Bitboard(0); 64],
 
             rook_indexes: [0; 64],
             rook_masks: [Bitboard(0); 64],
@@ -92,6 +99,8 @@ impl Precomp {
         for s in 0..64 {
             precomp.knight_attacks[s] = step_attacks(Square(s as i8), &KNIGHT_DELTAS);
             precomp.king_attacks[s] = step_attacks(Square(s as i8), &KING_DELTAS);
+            precomp.white_pawn_attacks[s] = step_attacks(Square(s as i8), &WHITE_PAWN_DELTAS);
+            precomp.black_pawn_attacks[s] = step_attacks(Square(s as i8), &BLACK_PAWN_DELTAS);
         }
 
         init_magics(&mut precomp.rook_indexes,
@@ -105,6 +114,15 @@ impl Precomp {
                     &BISHOP_DELTAS);
 
         precomp
+    }
+
+    pub fn pawn_attacks(&self, color: Color, Square(sq): Square) -> Bitboard {
+        let table = match color {
+            Color::White => self.white_pawn_attacks,
+            Color::Black => self.black_pawn_attacks,
+        };
+
+        table[sq as usize]
     }
 
     pub fn knight_attacks(&self, Square(sq): Square) -> Bitboard {
