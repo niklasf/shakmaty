@@ -83,7 +83,7 @@ impl Bitboard {
         }
     }
 
-    #[cfg(target_feature="bmi2")]
+    //#[cfg(target_feature="bmi2")]
     pub fn pext(self, Bitboard(mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
         let result: u64;
@@ -95,7 +95,7 @@ impl Bitboard {
         result
     }
 
-    #[cfg(not(target_feature="bmi2"))]
+    /*#[cfg(not(target_feature="bmi2"))]
     pub fn pext(self, Bitboard(mut mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
         let mut result = 0;
@@ -111,7 +111,7 @@ impl Bitboard {
         }
 
         result
-    }
+    }*/
 
     pub fn subsets(self) -> CarryRippler {
         CarryRippler::new(self)
