@@ -224,13 +224,13 @@ impl Board {
         (precomp.bishop_attacks(sq, self.occupied) & (self.bishops | self.queens)) |
         (precomp.knight_attacks(sq) & self.knights) |
         (precomp.king_attacks(sq) & self.kings) |
-        (precomp.pawn_attacks(Color::White, sq) & self.pawns & self.white) |
-        (precomp.pawn_attacks(Color::Black, sq) & self.pawns & self.black)
+        (precomp.pawn_attacks(Color::White, sq) & self.pawns & self.black) |
+        (precomp.pawn_attacks(Color::Black, sq) & self.pawns & self.white)
     }
 
     pub fn checkers(&self, precomp: &Precomp) -> Bitboard {
         self.our(Role::King).lsb()
-            .map(|king| self.attacks_to(king, precomp))
+            .map(|king| self.them() & self.attacks_to(king, precomp))
             .unwrap_or(Bitboard(0))
     }
 
@@ -308,6 +308,7 @@ impl Board {
 
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         println!("{}", self.board_fen());
+        println!("{:?}", self.checkers(precomp));
         assert!(self.checkers(precomp).is_empty());
     }
 
