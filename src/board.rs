@@ -68,7 +68,7 @@ pub struct Piece {
 
 impl Piece {
     pub fn chr(self) -> char {
-        self.color.fold(self.role.chr(), self.role.chr().to_ascii_uppercase())
+        self.color.fold(self.role.chr().to_ascii_uppercase(), self.role.chr())
     }
 }
 
