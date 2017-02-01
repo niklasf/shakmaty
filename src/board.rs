@@ -126,6 +126,11 @@ pub struct Board {
     ep_square: Option<Square>,
 }
 
+struct Pins {
+    blockers: Bitboard,
+    pinners: Bitboard,
+}
+
 impl Board {
     pub fn new() -> Board {
         Board {
@@ -343,6 +348,31 @@ impl Board {
 
         // TODO: Castling
         // TODO: En-passant
+    }
+
+    fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Pins {
+        let snipers = (precomp.rook_attacks(sq, Bitboard(0)) & (self.queens | self.rooks)) |
+                      (precomp.bishop_attacks(sq, Bitboard(0)) & (self.queens | self.bishops));
+
+        let mut result = Pins { pinners: Bitboard(0), blockers: Bitboard(0) };
+
+        for sniper in snipers & sliders {
+            let b = precomp.between(sq, sniper) & self.occupied;
+
+            if !b.more_than_one() {
+                result.blockers = result.blockers | b;
+
+                let team = self.color_at(sq)
+                    .map(|color| self.by_color(color))
+                    .unwrap_or(Bitboard(0));
+
+                if !(b & team).is_empty() {
+                    result.pinners.add(sniper);
+                }
+            }
+        }
+
+        result
     }
 
     fn is_legal(&self, m: &Move, precomp: &Precomp) -> bool {
