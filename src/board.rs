@@ -375,12 +375,7 @@ impl Board {
         result
     }
 
-    fn is_legal(&self, m: &Move, precomp: &Precomp) -> bool {
-        // TODO: Move out
-        let pins = self.slider_blockers(self.them(),
-                                        self.our(Role::King).first().unwrap(),
-                                        precomp);
-
+    fn is_legal(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
         match m {
             &Move::Normal { from, to, promotion: _ } =>
                 if self.kings.contains(from) {
@@ -422,7 +417,11 @@ impl Board {
             self.evasions(moves, precomp);
         }
 
-        moves.retain(|m| self.is_legal(m, precomp));
+        let pins = self.slider_blockers(self.them(),
+                                        self.our(Role::King).first().unwrap(),
+                                        precomp);
+
+        moves.retain(|m| self.is_legal(m, &pins, precomp));
     }
 
     pub fn do_move(&mut self, m: &Move) {
