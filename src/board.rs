@@ -376,13 +376,19 @@ impl Board {
     }
 
     fn is_legal(&self, m: &Move, precomp: &Precomp) -> bool {
+        // TODO: Move out
+        let pins = self.slider_blockers(self.them(),
+                                        self.our(Role::King).first().unwrap(),
+                                        precomp);
+
         match m {
             &Move::Normal { from, to, promotion } =>
                 if self.kings.contains(from) {
                     // TODO: Castling
                     (self.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
-                    false
+                    !(self.us() & pins.blockers).contains(from) ||
+                    precomp.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
             &Move::Put { to, role } =>
                 false // TODO
