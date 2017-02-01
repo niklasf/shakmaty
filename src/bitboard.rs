@@ -43,6 +43,10 @@ impl Bitboard {
         self.0 == 0
     }
 
+    pub fn more_than_one(self) -> bool {
+        self.0 & self.0.wrapping_sub(1) != 0
+    }
+
     pub fn contains(self, sq: Square) -> bool {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
@@ -55,7 +59,7 @@ impl Bitboard {
         self.0 ^= 1 << sq;
     }
 
-    pub fn lsb(self) -> Option<Square> {
+    pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
         } else {
@@ -150,7 +154,7 @@ impl Iterator for Bitboard {
     type Item = Square;
 
     fn next(&mut self) -> Option<Square> {
-        let square = self.lsb();
+        let square = self.first();
         self.0 &= self.0.wrapping_sub(1);
         square
     }
@@ -188,10 +192,10 @@ mod test {
     use square;
 
     #[test]
-    fn test_lsb() {
-        assert_eq!(Bitboard::from_square(square::A1).lsb(), Some(square::A1));
-        assert_eq!(Bitboard::from_square(square::D2).lsb(), Some(square::D2));
-        assert_eq!(Bitboard(0).lsb(), None);
+    fn test_first() {
+        assert_eq!(Bitboard::from_square(square::A1).first(), Some(square::A1));
+        assert_eq!(Bitboard::from_square(square::D2).first(), Some(square::D2));
+        assert_eq!(Bitboard(0).first(), None);
     }
 
     #[test]

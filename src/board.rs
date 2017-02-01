@@ -4,6 +4,8 @@ use bitboard::Bitboard;
 use attacks::Precomp;
 use std::ascii::AsciiExt;
 use std::char;
+use std::fmt;
+use std::fmt::Write;
 
 #[derive(Copy, Clone)]
 pub enum Color {
@@ -229,7 +231,7 @@ impl Board {
     }
 
     pub fn checkers(&self, precomp: &Precomp) -> Bitboard {
-        self.our(Role::King).lsb()
+        self.our(Role::King).first()
             .map(|king| self.them() & self.attacks_to(king, precomp))
             .unwrap_or(Bitboard(0))
     }
@@ -276,7 +278,7 @@ impl Board {
 
     pub fn pseudo_legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.us() & !self.pawns {
-            for to in self.attacks_from(from, precomp) & self.us() {
+            for to in self.attacks_from(from, precomp) & !self.us() {
                 moves.push(Move::Normal { from, to, promotion: None } );
             }
         }
@@ -306,10 +308,13 @@ impl Board {
         // TODO: En-passant
     }
 
+    fn non_evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+        
+    }
+
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        println!("{}", self.board_fen());
-        println!("{:?}", self.checkers(precomp));
         assert!(self.checkers(precomp).is_empty());
+        self.pseudo_legal_moves(moves, precomp);
     }
 
     pub fn do_move(&mut self, m: &Move) {
@@ -326,5 +331,26 @@ impl Board {
         }
 
         self.turn = !self.turn;
+    }
+}
+
+impl fmt::Debug for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for rank in (0..8).rev() {
+            for file in 0..8 {
+                try!(f.write_char(self.piece_at(Square::new(file, rank))
+                                      .map(|piece| piece.chr())
+                                      .unwrap_or('.')));
+
+                if file < 7 {
+                    try!(f.write_char(' '));
+                } else {
+                    try!(f.write_char('\n'));
+                }
+
+            }
+        }
+
+        Ok(())
     }
 }

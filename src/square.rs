@@ -40,7 +40,9 @@ pub fn distance(a: Square, b: Square) -> i8 {
 }
 
 pub const A1: Square = Square(0);
+pub const A2: Square = Square(8);
 pub const D2: Square = Square(11);
+pub const A3: Square = Square(16);
 pub const G3: Square = Square(22);
 pub const D6: Square = Square(43);
 
