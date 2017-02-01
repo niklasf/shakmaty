@@ -14,7 +14,7 @@ pub enum Color {
 }
 
 impl Color {
-    fn fold<T>(self, white: T, black: T) -> T {
+    pub fn fold<T>(self, white: T, black: T) -> T {
         match self {
             Color::Black => black,
             Color::White => white
@@ -170,7 +170,7 @@ impl Board {
     }
 
     fn mut_by_color(&mut self, color: Color) -> &mut Bitboard {
-        color.fold(&mut self.black, &mut self.white)
+        color.fold(&mut self.white, &mut self.black)
     }
 
     pub fn by_role(&self, role: Role) -> Bitboard {
@@ -366,5 +366,12 @@ mod test {
     fn test_piece_at() {
         let board = Board::new();
         assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
+    }
+
+    #[test]
+    fn test_set_piece_at() {
+        let mut board = Board::new();
+        board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
+        assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
     }
 }
