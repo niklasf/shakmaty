@@ -77,6 +77,22 @@ pub enum Move {
     Put { to: Square, role: Role },
 }
 
+impl Move {
+    pub fn from_uci(uci: &str) -> Option<Move> {
+        if uci.len() < 4 || uci.len() > 5 {
+            return None
+        }
+
+        Square::from_str(&uci[2..4]).and_then(|to| {
+            Square::from_str(&uci[0..2]).map(|from| {
+                // TODO: Promotions
+                Move::Normal { from, to, promotion: None }
+            })
+            // TODO: Drops
+       })
+    }
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

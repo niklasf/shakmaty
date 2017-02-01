@@ -12,6 +12,27 @@ impl Square {
         Square(file | (rank << 3))
     }
 
+    pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
+        if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
+            Some(Square::new(file, rank))
+        } else {
+            None
+        }
+    }
+
+    pub fn from_str(s: &str) -> Option<Square> {
+        if s.len() != 2 {
+            return None
+        }
+
+        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
+        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
+        match (file, rank) {
+            (Some(file), Some(rank)) => Square::from_coords(file, rank),
+            _ => None
+        }
+    }
+
     pub fn file(self) -> i8 {
         let Square(sq) = self;
         sq & 7

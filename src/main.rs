@@ -49,12 +49,11 @@ fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
 fn main() {
     let precomp = attacks::Precomp::new();
     let mut board = Board::new();
-    //board.do_move(&Move::Normal{ from: square::E2, to: square::E4, promotion: None });
-    //board.do_move(&Move::Normal{ from: square::D7, to: square::D5, promotion: None });
-    println!("{:?}", board);
+
+    board.do_move(&Move::from_uci("e2e4").unwrap());
 
     assert_eq!(perft(&board, 1, &precomp), 20);
-    assert_eq!(perft(&board, 2, &precomp), 400);
-    assert_eq!(perft(&board, 3, &precomp), 8902);
+    //assert_eq!(perft(&board, 2, &precomp), 400);
+    //assert_eq!(perft(&board, 3, &precomp), 8902);
     //assert_eq!(perft(&board, 4, &precomp), 197281);
 }
