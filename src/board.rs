@@ -67,6 +67,8 @@ pub struct Board {
     queens: Bitboard,
     kings: Bitboard,
 
+    promoted: Bitboard,
+
     turn: Color,
 }
 
@@ -84,6 +86,8 @@ impl Board {
             rooks: Bitboard(0x8100000000000081),
             queens: Bitboard(0x800000000000008),
             kings: Bitboard(0x1000000000000010),
+
+            promoted: Bitboard(0),
 
             turn: Color::White,
         }
@@ -140,17 +144,11 @@ impl Board {
     }
 
     pub fn by_color(&self, color: Color) -> Bitboard {
-        match color {
-            Color::Black => self.black,
-            Color::White => self.white,
-        }
+        color.fold(self.black, self.white)
     }
 
     fn mut_by_color(&mut self, color: Color) -> &mut Bitboard {
-        match color {
-            Color::Black => &mut self.black,
-            Color::White => &mut self.white
-        }
+        color.fold(&mut self.black, &mut self.white)
     }
 
     pub fn by_role(&self, role: Role) -> Bitboard {
@@ -179,6 +177,18 @@ impl Board {
         self.by_color(color) & self.by_role(role)
     }
 
+    pub fn us(&self) -> Bitboard {
+        self.turn.fold(self.white, self.black)
+    }
+
+    pub fn our(&self, role: Role) -> Bitboard {
+        self.us() & self.by_role(role)
+    }
+
+    pub fn them(&self) -> Bitboard {
+        self.turn.fold(self.black, self.white)
+    }
+
     pub fn attacks_from(&self, sq: Square, precomp: &Precomp) -> Bitboard {
         self.role_at(sq).map(|role| match role {
             Role::Pawn   => precomp.pawn_attacks(self.turn, sq),
@@ -188,6 +198,21 @@ impl Board {
             Role::Queen  => precomp.queen_attacks(sq, self.occupied),
             Role::King   => precomp.king_attacks(sq)
         }).unwrap_or(Bitboard(0))
+    }
+
+    pub fn attacks_to(&self, sq: Square, precomp: &Precomp) -> Bitboard {
+        (precomp.rook_attacks(sq, self.occupied) & (self.rooks | self.queens)) |
+        (precomp.bishop_attacks(sq, self.occupied) & (self.bishops | self.queens)) |
+        (precomp.knight_attacks(sq) & self.knights) |
+        (precomp.king_attacks(sq) & self.kings) |
+        (precomp.pawn_attacks(Color::White, sq) & self.pawns & self.white) |
+        (precomp.pawn_attacks(Color::Black, sq) & self.pawns & self.black)
+    }
+
+    pub fn checkers(&self, precomp: &Precomp) -> Bitboard {
+        self.our(Role::King).lsb()
+            .map(|king| self.attacks_to(king, precomp))
+            .unwrap_or(Bitboard(0))
     }
 
     fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
@@ -202,22 +227,19 @@ impl Board {
     }
 
     pub fn pseudo_legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        let us = self.by_color(self.turn);
-        let them = self.by_color(!self.turn);
-
-        for from in us & !self.pawns {
-            for to in self.attacks_from(from, precomp) & !us {
+        for from in self.us() & !self.pawns {
+            for to in self.attacks_from(from, precomp) & self.us() {
                 moves.push(Move::Normal { from, to, promotion: None } );
             }
         }
 
-        for from in us & self.pawns {
-            for to in self.attacks_from(from, precomp) & them {
+        for from in self.our(Role::Pawn) {
+            for to in self.attacks_from(from, precomp) & self.them() {
                 self.push_pawn_moves(moves, from, to);
             }
         }
 
-        let single_moves = (us & self.pawns).relative_shift(self.turn, 8) & !self.occupied;
+        let single_moves = self.our(Role::Pawn).relative_shift(self.turn, 8) & !self.occupied;
         let double_moves = single_moves.relative_shift(self.turn, 8) &
                            Bitboard::relative_rank(self.turn, 3) &
                            !self.occupied;
