@@ -42,6 +42,15 @@ impl Square {
         let Square(sq) = self;
         sq >> 3
     }
+
+    pub fn offset(self, delta: i8) -> Option<Square> {
+        let Square(sq) = self;
+        if 0 <= sq + delta && sq + delta < 64 {
+            Some(Square(sq + delta))
+        } else {
+            None
+        }
+    }
 }
 
 impl fmt::Display for Square {
@@ -55,6 +64,10 @@ impl fmt::Debug for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string().to_uppercase())
     }
+}
+
+pub fn delta(Square(a): Square, Square(b): Square) -> i8 {
+    a - b
 }
 
 pub fn distance(a: Square, b: Square) -> i8 {

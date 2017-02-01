@@ -350,13 +350,15 @@ impl Board {
                            !self.occupied;
 
         for to in single_moves & target {
-            let from = Square(to.0 + self.turn.fold(-8, 8));
-            self.push_pawn_moves(moves, from, to);
+            if let Some(from) = to.offset(self.turn.fold(-8, 8)) {
+                self.push_pawn_moves(moves, from, to);
+            }
         }
 
         for to in double_moves & target {
-            let from = Square(to.0 + self.turn.fold(-16, 16));
-            self.push_pawn_moves(moves, from, to);
+            if let Some(from) = to.offset(self.turn.fold(-16, 16)) {
+                self.push_pawn_moves(moves, from, to);
+            }
         }
 
         if let Some(to) = self.ep_square {
@@ -451,17 +453,27 @@ impl Board {
         match m {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
+                    // Execute en passant capture.
+                    if moved.role == Role::Pawn && square::delta(from, to) & 1 != 0 {
+                        self.ep_square.and_then(|sq| sq.offset(color.fold(-8, 8)))
+                                      .map(|sq| self.remove_piece_at(sq));
+                    }
+
+                    // Update en passant square.
                     if moved.role == Role::Pawn && square::distance(from, to) == 2 {
-                        self.ep_square = Some(Square(from.0 + color.fold(8, -8)));
+                        self.ep_square = from.offset(color.fold(8, -8))
                     } else {
                         self.ep_square = None;
                     }
 
+                    // Move piece to new square.
                     self.set_piece_at(to, promotion.map(|role| role.of(color))
                                                    .unwrap_or(moved));
                 },
-            &Move::Put { to, role } =>
-                self.set_piece_at(to, Piece { color, role })
+            &Move::Put { to, role } => {
+                self.ep_square = None;
+                self.set_piece_at(to, Piece { color, role });
+            }
         }
 
         self.turn = !self.turn;

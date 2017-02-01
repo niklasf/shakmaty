@@ -65,11 +65,12 @@ fn main() {
     //board.do_move(&Move::from_uci("e7e5").unwrap());
     //board.do_move(&Move::from_uci("f1b5").unwrap());
 
-    //assert_eq!(perft(&board, 1, &precomp), 20);
-    //assert_eq!(perft(&board, 2, &precomp), 400);
-    //assert_eq!(perft(&board, 3, &precomp), 8902);
-    //assert_eq!(perft(&board, 4, &precomp), 197281);
+    assert_eq!(perft(&board, 1, &precomp), 20);
+    assert_eq!(perft(&board, 2, &precomp), 400);
+    assert_eq!(perft(&board, 3, &precomp), 8902);
+    assert_eq!(perft(&board, 4, &precomp), 197281);
     assert_eq!(perft(&board, 5, &precomp), 4865609);
+    assert_eq!(perft(&board, 6, &precomp), 119060324);
 }
 
 #[cfg(test)]
