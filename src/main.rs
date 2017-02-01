@@ -14,7 +14,7 @@ use board::Board;
 use board::Move;
 use attacks::Precomp;
 
-fn perft(board: Board, depth: i8, precomp: &Precomp) -> usize {
+fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
     } else {
@@ -24,7 +24,8 @@ fn perft(board: Board, depth: i8, precomp: &Precomp) -> usize {
         moves.iter().map(|m| {
             let mut child = board.clone();
             child.do_move(m);
-            perft(child, depth - 1, precomp)
+            println!("{:?}", m);
+            perft(&child, depth - 1, precomp)
         }).sum()
     }
 }
@@ -35,5 +36,11 @@ fn main() {
     //board.do_move(&Move::Normal{ from: square::E2, to: square::E4, promotion: None });
     //board.do_move(&Move::Normal{ from: square::D7, to: square::D5, promotion: None });
     println!("{:?}", board);
-    println!("{:}", perft(board, 4, &precomp));
+
+    assert_eq!(perft(&board, 1, &precomp), 20);
+    assert_eq!(perft(&board, 2, &precomp), 400);
+    println!("{:}", perft(&board, 1, &precomp));
+    println!("{:}", perft(&board, 2, &precomp));
+    println!("{:}", perft(&board, 3, &precomp));
+    println!("{:}", perft(&board, 4, &precomp));
 }
