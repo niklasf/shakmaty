@@ -324,8 +324,8 @@ impl Board {
         match m {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
-                    /*self.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                   .unwrap_or(moved))*/
+                    self.set_piece_at(to, promotion.map(|role| role.of(color))
+                                                   .unwrap_or(moved))
                 },
             &Move::Put { to, role } =>
                 self.set_piece_at(to, Piece { color, role })

@@ -32,8 +32,8 @@ fn perft(board: Board, depth: i8, precomp: &Precomp) -> usize {
 fn main() {
     let precomp = attacks::Precomp::new();
     let mut board = Board::new();
-    board.do_move(&Move::Normal{ from: square::E2, to: square::E4, promotion: None });
-    board.do_move(&Move::Normal{ from: square::D7, to: square::D5, promotion: None });
+    //board.do_move(&Move::Normal{ from: square::E2, to: square::E4, promotion: None });
+    //board.do_move(&Move::Normal{ from: square::D7, to: square::D5, promotion: None });
     println!("{:?}", board);
-    println!("{:}", perft(board, 3, &precomp));
+    println!("{:}", perft(board, 4, &precomp));
 }
