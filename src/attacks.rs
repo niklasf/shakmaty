@@ -132,15 +132,15 @@ impl Precomp {
                         (precomp.bishop_attacks(sa, Bitboard(0)) &
                          precomp.bishop_attacks(sb, Bitboard(0))).with(sa).with(sb);
                     precomp.bb_between[a][b] =
-                        (precomp.bishop_attacks(sa, Bitboard::from_square(sb)) &
-                         precomp.bishop_attacks(sb, Bitboard::from_square(sa)));
+                        precomp.bishop_attacks(sa, Bitboard::from_square(sb)) &
+                        precomp.bishop_attacks(sb, Bitboard::from_square(sa));
                 } else if precomp.rook_attacks(sa, Bitboard(0)).contains(sb) {
                     precomp.bb_rays[a][b] =
                         (precomp.rook_attacks(sa, Bitboard(0)) &
                          precomp.rook_attacks(sb, Bitboard(0))).with(sa).with(sb);
                     precomp.bb_between[a][b] =
-                        (precomp.rook_attacks(sa, Bitboard::from_square(sb)) &
-                         precomp.rook_attacks(sb, Bitboard::from_square(sa)));
+                        precomp.rook_attacks(sa, Bitboard::from_square(sb)) &
+                        precomp.rook_attacks(sb, Bitboard::from_square(sa));
                 }
             }
         }
