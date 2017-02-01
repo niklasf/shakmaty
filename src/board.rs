@@ -310,11 +310,31 @@ impl Board {
         }
     }
 
+    fn push_moves(&self, moves: &mut Vec<Move>, from: Square, to: Bitboard) {
+        for square in to {
+            moves.push(Move::Normal { from, to: square, promotion: None });
+        }
+    }
+
     fn pseudo_legal_moves(&self, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
-        for from in self.us() & !self.pawns {
-            for to in self.attacks_from(from, precomp) & !self.us() & target {
-                moves.push(Move::Normal { from, to, promotion: None } );
-            }
+        for from in self.our(Role::King) {
+            self.push_moves(moves, from,
+                            precomp.king_attacks(from) & !self.us() & target);
+        }
+
+        for from in self.our(Role::Knight) {
+            self.push_moves(moves, from,
+                            precomp.knight_attacks(from) & !self.us() & target);
+        }
+
+        for from in self.our(Role::Rook) | self.our(Role::Queen) {
+            self.push_moves(moves, from,
+                            precomp.rook_attacks(from, self.occupied) & !self.us() & target);
+        }
+
+        for from in self.our(Role::Bishop) | self.our(Role::Queen) {
+            self.push_moves(moves, from,
+                            precomp.bishop_attacks(from, self.occupied) & !self.us() & target);
         }
 
         for from in self.our(Role::Pawn) {
