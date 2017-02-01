@@ -25,13 +25,14 @@ impl Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", ('a' as u8 + self.file() as u8) as char, ('1' as u8 + self.rank() as u8) as char)
+        write!(f, "{}{}", ('a' as u8 + self.file() as u8) as char,
+                          ('1' as u8 + self.rank() as u8) as char)
     }
 }
 
 impl fmt::Debug for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "square::{}", self.to_string().to_uppercase())
+        write!(f, "{}", self.to_string().to_uppercase())
     }
 }
 
