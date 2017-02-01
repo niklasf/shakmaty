@@ -447,6 +447,12 @@ impl Board {
         moves.retain(|m| self.is_legal(m, &pins, precomp));
     }
 
+    fn is_en_passant(&self, &Piece { color, role }: &Piece, from: Square, to: Square) -> bool {
+        role == Role::Pawn &&
+            square::delta(from, to) & 1 != 0 &&
+            !self.occupied.contains(to)
+    }
+
     pub fn do_move(&mut self, m: &Move) {
         let color = self.turn;
 
@@ -454,7 +460,7 @@ impl Board {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
                     // Execute en passant capture.
-                    if moved.role == Role::Pawn && square::delta(from, to) & 1 != 0 {
+                    if self.is_en_passant(&moved, from, to) {
                         self.ep_square.and_then(|sq| sq.offset(color.fold(-8, 8)))
                                       .map(|sq| self.remove_piece_at(sq));
                     }

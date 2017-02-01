@@ -87,13 +87,14 @@ mod tests {
     fn test_perft() {
         let precomp = attacks::Precomp::new();
         let mut board = Board::new();
+
         board.do_move(&Move::from_uci("h2h4").unwrap());
         board.do_move(&Move::from_uci("g7g5").unwrap());
         board.do_move(&Move::from_uci("e2e4").unwrap());
-        //assert_eq!(perft(&board, 2, &precomp), 699);
-        println!("{:?}", board);
+        assert_eq!(perft_inner(&board, 2, &precomp), 699);
+
         board.do_move(&Move::from_uci("g5h4").unwrap());
-        assert_eq!(perft(&board, 1, &precomp), 31);
+        assert_eq!(perft_inner(&board, 1, &precomp), 31);
     }
 
     #[bench]
