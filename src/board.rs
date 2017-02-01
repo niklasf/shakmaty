@@ -345,6 +345,20 @@ impl Board {
         // TODO: En-passant
     }
 
+    fn is_legal(&self, m: &Move, precomp: &Precomp) -> bool {
+        match m {
+            &Move::Normal { from, to, promotion } =>
+                if self.kings.contains(from) {
+                    // TODO: Castling
+                    (self.attacks_to(to, precomp) & self.them()).is_empty()
+                } else {
+                    false
+                },
+            &Move::Put { to, role } =>
+                false // TODO
+        }
+    }
+
     fn evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         let checkers = self.checkers(precomp);
         let king = self.our(Role::King).first().unwrap();
@@ -371,6 +385,8 @@ impl Board {
         } else {
             self.evasions(moves, precomp);
         }
+
+        moves.retain(|m| self.is_legal(m, precomp));
     }
 
     pub fn do_move(&mut self, m: &Move) {

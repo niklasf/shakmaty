@@ -181,6 +181,10 @@ impl Precomp {
             Bitboard(0)
         }
     }
+
+    pub fn aligned(&self, a: Square, b: Square, c: Square) -> bool {
+        self.ray(a, b).contains(c)
+    }
 }
 
 mod test {

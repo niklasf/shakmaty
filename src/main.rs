@@ -51,6 +51,8 @@ fn main() {
     let mut board = Board::new();
 
     board.do_move(&Move::from_uci("e2e4").unwrap());
+    board.do_move(&Move::from_uci("e7e5").unwrap());
+    board.do_move(&Move::from_uci("f1b5").unwrap());
 
     assert_eq!(perft(&board, 1, &precomp), 20);
     //assert_eq!(perft(&board, 2, &precomp), 400);
