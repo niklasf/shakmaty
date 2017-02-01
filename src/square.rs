@@ -126,10 +126,10 @@ pub const F8: Square = Square(61);
 pub const G8: Square = Square(62);
 pub const H8: Square = Square(63);
 
-mod test {
+#[cfg(test)]
+mod tests {
+    use super::*;
     use square;
-    use square::Square;
-    use square::distance;
 
     #[test]
     fn test_square() {

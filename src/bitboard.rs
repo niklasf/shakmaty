@@ -203,8 +203,9 @@ impl Iterator for CarryRippler {
     }
 }
 
-mod test {
-    use bitboard::Bitboard;
+#[cfg(test)]
+mod tests {
+    use super::*;
     use square;
 
     #[test]

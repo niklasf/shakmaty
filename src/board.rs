@@ -1,9 +1,9 @@
-use std::ops;
 use square::Square;
 use bitboard::Bitboard;
 use attacks::Precomp;
 use std::ascii::AsciiExt;
 use std::char;
+use std::ops;
 use std::fmt;
 use std::fmt::Write;
 
@@ -382,7 +382,7 @@ impl Board {
                                         precomp);
 
         match m {
-            &Move::Normal { from, to, promotion } =>
+            &Move::Normal { from, to, promotion: _ } =>
                 if self.kings.contains(from) {
                     // TODO: Castling
                     (self.attacks_to(to, precomp) & self.them()).is_empty()
@@ -390,7 +390,7 @@ impl Board {
                     !(self.us() & pins.blockers).contains(from) ||
                     precomp.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
-            &Move::Put { to, role } =>
+            _ =>
                 false // TODO
         }
     }
@@ -463,16 +463,22 @@ impl fmt::Debug for Board {
     }
 }
 
-#[test]
-fn test_piece_at() {
-    let board = Board::new();
-    assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
-    assert_eq!(board.piece_at(square::B1), Some(Role::Knight.of(Color::White)));
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use square;
 
-#[test]
-fn test_set_piece_at() {
-    let mut board = Board::new();
-    board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
-    assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
+    #[test]
+    fn test_piece_at() {
+        let board = Board::new();
+        assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
+        assert_eq!(board.piece_at(square::B1), Some(Role::Knight.of(Color::White)));
+    }
+
+    #[test]
+    fn test_set_piece_at() {
+        let mut board = Board::new();
+        board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
+        assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
+    }
 }
