@@ -272,15 +272,15 @@ impl Board {
         }
     }
 
-    pub fn pseudo_legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    pub fn pseudo_legal_moves(&self, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.us() & !self.pawns {
-            for to in self.attacks_from(from, precomp) & !self.us() {
+            for to in self.attacks_from(from, precomp) & !self.us() & target {
                 moves.push(Move::Normal { from, to, promotion: None } );
             }
         }
 
         for from in self.our(Role::Pawn) {
-            for to in precomp.pawn_attacks(self.turn, from) & self.them() {
+            for to in precomp.pawn_attacks(self.turn, from) & self.them() & target {
                 self.push_pawn_moves(moves, from, to);
             }
         }
@@ -290,12 +290,12 @@ impl Board {
                            Bitboard::relative_rank(self.turn, 3) &
                            !self.occupied;
 
-        for to in single_moves {
+        for to in single_moves & target {
             let from = Square(to.0 + self.turn.fold(-8, 8));
             self.push_pawn_moves(moves, from, to);
         }
 
-        for to in double_moves {
+        for to in double_moves & target {
             let from = Square(to.0 + self.turn.fold(-16, 16));
             self.push_pawn_moves(moves, from, to);
         }
@@ -304,12 +304,32 @@ impl Board {
         // TODO: En-passant
     }
 
-    fn non_evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+        let checkers = self.checkers(precomp);
+        let king = self.our(Role::King).first().unwrap();
+        let sliders = checkers & (self.rooks | self.bishops | self.queens);
+
+        let mut attacked = Bitboard(0);
+        for checker in sliders {
+            attacked = attacked | precomp.ray(checker, king).without(checker);
+        }
+
+        for to in precomp.king_attacks(king) & !self.us() & !attacked {
+            moves.push(Move::Normal { from: king, to, promotion: None });
+        }
+
+        if let Some(checker) = checkers.single_square() {
+            let target = precomp.between(king, checker).with(checker);
+            self.pseudo_legal_moves(target, moves, precomp);
+        }
     }
 
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        assert!(self.checkers(precomp).is_empty());
-        self.pseudo_legal_moves(moves, precomp);
+        if self.checkers(precomp).is_empty() {
+            self.pseudo_legal_moves(Bitboard::all(), moves, precomp);
+        } else {
+            self.evasions(moves, precomp);
+        }
     }
 
     pub fn do_move(&mut self, m: &Move) {

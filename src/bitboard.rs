@@ -43,10 +43,6 @@ impl Bitboard {
         self.0 == 0
     }
 
-    pub fn more_than_one(self) -> bool {
-        self.0 & self.0.wrapping_sub(1) != 0
-    }
-
     pub fn contains(self, sq: Square) -> bool {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
@@ -63,11 +59,27 @@ impl Bitboard {
         self | Bitboard::from_square(sq)
     }
 
+    pub fn without(self, sq: Square) -> Bitboard {
+        self & !Bitboard::from_square(sq)
+    }
+
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
         } else {
             Some(Square(self.0.trailing_zeros() as i8))
+        }
+    }
+
+    pub fn more_than_one(self) -> bool {
+        self.0 & self.0.wrapping_sub(1) != 0
+    }
+
+    pub fn single_square(self) -> Option<Square> {
+        if self.more_than_one() {
+            None
+        } else {
+            self.first()
         }
     }
 
