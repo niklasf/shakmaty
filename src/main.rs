@@ -28,11 +28,15 @@ fn perft_inner(board: &Board, depth: i8, precomp: &Precomp) -> usize {
         let mut moves: Vec<Move> = Vec::new();
         board.legal_moves(&mut moves, precomp);
 
-        moves.iter().map(|m| {
-            let mut child = board.clone();
-            child.do_move(m);
-            perft_inner(&child, depth - 1, precomp)
-        }).sum()
+        if depth == 1 {
+            moves.len()
+        } else {
+            moves.iter().map(|m| {
+                let mut child = board.clone();
+                child.do_move(m);
+                perft_inner(&child, depth - 1, precomp)
+            }).sum()
+        }
     }
 }
 
@@ -64,7 +68,8 @@ fn main() {
     //assert_eq!(perft(&board, 1, &precomp), 20);
     //assert_eq!(perft(&board, 2, &precomp), 400);
     //assert_eq!(perft(&board, 3, &precomp), 8902);
-    assert_eq!(perft(&board, 4, &precomp), 197281);
+    //assert_eq!(perft(&board, 4, &precomp), 197281);
+    assert_eq!(perft(&board, 5, &precomp), 4865609);
 }
 
 #[cfg(test)]
