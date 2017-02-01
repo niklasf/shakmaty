@@ -276,10 +276,7 @@ impl Board {
 
     fn pseudo_legal_moves(&self, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.us() & !self.pawns {
-            println!("{}", from);
-            println!("{:?}", self.attacks_from(from, precomp));
             for to in self.attacks_from(from, precomp) & !self.us() & target {
-                println!("{}{}", from, to);
                 moves.push(Move::Normal { from, to, promotion: None } );
             }
         }

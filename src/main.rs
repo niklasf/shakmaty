@@ -39,8 +39,6 @@ fn main() {
 
     assert_eq!(perft(&board, 1, &precomp), 20);
     assert_eq!(perft(&board, 2, &precomp), 400);
-    println!("{:}", perft(&board, 1, &precomp));
-    println!("{:}", perft(&board, 2, &precomp));
-    println!("{:}", perft(&board, 3, &precomp));
-    println!("{:}", perft(&board, 4, &precomp));
+    assert_eq!(perft(&board, 3, &precomp), 8902);
+    assert_eq!(perft(&board, 4, &precomp), 197281);
 }
