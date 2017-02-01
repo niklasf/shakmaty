@@ -94,6 +94,7 @@ pub struct Board {
     promoted: Bitboard,
 
     turn: Color,
+    ep_square: Option<Square>,
 }
 
 impl Board {
@@ -114,6 +115,7 @@ impl Board {
             promoted: Bitboard(0),
 
             turn: Color::White,
+            ep_square: None,
         }
     }
 
@@ -300,6 +302,14 @@ impl Board {
         for to in double_moves & target {
             let from = Square(to.0 + self.turn.fold(-16, 16));
             self.push_pawn_moves(moves, from, to);
+        }
+
+        if let Some(to) = self.ep_square {
+            if target.contains(to) {
+                for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
+                    moves.push(Move::Normal { from, to, promotion: None });
+                }
+            }
         }
 
         // TODO: Castling

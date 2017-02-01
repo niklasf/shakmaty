@@ -24,7 +24,6 @@ fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
         moves.iter().map(|m| {
             let mut child = board.clone();
             child.do_move(m);
-            println!("{:?}", m);
             perft(&child, depth - 1, precomp)
         }).sum()
     }
