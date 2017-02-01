@@ -59,6 +59,10 @@ impl Bitboard {
         self.0 ^= 1 << sq;
     }
 
+    pub fn with(self, sq: Square) -> Bitboard {
+        self | Bitboard::from_square(sq)
+    }
+
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None

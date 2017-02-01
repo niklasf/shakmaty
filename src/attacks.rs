@@ -156,6 +156,30 @@ impl Precomp {
             King   => self.king_attacks(sq)
         }
     }
+
+    pub fn ray(&self, a: Square, b: Square) -> Bitboard {
+        let z = Bitboard(0);
+
+        if self.bishop_attacks(a, z).contains(b) {
+            (self.bishop_attacks(a, z) & self.bishop_attacks(b, z)).with(a).with(b)
+        } else if self.rook_attacks(a, z).contains(b) {
+            (self.rook_attacks(a, z) & self.rook_attacks(b, z)).with(a).with(b)
+        } else {
+            Bitboard(0)
+        }
+    }
+
+    pub fn between(&self, a: Square, b: Square) -> Bitboard {
+        if self.bishop_attacks(a, Bitboard(0)).contains(b) {
+            self.bishop_attacks(a, Bitboard::from_square(b)) &
+            self.bishop_attacks(b, Bitboard::from_square(a))
+        } else if self.rook_attacks(a, Bitboard(0)).contains(b) {
+            self.rook_attacks(a, Bitboard::from_square(b)) &
+            self.rook_attacks(b, Bitboard::from_square(a))
+        } else {
+            Bitboard(0)
+        }
+    }
 }
 
 mod test {
