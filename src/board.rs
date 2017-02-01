@@ -212,14 +212,9 @@ impl Board {
     }
 
     pub fn attacks_from(&self, sq: Square, precomp: &Precomp) -> Bitboard {
-        self.role_at(sq).map(|role| match role {
-            Role::Pawn   => precomp.pawn_attacks(self.turn, sq),
-            Role::Knight => precomp.knight_attacks(sq),
-            Role::Bishop => precomp.bishop_attacks(sq, self.occupied),
-            Role::Rook   => precomp.rook_attacks(sq, self.occupied),
-            Role::Queen  => precomp.queen_attacks(sq, self.occupied),
-            Role::King   => precomp.king_attacks(sq)
-        }).unwrap_or(Bitboard(0))
+        self.piece_at(sq)
+            .map(|piece| precomp.attacks(sq, piece, self.occupied))
+            .unwrap_or(Bitboard(0))
     }
 
     pub fn attacks_to(&self, sq: Square, precomp: &Precomp) -> Bitboard {
@@ -235,17 +230,6 @@ impl Board {
         self.our(Role::King).first()
             .map(|king| self.them() & self.attacks_to(king, precomp))
             .unwrap_or(Bitboard(0))
-    }
-
-    fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
-        if to.rank() == self.turn.fold(7, 0) {
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Queen) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Rook) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Bishop) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Knight) } );
-        } else {
-            moves.push(Move::Normal { from, to, promotion: None } );
-        }
     }
 
     pub fn board_fen(&self) -> String {
@@ -277,6 +261,17 @@ impl Board {
         fen
     }
 
+    fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
+        if to.rank() == self.turn.fold(7, 0) {
+            moves.push(Move::Normal { from, to, promotion: Some(Role::Queen) } );
+            moves.push(Move::Normal { from, to, promotion: Some(Role::Rook) } );
+            moves.push(Move::Normal { from, to, promotion: Some(Role::Bishop) } );
+            moves.push(Move::Normal { from, to, promotion: Some(Role::Knight) } );
+        } else {
+            moves.push(Move::Normal { from, to, promotion: None } );
+        }
+    }
+
     pub fn pseudo_legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.us() & !self.pawns {
             for to in self.attacks_from(from, precomp) & !self.us() {
@@ -285,7 +280,7 @@ impl Board {
         }
 
         for from in self.our(Role::Pawn) {
-            for to in self.attacks_from(from, precomp) & self.them() {
+            for to in precomp.pawn_attacks(self.turn, from) & self.them() {
                 self.push_pawn_moves(moves, from, to);
             }
         }
@@ -310,7 +305,6 @@ impl Board {
     }
 
     fn non_evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        
     }
 
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {

@@ -2,6 +2,7 @@ use square;
 use square::Square;
 use bitboard::Bitboard;
 use board::Color;
+use board::Piece;
 
 pub const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 pub const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
@@ -143,6 +144,17 @@ impl Precomp {
 
     pub fn queen_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
         self.rook_attacks(sq, occupied) | self.bishop_attacks(sq, occupied)
+    }
+
+    pub fn attacks(&self, sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> Bitboard {
+        match role {
+            Pawn   => self.pawn_attacks(color, sq),
+            Knight => self.knight_attacks(sq),
+            Bishop => self.bishop_attacks(sq, occupied),
+            Rook   => self.rook_attacks(sq, occupied),
+            Queen  => self.queen_attacks(sq, occupied),
+            King   => self.king_attacks(sq)
+        }
     }
 }
 
