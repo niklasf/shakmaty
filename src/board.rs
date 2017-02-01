@@ -1,3 +1,4 @@
+use square;
 use square::Square;
 use bitboard::Bitboard;
 use attacks::Precomp;
@@ -450,8 +451,14 @@ impl Board {
         match m {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
+                    if moved.role == Role::Pawn && square::distance(from, to) == 2 {
+                        self.ep_square = Some(Square(from.0 + color.fold(8, -8)));
+                    } else {
+                        self.ep_square = None;
+                    }
+
                     self.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                   .unwrap_or(moved))
+                                                   .unwrap_or(moved));
                 },
             &Move::Put { to, role } =>
                 self.set_piece_at(to, Piece { color, role })
