@@ -79,6 +79,9 @@ pub struct Precomp {
     bishop_indexes: [usize; 64],
     bishop_masks: [Bitboard; 64],
     bishop_attacks: Vec<Bitboard>,
+
+    bb_rays: [[Bitboard; 64]; 64],
+    bb_between: [[Bitboard; 64]; 64],
 }
 
 impl Precomp {
@@ -96,6 +99,9 @@ impl Precomp {
             bishop_indexes: [0; 64],
             bishop_masks: [Bitboard(0); 64],
             bishop_attacks: vec![Bitboard(0); 0x1480],
+
+            bb_rays: [[Bitboard(0); 64]; 64],
+            bb_between: [[Bitboard(0); 64]; 64],
         };
 
         for s in 0..64 {
@@ -114,6 +120,30 @@ impl Precomp {
                     &mut precomp.bishop_masks,
                     &mut precomp.bishop_attacks,
                     &BISHOP_DELTAS);
+
+        for a in 0..64 {
+            let sa = Square(a as i8);
+
+            for b in 0..64 {
+                let sb = Square(b as i8);
+
+                if precomp.bishop_attacks(sa, Bitboard(0)).contains(sb) {
+                    precomp.bb_rays[a][b] =
+                        (precomp.bishop_attacks(sa, Bitboard(0)) &
+                         precomp.bishop_attacks(sb, Bitboard(0))).with(sa).with(sb);
+                    precomp.bb_between[a][b] =
+                        (precomp.bishop_attacks(sa, Bitboard::from_square(sb)) &
+                         precomp.bishop_attacks(sb, Bitboard::from_square(sa)));
+                } else if precomp.rook_attacks(sa, Bitboard(0)).contains(sb) {
+                    precomp.bb_rays[a][b] =
+                        (precomp.rook_attacks(sa, Bitboard(0)) &
+                         precomp.rook_attacks(sb, Bitboard(0))).with(sa).with(sb);
+                    precomp.bb_between[a][b] =
+                        (precomp.rook_attacks(sa, Bitboard::from_square(sb)) &
+                         precomp.rook_attacks(sb, Bitboard::from_square(sa)));
+                }
+            }
+        }
 
         precomp
     }
@@ -158,28 +188,12 @@ impl Precomp {
         }
     }
 
-    pub fn ray(&self, a: Square, b: Square) -> Bitboard {
-        let z = Bitboard(0);
-
-        if self.bishop_attacks(a, z).contains(b) {
-            (self.bishop_attacks(a, z) & self.bishop_attacks(b, z)).with(a).with(b)
-        } else if self.rook_attacks(a, z).contains(b) {
-            (self.rook_attacks(a, z) & self.rook_attacks(b, z)).with(a).with(b)
-        } else {
-            Bitboard(0)
-        }
+    pub fn ray(&self, Square(a): Square, Square(b): Square) -> Bitboard {
+        self.bb_rays[a as usize][b as usize]
     }
 
-    pub fn between(&self, a: Square, b: Square) -> Bitboard {
-        if self.bishop_attacks(a, Bitboard(0)).contains(b) {
-            self.bishop_attacks(a, Bitboard::from_square(b)) &
-            self.bishop_attacks(b, Bitboard::from_square(a))
-        } else if self.rook_attacks(a, Bitboard(0)).contains(b) {
-            self.rook_attacks(a, Bitboard::from_square(b)) &
-            self.rook_attacks(b, Bitboard::from_square(a))
-        } else {
-            Bitboard(0)
-        }
+    pub fn between(&self, Square(a): Square, Square(b): Square) -> Bitboard {
+        self.bb_between[a as usize][b as usize]
     }
 
     pub fn aligned(&self, a: Square, b: Square, c: Square) -> bool {
