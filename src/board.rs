@@ -7,7 +7,7 @@ use std::char;
 use std::fmt;
 use std::fmt::Write;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Color {
     Black,
     White,
@@ -30,7 +30,7 @@ impl ops::Not for Color {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Role {
     Pawn,
     Knight,
@@ -57,6 +57,7 @@ impl Role {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -323,8 +324,8 @@ impl Board {
         match m {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
-                    self.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                   .unwrap_or(moved))
+                    /*self.set_piece_at(to, promotion.map(|role| role.of(color))
+                                                   .unwrap_or(moved))*/
                 },
             &Move::Put { to, role } =>
                 self.set_piece_at(to, Piece { color, role })
@@ -352,5 +353,18 @@ impl fmt::Debug for Board {
         }
 
         Ok(())
+    }
+}
+
+mod test {
+    use board::Board;
+    use board::Role;
+    use board::Color;
+    use square;
+
+    #[test]
+    fn test_piece_at() {
+        let board = Board::new();
+        assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
     }
 }

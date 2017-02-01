@@ -35,5 +35,6 @@ fn main() {
     let mut board = Board::new();
     board.do_move(&Move::Normal { from: square::A2, to: square::A3, promotion: None });
     println!("{:?}", board);
+    println!("{:?}", board.us());
     println!("{:}", perft(board, 1, &precomp));
 }
