@@ -14,6 +14,9 @@ use board::Board;
 use board::Move;
 use attacks::Precomp;
 
+extern crate rayon;
+use rayon::prelude::*;
+
 fn perft_inner(board: &Board, depth: i8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
@@ -36,11 +39,11 @@ fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
         let mut moves: Vec<Move> = Vec::new();
         board.legal_moves(&mut moves, precomp);
 
-        moves.iter().map(|m| {
+        moves.par_iter().map(|m| {
             let mut child = board.clone();
             child.do_move(m);
             let p = perft_inner(&child, depth - 1, precomp);
-            println!("{} {} {}", m, p);
+            println!("{} {}", m, p);
             p
         }).sum()
     }

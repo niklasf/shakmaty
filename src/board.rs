@@ -463,23 +463,16 @@ impl fmt::Debug for Board {
     }
 }
 
-mod test {
-    use board::Board;
-    use board::Role;
-    use board::Color;
-    use square;
+#[test]
+fn test_piece_at() {
+    let board = Board::new();
+    assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
+    assert_eq!(board.piece_at(square::B1), Some(Role::Knight.of(Color::White)));
+}
 
-    #[test]
-    fn test_piece_at() {
-        let board = Board::new();
-        assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
-        assert_eq!(board.piece_at(square::B1), Some(Role::Knight.of(Color::White)));
-    }
-
-    #[test]
-    fn test_set_piece_at() {
-        let mut board = Board::new();
-        board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
-        assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
-    }
+#[test]
+fn test_set_piece_at() {
+    let mut board = Board::new();
+    board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
+    assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
 }
