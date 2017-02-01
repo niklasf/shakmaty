@@ -77,6 +77,19 @@ pub enum Move {
     Put { to: Square, role: Role },
 }
 
+impl fmt::Display for Move {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Move::Normal { from, to, promotion: None } =>
+                write!(f, "{}{}", from, to),
+            &Move::Normal { from, to, promotion: Some(promotion) } =>
+                write!(f, "{}{}{}", from, to, promotion.chr()),
+            &Move::Put { to, role } =>
+                write!(f, "{}@{}", role.chr().to_ascii_uppercase(), to)
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Board {
     occupied: Bitboard,
