@@ -19,7 +19,7 @@ fn perft(board: Board, depth: i8, precomp: &Precomp) -> usize {
         1
     } else {
         let mut moves: Vec<Move> = Vec::new();
-        board.pseudo_legal_moves(&mut moves, precomp);
+        board.legal_moves(&mut moves, precomp);
 
         moves.iter().map(|m| {
             let mut child = board.clone();
@@ -31,5 +31,6 @@ fn perft(board: Board, depth: i8, precomp: &Precomp) -> usize {
 
 fn main() {
     let precomp = attacks::Precomp::new();
+    println!("{}", Board::new().board_fen());
     println!("{:}", perft(Board::new(), 2, &precomp));
 }

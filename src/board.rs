@@ -2,6 +2,8 @@ use std::ops;
 use square::Square;
 use bitboard::Bitboard;
 use attacks::Precomp;
+use std::ascii::AsciiExt;
+use std::char;
 
 #[derive(Copy, Clone)]
 pub enum Color {
@@ -40,11 +42,28 @@ impl Role {
     pub fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
+
+    pub fn chr(self) -> char {
+        match self {
+            Role::Pawn =>   'p',
+            Role::Knight => 'n',
+            Role::Bishop => 'b',
+            Role::Rook =>   'r',
+            Role::Queen =>  'q',
+            Role::King =>   'k'
+        }
+    }
 }
 
 pub struct Piece {
     pub color: Color,
     pub role: Role,
+}
+
+impl Piece {
+    pub fn chr(self) -> char {
+        self.color.fold(self.role.chr(), self.role.chr().to_ascii_uppercase())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -226,6 +245,35 @@ impl Board {
         }
     }
 
+    pub fn board_fen(&self) -> String {
+        let mut fen = String::with_capacity(15);
+
+        for rank in (0..8).rev() {
+            let mut empty = 0;
+
+            for file in 0..8 {
+                empty = self.piece_at(Square::new(file, rank))
+                    .map_or_else(|| empty + 1, |piece| {
+                        if empty > 0 {
+                            fen.push(char::from_digit(empty, 10).unwrap());
+                        }
+                        fen.push(piece.chr());
+                        return 0
+                    });
+
+                if file == 7 && empty > 0 {
+                    fen.push(char::from_digit(empty, 10).unwrap());
+                }
+
+                if file == 7 && rank > 0 {
+                    fen.push('/')
+                }
+            }
+        }
+
+        fen
+    }
+
     pub fn pseudo_legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.us() & !self.pawns {
             for to in self.attacks_from(from, precomp) & self.us() {
@@ -256,6 +304,11 @@ impl Board {
 
         // TODO: Castling
         // TODO: En-passant
+    }
+
+    pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+        println!("{}", self.board_fen());
+        assert!(self.checkers(precomp).is_empty());
     }
 
     pub fn do_move(&mut self, m: &Move) {
