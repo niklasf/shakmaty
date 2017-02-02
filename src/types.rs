@@ -35,7 +35,7 @@ impl ops::Not for Color {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Role {
     Pawn,
     Knight,
@@ -62,7 +62,7 @@ impl Role {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -74,7 +74,7 @@ impl Piece {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Move {
     Normal { from: Square, to: Square, promotion: Option<Role> },
     Put { to: Square, role: Role },
