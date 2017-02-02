@@ -46,6 +46,18 @@ pub enum Role {
 }
 
 impl Role {
+    pub fn from_chr(chr: char) -> Option<Role> {
+        match chr {
+            'p' => Some(Role::Pawn),
+            'n' => Some(Role::Knight),
+            'b' => Some(Role::Bishop),
+            'r' => Some(Role::Rook),
+            'q' => Some(Role::Queen),
+            'k' => Some(Role::King),
+            _ => None
+        }
+    }
+
     pub fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
@@ -86,13 +98,25 @@ impl Move {
             return None
         }
 
-        Square::from_str(&uci[2..4]).and_then(|to| {
-            Square::from_str(&uci[0..2]).map(|from| {
-                // TODO: Promotions
-                Move::Normal { from, to, promotion: None }
-            })
-            // TODO: Drops
-       })
+        match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
+            (Some(from), Some(to), Some(promotion)) =>
+                return Role::from_chr(promotion).map(|role| {
+                    Move::Normal { from, to, promotion: Some(role) }
+                }),
+            (Some(from), Some(to), None) =>
+                return Some(Move::Normal { from, to, promotion: None }),
+            _ => ()
+        }
+
+        match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
+            (Some(piece), Some('@'), Some(to)) =>
+                return Role::from_chr(piece.to_ascii_lowercase()).map(|role| {
+                    Move::Put { role, to }
+                }),
+            _ => ()
+        }
+
+        None
     }
 }
 
