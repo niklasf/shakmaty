@@ -394,6 +394,9 @@ impl Board {
             &Move::Put { to, role } => {
                 self.ep_square = None;
                 self.set_piece_at(to, Piece { color, role });
+            },
+            &Move::Null => {
+                self.ep_square = None;
             }
         }
 

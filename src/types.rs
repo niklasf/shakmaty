@@ -90,6 +90,7 @@ impl Piece {
 pub enum Move {
     Normal { from: Square, to: Square, promotion: Option<Role> },
     Put { to: Square, role: Role },
+    Null
 }
 
 impl Move {
@@ -116,6 +117,10 @@ impl Move {
             _ => ()
         }
 
+        if uci == "0000" {
+            return Some(Move::Null)
+        }
+
         None
     }
 }
@@ -128,7 +133,9 @@ impl fmt::Display for Move {
             &Move::Normal { from, to, promotion: Some(promotion) } =>
                 write!(f, "{}{}{}", from, to, promotion.chr()),
             &Move::Put { to, role } =>
-                write!(f, "{}@{}", role.chr().to_ascii_uppercase(), to)
+                write!(f, "{}@{}", role.chr().to_ascii_uppercase(), to),
+            &Move::Null =>
+                write!(f, "0000")
         }
     }
 }
