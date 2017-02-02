@@ -201,8 +201,7 @@ impl Precomp {
 
 #[cfg(test)]
 mod tests {
-    use attacks::Precomp;
-    use bitboard::Bitboard;
+    use super::*;
 
     #[test]
     fn test_sliding_rook_attacks() {
