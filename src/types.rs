@@ -19,7 +19,12 @@ impl Color {
         }
     }
 
+    pub fn pawn(self)   -> Piece { Role::Pawn.of(self) }
     pub fn knight(self) -> Piece { Role::Knight.of(self) }
+    pub fn bishop(self) -> Piece { Role::Bishop.of(self) }
+    pub fn rook(self)   -> Piece { Role::Rook.of(self) }
+    pub fn queen(self)  -> Piece { Role::Queen.of(self) }
+    pub fn king(self)   -> Piece { Role::King.of(self) }
 }
 
 impl ops::Not for Color {
