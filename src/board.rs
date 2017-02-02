@@ -370,7 +370,6 @@ impl Board {
         }
 
         // TODO: Castling
-        // TODO: En-passant
     }
 
     fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Pins {
@@ -401,7 +400,17 @@ impl Board {
     fn is_legal(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
         match m {
             &Move::Normal { from, to, promotion: _ } =>
-                if self.kings.contains(from) {
+                if let Some(ep_capture) = self.ep_capture(m) {
+                    let mut occupied = self.occupied;
+                    occupied.flip(from);
+                    occupied.flip(ep_capture);
+                    occupied.add(to);
+
+                    self.our(Role::King).first().map(|king| {
+                        (precomp.rook_attacks(king, occupied) & self.them() & (self.queens | self.rooks)).is_empty() &&
+                        (precomp.bishop_attacks(king, occupied) & self.them() & (self.queens | self.bishops)).is_empty()
+                    }).unwrap_or(true)
+                } else if self.kings.contains(from) {
                     // TODO: Castling
                     (self.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
@@ -447,13 +456,17 @@ impl Board {
         moves.retain(|m| self.is_legal(m, &pins, precomp));
     }
 
-    fn is_en_passant(&self, m: &Move) -> bool {
+    fn ep_capture(&self, m: &Move) -> Option<Square> {
         match m {
             &Move::Normal { from, to, promotion: _ } =>
-                square::delta(from, to) & 1 != 0 &&
-                self.pawns.contains(from) &&
-                !self.occupied.contains(to),
-            _ => false
+                if square::delta(from, to) & 1 != 0 &&
+                        self.pawns.contains(from) &&
+                        !self.occupied.contains(to) {
+                    self.ep_square.and_then(|sq| sq.offset(self.turn.fold(-8, 8)))
+                } else {
+                    None
+                },
+            _ => return None
         }
     }
 
@@ -464,10 +477,7 @@ impl Board {
             &Move::Normal { from, to, promotion } =>
                 if let Some(moved) = self.remove_piece_at(from) {
                     // Execute en passant capture.
-                    if self.is_en_passant(m) {
-                        self.ep_square.and_then(|sq| sq.offset(color.fold(-8, 8)))
-                                      .map(|sq| self.remove_piece_at(sq));
-                    }
+                    self.ep_capture(m).map(|sq| self.remove_piece_at(sq));
 
                     // Update en passant square.
                     if moved.role == Role::Pawn && square::distance(from, to) == 2 {
