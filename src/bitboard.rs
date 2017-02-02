@@ -3,7 +3,7 @@ use std::fmt;
 use std::fmt::Write;
 
 use square::Square;
-use board::Color;
+use types::Color;
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bitboard(pub u64);

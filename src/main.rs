@@ -10,16 +10,16 @@ extern crate rayon;
 extern crate test;
 
 mod square;
+mod types;
 mod bitboard;
 mod attacks;
 mod board;
 
 use rayon::prelude::*;
 
-use board::Board;
-use board::Move;
+use types::Move;
 use attacks::Precomp;
-
+use board::Board;
 
 fn perft_inner(board: &Board, depth: i8, precomp: &Precomp) -> usize {
     if depth < 1 {

@@ -1,9 +1,7 @@
 use square;
 use square::Square;
 use bitboard::Bitboard;
-use board::Color;
-use board::Piece;
-use board::Role;
+use types::{ Color, Role, Piece };
 
 pub const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 pub const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
@@ -201,12 +199,10 @@ impl Precomp {
     }
 }
 
-mod test {
-    use attacks::ROOK_DELTAS;
-    use attacks::sliding_attacks;
+#[cfg(test)]
+mod tests {
     use attacks::Precomp;
     use bitboard::Bitboard;
-    use square;
 
     #[test]
     fn test_sliding_rook_attacks() {
