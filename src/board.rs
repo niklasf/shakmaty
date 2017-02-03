@@ -473,18 +473,18 @@ impl Board {
                         self.ep_square = from.offset(color.fold(8, -8))
                     }
 
-                    // Move piece to new square.
-                    self.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                   .unwrap_or(moved));
-
                     // Update castling rights.
-                    if self.kings.contains(from) {
+                    if moved.role == Role::King {
                         self.castling_rights = self.castling_rights &
                                                Bitboard::relative_rank(self.turn, 7);
                     } else {
                         self.castling_rights.remove(from);
                         self.castling_rights.remove(to);
                     }
+
+                    // Move piece to new square.
+                    self.set_piece_at(to, promotion.map(|role| role.of(color))
+                                                   .unwrap_or(moved));
                 }
             },
             &Move::Put { to, role } => {
