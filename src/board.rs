@@ -220,23 +220,23 @@ impl Board {
         }
     }
 
-    fn pseudo_legal_moves(&self, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
-        for from in self.our(Role::King) {
+    fn pseudo_legal_moves(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
+        for from in self.our(Role::King) & selection {
             self.push_moves(moves, from,
                             precomp.king_attacks(from) & !self.us() & target);
         }
 
-        for from in self.our(Role::Knight) {
+        for from in self.our(Role::Knight) & selection {
             self.push_moves(moves, from,
                             precomp.knight_attacks(from) & !self.us() & target);
         }
 
-        for from in self.our(Role::Rook) | self.our(Role::Queen) {
+        for from in (self.our(Role::Rook) | self.our(Role::Queen)) & selection {
             self.push_moves(moves, from,
                             precomp.rook_attacks(from, self.occupied) & !self.us() & target);
         }
 
-        for from in self.our(Role::Bishop) | self.our(Role::Queen) {
+        for from in (self.our(Role::Bishop) | self.our(Role::Queen)) & selection {
             self.push_moves(moves, from,
                             precomp.bishop_attacks(from, self.occupied) & !self.us() & target);
         }
@@ -247,7 +247,9 @@ impl Board {
             }
         }
 
-        let single_moves = self.our(Role::Pawn).relative_shift(self.turn, 8) & !self.occupied;
+        let single_moves = (self.our(Role::Pawn) & selection).relative_shift(self.turn, 8) &
+                           !self.occupied;
+
         let double_moves = single_moves.relative_shift(self.turn, 8) &
                            Bitboard::relative_rank(self.turn, 3) &
                            !self.occupied;
@@ -266,13 +268,11 @@ impl Board {
 
         if let Some(to) = self.ep_square {
             if target.contains(to) {
-                for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
+                for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) & selection {
                     moves.push(Move::Normal { from, to, promotion: None });
                 }
             }
         }
-
-        // TODO: Castling
     }
 
     fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Pins {
@@ -342,7 +342,7 @@ impl Board {
 
         if let Some(checker) = checkers.single_square() {
             let target = precomp.between(king, checker).with(checker);
-            self.pseudo_legal_moves(target, moves, precomp);
+            self.pseudo_legal_moves(!self.kings, target, moves, precomp);
         }
     }
 
@@ -391,7 +391,7 @@ impl Board {
 
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if self.checkers(precomp).is_empty() {
-            self.pseudo_legal_moves(Bitboard::all(), moves, precomp);
+            self.pseudo_legal_moves(Bitboard::all(), Bitboard::all(), moves, precomp);
             self.castling_moves(moves, precomp);
         } else {
             self.evasions(moves, precomp);
