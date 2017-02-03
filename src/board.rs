@@ -350,7 +350,7 @@ impl Board {
         let backrank = Bitboard::relative_rank(self.turn, 0);
 
         for king in self.our(Role::King) & backrank {
-            for rook in self.castling_rights & backrank {
+            'next_rook: for rook in self.castling_rights & backrank {
                 let (king_to, rook_to) = if king < rook {
                     (self.turn.fold(square::G1, square::G8),
                      self.turn.fold(square::H1, square::H8))
@@ -375,7 +375,7 @@ impl Board {
 
                 for sq in precomp.between(king, king_to).with(king).with(king_to) {
                     if !(self.attacks_to(sq, precomp) & self.them()).is_empty() {
-                        continue;
+                        continue 'next_rook;
                     }
                 }
 

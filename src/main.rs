@@ -59,14 +59,15 @@ fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
 
 fn main() {
     let precomp = attacks::Precomp::new();
-    let mut board = Board::new();
+    let board = Board::new();
 
     /* assert_eq!(perft(&board, 1, &precomp), 20);
     assert_eq!(perft(&board, 2, &precomp), 400);
     assert_eq!(perft(&board, 3, &precomp), 8902);
     assert_eq!(perft(&board, 4, &precomp), 197281);
     assert_eq!(perft(&board, 5, &precomp), 4865609); */
-    assert_eq!(perft(&board, 6, &precomp), 119060324);
+    //assert_eq!(perft(&board, 6, &precomp), 119060324);
+    assert_eq!(perft(&board, 7, &precomp), 3195901860);
 }
 
 #[cfg(test)]
@@ -124,6 +125,26 @@ mod tests {
 
         board.do_move(&Move::from_uci("a5b6").unwrap());
         assert_eq!(perft_inner(&board, 1, &precomp), 21);
+    }
+
+    #[test]
+    fn test_prevented_castling() {
+        let precomp = attacks::Precomp::new();
+        let mut board = Board::new();
+
+        board.do_move(&Move::from_uci("g1f3").unwrap());
+        board.do_move(&Move::from_uci("a7a5").unwrap());
+        board.do_move(&Move::from_uci("g2g3").unwrap());
+        assert_eq!(perft_inner(&board, 4, &precomp), 282514);
+
+        board.do_move(&Move::from_uci("d7d6").unwrap());
+        assert_eq!(perft_inner(&board, 3, &precomp), 16080);
+
+        board.do_move(&Move::from_uci("f1h3").unwrap());
+        assert_eq!(perft_inner(&board, 2, &precomp), 755);
+
+        board.do_move(&Move::from_uci("c8h3").unwrap());
+        assert_eq!(perft_inner(&board, 1, &precomp), 20);
     }
 
     #[bench]
