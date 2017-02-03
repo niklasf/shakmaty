@@ -464,10 +464,10 @@ impl Board {
 
                     self.castling_rights = self.castling_rights &
                                            Bitboard::relative_rank(self.turn, 7);
+                } else if let Some(ep_capture) = self.ep_capture(m) {
+                    self.remove_piece_at(ep_capture);
+                    self.remove_piece_at(from).map(|piece| self.set_piece_at(to, piece));
                 } else if let Some(moved) = self.remove_piece_at(from) {
-                    // Execute en passant capture.
-                    self.ep_capture(m).map(|sq| self.remove_piece_at(sq));
-
                     // Update en passant square.
                     if moved.role == Role::Pawn && square::distance(from, to) == 2 {
                         self.ep_square = from.offset(color.fold(8, -8))

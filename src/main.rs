@@ -107,6 +107,25 @@ mod tests {
         assert_eq!(perft_inner(&board, 1, &precomp), 5);
     }
 
+    #[test]
+    fn test_en_passant() {
+        let precomp = attacks::Precomp::new();
+        let mut board = Board::new();
+
+        board.do_move(&Move::from_uci("a2a4").unwrap());
+        board.do_move(&Move::from_uci("h7h6").unwrap());
+        assert_eq!(perft_inner(&board, 4, &precomp), 199242);
+
+        board.do_move(&Move::from_uci("a4a5").unwrap());
+        assert_eq!(perft_inner(&board, 3, &precomp), 8189);
+
+        board.do_move(&Move::from_uci("b7b5").unwrap());
+        assert_eq!(perft_inner(&board, 2, &precomp), 439);
+
+        board.do_move(&Move::from_uci("a5b6").unwrap());
+        assert_eq!(perft_inner(&board, 1, &precomp), 21);
+    }
+
     #[bench]
     fn bench_perft(b: &mut Bencher) {
         let precomp = attacks::Precomp::new();
