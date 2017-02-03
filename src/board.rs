@@ -27,6 +27,9 @@ pub struct Board {
     turn: Color,
     castling_rights: Bitboard,
     ep_square: Option<Square>,
+
+    halfmove_clock: u32,
+    fullmoves: u32,
 }
 
 struct Pins {
@@ -54,6 +57,9 @@ impl Board {
             turn: Color::White,
             castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
+
+            halfmove_clock: 0,
+            fullmoves: 1,
         }
     }
 
@@ -184,7 +190,8 @@ impl Board {
                 self.turn.fold('w', 'b'),
                 self.castling_shredder_fen(),
                 self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
-                0, 1)
+                self.halfmove_clock,
+                self.fullmoves)
     }
 
     pub fn board_fen(&self) -> String {
@@ -475,6 +482,7 @@ impl Board {
     pub fn do_move(&mut self, m: &Move) {
         let color = self.turn;
         self.ep_square.take();
+        self.halfmove_clock += 1;
 
         match m {
             &Move::Normal { from, to, promotion } => {
@@ -497,7 +505,13 @@ impl Board {
                 } else if let Some(ep_capture) = self.ep_capture(m) {
                     self.remove_piece_at(ep_capture);
                     self.remove_piece_at(from).map(|piece| self.set_piece_at(to, piece));
+                    self.halfmove_clock = 0;
                 } else if let Some(moved) = self.remove_piece_at(from) {
+                    // Reset the halfmove clock.
+                    if moved.role == Role::Pawn || self.occupied.contains(to) {
+                        self.halfmove_clock = 0;
+                    }
+
                     // Update en passant square.
                     if moved.role == Role::Pawn && square::distance(from, to) == 2 {
                         self.ep_square = from.offset(color.fold(8, -8))
@@ -524,6 +538,10 @@ impl Board {
         }
 
         self.turn = !self.turn;
+
+        if self.turn == Color::White {
+            self.fullmoves += 1;
+        }
     }
 }
 

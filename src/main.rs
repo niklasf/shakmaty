@@ -59,7 +59,10 @@ fn perft(board: &Board, depth: i8, precomp: &Precomp) -> usize {
 
 fn main() {
     let precomp = attacks::Precomp::new();
-    let board = Board::new();
+    let mut board = Board::new();
+
+    board.do_move(&Move::from_uci("g1f3").unwrap());
+    board.do_move(&Move::from_uci("e7e5").unwrap());
 
     println!("{}", board.fen());
 
