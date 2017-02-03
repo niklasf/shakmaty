@@ -300,7 +300,7 @@ impl Board {
         result
     }
 
-    fn is_legal(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
+    fn is_safe(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
         match m {
             &Move::Normal { from, to, promotion: _ } =>
                 if let Some(ep_capture) = self.ep_capture(m) {
@@ -321,8 +321,7 @@ impl Board {
                     !(self.us() & pins.blockers).contains(from) ||
                     precomp.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
-            _ =>
-                false // TODO
+            _ => false
         }
     }
 
@@ -401,7 +400,7 @@ impl Board {
                                         self.our(Role::King).first().unwrap(),
                                         precomp);
 
-        moves.retain(|m| self.is_legal(m, &pins, precomp));
+        moves.retain(|m| self.is_safe(m, &pins, precomp));
     }
 
     fn ep_capture(&self, m: &Move) -> Option<Square> {
