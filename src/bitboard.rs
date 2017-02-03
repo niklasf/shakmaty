@@ -75,14 +75,6 @@ impl Bitboard {
         }
     }
 
-    pub fn last(self) -> Option<Square> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(Square(63 - self.0.leading_zeros() as i8))
-        }
-    }
-
     pub fn more_than_one(self) -> bool {
         self.0 & self.0.wrapping_sub(1) != 0
     }
@@ -178,6 +170,34 @@ impl Iterator for Bitboard {
         self.0 &= self.0.wrapping_sub(1);
         square
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, Some(64))
+    }
+
+    fn count(self) -> usize {
+        self.0.count_ones() as usize
+    }
+
+    fn last(self) -> Option<Square> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(Square(63 ^ self.0.leading_zeros() as i8))
+        }
+    }
+}
+
+impl DoubleEndedIterator for Bitboard {
+    fn next_back(&mut self) -> Option<Square> {
+        if self.is_empty() {
+            None
+        } else {
+            let sq = Square(63 ^ self.0.leading_zeros() as i8);
+            self.0 ^= 1 << sq.0;
+            Some(sq)
+        }
+    }
 }
 
 pub struct CarryRippler {
@@ -217,6 +237,13 @@ mod tests {
         assert_eq!(Bitboard::from_square(square::A1).first(), Some(square::A1));
         assert_eq!(Bitboard::from_square(square::D2).first(), Some(square::D2));
         assert_eq!(Bitboard(0).first(), None);
+    }
+
+    #[test]
+    fn test_last() {
+        assert_eq!(Bitboard::from_square(square::A1).last(), Some(square::A1));
+        assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(), Some(square::H1));
+        assert_eq!(Bitboard(0).last(), None);
     }
 
     #[test]

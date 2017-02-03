@@ -211,7 +211,11 @@ impl Board {
         let mut fen = String::with_capacity(4);
 
         for rook in (self.castling_rights & Bitboard::rank(0)).rev() {
-            println!("{}", rook);
+            fen.push((rook.file() as u8 + 'A' as u8) as char);
+        }
+
+        for rook in (self.castling_rights & Bitboard::rank(7)).rev() {
+            fen.push((rook.file() as u8 + 'a' as u8) as char);
         }
 
         if fen.is_empty() {
