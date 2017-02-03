@@ -404,11 +404,11 @@ impl Board {
 
     fn ep_capture(&self, m: &Move) -> Option<Square> {
         match m {
-            &Move::Normal { from, to, promotion: _ } =>
+            &Move::Normal { from, to, promotion: None } =>
                 if square::delta(from, to) & 1 != 0 &&
                         self.pawns.contains(from) &&
                         !self.occupied.contains(to) {
-                    self.ep_square.and_then(|sq| sq.offset(self.turn.fold(-8, 8)))
+                    to.offset(self.turn.fold(-8, 8))
                 } else {
                     None
                 },
@@ -416,20 +416,59 @@ impl Board {
         }
     }
 
+    fn castle(&self, m: &Move) -> Option<Square> {
+        match m {
+            &Move::Normal { from, to, promotion: None } => {
+                if self.our(Role::Rook).contains(to) {
+                    return Some(to);
+                }
+
+                if square::distance(from, to) > 1 && self.kings.contains(from) {
+                    let candidates = self.rooks & self.castling_rights &
+                                     Bitboard::relative_rank(self.turn, 0);
+
+                    if square::delta(from, to) > 0 {
+                        return candidates.first();
+                    } else {
+                        return candidates.last();
+                    }
+                }
+
+                None
+            },
+            _ => return None
+        }
+    }
+
     pub fn do_move(&mut self, m: &Move) {
         let color = self.turn;
+        self.ep_square.take();
 
         match m {
-            &Move::Normal { from, to, promotion } =>
-                if let Some(moved) = self.remove_piece_at(from) {
+            &Move::Normal { from, to, promotion } => {
+                if let Some(castle) = self.castle(m) {
+                    let rook_to = Square::new(
+                        if square::delta(castle, from) < 0 { 3 } else { 5 },
+                        self.turn.fold(0, 7));
+
+                    let king_to = Square::new(
+                        if square::delta(castle, from) < 0 { 2 } else { 6 },
+                        self.turn.fold(0, 7));
+
+                    self.remove_piece_at(from);
+                    self.remove_piece_at(castle);
+                    self.set_piece_at(rook_to, color.rook());
+                    self.set_piece_at(king_to, color.king());
+
+                    self.castling_rights = self.castling_rights &
+                                           Bitboard::relative_rank(self.turn, 7);
+                } else if let Some(moved) = self.remove_piece_at(from) {
                     // Execute en passant capture.
                     self.ep_capture(m).map(|sq| self.remove_piece_at(sq));
 
                     // Update en passant square.
                     if moved.role == Role::Pawn && square::distance(from, to) == 2 {
                         self.ep_square = from.offset(color.fold(8, -8))
-                    } else {
-                        self.ep_square = None;
                     }
 
                     // Move piece to new square.
@@ -444,14 +483,12 @@ impl Board {
                         self.castling_rights.remove(from);
                         self.castling_rights.remove(to);
                     }
-                },
+                }
+            },
             &Move::Put { to, role } => {
-                self.ep_square = None;
                 self.set_piece_at(to, Piece { color, role });
             },
-            &Move::Null => {
-                self.ep_square = None;
-            }
+            &Move::Null => ()
         }
 
         self.turn = !self.turn;
@@ -514,5 +551,9 @@ mod tests {
         let mut moves = Vec::new();
         board.castling_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));
+
+        board.do_move(&castle);
+        assert_eq!(board.piece_at(square::G1), Some(Color::White.king()));
+        assert_eq!(board.piece_at(square::F1), Some(Color::White.rook()));
     }
 }

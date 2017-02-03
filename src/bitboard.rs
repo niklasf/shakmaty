@@ -75,6 +75,14 @@ impl Bitboard {
         }
     }
 
+    pub fn last(self) -> Option<Square> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(Square(63 - self.0.leading_zeros() as i8))
+        }
+    }
+
     pub fn more_than_one(self) -> bool {
         self.0 & self.0.wrapping_sub(1) != 0
     }
