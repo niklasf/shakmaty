@@ -57,6 +57,10 @@ impl Board {
         }
     }
 
+    pub fn from_fen() -> Option<Board> {
+        None
+    }
+
     pub fn color_at(&self, sq: Square) -> Option<Color> {
         if self.white.contains(sq) {
             Some(Color::White)
@@ -198,6 +202,20 @@ impl Board {
                     fen.push('/')
                 }
             }
+        }
+
+        fen
+    }
+
+    pub fn castling_shredder_fen(&self) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for rook in (self.castling_rights & Bitboard::rank(0)).rev() {
+            println!("{}", rook);
+        }
+
+        if fen.is_empty() {
+            fen.push('-');
         }
 
         fen
@@ -556,5 +574,11 @@ mod tests {
         board.do_move(&castle);
         assert_eq!(board.piece_at(square::G1), Some(Color::White.king()));
         assert_eq!(board.piece_at(square::F1), Some(Color::White.rook()));
+    }
+
+    #[test]
+    fn test_castling_shredder_fen() {
+        let board = Board::new();
+        assert_eq!(board.castling_shredder_fen(), "HAha");
     }
 }
