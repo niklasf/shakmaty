@@ -61,6 +61,8 @@ fn main() {
     let precomp = attacks::Precomp::new();
     let board = Board::new();
 
+    println!("{}", board.fen());
+
     /* assert_eq!(perft(&board, 1, &precomp), 20);
     assert_eq!(perft(&board, 2, &precomp), 400);
     assert_eq!(perft(&board, 3, &precomp), 8902);
@@ -68,7 +70,7 @@ fn main() {
     assert_eq!(perft(&board, 5, &precomp), 4865609); */
     //assert_eq!(perft(&board, 6, &precomp), 119060324);
     //assert_eq!(perft(&board, 7, &precomp), 3195901860);
-    assert_eq!(perft(&board, 8, &precomp), 84998978956);
+    //assert_eq!(perft(&board, 8, &precomp), 84998978956);
 }
 
 #[cfg(test)]

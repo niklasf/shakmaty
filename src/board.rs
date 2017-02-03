@@ -178,6 +178,15 @@ impl Board {
             .unwrap_or(Bitboard(0))
     }
 
+    pub fn fen(&self) -> String {
+        format!("{} {} {} {} {} {}",
+                self.board_fen(),
+                self.turn.fold('w', 'b'),
+                self.castling_shredder_fen(),
+                self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                0, 1)
+    }
+
     pub fn board_fen(&self) -> String {
         let mut fen = String::with_capacity(15);
 
