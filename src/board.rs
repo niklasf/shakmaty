@@ -313,8 +313,9 @@ impl Board {
                         (precomp.rook_attacks(king, occupied) & self.them() & (self.queens | self.rooks)).is_empty() &&
                         (precomp.bishop_attacks(king, occupied) & self.them() & (self.queens | self.bishops)).is_empty()
                     }).unwrap_or(true)
+                } else if let Some(_) = self.castle(m) {
+                    true
                 } else if self.kings.contains(from) {
-                    // TODO: Castling
                     (self.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
                     !(self.us() & pins.blockers).contains(from) ||
@@ -345,7 +346,7 @@ impl Board {
         }
     }
 
-    pub fn castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         let backrank = Bitboard::relative_rank(self.turn, 0);
 
         for king in self.our(Role::King) & backrank {
@@ -391,6 +392,7 @@ impl Board {
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if self.checkers(precomp).is_empty() {
             self.pseudo_legal_moves(Bitboard::all(), moves, precomp);
+            self.castling_moves(moves, precomp);
         } else {
             self.evasions(moves, precomp);
         }
@@ -549,7 +551,7 @@ mod tests {
 
         let castle = Move::from_uci("e1g1").unwrap();
         let mut moves = Vec::new();
-        board.castling_moves(&mut moves, &precomp);
+        board.legal_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));
 
         board.do_move(&castle);
