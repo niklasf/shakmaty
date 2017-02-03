@@ -25,6 +25,7 @@ pub struct Board {
     promoted: Bitboard,
 
     turn: Color,
+    castling_rights: Bitboard,
     ep_square: Option<Square>,
 }
 
@@ -51,6 +52,7 @@ impl Board {
             promoted: Bitboard(0),
 
             turn: Color::White,
+            castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
         }
     }
@@ -343,6 +345,49 @@ impl Board {
         }
     }
 
+    pub fn castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+        let backrank = Bitboard::relative_rank(self.turn, 0);
+
+        for king in self.our(Role::King) & backrank {
+            for rook in self.castling_rights & backrank {
+                let (king_to, rook_to) = if king < rook {
+                    (self.turn.fold(square::G1, square::G8),
+                     self.turn.fold(square::H1, square::H8))
+                } else {
+                    (self.turn.fold(square::C1, square::C8),
+                     self.turn.fold(square::D1, square::D8))
+                };
+
+                let empty_for_king = precomp.between(king, king_to).with(king_to)
+                                            .without(rook).without(king);
+
+                let empty_for_rook = precomp.between(rook, rook_to).with(rook_to)
+                                            .without(rook).without(king);
+
+                if !(self.occupied & empty_for_king).is_empty() {
+                    continue;
+                }
+
+                if !(self.occupied & empty_for_rook).is_empty() {
+                    continue;
+                }
+
+                for sq in precomp.between(king, king_to).with(king).with(king_to) {
+                    if !(self.attacks_to(sq, precomp) & self.them()).is_empty() {
+                        continue;
+                    }
+                }
+
+                if !(precomp.rook_attacks(king_to, self.occupied.without(rook)) &
+                     self.them() & (self.rooks | self.queens)).is_empty() {
+                    continue;
+                }
+
+                moves.push(Move::Normal { from: king, to: king_to, promotion: None });
+            }
+        }
+    }
+
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if self.checkers(precomp).is_empty() {
             self.pseudo_legal_moves(Bitboard::all(), moves, precomp);
@@ -390,6 +435,15 @@ impl Board {
                     // Move piece to new square.
                     self.set_piece_at(to, promotion.map(|role| role.of(color))
                                                    .unwrap_or(moved));
+
+                    // Update castling rights.
+                    if self.kings.contains(from) {
+                        self.castling_rights = self.castling_rights &
+                                               Bitboard::relative_rank(self.turn, 7);
+                    } else {
+                        self.castling_rights.remove(from);
+                        self.castling_rights.remove(to);
+                    }
                 },
             &Move::Put { to, role } => {
                 self.ep_square = None;
@@ -442,5 +496,23 @@ mod tests {
         let mut board = Board::new();
         board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
         assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
+    }
+
+    #[test]
+    fn test_castling_moves() {
+        let precomp = Precomp::new();
+
+        let mut board = Board::new();
+        board.do_move(&Move::from_uci("g1f3").unwrap());
+        board.do_move(&Move::from_uci("0000").unwrap());
+        board.do_move(&Move::from_uci("g2g3").unwrap());
+        board.do_move(&Move::from_uci("0000").unwrap());
+        board.do_move(&Move::from_uci("f1g2").unwrap());
+        board.do_move(&Move::from_uci("0000").unwrap());
+
+        let castle = Move::from_uci("e1g1").unwrap();
+        let mut moves = Vec::new();
+        board.castling_moves(&mut moves, &precomp);
+        assert!(moves.contains(&castle));
     }
 }

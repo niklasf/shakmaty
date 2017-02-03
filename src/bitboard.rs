@@ -55,6 +55,10 @@ impl Bitboard {
         self.0 ^= 1 << sq;
     }
 
+    pub fn remove(&mut self, Square(sq): Square) {
+        self.0 &= !(1 << sq);
+    }
+
     pub fn with(self, sq: Square) -> Bitboard {
         self | Bitboard::from_square(sq)
     }
