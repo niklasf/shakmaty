@@ -2,6 +2,7 @@ use std::cmp::max;
 use std::char;
 use std::fmt;
 use std::fmt::Write;
+use std::ascii::AsciiExt;
 
 use square;
 use square::Square;
@@ -124,8 +125,22 @@ impl Board {
             None      => ()
         }
 
-        // TODO: Castling
-        parts.next();
+        if let Some(castling_part) = parts.next() {
+            for chr in castling_part.chars() {
+                let color = if chr.to_ascii_lowercase() == chr {
+                    Color::Black
+                } else {
+                    Color::White
+                };
+
+                let file = chr.to_ascii_lowercase() as i8 - 'a' as i8;
+
+                match Square::from_coords(file, color.fold(0, 7)) {
+                    Some(flag) => board.castling_rights.add(flag),
+                    None       => return None
+                }
+            }
+        }
 
         if let Some(ep_part) = parts.next() {
             if ep_part != "-" {
