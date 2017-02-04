@@ -345,7 +345,9 @@ impl Board {
         let mut fen = String::with_capacity(4);
 
         for color in &[Color::White, Color::Black] {
-            for rook in (self.castling_rights & Bitboard::relative_rank(*color, 0)).rev() {
+            let candidates = self.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & self.castling_rights).rev() {
                 fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
 
             }
@@ -759,5 +761,11 @@ mod tests {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         let board = Board::from_fen(fen).unwrap();
         assert_eq!(board.fen(), fen);
+    }
+
+    #[test]
+    fn test_shredder_fen() {
+        let board = Board::new();
+        assert_eq!(board.shredder_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 }
