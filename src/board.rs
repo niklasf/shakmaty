@@ -302,6 +302,16 @@ impl Board {
                 self.fullmoves)
     }
 
+    pub fn fen(&self) -> String {
+        format!("{} {} {} {} {} {}",
+                self.board_fen(),
+                self.turn.fold('w', 'b'),
+                self.castling_xfen(),
+                self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                self.halfmove_clock,
+                self.fullmoves)
+    }
+
     pub fn board_fen(&self) -> String {
         let mut fen = String::with_capacity(15);
 
@@ -334,12 +344,35 @@ impl Board {
     pub fn castling_shredder_fen(&self) -> String {
         let mut fen = String::with_capacity(4);
 
-        for rook in (self.castling_rights & Bitboard::rank(0)).rev() {
-            fen.push((rook.file() as u8 + 'A' as u8) as char);
+        for color in &[Color::White, Color::Black] {
+            for rook in (self.castling_rights & Bitboard::relative_rank(*color, 0)).rev() {
+                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+
+            }
         }
 
-        for rook in (self.castling_rights & Bitboard::rank(7)).rev() {
-            fen.push((rook.file() as u8 + 'a' as u8) as char);
+        if fen.is_empty() {
+            fen.push('-');
+        }
+
+        fen
+    }
+
+    pub fn castling_xfen(&self) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for color in &[Color::White, Color::Black] {
+            let candidates = self.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & self.castling_rights).rev() {
+                if Some(rook) == candidates.first() {
+                    fen.push(color.fold('Q', 'q'));
+                } else if Some(rook) == candidates.last() {
+                    fen.push(color.fold('K', 'k'));
+                } else {
+                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+                }
+            }
         }
 
         if fen.is_empty() {
@@ -722,9 +755,9 @@ mod tests {
     }
 
     #[test]
-    fn test_from_fen() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQha - 0 1";
+    fn test_fen() {
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         let board = Board::from_fen(fen).unwrap();
-        assert_eq!(board.shredder_fen(), fen);
+        assert_eq!(board.fen(), fen);
     }
 }
