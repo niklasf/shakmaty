@@ -133,11 +133,18 @@ impl Board {
                     Color::White
                 };
 
-                let file = chr.to_ascii_lowercase() as i8 - 'a' as i8;
+                let candidates = Bitboard::relative_rank(color, 0) &
+                                 board.rooks & board.by_color(color);
 
-                match Square::from_coords(file, color.fold(0, 7)) {
-                    Some(flag) => board.castling_rights.add(flag),
-                    None       => return None
+                let flag = match chr.to_ascii_lowercase() {
+                    'k'  => candidates.last(),
+                    'q'  => candidates.first(),
+                    file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
+                };
+
+                match flag {
+                    Some(cr) => board.castling_rights.add(cr),
+                    None     => return None
                 }
             }
         }
@@ -219,7 +226,7 @@ impl Board {
     }
 
     pub fn by_color(&self, color: Color) -> Bitboard {
-        color.fold(self.black, self.white)
+        color.fold(self.white, self.black)
     }
 
     fn mut_by_color(&mut self, color: Color) -> &mut Bitboard {
@@ -716,7 +723,7 @@ mod tests {
 
     #[test]
     fn test_from_fen() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1";
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQha - 0 1";
         let board = Board::from_fen(fen).unwrap();
         assert_eq!(board.shredder_fen(), fen);
     }
