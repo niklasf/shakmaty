@@ -405,7 +405,7 @@ impl Board {
         }
     }
 
-    fn pseudo_legal_moves(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn gen_pseudo_legal(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.our(Role::King) & selection {
             self.push_moves(moves, from,
                             precomp.king_attacks(from) & !self.us() & target);
@@ -450,12 +450,12 @@ impl Board {
                 self.push_pawn_moves(moves, from, to);
             }
         }
+    }
 
+    fn gen_en_passant(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if let Some(to) = self.ep_square {
-            if target.contains(to) {
-                for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) & selection {
-                    moves.push(Move::Normal { from, to, promotion: None });
-                }
+            for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
+                moves.push(Move::Normal { from, to, promotion: None });
             }
         }
     }
@@ -525,14 +525,13 @@ impl Board {
         }
 
         if let Some(checker) = checkers.single_square() {
-            let target = precomp.between(king, checker).with(checker) |
-                         Bitboard::from_all(self.ep_square);
-
-            self.pseudo_legal_moves(!self.kings, target, moves, precomp);
+            let target = precomp.between(king, checker).with(checker);
+            self.gen_pseudo_legal(!self.kings, target, moves, precomp);
+            self.gen_en_passant(moves, precomp);
         }
     }
 
-    fn castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn gen_castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         let backrank = Bitboard::relative_rank(self.turn, 0);
 
         for king in self.our(Role::King) & backrank {
@@ -577,8 +576,9 @@ impl Board {
 
     pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if self.checkers(precomp).is_empty() {
-            self.pseudo_legal_moves(Bitboard::all(), Bitboard::all(), moves, precomp);
-            self.castling_moves(moves, precomp);
+            self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
+            self.gen_en_passant(moves, precomp);
+            self.gen_castling_moves(moves, precomp);
         } else {
             self.evasions(moves, precomp);
         }

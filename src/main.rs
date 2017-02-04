@@ -177,12 +177,15 @@ mod tests {
     #[test]
     fn test_en_passant_evasion() {
         let precomp = attacks::Precomp::new();
-        let mut board = Board::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
+        let mut board_a = Board::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
-        assert_eq!(perft_inner(&board, 2, &precomp), 601);
+        assert_eq!(perft_inner(&board_a, 2, &precomp), 601);
 
-        board.do_move(&Move::from_uci("d2d4").unwrap());
-        assert_eq!(perft_inner(&board, 1, &precomp), 3);
+        board_a.do_move(&Move::from_uci("d2d4").unwrap());
+        assert_eq!(perft_inner(&board_a, 1, &precomp), 3);
+
+        let board_b = Board::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
+        assert_eq!(perft_inner(&board_b, 2, &precomp), 762);
     }
 
     #[bench]
