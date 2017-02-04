@@ -174,6 +174,17 @@ mod tests {
         assert_eq!(perft_inner(&board, 1, &precomp), 27);
     }
 
+    #[test]
+    fn test_en_passant_evasion() {
+        let precomp = attacks::Precomp::new();
+        let mut board = Board::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
+
+        assert_eq!(perft_inner(&board, 2, &precomp), 601);
+
+        board.do_move(&Move::from_uci("d2d4").unwrap());
+        assert_eq!(perft_inner(&board, 1, &precomp), 3);
+    }
+
     #[bench]
     fn bench_perft(b: &mut Bencher) {
         let precomp = attacks::Precomp::new();

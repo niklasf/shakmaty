@@ -525,7 +525,9 @@ impl Board {
         }
 
         if let Some(checker) = checkers.single_square() {
-            let target = precomp.between(king, checker).with(checker);
+            let target = precomp.between(king, checker).with(checker) |
+                         Bitboard::from_all(self.ep_square);
+
             self.pseudo_legal_moves(!self.kings, target, moves, precomp);
         }
     }

@@ -13,6 +13,14 @@ impl Bitboard {
         Bitboard(1 << sq)
     }
 
+    pub fn from_all<I>(squares: I) -> Bitboard where I: IntoIterator<Item=Square> {
+        let mut result = Bitboard(0);
+        for square in squares {
+            result.add(square);
+        }
+        result
+    }
+
     pub fn all() -> Bitboard {
         Bitboard(!0u64)
     }
