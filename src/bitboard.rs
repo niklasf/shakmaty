@@ -18,11 +18,19 @@ impl Bitboard {
     }
 
     pub fn rank(rank: i8) -> Bitboard {
-        Bitboard(0xff << (8 * rank))
+        if 0 <= rank && rank < 8 {
+            Bitboard(0xff << (8 * rank))
+        } else {
+            Bitboard(0)
+        }
     }
 
     pub fn file(file: i8) -> Bitboard {
-        Bitboard(0x101010101010101 << file)
+        if 0 <= file && file < 8 {
+            Bitboard(0x101010101010101 << file)
+        } else {
+            Bitboard(0)
+        }
     }
 
     pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
