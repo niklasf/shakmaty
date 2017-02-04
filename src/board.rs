@@ -127,6 +127,10 @@ impl Board {
 
         if let Some(castling_part) = parts.next() {
             for chr in castling_part.chars() {
+                if chr == '-' {
+                    continue;
+                }
+
                 let color = if chr.to_ascii_lowercase() == chr {
                     Color::Black
                 } else {
