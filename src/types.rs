@@ -74,7 +74,7 @@ impl Role {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
