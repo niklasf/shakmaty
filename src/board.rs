@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::char;
 use std::fmt;
 use std::fmt::Write;
@@ -63,8 +64,93 @@ impl Board {
         }
     }
 
-    pub fn from_fen() -> Option<Board> {
-        None
+    pub fn empty() -> Board {
+        Board {
+            occupied: Bitboard(0),
+
+            black: Bitboard(0),
+            white: Bitboard(0),
+
+            pawns: Bitboard(0),
+            knights: Bitboard(0),
+            bishops: Bitboard(0),
+            rooks: Bitboard(0),
+            queens: Bitboard(0),
+            kings: Bitboard(0),
+
+            promoted: Bitboard(0),
+
+            turn: Color::White,
+            castling_rights: Bitboard(0),
+            ep_square: None,
+
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+
+    pub fn from_fen(fen: &str) -> Option<Board> {
+        let mut board = Board::empty();
+        let mut parts = fen.split(' ');
+
+        if let Some(board_fen) = parts.next() {
+            let mut rank = 7;
+            let mut file = 0;
+
+            for chr in board_fen.chars() {
+                if chr == '/' {
+                    file = 0;
+                    rank -= 1;
+                } else if let Some(empty) = chr.to_digit(10) {
+                    file += empty;
+                } else if let Some(piece) = Piece::from_chr(chr) {
+                    match Square::from_coords(file as i8, rank as i8) {
+                        Some(sq) => board.set_piece_at(sq, piece),
+                        None     => return None
+                    }
+                    file += 1;
+                } else {
+                    return None
+                }
+            }
+        } else {
+            return None
+        }
+
+        match parts.next() {
+            Some("w") => board.turn = Color::White,
+            Some("b") => board.turn = Color::Black,
+            Some(_)   => return None,
+            None      => ()
+        }
+
+        // TODO: Castling
+        parts.next();
+
+        if let Some(ep_part) = parts.next() {
+            if ep_part != "-" {
+                match Square::from_str(ep_part) {
+                    Some(sq) => board.ep_square = Some(sq),
+                    None     => return None
+                }
+            }
+        }
+
+        if let Some(halfmoves_part) = parts.next() {
+            match halfmoves_part.parse::<u32>() {
+                Ok(halfmoves) => board.halfmove_clock = halfmoves,
+                _             => return None
+            }
+        }
+
+        if let Some(fullmoves_part) = parts.next() {
+            match fullmoves_part.parse::<u32>() {
+                Ok(fullmoves) => board.fullmoves = max(1, fullmoves),
+                _             => return None
+            }
+        }
+
+        Some(board)
     }
 
     pub fn color_at(&self, sq: Square) -> Option<Color> {
@@ -184,7 +270,7 @@ impl Board {
             .unwrap_or(Bitboard(0))
     }
 
-    pub fn fen(&self) -> String {
+    pub fn shredder_fen(&self) -> String {
         format!("{} {} {} {} {} {}",
                 self.board_fen(),
                 self.turn.fold('w', 'b'),
@@ -611,5 +697,12 @@ mod tests {
     fn test_castling_shredder_fen() {
         let board = Board::new();
         assert_eq!(board.castling_shredder_fen(), "HAha");
+    }
+
+    #[test]
+    fn test_from_fen() {
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1";
+        let board = Board::from_fen(fen).unwrap();
+        assert_eq!(board.shredder_fen(), fen);
     }
 }

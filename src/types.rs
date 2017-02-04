@@ -84,6 +84,14 @@ impl Piece {
     pub fn chr(self) -> char {
         self.color.fold(self.role.chr().to_ascii_uppercase(), self.role.chr())
     }
+
+    pub fn from_chr(chr: char) -> Option<Piece> {
+        if chr == chr.to_ascii_lowercase() {
+            Role::from_chr(chr).map(|role| role.of(Color::Black))
+        } else {
+            Role::from_chr(chr.to_ascii_lowercase()).map(|role| role.of(Color::White))
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
