@@ -98,13 +98,13 @@ impl Board {
             let mut rank = 7;
             let mut file = 0;
 
-            for chr in board_fen.chars() {
-                if chr == '/' {
+            for ch in board_fen.chars() {
+                if ch == '/' {
                     file = 0;
                     rank -= 1;
-                } else if let Some(empty) = chr.to_digit(10) {
+                } else if let Some(empty) = ch.to_digit(10) {
                     file += empty;
-                } else if let Some(piece) = Piece::from_chr(chr) {
+                } else if let Some(piece) = Piece::from_char(ch) {
                     match Square::from_coords(file as i8, rank as i8) {
                         Some(sq) => board.set_piece_at(sq, piece),
                         None     => return None
@@ -126,12 +126,12 @@ impl Board {
         }
 
         if let Some(castling_part) = parts.next() {
-            for chr in castling_part.chars() {
-                if chr == '-' {
+            for ch in castling_part.chars() {
+                if ch == '-' {
                     continue;
                 }
 
-                let color = if chr.to_ascii_lowercase() == chr {
+                let color = if ch.to_ascii_lowercase() == ch {
                     Color::Black
                 } else {
                     Color::White
@@ -140,7 +140,7 @@ impl Board {
                 let candidates = Bitboard::relative_rank(color, 0) &
                                  board.rooks & board.by_color(color);
 
-                let flag = match chr.to_ascii_lowercase() {
+                let flag = match ch.to_ascii_lowercase() {
                     'k'  => candidates.last(),
                     'q'  => candidates.first(),
                     file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
@@ -328,7 +328,7 @@ impl Board {
                         if empty > 0 {
                             fen.push(char::from_digit(empty, 10).unwrap());
                         }
-                        fen.push(piece.chr());
+                        fen.push(piece.char());
                         0
                     });
 
@@ -699,7 +699,7 @@ impl fmt::Debug for Board {
         for rank in (0..8).rev() {
             for file in 0..8 {
                 try!(f.write_char(self.piece_at(Square::new(file, rank))
-                                      .map(|piece| piece.chr())
+                                      .map(|piece| piece.char())
                                       .unwrap_or('.')));
 
                 if file < 7 {

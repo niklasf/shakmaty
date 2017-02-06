@@ -46,8 +46,8 @@ pub enum Role {
 }
 
 impl Role {
-    pub fn from_chr(chr: char) -> Option<Role> {
-        match chr {
+    pub fn from_char(ch: char) -> Option<Role> {
+        match ch {
             'p' => Some(Role::Pawn),
             'n' => Some(Role::Knight),
             'b' => Some(Role::Bishop),
@@ -62,7 +62,7 @@ impl Role {
         Piece { color, role: self }
     }
 
-    pub fn chr(self) -> char {
+    pub fn char(self) -> char {
         match self {
             Role::Pawn =>   'p',
             Role::Knight => 'n',
@@ -81,15 +81,15 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn chr(self) -> char {
-        self.color.fold(self.role.chr().to_ascii_uppercase(), self.role.chr())
+    pub fn char(self) -> char {
+        self.color.fold(self.role.char().to_ascii_uppercase(), self.role.char())
     }
 
-    pub fn from_chr(chr: char) -> Option<Piece> {
-        if chr == chr.to_ascii_lowercase() {
-            Role::from_chr(chr).map(|role| role.of(Color::Black))
+    pub fn from_char(ch: char) -> Option<Piece> {
+        if ch == ch.to_ascii_lowercase() {
+            Role::from_char(ch).map(|role| role.of(Color::Black))
         } else {
-            Role::from_chr(chr.to_ascii_lowercase()).map(|role| role.of(Color::White))
+            Role::from_char(ch.to_ascii_lowercase()).map(|role| role.of(Color::White))
         }
     }
 }
@@ -109,7 +109,7 @@ impl Move {
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
             (Some(from), Some(to), Some(promotion)) =>
-                return Role::from_chr(promotion).map(|role| {
+                return Role::from_char(promotion).map(|role| {
                     Move::Normal { from, to, promotion: Some(role) }
                 }),
             (Some(from), Some(to), None) =>
@@ -119,7 +119,7 @@ impl Move {
 
         match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
             (Some(piece), Some('@'), Some(to)) =>
-                return Role::from_chr(piece.to_ascii_lowercase()).map(|role| {
+                return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
                     Move::Put { role, to }
                 }),
             _ => ()
@@ -139,9 +139,9 @@ impl fmt::Display for Move {
             Move::Normal { from, to, promotion: None } =>
                 write!(f, "{}{}", from, to),
             Move::Normal { from, to, promotion: Some(promotion) } =>
-                write!(f, "{}{}{}", from, to, promotion.chr()),
+                write!(f, "{}{}{}", from, to, promotion.char()),
             Move::Put { to, role } =>
-                write!(f, "{}@{}", role.chr().to_ascii_uppercase(), to),
+                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
             Move::Null =>
                 write!(f, "0000")
         }
