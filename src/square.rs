@@ -1,5 +1,6 @@
 use std::cmp::max;
 use std::fmt;
+use std::str;
 
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Square(pub i8);
@@ -19,19 +20,6 @@ impl Square {
         }
     }
 
-    pub fn from_str(s: &str) -> Option<Square> {
-        if s.len() != 2 {
-            return None
-        }
-
-        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
-        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
-        match (file, rank) {
-            (Some(file), Some(rank)) => Square::from_coords(file, rank),
-            _ => None
-        }
-    }
-
     pub fn file(self) -> i8 {
         let Square(sq) = self;
         sq & 7
@@ -48,6 +36,23 @@ impl Square {
             Some(Square(sq + delta))
         } else {
             None
+        }
+    }
+}
+
+impl str::FromStr for Square {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Square, ()> {
+        if s.len() != 2 {
+            return Err(())
+        }
+
+        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
+        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
+        match (file, rank) {
+            (Some(file), Some(rank)) => Square::from_coords(file, rank).ok_or(()),
+            _ => Err(())
         }
     }
 }

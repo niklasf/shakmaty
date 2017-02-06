@@ -2,6 +2,7 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use std::char;
 use std::ops;
+use std::str::FromStr;
 
 use square::Square;
 
@@ -108,17 +109,17 @@ impl Move {
         }
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
-            (Some(from), Some(to), Some(promotion)) =>
+            (Ok(from), Ok(to), Some(promotion)) =>
                 return Role::from_char(promotion).map(|role| {
                     Move::Normal { from, to, promotion: Some(role) }
                 }),
-            (Some(from), Some(to), None) =>
+            (Ok(from), Ok(to), None) =>
                 return Some(Move::Normal { from, to, promotion: None }),
             _ => ()
         }
 
         match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
-            (Some(piece), Some('@'), Some(to)) =>
+            (Some(piece), Some('@'), Ok(to)) =>
                 return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
                     Move::Put { role, to }
                 }),

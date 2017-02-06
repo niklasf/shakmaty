@@ -3,6 +3,7 @@ use std::char;
 use std::fmt;
 use std::fmt::Write;
 use std::ascii::AsciiExt;
+use std::str::FromStr;
 
 use square;
 use square::Square;
@@ -156,8 +157,8 @@ impl Board {
         if let Some(ep_part) = parts.next() {
             if ep_part != "-" {
                 match Square::from_str(ep_part) {
-                    Some(sq) => board.ep_square = Some(sq),
-                    None     => return None
+                    Ok(sq) => board.ep_square = Some(sq),
+                    _      => return None
                 }
             }
         }
