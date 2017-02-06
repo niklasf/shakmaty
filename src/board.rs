@@ -329,7 +329,7 @@ impl Board {
                             fen.push(char::from_digit(empty, 10).unwrap());
                         }
                         fen.push(piece.chr());
-                        return 0
+                        0
                     });
 
                 if file == 7 && empty > 0 {
@@ -486,8 +486,8 @@ impl Board {
     }
 
     fn is_safe(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
-        match m {
-            &Move::Normal { from, to, promotion: _ } =>
+        match *m {
+            Move::Normal { from, to, .. } =>
                 if let Some(ep_capture) = self.ep_capture(m) {
                     let mut occupied = self.occupied;
                     occupied.flip(from);
@@ -498,7 +498,7 @@ impl Board {
                         (precomp.rook_attacks(king, occupied) & self.them() & (self.queens | self.rooks)).is_empty() &&
                         (precomp.bishop_attacks(king, occupied) & self.them() & (self.queens | self.bishops)).is_empty()
                     }).unwrap_or(true)
-                } else if let Some(_) = self.castle(m) {
+                } else if self.castle(m).is_some() {
                     true
                 } else if self.kings.contains(from) {
                     (self.attacks_to(to, precomp) & self.them()).is_empty()
@@ -591,8 +591,8 @@ impl Board {
     }
 
     fn ep_capture(&self, m: &Move) -> Option<Square> {
-        match m {
-            &Move::Normal { from, to, promotion: None } =>
+        match *m {
+            Move::Normal { from, to, promotion: None } =>
                 if square::delta(from, to) & 1 != 0 &&
                         self.pawns.contains(from) &&
                         !self.occupied.contains(to) {
@@ -600,13 +600,13 @@ impl Board {
                 } else {
                     None
                 },
-            _ => return None
+            _ => None
         }
     }
 
     fn castle(&self, m: &Move) -> Option<Square> {
-        match m {
-            &Move::Normal { from, to, promotion: None } => {
+        match *m {
+            Move::Normal { from, to, promotion: None } => {
                 if self.our(Role::Rook).contains(to) {
                     return Some(to);
                 }
@@ -624,7 +624,7 @@ impl Board {
 
                 None
             },
-            _ => return None
+            _ => None
         }
     }
 
@@ -633,8 +633,8 @@ impl Board {
         self.ep_square.take();
         self.halfmove_clock += 1;
 
-        match m {
-            &Move::Normal { from, to, promotion } => {
+        match *m {
+            Move::Normal { from, to, promotion } => {
                 if let Some(castle) = self.castle(m) {
                     let rook_to = Square::new(
                         if square::delta(castle, from) < 0 { 3 } else { 5 },
@@ -680,10 +680,10 @@ impl Board {
                                                    .unwrap_or(moved));
                 }
             },
-            &Move::Put { to, role } => {
+            Move::Put { to, role } => {
                 self.set_piece_at(to, Piece { color, role });
             },
-            &Move::Null => ()
+            Move::Null => ()
         }
 
         self.turn = !self.turn;
