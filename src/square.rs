@@ -6,15 +6,9 @@ use std::str;
 pub struct Square(pub i8);
 
 impl Square {
-    pub fn new(file: i8, rank: i8) -> Square {
-        debug_assert!(0 <= file && file < 8);
-        debug_assert!(0 <= rank && rank < 8);
-        Square(file | (rank << 3))
-    }
-
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
-            Some(Square::new(file, rank))
+            Some(Square(file | (rank << 3)))
         } else {
             None
         }
@@ -152,7 +146,7 @@ mod tests {
     fn test_square() {
         for file in 0..8 {
             for rank in 0..8 {
-                let square = Square::new(file, rank);
+                let square = Square::from_coords(file, rank).unwrap();
                 assert_eq!(square.file(), file);
                 assert_eq!(square.rank(), rank);
             }

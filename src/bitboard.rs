@@ -142,7 +142,7 @@ impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                let sq = Square::new(file, rank);
+                let sq = Square::from_coords(file, rank).unwrap();
                 try!(f.write_char(if self.contains(sq) { '1' } else { '.' }));
                 try!(f.write_char(if file < 7 { ' ' } else { '\n' }));
             }

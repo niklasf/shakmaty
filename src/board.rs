@@ -324,7 +324,7 @@ impl Board {
             let mut empty = 0;
 
             for file in 0..8 {
-                empty = self.piece_at(Square::new(file, rank))
+                empty = self.piece_at(Square::from_coords(file, rank).unwrap())
                     .map_or_else(|| empty + 1, |piece| {
                         if empty > 0 {
                             fen.push(char::from_digit(empty, 10).unwrap());
@@ -637,13 +637,13 @@ impl Board {
         match *m {
             Move::Normal { from, to, promotion } => {
                 if let Some(castle) = self.castle(m) {
-                    let rook_to = Square::new(
+                    let rook_to = Square::from_coords(
                         if square::delta(castle, from) < 0 { 3 } else { 5 },
-                        self.turn.fold(0, 7));
+                        self.turn.fold(0, 7)).unwrap();
 
-                    let king_to = Square::new(
+                    let king_to = Square::from_coords(
                         if square::delta(castle, from) < 0 { 2 } else { 6 },
-                        self.turn.fold(0, 7));
+                        self.turn.fold(0, 7)).unwrap();
 
                     self.remove_piece_at(from);
                     self.remove_piece_at(castle);
@@ -699,7 +699,7 @@ impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                try!(f.write_char(self.piece_at(Square::new(file, rank))
+                try!(f.write_char(self.piece_at(Square::from_coords(file, rank).unwrap())
                                       .map(|piece| piece.char())
                                       .unwrap_or('.')));
 
