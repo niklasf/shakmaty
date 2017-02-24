@@ -5,6 +5,11 @@ use std::fmt::Write;
 use square::Square;
 use types::Color;
 
+extern "platform-intrinsic" {
+    #[cfg(target_feature="bmi2")]
+    fn x86_bmi2_pext_64(src: u64, mask: u64) -> u64;
+}
+
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bitboard(pub u64);
 
@@ -106,13 +111,10 @@ impl Bitboard {
     #[cfg(target_feature="bmi2")]
     pub fn pext(self, Bitboard(mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
-        let result: u64;
-        unsafe {
-            asm!("pextq $2, $0, $0"
-                 : "=r"(result)
-                 : "0"(src), "r"(mask));
-        }
-        result
+
+        // This is safe because we specifically checked for the bmi2 target
+        // feature.
+        unsafe { x86_bmi2_pext_64(src, mask) }
     }
 
     #[cfg(not(target_feature="bmi2"))]

@@ -1,8 +1,8 @@
+#![feature(test)]
 #![feature(associated_consts)]
 #![feature(cfg_target_feature)]
-#![feature(asm)]
-#![feature(test)]
 #![feature(field_init_shorthand)]
+#![feature(platform_intrinsics)]
 
 #![allow(dead_code)]  // TODO: Remove
 
