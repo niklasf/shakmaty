@@ -3,14 +3,14 @@ use square::Square;
 use bitboard::Bitboard;
 use types::{ Color, Role, Piece };
 
-pub const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
-pub const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
-pub const KING_DELTAS: [i8; 8] = [9, 8, 7, 1, -9, -8, -7, -1];
-pub const KNIGHT_DELTAS: [i8; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
-pub const WHITE_PAWN_DELTAS: [i8; 2] = [7, 9];
-pub const BLACK_PAWN_DELTAS: [i8; 2] = [-7, -9];
+const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
+const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
+const KING_DELTAS: [i8; 8] = [9, 8, 7, 1, -9, -8, -7, -1];
+const KNIGHT_DELTAS: [i8; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
+const WHITE_PAWN_DELTAS: [i8; 2] = [7, 9];
+const BLACK_PAWN_DELTAS: [i8; 2] = [-7, -9];
 
-pub fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
+fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     let mut attack = Bitboard(0);
 
     for delta in deltas {
@@ -33,7 +33,7 @@ pub fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboar
     attack
 }
 
-pub fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
+fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
     sliding_attacks(sq, Bitboard::all(), deltas)
 }
 
