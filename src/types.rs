@@ -35,6 +35,9 @@ impl Color {
         }
     }
 
+    pub fn is_white(self) -> bool { self == Color::White }
+    pub fn is_black(self) -> bool { self == Color::Black }
+
     pub fn char(self) -> char { self.fold('w', 'b') }
 
     pub fn pawn(self)   -> Piece { Pawn.of(self) }
