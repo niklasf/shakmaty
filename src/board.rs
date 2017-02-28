@@ -9,19 +9,19 @@ use attacks::Precomp;
 
 #[derive(Clone)]
 pub struct Board {
-    pub occupied: Bitboard,
+    occupied: Bitboard,
 
-    pub white: Bitboard,
-    pub black: Bitboard,
+    white: Bitboard,
+    black: Bitboard,
 
-    pub pawns: Bitboard,
-    pub knights: Bitboard,
-    pub bishops: Bitboard,
-    pub rooks: Bitboard,
-    pub queens: Bitboard,
-    pub kings: Bitboard,
+    pawns: Bitboard,
+    knights: Bitboard,
+    bishops: Bitboard,
+    rooks: Bitboard,
+    queens: Bitboard,
+    kings: Bitboard,
 
-    pub promoted: Bitboard,
+    promoted: Bitboard,
 }
 
 impl Board {
@@ -115,6 +115,24 @@ impl Board {
 
         fen
     }
+
+    pub fn occupied(&self) -> Bitboard { self.occupied }
+
+    pub fn pawns(&self)   -> Bitboard { self.pawns }
+    pub fn knights(&self) -> Bitboard { self.knights }
+    pub fn bishops(&self) -> Bitboard { self.bishops }
+    pub fn rooks(&self)   -> Bitboard { self.rooks }
+    pub fn queens(&self)  -> Bitboard { self.queens }
+    pub fn kings(&self)   -> Bitboard { self.kings }
+
+    pub fn white(&self) -> Bitboard { self.white }
+    pub fn black(&self) -> Bitboard { self.black }
+
+    pub fn promoted(&self) -> Bitboard { self.promoted }
+
+    pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }
+    pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
+    pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
 
     pub fn color_at(&self, sq: Square) -> Option<Color> {
         if self.white.contains(sq) {

@@ -236,12 +236,12 @@ impl Position {
 
         for from in (self.our(Role::Rook) | self.our(Role::Queen)) & selection {
             self.push_moves(moves, from,
-                            precomp.rook_attacks(from, self.board.occupied) & !self.us() & target);
+                            precomp.rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in (self.our(Role::Bishop) | self.our(Role::Queen)) & selection {
             self.push_moves(moves, from,
-                            precomp.bishop_attacks(from, self.board.occupied) & !self.us() & target);
+                            precomp.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Pawn) {
@@ -251,11 +251,11 @@ impl Position {
         }
 
         let single_moves = (self.our(Role::Pawn) & selection).relative_shift(self.turn, 8) &
-                           !self.board.occupied;
+                           !self.board.occupied();
 
         let double_moves = single_moves.relative_shift(self.turn, 8) &
                            Bitboard::relative_rank(self.turn, 3) &
-                           !self.board.occupied;
+                           !self.board.occupied();
 
         for to in single_moves & target {
             if let Some(from) = to.offset(self.turn.fold(-8, 8)) {
@@ -279,13 +279,13 @@ impl Position {
     }
 
     fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Pins {
-        let snipers = (precomp.rook_attacks(sq, Bitboard(0)) & (self.board.queens | self.board.rooks)) |
-                      (precomp.bishop_attacks(sq, Bitboard(0)) & (self.board.queens | self.board.bishops));
+        let snipers = (precomp.rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
+                      (precomp.bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
 
         let mut result = Pins { pinners: Bitboard(0), blockers: Bitboard(0) };
 
         for sniper in snipers & sliders {
-            let b = precomp.between(sq, sniper) & self.board.occupied;
+            let b = precomp.between(sq, sniper) & self.board.occupied();
 
             if !b.more_than_one() {
                 result.blockers = result.blockers | b;
@@ -307,18 +307,18 @@ impl Position {
         match *m {
             Move::Normal { from, to, .. } =>
                 if let Some(ep_capture) = self.ep_capture(m) {
-                    let mut occupied = self.board.occupied;
+                    let mut occupied = self.board.occupied();
                     occupied.flip(from);
                     occupied.flip(ep_capture);
                     occupied.add(to);
 
                     self.our(Role::King).first().map(|king| {
-                        (precomp.rook_attacks(king, occupied) & self.them() & (self.board.queens | self.board.rooks)).is_empty() &&
-                        (precomp.bishop_attacks(king, occupied) & self.them() & (self.board.queens | self.board.bishops)).is_empty()
+                        (precomp.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
+                        (precomp.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
                     }).unwrap_or(true)
                 } else if self.castle(m).is_some() {
                     true
-                } else if self.board.kings.contains(from) {
+                } else if self.board.kings().contains(from) {
                     (self.board.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
                     !(self.us() & pins.blockers).contains(from) ||
@@ -331,7 +331,7 @@ impl Position {
     fn evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         let checkers = self.checkers(precomp);
         let king = self.our(Role::King).first().unwrap();
-        let sliders = checkers & (self.board.rooks | self.board.bishops | self.board.queens);
+        let sliders = checkers & self.board.sliders();
 
         let mut attacked = Bitboard(0);
         for checker in sliders {
@@ -344,7 +344,7 @@ impl Position {
 
         if let Some(checker) = checkers.single_square() {
             let target = precomp.between(king, checker).with(checker);
-            self.gen_pseudo_legal(!self.board.kings, target, moves, precomp);
+            self.gen_pseudo_legal(!self.board.kings(), target, moves, precomp);
             self.gen_en_passant(moves, precomp);
         }
     }
@@ -368,11 +368,11 @@ impl Position {
                 let empty_for_rook = precomp.between(rook, rook_to).with(rook_to)
                                             .without(rook).without(king);
 
-                if !(self.board.occupied & empty_for_king).is_empty() {
+                if !(self.board.occupied() & empty_for_king).is_empty() {
                     continue;
                 }
 
-                if !(self.board.occupied & empty_for_rook).is_empty() {
+                if !(self.board.occupied() & empty_for_rook).is_empty() {
                     continue;
                 }
 
@@ -382,8 +382,8 @@ impl Position {
                     }
                 }
 
-                if !(precomp.rook_attacks(king_to, self.board.occupied.without(rook)) &
-                     self.them() & (self.board.rooks | self.board.queens)).is_empty() {
+                if !(precomp.rook_attacks(king_to, self.board.occupied().without(rook)) &
+                     self.them() & self.board.rooks_and_queens()).is_empty() {
                     continue;
                 }
 
@@ -412,8 +412,8 @@ impl Position {
         match *m {
             Move::Normal { from, to, promotion: None } =>
                 if square::delta(from, to) & 1 != 0 &&
-                        self.board.pawns.contains(from) &&
-                        !self.board.occupied.contains(to) {
+                        self.board.pawns().contains(from) &&
+                        !self.board.occupied().contains(to) {
                     to.offset(self.turn.fold(-8, 8))
                 } else {
                     None
@@ -429,8 +429,8 @@ impl Position {
                     return Some(to);
                 }
 
-                if square::distance(from, to) > 1 && self.board.kings.contains(from) {
-                    let candidates = self.board.rooks & self.castling_rights &
+                if square::distance(from, to) > 1 && self.board.kings().contains(from) {
+                    let candidates = self.board.rooks() & self.castling_rights &
                                      Bitboard::relative_rank(self.turn, 0);
 
                     if square::delta(from, to) > 0 {
@@ -475,7 +475,7 @@ impl Position {
                     self.halfmove_clock = 0;
                 } else if let Some(moved) = self.board.remove_piece_at(from) {
                     // Reset the halfmove clock.
-                    if moved.role == Role::Pawn || self.board.occupied.contains(to) {
+                    if moved.role == Role::Pawn || self.board.occupied().contains(to) {
                         self.halfmove_clock = 0;
                     }
 
