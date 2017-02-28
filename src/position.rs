@@ -77,11 +77,7 @@ impl Position {
                     continue;
                 }
 
-                let color = if ch.to_ascii_lowercase() == ch {
-                    Black
-                } else {
-                    White
-                };
+                let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
 
                 let candidates = Bitboard::relative_rank(color, 0) &
                                  pos.board.by_piece(Role::Rook.of(color));

@@ -23,6 +23,10 @@ impl Color {
         }
     }
 
+    pub fn from_bool(white: bool) -> Color {
+        if white { Color::White } else { Color::Black }
+    }
+
     pub fn fold<T>(self, white: T, black: T) -> T {
         match self {
             Color::White => white,
