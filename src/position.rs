@@ -442,7 +442,7 @@ impl Position {
         }
     }
 
-    pub fn do_move(&mut self, m: &Move) {
+    pub fn do_move(mut self, m: &Move) -> Position {
         let color = self.turn;
         self.ep_square.take();
         self.halfmove_clock += 1;
@@ -505,6 +505,8 @@ impl Position {
         if self.turn == White {
             self.fullmoves += 1;
         }
+
+        self
     }
 
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
@@ -521,20 +523,20 @@ mod tests {
     fn test_castling_moves() {
         let precomp = Precomp::new();
 
-        let mut pos = Position::new();
-        pos.do_move(&Move::from_uci("g1f3").unwrap());
-        pos.do_move(&Move::from_uci("0000").unwrap());
-        pos.do_move(&Move::from_uci("g2g3").unwrap());
-        pos.do_move(&Move::from_uci("0000").unwrap());
-        pos.do_move(&Move::from_uci("f1g2").unwrap());
-        pos.do_move(&Move::from_uci("0000").unwrap());
+        let pos = Position::new()
+            .do_move(&Move::from_uci("g1f3").unwrap())
+            .do_move(&Move::from_uci("0000").unwrap())
+            .do_move(&Move::from_uci("g2g3").unwrap())
+            .do_move(&Move::from_uci("0000").unwrap())
+            .do_move(&Move::from_uci("f1g2").unwrap())
+            .do_move(&Move::from_uci("0000").unwrap());
 
         let castle = Move::from_uci("e1g1").unwrap();
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));
 
-        pos.do_move(&castle);
+        let pos = pos.do_move(&castle);
         assert_eq!(pos.piece_at(square::G1), Some(White.king()));
         assert_eq!(pos.piece_at(square::F1), Some(White.rook()));
     }
