@@ -3,7 +3,7 @@ use std::fmt::Write;
 use std::char;
 
 use square::Square;
-use types::{Color, Role, Piece};
+use types::{ Color, White, Role, Piece };
 use bitboard::Bitboard;
 use attacks::Precomp;
 
@@ -263,14 +263,14 @@ mod tests {
     #[test]
     fn test_piece_at() {
         let board = Board::new();
-        assert_eq!(board.piece_at(square::A2), Some(Role::Pawn.of(Color::White)));
-        assert_eq!(board.piece_at(square::B1), Some(Role::Knight.of(Color::White)));
+        assert_eq!(board.piece_at(square::A2), Some(White.pawn()));
+        assert_eq!(board.piece_at(square::B1), Some(White.knight()));
     }
 
     #[test]
     fn test_set_piece_at() {
         let mut board = Board::new();
-        board.set_piece_at(square::A3, Role::Pawn.of(Color::White));
-        assert_eq!(board.piece_at(square::A3), Some(Role::Pawn.of(Color::White)));
+        board.set_piece_at(square::A3, White.pawn());
+        assert_eq!(board.piece_at(square::A3), Some(White.pawn()));
     }
 }

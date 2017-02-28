@@ -12,6 +12,8 @@ pub enum Color {
     White,
 }
 
+pub use self::Color::{Black, White};
+
 impl Color {
     pub fn from_char(ch: char) -> Option<Color> {
         match ch {

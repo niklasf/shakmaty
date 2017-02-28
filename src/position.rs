@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use square;
 use square::Square;
-use types::{ Color, Role, Piece, Move };
+use types::{ Color, White, Black, Role, Piece, Move };
 use bitboard::Bitboard;
 use board::Board;
 use attacks::Precomp;
@@ -32,7 +32,7 @@ impl Position {
         Position {
             board: Board::new(),
 
-            turn: Color::White,
+            turn: White,
             castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
 
@@ -45,7 +45,7 @@ impl Position {
         Position {
             board: Board::empty(),
 
-            turn: Color::White,
+            turn: White,
             castling_rights: Bitboard(0),
             ep_square: None,
 
@@ -65,8 +65,8 @@ impl Position {
         }
 
         match parts.next() {
-            Some("w") => pos.turn = Color::White,
-            Some("b") => pos.turn = Color::Black,
+            Some("w") => pos.turn = White,
+            Some("b") => pos.turn = Black,
             Some(_)   => return None,
             None      => ()
         }
@@ -78,9 +78,9 @@ impl Position {
                 }
 
                 let color = if ch.to_ascii_lowercase() == ch {
-                    Color::Black
+                    Black
                 } else {
-                    Color::White
+                    White
                 };
 
                 let candidates = Bitboard::relative_rank(color, 0) &
@@ -166,7 +166,7 @@ impl Position {
     pub fn castling_shredder_fen(&self) -> String {
         let mut fen = String::with_capacity(4);
 
-        for color in &[Color::White, Color::Black] {
+        for color in &[White, Black] {
             let candidates = self.board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
 
             for rook in (candidates & self.castling_rights).rev() {
@@ -185,7 +185,7 @@ impl Position {
     pub fn castling_xfen(&self) -> String {
         let mut fen = String::with_capacity(4);
 
-        for color in &[Color::White, Color::Black] {
+        for color in &[White, Black] {
             let candidates = self.board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
 
             for rook in (candidates & self.castling_rights).rev() {
@@ -506,7 +506,7 @@ impl Position {
 
         self.turn = !self.turn;
 
-        if self.turn == Color::White {
+        if self.turn == White {
             self.fullmoves += 1;
         }
     }
@@ -539,8 +539,8 @@ mod tests {
         assert!(moves.contains(&castle));
 
         pos.do_move(&castle);
-        assert_eq!(pos.piece_at(square::G1), Some(Color::White.king()));
-        assert_eq!(pos.piece_at(square::F1), Some(Color::White.rook()));
+        assert_eq!(pos.piece_at(square::G1), Some(White.king()));
+        assert_eq!(pos.piece_at(square::F1), Some(White.rook()));
     }
 
     #[test]
