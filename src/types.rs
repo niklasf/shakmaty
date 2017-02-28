@@ -6,13 +6,14 @@ use std::str::FromStr;
 
 use square::Square;
 
+pub use self::Color::{Black, White};
+pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Color {
     Black,
     White,
 }
-
-pub use self::Color::{Black, White};
 
 impl Color {
     pub fn from_char(ch: char) -> Option<Color> {
@@ -36,12 +37,12 @@ impl Color {
 
     pub fn char(self) -> char { self.fold('w', 'b') }
 
-    pub fn pawn(self)   -> Piece { Role::Pawn.of(self) }
-    pub fn knight(self) -> Piece { Role::Knight.of(self) }
-    pub fn bishop(self) -> Piece { Role::Bishop.of(self) }
-    pub fn rook(self)   -> Piece { Role::Rook.of(self) }
-    pub fn queen(self)  -> Piece { Role::Queen.of(self) }
-    pub fn king(self)   -> Piece { Role::King.of(self) }
+    pub fn pawn(self)   -> Piece { Pawn.of(self) }
+    pub fn knight(self) -> Piece { Knight.of(self) }
+    pub fn bishop(self) -> Piece { Bishop.of(self) }
+    pub fn rook(self)   -> Piece { Rook.of(self) }
+    pub fn queen(self)  -> Piece { Queen.of(self) }
+    pub fn king(self)   -> Piece { King.of(self) }
 }
 
 impl ops::Not for Color {
