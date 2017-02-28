@@ -13,12 +13,22 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn fold<T>(self, white: T, black: T) -> T {
-        match self {
-            Color::Black => black,
-            Color::White => white
+    pub fn from_char(ch: char) -> Option<Color> {
+        match ch {
+            'w' => Some(Color::White),
+            'b' => Some(Color::Black),
+            _ => None
         }
     }
+
+    pub fn fold<T>(self, white: T, black: T) -> T {
+        match self {
+            Color::White => white,
+            Color::Black => black
+        }
+    }
+
+    pub fn char(self) -> char { self.fold('w', 'b') }
 
     pub fn pawn(self)   -> Piece { Role::Pawn.of(self) }
     pub fn knight(self) -> Piece { Role::Knight.of(self) }

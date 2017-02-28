@@ -146,7 +146,7 @@ impl Position {
     pub fn shredder_fen(&self) -> String {
         format!("{} {} {} {} {} {}",
                 self.board.board_fen(),
-                self.turn.fold('w', 'b'),
+                self.turn.char(),
                 self.castling_shredder_fen(),
                 self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
                 self.halfmove_clock,
@@ -156,7 +156,7 @@ impl Position {
     pub fn fen(&self) -> String {
         format!("{} {} {} {} {} {}",
                 self.board.board_fen(),
-                self.turn.fold('w', 'b'),
+                self.turn.char(),
                 self.castling_xfen(),
                 self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
                 self.halfmove_clock,
