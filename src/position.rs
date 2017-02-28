@@ -10,8 +10,13 @@ use bitboard::Bitboard;
 use board::Board;
 use attacks::Precomp;
 
+pub trait Position : Clone + Default + Sync {
+    fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
+    fn do_move(self, m: &Move) -> Self;
+}
+
 #[derive(Clone)]
-pub struct Position {
+pub struct Standard {
     board: Board,
 
     turn: Color,
@@ -22,14 +27,94 @@ pub struct Position {
     fullmoves: u32,
 }
 
-struct Pins {
-    blockers: Bitboard,
-    pinners: Bitboard,
+impl Position for Standard {
+    fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+        if self.checkers(precomp).is_empty() {
+            self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
+            self.gen_en_passant(moves, precomp);
+            self.gen_castling_moves(moves, precomp);
+        } else {
+            self.evasions(moves, precomp);
+        }
+
+        let pins = self.slider_blockers(self.them(),
+                                        self.our(Role::King).first().unwrap(),
+                                        precomp);
+
+        moves.retain(|m| self.is_safe(m, &pins, precomp));
+    }
+
+    fn do_move(mut self, m: &Move) -> Standard {
+        let color = self.turn;
+        self.ep_square.take();
+        self.halfmove_clock += 1;
+
+        match *m {
+            Move::Normal { from, to, promotion } => {
+                if let Some(castle) = self.castle(m) {
+                    let rook_to = Square::from_coords(
+                        if square::delta(castle, from) < 0 { 3 } else { 5 },
+                        self.turn.fold(0, 7)).unwrap();
+
+                    let king_to = Square::from_coords(
+                        if square::delta(castle, from) < 0 { 2 } else { 6 },
+                        self.turn.fold(0, 7)).unwrap();
+
+                    self.board.remove_piece_at(from);
+                    self.board.remove_piece_at(castle);
+                    self.board.set_piece_at(rook_to, color.rook());
+                    self.board.set_piece_at(king_to, color.king());
+
+                    self.castling_rights = self.castling_rights &
+                                           Bitboard::relative_rank(self.turn, 7);
+                } else if let Some(ep_capture) = self.ep_capture(m) {
+                    self.board.remove_piece_at(ep_capture);
+                    self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
+                    self.halfmove_clock = 0;
+                } else if let Some(moved) = self.board.remove_piece_at(from) {
+                    // Reset the halfmove clock.
+                    if moved.role == Role::Pawn || self.board.occupied().contains(to) {
+                        self.halfmove_clock = 0;
+                    }
+
+                    // Update en passant square.
+                    if moved.role == Role::Pawn && square::distance(from, to) == 2 {
+                        self.ep_square = from.offset(color.fold(8, -8))
+                    }
+
+                    // Update castling rights.
+                    if moved.role == Role::King {
+                        self.castling_rights = self.castling_rights &
+                                               Bitboard::relative_rank(self.turn, 7);
+                    } else {
+                        self.castling_rights.remove(from);
+                        self.castling_rights.remove(to);
+                    }
+
+                    // Move piece to new square.
+                    self.board.set_piece_at(to, promotion.map(|role| role.of(color))
+                                                         .unwrap_or(moved));
+                }
+            },
+            Move::Put { to, role } => {
+                self.board.set_piece_at(to, Piece { color, role });
+            },
+            Move::Null => ()
+        }
+
+        self.turn = !self.turn;
+
+        if self.turn == White {
+            self.fullmoves += 1;
+        }
+
+        self
+    }
 }
 
-impl Position {
-    pub fn new() -> Position {
-        Position {
+impl Default for Standard {
+    fn default() -> Standard {
+        Standard {
             board: Board::new(),
 
             turn: White,
@@ -40,9 +125,16 @@ impl Position {
             fullmoves: 1,
         }
     }
+}
 
-    pub fn empty() -> Position {
-        Position {
+struct Pins {
+    blockers: Bitboard,
+    pinners: Bitboard,
+}
+
+impl Standard {
+    pub fn empty() -> Standard {
+        Standard {
             board: Board::empty(),
 
             turn: White,
@@ -54,8 +146,8 @@ impl Position {
         }
     }
 
-    pub fn from_fen(fen: &str) -> Option<Position> {
-        let mut pos = Position::empty();
+    pub fn from_fen(fen: &str) -> Option<Standard> {
+        let mut pos = Standard::empty();
         let mut parts = fen.split(' ');
 
         if let Some(board) = parts.next().and_then(|board_fen| Board::from_board_fen(board_fen)) {
@@ -388,22 +480,6 @@ impl Position {
         }
     }
 
-    pub fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        if self.checkers(precomp).is_empty() {
-            self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
-            self.gen_en_passant(moves, precomp);
-            self.gen_castling_moves(moves, precomp);
-        } else {
-            self.evasions(moves, precomp);
-        }
-
-        let pins = self.slider_blockers(self.them(),
-                                        self.our(Role::King).first().unwrap(),
-                                        precomp);
-
-        moves.retain(|m| self.is_safe(m, &pins, precomp));
-    }
-
     fn ep_capture(&self, m: &Move) -> Option<Square> {
         match *m {
             Move::Normal { from, to, promotion: None } =>
@@ -442,73 +518,6 @@ impl Position {
         }
     }
 
-    pub fn do_move(mut self, m: &Move) -> Position {
-        let color = self.turn;
-        self.ep_square.take();
-        self.halfmove_clock += 1;
-
-        match *m {
-            Move::Normal { from, to, promotion } => {
-                if let Some(castle) = self.castle(m) {
-                    let rook_to = Square::from_coords(
-                        if square::delta(castle, from) < 0 { 3 } else { 5 },
-                        self.turn.fold(0, 7)).unwrap();
-
-                    let king_to = Square::from_coords(
-                        if square::delta(castle, from) < 0 { 2 } else { 6 },
-                        self.turn.fold(0, 7)).unwrap();
-
-                    self.board.remove_piece_at(from);
-                    self.board.remove_piece_at(castle);
-                    self.board.set_piece_at(rook_to, color.rook());
-                    self.board.set_piece_at(king_to, color.king());
-
-                    self.castling_rights = self.castling_rights &
-                                           Bitboard::relative_rank(self.turn, 7);
-                } else if let Some(ep_capture) = self.ep_capture(m) {
-                    self.board.remove_piece_at(ep_capture);
-                    self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
-                    self.halfmove_clock = 0;
-                } else if let Some(moved) = self.board.remove_piece_at(from) {
-                    // Reset the halfmove clock.
-                    if moved.role == Role::Pawn || self.board.occupied().contains(to) {
-                        self.halfmove_clock = 0;
-                    }
-
-                    // Update en passant square.
-                    if moved.role == Role::Pawn && square::distance(from, to) == 2 {
-                        self.ep_square = from.offset(color.fold(8, -8))
-                    }
-
-                    // Update castling rights.
-                    if moved.role == Role::King {
-                        self.castling_rights = self.castling_rights &
-                                               Bitboard::relative_rank(self.turn, 7);
-                    } else {
-                        self.castling_rights.remove(from);
-                        self.castling_rights.remove(to);
-                    }
-
-                    // Move piece to new square.
-                    self.board.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                         .unwrap_or(moved));
-                }
-            },
-            Move::Put { to, role } => {
-                self.board.set_piece_at(to, Piece { color, role });
-            },
-            Move::Null => ()
-        }
-
-        self.turn = !self.turn;
-
-        if self.turn == White {
-            self.fullmoves += 1;
-        }
-
-        self
-    }
-
     pub fn piece_at(&self, square: Square) -> Option<Piece> {
         self.board.piece_at(square)
     }
@@ -523,7 +532,7 @@ mod tests {
     fn test_castling_moves() {
         let precomp = Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("g1f3").unwrap())
             .do_move(&Move::from_uci("0000").unwrap())
             .do_move(&Move::from_uci("g2g3").unwrap())
@@ -543,20 +552,20 @@ mod tests {
 
     #[test]
     fn test_castling_shredder_fen() {
-        let pos = Position::new();
+        let pos = Standard::default();
         assert_eq!(pos.castling_shredder_fen(), "HAha");
     }
 
     #[test]
     fn test_fen() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let pos = Position::from_fen(fen).unwrap();
+        let pos = Standard::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
     }
 
     #[test]
     fn test_shredder_fen() {
-        let pos = Position::new();
+        let pos = Standard::default();
         assert_eq!(pos.shredder_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 }

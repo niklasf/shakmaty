@@ -20,9 +20,9 @@ use rayon::prelude::*;
 
 use types::Move;
 use attacks::Precomp;
-use position::Position;
+use position::{ Position, Standard };
 
-fn perft_inner(pos: &Position, depth: i8, precomp: &Precomp) -> usize {
+fn perft_inner<P: Position>(pos: &P, depth: i8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
     } else {
@@ -40,7 +40,7 @@ fn perft_inner(pos: &Position, depth: i8, precomp: &Precomp) -> usize {
     }
 }
 
-fn perft(pos: &Position, depth: i8, precomp: &Precomp) -> usize {
+fn perft<P: Position>(pos: &P, depth: i8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
     } else {
@@ -59,7 +59,7 @@ fn perft(pos: &Position, depth: i8, precomp: &Precomp) -> usize {
 fn main() {
     let precomp = attacks::Precomp::new();
 
-    let pos = Position::new()
+    let pos = Standard::default()
         .do_move(&Move::from_uci("g1f3").unwrap())
         .do_move(&Move::from_uci("e7e5").unwrap());
 
@@ -84,7 +84,7 @@ mod tests {
     fn test_perft() {
         let precomp = attacks::Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("h2h4").unwrap())
             .do_move(&Move::from_uci("g7g5").unwrap())
             .do_move(&Move::from_uci("e2e4").unwrap());
@@ -99,7 +99,7 @@ mod tests {
     fn test_duplicate_evasions() {
         let precomp = attacks::Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("b2b3").unwrap())
             .do_move(&Move::from_uci("e7e6").unwrap());
 
@@ -119,7 +119,7 @@ mod tests {
     fn test_en_passant() {
         let precomp = attacks::Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("a2a4").unwrap())
             .do_move(&Move::from_uci("h7h6").unwrap());
 
@@ -139,7 +139,7 @@ mod tests {
     fn test_prevented_castling() {
         let precomp = attacks::Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("g1f3").unwrap())
             .do_move(&Move::from_uci("a7a5").unwrap())
             .do_move(&Move::from_uci("g2g3").unwrap());
@@ -160,7 +160,7 @@ mod tests {
     fn test_forfeit_castling_rights() {
         let precomp = attacks::Precomp::new();
 
-        let pos = Position::new()
+        let pos = Standard::default()
             .do_move(&Move::from_uci("b2b3").unwrap())
             .do_move(&Move::from_uci("g8h6").unwrap())
             .do_move(&Move::from_uci("c1a3").unwrap())
@@ -181,21 +181,21 @@ mod tests {
     #[test]
     fn test_en_passant_evasion() {
         let precomp = attacks::Precomp::new();
-        let pos_a = Position::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
+        let pos_a = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
         assert_eq!(perft_inner(&pos_a, 2, &precomp), 601);
 
         let pos_a = pos_a.do_move(&Move::from_uci("d2d4").unwrap());
         assert_eq!(perft_inner(&pos_a, 1, &precomp), 3);
 
-        let pos_b = Position::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
+        let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
         assert_eq!(perft_inner(&pos_b, 2, &precomp), 762);
     }
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
         let precomp = attacks::Precomp::new();
-        let pos = Position::new();
+        let pos = Standard::default();
         b.iter(|| assert_eq!(perft_inner(&pos, 4, &precomp), 197281));
     }
 }
