@@ -69,6 +69,71 @@ pub trait Position : Clone + Default + Sync {
         self.board().piece_at(sq)
     }
 
+    fn shredder_fen(&self) -> String {
+        format!("{} {} {} {} {} {}",
+                self.board().board_fen(),
+                self.turn().char(),
+                self.castling_shredder_fen(),
+                self.ep_square().map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                self.halfmove_clock(),
+                self.fullmoves())
+    }
+
+    fn fen(&self) -> String {
+        format!("{} {} {} {} {} {}",
+                self.board().board_fen(),
+                self.turn().char(),
+                self.castling_xfen(),
+                self.ep_square().map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                self.halfmove_clock(),
+                self.fullmoves())
+    }
+
+    fn castling_shredder_fen(&self) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for color in &[White, Black] {
+            let candidates = self.board().by_piece(color.rook()) &
+                             Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & self.castling_rights()).rev() {
+                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+
+            }
+        }
+
+        if fen.is_empty() {
+            fen.push('-');
+        }
+
+        fen
+    }
+
+    fn castling_xfen(&self) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for color in &[White, Black] {
+            let candidates = self.board().by_piece(color.rook()) &
+                             Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & self.castling_rights()).rev() {
+                if Some(rook) == candidates.first() {
+                    fen.push(color.fold('Q', 'q'));
+                } else if Some(rook) == candidates.last() {
+                    fen.push(color.fold('K', 'k'));
+                } else {
+                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+                }
+            }
+        }
+
+        if fen.is_empty() {
+            fen.push('-');
+        }
+
+        fen
+    }
+
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
     fn do_move(self, m: &Move) -> Self;
 }
@@ -294,69 +359,6 @@ impl Standard {
         self.our(Role::King).first()
             .map(|king| self.them() & self.board.attacks_to(king, precomp))
             .unwrap_or(Bitboard(0))
-    }
-
-    pub fn shredder_fen(&self) -> String {
-        format!("{} {} {} {} {} {}",
-                self.board.board_fen(),
-                self.turn.char(),
-                self.castling_shredder_fen(),
-                self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
-                self.halfmove_clock,
-                self.fullmoves)
-    }
-
-    pub fn fen(&self) -> String {
-        format!("{} {} {} {} {} {}",
-                self.board.board_fen(),
-                self.turn.char(),
-                self.castling_xfen(),
-                self.ep_square.map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
-                self.halfmove_clock,
-                self.fullmoves)
-    }
-
-    pub fn castling_shredder_fen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let candidates = self.board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights).rev() {
-                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
-    }
-
-    pub fn castling_xfen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let candidates = self.board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights).rev() {
-                if Some(rook) == candidates.first() {
-                    fen.push(color.fold('Q', 'q'));
-                } else if Some(rook) == candidates.last() {
-                    fen.push(color.fold('K', 'k'));
-                } else {
-                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-                }
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
     }
 
     fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
