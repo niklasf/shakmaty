@@ -10,6 +10,50 @@ use bitboard::Bitboard;
 use board::Board;
 use attacks::Precomp;
 
+pub struct RemainingChecks {
+    pub white: u8,
+    pub black: u8,
+}
+
+impl RemainingChecks {
+    pub fn by_color(&self, color: Color) -> u8 {
+        color.fold(self.white, self.black)
+    }
+}
+
+pub struct Pocket {
+    pub pawns: u8,
+    pub knights: u8,
+    pub bishops: u8,
+    pub rooks: u8,
+    pub queens: u8,
+    pub kings: u8,
+}
+
+impl Pocket {
+    pub fn by_role(&self, role: Role) -> u8 {
+        match role {
+            Role::Pawn   => self.pawns,
+            Role::Knight => self.knights,
+            Role::Bishop => self.bishops,
+            Role::Rook   => self.rooks,
+            Role::Queen  => self.queens,
+            Role::King   => self.kings,
+        }
+    }
+}
+
+pub struct Pockets {
+    pub white: Pocket,
+    pub black: Pocket,
+}
+
+impl Pockets {
+    pub fn by_color(&self, color: Color) -> &Pocket {
+        color.fold(&self.white, &self.black)
+    }
+}
+
 pub trait Position : Clone + Default + Sync {
     fn board(&self) -> &Board;
     fn turn(&self) -> Color;
@@ -17,6 +61,9 @@ pub trait Position : Clone + Default + Sync {
     fn ep_square(&self) -> Option<Square>;
     fn halfmove_clock(&self) -> u32;
     fn fullmoves(&self) -> u32;
+
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn pockets(&self) -> Option<&Pockets> { None }
 
     fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.board().piece_at(sq)
