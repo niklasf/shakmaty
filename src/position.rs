@@ -11,6 +11,17 @@ use board::Board;
 use attacks::Precomp;
 
 pub trait Position : Clone + Default + Sync {
+    fn board(&self) -> &Board;
+    fn turn(&self) -> Color;
+    fn castling_rights(&self) -> Bitboard;
+    fn ep_square(&self) -> Option<Square>;
+    fn halfmove_clock(&self) -> u32;
+    fn fullmoves(&self) -> u32;
+
+    fn piece_at(&self, sq: Square) -> Option<Piece> {
+        self.board().piece_at(sq)
+    }
+
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
     fn do_move(self, m: &Move) -> Self;
 }
@@ -28,6 +39,13 @@ pub struct Standard {
 }
 
 impl Position for Standard {
+    fn board(&self) -> &Board { &self.board }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if self.checkers(precomp).is_empty() {
             self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
@@ -516,10 +534,6 @@ impl Standard {
             },
             _ => None
         }
-    }
-
-    pub fn piece_at(&self, square: Square) -> Option<Piece> {
-        self.board.piece_at(square)
     }
 }
 
