@@ -5,6 +5,11 @@ use std::fmt::Write;
 use square::Square;
 use types::Color;
 
+extern "platform-intrinsic" {
+    #[cfg(target_feature="bmi2")]
+    fn x86_bmi2_pext_64(src: u64, mask: u64) -> u64;
+}
+
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bitboard(pub u64);
 
@@ -106,13 +111,10 @@ impl Bitboard {
     #[cfg(target_feature="bmi2")]
     pub fn pext(self, Bitboard(mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
-        let result: u64;
-        unsafe {
-            asm!("pextq $2, $0, $0"
-                 : "=r"(result)
-                 : "0"(src), "r"(mask));
-        }
-        result
+
+        // This is safe because we specifically checked for the bmi2 target
+        // feature.
+        unsafe { x86_bmi2_pext_64(src, mask) }
     }
 
     #[cfg(not(target_feature="bmi2"))]
@@ -142,7 +144,7 @@ impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                let sq = Square::new(file, rank);
+                let sq = Square::from_coords(file, rank).unwrap();
                 try!(f.write_char(if self.contains(sq) { '1' } else { '.' }));
                 try!(f.write_char(if file < 7 { ' ' } else { '\n' }));
             }

@@ -2,8 +2,12 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use std::char;
 use std::ops;
+use std::str::FromStr;
 
 use square::Square;
+
+pub use self::Color::{Black, White};
+pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Color {
@@ -12,19 +16,36 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn fold<T>(self, white: T, black: T) -> T {
-        match self {
-            Color::Black => black,
-            Color::White => white
+    pub fn from_char(ch: char) -> Option<Color> {
+        match ch {
+            'w' => Some(Color::White),
+            'b' => Some(Color::Black),
+            _ => None
         }
     }
 
-    pub fn pawn(self)   -> Piece { Role::Pawn.of(self) }
-    pub fn knight(self) -> Piece { Role::Knight.of(self) }
-    pub fn bishop(self) -> Piece { Role::Bishop.of(self) }
-    pub fn rook(self)   -> Piece { Role::Rook.of(self) }
-    pub fn queen(self)  -> Piece { Role::Queen.of(self) }
-    pub fn king(self)   -> Piece { Role::King.of(self) }
+    pub fn from_bool(white: bool) -> Color {
+        if white { Color::White } else { Color::Black }
+    }
+
+    pub fn fold<T>(self, white: T, black: T) -> T {
+        match self {
+            Color::White => white,
+            Color::Black => black
+        }
+    }
+
+    pub fn is_white(self) -> bool { self == Color::White }
+    pub fn is_black(self) -> bool { self == Color::Black }
+
+    pub fn char(self) -> char { self.fold('w', 'b') }
+
+    pub fn pawn(self)   -> Piece { Pawn.of(self) }
+    pub fn knight(self) -> Piece { Knight.of(self) }
+    pub fn bishop(self) -> Piece { Bishop.of(self) }
+    pub fn rook(self)   -> Piece { Rook.of(self) }
+    pub fn queen(self)  -> Piece { Queen.of(self) }
+    pub fn king(self)   -> Piece { King.of(self) }
 }
 
 impl ops::Not for Color {
@@ -46,8 +67,8 @@ pub enum Role {
 }
 
 impl Role {
-    pub fn from_chr(chr: char) -> Option<Role> {
-        match chr {
+    pub fn from_char(ch: char) -> Option<Role> {
+        match ch {
             'p' => Some(Role::Pawn),
             'n' => Some(Role::Knight),
             'b' => Some(Role::Bishop),
@@ -62,7 +83,7 @@ impl Role {
         Piece { color, role: self }
     }
 
-    pub fn chr(self) -> char {
+    pub fn char(self) -> char {
         match self {
             Role::Pawn =>   'p',
             Role::Knight => 'n',
@@ -81,15 +102,15 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn chr(self) -> char {
-        self.color.fold(self.role.chr().to_ascii_uppercase(), self.role.chr())
+    pub fn char(self) -> char {
+        self.color.fold(self.role.char().to_ascii_uppercase(), self.role.char())
     }
 
-    pub fn from_chr(chr: char) -> Option<Piece> {
-        if chr == chr.to_ascii_lowercase() {
-            Role::from_chr(chr).map(|role| role.of(Color::Black))
+    pub fn from_char(ch: char) -> Option<Piece> {
+        if ch == ch.to_ascii_lowercase() {
+            Role::from_char(ch).map(|role| role.of(Color::Black))
         } else {
-            Role::from_chr(chr.to_ascii_lowercase()).map(|role| role.of(Color::White))
+            Role::from_char(ch.to_ascii_lowercase()).map(|role| role.of(Color::White))
         }
     }
 }
@@ -108,18 +129,18 @@ impl Move {
         }
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
-            (Some(from), Some(to), Some(promotion)) =>
-                return Role::from_chr(promotion).map(|role| {
+            (Ok(from), Ok(to), Some(promotion)) =>
+                return Role::from_char(promotion).map(|role| {
                     Move::Normal { from, to, promotion: Some(role) }
                 }),
-            (Some(from), Some(to), None) =>
+            (Ok(from), Ok(to), None) =>
                 return Some(Move::Normal { from, to, promotion: None }),
             _ => ()
         }
 
         match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
-            (Some(piece), Some('@'), Some(to)) =>
-                return Role::from_chr(piece.to_ascii_lowercase()).map(|role| {
+            (Some(piece), Some('@'), Ok(to)) =>
+                return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
                     Move::Put { role, to }
                 }),
             _ => ()
@@ -135,14 +156,14 @@ impl Move {
 
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            &Move::Normal { from, to, promotion: None } =>
+        match *self {
+            Move::Normal { from, to, promotion: None } =>
                 write!(f, "{}{}", from, to),
-            &Move::Normal { from, to, promotion: Some(promotion) } =>
-                write!(f, "{}{}{}", from, to, promotion.chr()),
-            &Move::Put { to, role } =>
-                write!(f, "{}@{}", role.chr().to_ascii_uppercase(), to),
-            &Move::Null =>
+            Move::Normal { from, to, promotion: Some(promotion) } =>
+                write!(f, "{}{}{}", from, to, promotion.char()),
+            Move::Put { to, role } =>
+                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
+            Move::Null =>
                 write!(f, "0000")
         }
     }

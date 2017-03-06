@@ -1,34 +1,16 @@
 use std::cmp::max;
 use std::fmt;
+use std::str;
 
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Square(pub i8);
 
 impl Square {
-    pub fn new(file: i8, rank: i8) -> Square {
-        debug_assert!(0 <= file && file < 8);
-        debug_assert!(0 <= rank && rank < 8);
-        Square(file | (rank << 3))
-    }
-
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
-            Some(Square::new(file, rank))
+            Some(Square(file | (rank << 3)))
         } else {
             None
-        }
-    }
-
-    pub fn from_str(s: &str) -> Option<Square> {
-        if s.len() != 2 {
-            return None
-        }
-
-        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
-        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
-        match (file, rank) {
-            (Some(file), Some(rank)) => Square::from_coords(file, rank),
-            _ => None
         }
     }
 
@@ -48,6 +30,23 @@ impl Square {
             Some(Square(sq + delta))
         } else {
             None
+        }
+    }
+}
+
+impl str::FromStr for Square {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Square, ()> {
+        if s.len() != 2 {
+            return Err(())
+        }
+
+        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
+        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
+        match (file, rank) {
+            (Some(file), Some(rank)) => Square::from_coords(file, rank).ok_or(()),
+            _ => Err(())
         }
     }
 }
@@ -147,7 +146,7 @@ mod tests {
     fn test_square() {
         for file in 0..8 {
             for rank in 0..8 {
-                let square = Square::new(file, rank);
+                let square = Square::from_coords(file, rank).unwrap();
                 assert_eq!(square.file(), file);
                 assert_eq!(square.rank(), rank);
             }
