@@ -100,11 +100,11 @@ pub trait Position : Clone + Default + Sync {
                          .map_or("".to_owned(), |r| format!(" {}", r));
 
         format!("{}{} {} {} {}{} {} {}",
-                self.board().board_fen(),
+                self.board().board_fen(self.pockets().is_some()),
                 pockets,
                 self.turn().char(),
                 self.castling_xfen(),
-                self.ep_square().map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
                 checks,
                 self.halfmove_clock(),
                 self.fullmoves())

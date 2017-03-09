@@ -101,21 +101,25 @@ impl Board {
         Some(board)
     }
 
-    pub fn board_fen(&self) -> String {
+    pub fn board_fen(&self, promoted: bool) -> String {
         let mut fen = String::with_capacity(15);
 
         for rank in (0..8).rev() {
             let mut empty = 0;
 
             for file in 0..8 {
-                empty = self.piece_at(Square::from_coords(file, rank).unwrap())
-                    .map_or_else(|| empty + 1, |piece| {
-                        if empty > 0 {
-                            fen.push(char::from_digit(empty, 10).unwrap());
-                        }
-                        fen.push(piece.char());
-                        0
-                    });
+                let square = Square::from_coords(file, rank).unwrap();
+
+                empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
+                    if empty > 0 {
+                        fen.push(char::from_digit(empty, 10).unwrap());
+                    }
+                    fen.push(piece.char());
+                    if promoted && self.promoted.contains(square) {
+                        fen.push('~');
+                    }
+                    0
+                });
 
                 if file == 7 && empty > 0 {
                     fen.push(char::from_digit(empty, 10).unwrap());
