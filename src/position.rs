@@ -79,14 +79,13 @@ impl fmt::Display for Pockets {
 
 pub trait Position : Clone + Default + Sync {
     fn board(&self) -> &Board;
+    fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color;
     fn castling_rights(&self) -> Bitboard;
     fn ep_square(&self) -> Option<Square>;
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32;
     fn fullmoves(&self) -> u32;
-
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn pockets(&self) -> Option<&Pockets> { None }
 
     fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.board().piece_at(sq)
@@ -135,6 +134,55 @@ pub trait Position : Clone + Default + Sync {
         }
 
         fen
+    }
+
+    fn san(self, m: &Move, precomp: &Precomp) -> String {
+        fn suffix<P: Position>(pos: P, m: &Move, precomp: &Precomp) -> &'static str {
+            let after = pos.do_move(m);
+
+            if after.checkers(precomp).is_empty() {
+                ""
+            } else {
+                let mut legals = Vec::new();
+                after.legal_moves(&mut legals, precomp);
+                if legals.is_empty() { "#" } else { "+" }
+            }
+        }
+
+        match *m {
+            Move::Normal { from, to, promotion } => {
+                let mut san = String::new();
+                let role = self.board().role_at(from).unwrap(); // XXX
+
+                if role != Role::Pawn {
+                    san.push(role.char().to_ascii_uppercase());
+
+                    // TODO: Disambiguate
+                    let mut legals = Vec::new();
+                    self.legal_moves(&mut legals, precomp);
+                }
+
+                if self.board().occupied().contains(to) {
+                    if role == Role::Pawn {
+                        san.push(from.file_char())
+                    }
+                    san.push('x');
+                }
+
+                san.push_str(&to.to_string());
+
+                promotion.map(|r| {
+                    san.push('=');
+                    san.push(r.char().to_ascii_uppercase());
+                });
+
+                san.push_str(suffix(self, m, precomp));
+
+                san
+            },
+            Move::Put { to, role } => format!("{}@{}{}", role.char().to_ascii_uppercase(), to, suffix(self, m, precomp)),
+            Move::Null => "--".to_owned()
+        }
     }
 
     fn checkers(&self, precomp: &Precomp) -> Bitboard {
@@ -611,5 +659,12 @@ mod tests {
         let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
+    }
+
+    #[test]
+    fn test_san() {
+        let precomp = Precomp::new();
+        let pos = Standard::default();
+        assert_eq!(pos.san(&Move::from_uci("g1f3").unwrap(), &precomp), "Nf3");
     }
 }

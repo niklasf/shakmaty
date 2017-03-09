@@ -19,6 +19,8 @@ impl Square {
         sq & 7
     }
 
+    pub fn file_char(self) -> char { ('a' as u8 + self.file() as u8) as char }
+
     pub fn rank(self) -> i8 {
         let Square(sq) = self;
         sq >> 3
@@ -53,8 +55,7 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", ('a' as u8 + self.file() as u8) as char,
-                          ('1' as u8 + self.rank() as u8) as char)
+        write!(f, "{}{}", self.file_char(), ('1' as u8 + self.rank() as u8) as char)
     }
 }
 
