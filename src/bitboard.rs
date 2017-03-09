@@ -251,6 +251,15 @@ mod tests {
     use square;
 
     #[test]
+    fn test_more_than_one() {
+        assert_eq!(Bitboard(0).more_than_one(), false);
+        assert_eq!(Bitboard(1).more_than_one(), false);
+        assert_eq!(Bitboard(2).more_than_one(), false);
+        assert_eq!(Bitboard(3).more_than_one(), true);
+        assert_eq!(Bitboard::all().more_than_one(), true);
+    }
+
+    #[test]
     fn test_first() {
         assert_eq!(Bitboard::from_square(square::A1).first(), Some(square::A1));
         assert_eq!(Bitboard::from_square(square::D2).first(), Some(square::D2));
