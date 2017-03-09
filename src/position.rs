@@ -136,6 +136,11 @@ pub trait Position : Clone + Default + Sync {
         fen
     }
 
+    fn checkers(&self, precomp: &Precomp) -> Bitboard {
+        self.board().king_of(self.turn())
+            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king, precomp))
+    }
+
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
     fn do_move(self, m: &Move) -> Self;
 }
@@ -355,12 +360,6 @@ impl Standard {
 
     pub fn them(&self) -> Bitboard {
         self.board.by_color(!self.turn)
-    }
-
-    pub fn checkers(&self, precomp: &Precomp) -> Bitboard {
-        self.our(Role::King).first()
-            .map(|king| self.them() & self.board.attacks_to(king, precomp))
-            .unwrap_or(Bitboard(0))
     }
 
     fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
