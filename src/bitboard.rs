@@ -1,6 +1,7 @@
 use std::ops;
 use std::fmt;
 use std::fmt::Write;
+use std::iter::FromIterator;
 
 use square::Square;
 use types::Color;
@@ -16,14 +17,6 @@ pub struct Bitboard(pub u64);
 impl Bitboard {
     pub fn from_square(Square(sq): Square) -> Bitboard {
         Bitboard(1 << sq)
-    }
-
-    pub fn from_all<I>(squares: I) -> Bitboard where I: IntoIterator<Item=Square> {
-        let mut result = Bitboard(0);
-        for square in squares {
-            result.add(square);
-        }
-        result
     }
 
     pub fn all() -> Bitboard {
@@ -180,6 +173,16 @@ impl ops::Not for Bitboard {
     }
 }
 
+impl FromIterator<Square> for Bitboard {
+    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=Square> {
+        let mut result = Bitboard(0);
+        for square in iter {
+            result.add(square);
+        }
+        result
+    }
+}
+
 impl Iterator for Bitboard {
     type Item = Square;
 
@@ -283,5 +286,11 @@ mod tests {
     #[test]
     fn test_rank() {
         assert_eq!(Bitboard::rank(3), Bitboard(0xff000000));
+    }
+
+    #[test]
+    fn test_from_iter() {
+        assert_eq!(Bitboard::from_iter(None), Bitboard(0));
+        assert_eq!(Bitboard::from_iter(Some(square::D2)), Bitboard::from_square(square::D2));
     }
 }
