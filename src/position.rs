@@ -113,14 +113,15 @@ pub trait Position : Clone + Default + Sync {
         let mut fen = String::with_capacity(4);
 
         for color in &[White, Black] {
+            let king = self.board().king_of(*color);
+
             let candidates = self.board().by_piece(color.rook()) &
                              Bitboard::relative_rank(*color, 0);
 
             for rook in (candidates & self.castling_rights()).rev() {
-                // TODO: This is broken if there is one k-side rook
-                if Some(rook) == candidates.first() {
+                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                     fen.push(color.fold('Q', 'q'));
-                } else if Some(rook) == candidates.last() {
+                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
                     fen.push(color.fold('K', 'k'));
                 } else {
                     fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);

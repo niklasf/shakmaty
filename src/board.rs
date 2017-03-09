@@ -134,6 +134,10 @@ impl Board {
     pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
     pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
 
+    pub fn king_of(&self, color: Color) -> Option<Square> {
+        (self.by_piece(color.king()) & !self.promoted).single_square()
+    }
+
     pub fn color_at(&self, sq: Square) -> Option<Color> {
         if self.white.contains(sq) {
             Some(Color::White)
