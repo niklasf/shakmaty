@@ -117,6 +117,7 @@ pub trait Position : Clone + Default + Sync {
                              Bitboard::relative_rank(*color, 0);
 
             for rook in (candidates & self.castling_rights()).rev() {
+                // TODO: This is broken if there is one k-side rook
                 if Some(rook) == candidates.first() {
                     fen.push(color.fold('Q', 'q'));
                 } else if Some(rook) == candidates.last() {
@@ -614,14 +615,12 @@ mod tests {
     }
 
     #[test]
-    fn test_castling_shredder_fen() {
-        let pos = Standard::default();
-        assert_eq!(pos.castling_shredder_fen(), "HAha");
-    }
-
-    #[test]
     fn test_fen() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let pos = Standard::from_fen(fen).unwrap();
+        assert_eq!(pos.fen(), fen);
+
+        let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
     }
