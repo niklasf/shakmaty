@@ -174,11 +174,11 @@ impl Position for Standard {
             self.evasions(moves, precomp);
         }
 
-        let pins = self.slider_blockers(self.them(),
-                                        self.our(Role::King).first().unwrap(),
-                                        precomp);
+        let blockers = self.slider_blockers(self.them(),
+                                            self.board.king_of(self.turn()).unwrap(),
+                                            precomp);
 
-        moves.retain(|m| self.is_safe(m, &pins, precomp));
+        moves.retain(|m| self.is_safe(m, blockers, precomp));
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
@@ -262,11 +262,6 @@ impl Default for Standard {
             fullmoves: 1,
         }
     }
-}
-
-struct Pins {
-    blockers: Bitboard,
-    pinners: Bitboard,
 }
 
 impl Standard {
@@ -434,32 +429,24 @@ impl Standard {
         }
     }
 
-    fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Pins {
+    fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Bitboard {
         let snipers = (precomp.rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
                       (precomp.bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
 
-        let mut result = Pins { pinners: Bitboard(0), blockers: Bitboard(0) };
+        let mut blockers = Bitboard(0);
 
         for sniper in snipers & sliders {
             let b = precomp.between(sq, sniper) & self.board.occupied();
 
             if !b.more_than_one() {
-                result.blockers = result.blockers | b;
-
-                let team = self.board.color_at(sq)
-                    .map(|color| self.board.by_color(color))
-                    .unwrap_or(Bitboard(0));
-
-                if !(b & team).is_empty() {
-                    result.pinners.add(sniper);
-                }
+                blockers = blockers | b;
             }
         }
 
-        result
+        blockers
     }
 
-    fn is_safe(&self, m: &Move, pins: &Pins, precomp: &Precomp) -> bool {
+    fn is_safe(&self, m: &Move, blockers: Bitboard, precomp: &Precomp) -> bool {
         match *m {
             Move::Normal { from, to, .. } =>
                 if let Some(ep_capture) = self.ep_capture(m) {
@@ -477,7 +464,7 @@ impl Standard {
                 } else if self.board.kings().contains(from) {
                     (self.board.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
-                    !(self.us() & pins.blockers).contains(from) ||
+                    !(self.us() & blockers).contains(from) ||
                     precomp.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
             _ => false
