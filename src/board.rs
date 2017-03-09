@@ -66,20 +66,34 @@ impl Board {
 
         let mut rank = 7;
         let mut file = 0;
+        let mut promoted = false;
 
         for ch in board_fen.chars() {
             if ch == '/' {
                 file = 0;
                 rank -= 1;
+            } else if ch == '~' {
+                promoted = true;
+                continue;
             } else if let Some(empty) = ch.to_digit(10) {
                 file += empty;
             } else if let Some(piece) = Piece::from_char(ch) {
                 match Square::from_coords(file as i8, rank as i8) {
-                    Some(sq) => board.set_piece_at(sq, piece),
-                    None     => return None
+                    Some(sq) => {
+                        board.set_piece_at(sq, piece);
+                        if promoted {
+                            board.promoted.add(sq);
+                            promoted = false;
+                        }
+                    },
+                    None => return None
                 }
                 file += 1;
             } else {
+                return None
+            }
+
+            if promoted {
                 return None
             }
         }
@@ -263,7 +277,7 @@ impl fmt::Debug for Board {
 mod tests {
     use super::*;
     use square;
-    use types::White;
+    use types::{ White, Black };
 
     #[test]
     fn test_piece_at() {
@@ -277,5 +291,12 @@ mod tests {
         let mut board = Board::new();
         board.set_piece_at(square::A3, White.pawn());
         assert_eq!(board.piece_at(square::A3), Some(White.pawn()));
+    }
+
+    #[test]
+    fn test_promoted() {
+        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").unwrap();
+        assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
+        assert!(board.promoted.contains(square::C1));
     }
 }
