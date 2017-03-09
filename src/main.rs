@@ -62,7 +62,7 @@ fn main() {
         .do_move(&Move::from_uci("g1f3").unwrap())
         .do_move(&Move::from_uci("e7e5").unwrap());
 
-    println!("{}", pos.shredder_fen());
+    println!("{}", pos.fen());
 
     assert_eq!(perft(&pos, 1, &precomp), 20);
     assert_eq!(perft(&pos, 2, &precomp), 400);

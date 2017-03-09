@@ -2,10 +2,11 @@ use std::cmp::max;
 use std::char;
 use std::ascii::AsciiExt;
 use std::str::FromStr;
+use std::fmt;
 
 use square;
 use square::Square;
-use types::{ Color, White, Black, Role, Piece, Move };
+use types::{ Color, White, Black, Role, Piece, Move, ROLES };
 use bitboard::Bitboard;
 use board::Board;
 use attacks::Precomp;
@@ -18,6 +19,12 @@ pub struct RemainingChecks {
 impl RemainingChecks {
     pub fn by_color(&self, color: Color) -> u8 {
         color.fold(self.white, self.black)
+    }
+}
+
+impl fmt::Display for RemainingChecks {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}+{}", self.white, self.black)
     }
 }
 
@@ -52,6 +59,22 @@ impl Pockets {
     pub fn by_color(&self, color: Color) -> &Pocket {
         color.fold(&self.white, &self.black)
     }
+
+    pub fn by_piece(&self, piece: Piece) -> u8 {
+        self.by_color(piece.color).by_role(piece.role)
+    }
+}
+
+impl fmt::Display for Pockets {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for color in &[White, Black] {
+            for role in &ROLES {
+                let piece = Piece { color: *color, role: *role };
+                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize)));
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait Position : Clone + Default + Sync {
@@ -69,44 +92,22 @@ pub trait Position : Clone + Default + Sync {
         self.board().piece_at(sq)
     }
 
-    fn shredder_fen(&self) -> String {
-        format!("{} {} {} {} {} {}",
-                self.board().board_fen(),
-                self.turn().char(),
-                self.castling_shredder_fen(),
-                self.ep_square().map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
-                self.halfmove_clock(),
-                self.fullmoves())
-    }
-
     fn fen(&self) -> String {
-        format!("{} {} {} {} {} {}",
+        let pockets = self.pockets()
+                          .map_or("".to_owned(), |p| format!("[{}]", p));
+
+        let checks = self.remaining_checks()
+                         .map_or("".to_owned(), |r| format!(" {}", r));
+
+        format!("{}{} {} {} {}{} {} {}",
                 self.board().board_fen(),
+                pockets,
                 self.turn().char(),
                 self.castling_xfen(),
                 self.ep_square().map(|sq| sq.to_string()).unwrap_or("-".to_owned()),
+                checks,
                 self.halfmove_clock(),
                 self.fullmoves())
-    }
-
-    fn castling_shredder_fen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let candidates = self.board().by_piece(color.rook()) &
-                             Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights()).rev() {
-                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
     }
 
     fn castling_xfen(&self) -> String {
@@ -610,11 +611,5 @@ mod tests {
         let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
-    }
-
-    #[test]
-    fn test_shredder_fen() {
-        let pos = Standard::default();
-        assert_eq!(pos.shredder_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 }

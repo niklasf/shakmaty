@@ -95,6 +95,8 @@ impl Role {
     }
 }
 
+pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Piece {
     pub color: Color,
@@ -102,7 +104,7 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn char(self) -> char {
+    pub fn char(&self) -> char {
         self.color.fold(self.role.char().to_ascii_uppercase(), self.role.char())
     }
 
