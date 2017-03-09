@@ -3,7 +3,7 @@ use std::fmt::Write;
 use std::char;
 
 use square::Square;
-use types::{ Color, White, Role, Piece };
+use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks::Precomp;
 
@@ -259,6 +259,7 @@ impl fmt::Debug for Board {
 mod tests {
     use super::*;
     use square;
+    use types::White;
 
     #[test]
     fn test_piece_at() {
