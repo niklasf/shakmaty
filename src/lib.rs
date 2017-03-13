@@ -7,15 +7,15 @@ extern crate test;
 
 pub mod square;
 pub mod types;
-pub mod bitboard;
-pub mod attacks;
+mod bitboard;
+mod attacks;
 pub mod board;
 pub mod position;
 
-pub use bitboard::Bitboard;
+pub use bitboard::{Bitboard, CarryRippler};
 pub use position::{Position, Standard};
 use types::Move;
-use attacks::Precomp;
+pub use attacks::Precomp;
 
 #[cfg(test)]
 mod tests {

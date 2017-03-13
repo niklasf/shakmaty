@@ -61,6 +61,28 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
     }
 }
 
+/// Precomputed attack tables.
+///
+/// # Examples
+///
+/// ```
+/// # use shakmaty::{Bitboard, Precomp, square};
+/// let precomp = Precomp::new();
+///
+/// let occupied = Bitboard::rank(5); // blocking pieces
+/// let attacks = precomp.bishop_attacks(square::C2, occupied);
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // 0 0 0 0 0 0 1 0
+/// // . . . . . 1 . .
+/// // 1 . . . 1 . . .
+/// // . 1 . 1 . . . .
+/// // . . . . . . . .
+/// // . 1 . 1 . . . .
+///
+/// assert!(attacks.contains(square::G6));
+/// assert!(!attacks.contains(square::H7));
+/// ```
 pub struct Precomp {
     knight_attacks: [Bitboard; 64],
     king_attacks: [Bitboard; 64],
@@ -82,6 +104,7 @@ pub struct Precomp {
 }
 
 impl Precomp {
+    /// Allocates about 200 KiB of heap memory and precomptes attack tables.
     pub fn new() -> Precomp {
         let mut precomp = Precomp {
             knight_attacks: [Bitboard(0); 64],
@@ -195,14 +218,33 @@ impl Precomp {
         }
     }
 
+    /// The rank, file or diagonal with the two squares (or an empty `Bitboard`
+    /// if they are not aligned).
+    ///
+    /// ```
+    /// # use shakmaty::square;
+    /// # use shakmaty::Precomp;
+    /// let precomp = Precomp::new();
+    /// let ray = precomp.ray(square::E2, square::G4);
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . 1
+    /// // . . . . . . 1 .
+    /// // . . . . . 1 . .
+    /// // . . . . 1 . . .
+    /// // . . . 1 . . . .
+    /// ```
     pub fn ray(&self, Square(a): Square, Square(b): Square) -> Bitboard {
         self.bb_rays[a as usize][b as usize]
     }
 
+    /// Like `ray`, but just the squares in-between (exluding the bounds).
     pub fn between(&self, Square(a): Square, Square(b): Square) -> Bitboard {
         self.bb_between[a as usize][b as usize]
     }
 
+    /// Tests if all three squares are aligned on a rank, file or diagonal.
     pub fn aligned(&self, a: Square, b: Square, c: Square) -> bool {
         self.ray(a, b).contains(c)
     }
