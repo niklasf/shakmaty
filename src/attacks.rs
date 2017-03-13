@@ -37,24 +37,23 @@ fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
     sliding_attacks(sq, Bitboard::all(), deltas)
 }
 
-fn magic_index(indexes: &[usize], masks: &[Bitboard], Square(sq): Square, occupied: Bitboard) -> usize {
-    indexes[sq as usize] + occupied.pext(masks[sq as usize]) as usize
-}
-
-fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], attacks: &mut Vec<Bitboard>, deltas: &[i8]) {
+fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboard], attacks: &mut Vec<u16>, deltas: &[i8]) {
     for s in 0..64 {
         let sq = Square(s);
+
+        let range = sliding_attacks(sq, Bitboard(0), deltas);
+        ranges[s as usize] = range;
 
         let edges = ((Bitboard::rank(0) | Bitboard::rank(7)) & !Bitboard::rank(sq.rank())) |
                     ((Bitboard::file(0) | Bitboard::file(7)) & !Bitboard::file(sq.file()));
 
-        let mask = sliding_attacks(sq, Bitboard(0), deltas) & !edges;
+        let mask = range & !edges;
         masks[s as usize] = mask;
 
         let mut size = 0;
         for subset in mask.subsets() {
-            let index = magic_index(indexes, masks, sq, subset);
-            attacks[index] = sliding_attacks(sq, subset, deltas);
+            let index = indexes[s as usize] + subset.pext(mask) as usize;
+            attacks[index] = sliding_attacks(sq, subset, deltas).pext(range) as u16;
             size += 1;
         }
 
@@ -72,11 +71,13 @@ pub struct Precomp {
 
     rook_indexes: [usize; 64],
     rook_masks: [Bitboard; 64],
-    rook_attacks: Vec<Bitboard>,
+    rook_ranges: [Bitboard; 64],
+    rook_attacks: Vec<u16>,
 
     bishop_indexes: [usize; 64],
     bishop_masks: [Bitboard; 64],
-    bishop_attacks: Vec<Bitboard>,
+    bishop_ranges: [Bitboard; 64],
+    bishop_attacks: Vec<u16>,
 
     bb_rays: [[Bitboard; 64]; 64],
     bb_between: [[Bitboard; 64]; 64],
@@ -92,11 +93,13 @@ impl Precomp {
 
             rook_indexes: [0; 64],
             rook_masks: [Bitboard(0); 64],
-            rook_attacks: vec![Bitboard(0); 0x19000],
+            rook_ranges: [Bitboard(0); 64],
+            rook_attacks: vec![0; 0x19000],
 
             bishop_indexes: [0; 64],
             bishop_masks: [Bitboard(0); 64],
-            bishop_attacks: vec![Bitboard(0); 0x1480],
+            bishop_ranges: [Bitboard(0); 64],
+            bishop_attacks: vec![0; 0x1480],
 
             bb_rays: [[Bitboard(0); 64]; 64],
             bb_between: [[Bitboard(0); 64]; 64],
@@ -111,11 +114,13 @@ impl Precomp {
 
         init_magics(&mut precomp.rook_indexes,
                     &mut precomp.rook_masks,
+                    &mut precomp.rook_ranges,
                     &mut precomp.rook_attacks,
                     &ROOK_DELTAS);
 
         init_magics(&mut precomp.bishop_indexes,
                     &mut precomp.bishop_masks,
+                    &mut precomp.bishop_ranges,
                     &mut precomp.bishop_attacks,
                     &BISHOP_DELTAS);
 
@@ -163,12 +168,16 @@ impl Precomp {
         self.king_attacks[sq as usize]
     }
 
-    pub fn rook_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
-        self.rook_attacks[magic_index(&self.rook_indexes, &self.rook_masks, sq, occupied)]
+    pub fn rook_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
+        let mask = self.rook_masks[sq as usize];
+        let range = self.rook_ranges[sq as usize];
+        Bitboard::pdep(self.rook_attacks[self.rook_indexes[sq as usize] + occupied.pext(mask) as usize] as u64, range)
     }
 
-    pub fn bishop_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
-        self.bishop_attacks[magic_index(&self.bishop_indexes, &self.bishop_masks, sq, occupied)]
+    pub fn bishop_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
+        let mask = self.bishop_masks[sq as usize];
+        let range = self.bishop_ranges[sq as usize];
+        Bitboard::pdep(self.bishop_attacks[self.bishop_indexes[sq as usize] + occupied.pext(mask) as usize] as u64, range)
     }
 
     pub fn queen_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
