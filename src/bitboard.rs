@@ -9,6 +9,9 @@ use types::Color;
 extern "platform-intrinsic" {
     #[cfg(target_feature="bmi2")]
     fn x86_bmi2_pext_64(src: u64, mask: u64) -> u64;
+
+    #[cfg(target_feature="bmi2")]
+    fn x86_bmi2_pdep_64(src: u64, mask: u64) -> u64;
 }
 
 #[derive(PartialEq, Eq, Copy, Clone)]
@@ -126,6 +129,13 @@ impl Bitboard {
         }
 
         result
+    }
+
+    #[cfg(target_feature="bmi2")]
+    pub fn pdep(src: u64, Bitboard(mask): Bitboard) -> Bitboard {
+        // This is safe because we specifically checked for the bmi2 target
+        // feature.
+        Bitboard(unsafe { x86_bmi2_pdep_64(src, mask) })
     }
 
     pub fn subsets(self) -> CarryRippler {
