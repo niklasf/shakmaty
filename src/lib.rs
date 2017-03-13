@@ -9,15 +9,15 @@ pub mod square;
 mod types;
 mod bitboard;
 mod attacks;
-pub mod board;
+mod board;
 pub mod position;
 
-pub use types::{Color, Black, White,
-                Role, Pawn, Knight, Bishop, Rook, Queen, King};
+pub use types::{Color, Role};
 pub use bitboard::{Bitboard, CarryRippler};
+pub use attacks::Precomp;
+pub use board::Board;
 pub use position::{Position, Standard};
 use types::Move;
-pub use attacks::Precomp;
 
 #[cfg(test)]
 mod tests {

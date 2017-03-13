@@ -7,6 +7,28 @@ use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks::Precomp;
 
+/// Piece positions on a board.
+///
+/// # Examples
+///
+/// ```
+/// # use shakmaty::{Board, square};
+/// # use shakmaty::Color::Black;
+/// let board = Board::new();
+/// // r n b q k b n r
+/// // p p p p p p p p
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // P P P P P P P P
+/// // R N B Q K B N R
+///
+/// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
+///
+/// let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+/// assert_eq!(board.board_fen(false), fen);
+/// ```
 #[derive(Clone)]
 pub struct Board {
     occupied: Bitboard,
@@ -148,10 +170,13 @@ impl Board {
 
     pub fn promoted(&self) -> Bitboard { self.promoted }
 
+    /// Bishops, rooks and queens.
     pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }
+
     pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
     pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
 
+    /// The (royal, unpromoted) king of the given side.
     pub fn king_of(&self, color: Color) -> Option<Square> {
         (self.by_piece(color.king()) & !self.promoted).single_square()
     }
