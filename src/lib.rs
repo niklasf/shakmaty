@@ -16,28 +16,28 @@ pub use position::{Position, Standard};
 use types::Move;
 use attacks::Precomp;
 
-fn perft<P: Position>(pos: &P, depth: i8, precomp: &Precomp) -> usize {
-    if depth < 1 {
-        1
-    } else {
-        let mut moves: Vec<Move> = Vec::new();
-        pos.legal_moves(&mut moves, precomp);
-
-        if depth == 1 {
-            moves.len()
-        } else {
-            moves.iter().map(|m| {
-                let child = pos.clone().do_move(m);
-                perft(&child, depth - 1, precomp)
-            }).sum()
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
+
+    fn perft<P: Position>(pos: &P, depth: i8, precomp: &Precomp) -> usize {
+        if depth < 1 {
+            1
+        } else {
+            let mut moves: Vec<Move> = Vec::new();
+            pos.legal_moves(&mut moves, precomp);
+
+            if depth == 1 {
+                moves.len()
+            } else {
+                moves.iter().map(|m| {
+                    let child = pos.clone().do_move(m);
+                    perft(&child, depth - 1, precomp)
+                }).sum()
+            }
+        }
+    }
 
     #[test]
     fn test_perft() {
