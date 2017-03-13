@@ -14,7 +14,7 @@ extern "platform-intrinsic" {
     fn x86_bmi2_pdep_64(src: u64, mask: u64) -> u64;
 }
 
-/// A set of squares represented by 64bit integer mask.
+/// A set of squares represented by 64 bit integer mask.
 ///
 /// # Examples
 ///

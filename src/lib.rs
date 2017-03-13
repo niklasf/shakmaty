@@ -6,12 +6,14 @@
 extern crate test;
 
 pub mod square;
-pub mod types;
+mod types;
 mod bitboard;
 mod attacks;
 pub mod board;
 pub mod position;
 
+pub use types::{Color, Black, White,
+                Role, Pawn, Knight, Bishop, Rook, Queen, King};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use position::{Position, Standard};
 use types::Move;

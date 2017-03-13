@@ -9,6 +9,7 @@ use square::Square;
 pub use self::Color::{Black, White};
 pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
 
+/// `White` or `Black`.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Color {
     Black,
@@ -56,6 +57,7 @@ impl ops::Not for Color {
     }
 }
 
+/// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Role {
     Pawn,
