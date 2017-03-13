@@ -138,6 +138,22 @@ impl Bitboard {
         Bitboard(unsafe { x86_bmi2_pdep_64(src, mask) })
     }
 
+    #[cfg(not(target_feature="bmi2"))]
+    pub fn deposit(src: u64, Bitboard(mut mask): Bitboard) -> Bitboard {
+        let mut result = 0;
+        let mut bit = 1;
+
+        while mask != 0 {
+            if src & bit != 0 {
+                result ^= mask & 0u64.wrapping_sub(mask);
+            }
+            mask &= mask.wrapping_sub(1);
+            bit <<= 1;
+        }
+
+        Bitboard(result)
+    }
+
     pub fn subsets(self) -> CarryRippler {
         CarryRippler::new(self)
     }
