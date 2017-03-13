@@ -12,6 +12,7 @@ pub mod attacks;
 pub mod board;
 pub mod position;
 
+pub use bitboard::Bitboard;
 pub use position::{Position, Standard};
 use types::Move;
 use attacks::Precomp;

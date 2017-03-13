@@ -14,6 +14,25 @@ extern "platform-intrinsic" {
     fn x86_bmi2_pdep_64(src: u64, mask: u64) -> u64;
 }
 
+/// A set of squares represented by 64bit integer mask.
+///
+/// # Examples
+///
+/// ```
+/// # use shakmaty::Bitboard;
+/// # use shakmaty::square;
+/// let mask = Bitboard::rank(2).with(square::E5);
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . 1 . . .
+/// // . . . . . . . .
+/// // 1 1 1 1 1 1 1 1
+/// // . . . . . . . .
+/// // . . . . . . . .
+///
+/// assert_eq!(mask.first(), Some(square::A3));
+/// ```
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub struct Bitboard(pub u64);
 
@@ -22,10 +41,13 @@ impl Bitboard {
         Bitboard(1 << sq)
     }
 
+    /// Returns the bitboard containing all squares.
     pub fn all() -> Bitboard {
         Bitboard(!0u64)
     }
 
+    /// Returns the bitboard containing all squares of the given rank
+    /// (or an empty bitboard if the rank index is out of range).
     pub fn rank(rank: i8) -> Bitboard {
         if 0 <= rank && rank < 8 {
             Bitboard(0xff << (8 * rank))
@@ -34,6 +56,8 @@ impl Bitboard {
         }
     }
 
+    /// Returns the bitboard containing all squares of the given file
+    /// (or an empty bitboard if the file index is out of range).
     pub fn file(file: i8) -> Bitboard {
         if 0 <= file && file < 8 {
             Bitboard(0x101010101010101 << file)
@@ -154,6 +178,7 @@ impl Bitboard {
         Bitboard(result)
     }
 
+    /// An iterator over the subsets of this bitboard.
     pub fn subsets(self) -> CarryRippler {
         CarryRippler::new(self)
     }
@@ -247,6 +272,7 @@ impl DoubleEndedIterator for Bitboard {
     }
 }
 
+/// Iterator over the subsets of a `Bitboard`.
 pub struct CarryRippler {
     bb: u64,
     subset: u64,
