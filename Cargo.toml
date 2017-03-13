@@ -2,6 +2,3 @@
 name = "shakmaty"
 version = "0.0.1"
 authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
-
-[dependencies]
-rayon = "*"
