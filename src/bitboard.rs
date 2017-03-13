@@ -105,7 +105,7 @@ impl Bitboard {
     }
 
     #[cfg(target_feature="bmi2")]
-    pub fn pext(self, Bitboard(mask): Bitboard) -> u64 {
+    pub fn extract(self, Bitboard(mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
 
         // This is safe because we specifically checked for the bmi2 target
@@ -114,7 +114,7 @@ impl Bitboard {
     }
 
     #[cfg(not(target_feature="bmi2"))]
-    pub fn pext(self, Bitboard(mut mask): Bitboard) -> u64 {
+    pub fn extract(self, Bitboard(mut mask): Bitboard) -> u64 {
         let Bitboard(src) = self;
         let mut result = 0;
         let mut bit = 1;
@@ -132,7 +132,7 @@ impl Bitboard {
     }
 
     #[cfg(target_feature="bmi2")]
-    pub fn pdep(src: u64, Bitboard(mask): Bitboard) -> Bitboard {
+    pub fn deposit(src: u64, Bitboard(mask): Bitboard) -> Bitboard {
         // This is safe because we specifically checked for the bmi2 target
         // feature.
         Bitboard(unsafe { x86_bmi2_pdep_64(src, mask) })
@@ -287,10 +287,10 @@ mod tests {
     }
 
     #[test]
-    fn test_pext() {
-        assert_eq!(Bitboard::all().pext(Bitboard(0)), 0);
-        assert_eq!(Bitboard::all().pext(Bitboard::all()), !0u64);
-        assert_eq!(Bitboard(7).pext(Bitboard(1)), 1);
+    fn test_extract() {
+        assert_eq!(Bitboard::all().extract(Bitboard(0)), 0);
+        assert_eq!(Bitboard::all().extract(Bitboard::all()), !0u64);
+        assert_eq!(Bitboard(7).extract(Bitboard(1)), 1);
     }
 
     #[test]

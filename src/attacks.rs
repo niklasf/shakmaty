@@ -52,8 +52,8 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
 
         let mut size = 0;
         for subset in mask.subsets() {
-            let index = indexes[s as usize] + subset.pext(mask) as usize;
-            attacks[index] = sliding_attacks(sq, subset, deltas).pext(range) as u16;
+            let index = indexes[s as usize] + subset.extract(mask) as usize;
+            attacks[index] = sliding_attacks(sq, subset, deltas).extract(range) as u16;
             size += 1;
         }
 
@@ -171,13 +171,13 @@ impl Precomp {
     pub fn rook_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
         let mask = self.rook_masks[sq as usize];
         let range = self.rook_ranges[sq as usize];
-        Bitboard::pdep(self.rook_attacks[self.rook_indexes[sq as usize] + occupied.pext(mask) as usize] as u64, range)
+        Bitboard::deposit(self.rook_attacks[self.rook_indexes[sq as usize] + occupied.extract(mask) as usize] as u64, range)
     }
 
     pub fn bishop_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
         let mask = self.bishop_masks[sq as usize];
         let range = self.bishop_ranges[sq as usize];
-        Bitboard::pdep(self.bishop_attacks[self.bishop_indexes[sq as usize] + occupied.pext(mask) as usize] as u64, range)
+        Bitboard::deposit(self.bishop_attacks[self.bishop_indexes[sq as usize] + occupied.extract(mask) as usize] as u64, range)
     }
 
     pub fn queen_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
