@@ -12,12 +12,12 @@ mod attacks;
 mod board;
 pub mod position;
 
-pub use types::{Color, Role};
+pub use square::Square;
+pub use types::{Color, Role, Piece, Move};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use attacks::Precomp;
 pub use board::Board;
 pub use position::{Position, Standard};
-use types::Move;
 
 #[cfg(test)]
 mod tests {

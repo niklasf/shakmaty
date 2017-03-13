@@ -2,6 +2,7 @@ use std::cmp::max;
 use std::fmt;
 use std::str;
 
+/// A square index.
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct Square(pub i8);
 
@@ -65,10 +66,13 @@ impl fmt::Debug for Square {
     }
 }
 
+/// The difference of the square indices.
 pub fn delta(Square(a): Square, Square(b): Square) -> i8 {
     a - b
 }
 
+/// The distance between the two squares, i.e. the number of king steps to get
+/// from `a` to `b`.
 pub fn distance(a: Square, b: Square) -> i8 {
     max((a.file() - b.file()).abs(), (a.rank() - b.rank()).abs())
 }
