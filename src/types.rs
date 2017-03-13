@@ -99,6 +99,7 @@ impl Role {
 
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
+/// A piece with `Color` and `Role`.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Piece {
     pub color: Color,
@@ -119,6 +120,7 @@ impl Piece {
     }
 }
 
+/// A normal move, piece drop or null move.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Move {
     Normal { from: Square, to: Square, promotion: Option<Role> },
