@@ -77,7 +77,7 @@ impl fmt::Display for Pockets {
     }
 }
 
-pub trait Position : Clone + Default + Sync {
+pub trait Position : Clone + Default {
     fn board(&self) -> &Board;
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color;
