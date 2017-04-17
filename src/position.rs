@@ -231,6 +231,11 @@ pub trait Position : Clone + Default {
         match *uci {
             Uci::Normal { from, to, promotion } => {
                 self.board().role_at(from).map(|role| {
+                    if role == Role::King {
+                        if self.board().by_piece(self.turn().rook()).contains(to) {
+                            return Move::Castle { king: from, rook: to }
+                        }
+                    }
                     Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
                 })
             },
@@ -659,7 +664,7 @@ mod tests {
         let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
 
-        let castle = pos.validate(&Uci::from_str("e1g1").unwrap()).unwrap();
+        let castle = pos.validate(&Uci::from_str("e1h1").unwrap()).unwrap();
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));

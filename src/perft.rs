@@ -122,7 +122,7 @@ mod tests {
 
         let pos = pos.do_move(&Move::from_uci("a2a3").unwrap());
         assert_eq!(perft(&pos, 1, &precomp), 27);
-    }
+    } */
 
     #[test]
     fn test_en_passant_evasion() {
@@ -131,12 +131,12 @@ mod tests {
 
         assert_eq!(perft(&pos_a, 2, &precomp), 601);
 
-        let pos_a = pos_a.do_move(&Move::from_uci("d2d4").unwrap());
-        assert_eq!(perft(&pos_a, 1, &precomp), 3);
+        /* let pos_a = pos_a.do_move(&Move::from_uci("d2d4").unwrap());
+        assert_eq!(perft(&pos_a, 1, &precomp), 3); */
 
         let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
         assert_eq!(perft(&pos_b, 2, &precomp), 762);
-    } */
+    }
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
