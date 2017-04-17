@@ -174,3 +174,47 @@ impl fmt::Display for Move {
         }
     }
 }
+
+pub enum MoveInfo {
+    Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
+    EnPassant { from: Square, to: Square, pawn: Square },
+    Castle { king: Square, rook: Square },
+    Put { role: Role, to: Square },
+    Null
+}
+
+impl fmt::Display for MoveInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            MoveInfo::Normal { role, from, capture, to, promotion } => {
+                if role != Role::Pawn {
+                    try!(write!(f, "{}", role.char().to_ascii_uppercase()));
+                }
+
+                try!(write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to));
+
+                if let Some(p) = promotion {
+                    try!(write!(f, "={}", p.char().to_ascii_uppercase()));
+                }
+
+                Ok(())
+            },
+            MoveInfo::EnPassant { from, to, .. } => {
+                write!(f, "{}x{}", from, to)
+            },
+            MoveInfo::Castle { king, rook } => {
+                if king < rook {
+                    write!(f, "O-O")
+                } else {
+                    write!(f, "O-O-O")
+                }
+            },
+            MoveInfo::Put { role, to } => {
+                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to)
+            },
+            MoveInfo::Null => {
+                write!(f, "--")
+            }
+        }
+    }
+}
