@@ -36,7 +36,7 @@ fn debug_perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
         moves.iter().map(|m| {
             let child = pos.clone().do_move(m);
             let nodes = perft(&child, depth - 1, precomp);
-            println!("{}: {}", m, nodes);
+            println!("{} {}: {}", m.to_uci(), m, nodes);
             nodes
         }).sum()
     }
@@ -153,6 +153,7 @@ mod tests {
         let precomp = Precomp::new();
         let pos_a = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
+        assert_eq!(perft(&pos_a, 1, &precomp), 26);
         assert_eq!(debug_perft(&pos_a, 2, &precomp), 601);
 
         let m = pos_a.validate(&Uci::from_str("d2d4").unwrap()).unwrap();
