@@ -533,7 +533,7 @@ impl Standard {
     fn gen_en_passant(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if let Some(to) = self.ep_square {
             for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
-                moves.push(Move::EnPassant { from, to, pawn: to.offset(self.turn.fold(8, -8)).unwrap() }); // XXX
+                moves.push(Move::EnPassant { from, to, pawn: to.offset(self.turn.fold(-8, 8)).unwrap() }); // XXX
             }
         }
     }
