@@ -20,14 +20,14 @@ impl Square {
         sq & 7
     }
 
-    pub fn file_char(self) -> char { ('a' as u8 + self.file() as u8) as char }
+    pub fn file_char(self) -> char { (b'a' + self.file() as u8) as char }
 
     pub fn rank(self) -> i8 {
         let Square(sq) = self;
         sq >> 3
     }
 
-    pub fn rank_char(self) -> char { ('1' as u8 + self.rank() as u8) as char }
+    pub fn rank_char(self) -> char { (b'1' + self.rank() as u8) as char }
 
     pub fn offset(self, delta: i8) -> Option<Square> {
         let Square(sq) = self;
