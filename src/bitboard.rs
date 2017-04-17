@@ -96,8 +96,30 @@ impl Bitboard {
         self.0 ^= 1 << sq;
     }
 
-    pub fn remove(&mut self, Square(sq): Square) {
+    pub fn discard(&mut self, Square(sq): Square) {
         self.0 &= !(1 << sq);
+    }
+
+    pub fn discard_all(&mut self, Bitboard(bb): Bitboard) {
+        self.0 &= !bb;
+    }
+
+    #[must_use]
+    pub fn remove(&mut self, sq: Square) -> bool {
+        if self.contains(sq) {
+            self.flip(sq);
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn set(&mut self, sq: Square, v: bool) {
+        if v {
+            self.discard(sq);
+        } else {
+            self.add(sq);
+        }
     }
 
     pub fn with(self, sq: Square) -> Bitboard {

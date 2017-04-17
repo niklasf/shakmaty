@@ -161,9 +161,8 @@ pub trait Position : Clone + Default {
         }
 
         match *m {
-            Move::Normal { from, to, promotion } => {
+            Move::Normal { role, from, capture, to, promotion } => {
                 let mut san = String::new();
-                let role = self.board().role_at(from).unwrap(); // XXX
 
                 if role != Role::Pawn {
                     san.push(role.char().to_ascii_uppercase());
@@ -194,7 +193,7 @@ pub trait Position : Clone + Default {
                     }
                 }
 
-                if self.board().occupied().contains(to) {
+                if capture.is_some() {
                     if role == Role::Pawn {
                         san.push(from.file_char())
                     }
@@ -212,6 +211,8 @@ pub trait Position : Clone + Default {
 
                 san
             },
+            Move::EnPassant { from, to, .. } => format!("{}x{}{}", from.file_char(), to, suffix(self, m, precomp)),
+            Move::Castle { .. } => format!("{}{}", m, suffix(self, m, precomp)),
             Move::Put { to, role } => format!("{}@{}{}", role.char().to_ascii_uppercase(), to, suffix(self, m, precomp)),
             Move::Null => "--".to_owned()
         }
@@ -223,7 +224,8 @@ pub trait Position : Clone + Default {
     }
 
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
-    fn do_move(self, m: &Move) -> Self;
+
+    fn do_move(mut self, m: &Move) -> Self;
 }
 
 #[derive(Clone)]
@@ -265,56 +267,56 @@ impl Position for Standard {
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
-        let color = self.turn;
-        self.ep_square.take();
+        let color = self.turn();
+        self.ep_square().take();
         self.halfmove_clock += 1;
 
         match *m {
-            Move::Normal { from, to, promotion } => {
-                if let Some(castle) = self.castle(m) {
-                    let rook_to = Square::from_coords(
-                        if square::delta(castle, from) < 0 { 3 } else { 5 },
-                        self.turn.fold(0, 7)).unwrap();
-
-                    let king_to = Square::from_coords(
-                        if square::delta(castle, from) < 0 { 2 } else { 6 },
-                        self.turn.fold(0, 7)).unwrap();
-
-                    self.board.remove_piece_at(from);
-                    self.board.remove_piece_at(castle);
-                    self.board.set_piece_at(rook_to, color.rook());
-                    self.board.set_piece_at(king_to, color.king());
-
-                    self.castling_rights = self.castling_rights &
-                                           Bitboard::relative_rank(self.turn, 7);
-                } else if let Some(ep_capture) = self.ep_capture(m) {
-                    self.board.remove_piece_at(ep_capture);
-                    self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
+            Move::Normal { role, from, capture, to, promotion } => {
+                if role == Role::Pawn || capture.is_some() {
                     self.halfmove_clock = 0;
-                } else if let Some(moved) = self.board.remove_piece_at(from) {
-                    // Reset the halfmove clock.
-                    if moved.role == Role::Pawn || self.board.occupied().contains(to) {
-                        self.halfmove_clock = 0;
-                    }
-
-                    // Update en passant square.
-                    if moved.role == Role::Pawn && square::distance(from, to) == 2 {
-                        self.ep_square = from.offset(color.fold(8, -8))
-                    }
-
-                    // Update castling rights.
-                    if moved.role == Role::King {
-                        self.castling_rights = self.castling_rights &
-                                               Bitboard::relative_rank(self.turn, 7);
-                    } else {
-                        self.castling_rights.remove(from);
-                        self.castling_rights.remove(to);
-                    }
-
-                    // Move piece to new square.
-                    self.board.set_piece_at(to, promotion.map(|role| role.of(color))
-                                                         .unwrap_or(moved));
                 }
+
+                if role == Role::Pawn && square::distance(from, to) == 2 {
+                    self.ep_square = from.offset(color.fold(8, -8));
+                }
+
+                if role == Role::King {
+                    self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+                } else {
+                    self.castling_rights.remove(from);
+                    self.castling_rights.remove(to);
+                }
+
+                let promoted = self.board.promoted().remove(from) || promotion.is_some();
+
+                self.board.set_piece_at(to, promotion.map(|p| p.of(color))
+                                                     .unwrap_or(role.of(color)));
+
+                if promoted {
+                    self.board.promoted().flip(to);
+                }
+            },
+            Move::Castle { king, rook } => {
+                let rook_to = Square::from_coords(
+                    if square::delta(rook, king) < 0 { 3 } else { 5 },
+                    color.fold(0, 7)).unwrap();
+
+                let king_to = Square::from_coords(
+                    if square::delta(rook, king) < 0 { 2 } else { 6 },
+                    color.fold(0, 7)).unwrap();
+
+                self.board.remove_piece_at(king);
+                self.board.remove_piece_at(rook);
+                self.board.set_piece_at(rook_to, color.rook());
+                self.board.set_piece_at(king_to, color.king());
+
+                self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+            },
+            Move::EnPassant { from, to, pawn } => {
+                self.board.remove_piece_at(pawn);
+                self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
+                self.halfmove_clock = 0;
             },
             Move::Put { to, role } => {
                 self.board.set_piece_at(to, Piece { color, role });
@@ -324,7 +326,7 @@ impl Position for Standard {
 
         self.turn = !self.turn;
 
-        if self.turn == White {
+        if self.turn() == White {
             self.fullmoves += 1;
         }
 
@@ -441,40 +443,52 @@ impl Standard {
     }
 
     fn push_pawn_moves(&self, moves: &mut Vec<Move>, from: Square, to: Square) {
+        let capture = self.board.role_at(to); // XXX
+
         if to.rank() == self.turn.fold(7, 0) {
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Queen) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Rook) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Bishop) } );
-            moves.push(Move::Normal { from, to, promotion: Some(Role::Knight) } );
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) } );
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) } );
         } else {
-            moves.push(Move::Normal { from, to, promotion: None } );
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
         }
     }
 
-    fn push_moves(&self, moves: &mut Vec<Move>, from: Square, to: Bitboard) {
+    fn push_moves(&self, moves: &mut Vec<Move>, role: Role, from: Square, to: Bitboard) {
         for square in to {
-            moves.push(Move::Normal { from, to: square, promotion: None });
+            moves.push(Move::Normal { role, from, capture: self.board.role_at(square), to: square, promotion: None });
         }
     }
 
     fn gen_pseudo_legal(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
         for from in self.our(Role::King) & selection {
-            self.push_moves(moves, from,
+            self.push_moves(moves, Role::King, from,
                             precomp.king_attacks(from) & !self.us() & target);
         }
 
         for from in self.our(Role::Knight) & selection {
-            self.push_moves(moves, from,
+            self.push_moves(moves, Role::Knight, from,
                             precomp.knight_attacks(from) & !self.us() & target);
         }
 
-        for from in (self.our(Role::Rook) | self.our(Role::Queen)) & selection {
-            self.push_moves(moves, from,
+        for from in self.our(Role::Rook) & selection {
+            self.push_moves(moves, Role::Rook, from,
                             precomp.rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
-        for from in (self.our(Role::Bishop) | self.our(Role::Queen)) & selection {
-            self.push_moves(moves, from,
+        for from in self.our(Role::Queen) & selection {
+            self.push_moves(moves, Role::Queen, from,
+                            precomp.rook_attacks(from, self.board.occupied()) & !self.us() & target);
+        }
+
+        for from in self.our(Role::Bishop) & selection {
+            self.push_moves(moves, Role::Bishop, from,
+                            precomp.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
+        }
+
+        for from in self.our(Role::Queen) & selection {
+            self.push_moves(moves, Role::Queen, from,
                             precomp.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
@@ -507,7 +521,7 @@ impl Standard {
     fn gen_en_passant(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
         if let Some(to) = self.ep_square {
             for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
-                moves.push(Move::Normal { from, to, promotion: None });
+                moves.push(Move::EnPassant { from, to, pawn: to.offset(self.turn.fold(8, -8)).unwrap() }); // XXX
             }
         }
     }
@@ -531,26 +545,28 @@ impl Standard {
 
     fn is_safe(&self, m: &Move, blockers: Bitboard, precomp: &Precomp) -> bool {
         match *m {
-            Move::Normal { from, to, .. } =>
-                if let Some(ep_capture) = self.ep_capture(m) {
-                    let mut occupied = self.board.occupied();
-                    occupied.flip(from);
-                    occupied.flip(ep_capture);
-                    occupied.add(to);
-
-                    self.our(Role::King).first().map(|king| {
-                        (precomp.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
-                        (precomp.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
-                    }).unwrap_or(true)
-                } else if self.castle(m).is_some() {
-                    true
-                } else if self.board.kings().contains(from) {
+            Move::Normal { role, from, to, .. } =>
+                if role == Role::King {
                     (self.board.attacks_to(to, precomp) & self.them()).is_empty()
                 } else {
                     !(self.us() & blockers).contains(from) ||
                     precomp.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
-            _ => false
+            Move::EnPassant { from, to, pawn } => {
+                let mut occupied = self.board.occupied();
+                occupied.flip(from);
+                occupied.flip(pawn);
+                occupied.add(to);
+
+                self.our(Role::King).first().map(|king| {
+                    (precomp.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
+                    (precomp.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
+                }).unwrap_or(true)
+            },
+            Move::Castle { .. } => {
+                true
+            },
+            _ => false // XXX
         }
     }
 
@@ -565,7 +581,7 @@ impl Standard {
         }
 
         for to in precomp.king_attacks(king) & !self.us() & !attacked {
-            moves.push(Move::Normal { from: king, to, promotion: None });
+            moves.push(Move::Normal { role: Role::King, from: king, capture: self.board.role_at(to), to, promotion: None });
         }
 
         if let Some(checker) = checkers.single_square() {
@@ -613,46 +629,8 @@ impl Standard {
                     continue;
                 }
 
-                moves.push(Move::Normal { from: king, to: king_to, promotion: None });
+                moves.push(Move::Castle { king, rook });
             }
-        }
-    }
-
-    fn ep_capture(&self, m: &Move) -> Option<Square> {
-        match *m {
-            Move::Normal { from, to, promotion: None } =>
-                if square::delta(from, to) & 1 != 0 &&
-                        self.board.pawns().contains(from) &&
-                        !self.board.occupied().contains(to) {
-                    to.offset(self.turn.fold(-8, 8))
-                } else {
-                    None
-                },
-            _ => None
-        }
-    }
-
-    fn castle(&self, m: &Move) -> Option<Square> {
-        match *m {
-            Move::Normal { from, to, promotion: None } => {
-                if self.our(Role::Rook).contains(to) {
-                    return Some(to);
-                }
-
-                if square::distance(from, to) > 1 && self.board.kings().contains(from) {
-                    let candidates = self.board.rooks() & self.castling_rights &
-                                     Bitboard::relative_rank(self.turn, 0);
-
-                    if square::delta(from, to) > 0 {
-                        return candidates.first();
-                    } else {
-                        return candidates.last();
-                    }
-                }
-
-                None
-            },
-            _ => None
         }
     }
 }

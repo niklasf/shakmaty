@@ -120,16 +120,16 @@ impl Piece {
     }
 }
 
-/// A normal move, piece drop or null move.
+/* /// A normal move, piece drop or null move.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Move {
+pub enum Uci {
     Normal { from: Square, to: Square, promotion: Option<Role> },
     Put { to: Square, role: Role },
     Null
 }
 
-impl Move {
-    pub fn from_uci(uci: &str) -> Option<Move> {
+impl Uci {
+    pub fn from_uci(uci: &str) -> Option<Uci> {
         if uci.len() < 4 || uci.len() > 5 {
             return None
         }
@@ -137,7 +137,7 @@ impl Move {
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
             (Ok(from), Ok(to), Some(promotion)) =>
                 return Role::from_char(promotion).map(|role| {
-                    Move::Normal { from, to, promotion: Some(role) }
+                    UciMove::Normal { from, to, promotion: Some(role) }
                 }),
             (Ok(from), Ok(to), None) =>
                 return Some(Move::Normal { from, to, promotion: None }),
@@ -147,20 +147,20 @@ impl Move {
         match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
             (Some(piece), Some('@'), Ok(to)) =>
                 return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
-                    Move::Put { role, to }
+                    UciMove::Put { role, to }
                 }),
             _ => ()
         }
 
         if uci == "0000" {
-            return Some(Move::Null)
+            return Some(Uci::Null)
         }
 
         None
     }
 }
 
-impl fmt::Display for Move {
+impl fmt::Display for UciMove {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Move::Normal { from, to, promotion: None } =>
@@ -173,9 +173,9 @@ impl fmt::Display for Move {
                 write!(f, "0000")
         }
     }
-}
+} */
 
-pub enum MoveInfo {
+pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square, pawn: Square },
     Castle { king: Square, rook: Square },
@@ -183,10 +183,10 @@ pub enum MoveInfo {
     Null
 }
 
-impl fmt::Display for MoveInfo {
+impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            MoveInfo::Normal { role, from, capture, to, promotion } => {
+            Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
                     try!(write!(f, "{}", role.char().to_ascii_uppercase()));
                 }
@@ -199,20 +199,20 @@ impl fmt::Display for MoveInfo {
 
                 Ok(())
             },
-            MoveInfo::EnPassant { from, to, .. } => {
+            Move::EnPassant { from, to, .. } => {
                 write!(f, "{}x{}", from, to)
             },
-            MoveInfo::Castle { king, rook } => {
+            Move::Castle { king, rook } => {
                 if king < rook {
                     write!(f, "O-O")
                 } else {
                     write!(f, "O-O-O")
                 }
             },
-            MoveInfo::Put { role, to } => {
+            Move::Put { role, to } => {
                 write!(f, "{}@{}", role.char().to_ascii_uppercase(), to)
             },
-            MoveInfo::Null => {
+            Move::Null => {
                 write!(f, "--")
             }
         }
