@@ -284,8 +284,8 @@ impl Position for Standard {
                 if role == Role::King {
                     self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
                 } else {
-                    self.castling_rights.remove(from);
-                    self.castling_rights.remove(to);
+                    self.castling_rights.discard(from);
+                    self.castling_rights.discard(to);
                 }
 
                 let promoted = self.board.promoted().remove(from) || promotion.is_some();
