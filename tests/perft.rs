@@ -17,6 +17,8 @@ fn test_perft_file(path: &str, node_limit: usize) {
     let mut pos = Standard::default();
 
     for line in reader.lines().map(|l| l.unwrap()) {
+        println!("{}", line);
+
         let trimmed = line.trim();
         let mut slices = trimmed.splitn(2, ' ');
 
