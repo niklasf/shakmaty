@@ -25,6 +25,8 @@ mod tests {
     use super::*;
     use test::Bencher;
     use position::Standard;
+    use types::Uci;
+    use std::str::FromStr;
 
     /* #[test]
     fn test_perft() {
@@ -131,8 +133,9 @@ mod tests {
 
         assert_eq!(perft(&pos_a, 2, &precomp), 601);
 
-        /* let pos_a = pos_a.do_move(&Move::from_uci("d2d4").unwrap());
-        assert_eq!(perft(&pos_a, 1, &precomp), 3); */
+        let m = pos_a.validate(&Uci::from_str("d2d4").unwrap()).unwrap();
+        let pos_a = pos_a.do_move(&m);
+        assert_eq!(perft(&pos_a, 1, &precomp), 3);
 
         let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
         assert_eq!(perft(&pos_b, 2, &precomp), 762);
