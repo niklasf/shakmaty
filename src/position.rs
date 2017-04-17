@@ -333,9 +333,9 @@ impl Position for Standard {
 }
 
 impl Default for Standard {
-    fn default() -> Standard {
+    fn default() -> Self {
         Standard {
-            board: Board::new(),
+            board: Board::default(),
 
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),

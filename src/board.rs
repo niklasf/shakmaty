@@ -281,6 +281,12 @@ impl Board {
     }
 }
 
+impl Default for Board {
+    fn default() -> Self {
+        Board::new()
+    }
+}
+
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
