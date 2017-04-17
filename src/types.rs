@@ -120,6 +120,7 @@ impl Piece {
     }
 }
 
+/// Information about a move.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
@@ -165,6 +166,7 @@ impl fmt::Display for Move {
     }
 }
 
+/// A move as represented in the UCI protocol.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Uci {
     Normal { from: Square, to: Square, promotion: Option<Role> },
