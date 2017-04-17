@@ -130,6 +130,23 @@ pub enum Move {
     Null
 }
 
+impl Move {
+    pub fn to_uci(&self) -> Uci {
+        match *self {
+            Move::Normal { role: _, from, capture: _, to, promotion } =>
+                Uci::Normal { from, to, promotion },
+            Move::EnPassant { from, to, .. } =>
+                Uci::Normal { from, to, promotion: None },
+            Move::Castle { king, rook } =>
+                Uci::Normal { from: king, to: rook, promotion: None },  // Chess960-style
+            Move::Put { role, to } =>
+                Uci::Put { role, to },
+            Move::Null =>
+                Uci::Null
+        }
+    }
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
