@@ -138,6 +138,15 @@ pub trait Position : Clone + Default {
         fen
     }
 
+    fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square, precomp: &Precomp) {
+        self.legal_moves(moves, precomp);
+        moves.retain(|m| match *m {
+            Move::Normal { from, to, .. } =>
+                to == target && self.board().by_piece(role.of(self.turn())).contains(from),
+            _ => false
+        })
+    }
+
     fn san(self, m: &Move, precomp: &Precomp) -> String {
         fn suffix<P: Position>(pos: P, m: &Move, precomp: &Precomp) -> &'static str {
             let after = pos.do_move(m);
@@ -159,9 +168,30 @@ pub trait Position : Clone + Default {
                 if role != Role::Pawn {
                     san.push(role.char().to_ascii_uppercase());
 
-                    // TODO: Disambiguate
+                    // Disambiguate.
                     let mut legals = Vec::new();
-                    self.legal_moves(&mut legals, precomp);
+                    self.san_candidates(&mut legals, role, to, precomp);
+
+                    let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
+                        Move::Normal { from: candidate, .. } =>
+                            if m == c {
+                                (rank, file)
+                            } else if from.rank() == candidate.rank() {
+                                (rank, true)
+                            } else if from.file() == candidate.file() {
+                                (true, file)
+                            } else {
+                                (rank, true)
+                            },
+                        _ => (rank, file)
+                    });
+
+                    if file {
+                        san.push(from.file_char());
+                    }
+                    if rank {
+                        san.push(from.rank_char());
+                    }
                 }
 
                 if self.board().occupied().contains(to) {

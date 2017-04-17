@@ -27,6 +27,8 @@ impl Square {
         sq >> 3
     }
 
+    pub fn rank_char(self) -> char { ('1' as u8 + self.rank() as u8) as char }
+
     pub fn offset(self, delta: i8) -> Option<Square> {
         let Square(sq) = self;
         if 0 <= sq + delta && sq + delta < 64 {
