@@ -2,6 +2,11 @@ use attacks::Precomp;
 use types::Move;
 use position::Position;
 
+/// Counts legal move paths of a given length.
+///
+/// Paths with mate or stalemate are not counted unless it occurs in the final
+/// position. Useful for comparing, testing and debugging move generation
+/// correctness and performance.
 pub fn perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
@@ -17,6 +22,23 @@ pub fn perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
                 perft(&child, depth - 1, precomp)
             }).sum()
         }
+    }
+}
+
+#[allow(unused)]
+fn debug_perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
+    if depth < 1 {
+        1
+    } else {
+        let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
+        pos.legal_moves(&mut moves, precomp);
+
+        moves.iter().map(|m| {
+            let child = pos.clone().do_move(m);
+            let nodes = perft(&child, depth - 1, precomp);
+            println!("{}: {}", m, nodes);
+            nodes
+        }).sum()
     }
 }
 
@@ -131,7 +153,7 @@ mod tests {
         let precomp = Precomp::new();
         let pos_a = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
-        assert_eq!(perft(&pos_a, 2, &precomp), 601);
+        assert_eq!(debug_perft(&pos_a, 2, &precomp), 601);
 
         let m = pos_a.validate(&Uci::from_str("d2d4").unwrap()).unwrap();
         let pos_a = pos_a.do_move(&m);
