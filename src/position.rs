@@ -174,7 +174,7 @@ pub trait Position : Clone + Default {
 
                     let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
                         Move::Normal { from: candidate, .. } =>
-                            if m == c {
+                            if from == candidate {
                                 (rank, file)
                             } else if from.rank() == candidate.rank() {
                                 (rank, true)
