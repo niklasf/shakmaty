@@ -656,15 +656,10 @@ mod tests {
     fn test_castling_moves() {
         let precomp = Precomp::new();
 
-        let pos = Standard::default()
-            .do_move(&Move::from_uci("g1f3").unwrap())
-            .do_move(&Move::from_uci("0000").unwrap())
-            .do_move(&Move::from_uci("g2g3").unwrap())
-            .do_move(&Move::from_uci("0000").unwrap())
-            .do_move(&Move::from_uci("f1g2").unwrap())
-            .do_move(&Move::from_uci("0000").unwrap());
+        let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
+        let pos = Standard::from_fen(fen).unwrap();
 
-        let castle = Move::from_uci("e1g1").unwrap();
+        let castle = pos.validate(&Uci::from_str("e1g1").unwrap()).unwrap();
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));
@@ -689,6 +684,7 @@ mod tests {
     fn test_san() {
         let precomp = Precomp::new();
         let pos = Standard::default();
-        assert_eq!(pos.san(&Move::from_uci("g1f3").unwrap(), &precomp), "Nf3");
+        let m = Move::Normal { role: Role::Knight, from: square::G1, capture: None, to: square::F3, promotion: None };
+        assert_eq!(pos.san(&m, &precomp), "Nf3");
     }
 }

@@ -26,7 +26,7 @@ mod tests {
     use test::Bencher;
     use position::Standard;
 
-    #[test]
+    /* #[test]
     fn test_perft() {
         let precomp = Precomp::new();
 
@@ -136,7 +136,7 @@ mod tests {
 
         let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
         assert_eq!(perft(&pos_b, 2, &precomp), 762);
-    }
+    } */
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
