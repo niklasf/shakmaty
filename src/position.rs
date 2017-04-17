@@ -78,6 +78,8 @@ impl fmt::Display for Pockets {
 }
 
 pub trait Position : Clone + Default {
+    const MAX_LEGAL_MOVES: usize;
+
     fn board(&self) -> &Board;
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color;
@@ -207,6 +209,8 @@ pub struct Standard {
 }
 
 impl Position for Standard {
+    const MAX_LEGAL_MOVES: usize = 255;
+
     fn board(&self) -> &Board { &self.board }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
