@@ -2,7 +2,6 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use std::char;
 use std::ops;
-use std::str::FromStr;
 
 use square::Square;
 
@@ -120,61 +119,7 @@ impl Piece {
     }
 }
 
-/* /// A normal move, piece drop or null move.
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum Uci {
-    Normal { from: Square, to: Square, promotion: Option<Role> },
-    Put { to: Square, role: Role },
-    Null
-}
-
-impl Uci {
-    pub fn from_uci(uci: &str) -> Option<Uci> {
-        if uci.len() < 4 || uci.len() > 5 {
-            return None
-        }
-
-        match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
-            (Ok(from), Ok(to), Some(promotion)) =>
-                return Role::from_char(promotion).map(|role| {
-                    UciMove::Normal { from, to, promotion: Some(role) }
-                }),
-            (Ok(from), Ok(to), None) =>
-                return Some(Move::Normal { from, to, promotion: None }),
-            _ => ()
-        }
-
-        match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
-            (Some(piece), Some('@'), Ok(to)) =>
-                return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
-                    UciMove::Put { role, to }
-                }),
-            _ => ()
-        }
-
-        if uci == "0000" {
-            return Some(Uci::Null)
-        }
-
-        None
-    }
-}
-
-impl fmt::Display for UciMove {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Move::Normal { from, to, promotion: None } =>
-                write!(f, "{}{}", from, to),
-            Move::Normal { from, to, promotion: Some(promotion) } =>
-                write!(f, "{}{}{}", from, to, promotion.char()),
-            Move::Put { to, role } =>
-                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
-            Move::Null =>
-                write!(f, "0000")
-        }
-    }
-} */
-
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square, pawn: Square },

@@ -225,7 +225,7 @@ pub trait Position : Clone + Default {
 
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
 
-    fn do_move(mut self, m: &Move) -> Self;
+    fn do_move(self, m: &Move) -> Self;
 }
 
 #[derive(Clone)]

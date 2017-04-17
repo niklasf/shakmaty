@@ -220,6 +220,7 @@ impl Board {
             self.occupied.flip(sq);
             self.mut_by_color(piece.color).flip(sq);
             self.mut_by_role(piece.role).flip(sq);
+            self.promoted.discard(sq);
             piece
         })
     }

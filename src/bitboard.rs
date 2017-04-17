@@ -104,7 +104,6 @@ impl Bitboard {
         self.0 &= !bb;
     }
 
-    #[must_use]
     pub fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {
             self.flip(sq);
