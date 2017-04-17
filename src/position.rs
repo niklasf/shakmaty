@@ -6,7 +6,7 @@ use std::fmt;
 
 use square;
 use square::Square;
-use types::{ Color, White, Black, Role, Piece, Move, ROLES };
+use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
 use bitboard::Bitboard;
 use board::Board;
 use attacks::Precomp;
@@ -226,6 +226,18 @@ pub trait Position : Clone + Default {
     fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
 
     fn do_move(self, m: &Move) -> Self;
+
+    fn validate(&self, uci: &Uci) -> Option<Move> {
+        match *uci {
+            Uci::Normal { from, to, promotion } => {
+                self.board().role_at(from).map(|role| {
+                    Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
+                })
+            },
+            Uci::Put { role, to } => Some(Move::Put { role, to }),
+            Uci::Null => Some(Move::Null)
+        }
+    }
 }
 
 #[derive(Clone)]
