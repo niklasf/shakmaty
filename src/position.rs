@@ -89,21 +89,36 @@ pub struct Position {
     fullmoves: u32,
 }
 
+impl Default for Position {
+    fn default() -> Self {
+        Position {
+            board: Board::default(),
+
+            turn: White,
+            castling_rights: Bitboard(0x8100000000000081),
+            ep_square: None,
+
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
 impl Position {
-    fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
-    fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    pub fn board(&self) -> &Board { &self.board }
+    pub fn pockets(&self) -> Option<&Pockets> { None }
+    pub fn turn(&self) -> Color { self.turn }
+    pub fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    pub fn ep_square(&self) -> Option<Square> { self.ep_square }
+    pub fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    pub fn fullmoves(&self) -> u32 { self.fullmoves }
 
     fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.board().piece_at(sq)
     }
 
-    fn fen(&self) -> String {
+    pub fn fen(&self) -> String {
         let pockets = self.pockets()
                           .map_or("".to_owned(), |p| format!("[{}]", p));
 
@@ -157,7 +172,7 @@ impl Position {
         })
     }
 
-    fn san(self, m: &Move) -> String {
+    pub fn san(self, m: &Move) -> String {
         fn suffix(pos: Position, m: &Move) -> &'static str {
             let after = pos.do_move(m);
 
@@ -333,24 +348,7 @@ impl Position {
 
         moves.retain(|m| self.is_safe(m, blockers));
     }
-}
 
-impl Default for Position {
-    fn default() -> Self {
-        Position {
-            board: Board::default(),
-
-            turn: White,
-            castling_rights: Bitboard(0x8100000000000081),
-            ep_square: None,
-
-            halfmove_clock: 0,
-            fullmoves: 1,
-        }
-    }
-}
-
-impl Position {
     pub fn empty() -> Position {
         Position {
             board: Board::empty(),
