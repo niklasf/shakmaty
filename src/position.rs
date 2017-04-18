@@ -9,7 +9,7 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
 use bitboard::Bitboard;
 use board::Board;
-use attacks::PRECOMP;
+use attacks;
 
 pub struct RemainingChecks {
     pub white: u8,
@@ -510,36 +510,36 @@ impl Standard {
     fn gen_pseudo_legal(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>) {
         for from in self.our(Role::King) & selection {
             self.push_moves(moves, Role::King, from,
-                            PRECOMP.king_attacks(from) & !self.us() & target);
+                            attacks::king_attacks(from) & !self.us() & target);
         }
 
         for from in self.our(Role::Knight) & selection {
             self.push_moves(moves, Role::Knight, from,
-                            PRECOMP.knight_attacks(from) & !self.us() & target);
+                            attacks::knight_attacks(from) & !self.us() & target);
         }
 
         for from in self.our(Role::Rook) & selection {
             self.push_moves(moves, Role::Rook, from,
-                            PRECOMP.rook_attacks(from, self.board.occupied()) & !self.us() & target);
+                            attacks::rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Queen) & selection {
             self.push_moves(moves, Role::Queen, from,
-                            PRECOMP.rook_attacks(from, self.board.occupied()) & !self.us() & target);
+                            attacks::rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Bishop) & selection {
             self.push_moves(moves, Role::Bishop, from,
-                            PRECOMP.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
+                            attacks::bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Queen) & selection {
             self.push_moves(moves, Role::Queen, from,
-                            PRECOMP.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
+                            attacks::bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Pawn) {
-            for to in PRECOMP.pawn_attacks(self.turn, from) & self.them() & target {
+            for to in attacks::pawn_attacks(self.turn, from) & self.them() & target {
                 self.push_pawn_moves(moves, from, to);
             }
         }
@@ -566,20 +566,20 @@ impl Standard {
 
     fn gen_en_passant(&self, moves: &mut Vec<Move>) {
         if let Some(to) = self.ep_square {
-            for from in self.our(Role::Pawn) & PRECOMP.pawn_attacks(!self.turn, to) {
+            for from in self.our(Role::Pawn) & attacks::pawn_attacks(!self.turn, to) {
                 moves.push(Move::EnPassant { from, to, pawn: to.offset(self.turn.fold(-8, 8)).unwrap() }); // XXX
             }
         }
     }
 
     fn slider_blockers(&self, sliders: Bitboard, sq: Square) -> Bitboard {
-        let snipers = (PRECOMP.rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
-                      (PRECOMP.bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
+        let snipers = (attacks::rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
+                      (attacks::bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
 
         let mut blockers = Bitboard(0);
 
         for sniper in snipers & sliders {
-            let b = PRECOMP.between(sq, sniper) & self.board.occupied();
+            let b = attacks::between(sq, sniper) & self.board.occupied();
 
             if !b.more_than_one() {
                 blockers = blockers | b;
@@ -596,7 +596,7 @@ impl Standard {
                     (self.board.attacks_to(to) & self.them()).is_empty()
                 } else {
                     !(self.us() & blockers).contains(from) ||
-                    PRECOMP.aligned(from, to, self.our(Role::King).first().unwrap())
+                    attacks::aligned(from, to, self.our(Role::King).first().unwrap())
                 },
             Move::EnPassant { from, to, pawn } => {
                 let mut occupied = self.board.occupied();
@@ -605,8 +605,8 @@ impl Standard {
                 occupied.add(to);
 
                 self.our(Role::King).first().map(|king| {
-                    (PRECOMP.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
-                    (PRECOMP.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
+                    (attacks::rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
+                    (attacks::bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
                 }).unwrap_or(true)
             },
             Move::Castle { .. } => {
@@ -623,15 +623,15 @@ impl Standard {
 
         let mut attacked = Bitboard(0);
         for checker in sliders {
-            attacked = attacked | PRECOMP.ray(checker, king).without(checker);
+            attacked = attacked | attacks::ray(checker, king).without(checker);
         }
 
-        for to in PRECOMP.king_attacks(king) & !self.us() & !attacked {
+        for to in attacks::king_attacks(king) & !self.us() & !attacked {
             moves.push(Move::Normal { role: Role::King, from: king, capture: self.board.role_at(to), to, promotion: None });
         }
 
         if let Some(checker) = checkers.single_square() {
-            let target = PRECOMP.between(king, checker).with(checker);
+            let target = attacks::between(king, checker).with(checker);
             self.gen_pseudo_legal(!self.board.kings(), target, moves);
             self.gen_en_passant(moves);
         }
@@ -650,10 +650,10 @@ impl Standard {
                      self.turn.fold(square::D1, square::D8))
                 };
 
-                let empty_for_king = PRECOMP.between(king, king_to).with(king_to)
+                let empty_for_king = attacks::between(king, king_to).with(king_to)
                                             .without(rook).without(king);
 
-                let empty_for_rook = PRECOMP.between(rook, rook_to).with(rook_to)
+                let empty_for_rook = attacks::between(rook, rook_to).with(rook_to)
                                             .without(rook).without(king);
 
                 if !(self.board.occupied() & empty_for_king).is_empty() {
@@ -664,13 +664,13 @@ impl Standard {
                     continue;
                 }
 
-                for sq in PRECOMP.between(king, king_to).with(king).with(king_to) {
+                for sq in attacks::between(king, king_to).with(king).with(king_to) {
                     if !(self.board.attacks_to(sq) & self.them()).is_empty() {
                         continue 'next_rook;
                     }
                 }
 
-                if !(PRECOMP.rook_attacks(king_to, self.board.occupied().without(rook)) &
+                if !(attacks::rook_attacks(king_to, self.board.occupied().without(rook)) &
                      self.them() & self.board.rooks_and_queens()).is_empty() {
                     continue;
                 }

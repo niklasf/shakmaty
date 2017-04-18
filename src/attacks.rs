@@ -83,7 +83,7 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
 /// assert!(attacks.contains(square::G6));
 /// assert!(!attacks.contains(square::H7));
 /// ```
-pub struct Precomp {
+struct Precomp {
     knight_attacks: [Bitboard; 64],
     king_attacks: [Bitboard; 64],
     white_pawn_attacks: [Bitboard; 64],
@@ -203,55 +203,87 @@ impl Precomp {
         Bitboard::deposit(self.bishop_attacks[index] as u64, range)
     }
 
-    pub fn queen_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
-        self.rook_attacks(sq, occupied) | self.bishop_attacks(sq, occupied)
-    }
-
-    pub fn attacks(&self, sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> Bitboard {
-        match role {
-            Role::Pawn   => self.pawn_attacks(color, sq),
-            Role::Knight => self.knight_attacks(sq),
-            Role::Bishop => self.bishop_attacks(sq, occupied),
-            Role::Rook   => self.rook_attacks(sq, occupied),
-            Role::Queen  => self.queen_attacks(sq, occupied),
-            Role::King   => self.king_attacks(sq)
-        }
-    }
-
-    /// The rank, file or diagonal with the two squares (or an empty `Bitboard`
-    /// if they are not aligned).
-    ///
-    /// ```
-    /// # use shakmaty::square;
-    /// # use shakmaty::Precomp;
-    /// let precomp = Precomp::new();
-    /// let ray = precomp.ray(square::E2, square::G4);
-    /// // . . . . . . . .
-    /// // . . . . . . . .
-    /// // . . . . . . . .
-    /// // . . . . . . . 1
-    /// // . . . . . . 1 .
-    /// // . . . . . 1 . .
-    /// // . . . . 1 . . .
-    /// // . . . 1 . . . .
-    /// ```
     pub fn ray(&self, Square(a): Square, Square(b): Square) -> Bitboard {
         self.bb_rays[a as usize][b as usize]
     }
 
-    /// Like `ray`, but just the squares in-between (exluding the bounds).
     pub fn between(&self, Square(a): Square, Square(b): Square) -> Bitboard {
         self.bb_between[a as usize][b as usize]
     }
 
-    /// Tests if all three squares are aligned on a rank, file or diagonal.
     pub fn aligned(&self, a: Square, b: Square, c: Square) -> bool {
         self.ray(a, b).contains(c)
     }
 }
 
 lazy_static! {
-    pub static ref PRECOMP: Precomp = Precomp::new();
+    static ref PRECOMP: Precomp = Precomp::new();
+}
+
+pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
+    PRECOMP.pawn_attacks(color, sq)
+}
+
+pub fn knight_attacks(sq: Square) -> Bitboard {
+    PRECOMP.knight_attacks(sq)
+}
+
+pub fn king_attacks(sq: Square) -> Bitboard {
+    PRECOMP.king_attacks(sq)
+}
+
+pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    PRECOMP.rook_attacks(sq, occupied)
+}
+
+pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    PRECOMP.bishop_attacks(sq, occupied)
+}
+
+pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    rook_attacks(sq, occupied) | bishop_attacks(sq, occupied)
+}
+
+pub fn attacks(sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> Bitboard {
+    match role {
+        Role::Pawn   => pawn_attacks(color, sq),
+        Role::Knight => knight_attacks(sq),
+        Role::Bishop => bishop_attacks(sq, occupied),
+        Role::Rook   => rook_attacks(sq, occupied),
+        Role::Queen  => queen_attacks(sq, occupied),
+        Role::King   => king_attacks(sq)
+    }
+}
+
+/// The rank, file or diagonal with the two squares (or an empty `Bitboard`
+/// if they are not aligned).
+///
+/// ```
+/// # use shakmaty::square;
+/// # use shakmaty::Precomp;
+/// let precomp = Precomp::new();
+/// let ray = precomp.ray(square::E2, square::G4);
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . . . . .
+/// // . . . . . . . 1
+/// // . . . . . . 1 .
+/// // . . . . . 1 . .
+/// // . . . . 1 . . .
+/// // . . . 1 . . . .
+/// ```
+pub fn ray(a: Square, b: Square) -> Bitboard {
+    PRECOMP.ray(a, b)
+}
+
+/// Like `ray`, but just the squares in-between (exluding the bounds).
+pub fn between(a: Square, b: Square) -> Bitboard {
+    PRECOMP.between(a, b)
+}
+
+/// Tests if all three squares are aligned on a rank, file or diagonal.
+pub fn aligned(a: Square, b: Square, c: Square) -> bool {
+    PRECOMP.aligned(a, b, c)
 }
 
 #[cfg(test)]
@@ -266,7 +298,6 @@ mod tests {
 
     #[test]
     fn test_rook_attacks() {
-        let table = Precomp::new();
-        assert_eq!(table.rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
+        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
     }
 }

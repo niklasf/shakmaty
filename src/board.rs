@@ -5,7 +5,7 @@ use std::char;
 use square::Square;
 use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
-use attacks::PRECOMP;
+use attacks;
 
 /// Piece positions on a board.
 ///
@@ -269,16 +269,16 @@ impl Board {
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
         self.piece_at(sq)
-            .map_or(Bitboard(0), |piece| PRECOMP.attacks(sq, piece, self.occupied))
+            .map_or(Bitboard(0), |piece| attacks::attacks(sq, piece, self.occupied))
     }
 
     pub fn attacks_to(&self, sq: Square) -> Bitboard {
-        (PRECOMP.rook_attacks(sq, self.occupied) & (self.rooks | self.queens)) |
-        (PRECOMP.bishop_attacks(sq, self.occupied) & (self.bishops | self.queens)) |
-        (PRECOMP.knight_attacks(sq) & self.knights) |
-        (PRECOMP.king_attacks(sq) & self.kings) |
-        (PRECOMP.pawn_attacks(Color::White, sq) & self.pawns & self.black) |
-        (PRECOMP.pawn_attacks(Color::Black, sq) & self.pawns & self.white)
+        (attacks::rook_attacks(sq, self.occupied) & (self.rooks | self.queens)) |
+        (attacks::bishop_attacks(sq, self.occupied) & (self.bishops | self.queens)) |
+        (attacks::knight_attacks(sq) & self.knights) |
+        (attacks::king_attacks(sq) & self.kings) |
+        (attacks::pawn_attacks(Color::White, sq) & self.pawns & self.black) |
+        (attacks::pawn_attacks(Color::Black, sq) & self.pawns & self.white)
     }
 }
 
