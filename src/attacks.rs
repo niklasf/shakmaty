@@ -174,21 +174,6 @@ impl Precomp {
         precomp
     }
 
-    pub fn pawn_attacks(&self, color: Color, Square(sq): Square) -> Bitboard {
-        match color {
-            Color::White => self.white_pawn_attacks[sq as usize],
-            Color::Black => self.black_pawn_attacks[sq as usize],
-        }
-    }
-
-    pub fn knight_attacks(&self, Square(sq): Square) -> Bitboard {
-        self.knight_attacks[sq as usize]
-    }
-
-    pub fn king_attacks(&self, Square(sq): Square) -> Bitboard {
-        self.king_attacks[sq as usize]
-    }
-
     pub fn rook_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
         let mask = self.rook_masks[sq as usize];
         let range = self.rook_ranges[sq as usize];
@@ -203,12 +188,8 @@ impl Precomp {
         Bitboard::deposit(self.bishop_attacks[index] as u64, range)
     }
 
-    pub fn ray(&self, Square(a): Square, Square(b): Square) -> Bitboard {
-        self.bb_rays[a as usize][b as usize]
-    }
-
-    pub fn between(&self, Square(a): Square, Square(b): Square) -> Bitboard {
-        self.bb_between[a as usize][b as usize]
+    pub fn queen_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
+        self.rook_attacks(sq, occupied) | self.bishop_attacks(sq, occupied)
     }
 }
 
@@ -216,16 +197,19 @@ lazy_static! {
     static ref PRECOMP: Precomp = Precomp::new();
 }
 
-pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
-    PRECOMP.pawn_attacks(color, sq)
+pub fn pawn_attacks(color: Color, Square(sq): Square) -> Bitboard {
+    match color {
+        Color::White => PRECOMP.white_pawn_attacks[sq as usize],
+        Color::Black => PRECOMP.black_pawn_attacks[sq as usize],
+    }
 }
 
-pub fn knight_attacks(sq: Square) -> Bitboard {
-    PRECOMP.knight_attacks(sq)
+pub fn knight_attacks(Square(sq): Square) -> Bitboard {
+    PRECOMP.knight_attacks[sq as usize]
 }
 
-pub fn king_attacks(sq: Square) -> Bitboard {
-    PRECOMP.king_attacks(sq)
+pub fn king_attacks(Square(sq): Square) -> Bitboard {
+    PRECOMP.king_attacks[sq as usize]
 }
 
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
@@ -237,7 +221,7 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 }
 
 pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    rook_attacks(sq, occupied) | bishop_attacks(sq, occupied)
+    PRECOMP.queen_attacks(sq, occupied)
 }
 
 pub fn attacks(sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> Bitboard {
@@ -268,13 +252,13 @@ pub fn attacks(sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> 
 /// // . . . . 1 . . .
 /// // . . . 1 . . . .
 /// ```
-pub fn ray(a: Square, b: Square) -> Bitboard {
-    PRECOMP.ray(a, b)
+pub fn ray(Square(a): Square, Square(b): Square) -> Bitboard {
+    PRECOMP.bb_rays[a as usize][b as usize]
 }
 
 /// Like `ray`, but just the squares in-between (exluding the bounds).
-pub fn between(a: Square, b: Square) -> Bitboard {
-    PRECOMP.between(a, b)
+pub fn between(Square(a): Square, Square(b): Square) -> Bitboard {
+    PRECOMP.bb_between[a as usize][b as usize]
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
