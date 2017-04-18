@@ -21,4 +21,4 @@ pub use square::Square;
 pub use types::{Color, Role, Piece, Move};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
-pub use position::{Position, Standard};
+pub use position::Position;

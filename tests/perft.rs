@@ -1,6 +1,6 @@
 extern crate shakmaty;
 
-use shakmaty::position::Standard;
+use shakmaty::Position;
 use shakmaty::perft;
 
 use std::io::BufReader;
@@ -11,7 +11,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
     let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
 
-    let mut pos = Standard::default();
+    let mut pos = Position::default();
 
     for line in reader.lines().map(|l| l.unwrap()) {
         println!("{}", line);
@@ -21,7 +21,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
 
         match slices.next() {
             Some("epd") => {
-                pos = Standard::from_fen(slices.next().unwrap()).unwrap()
+                pos = Position::from_fen(slices.next().unwrap()).unwrap()
             },
             Some("perft") => {
                 let mut params = slices.next().unwrap().splitn(2, ' ');
