@@ -2,15 +2,12 @@ extern crate shakmaty;
 
 use shakmaty::position::Standard;
 use shakmaty::perft;
-use shakmaty::Precomp;
 
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
 fn test_perft_file(path: &str, node_limit: usize) {
-    let precomp = Precomp::new();
-
     let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
 

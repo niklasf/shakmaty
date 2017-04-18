@@ -1,4 +1,3 @@
-use attacks::Precomp;
 use types::Move;
 use position::Position;
 
@@ -49,64 +48,59 @@ mod tests {
     use types::Uci;
     use std::str::FromStr;
 
-    fn do_uci<P: Position>(pos: P, uci: &str, precomp: &Precomp) -> Option<P> {
+    fn do_uci<P: Position>(pos: P, uci: &str) -> Option<P> {
         Uci::from_str(uci).ok()
-            .and_then(|u| pos.validate(&u, precomp))
+            .and_then(|u| pos.validate(&u))
             .map(|m| pos.do_move(&m))
     }
 
     #[test]
     fn test_prevented_castling() {
-        let precomp = Precomp::new();
-
-        let pos = do_uci(Standard::default(), "g1f3", &precomp)
-            .and_then(|p| do_uci(p, "a7a5", &precomp))
-            .and_then(|p| do_uci(p, "g2g3", &precomp))
+        let pos = do_uci(Standard::default(), "g1f3")
+            .and_then(|p| do_uci(p, "a7a5"))
+            .and_then(|p| do_uci(p, "g2g3"))
             .unwrap();
 
         assert_eq!(perft(&pos, 4), 282514);
 
-        let pos = do_uci(pos, "d7d6", &precomp).unwrap();
+        let pos = do_uci(pos, "d7d6").unwrap();
         assert_eq!(perft(&pos, 3), 16080);
 
-        let pos = do_uci(pos, "f1h3", &precomp).unwrap();
+        let pos = do_uci(pos, "f1h3").unwrap();
         assert_eq!(perft(&pos, 2), 755);
 
-        let pos = do_uci(pos, "c8h3", &precomp).unwrap();
+        let pos = do_uci(pos, "c8h3").unwrap();
         assert_eq!(perft(&pos, 1), 20);
     }
 
     #[test]
     fn test_forfeit_castling_rights() {
-        let precomp = Precomp::new();
-
-        let pos = do_uci(Standard::default(), "b2b3", &precomp)
-            .and_then(|p| do_uci(p, "g8h6", &precomp))
-            .and_then(|p| do_uci(p, "c1a3", &precomp))
-            .and_then(|p| do_uci(p, "e7e6", &precomp))
+        let pos = do_uci(Standard::default(), "b2b3")
+            .and_then(|p| do_uci(p, "g8h6"))
+            .and_then(|p| do_uci(p, "c1a3"))
+            .and_then(|p| do_uci(p, "e7e6"))
             .unwrap();
 
         assert_eq!(perft(&pos, 4), 482138);
 
-        let pos = do_uci(pos, "a3f8", &precomp).unwrap();
+        let pos = do_uci(pos, "a3f8").unwrap();
         assert_eq!(perft(&pos, 3), 16924);
 
-        let pos = do_uci(pos, "e8f8", &precomp).unwrap();
+        let pos = do_uci(pos, "e8f8").unwrap();
         assert_eq!(perft(&pos, 2), 540);
 
-        let pos = do_uci(pos, "a2a3", &precomp).unwrap();
+        let pos = do_uci(pos, "a2a3").unwrap();
         assert_eq!(perft(&pos, 1), 27);
     }
 
     #[test]
     fn test_en_passant_evasion() {
-        let precomp = Precomp::new();
         let pos_a = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
         assert_eq!(perft(&pos_a, 1), 26);
         assert_eq!(perft(&pos_a, 2), 601);
 
-        let pos_a = do_uci(pos_a, "d2d4", &precomp).unwrap();
+        let pos_a = do_uci(pos_a, "d2d4").unwrap();
         assert_eq!(perft(&pos_a, 1), 3);
 
         let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
@@ -115,7 +109,6 @@ mod tests {
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
-        let precomp = Precomp::new();
         let pos = Standard::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }

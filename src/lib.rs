@@ -5,6 +5,9 @@
 
 extern crate test;
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod square;
 mod types;
 mod bitboard;

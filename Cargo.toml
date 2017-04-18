@@ -8,5 +8,8 @@ readme = "README.md"
 license = "GPL3"
 authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
 
+[dependencies]
+lazy_static = "0.2"
+
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }

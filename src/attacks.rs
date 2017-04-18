@@ -250,8 +250,8 @@ impl Precomp {
     }
 }
 
-thread_local! {
-    pub static PRECOMP: Precomp = Precomp::new();
+lazy_static! {
+    pub static ref PRECOMP: Precomp = Precomp::new();
 }
 
 #[cfg(test)]

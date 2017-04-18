@@ -9,7 +9,7 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
 use bitboard::Bitboard;
 use board::Board;
-use attacks::{Precomp, PRECOMP};
+use attacks::PRECOMP;
 
 pub struct RemainingChecks {
     pub white: u8,
@@ -138,7 +138,7 @@ pub trait Position : Clone + Default {
         fen
     }
 
-    fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square, precomp: &Precomp) {
+    fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
         self.legal_moves(moves);
         moves.retain(|m| match *m {
             Move::Normal { from, to, .. } =>
@@ -147,11 +147,11 @@ pub trait Position : Clone + Default {
         })
     }
 
-    fn san(self, m: &Move, precomp: &Precomp) -> String {
-        fn suffix<P: Position>(pos: P, m: &Move, precomp: &Precomp) -> &'static str {
+    fn san(self, m: &Move) -> String {
+        fn suffix<P: Position>(pos: P, m: &Move) -> &'static str {
             let after = pos.do_move(m);
 
-            if after.checkers(precomp).is_empty() {
+            if after.checkers().is_empty() {
                 ""
             } else {
                 let mut legals = Vec::new();
@@ -169,7 +169,7 @@ pub trait Position : Clone + Default {
 
                     // Disambiguate.
                     let mut legals = Vec::new();
-                    self.san_candidates(&mut legals, role, to, precomp);
+                    self.san_candidates(&mut legals, role, to);
 
                     let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
                         Move::Normal { from: candidate, .. } =>
@@ -207,27 +207,27 @@ pub trait Position : Clone + Default {
                     san.push(r.char().to_ascii_uppercase());
                 });
 
-                san.push_str(suffix(self, m, precomp));
+                san.push_str(suffix(self, m));
 
                 san
             },
-            Move::EnPassant { from, to, .. } => format!("{}x{}{}", from.file_char(), to, suffix(self, m, precomp)),
-            Move::Castle { .. } => format!("{}{}", m, suffix(self, m, precomp)),
-            Move::Put { to, role } => format!("{}@{}{}", role.char().to_ascii_uppercase(), to, suffix(self, m, precomp)),
+            Move::EnPassant { from, to, .. } => format!("{}x{}{}", from.file_char(), to, suffix(self, m)),
+            Move::Castle { .. } => format!("{}{}", m, suffix(self, m)),
+            Move::Put { to, role } => format!("{}@{}{}", role.char().to_ascii_uppercase(), to, suffix(self, m)),
             Move::Null => "--".to_owned()
         }
     }
 
-    fn checkers(&self, precomp: &Precomp) -> Bitboard {
+    fn checkers(&self) -> Bitboard {
         self.board().king_of(self.turn())
-            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king, precomp))
+            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
     fn legal_moves(&self, moves: &mut Vec<Move>);
 
     fn do_move(self, m: &Move) -> Self;
 
-    fn validate(&self, uci: &Uci, _precomp: &Precomp) -> Option<Move> {
+    fn validate(&self, uci: &Uci) -> Option<Move> {
         match *uci {
             Uci::Normal { from, to, promotion } => {
                 self.board().role_at(from).map(|role| {
@@ -350,21 +350,18 @@ impl Position for Standard {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 
     fn legal_moves(&self, moves: &mut Vec<Move>) {
-        PRECOMP.with(|precomp| {
-            if self.checkers(precomp).is_empty() {
-                self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
-                self.gen_en_passant(moves, precomp);
-                self.gen_castling_moves(moves, precomp);
-            } else {
-                self.evasions(moves, precomp);
-            }
+        if self.checkers().is_empty() {
+            self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves);
+            self.gen_en_passant(moves);
+            self.gen_castling_moves(moves);
+        } else {
+            self.evasions(moves);
+        }
 
-            let blockers = self.slider_blockers(self.them(),
-                                                self.board.king_of(self.turn()).unwrap(),
-                                                precomp);
+        let blockers = self.slider_blockers(self.them(),
+                                            self.board.king_of(self.turn()).unwrap());
 
-            moves.retain(|m| self.is_safe(m, blockers, precomp));
-        })
+        moves.retain(|m| self.is_safe(m, blockers));
     }
 
     fn do_move(self, m: &Move) -> Standard {
@@ -510,39 +507,39 @@ impl Standard {
         }
     }
 
-    fn gen_pseudo_legal(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn gen_pseudo_legal(&self, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>) {
         for from in self.our(Role::King) & selection {
             self.push_moves(moves, Role::King, from,
-                            precomp.king_attacks(from) & !self.us() & target);
+                            PRECOMP.king_attacks(from) & !self.us() & target);
         }
 
         for from in self.our(Role::Knight) & selection {
             self.push_moves(moves, Role::Knight, from,
-                            precomp.knight_attacks(from) & !self.us() & target);
+                            PRECOMP.knight_attacks(from) & !self.us() & target);
         }
 
         for from in self.our(Role::Rook) & selection {
             self.push_moves(moves, Role::Rook, from,
-                            precomp.rook_attacks(from, self.board.occupied()) & !self.us() & target);
+                            PRECOMP.rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Queen) & selection {
             self.push_moves(moves, Role::Queen, from,
-                            precomp.rook_attacks(from, self.board.occupied()) & !self.us() & target);
+                            PRECOMP.rook_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Bishop) & selection {
             self.push_moves(moves, Role::Bishop, from,
-                            precomp.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
+                            PRECOMP.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Queen) & selection {
             self.push_moves(moves, Role::Queen, from,
-                            precomp.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
+                            PRECOMP.bishop_attacks(from, self.board.occupied()) & !self.us() & target);
         }
 
         for from in self.our(Role::Pawn) {
-            for to in precomp.pawn_attacks(self.turn, from) & self.them() & target {
+            for to in PRECOMP.pawn_attacks(self.turn, from) & self.them() & target {
                 self.push_pawn_moves(moves, from, to);
             }
         }
@@ -567,22 +564,22 @@ impl Standard {
         }
     }
 
-    fn gen_en_passant(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn gen_en_passant(&self, moves: &mut Vec<Move>) {
         if let Some(to) = self.ep_square {
-            for from in self.our(Role::Pawn) & precomp.pawn_attacks(!self.turn, to) {
+            for from in self.our(Role::Pawn) & PRECOMP.pawn_attacks(!self.turn, to) {
                 moves.push(Move::EnPassant { from, to, pawn: to.offset(self.turn.fold(-8, 8)).unwrap() }); // XXX
             }
         }
     }
 
-    fn slider_blockers(&self, sliders: Bitboard, sq: Square, precomp: &Precomp) -> Bitboard {
-        let snipers = (precomp.rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
-                      (precomp.bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
+    fn slider_blockers(&self, sliders: Bitboard, sq: Square) -> Bitboard {
+        let snipers = (PRECOMP.rook_attacks(sq, Bitboard(0)) & self.board.rooks_and_queens()) |
+                      (PRECOMP.bishop_attacks(sq, Bitboard(0)) & self.board.bishops_and_queens());
 
         let mut blockers = Bitboard(0);
 
         for sniper in snipers & sliders {
-            let b = precomp.between(sq, sniper) & self.board.occupied();
+            let b = PRECOMP.between(sq, sniper) & self.board.occupied();
 
             if !b.more_than_one() {
                 blockers = blockers | b;
@@ -592,14 +589,14 @@ impl Standard {
         blockers
     }
 
-    fn is_safe(&self, m: &Move, blockers: Bitboard, precomp: &Precomp) -> bool {
+    fn is_safe(&self, m: &Move, blockers: Bitboard) -> bool {
         match *m {
             Move::Normal { role, from, to, .. } =>
                 if role == Role::King {
-                    (self.board.attacks_to(to, precomp) & self.them()).is_empty()
+                    (self.board.attacks_to(to) & self.them()).is_empty()
                 } else {
                     !(self.us() & blockers).contains(from) ||
-                    precomp.aligned(from, to, self.our(Role::King).first().unwrap())
+                    PRECOMP.aligned(from, to, self.our(Role::King).first().unwrap())
                 },
             Move::EnPassant { from, to, pawn } => {
                 let mut occupied = self.board.occupied();
@@ -608,8 +605,8 @@ impl Standard {
                 occupied.add(to);
 
                 self.our(Role::King).first().map(|king| {
-                    (precomp.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
-                    (precomp.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
+                    (PRECOMP.rook_attacks(king, occupied) & self.them() & self.board.rooks_and_queens()).is_empty() &&
+                    (PRECOMP.bishop_attacks(king, occupied) & self.them() & self.board.bishops_and_queens()).is_empty()
                 }).unwrap_or(true)
             },
             Move::Castle { .. } => {
@@ -619,28 +616,28 @@ impl Standard {
         }
     }
 
-    fn evasions(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        let checkers = self.checkers(precomp);
+    fn evasions(&self, moves: &mut Vec<Move>) {
+        let checkers = self.checkers();
         let king = self.our(Role::King).first().unwrap();
         let sliders = checkers & self.board.sliders();
 
         let mut attacked = Bitboard(0);
         for checker in sliders {
-            attacked = attacked | precomp.ray(checker, king).without(checker);
+            attacked = attacked | PRECOMP.ray(checker, king).without(checker);
         }
 
-        for to in precomp.king_attacks(king) & !self.us() & !attacked {
+        for to in PRECOMP.king_attacks(king) & !self.us() & !attacked {
             moves.push(Move::Normal { role: Role::King, from: king, capture: self.board.role_at(to), to, promotion: None });
         }
 
         if let Some(checker) = checkers.single_square() {
-            let target = precomp.between(king, checker).with(checker);
-            self.gen_pseudo_legal(!self.board.kings(), target, moves, precomp);
-            self.gen_en_passant(moves, precomp);
+            let target = PRECOMP.between(king, checker).with(checker);
+            self.gen_pseudo_legal(!self.board.kings(), target, moves);
+            self.gen_en_passant(moves);
         }
     }
 
-    fn gen_castling_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
+    fn gen_castling_moves(&self, moves: &mut Vec<Move>) {
         let backrank = Bitboard::relative_rank(self.turn, 0);
 
         for king in self.our(Role::King) & backrank {
@@ -653,10 +650,10 @@ impl Standard {
                      self.turn.fold(square::D1, square::D8))
                 };
 
-                let empty_for_king = precomp.between(king, king_to).with(king_to)
+                let empty_for_king = PRECOMP.between(king, king_to).with(king_to)
                                             .without(rook).without(king);
 
-                let empty_for_rook = precomp.between(rook, rook_to).with(rook_to)
+                let empty_for_rook = PRECOMP.between(rook, rook_to).with(rook_to)
                                             .without(rook).without(king);
 
                 if !(self.board.occupied() & empty_for_king).is_empty() {
@@ -667,13 +664,13 @@ impl Standard {
                     continue;
                 }
 
-                for sq in precomp.between(king, king_to).with(king).with(king_to) {
-                    if !(self.board.attacks_to(sq, precomp) & self.them()).is_empty() {
+                for sq in PRECOMP.between(king, king_to).with(king).with(king_to) {
+                    if !(self.board.attacks_to(sq) & self.them()).is_empty() {
                         continue 'next_rook;
                     }
                 }
 
-                if !(precomp.rook_attacks(king_to, self.board.occupied().without(rook)) &
+                if !(PRECOMP.rook_attacks(king_to, self.board.occupied().without(rook)) &
                      self.them() & self.board.rooks_and_queens()).is_empty() {
                     continue;
                 }
@@ -691,12 +688,10 @@ mod tests {
 
     #[test]
     fn test_castling_moves() {
-        let precomp = Precomp::new();
-
         let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
 
-        let castle = pos.validate(&Uci::from_str("e1h1").unwrap(), &precomp).unwrap();
+        let castle = pos.validate(&Uci::from_str("e1h1").unwrap()).unwrap();
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves);
         assert!(moves.contains(&castle));
@@ -708,8 +703,6 @@ mod tests {
 
     #[test]
     fn test_chess960_castling() {
-        let precomp = Precomp::new();
-
         let fen = "r1k1r2q/p1ppp1pp/8/8/8/8/P1PPP1PP/R1K1R2Q w KQkq - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
@@ -736,33 +729,28 @@ mod tests {
 
     #[test]
     fn test_do_move() {
-        let precomp = Precomp::new();
-
         let pos = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
-        let m = pos.validate(&Uci::from_str("c3c1").unwrap(), &precomp).unwrap();
+        let m = pos.validate(&Uci::from_str("c3c1").unwrap()).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
     }
 
     #[test]
     fn test_ep_fen() {
-        let precomp = Precomp::new();
-
         let pos = Standard::default();
-        let m = pos.validate(&Uci::from_str("h2h4").unwrap(), &precomp).unwrap();
+        let m = pos.validate(&Uci::from_str("h2h4").unwrap()).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
 
-        let m = pos.validate(&Uci::from_str("b8c6").unwrap(), &precomp).unwrap();
+        let m = pos.validate(&Uci::from_str("b8c6").unwrap()).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
     }
 
     #[test]
     fn test_san() {
-        let precomp = Precomp::new();
         let pos = Standard::default();
         let m = Move::Normal { role: Role::Knight, from: square::G1, capture: None, to: square::F3, promotion: None };
-        assert_eq!(pos.san(&m, &precomp), "Nf3");
+        assert_eq!(pos.san(&m), "Nf3");
     }
 }
