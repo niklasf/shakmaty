@@ -9,7 +9,7 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
 use bitboard::Bitboard;
 use board::Board;
-use attacks::Precomp;
+use attacks::{Precomp, PRECOMP};
 
 pub struct RemainingChecks {
     pub white: u8,
@@ -139,7 +139,7 @@ pub trait Position : Clone + Default {
     }
 
     fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square, precomp: &Precomp) {
-        self.legal_moves(moves, precomp);
+        self.legal_moves(moves);
         moves.retain(|m| match *m {
             Move::Normal { from, to, .. } =>
                 to == target && self.board().by_piece(role.of(self.turn())).contains(from),
@@ -155,7 +155,7 @@ pub trait Position : Clone + Default {
                 ""
             } else {
                 let mut legals = Vec::new();
-                after.legal_moves(&mut legals, precomp);
+                after.legal_moves(&mut legals);
                 if legals.is_empty() { "#" } else { "+" }
             }
         }
@@ -223,7 +223,7 @@ pub trait Position : Clone + Default {
             .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king, precomp))
     }
 
-    fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp);
+    fn legal_moves(&self, moves: &mut Vec<Move>);
 
     fn do_move(self, m: &Move) -> Self;
 
@@ -349,20 +349,22 @@ impl Position for Standard {
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 
-    fn legal_moves(&self, moves: &mut Vec<Move>, precomp: &Precomp) {
-        if self.checkers(precomp).is_empty() {
-            self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
-            self.gen_en_passant(moves, precomp);
-            self.gen_castling_moves(moves, precomp);
-        } else {
-            self.evasions(moves, precomp);
-        }
+    fn legal_moves(&self, moves: &mut Vec<Move>) {
+        PRECOMP.with(|precomp| {
+            if self.checkers(precomp).is_empty() {
+                self.gen_pseudo_legal(Bitboard::all(), Bitboard::all(), moves, precomp);
+                self.gen_en_passant(moves, precomp);
+                self.gen_castling_moves(moves, precomp);
+            } else {
+                self.evasions(moves, precomp);
+            }
 
-        let blockers = self.slider_blockers(self.them(),
-                                            self.board.king_of(self.turn()).unwrap(),
-                                            precomp);
+            let blockers = self.slider_blockers(self.them(),
+                                                self.board.king_of(self.turn()).unwrap(),
+                                                precomp);
 
-        moves.retain(|m| self.is_safe(m, blockers, precomp));
+            moves.retain(|m| self.is_safe(m, blockers, precomp));
+        })
     }
 
     fn do_move(self, m: &Move) -> Standard {
@@ -696,7 +698,7 @@ mod tests {
 
         let castle = pos.validate(&Uci::from_str("e1h1").unwrap(), &precomp).unwrap();
         let mut moves = Vec::new();
-        pos.legal_moves(&mut moves, &precomp);
+        pos.legal_moves(&mut moves);
         assert!(moves.contains(&castle));
 
         let pos = pos.do_move(&castle);
@@ -716,7 +718,7 @@ mod tests {
         let ks = Move::Castle { king: square::C1, rook: square::E1 };
 
         let mut moves = Vec::new();
-        pos.legal_moves(&mut moves, &precomp);
+        pos.legal_moves(&mut moves);
         assert!(moves.contains(&qs));
         assert!(moves.contains(&ks));
     }

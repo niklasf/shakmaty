@@ -32,7 +32,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
                 let nodes = params.next().unwrap().parse().unwrap();
 
                 if nodes <= node_limit {
-                    assert_eq!(perft::perft(&pos, depth, &precomp), nodes);
+                    assert_eq!(perft::perft(&pos, depth), nodes);
                 }
             },
             _ => {},

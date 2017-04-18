@@ -7,34 +7,34 @@ use position::Position;
 /// Paths with mate or stalemate are not counted unless it occurs in the final
 /// position. Useful for comparing, testing and debugging move generation
 /// correctness and performance.
-pub fn perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
+pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
         let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
-        pos.legal_moves(&mut moves, precomp);
+        pos.legal_moves(&mut moves);
 
         if depth == 1 {
             moves.len()
         } else {
             moves.iter().map(|m| {
                 let child = pos.clone().do_move(m);
-                perft(&child, depth - 1, precomp)
+                perft(&child, depth - 1)
             }).sum()
         }
     }
 }
 
-pub fn debug_perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
+pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
         let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
-        pos.legal_moves(&mut moves, precomp);
+        pos.legal_moves(&mut moves);
 
         moves.iter().map(|m| {
             let child = pos.clone().do_move(m);
-            let nodes = perft(&child, depth - 1, precomp);
+            let nodes = perft(&child, depth - 1);
             println!("{} {} {}: {}", m.to_uci(), m, depth - 1, nodes);
             nodes
         }).sum()
@@ -64,16 +64,16 @@ mod tests {
             .and_then(|p| do_uci(p, "g2g3", &precomp))
             .unwrap();
 
-        assert_eq!(perft(&pos, 4, &precomp), 282514);
+        assert_eq!(perft(&pos, 4), 282514);
 
         let pos = do_uci(pos, "d7d6", &precomp).unwrap();
-        assert_eq!(perft(&pos, 3, &precomp), 16080);
+        assert_eq!(perft(&pos, 3), 16080);
 
         let pos = do_uci(pos, "f1h3", &precomp).unwrap();
-        assert_eq!(perft(&pos, 2, &precomp), 755);
+        assert_eq!(perft(&pos, 2), 755);
 
         let pos = do_uci(pos, "c8h3", &precomp).unwrap();
-        assert_eq!(perft(&pos, 1, &precomp), 20);
+        assert_eq!(perft(&pos, 1), 20);
     }
 
     #[test]
@@ -86,16 +86,16 @@ mod tests {
             .and_then(|p| do_uci(p, "e7e6", &precomp))
             .unwrap();
 
-        assert_eq!(perft(&pos, 4, &precomp), 482138);
+        assert_eq!(perft(&pos, 4), 482138);
 
         let pos = do_uci(pos, "a3f8", &precomp).unwrap();
-        assert_eq!(perft(&pos, 3, &precomp), 16924);
+        assert_eq!(perft(&pos, 3), 16924);
 
         let pos = do_uci(pos, "e8f8", &precomp).unwrap();
-        assert_eq!(perft(&pos, 2, &precomp), 540);
+        assert_eq!(perft(&pos, 2), 540);
 
         let pos = do_uci(pos, "a2a3", &precomp).unwrap();
-        assert_eq!(perft(&pos, 1, &precomp), 27);
+        assert_eq!(perft(&pos, 1), 27);
     }
 
     #[test]
@@ -103,20 +103,20 @@ mod tests {
         let precomp = Precomp::new();
         let pos_a = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
 
-        assert_eq!(perft(&pos_a, 1, &precomp), 26);
-        assert_eq!(perft(&pos_a, 2, &precomp), 601);
+        assert_eq!(perft(&pos_a, 1), 26);
+        assert_eq!(perft(&pos_a, 2), 601);
 
         let pos_a = do_uci(pos_a, "d2d4", &precomp).unwrap();
-        assert_eq!(perft(&pos_a, 1, &precomp), 3);
+        assert_eq!(perft(&pos_a, 1), 3);
 
         let pos_b = Standard::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
-        assert_eq!(perft(&pos_b, 2, &precomp), 762);
+        assert_eq!(perft(&pos_b, 2), 762);
     }
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
         let precomp = Precomp::new();
         let pos = Standard::default();
-        b.iter(|| assert_eq!(perft(&pos, 4, &precomp), 197281));
+        b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }
 }

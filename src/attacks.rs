@@ -250,6 +250,10 @@ impl Precomp {
     }
 }
 
+thread_local! {
+    pub static PRECOMP: Precomp = Precomp::new();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
