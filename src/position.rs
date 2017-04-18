@@ -11,6 +11,7 @@ use bitboard::Bitboard;
 use board::Board;
 use attacks;
 
+#[derive(Clone)]
 pub struct RemainingChecks {
     pub white: u8,
     pub black: u8,
@@ -28,6 +29,7 @@ impl fmt::Display for RemainingChecks {
     }
 }
 
+#[derive(Clone)]
 pub struct Pocket {
     pub pawns: u8,
     pub knights: u8,
@@ -50,6 +52,7 @@ impl Pocket {
     }
 }
 
+#[derive(Clone)]
 pub struct Pockets {
     pub white: Pocket,
     pub black: Pocket,
@@ -80,11 +83,11 @@ impl fmt::Display for Pockets {
 #[derive(Clone)]
 pub struct Position {
     board: Board,
-
+    pockets: Option<Pockets>,
     turn: Color,
     castling_rights: Bitboard,
     ep_square: Option<Square>,
-
+    remaining_checks: Option<RemainingChecks>,
     halfmove_clock: u32,
     fullmoves: u32,
 }
@@ -93,11 +96,11 @@ impl Default for Position {
     fn default() -> Self {
         Position {
             board: Board::default(),
-
+            pockets: None,
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
-
+            remaining_checks: None,
             halfmove_clock: 0,
             fullmoves: 1,
         }
@@ -113,10 +116,6 @@ impl Position {
     pub fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     pub fn fullmoves(&self) -> u32 { self.fullmoves }
-
-    fn piece_at(&self, sq: Square) -> Option<Piece> {
-        self.board().piece_at(sq)
-    }
 
     pub fn fen(&self) -> String {
         let pockets = self.pockets()
@@ -352,11 +351,11 @@ impl Position {
     pub fn empty() -> Position {
         Position {
             board: Board::empty(),
-
+            pockets: None,
             turn: White,
             castling_rights: Bitboard(0),
             ep_square: None,
-
+            remaining_checks: None,
             halfmove_clock: 0,
             fullmoves: 1,
         }
