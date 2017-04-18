@@ -8,13 +8,20 @@ extern crate test;
 #[macro_use]
 extern crate lazy_static;
 
-pub mod square;
 mod types;
 mod bitboard;
 mod board;
-pub mod position;
-pub mod perft;
+
+/// Square constants and distance functions.
+pub mod square;
+
+/// Attack and ray tables.
 pub mod attacks;
+
+pub mod position;
+
+/// Count legal move paths.
+pub mod perft;
 
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move};
