@@ -175,12 +175,10 @@ impl Precomp {
     }
 
     pub fn pawn_attacks(&self, color: Color, Square(sq): Square) -> Bitboard {
-        let table = match color {
-            Color::White => self.white_pawn_attacks,
-            Color::Black => self.black_pawn_attacks,
-        };
-
-        table[sq as usize]
+        match color {
+            Color::White => self.white_pawn_attacks[sq as usize],
+            Color::Black => self.black_pawn_attacks[sq as usize],
+        }
     }
 
     pub fn knight_attacks(&self, Square(sq): Square) -> Bitboard {
