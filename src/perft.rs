@@ -25,8 +25,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
     }
 }
 
-#[allow(unused)]
-fn debug_perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
+pub fn debug_perft<P: Position>(pos: &P, depth: u8, precomp: &Precomp) -> usize {
     if depth < 1 {
         1
     } else {

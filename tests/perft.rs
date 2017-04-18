@@ -32,7 +32,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
                 let nodes = params.next().unwrap().parse().unwrap();
 
                 if nodes <= node_limit {
-                    assert_eq!(perft::perft(&pos, depth, &precomp), nodes);
+                    assert_eq!(perft::debug_perft(&pos, depth, &precomp), nodes);
                 }
             },
             _ => {},
@@ -47,5 +47,5 @@ fn test_random() {
 
 #[test]
 fn test_tricky() {
-    //test_perft_file("tests/tricky.perft", 1000000);
+    test_perft_file("tests/tricky.perft", 1000000);
 }

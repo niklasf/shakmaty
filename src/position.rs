@@ -616,7 +616,7 @@ impl Standard {
             'next_rook: for rook in self.castling_rights & backrank {
                 let (king_to, rook_to) = if king < rook {
                     (self.turn.fold(square::G1, square::G8),
-                     self.turn.fold(square::H1, square::H8))
+                     self.turn.fold(square::F1, square::F8))
                 } else {
                     (self.turn.fold(square::C1, square::C8),
                      self.turn.fold(square::D1, square::D8))
@@ -673,6 +673,23 @@ mod tests {
         let pos = pos.do_move(&castle);
         assert_eq!(pos.piece_at(square::G1), Some(White.king()));
         assert_eq!(pos.piece_at(square::F1), Some(White.rook()));
+    }
+
+    #[test]
+    fn test_chess960_castling() {
+        let precomp = Precomp::new();
+
+        let fen = "r1k1r2q/p1ppp1pp/8/8/8/8/P1PPP1PP/R1K1R2Q w KQkq - 0 1";
+        let pos = Standard::from_fen(fen).unwrap();
+        assert_eq!(pos.fen(), fen);
+
+        let qs = Move::Castle { king: square::C1, rook: square::A1 };
+        let ks = Move::Castle { king: square::C1, rook: square::E1 };
+
+        let mut moves = Vec::new();
+        pos.legal_moves(&mut moves, &precomp);
+        assert!(moves.contains(&qs));
+        assert!(moves.contains(&ks));
     }
 
     #[test]
