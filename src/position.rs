@@ -227,7 +227,7 @@ pub trait Position : Clone + Default {
 
     fn do_move(self, m: &Move) -> Self;
 
-    fn validate(&self, uci: &Uci) -> Option<Move> {
+    fn validate(&self, uci: &Uci, _precomp: &Precomp) -> Option<Move> {
         match *uci {
             Uci::Normal { from, to, promotion } => {
                 self.board().role_at(from).map(|role| {
@@ -665,7 +665,7 @@ mod tests {
         let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
         let pos = Standard::from_fen(fen).unwrap();
 
-        let castle = pos.validate(&Uci::from_str("e1h1").unwrap()).unwrap();
+        let castle = pos.validate(&Uci::from_str("e1h1").unwrap(), &precomp).unwrap();
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves, &precomp);
         assert!(moves.contains(&castle));
@@ -688,20 +688,24 @@ mod tests {
 
     #[test]
     fn test_do_move() {
+        let precomp = Precomp::new();
+
         let pos = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
-        let m = pos.validate(&Uci::from_str("c3c1").unwrap()).unwrap();
+        let m = pos.validate(&Uci::from_str("c3c1").unwrap(), &precomp).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
     }
 
     #[test]
     fn test_ep_fen() {
+        let precomp = Precomp::new();
+
         let pos = Standard::default();
-        let m = pos.validate(&Uci::from_str("h2h4").unwrap()).unwrap();
+        let m = pos.validate(&Uci::from_str("h2h4").unwrap(), &precomp).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
 
-        let m = pos.validate(&Uci::from_str("b8c6").unwrap()).unwrap();
+        let m = pos.validate(&Uci::from_str("b8c6").unwrap(), &precomp).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
     }
