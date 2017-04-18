@@ -61,7 +61,7 @@ fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
     sliding_attacks(sq, Bitboard::all(), deltas)
 }
 
-fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboard], attacks: &mut Vec<u16>, deltas: &[i8]) {
+fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboard], attacks: &mut[u16], deltas: &[i8]) {
     for s in 0..64 {
         let sq = Square(s);
 
@@ -94,19 +94,20 @@ struct Precomp {
     rook_indexes: [usize; 64],
     rook_masks: [Bitboard; 64],
     rook_ranges: [Bitboard; 64],
-    rook_attacks: Vec<u16>,
+    rook_attacks: [u16; 0x19000],
 
     bishop_indexes: [usize; 64],
     bishop_masks: [Bitboard; 64],
     bishop_ranges: [Bitboard; 64],
-    bishop_attacks: Vec<u16>,
+    bishop_attacks: [u16; 0x1480],
 
     bb_rays: [[Bitboard; 64]; 64],
     bb_between: [[Bitboard; 64]; 64],
 }
 
 impl Precomp {
-    /// Allocates about 200 KiB of heap memory and precomptes attack tables.
+    /// Precomputes attack tables. The struct uses about 200 KiB of
+    /// stack memory.
     pub fn new() -> Precomp {
         let mut precomp = Precomp {
             knight_attacks: [Bitboard(0); 64],
@@ -117,12 +118,12 @@ impl Precomp {
             rook_indexes: [0; 64],
             rook_masks: [Bitboard(0); 64],
             rook_ranges: [Bitboard(0); 64],
-            rook_attacks: vec![0; 0x19000],
+            rook_attacks: [0; 0x19000],
 
             bishop_indexes: [0; 64],
             bishop_masks: [Bitboard(0); 64],
             bishop_ranges: [Bitboard(0); 64],
-            bishop_attacks: vec![0; 0x1480],
+            bishop_attacks: [0; 0x1480],
 
             bb_rays: [[Bitboard(0); 64]; 64],
             bb_between: [[Bitboard(0); 64]; 64],
