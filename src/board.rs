@@ -169,6 +169,7 @@ impl Board {
     pub fn black(&self) -> Bitboard { self.black }
 
     pub fn promoted(&self) -> Bitboard { self.promoted }
+    pub fn mut_promoted(&mut self) -> &mut Bitboard { &mut self.promoted }
 
     /// Bishops, rooks and queens.
     pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }

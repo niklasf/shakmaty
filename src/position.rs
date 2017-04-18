@@ -245,6 +245,88 @@ pub trait Position : Clone + Default {
     }
 }
 
+trait MutPosition: Position {
+    fn mut_board(&mut self) -> &mut Board;
+    fn mut_pockets(&mut self) -> Option<&mut Pockets>;
+    fn set_turn(&mut self, turn: Color);
+    fn mut_castling_rights(&mut self) -> &mut Bitboard;
+    fn set_ep_square(&mut self, sq: Option<Square>);
+    fn mut_remaining_checks(&mut self) -> Option<&mut RemainingChecks>;
+    fn set_halfmove_clock(&mut self, halmove_clock: u32);
+    fn set_fullmoves(&mut self, fullmoves: u32);
+
+    fn mut_do_move(mut self, m: &Move) -> Self {
+        let color = self.turn();
+        let halfmove_clock = self.halfmove_clock();
+        self.set_halfmove_clock(halfmove_clock + 1);
+        self.set_ep_square(None);
+
+        match *m {
+            Move::Normal { role, from, capture, to, promotion } => {
+                if role == Role::Pawn || capture.is_some() {
+                    self.set_halfmove_clock(0);
+                }
+
+                if role == Role::Pawn && square::distance(from, to) == 2 {
+                    self.set_ep_square(from.offset(color.fold(8, -8)));
+                }
+
+                if role == Role::King {
+                    self.mut_castling_rights().discard_all(Bitboard::relative_rank(color, 0));
+                } else {
+                    self.mut_castling_rights().discard(from);
+                    self.mut_castling_rights().discard(to);
+                }
+
+                let promoted = self.mut_board().mut_promoted().remove(from) || promotion.is_some();
+
+                self.mut_board().remove_piece_at(from);
+                self.mut_board().set_piece_at(to, promotion.map(|p| p.of(color))
+                                                           .unwrap_or(role.of(color)));
+
+                if promoted {
+                    self.mut_board().mut_promoted().flip(to);
+                }
+            },
+            Move::Castle { king, rook } => {
+                let rook_to = Square::from_coords(
+                    if square::delta(rook, king) < 0 { 3 } else { 5 },
+                    color.fold(0, 7)).unwrap();
+
+                let king_to = Square::from_coords(
+                    if square::delta(rook, king) < 0 { 2 } else { 6 },
+                    color.fold(0, 7)).unwrap();
+
+                self.mut_board().remove_piece_at(king);
+                self.mut_board().remove_piece_at(rook);
+                self.mut_board().set_piece_at(rook_to, color.rook());
+                self.mut_board().set_piece_at(king_to, color.king());
+
+                self.mut_castling_rights().discard_all(Bitboard::relative_rank(color, 0));
+            },
+            Move::EnPassant { from, to, pawn } => {
+                self.mut_board().remove_piece_at(pawn);
+                self.mut_board().remove_piece_at(from).map(|piece| self.mut_board().set_piece_at(to, piece));
+                self.set_halfmove_clock(0);
+            },
+            Move::Put { to, role } => {
+                self.mut_board().set_piece_at(to, Piece { color, role });
+            },
+            Move::Null => ()
+        }
+
+
+        if color == Black {
+            let fullmoves = self.fullmoves();
+            self.set_fullmoves(fullmoves + 1);
+        }
+
+        self.set_turn(!color);
+
+        self
+    }
+}
+
 #[derive(Clone)]
 pub struct Standard {
     board: Board,
@@ -283,73 +365,20 @@ impl Position for Standard {
         moves.retain(|m| self.is_safe(m, blockers, precomp));
     }
 
-    fn do_move(mut self, m: &Move) -> Standard {
-        let color = self.turn;
-        self.ep_square.take();
-        self.halfmove_clock += 1;
-
-        match *m {
-            Move::Normal { role, from, capture, to, promotion } => {
-                if role == Role::Pawn || capture.is_some() {
-                    self.halfmove_clock = 0;
-                }
-
-                if role == Role::Pawn && square::distance(from, to) == 2 {
-                    self.ep_square = from.offset(color.fold(8, -8));
-                }
-
-                if role == Role::King {
-                    self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-                } else {
-                    self.castling_rights.discard(from);
-                    self.castling_rights.discard(to);
-                }
-
-                let promoted = self.board.promoted().remove(from) || promotion.is_some();
-
-                self.board.remove_piece_at(from);
-                self.board.set_piece_at(to, promotion.map(|p| p.of(color))
-                                                     .unwrap_or(role.of(color)));
-
-                if promoted {
-                    self.board.promoted().flip(to);
-                }
-            },
-            Move::Castle { king, rook } => {
-                let rook_to = Square::from_coords(
-                    if square::delta(rook, king) < 0 { 3 } else { 5 },
-                    color.fold(0, 7)).unwrap();
-
-                let king_to = Square::from_coords(
-                    if square::delta(rook, king) < 0 { 2 } else { 6 },
-                    color.fold(0, 7)).unwrap();
-
-                self.board.remove_piece_at(king);
-                self.board.remove_piece_at(rook);
-                self.board.set_piece_at(rook_to, color.rook());
-                self.board.set_piece_at(king_to, color.king());
-
-                self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-            },
-            Move::EnPassant { from, to, pawn } => {
-                self.board.remove_piece_at(pawn);
-                self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
-                self.halfmove_clock = 0;
-            },
-            Move::Put { to, role } => {
-                self.board.set_piece_at(to, Piece { color, role });
-            },
-            Move::Null => ()
-        }
-
-        self.turn = !self.turn;
-
-        if self.turn == White {
-            self.fullmoves += 1;
-        }
-
-        self
+    fn do_move(self, m: &Move) -> Standard {
+        self.mut_do_move(m)
     }
+}
+
+impl MutPosition for Standard {
+    fn mut_board(&mut self) -> &mut Board { &mut self.board }
+    fn mut_pockets(&mut self) -> Option<&mut Pockets> { None }
+    fn set_turn(&mut self, turn: Color) { self.turn = turn; }
+    fn mut_castling_rights(&mut self) -> &mut Bitboard { &mut self.castling_rights }
+    fn set_ep_square(&mut self, sq: Option<Square>) { self.ep_square = sq; }
+    fn mut_remaining_checks(&mut self) -> Option<&mut RemainingChecks> { None }
+    fn set_halfmove_clock(&mut self, halfmove_clock: u32) { self.halfmove_clock = halfmove_clock; }
+    fn set_fullmoves(&mut self, fullmoves: u32) { self.fullmoves = fullmoves; }
 }
 
 impl Default for Standard {
