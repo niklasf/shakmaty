@@ -1,3 +1,5 @@
+//! Square constants and distance functions.
+
 use std::cmp::max;
 use std::fmt;
 use std::str;

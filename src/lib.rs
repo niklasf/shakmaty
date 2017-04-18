@@ -12,15 +12,9 @@ mod types;
 mod bitboard;
 mod board;
 
-/// Square constants and distance functions.
 pub mod square;
-
-/// Attack and ray tables.
 pub mod attacks;
-
 pub mod position;
-
-/// Count legal move paths.
 pub mod perft;
 
 pub use square::Square;

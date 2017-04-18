@@ -1,3 +1,5 @@
+//! Count legal move paths.
+
 use types::Move;
 use position::Position;
 

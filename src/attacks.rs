@@ -1,3 +1,27 @@
+//! Attack and ray tables.
+//!
+//! # Examples
+//!
+//! ```
+//! # use shakmaty::square;
+//! # use shakmaty::Bitboard;
+//! use shakmaty::attacks;
+//!
+//! let occupied = Bitboard::rank(5); // blocking pieces
+//! let attacks = attacks::bishop_attacks(square::C2, occupied);
+//! // . . . . . . . .
+//! // . . . . . . . .
+//! // 0 0 0 0 0 0 1 0
+//! // . . . . . 1 . .
+//! // 1 . . . 1 . . .
+//! // . 1 . 1 . . . .
+//! // . . . . . . . .
+//! // . 1 . 1 . . . .
+//!
+//! assert!(attacks.contains(square::G6));
+//! assert!(!attacks.contains(square::H7));
+//! ```
+
 use square;
 use square::Square;
 use bitboard::Bitboard;
@@ -61,28 +85,6 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
     }
 }
 
-/// Precomputed attack tables.
-///
-/// # Examples
-///
-/// ```
-/// # use shakmaty::{Bitboard, Precomp, square};
-/// let precomp = Precomp::new();
-///
-/// let occupied = Bitboard::rank(5); // blocking pieces
-/// let attacks = precomp.bishop_attacks(square::C2, occupied);
-/// // . . . . . . . .
-/// // . . . . . . . .
-/// // 0 0 0 0 0 0 1 0
-/// // . . . . . 1 . .
-/// // 1 . . . 1 . . .
-/// // . 1 . 1 . . . .
-/// // . . . . . . . .
-/// // . 1 . 1 . . . .
-///
-/// assert!(attacks.contains(square::G6));
-/// assert!(!attacks.contains(square::H7));
-/// ```
 struct Precomp {
     knight_attacks: [Bitboard; 64],
     king_attacks: [Bitboard; 64],
@@ -260,9 +262,9 @@ pub fn attacks(sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> 
 ///
 /// ```
 /// # use shakmaty::square;
-/// # use shakmaty::Precomp;
-/// let precomp = Precomp::new();
-/// let ray = precomp.ray(square::E2, square::G4);
+/// # use shakmaty::attacks;
+///
+/// let ray = attacks::ray(square::E2, square::G4);
 /// // . . . . . . . .
 /// // . . . . . . . .
 /// // . . . . . . . .
