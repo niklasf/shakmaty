@@ -102,11 +102,8 @@ impl Board {
             } else if let Some(piece) = Piece::from_char(ch) {
                 match Square::from_coords(file as i8, rank as i8) {
                     Some(sq) => {
-                        board.set_piece_at(sq, piece);
-                        if promoted {
-                            board.promoted.add(sq);
-                            promoted = false;
-                        }
+                        board.set_piece_at(sq, piece, promoted);
+                        promoted = false;
                     },
                     None => return None
                 }
@@ -169,7 +166,6 @@ impl Board {
     pub fn black(&self) -> Bitboard { self.black }
 
     pub fn promoted(&self) -> Bitboard { self.promoted }
-    pub fn mut_promoted(&mut self) -> &mut Bitboard { &mut self.promoted }
 
     /// Bishops, rooks and queens.
     pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }
@@ -226,11 +222,14 @@ impl Board {
         })
     }
 
-    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
+    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
         self.remove_piece_at(sq);
         self.occupied.flip(sq);
         self.mut_by_color(color).flip(sq);
         self.mut_by_role(role).flip(sq);
+        if promoted {
+            self.promoted.flip(sq);
+        }
     }
 
     pub fn by_color(&self, color: Color) -> Bitboard {
@@ -325,7 +324,7 @@ mod tests {
     #[test]
     fn test_set_piece_at() {
         let mut board = Board::new();
-        board.set_piece_at(square::A3, White.pawn());
+        board.set_piece_at(square::A3, White.pawn(), false);
         assert_eq!(board.piece_at(square::A3), Some(White.pawn()));
     }
 

@@ -286,15 +286,13 @@ impl Position {
                     self.castling_rights.discard(to);
                 }
 
-                let promoted = self.board.mut_promoted().remove(from) || promotion.is_some();
+                let promoted = self.board.promoted().contains(from) || promotion.is_some();
 
                 self.board.remove_piece_at(from);
-                self.board.set_piece_at(to, promotion.map(|p| p.of(color))
-                                                           .unwrap_or(role.of(color)));
-
-                if promoted {
-                    self.board.mut_promoted().flip(to);
-                }
+                self.board.set_piece_at(to,
+                                        promotion.map(|p| p.of(color))
+                                                 .unwrap_or(role.of(color)),
+                                        promoted);
             },
             Move::Castle { king, rook } => {
                 let rook_to = Square::from_coords(
@@ -307,18 +305,18 @@ impl Position {
 
                 self.board.remove_piece_at(king);
                 self.board.remove_piece_at(rook);
-                self.board.set_piece_at(rook_to, color.rook());
-                self.board.set_piece_at(king_to, color.king());
+                self.board.set_piece_at(rook_to, color.rook(), false);
+                self.board.set_piece_at(king_to, color.king(), false);
 
                 self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
             },
             Move::EnPassant { from, to, pawn } => {
                 self.board.remove_piece_at(pawn);
-                self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece));
+                self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece, false));
                 self.halfmove_clock = 0;
             },
             Move::Put { to, role } => {
-                self.board.set_piece_at(to, Piece { color, role });
+                self.board.set_piece_at(to, Piece { color, role }, false);
             },
             Move::Null => ()
         }
@@ -649,8 +647,8 @@ mod tests {
         assert!(moves.contains(&castle));
 
         let pos = pos.do_move(&castle);
-        assert_eq!(pos.piece_at(square::G1), Some(White.king()));
-        assert_eq!(pos.piece_at(square::F1), Some(White.rook()));
+        assert_eq!(pos.board().piece_at(square::G1), Some(White.king()));
+        assert_eq!(pos.board().piece_at(square::F1), Some(White.rook()));
     }
 
     #[test]
