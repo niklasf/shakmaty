@@ -284,8 +284,8 @@ impl Position for Standard {
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
-        let color = self.turn();
-        self.ep_square().take();
+        let color = self.turn;
+        self.ep_square.take();
         self.halfmove_clock += 1;
 
         match *m {
@@ -344,7 +344,7 @@ impl Position for Standard {
 
         self.turn = !self.turn;
 
-        if self.turn() == White {
+        if self.turn == White {
             self.fullmoves += 1;
         }
 
@@ -687,12 +687,23 @@ mod tests {
     }
 
     #[test]
-    fn test_rook_move() {
-        let precomp = Precomp::new();
+    fn test_do_move() {
         let pos = Standard::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
         let m = pos.validate(&Uci::from_str("c3c1").unwrap()).unwrap();
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
+    }
+
+    #[test]
+    fn test_ep_fen() {
+        let pos = Standard::default();
+        let m = pos.validate(&Uci::from_str("h2h4").unwrap()).unwrap();
+        let pos = pos.do_move(&m);
+        assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
+
+        let m = pos.validate(&Uci::from_str("b8c6").unwrap()).unwrap();
+        let pos = pos.do_move(&m);
+        assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
     }
 
     #[test]

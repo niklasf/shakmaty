@@ -1,7 +1,7 @@
 extern crate shakmaty;
 
 use shakmaty::position::Standard;
-use shakmaty::perft::perft;
+use shakmaty::perft;
 use shakmaty::Precomp;
 
 use std::io::BufReader;
@@ -32,7 +32,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
                 let nodes = params.next().unwrap().parse().unwrap();
 
                 if nodes <= node_limit {
-                    assert_eq!(perft(&pos, depth, &precomp), nodes);
+                    assert_eq!(perft::perft(&pos, depth, &precomp), nodes);
                 }
             },
             _ => {},
@@ -42,7 +42,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
 
 #[test]
 fn test_random() {
-    //test_perft_file("tests/random.perft", 10000);
+    test_perft_file("tests/random.perft", 10000);
 }
 
 #[test]
