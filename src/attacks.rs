@@ -25,7 +25,7 @@
 use square;
 use square::Square;
 use bitboard::Bitboard;
-use types::{ Color, Role, Piece };
+use types::{Color, Role, Piece};
 
 const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
@@ -212,10 +212,6 @@ impl Precomp {
     pub fn between(&self, Square(a): Square, Square(b): Square) -> Bitboard {
         self.bb_between[a as usize][b as usize]
     }
-
-    pub fn aligned(&self, a: Square, b: Square, c: Square) -> bool {
-        self.ray(a, b).contains(c)
-    }
 }
 
 lazy_static! {
@@ -285,7 +281,7 @@ pub fn between(a: Square, b: Square) -> Bitboard {
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
 pub fn aligned(a: Square, b: Square, c: Square) -> bool {
-    PRECOMP.aligned(a, b, c)
+    ray(a, b).contains(c)
 }
 
 #[cfg(test)]
