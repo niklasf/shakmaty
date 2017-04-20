@@ -289,10 +289,7 @@ impl Position {
                 let promoted = self.board.promoted().contains(from) || promotion.is_some();
 
                 self.board.remove_piece_at(from);
-                self.board.set_piece_at(to,
-                                        promotion.map(|p| p.of(color))
-                                                 .unwrap_or(role.of(color)),
-                                        promoted);
+                self.board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
             },
             Move::Castle { king, rook } => {
                 let rook_to = Square::from_coords(
