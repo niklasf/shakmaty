@@ -60,7 +60,7 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.file_char(), ('1' as u8 + self.rank() as u8) as char)
+        write!(f, "{}{}", self.file_char(), self.rank_char())
     }
 }
 
