@@ -133,7 +133,7 @@ pub enum Move {
 impl Move {
     pub fn to_uci(&self) -> Uci {
         match *self {
-            Move::Normal { role: _, from, capture: _, to, promotion } =>
+            Move::Normal { from, to, promotion, .. } =>
                 Uci::Normal { from, to, promotion },
             Move::EnPassant { from, to, .. } =>
                 Uci::Normal { from, to, promotion: None },
