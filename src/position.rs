@@ -199,12 +199,10 @@ impl Position {
                         Move::Normal { from: candidate, .. } =>
                             if from == candidate {
                                 (rank, file)
-                            } else if from.rank() == candidate.rank() {
+                            } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
                                 (rank, true)
-                            } else if from.file() == candidate.file() {
-                                (true, file)
                             } else {
-                                (rank, true)
+                                (true, file)
                             },
                         _ => (rank, file)
                     });
