@@ -45,12 +45,13 @@ pub fn perft<V: Variant>(pos: &V, depth: u8) -> usize {
     }
 } */
 
-/* #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
     use types::Uci;
     use std::str::FromStr;
+    use variant::Standard;
 
     fn do_uci(pos: Position, uci: &str) -> Option<Position> {
         Uci::from_str(uci).ok()
@@ -58,7 +59,7 @@ mod tests {
             .map(|m| pos.do_move(&m))
     }
 
-    #[test]
+    /* #[test]
     fn test_prevented_castling() {
         let pos = do_uci(Position::default(), "g1f3")
             .and_then(|p| do_uci(p, "a7a5"))
@@ -109,11 +110,11 @@ mod tests {
 
         let pos_b = Position::from_fen("4k3/1p6/5R1n/4rBp1/K3b3/2pp2P1/7P/1R4N1 b - -").unwrap();
         assert_eq!(perft(&pos_b, 2), 762);
-    }
+    } */
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
-        let pos = Position::default();
+        let pos = Standard::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }
-} */
+}
