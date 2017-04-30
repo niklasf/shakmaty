@@ -2,6 +2,7 @@
 
 use types::Move;
 use position::Position;
+use variant::Variant;
 
 const LEGAL_MOVES_HINT: usize = 255;
 
@@ -10,7 +11,7 @@ const LEGAL_MOVES_HINT: usize = 255;
 /// Paths with mate or stalemate are not counted unless it occurs in the final
 /// position. Useful for comparing, testing and debugging move generation
 /// correctness and performance.
-pub fn perft(pos: &Position, depth: u8) -> usize {
+pub fn perft<V: Variant>(pos: &V, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
@@ -28,7 +29,7 @@ pub fn perft(pos: &Position, depth: u8) -> usize {
     }
 }
 
-pub fn debug_perft(pos: &Position, depth: u8) -> usize {
+/* pub fn debug_perft(pos: &Position, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
@@ -42,9 +43,9 @@ pub fn debug_perft(pos: &Position, depth: u8) -> usize {
             nodes
         }).sum()
     }
-}
+} */
 
-#[cfg(test)]
+/* #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
@@ -115,4 +116,4 @@ mod tests {
         let pos = Position::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }
-}
+} */

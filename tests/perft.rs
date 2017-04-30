@@ -1,17 +1,19 @@
 extern crate shakmaty;
 
 use shakmaty::Position;
+use shakmaty::Variant;
+use shakmaty::variant::Standard;
 use shakmaty::perft;
 
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
-fn test_perft_file(path: &str, node_limit: usize) {
+fn test_perft_file<V: Variant>(path: &str, node_limit: usize) {
     let file = File::open(path).unwrap();
     let reader = BufReader::new(file);
 
-    let mut pos = Position::default();
+    let mut pos = V::default();
 
     for line in reader.lines().map(|l| l.unwrap()) {
         println!("{}", line);
@@ -21,7 +23,7 @@ fn test_perft_file(path: &str, node_limit: usize) {
 
         match slices.next() {
             Some("epd") => {
-                pos = Position::from_fen(slices.next().unwrap()).unwrap()
+                pos = V::from_fen(slices.next().unwrap()).unwrap()
             },
             Some("perft") => {
                 let mut params = slices.next().unwrap().splitn(2, ' ');
@@ -39,10 +41,10 @@ fn test_perft_file(path: &str, node_limit: usize) {
 
 #[test]
 fn test_random() {
-    test_perft_file("tests/random.perft", 10000);
+    test_perft_file::<Standard>("tests/random.perft", 10000);
 }
 
 #[test]
 fn test_tricky() {
-    test_perft_file("tests/tricky.perft", 1000000);
+    test_perft_file::<Standard>("tests/tricky.perft", 1000000);
 }
