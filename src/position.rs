@@ -54,6 +54,17 @@ impl Pocket {
             Role::King   => self.kings,
         }
     }
+
+    pub fn mut_by_role(&mut self, role: Role) -> &mut u8 {
+        match role {
+            Role::Pawn   => &mut self.pawns,
+            Role::Knight => &mut self.knights,
+            Role::Bishop => &mut self.bishops,
+            Role::Rook   => &mut self.rooks,
+            Role::Queen  => &mut self.queens,
+            Role::King   => &mut self.kings,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -67,8 +78,16 @@ impl Pockets {
         color.fold(&self.white, &self.black)
     }
 
+    pub fn mut_by_color(&mut self, color: Color) -> &mut Pocket {
+        color.fold(&mut self.white, &mut self.black)
+    }
+
     pub fn by_piece(&self, piece: Piece) -> u8 {
         self.by_color(piece.color).by_role(piece.role)
+    }
+
+    pub fn mut_by_piece(&mut self, piece: Piece) -> &mut u8 {
+        self.mut_by_color(piece.color).mut_by_role(piece.role)
     }
 }
 
@@ -277,6 +296,16 @@ impl Position {
                     self.halfmove_clock = 0;
                 }
 
+                if let Some(ref mut pockets) = self.pockets {
+                    if let Some(capture_role) = capture {
+                        if self.board.promoted().contains(to) {
+                            *pockets.mut_by_color(color).mut_by_role(Role::Pawn) += 1;
+                        } else {
+                            *pockets.mut_by_color(color).mut_by_role(capture_role) += 1;
+                        }
+                    }
+                }
+
                 if role == Role::Pawn && square::distance(from, to) == 2 {
                     self.ep_square = from.offset(color.fold(8, -8));
                 }
@@ -313,9 +342,17 @@ impl Position {
                 self.board.remove_piece_at(pawn);
                 self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece, false));
                 self.halfmove_clock = 0;
+
+                if let Some(ref mut pockets) = self.pockets {
+                    *pockets.mut_by_color(color).mut_by_role(Role::Pawn) += 1;
+                }
             },
             Move::Put { to, role } => {
                 self.board.set_piece_at(to, Piece { color, role }, false);
+
+                if let Some(ref mut pockets) = self.pockets {
+                    *pockets.mut_by_color(color).mut_by_role(role) -= 1;
+                }
             },
             Move::Null => ()
         }
