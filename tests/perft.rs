@@ -1,6 +1,5 @@
 extern crate shakmaty;
 
-use shakmaty::Position;
 use shakmaty::Variant;
 use shakmaty::variant::Standard;
 use shakmaty::perft;

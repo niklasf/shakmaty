@@ -15,12 +15,11 @@ mod board;
 pub mod variant;
 pub mod square;
 pub mod attacks;
-pub mod position;
+pub mod fen;
 pub mod perft;
 
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
-pub use position::Position;
 pub use variant::Variant;

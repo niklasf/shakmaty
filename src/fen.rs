@@ -173,7 +173,7 @@ pub trait Fen: Epd {
 }
 
 #[derive(Clone)]
-pub struct Position {
+pub struct Situation {
     board: Board,
     turn: Color,
     castling_rights: Bitboard,
@@ -182,9 +182,9 @@ pub struct Position {
     fullmoves: u32,
 }
 
-impl Default for Position {
+impl Default for Situation {
     fn default() -> Self {
-        Position {
+        Situation {
             board: Board::default(),
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),
@@ -195,7 +195,7 @@ impl Default for Position {
     }
 }
 
-impl Epd for Position {
+impl Epd for Situation {
     const PROMOTED: bool = true;
 
     fn board(&self) -> &Board { &self.board }
@@ -206,12 +206,12 @@ impl Epd for Position {
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
 }
 
-impl Fen for Position {
+impl Fen for Situation {
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position {
+impl Situation {
     pub fn do_move(mut self, m: &Move) -> Self {
         let color = self.turn();
         self.ep_square.take();
@@ -275,8 +275,8 @@ impl Position {
         self
     }
 
-    pub fn empty() -> Position {
-        Position {
+    pub fn empty() -> Situation {
+        Situation {
             board: Board::empty(),
             turn: White,
             castling_rights: Bitboard(0),
@@ -286,8 +286,8 @@ impl Position {
         }
     }
 
-    pub fn from_fen(fen: &str) -> Option<Position> {
-        let mut pos = Position::empty();
+    pub fn from_fen(fen: &str) -> Option<Situation> {
+        let mut pos = Situation::empty();
         let mut parts = fen.split(' ');
 
         if let Some(board) = parts.next().and_then(|board_fen| Board::from_board_fen(board_fen)) {
@@ -374,7 +374,7 @@ mod tests {
     /* #[test]
     fn test_castling_moves() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
-        let pos = Position::from_fen(fen).unwrap();
+        let pos = Situation::from_fen(fen).unwrap();
 
         let castle = Move::Castle { king: square::E1, rook: square::H1 };
         let mut moves = Vec::new();
@@ -389,7 +389,7 @@ mod tests {
     #[test]
     fn test_chess960_castling() {
         let fen = "r1k1r2q/p1ppp1pp/8/8/8/8/P1PPP1PP/R1K1R2Q w KQkq - 0 1";
-        let pos = Position::from_fen(fen).unwrap();
+        let pos = Situation::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
 
         let qs = Move::Castle { king: square::C1, rook: square::A1 };
@@ -404,17 +404,17 @@ mod tests {
     #[test]
     fn test_fen() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let pos = Position::from_fen(fen).unwrap();
+        let pos = Situation::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
 
         let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
-        let pos = Position::from_fen(fen).unwrap();
+        let pos = Situation::from_fen(fen).unwrap();
         assert_eq!(pos.fen(), fen);
     }
 
     #[test]
     fn test_do_move() {
-        let pos = Position::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
+        let pos = Situation::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
         let m = Move::Normal { role: Role::Rook, from: square::C3, to: square::C1, capture: None, promotion: None };
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
@@ -422,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_ep_fen() {
-        let pos = Position::default();
+        let pos = Situation::default();
         let m = Move::Normal { role: Role::Pawn, from: square::H2, to: square::H4, capture: None, promotion: None };
         let pos = pos.do_move(&m);
         assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
@@ -434,7 +434,7 @@ mod tests {
 
     /* #[test]
     fn test_san() {
-        let pos = Position::default();
+        let pos = Situation::default();
         let m = Move::Normal { role: Role::Knight, from: square::G1, capture: None, to: square::F3, promotion: None };
         assert_eq!(pos.san(&m), "Nf3");
     } */

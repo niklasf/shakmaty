@@ -1,6 +1,6 @@
 use std::fmt;
 
-use position::{Position, Pockets, RemainingChecks, Epd, Fen};
+use fen::{Situation, Pockets, RemainingChecks, Epd, Fen};
 use board::Board;
 use bitboard::Bitboard;
 use square;
@@ -9,7 +9,7 @@ use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
 use attacks;
 
 pub trait Variant : Default + Clone {
-    fn position(&self) -> &Position;
+    fn position(&self) -> &Situation;
     fn board(&self) -> &Board { self.position().board() }
     fn turn(&self) -> Color { self.position().turn() }
 
@@ -53,7 +53,7 @@ pub trait Variant : Default + Clone {
     }
 
     fn san(self, m: &Move) -> String {
-        fn suffix(pos: Position, m: &Move) -> &'static str {
+        fn suffix(pos: Situation, m: &Move) -> &'static str {
             let after = pos.do_move(m);
 
             if after.checkers().is_empty() {
@@ -144,16 +144,16 @@ pub trait Variant : Default + Clone {
 
 #[derive(Default, Clone)]
 pub struct Standard {
-    pos: Position
+    pos: Situation
 }
 
 impl Variant for Standard {
-    fn position(&self) -> &Position {
+    fn position(&self) -> &Situation {
         &self.pos
     }
 
     fn from_fen(fen: &str) -> Option<Standard> {
-        Position::from_fen(fen).map(|pos| Standard { pos })
+        Situation::from_fen(fen).map(|pos| Standard { pos })
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
@@ -164,16 +164,16 @@ impl Variant for Standard {
 
 #[derive(Default, Clone)]
 pub struct Crazyhouse {
-    pos: Position,
+    pos: Situation,
     pockets: Pockets,
 }
 
 impl Variant for Crazyhouse {
     fn from_fen(fen: &str) -> Option<Crazyhouse> {
-        Position::from_fen(fen).map(|pos| Crazyhouse { pos, ..Crazyhouse::default() })
+        Situation::from_fen(fen).map(|pos| Crazyhouse { pos, ..Crazyhouse::default() })
     }
 
-    fn position(&self) -> &Position {
+    fn position(&self) -> &Situation {
         &self.pos
     }
 
@@ -200,16 +200,16 @@ impl Variant for Crazyhouse {
 
 #[derive(Default, Clone)]
 pub struct ThreeCheck {
-    pos: Position,
+    pos: Situation,
     remaining_checks: RemainingChecks,
 }
 
 impl Variant for ThreeCheck {
     fn from_fen(fen: &str) -> Option<ThreeCheck> {
-        Position::from_fen(fen).map(|pos| ThreeCheck { pos, ..ThreeCheck::default() })
+        Situation::from_fen(fen).map(|pos| ThreeCheck { pos, ..ThreeCheck::default() })
     }
 
-    fn position(&self) -> &Position {
+    fn position(&self) -> &Situation {
         &self.pos
     }
 
@@ -224,7 +224,7 @@ impl Variant for ThreeCheck {
     }
 }
 
-fn evasions(pos: &Position, checkers: Bitboard, moves: &mut Vec<Move>) {
+fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut Vec<Move>) {
     let king = pos.our(Role::King).first().unwrap();
     let sliders = checkers & pos.board().sliders();
 
@@ -244,7 +244,7 @@ fn evasions(pos: &Position, checkers: Bitboard, moves: &mut Vec<Move>) {
     }
 }
 
-fn gen_castling_moves(pos: &Position, moves: &mut Vec<Move>) {
+fn gen_castling_moves(pos: &Situation, moves: &mut Vec<Move>) {
     let backrank = Bitboard::relative_rank(pos.turn(), 0);
 
     for king in pos.our(Role::King) & backrank {
@@ -287,7 +287,7 @@ fn gen_castling_moves(pos: &Position, moves: &mut Vec<Move>) {
     }
 }
 
-fn push_pawn_moves(pos: &Position, moves: &mut Vec<Move>, from: Square, to: Square) {
+fn push_pawn_moves(pos: &Situation, moves: &mut Vec<Move>, from: Square, to: Square) {
     let capture = pos.board().role_at(to); // XXX
 
     if to.rank() == pos.turn().fold(7, 0) {
@@ -300,13 +300,13 @@ fn push_pawn_moves(pos: &Position, moves: &mut Vec<Move>, from: Square, to: Squa
     }
 }
 
-fn push_moves(pos: &Position, moves: &mut Vec<Move>, role: Role, from: Square, to: Bitboard) {
+fn push_moves(pos: &Situation, moves: &mut Vec<Move>, role: Role, from: Square, to: Bitboard) {
     for square in to {
         moves.push(Move::Normal { role, from, capture: pos.board().role_at(square), to: square, promotion: None });
     }
 }
 
-fn gen_pseudo_legal(pos: &Position, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>) {
+fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>) {
     for from in pos.our(Role::King) & selection {
         push_moves(pos, moves, Role::King, from,
                    attacks::king_attacks(from) & !pos.us() & target);
@@ -363,7 +363,7 @@ fn gen_pseudo_legal(pos: &Position, selection: Bitboard, target: Bitboard, moves
     }
 }
 
-fn gen_en_passant(pos: &Position, moves: &mut Vec<Move>) {
+fn gen_en_passant(pos: &Situation, moves: &mut Vec<Move>) {
     if let Some(to) = pos.ep_square() {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn(), to) {
             moves.push(Move::EnPassant { from, to, pawn: to.offset(pos.turn().fold(-8, 8)).unwrap() }); // XXX
@@ -371,7 +371,7 @@ fn gen_en_passant(pos: &Position, moves: &mut Vec<Move>) {
     }
 }
 
-fn slider_blockers(pos: &Position, sliders: Bitboard, sq: Square) -> Bitboard {
+fn slider_blockers(pos: &Situation, sliders: Bitboard, sq: Square) -> Bitboard {
     let snipers = (attacks::rook_attacks(sq, Bitboard(0)) & pos.board().rooks_and_queens()) |
                   (attacks::bishop_attacks(sq, Bitboard(0)) & pos.board().bishops_and_queens());
 
@@ -388,7 +388,7 @@ fn slider_blockers(pos: &Position, sliders: Bitboard, sq: Square) -> Bitboard {
     blockers
 }
 
-fn is_safe(pos: &Position, m: &Move, blockers: Bitboard) -> bool {
+fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
     match *m {
         Move::Normal { role, from, to, .. } =>
             if role == Role::King {

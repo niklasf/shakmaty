@@ -1,7 +1,6 @@
 //! Count legal move paths.
 
 use types::Move;
-use position::Position;
 use variant::Variant;
 
 const LEGAL_MOVES_HINT: usize = 255;
