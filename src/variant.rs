@@ -1,6 +1,6 @@
 use std::fmt;
 
-use position::{Position, Pockets, RemainingChecks};
+use position::{Position, Pockets, RemainingChecks, Epd, Fen};
 use board::Board;
 use bitboard::Bitboard;
 use square;

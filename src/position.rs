@@ -81,7 +81,6 @@ impl fmt::Display for Pockets {
     }
 }
 
-
 #[derive(Clone)]
 pub struct RemainingChecks {
     pub white: u8,
@@ -110,54 +109,15 @@ impl fmt::Display for RemainingChecks {
     }
 }
 
+pub trait Epd {
+    const PROMOTED: bool;
 
-
-#[derive(Clone)]
-pub struct Position {
-    board: Board,
-    turn: Color,
-    castling_rights: Bitboard,
-    ep_square: Option<Square>,
-    halfmove_clock: u32,
-    fullmoves: u32,
-}
-
-impl Default for Position {
-    fn default() -> Self {
-        Position {
-            board: Board::default(),
-            turn: White,
-            castling_rights: Bitboard(0x8100000000000081),
-            ep_square: None,
-            halfmove_clock: 0,
-            fullmoves: 1,
-        }
-    }
-}
-
-impl Position {
-    pub fn board(&self) -> &Board { &self.board }
-    pub fn turn(&self) -> Color { self.turn }
-    pub fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    pub fn ep_square(&self) -> Option<Square> { self.ep_square }
-    pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
-    pub fn fullmoves(&self) -> u32 { self.fullmoves }
-
-    pub fn fen(&self, promoted: bool, pockets: Option<&Pockets>, remaining_checks: Option<&RemainingChecks>) -> String {
-        let pockets = pockets.map_or("".to_owned(), |p| format!("[{}]", p));
-
-        let checks = remaining_checks.map_or("".to_owned(), |r| format!(" {}", r));
-
-        format!("{}{} {} {} {}{} {} {}",
-                self.board().board_fen(promoted),
-                pockets,
-                self.turn().char(),
-                self.castling_xfen(),
-                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks,
-                self.halfmove_clock(),
-                self.fullmoves())
-    }
+    fn board(&self) -> &Board;
+    fn pockets(&self) -> Option<&Pockets>;
+    fn turn(&self) -> Color;
+    fn castling_rights(&self) -> Bitboard;
+    fn ep_square(&self) -> Option<Square>;
+    fn remaining_checks(&self) -> Option<&RemainingChecks>;
 
     fn castling_xfen(&self) -> String {
         let mut fen = String::with_capacity(4);
@@ -186,6 +146,72 @@ impl Position {
         fen
     }
 
+    fn epd(&self) -> String {
+        let pockets = self.pockets()
+                          .map_or("".to_owned(), |p| format!("[{}]", p));
+
+        let checks = self.remaining_checks()
+                         .map_or("".to_owned(), |r| format!(" {}", r));
+
+        format!("{}{} {} {} {}{}",
+                self.board().board_fen(Self::PROMOTED),
+                pockets,
+                self.turn().char(),
+                self.castling_xfen(),
+                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                checks)
+    }
+}
+
+pub trait Fen: Epd {
+    fn halfmove_clock(&self) -> u32;
+    fn fullmoves(&self) -> u32;
+
+    fn fen(&self) -> String {
+        format!("{} {} {}", self.epd(), self.halfmove_clock(), self.fullmoves())
+    }
+}
+
+#[derive(Clone)]
+pub struct Position {
+    board: Board,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Position {
+    fn default() -> Self {
+        Position {
+            board: Board::default(),
+            turn: White,
+            castling_rights: Bitboard(0x8100000000000081),
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Epd for Position {
+    const PROMOTED: bool = true;
+
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+}
+
+impl Fen for Position {
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position {
     pub fn do_move(mut self, m: &Move) -> Self {
         let color = self.turn();
         self.ep_square.take();
@@ -379,11 +405,11 @@ mod tests {
     fn test_fen() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         let pos = Position::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(false, None, None), fen);
+        assert_eq!(pos.fen(), fen);
 
         let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
         let pos = Position::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(false, None, None), fen);
+        assert_eq!(pos.fen(), fen);
     }
 
     #[test]
@@ -391,7 +417,7 @@ mod tests {
         let pos = Position::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
         let m = Move::Normal { role: Role::Rook, from: square::C3, to: square::C1, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(false, None, None), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
+        assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
     }
 
     #[test]
@@ -399,11 +425,11 @@ mod tests {
         let pos = Position::default();
         let m = Move::Normal { role: Role::Pawn, from: square::H2, to: square::H4, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(false, None, None), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
+        assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
 
         let m = Move::Normal { role: Role::Knight, from: square::B8, to: square::C6, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(false, None, None), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
+        assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
     }
 
     /* #[test]
