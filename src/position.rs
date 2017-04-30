@@ -21,6 +21,10 @@ impl RemainingChecks {
     pub fn by_color(&self, color: Color) -> u8 {
         color.fold(self.white, self.black)
     }
+
+    pub fn mut_by_color(&mut self, color: Color) -> &mut u8 {
+        color.fold(&mut self.white, &mut self.black)
+    }
 }
 
 impl fmt::Display for RemainingChecks {
@@ -316,6 +320,11 @@ impl Position {
             Move::Null => ()
         }
 
+        if self.remaining_checks.is_some() && !self.checkers().is_empty() {
+            if let Some(ref mut checks) = self.remaining_checks {
+                *checks.mut_by_color(color) -= 1;
+            }
+        }
 
         if color == Black {
             self.fullmoves += 1;
