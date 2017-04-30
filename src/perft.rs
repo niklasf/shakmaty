@@ -53,13 +53,13 @@ mod tests {
     use std::str::FromStr;
     use variant::Standard;
 
-    fn do_uci(pos: Position, uci: &str) -> Option<Position> {
+    /* fn do_uci(pos: Position, uci: &str) -> Option<Position> {
         Uci::from_str(uci).ok()
             .and_then(|u| pos.validate(&u))
             .map(|m| pos.do_move(&m))
     }
 
-    /* #[test]
+    #[test]
     fn test_prevented_castling() {
         let pos = do_uci(Position::default(), "g1f3")
             .and_then(|p| do_uci(p, "a7a5"))

@@ -11,6 +11,107 @@ use bitboard::Bitboard;
 use board::Board;
 use attacks;
 
+#[derive(Clone, Default)]
+pub struct Pocket {
+    pub pawns: u8,
+    pub knights: u8,
+    pub bishops: u8,
+    pub rooks: u8,
+    pub queens: u8,
+    pub kings: u8,
+}
+
+impl Pocket {
+    pub fn by_role(&self, role: Role) -> u8 {
+        match role {
+            Role::Pawn   => self.pawns,
+            Role::Knight => self.knights,
+            Role::Bishop => self.bishops,
+            Role::Rook   => self.rooks,
+            Role::Queen  => self.queens,
+            Role::King   => self.kings,
+        }
+    }
+
+    pub fn mut_by_role(&mut self, role: Role) -> &mut u8 {
+        match role {
+            Role::Pawn   => &mut self.pawns,
+            Role::Knight => &mut self.knights,
+            Role::Bishop => &mut self.bishops,
+            Role::Rook   => &mut self.rooks,
+            Role::Queen  => &mut self.queens,
+            Role::King   => &mut self.kings,
+        }
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Pockets {
+    pub white: Pocket,
+    pub black: Pocket,
+}
+
+impl Pockets {
+    pub fn by_color(&self, color: Color) -> &Pocket {
+        color.fold(&self.white, &self.black)
+    }
+
+    pub fn mut_by_color(&mut self, color: Color) -> &mut Pocket {
+        color.fold(&mut self.white, &mut self.black)
+    }
+
+    pub fn by_piece(&self, piece: Piece) -> u8 {
+        self.by_color(piece.color).by_role(piece.role)
+    }
+
+    pub fn mut_by_piece(&mut self, piece: Piece) -> &mut u8 {
+        self.mut_by_color(piece.color).mut_by_role(piece.role)
+    }
+}
+
+impl fmt::Display for Pockets {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for color in &[White, Black] {
+            for role in &ROLES {
+                let piece = Piece { color: *color, role: *role };
+                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize)));
+            }
+        }
+        Ok(())
+    }
+}
+
+
+#[derive(Clone)]
+pub struct RemainingChecks {
+    pub white: u8,
+    pub black: u8,
+}
+
+impl Default for RemainingChecks {
+    fn default() -> RemainingChecks {
+        RemainingChecks { white: 3, black: 3 }
+    }
+}
+
+impl RemainingChecks {
+    pub fn by_color(&self, color: Color) -> u8 {
+        color.fold(self.white, self.black)
+    }
+
+    pub fn mut_by_color(&mut self, color: Color) -> &mut u8 {
+        color.fold(&mut self.white, &mut self.black)
+    }
+}
+
+impl fmt::Display for RemainingChecks {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}+{}", self.white, self.black)
+    }
+}
+
+
+
 #[derive(Clone)]
 pub struct Position {
     board: Board,
@@ -42,7 +143,23 @@ impl Position {
     pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     pub fn fullmoves(&self) -> u32 { self.fullmoves }
 
-    pub fn castling_xfen(&self) -> String {
+    pub fn fen(&self, promoted: bool, pockets: Option<&Pockets>, remaining_checks: Option<&RemainingChecks>) -> String {
+        let pockets = pockets.map_or("".to_owned(), |p| format!("[{}]", p));
+
+        let checks = remaining_checks.map_or("".to_owned(), |r| format!(" {}", r));
+
+        format!("{}{} {} {} {}{} {} {}",
+                self.board().board_fen(promoted),
+                pockets,
+                self.turn().char(),
+                self.castling_xfen(),
+                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                checks,
+                self.halfmove_clock(),
+                self.fullmoves())
+    }
+
+    fn castling_xfen(&self) -> String {
         let mut fen = String::with_capacity(4);
 
         for color in &[White, Black] {
@@ -67,23 +184,6 @@ impl Position {
         }
 
         fen
-    }
-
-    pub fn validate(&self, uci: &Uci) -> Option<Move> {
-        match *uci {
-            Uci::Normal { from, to, promotion } => {
-                self.board().role_at(from).map(|role| {
-                    if role == Role::King {
-                        if self.board().by_piece(self.turn().rook()).contains(to) {
-                            return Move::Castle { king: from, rook: to }
-                        }
-                    }
-                    Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
-                })
-            },
-            Uci::Put { role, to } => Some(Move::Put { role, to }),
-            Uci::Null => Some(Move::Null)
-        }
     }
 
     pub fn do_move(mut self, m: &Move) -> Self {
@@ -148,7 +248,6 @@ impl Position {
 
         self
     }
-
 
     pub fn empty() -> Position {
         Position {
@@ -241,17 +340,17 @@ impl Position {
     }
 }
 
-/* #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use square;
 
-    #[test]
+    /* #[test]
     fn test_castling_moves() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
         let pos = Position::from_fen(fen).unwrap();
 
-        let castle = pos.validate(&Uci::from_str("e1h1").unwrap()).unwrap();
+        let castle = Move::Castle { king: square::E1, rook: square::H1 };
         let mut moves = Vec::new();
         pos.legal_moves(&mut moves);
         assert!(moves.contains(&castle));
@@ -274,43 +373,43 @@ mod tests {
         pos.legal_moves(&mut moves);
         assert!(moves.contains(&qs));
         assert!(moves.contains(&ks));
-    }
+    } */
 
     #[test]
     fn test_fen() {
         let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
         let pos = Position::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(), fen);
+        assert_eq!(pos.fen(false, None, None), fen);
 
         let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
         let pos = Position::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(), fen);
+        assert_eq!(pos.fen(false, None, None), fen);
     }
 
     #[test]
     fn test_do_move() {
         let pos = Position::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
-        let m = pos.validate(&Uci::from_str("c3c1").unwrap()).unwrap();
+        let m = Move::Normal { role: Role::Rook, from: square::C3, to: square::C1, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
+        assert_eq!(pos.fen(false, None, None), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
     }
 
     #[test]
     fn test_ep_fen() {
         let pos = Position::default();
-        let m = pos.validate(&Uci::from_str("h2h4").unwrap()).unwrap();
+        let m = Move::Normal { role: Role::Pawn, from: square::H2, to: square::H4, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
+        assert_eq!(pos.fen(false, None, None), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
 
-        let m = pos.validate(&Uci::from_str("b8c6").unwrap()).unwrap();
+        let m = Move::Normal { role: Role::Knight, from: square::B8, to: square::C6, capture: None, promotion: None };
         let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
+        assert_eq!(pos.fen(false, None, None), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
     }
 
-    #[test]
+    /* #[test]
     fn test_san() {
         let pos = Position::default();
         let m = Move::Normal { role: Role::Knight, from: square::G1, capture: None, to: square::F3, promotion: None };
         assert_eq!(pos.san(&m), "Nf3");
-    }
-} */
+    } */
+}

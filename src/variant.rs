@@ -1,6 +1,7 @@
 use std::fmt;
 
-use position::Position;
+use position::{Position, Pockets, RemainingChecks};
+use board::Board;
 use bitboard::Bitboard;
 use square;
 use square::Square;
@@ -9,6 +10,9 @@ use attacks;
 
 pub trait Variant : Default + Clone {
     fn position(&self) -> &Position;
+    fn board(&self) -> &Board { self.position().board() }
+    fn turn(&self) -> Color { self.position().turn() }
+
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn pockets(&self) -> Option<&Pockets> { None }
 
@@ -17,28 +21,26 @@ pub trait Variant : Default + Clone {
     fn checkers(&self) -> Bitboard {
         let pos = self.position();
         pos.board().king_of(pos.turn())
-            .map_or(Bitboard(0), |king| pos.board().by_color(!pos.turn()) & pos.board().attacks_to(king))
+           .map_or(Bitboard(0), |king| pos.board().by_color(!pos.turn()) & pos.board().attacks_to(king))
     }
 
-    fn fen(&self) -> String {
-        let pos = self.position();
-
-        let pockets = self.pockets()
-                          .map_or("".to_owned(), |p| format!("[{}]", p));
-
-        let checks = self.remaining_checks()
-                         .map_or("".to_owned(), |r| format!(" {}", r));
-
-        format!("{}{} {} {} {}{} {} {}",
-                pos.board().board_fen(self.pockets().is_some()),
-                pockets,
-                pos.turn().char(),
-                pos.castling_xfen(),
-                pos.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks,
-                pos.halfmove_clock(),
-                pos.fullmoves())
+    fn validate(&self, uci: &Uci) -> Option<Move> {
+        match *uci {
+            Uci::Normal { from, to, promotion } => {
+                self.board().role_at(from).map(|role| {
+                    if role == Role::King {
+                        if self.board().by_piece(self.turn().rook()).contains(to) {
+                            return Move::Castle { king: from, rook: to}
+                        }
+                    }
+                    Move::Normal { role, from, capture: self.position().board().role_at(to), to, promotion }
+                })
+            },
+            Uci::Put { role, to } => Some(Move::Put { role, to }),
+            Uci::Null => Some(Move::Null)
+        }
     }
+
 
     /* fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
         let pos = self.position();
@@ -196,110 +198,11 @@ impl Variant for Crazyhouse {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct Pocket {
-    pub pawns: u8,
-    pub knights: u8,
-    pub bishops: u8,
-    pub rooks: u8,
-    pub queens: u8,
-    pub kings: u8,
-}
-
-impl Pocket {
-    pub fn by_role(&self, role: Role) -> u8 {
-        match role {
-            Role::Pawn   => self.pawns,
-            Role::Knight => self.knights,
-            Role::Bishop => self.bishops,
-            Role::Rook   => self.rooks,
-            Role::Queen  => self.queens,
-            Role::King   => self.kings,
-        }
-    }
-
-    pub fn mut_by_role(&mut self, role: Role) -> &mut u8 {
-        match role {
-            Role::Pawn   => &mut self.pawns,
-            Role::Knight => &mut self.knights,
-            Role::Bishop => &mut self.bishops,
-            Role::Rook   => &mut self.rooks,
-            Role::Queen  => &mut self.queens,
-            Role::King   => &mut self.kings,
-        }
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct Pockets {
-    pub white: Pocket,
-    pub black: Pocket,
-}
-
-impl Pockets {
-    pub fn by_color(&self, color: Color) -> &Pocket {
-        color.fold(&self.white, &self.black)
-    }
-
-    pub fn mut_by_color(&mut self, color: Color) -> &mut Pocket {
-        color.fold(&mut self.white, &mut self.black)
-    }
-
-    pub fn by_piece(&self, piece: Piece) -> u8 {
-        self.by_color(piece.color).by_role(piece.role)
-    }
-
-    pub fn mut_by_piece(&mut self, piece: Piece) -> &mut u8 {
-        self.mut_by_color(piece.color).mut_by_role(piece.role)
-    }
-}
-
-impl fmt::Display for Pockets {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for color in &[White, Black] {
-            for role in &ROLES {
-                let piece = Piece { color: *color, role: *role };
-                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize)));
-            }
-        }
-        Ok(())
-    }
-}
-
 #[derive(Default, Clone)]
 pub struct ThreeCheck {
     pos: Position,
     remaining_checks: RemainingChecks,
 }
-
-#[derive(Clone)]
-pub struct RemainingChecks {
-    pub white: u8,
-    pub black: u8,
-}
-
-impl Default for RemainingChecks {
-    fn default() -> RemainingChecks {
-        RemainingChecks { white: 3, black: 3 }
-    }
-}
-
-impl RemainingChecks {
-    pub fn by_color(&self, color: Color) -> u8 {
-        color.fold(self.white, self.black)
-    }
-
-    pub fn mut_by_color(&mut self, color: Color) -> &mut u8 {
-        color.fold(&mut self.white, &mut self.black)
-    }
-}
-
-impl fmt::Display for RemainingChecks {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}+{}", self.white, self.black)
-    }
-}
-
 
 impl Variant for ThreeCheck {
     fn from_fen(fen: &str) -> Option<ThreeCheck> {
