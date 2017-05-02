@@ -10,7 +10,7 @@ use std::io::prelude::*;
 use std::fs::File;
 
 fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
-    let file = File::open(path).unwrap();
+    let file = File::open(path).expect("failed to open test suite");
     let reader = BufReader::new(file);
 
     let mut pos = P::default();
@@ -23,15 +23,15 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
 
         match slices.next() {
             Some("epd") => {
-                pos = PositionBuilder::from_fen(slices.next().unwrap())
-                  .unwrap()
-                  .build()
-                  .unwrap();
+                pos = PositionBuilder::from_fen(slices.next().expect("missing epd"))
+                    .expect("invalid fen")
+                    .build()
+                    .expect("illegal fen");
             },
             Some("perft") => {
-                let mut params = slices.next().unwrap().splitn(2, ' ');
-                let depth = params.next().unwrap().parse().unwrap();
-                let nodes = params.next().unwrap().parse().unwrap();
+                let mut params = slices.next().expect("missing perft params").splitn(2, ' ');
+                let depth = params.next().expect("missing perft depth").parse().expect("depth not an integer");
+                let nodes = params.next().expect("missing perft nodes").parse().expect("nodes not an integer");
 
                 if nodes <= node_limit {
                     assert_eq!(perft::perft(&pos, depth), nodes);
