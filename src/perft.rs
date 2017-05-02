@@ -48,7 +48,6 @@ pub fn perft<V: Variant>(pos: &V, depth: u8) -> usize {
 mod tests {
     use super::*;
     use test::Bencher;
-    use types::Uci;
     use std::str::FromStr;
     use variant::Standard;
 

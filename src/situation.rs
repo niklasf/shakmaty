@@ -1,15 +1,13 @@
 use std::cmp::max;
-use std::char;
 use std::ascii::AsciiExt;
-use std::str::FromStr;
 use std::fmt;
+use std::str::FromStr;
 
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
+use types::{Color, White, Black, Role, Piece, Move, ROLES};
 use bitboard::Bitboard;
 use board::Board;
-use attacks;
 
 #[derive(Clone, Default)]
 pub struct Pocket {
@@ -109,68 +107,6 @@ impl fmt::Display for RemainingChecks {
     }
 }
 
-pub trait Epd {
-    const PROMOTED: bool;
-
-    fn board(&self) -> &Board;
-    fn pockets(&self) -> Option<&Pockets>;
-    fn turn(&self) -> Color;
-    fn castling_rights(&self) -> Bitboard;
-    fn ep_square(&self) -> Option<Square>;
-    fn remaining_checks(&self) -> Option<&RemainingChecks>;
-
-    fn castling_xfen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let king = self.board().king_of(*color);
-
-            let candidates = self.board().by_piece(color.rook()) &
-                             Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights()).rev() {
-                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
-                    fen.push(color.fold('Q', 'q'));
-                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
-                    fen.push(color.fold('K', 'k'));
-                } else {
-                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-                }
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
-    }
-
-    fn epd(&self) -> String {
-        let pockets = self.pockets()
-                          .map_or("".to_owned(), |p| format!("[{}]", p));
-
-        let checks = self.remaining_checks()
-                         .map_or("".to_owned(), |r| format!(" {}", r));
-
-        format!("{}{} {} {} {}{}",
-                self.board().board_fen(Self::PROMOTED),
-                pockets,
-                self.turn().char(),
-                self.castling_xfen(),
-                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks)
-    }
-}
-
-pub trait Fen: Epd {
-    fn halfmove_clock(&self) -> u32;
-    fn fullmoves(&self) -> u32;
-
-    fn fen(&self) -> String {
-        format!("{} {} {}", self.epd(), self.halfmove_clock(), self.fullmoves())
-    }
-}
 
 #[derive(Clone)]
 pub struct Situation {
@@ -195,23 +131,14 @@ impl Default for Situation {
     }
 }
 
-impl Epd for Situation {
-    const PROMOTED: bool = true;
-
-    fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
-    fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-}
-
-impl Fen for Situation {
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
-}
-
 impl Situation {
+    pub fn board(&self) -> &Board { &self.board }
+    pub fn turn(&self) -> Color { self.turn }
+    pub fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    pub fn ep_square(&self) -> Option<Square> { self.ep_square }
+    pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    pub fn fullmoves(&self) -> u32 { self.fullmoves }
+
     pub fn do_move(mut self, m: &Move) -> Self {
         let color = self.turn();
         self.ep_square.take();
@@ -364,78 +291,4 @@ impl Situation {
     pub fn them(&self) -> Bitboard {
         self.board.by_color(!self.turn)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use square;
-
-    /* #[test]
-    fn test_castling_moves() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/5NP1/PPPPPPBP/RNBQK2R w KQkq - 0 1";
-        let pos = Situation::from_fen(fen).unwrap();
-
-        let castle = Move::Castle { king: square::E1, rook: square::H1 };
-        let mut moves = Vec::new();
-        pos.legal_moves(&mut moves);
-        assert!(moves.contains(&castle));
-
-        let pos = pos.do_move(&castle);
-        assert_eq!(pos.board().piece_at(square::G1), Some(White.king()));
-        assert_eq!(pos.board().piece_at(square::F1), Some(White.rook()));
-    }
-
-    #[test]
-    fn test_chess960_castling() {
-        let fen = "r1k1r2q/p1ppp1pp/8/8/8/8/P1PPP1PP/R1K1R2Q w KQkq - 0 1";
-        let pos = Situation::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(), fen);
-
-        let qs = Move::Castle { king: square::C1, rook: square::A1 };
-        let ks = Move::Castle { king: square::C1, rook: square::E1 };
-
-        let mut moves = Vec::new();
-        pos.legal_moves(&mut moves);
-        assert!(moves.contains(&qs));
-        assert!(moves.contains(&ks));
-    } */
-
-    #[test]
-    fn test_fen() {
-        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-        let pos = Situation::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(), fen);
-
-        let fen = "4k3/8/8/8/8/8/8/4K2R w K - 0 1";
-        let pos = Situation::from_fen(fen).unwrap();
-        assert_eq!(pos.fen(), fen);
-    }
-
-    #[test]
-    fn test_do_move() {
-        let pos = Situation::from_fen("rb6/5b2/1p2r3/p1k1P3/PpP1p3/2R4P/3P4/1N1K2R1 w - -").unwrap();
-        let m = Move::Normal { role: Role::Rook, from: square::C3, to: square::C1, capture: None, promotion: None };
-        let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "rb6/5b2/1p2r3/p1k1P3/PpP1p3/7P/3P4/1NRK2R1 b - - 1 1");
-    }
-
-    #[test]
-    fn test_ep_fen() {
-        let pos = Situation::default();
-        let m = Move::Normal { role: Role::Pawn, from: square::H2, to: square::H4, capture: None, promotion: None };
-        let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1");
-
-        let m = Move::Normal { role: Role::Knight, from: square::B8, to: square::C6, capture: None, promotion: None };
-        let pos = pos.do_move(&m);
-        assert_eq!(pos.fen(), "r1bqkbnr/pppppppp/2n5/8/7P/8/PPPPPPP1/RNBQKBNR w KQkq - 1 2");
-    }
-
-    /* #[test]
-    fn test_san() {
-        let pos = Situation::default();
-        let m = Move::Normal { role: Role::Knight, from: square::G1, capture: None, to: square::F3, promotion: None };
-        assert_eq!(pos.san(&m), "Nf3");
-    } */
 }

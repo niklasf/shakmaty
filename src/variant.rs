@@ -1,17 +1,21 @@
-use std::fmt;
-
-use fen::{Situation, Pockets, RemainingChecks, Epd, Fen};
+use attacks;
+use situation::{Situation, Pockets, RemainingChecks};
 use board::Board;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Uci, ROLES};
-use attacks;
+use types::{Color, White, Black, Role, Move, Uci};
 
 pub trait Variant : Default + Clone {
-    fn position(&self) -> &Situation;
-    fn board(&self) -> &Board { self.position().board() }
-    fn turn(&self) -> Color { self.position().turn() }
+    const FEN_PROMOTED: bool;
+
+    fn situation(&self) -> &Situation;
+    fn board(&self) -> &Board { self.situation().board() }
+    fn turn(&self) -> Color { self.situation().turn() }
+    fn castling_rights(&self) -> Bitboard { self.situation().castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.situation().ep_square() }
+    fn halfmove_clock(&self) -> u32 { self.situation().halfmove_clock() }
+    fn fullmoves(&self) -> u32 { self.situation().fullmoves() }
 
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn pockets(&self) -> Option<&Pockets> { None }
@@ -19,9 +23,8 @@ pub trait Variant : Default + Clone {
     fn from_fen(fen: &str) -> Option<Self>;
 
     fn checkers(&self) -> Bitboard {
-        let pos = self.position();
-        pos.board().king_of(pos.turn())
-           .map_or(Bitboard(0), |king| pos.board().by_color(!pos.turn()) & pos.board().attacks_to(king))
+        self.board().king_of(self.turn())
+           .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
     fn validate(&self, uci: &Uci) -> Option<Move> {
@@ -33,7 +36,7 @@ pub trait Variant : Default + Clone {
                             return Move::Castle { king: from, rook: to}
                         }
                     }
-                    Move::Normal { role, from, capture: self.position().board().role_at(to), to, promotion }
+                    Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
                 })
             },
             Uci::Put { role, to } => Some(Move::Put { role, to }),
@@ -121,8 +124,55 @@ pub trait Variant : Default + Clone {
         }
     } */
 
+    fn castling_xfen(&self) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for color in &[White, Black] {
+            let king = self.board().king_of(*color);
+
+            let candidates = self.board().by_piece(color.rook()) &
+                             Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & self.castling_rights()).rev() {
+                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                    fen.push(color.fold('Q', 'q'));
+                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                    fen.push(color.fold('K', 'k'));
+                } else {
+                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+                }
+            }
+        }
+
+        if fen.is_empty() {
+            fen.push('-');
+        }
+
+        fen
+    }
+
+    fn epd(&self) -> String {
+        let pockets = self.pockets()
+                          .map_or("".to_owned(), |p| format!("[{}]", p));
+
+        let checks = self.remaining_checks()
+                         .map_or("".to_owned(), |r| format!(" {}", r));
+
+        format!("{}{} {} {} {}{}",
+                self.board().board_fen(Self::FEN_PROMOTED),
+                pockets,
+                self.turn().char(),
+                self.castling_xfen(),
+                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                checks)
+    }
+
+    fn fen(&self) -> String {
+        format!("{} {} {}", self.epd(), self.halfmove_clock(), self.fullmoves())
+    }
+
     fn legal_moves(&self, moves: &mut Vec<Move>) {
-        let pos = self.position();
+        let pos = self.situation();
         let checkers = self.checkers();
 
         if checkers.is_empty() {
@@ -136,33 +186,35 @@ pub trait Variant : Default + Clone {
         let blockers = slider_blockers(pos, pos.them(),
                                        pos.board().king_of(pos.turn()).unwrap());
 
-        moves.retain(|m| is_safe(self.position(), m, blockers));
+        moves.retain(|m| is_safe(self.situation(), m, blockers));
     }
 
-    fn do_move(mut self, m: &Move) -> Self;
+    fn do_move(self, m: &Move) -> Self;
 }
 
 #[derive(Default, Clone)]
 pub struct Standard {
-    pos: Situation
+    situation: Situation
 }
 
 impl Variant for Standard {
-    fn position(&self) -> &Situation {
-        &self.pos
+    const FEN_PROMOTED: bool = true;
+
+    fn situation(&self) -> &Situation {
+        &self.situation
     }
 
     fn from_fen(fen: &str) -> Option<Standard> {
-        Situation::from_fen(fen).map(|pos| Standard { pos })
+        Situation::from_fen(fen).map(|situation| Standard { situation })
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
-        self.pos = self.pos.do_move(m);
+        self.situation = self.situation.do_move(m);
         self
     }
 }
 
-#[derive(Default, Clone)]
+/* #[derive(Default, Clone)]
 pub struct Crazyhouse {
     pos: Situation,
     pockets: Pockets,
@@ -196,9 +248,9 @@ impl Variant for Crazyhouse {
 
         self
     }
-}
+} */
 
-#[derive(Default, Clone)]
+/* #[derive(Default, Clone)]
 pub struct ThreeCheck {
     pos: Situation,
     remaining_checks: RemainingChecks,
@@ -222,7 +274,7 @@ impl Variant for ThreeCheck {
 
         self
     }
-}
+} */
 
 fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut Vec<Move>) {
     let king = pos.our(Role::King).first().unwrap();
