@@ -4,7 +4,7 @@ use board::Board;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Move, Uci};
+use types::{Color, White, Black, Role, Piece, Move, Uci};
 use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::cmp::max;
@@ -46,10 +46,33 @@ impl PositionBuilder {
         let mut sit = Situation::empty();
         let mut parts = fen.split(' ');
 
-        if let Some(board) = parts.next().and_then(|board_fen| Board::from_board_fen(board_fen)) {
-            sit.board = board
+        let mut pockets: Option<Pockets> = None;
+
+        let maybe_board = parts.next().and_then(|board_part| {
+            if board_part.ends_with(']') {
+                if let Some(split_point) = board_part.find('[') {
+                    let mut tmp_pockets = Pockets::default();
+                    for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
+                        if let Some(piece) = Piece::from_char(ch) {
+                            *tmp_pockets.mut_by_piece(piece) += 1;
+                        } else {
+                            return None
+                        }
+                    }
+                    pockets = Some(tmp_pockets);
+                    Some(&board_part[..split_point])
+                } else {
+                    None
+                }
+            } else {
+                Some(&board_part)
+            }
+        });
+
+        if let Some(board) = maybe_board.and_then(|board_fen| Board::from_board_fen(board_fen)) {
+            sit.board = board;
         } else {
-            return None
+            return None;
         }
 
         match parts.next() {
@@ -106,11 +129,7 @@ impl PositionBuilder {
             }
         }
 
-        Some(PositionBuilder {
-            situation: sit,
-            pockets: None,
-            remaining_checks: None
-        })
+        Some(PositionBuilder { situation: sit, pockets, remaining_checks: None })
     }
 
     pub fn build<P: Position>(&self) -> Result<P, PositionError> {
@@ -631,5 +650,17 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
             true
         },
         _ => false
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_fen() {
+        // Test pocket.
+        let builder = PositionBuilder::from_fen("8/8/8/8/8/8/8/8[NNn]").unwrap();
+        assert_eq!(builder.pockets.unwrap().white.knights, 2);
     }
 }
