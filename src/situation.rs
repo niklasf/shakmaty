@@ -132,7 +132,7 @@ impl Default for Situation {
 }
 
 impl Situation {
-    pub fn do_move(mut self, m: &Move) -> Self {
+    pub fn do_move(&mut self, m: &Move) {
         let color = self.turn;
         self.ep_square.take();
         self.halfmove_clock += 1;
@@ -191,8 +191,6 @@ impl Situation {
         }
 
         self.turn = !color;
-
-        self
     }
 
     pub fn empty() -> Situation {

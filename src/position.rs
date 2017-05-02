@@ -376,7 +376,7 @@ impl Position for Standard {
     }
 
     fn do_move(mut self, m: &Move) -> Standard {
-        self.situation = self.situation.do_move(m);
+        self.situation.do_move(m);
         self
     }
 }
