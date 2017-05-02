@@ -6,7 +6,8 @@ use square;
 use square::Square;
 use types::{Color, White, Black, Role, Move, Uci};
 
-pub trait Variant : Default + Clone {
+pub trait Position : Default + Clone {
+    const MAX_LEGAL_MOVES: usize;
     const FEN_PROMOTED: bool;
 
     fn situation(&self) -> &Situation;
@@ -197,7 +198,8 @@ pub struct Standard {
     situation: Situation
 }
 
-impl Variant for Standard {
+impl Position for Standard {
+    const MAX_LEGAL_MOVES: usize = 255;
     const FEN_PROMOTED: bool = true;
 
     fn situation(&self) -> &Situation {

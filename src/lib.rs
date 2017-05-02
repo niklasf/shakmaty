@@ -12,8 +12,8 @@ mod types;
 mod bitboard;
 mod board;
 mod situation;
+mod position;
 
-pub mod variant;
 pub mod square;
 pub mod attacks;
 pub mod perft;
@@ -23,4 +23,4 @@ pub use types::{Color, Role, Piece, Move};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use situation::{Situation, RemainingChecks, Pockets, Pocket};
-pub use variant::Variant;
+pub use position::{Position, Standard};
