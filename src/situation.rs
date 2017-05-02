@@ -217,4 +217,8 @@ impl Situation {
     pub fn them(&self) -> Bitboard {
         self.board.by_color(!self.turn)
     }
+
+    pub fn their(&self, role: Role) -> Bitboard {
+        self.them() & self.board.by_role(role)
+    }
 }

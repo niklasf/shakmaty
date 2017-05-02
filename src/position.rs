@@ -10,7 +10,17 @@ use std::str::FromStr;
 use std::cmp::max;
 
 #[derive(Debug)]
-pub enum PositionError { }
+pub enum PositionError {
+    Empty,
+    NoKing { color: Color },
+    TooManyKings { color: Color },
+    TooManyPawns { color: Color },
+    TooManyPieces { color: Color },
+    PawnsOnBackrank,
+    BadCastlingRights,
+    InvalidEpSquare,
+    OppositeCheck,
+}
 
 #[derive(Clone, Default)]
 pub struct PositionBuilder {
@@ -304,7 +314,61 @@ impl Position for Standard {
     const FEN_PROMOTED: bool = true;
 
     fn from_builder(builder: &PositionBuilder) -> Result<Standard, PositionError> {
-        Ok(Standard { situation: builder.situation.clone() })
+        let pos = Standard {
+            situation: builder.situation.clone()
+        };
+
+        if pos.board().occupied().is_empty() {
+            return Err(PositionError::Empty)
+        }
+
+        for color in &[White, Black] {
+            if (pos.board().by_piece(color.king()) & !pos.board().promoted()).is_empty() {
+                return Err(PositionError::NoKing { color: *color })
+            }
+            if pos.board().by_piece(color.king()).count() > 1 {
+                return Err(PositionError::TooManyKings { color: *color })
+            }
+            if pos.board().by_color(*color).count() > 16 {
+                return Err(PositionError::TooManyPieces { color: *color })
+            }
+            if pos.board().by_piece(color.pawn()).count() > 8 {
+                return Err(PositionError::TooManyPawns { color: *color })
+            }
+        }
+
+        if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
+            return Err(PositionError::PawnsOnBackrank)
+        }
+
+        // TODO: Validate castling rights.
+
+        if let Some(ep_square) = pos.ep_square() {
+            if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
+                return Err(PositionError::InvalidEpSquare)
+            }
+
+            let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8)).expect("ep square is on sixth rank");
+            let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8)).expect("ep square is on sixth rank");
+
+            // The last move must have been a double pawn push. Check for the
+            // presence of that pawn.
+            if !pos.situation.their(Role::Pawn).contains(fifth_rank_sq) {
+                return Err(PositionError::InvalidEpSquare)
+            }
+
+            if pos.board().occupied().contains(ep_square) | pos.board().occupied().contains(seventh_rank_sq) {
+                return Err(PositionError::InvalidEpSquare)
+            }
+        }
+
+        if let Some(their_king) = pos.board().king_of(!pos.turn()) {
+            if !(pos.board().attacks_to(their_king) & pos.situation.us()).is_empty() {
+                return Err(PositionError::OppositeCheck)
+            }
+        }
+
+        Ok(pos)
     }
 
     fn situation(&self) -> &Situation {
