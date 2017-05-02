@@ -1,6 +1,7 @@
 extern crate shakmaty;
 
 use shakmaty::Position;
+use shakmaty::PositionBuilder;
 use shakmaty::Standard;
 use shakmaty::perft;
 
@@ -22,7 +23,10 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
 
         match slices.next() {
             Some("epd") => {
-                // TODO: pos = P::from_fen(slices.next().unwrap()).unwrap()
+                pos = PositionBuilder::from_fen(slices.next().unwrap())
+                  .unwrap()
+                  .build()
+                  .unwrap();
             },
             Some("perft") => {
                 let mut params = slices.next().unwrap().splitn(2, ' ');

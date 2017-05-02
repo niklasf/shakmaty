@@ -23,4 +23,4 @@ pub use types::{Color, Role, Piece, Move};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use situation::{Situation, RemainingChecks, Pockets, Pocket};
-pub use position::{Position, Standard};
+pub use position::{PositionError, PositionBuilder, Position, Standard};

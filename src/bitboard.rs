@@ -41,6 +41,11 @@ impl Bitboard {
         Bitboard(1 << sq)
     }
 
+    /// Returns an empty bitboard.
+    pub fn empty() -> Bitboard {
+        Bitboard(0)
+    }
+
     /// Returns the bitboard containing all squares.
     pub fn all() -> Bitboard {
         Bitboard(!0u64)

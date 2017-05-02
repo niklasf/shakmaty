@@ -110,12 +110,12 @@ impl fmt::Display for RemainingChecks {
 
 #[derive(Clone)]
 pub struct Situation {
-    board: Board,
-    turn: Color,
-    castling_rights: Bitboard,
-    ep_square: Option<Square>,
-    halfmove_clock: u32,
-    fullmoves: u32,
+    pub board: Board,
+    pub turn: Color,
+    pub castling_rights: Bitboard,
+    pub ep_square: Option<Square>,
+    pub halfmove_clock: u32,
+    pub fullmoves: u32,
 }
 
 impl Default for Situation {
@@ -132,15 +132,8 @@ impl Default for Situation {
 }
 
 impl Situation {
-    pub fn board(&self) -> &Board { &self.board }
-    pub fn turn(&self) -> Color { self.turn }
-    pub fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    pub fn ep_square(&self) -> Option<Square> { self.ep_square }
-    pub fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
-    pub fn fullmoves(&self) -> u32 { self.fullmoves }
-
     pub fn do_move(mut self, m: &Move) -> Self {
-        let color = self.turn();
+        let color = self.turn;
         self.ep_square.take();
         self.halfmove_clock += 1;
 
@@ -211,73 +204,6 @@ impl Situation {
             halfmove_clock: 0,
             fullmoves: 1,
         }
-    }
-
-    pub fn from_fen(fen: &str) -> Option<Situation> {
-        let mut pos = Situation::empty();
-        let mut parts = fen.split(' ');
-
-        if let Some(board) = parts.next().and_then(|board_fen| Board::from_board_fen(board_fen)) {
-            pos.board = board
-        } else {
-            return None
-        }
-
-        match parts.next() {
-            Some("w") => pos.turn = White,
-            Some("b") => pos.turn = Black,
-            Some(_)   => return None,
-            None      => ()
-        }
-
-        if let Some(castling_part) = parts.next() {
-            for ch in castling_part.chars() {
-                if ch == '-' {
-                    continue;
-                }
-
-                let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
-
-                let candidates = Bitboard::relative_rank(color, 0) &
-                                 pos.board.by_piece(Role::Rook.of(color));
-
-                let flag = match ch.to_ascii_lowercase() {
-                    'k'  => candidates.last(),
-                    'q'  => candidates.first(),
-                    file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
-                };
-
-                match flag {
-                    Some(cr) => pos.castling_rights.add(cr),
-                    None     => return None
-                }
-            }
-        }
-
-        if let Some(ep_part) = parts.next() {
-            if ep_part != "-" {
-                match Square::from_str(ep_part) {
-                    Ok(sq) => pos.ep_square = Some(sq),
-                    _      => return None
-                }
-            }
-        }
-
-        if let Some(halfmoves_part) = parts.next() {
-            match halfmoves_part.parse::<u32>() {
-                Ok(halfmoves) => pos.halfmove_clock = halfmoves,
-                _             => return None
-            }
-        }
-
-        if let Some(fullmoves_part) = parts.next() {
-            match fullmoves_part.parse::<u32>() {
-                Ok(fullmoves) => pos.fullmoves = max(1, fullmoves),
-                _             => return None
-            }
-        }
-
-        Some(pos)
     }
 
     pub fn us(&self) -> Bitboard {
