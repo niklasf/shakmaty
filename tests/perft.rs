@@ -1,7 +1,7 @@
 extern crate shakmaty;
 
 use shakmaty::Position;
-use shakmaty::Standard;
+use shakmaty::Chess;
 use shakmaty::fen::Fen;
 use shakmaty::perft;
 
@@ -48,10 +48,10 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
 #[ignore]
 #[test]
 fn test_random() {
-    test_perft_file::<Standard>("tests/random.perft", 10000);
+    test_perft_file::<Chess>("tests/random.perft", 10000);
 }
 
 #[test]
 fn test_tricky() {
-    test_perft_file::<Standard>("tests/tricky.perft", 1000000);
+    test_perft_file::<Chess>("tests/tricky.perft", 1000000);
 }

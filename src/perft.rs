@@ -47,11 +47,11 @@ pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
 mod tests {
     use super::*;
     use test::Bencher;
-    use position::Standard;
+    use position::Chess;
 
     #[bench]
     fn bench_perft(b: &mut Bencher) {
-        let pos = Standard::default();
+        let pos = Chess::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }
 }

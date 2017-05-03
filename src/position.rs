@@ -290,15 +290,15 @@ impl<P> Setup for P where P: SetupFromSituation {
 }
 
 #[derive(Default, Clone)]
-pub struct Standard {
+pub struct Chess {
     situation: Situation
 }
 
-impl SetupFromSituation for Standard {
+impl SetupFromSituation for Chess {
     fn situation(&self) -> &Situation { &self.situation }
 }
 
-impl Position for Standard {
+impl Position for Chess {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
@@ -306,13 +306,13 @@ impl Position for Standard {
         &self.situation
     }
 
-    fn do_move(mut self, m: &Move) -> Standard {
+    fn do_move(mut self, m: &Move) -> Chess {
         self.situation.do_move(m);
         self
     }
 
-    fn from_setup<S: Setup>(setup: &S) -> Result<Standard, PositionError> {
-        let pos = Standard {
+    fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
+        let pos = Chess {
             situation: Situation {
                 board: setup.board().clone(),
                 turn: setup.turn(),
