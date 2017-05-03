@@ -1,9 +1,6 @@
 //! Count legal move paths.
 
-use types::Move;
-use position::Position;
-
-use arrayvec::ArrayVec;
+use position::{Position, MoveList};
 
 /// Counts legal move paths of a given length.
 ///
@@ -14,7 +11,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
-        let mut moves = ArrayVec::new();
+        let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
 
         if depth == 1 {
