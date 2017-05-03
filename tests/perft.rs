@@ -30,8 +30,12 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
             },
             Some("perft") => {
                 let mut params = slices.next().expect("missing perft params").splitn(2, ' ');
-                let depth = params.next().expect("missing perft depth").parse().expect("depth not an integer");
-                let nodes = params.next().expect("missing perft nodes").parse().expect("nodes not an integer");
+
+                let depth = params.next().expect("missing perft depth")
+                                  .parse().expect("depth not an integer");
+
+                let nodes = params.next().expect("missing perft nodes")
+                                  .parse().expect("nodes not an integer");
 
                 if nodes <= node_limit {
                     assert_eq!(perft::perft(&pos, depth), nodes);
