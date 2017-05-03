@@ -6,8 +6,6 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
 use setup::Setup;
 
-use std::str::FromStr;
-
 #[derive(Debug)]
 pub enum PositionError {
     Empty,
@@ -629,9 +627,4 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
         },
         _ => false
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
 }

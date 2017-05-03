@@ -2,11 +2,10 @@
 
 use std::str::FromStr;
 use std::ascii::AsciiExt;
-use std::cmp::max;
 use std::fmt;
 
 use square::Square;
-use types::{Color, Black, White, Role, Piece, Pockets, RemainingChecks};
+use types::{Color, Black, White, Role, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
