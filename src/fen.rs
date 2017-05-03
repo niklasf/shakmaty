@@ -1,3 +1,5 @@
+//! Parse and write Forsyth-Edwards-Notation.
+
 use std::str::FromStr;
 use std::ascii::AsciiExt;
 use std::cmp::max;
@@ -10,6 +12,7 @@ use board::Board;
 use setup::Setup;
 use position::{Position, PositionError};
 
+/// A parsed FEN.
 #[derive(Clone)]
 pub struct Fen {
     pub board: Board,
@@ -33,6 +36,7 @@ impl Setup for Fen {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
+/// Errors that can occur when parsing FENs.
 #[derive(Debug)]
 pub enum FenError {
     InvalidBoard,
@@ -181,6 +185,7 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
     fen
 }
 
+/// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
     let pockets = setup.pockets()
                        .map_or("".to_owned(), |p| format!("[{}]", p));
@@ -197,6 +202,7 @@ pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
             checks)
 }
 
+/// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 pub fn fen<S: Setup>(setup: &S, promoted: bool) -> String {
     format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
 }
