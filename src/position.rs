@@ -32,8 +32,10 @@ pub trait Position : Setup + Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
+    /// Validate a `Setup` and construct a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
+    /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.board().king_of(self.turn())
            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
