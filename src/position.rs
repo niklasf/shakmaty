@@ -46,7 +46,7 @@ pub trait Position : Setup + Default + Clone {
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
-        let mut legals = ArrayVec::new();
+        let mut legals = MoveList::new();
         self.legal_moves(&mut legals);
         legals.contains(m)
     }
