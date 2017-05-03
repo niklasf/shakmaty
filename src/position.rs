@@ -145,52 +145,6 @@ pub trait Position : Default + Clone {
         }
     } */
 
-    fn castling_xfen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let king = self.board().king_of(*color);
-
-            let candidates = self.board().by_piece(color.rook()) &
-                             Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights()).rev() {
-                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
-                    fen.push(color.fold('Q', 'q'));
-                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
-                    fen.push(color.fold('K', 'k'));
-                } else {
-                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-                }
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
-    }
-
-    fn epd(&self) -> String {
-        let pockets = self.pockets()
-                          .map_or("".to_owned(), |p| format!("[{}]", p));
-
-        let checks = self.remaining_checks()
-                         .map_or("".to_owned(), |r| format!(" {}", r));
-
-        format!("{}{} {} {} {}{}",
-                self.board().board_fen(Self::TRACK_PROMOTED),
-                pockets,
-                self.turn().char(),
-                self.castling_xfen(),
-                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks)
-    }
-
-    fn fen(&self) -> String {
-        format!("{} {} {}", self.epd(), self.halfmove_clock(), self.fullmoves())
-    }
 
     fn legal_moves(&self, moves: &mut Vec<Move>) {
         let pos = self.situation();
