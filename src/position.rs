@@ -466,9 +466,9 @@ fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut MoveList) {
         attacked = attacked | attacks::ray(checker, king).without(checker);
     }
 
-    for to in attacks::king_attacks(king) & !pos.us() & !attacked {
-        moves.push(Move::Normal { role: Role::King, from: king, capture: pos.board.role_at(to), to, promotion: None });
-    }
+    moves.extend((attacks::king_attacks(king) & !pos.us() & !attacked).map(|to| {
+        Move::Normal { role: Role::King, from: king, capture: pos.board.role_at(to), to, promotion: None }
+    }));
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
@@ -534,9 +534,9 @@ fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Squa
 }
 
 fn push_moves(pos: &Situation, moves: &mut MoveList, role: Role, from: Square, to: Bitboard) {
-    for square in to {
-        moves.push(Move::Normal { role, from, capture: pos.board.role_at(square), to: square, promotion: None });
-    }
+    moves.extend(to.map(|square| {
+        Move::Normal { role, from, capture: pos.board.role_at(square), to: square, promotion: None }
+    }));
 }
 
 fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
