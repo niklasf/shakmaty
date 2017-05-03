@@ -520,9 +520,7 @@ fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
     }
 }
 
-fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Square) {
-    let capture = pos.board.role_at(to); // XXX
-
+fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
     if to.rank() == pos.turn.fold(7, 0) {
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
@@ -572,7 +570,7 @@ fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, move
 
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
-            push_pawn_moves(pos, moves, from, to);
+            push_pawn_moves(pos, moves, from, to, pos.board.role_at(to));
         }
     }
 
@@ -585,13 +583,13 @@ fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, move
 
     for to in single_moves & target {
         if let Some(from) = to.offset(pos.turn.fold(-8, 8)) {
-            push_pawn_moves(pos, moves, from, to);
+            push_pawn_moves(pos, moves, from, to, None);
         }
     }
 
     for to in double_moves & target {
         if let Some(from) = to.offset(pos.turn.fold(-16, 16)) {
-            push_pawn_moves(pos, moves, from, to);
+            push_pawn_moves(pos, moves, from, to, None);
         }
     }
 }
