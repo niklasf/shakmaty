@@ -5,8 +5,9 @@ use bitboard::Bitboard;
 use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
-use std::str::FromStr;
 use setup::Setup;
+
+use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum PositionError {
@@ -31,10 +32,7 @@ pub trait Position : Setup + Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
-    fn from_setup(builder: &Setup) -> Result<Self, PositionError>;
-
-    fn pockets(&self) -> Option<&Pockets> { None }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
     fn checkers(&self) -> Bitboard {
         self.board().king_of(self.turn())
@@ -190,15 +188,24 @@ impl Position for Standard {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
-    fn from_setup(builder: &Setup) -> Result<Standard, PositionError> {
+    fn situation(&self) -> &Situation {
+        &self.situation
+    }
+
+    fn do_move(mut self, m: &Move) -> Standard {
+        self.situation.do_move(m);
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Standard, PositionError> {
         let pos = Standard {
             situation: Situation {
-                board: builder.board().clone(),
-                turn: builder.turn(),
-                castling_rights: builder.castling_rights(),
-                ep_square: builder.ep_square(),
-                halfmove_clock: builder.halfmove_clock(),
-                fullmoves: builder.fullmoves(),
+                board: setup.board().clone(),
+                turn: setup.turn(),
+                castling_rights: setup.castling_rights(),
+                ep_square: setup.ep_square(),
+                halfmove_clock: setup.halfmove_clock(),
+                fullmoves: setup.fullmoves(),
             }
         };
 
@@ -253,15 +260,6 @@ impl Position for Standard {
         }
 
         Ok(pos)
-    }
-
-    fn situation(&self) -> &Situation {
-        &self.situation
-    }
-
-    fn do_move(mut self, m: &Move) -> Standard {
-        self.situation.do_move(m);
-        self
     }
 }
 
@@ -521,11 +519,4 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_from_fen() {
-        // Test pocket.
-        let builder = Setup::from_fen("8/8/8/8/8/8/8/8[NNn]").unwrap();
-        assert_eq!(builder.pockets.unwrap().white.knights, 2);
-    }
 }

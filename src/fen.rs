@@ -7,7 +7,9 @@ use types::{Color, Black, White, Role, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
+use position::{Position, PositionError};
 
+#[derive(Clone)]
 pub struct Fen {
     pub board: Board,
     pub pockets: Option<Pockets>,
@@ -113,6 +115,7 @@ impl Setup {
         }
     }*/
 
+#[derive(Debug)]
 pub enum FenError {
     InvalidBoard,
     InvalidTurn,
@@ -122,18 +125,32 @@ pub enum FenError {
     InvalidFullmoves,
 }
 
-impl Fen {
-    pub fn empty() -> Fen {
+impl Default for Fen {
+    fn default() -> Fen {
         Fen {
-            board: Board::empty(),
+            board: Board::default(),
             pockets: None,
             turn: White,
-            castling_rights: Bitboard::empty(),
+            castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
             remaining_checks: None,
             halfmove_clock: 0,
             fullmoves: 1,
         }
+    }
+}
+
+impl Fen {
+    pub fn empty() -> Fen {
+        Fen {
+            board: Board::empty(),
+            castling_rights: Bitboard::empty(),
+            ..Fen::default()
+        }
+    }
+
+    pub fn position<P: Position>(&self) -> Result<P, PositionError> {
+        P::from_setup(self)
     }
 }
 

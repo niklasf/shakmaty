@@ -2,7 +2,7 @@ extern crate shakmaty;
 
 use shakmaty::Position;
 use shakmaty::Standard;
-use shakmaty::fen;
+use shakmaty::fen::Fen;
 use shakmaty::perft;
 
 use std::io::BufReader;
@@ -23,10 +23,9 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
 
         match slices.next() {
             Some("epd") => {
-                pos = fen::Setup::from_fen(slices.next().expect("missing epd"))
-                    .expect("invalid fen")
-                    .position()
-                    .expect("illegal fen");
+                pos = slices.next().expect("missing epd")
+                            .parse::<Fen>().expect("invalid fen")
+                            .position().expect("illegal fen");
             },
             Some("perft") => {
                 let mut params = slices.next().expect("missing perft params").splitn(2, ' ');
