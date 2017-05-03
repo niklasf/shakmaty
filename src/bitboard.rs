@@ -242,6 +242,15 @@ impl ops::BitOr<Bitboard> for Bitboard {
     }
 }
 
+impl ops::BitXor<Bitboard> for Bitboard {
+    type Output = Bitboard;
+
+    fn bitxor(self, Bitboard(rhs): Bitboard) -> Bitboard {
+        let Bitboard(lhs) = self;
+        Bitboard(lhs ^ rhs)
+    }
+}
+
 impl ops::Not for Bitboard {
     type Output = Bitboard;
 
