@@ -112,10 +112,9 @@ impl FromStr for Fen {
         }); */
 
         result.turn = match parts.next() {
-            Some("w") => White,
+            Some("w") | None => White,
             Some("b") => Black,
-            Some(_)   => return Err(FenError::InvalidTurn),
-            None      => White,
+            Some(_) => return Err(FenError::InvalidTurn),
         };
 
         if let Some(castling_part) = parts.next() {
