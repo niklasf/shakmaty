@@ -223,17 +223,6 @@ impl Situation {
         self.turn = !color;
     }
 
-    pub fn empty() -> Situation {
-        Situation {
-            board: Board::empty(),
-            turn: White,
-            castling_rights: Bitboard(0),
-            ep_square: None,
-            halfmove_clock: 0,
-            fullmoves: 1,
-        }
-    }
-
     pub fn us(&self) -> Bitboard {
         self.board.by_color(self.turn)
     }
