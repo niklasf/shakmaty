@@ -38,19 +38,20 @@ fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     let mut attack = Bitboard(0);
 
     for delta in deltas {
-        let Square(mut s) = sq;
+        let mut previous = sq;
 
-        loop {
-            s += *delta;
-            if s < 0 || s >= 64 || square::distance(Square(s), Square(s - delta)) > 2 {
+        while let Some(s) = previous.offset(*delta) {
+            if square::distance(s, previous) > 2 {
                 break;
             }
 
-            attack.add(Square(s));
+            attack.add(s);
 
-            if occupied.contains(Square(s)) {
+            if occupied.contains(s) {
                 break;
             }
+
+            previous = s;
         }
     }
 

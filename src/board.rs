@@ -86,6 +86,8 @@ impl Board {
     pub fn from_board_fen(board_fen: &str) -> Option<Board> {
         let mut board = Board::empty();
 
+        // TODO: Check for overflows.
+
         let mut rank = 7;
         let mut file = 0;
         let mut promoted = false;
