@@ -1,10 +1,10 @@
 use attacks;
-use situation::{Situation, Pockets, RemainingChecks};
+use situation::Situation;
 use board::Board;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Uci};
+use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
 use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::cmp::max;

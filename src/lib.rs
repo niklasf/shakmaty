@@ -19,8 +19,8 @@ pub mod attacks;
 pub mod perft;
 
 pub use square::Square;
-pub use types::{Color, Role, Piece, Move};
+pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
-pub use situation::{Situation, RemainingChecks, Pockets, Pocket};
+pub use situation::Situation;
 pub use position::{PositionError, PositionBuilder, Position, Standard};
