@@ -19,6 +19,11 @@ pub enum PositionError {
     OppositeCheck,
 }
 
+#[derive(Debug)]
+pub enum UciError {
+    IllegalUci
+}
+
 /// A chess or chess variant position.
 pub trait Position : Setup + Default + Clone {
     /// The maximum number of legal moves in any valid position.
@@ -38,27 +43,52 @@ pub trait Position : Setup + Default + Clone {
            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
+    /// Generates legal moves.
     fn legal_moves(&self, moves: &mut Vec<Move>);
+
+    /// Plays a move.
     fn do_move(self, m: &Move) -> Self;
 
-    /* fn validate(&self, uci: &Uci) -> Option<Move> {
-        match *uci {
+    /// Tests a move for legality.
+    fn is_legal(&self, m: &Move) -> bool {
+        let mut legals = Vec::with_capacity(Self::MAX_LEGAL_MOVES);
+        self.legal_moves(&mut legals);
+        legals.contains(m)
+    }
+
+    /// Tries to convert an `Uci` to a legal move.
+    fn validate(&self, uci: &Uci) -> Result<Move, UciError> {
+        let candidate = match *uci {
             Uci::Normal { from, to, promotion } => {
-                self.board().role_at(from).map(|role| {
-                    if role == Role::King {
-                        if self.board().by_piece(self.turn().rook()).contains(to) {
-                            return Move::Castle { king: from, rook: to}
-                        }
+                let role = self.board().role_at(from).ok_or(UciError::IllegalUci)?;
+
+                if role == Role::King && self.castling_rights().contains(to) {
+                    Move::Castle { king: from, rook: to }
+                } else if role == Role::King &&
+                          from == self.turn().fold(square::E1, square::E8) &&
+                          to.rank() == self.turn().fold(0, 7) &&
+                          square::distance(from, to) == 2 {
+                    if from.file() < to.file() {
+                        Move::Castle { king: from, rook: self.turn().fold(square::H1, square::H8) }
+                    } else {
+                        Move::Castle { king: from, rook: self.turn().fold(square::A1, square::A8) }
                     }
+                } else {
                     Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
-                })
+                }
             },
-            Uci::Put { role, to } => Some(Move::Put { role, to }),
-            Uci::Null => Some(Move::Null)
+            Uci::Put { role, to } => Move::Put { role, to },
+            Uci::Null => return Ok(Move::Null)
+        };
+
+        if self.is_legal(&candidate) {
+            Ok(candidate)
+        } else {
+            Err(UciError::IllegalUci)
         }
     }
 
-    fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
+    /* fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
         let pos = self.position();
         self.legal_moves(moves);
         moves.retain(|m| match *m {
