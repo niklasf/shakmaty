@@ -13,6 +13,7 @@ mod bitboard;
 mod board;
 mod situation;
 mod position;
+mod setup;
 
 pub mod square;
 pub mod attacks;
@@ -23,5 +24,6 @@ pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
+pub use setup::Setup;
 pub use situation::Situation;
 pub use position::{PositionError, Position, Standard};

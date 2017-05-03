@@ -6,7 +6,7 @@ use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
 use std::str::FromStr;
-use fen::Setup;
+use setup::Setup;
 
 #[derive(Debug)]
 pub enum PositionError {
@@ -22,7 +22,7 @@ pub enum PositionError {
 }
 
 /// A chess or chess variant position.
-pub trait Position : Default + Clone {
+pub trait Position : Setup + Default + Clone {
     /// The maximum number of legal moves in any valid position.
     const MAX_LEGAL_MOVES: usize;
 
@@ -32,14 +32,6 @@ pub trait Position : Default + Clone {
     const TRACK_PROMOTED: bool;
 
     fn from_setup(builder: &Setup) -> Result<Self, PositionError>;
-
-    fn situation(&self) -> &Situation;
-    fn board(&self) -> &Board { &self.situation().board }
-    fn turn(&self) -> Color { self.situation().turn }
-    fn castling_rights(&self) -> Bitboard { self.situation().castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.situation().ep_square }
-    fn halfmove_clock(&self) -> u32 { self.situation().halfmove_clock }
-    fn fullmoves(&self) -> u32 { self.situation().fullmoves }
 
     fn pockets(&self) -> Option<&Pockets> { None }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
@@ -145,6 +137,7 @@ pub trait Position : Default + Clone {
         }
     } */
 
+    fn situation(&self) -> &Situation;
 
     fn legal_moves(&self, moves: &mut Vec<Move>) {
         let pos = self.situation();
@@ -167,9 +160,30 @@ pub trait Position : Default + Clone {
     fn do_move(self, m: &Move) -> Self;
 }
 
+trait SetupFromSituation {
+    fn situation(&self) -> &Situation;
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+}
+
+impl<P> Setup for P where P: SetupFromSituation {
+    fn board(&self) -> &Board { &self.situation().board }
+    fn pockets(&self) -> Option<&Pockets> { self.pockets() }
+    fn turn(&self) -> Color { self.situation().turn }
+    fn castling_rights(&self) -> Bitboard { self.situation().castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.situation().ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks() }
+    fn halfmove_clock(&self) -> u32 { self.situation().halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.situation().fullmoves }
+}
+
 #[derive(Default, Clone)]
 pub struct Standard {
     situation: Situation
+}
+
+impl SetupFromSituation for Standard {
+    fn situation(&self) -> &Situation { &self.situation }
 }
 
 impl Position for Standard {
@@ -178,7 +192,14 @@ impl Position for Standard {
 
     fn from_setup(builder: &Setup) -> Result<Standard, PositionError> {
         let pos = Standard {
-            situation: builder.situation.clone()
+            situation: Situation {
+                board: builder.board().clone(),
+                turn: builder.turn(),
+                castling_rights: builder.castling_rights(),
+                ep_square: builder.ep_square(),
+                halfmove_clock: builder.halfmove_clock(),
+                fullmoves: builder.fullmoves(),
+            }
         };
 
         if pos.board().occupied().is_empty() {

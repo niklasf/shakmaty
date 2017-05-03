@@ -3,13 +3,34 @@ use std::ascii::AsciiExt;
 use std::cmp::max;
 
 use square::Square;
-use position::{PositionError, Position};
 use types::{Color, Black, White, Role, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
-use situation::Situation;
 use board::Board;
+use setup::Setup;
 
-pub trait Epd {
+pub struct Fen {
+    pub board: Board,
+    pub pockets: Option<Pockets>,
+    pub turn: Color,
+    pub castling_rights: Bitboard,
+    pub ep_square: Option<Square>,
+    pub remaining_checks: Option<RemainingChecks>,
+    pub halfmove_clock: u32,
+    pub fullmoves: u32,
+}
+
+impl Setup for Fen {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { self.pockets.as_ref() }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+/* pub trait Epd {
     const MARK_PROMOTED_PIECES: bool;
 
     fn board(&self) -> &Board;
@@ -90,13 +111,46 @@ impl Setup {
             pockets: None,
             remaining_checks: None,
         }
-    }
+    }*/
 
-    pub fn from_fen(fen: &str) -> Option<Setup> {
-        let mut sit = Situation::empty();
+pub enum FenError {
+    InvalidBoard,
+    InvalidTurn,
+    InvalidCastling,
+    InvalidEpSquare,
+    InvalidHalfmoveClock,
+    InvalidFullmoves,
+}
+
+impl Fen {
+    pub fn empty() -> Fen {
+        Fen {
+            board: Board::empty(),
+            pockets: None,
+            turn: White,
+            castling_rights: Bitboard::empty(),
+            ep_square: None,
+            remaining_checks: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl FromStr for Fen {
+    type Err = FenError;
+
+    fn from_str(fen: &str) -> Result<Fen, FenError> {
+        let mut result = Fen::empty();
+
+        //let mut result = Fen:sit = Situation::empty();
         let mut parts = fen.split(' ');
 
-        let mut pockets: Option<Pockets> = None;
+        let board_part = parts.next().expect("splits have at least one part");
+
+        result.board = Board::from_board_fen(board_part).ok_or(FenError::InvalidBoard)?;
+
+        /* let mut pockets: Option<Pockets> = None;
 
         let maybe_board = parts.next().and_then(|board_part| {
             if board_part.ends_with(']') {
@@ -117,20 +171,14 @@ impl Setup {
             } else {
                 Some(&board_part)
             }
-        });
+        }); */
 
-        if let Some(board) = maybe_board.and_then(|board_fen| Board::from_board_fen(board_fen)) {
-            sit.board = board;
-        } else {
-            return None;
-        }
-
-        match parts.next() {
-            Some("w") => sit.turn = White,
-            Some("b") => sit.turn = Black,
-            Some(_)   => return None,
-            None      => ()
-        }
+        result.turn = match parts.next() {
+            Some("w") => White,
+            Some("b") => Black,
+            Some(_)   => return Err(FenError::InvalidTurn),
+            None      => White,
+        };
 
         if let Some(castling_part) = parts.next() {
             for ch in castling_part.chars() {
@@ -141,7 +189,7 @@ impl Setup {
                 let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
 
                 let candidates = Bitboard::relative_rank(color, 0) &
-                                 sit.board.by_piece(Role::Rook.of(color));
+                                 result.board.by_piece(Role::Rook.of(color));
 
                 let flag = match ch.to_ascii_lowercase() {
                     'k'  => candidates.last(),
@@ -149,40 +197,24 @@ impl Setup {
                     file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
                 };
 
-                match flag {
-                    Some(cr) => sit.castling_rights.add(cr),
-                    None     => return None
-                }
+                result.castling_rights.add(flag.ok_or(FenError::InvalidCastling)?);
             }
         }
 
-        if let Some(ep_part) = parts.next() {
-            if ep_part != "-" {
-                match Square::from_str(ep_part) {
-                    Ok(sq) => sit.ep_square = Some(sq),
-                    _      => return None
-                }
-            }
+        match parts.next() {
+            Some("-") | None => (),
+            Some(ep_part) =>
+                result.ep_square = Some(Square::from_str(ep_part).map_err(|_| FenError::InvalidEpSquare)?)
         }
 
         if let Some(halfmoves_part) = parts.next() {
-            match halfmoves_part.parse::<u32>() {
-                Ok(halfmoves) => sit.halfmove_clock = halfmoves,
-                _             => return None
-            }
+            result.halfmove_clock = halfmoves_part.parse().map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
         if let Some(fullmoves_part) = parts.next() {
-            match fullmoves_part.parse::<u32>() {
-                Ok(fullmoves) => sit.fullmoves = max(1, fullmoves),
-                _             => return None
-            }
+            result.fullmoves = fullmoves_part.parse().map_err(|_| FenError::InvalidFullmoves)?;
         }
 
-        Some(Setup { situation: sit, pockets, remaining_checks: None })
-    }
-
-    pub fn position<P: Position>(&self) -> Result<P, PositionError> {
-        P::from_setup(self)
+        Ok(result)
     }
 }
