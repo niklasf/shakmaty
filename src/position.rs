@@ -13,9 +13,9 @@ use std::str::FromStr;
 pub enum PositionError {
     Empty,
     NoKing { color: Color },
-    TooManyKings { color: Color },
     TooManyPawns { color: Color },
     TooManyPieces { color: Color },
+    TooManyKings,
     PawnsOnBackrank,
     BadCastlingRights,
     InvalidEpSquare,
@@ -217,15 +217,16 @@ impl Position for Standard {
             if (pos.board().by_piece(color.king()) & !pos.board().promoted()).is_empty() {
                 return Err(PositionError::NoKing { color: *color })
             }
-            if pos.board().by_piece(color.king()).count() > 1 {
-                return Err(PositionError::TooManyKings { color: *color })
-            }
             if pos.board().by_color(*color).count() > 16 {
                 return Err(PositionError::TooManyPieces { color: *color })
             }
             if pos.board().by_piece(color.pawn()).count() > 8 {
                 return Err(PositionError::TooManyPawns { color: *color })
             }
+        }
+
+        if pos.board().kings().count() > 2 {
+            return Err(PositionError::TooManyKings)
         }
 
         if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
