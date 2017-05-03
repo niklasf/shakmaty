@@ -212,3 +212,14 @@ impl fmt::Display for Fen {
         write!(f, "{}", fen(self, true))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default() {
+        assert_eq!(Fen::empty().to_string(), "8/8/8/8/8/8/8/8 w - - 0 1");
+        assert_eq!(Fen::default().to_string(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+}
