@@ -458,7 +458,7 @@ impl Variant for ThreeCheck {
 } */
 
 fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut MoveList) {
-    let king = pos.our(Role::King).first().unwrap();
+    let king = pos.board.king_of(pos.turn).unwrap();
     let sliders = checkers & pos.board.sliders();
 
     let mut attacked = Bitboard(0);
@@ -626,7 +626,7 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
                 (pos.board.attacks_to(to) & pos.them()).is_empty()
             } else {
                 !(pos.us() & blockers).contains(from) ||
-                attacks::aligned(from, to, pos.our(Role::King).first().unwrap())
+                attacks::aligned(from, to, pos.board.king_of(pos.turn).unwrap())
             },
         Move::EnPassant { from, to, pawn } => {
             let mut occupied = pos.board.occupied();
@@ -634,7 +634,7 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
             occupied.flip(pawn);
             occupied.add(to);
 
-            pos.our(Role::King).first().map(|king| {
+            pos.board.king_of(pos.turn).map(|king| {
                 (attacks::rook_attacks(king, occupied) & pos.them() & pos.board.rooks_and_queens()).is_empty() &&
                 (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board.bishops_and_queens()).is_empty()
             }).unwrap_or(true)
