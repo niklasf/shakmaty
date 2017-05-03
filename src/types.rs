@@ -240,6 +240,7 @@ impl fmt::Display for Uci {
     }
 }
 
+/// A players Crazyhouse pocket.
 #[derive(Clone, Default)]
 pub struct Pocket {
     pub pawns: u8,
@@ -274,6 +275,7 @@ impl Pocket {
     }
 }
 
+/// Crazyhouse pockets for both sides, holding captured pieces.
 #[derive(Clone, Default)]
 pub struct Pockets {
     pub white: Pocket,
@@ -310,6 +312,8 @@ impl fmt::Display for Pockets {
     }
 }
 
+/// The number of checks the respective side needs to give in order to win
+/// (in a game of Three-check).
 #[derive(Clone)]
 pub struct RemainingChecks {
     pub white: u8,
