@@ -251,30 +251,20 @@ impl Situation {
     }
 }
 
-trait SetupFromSituation {
-    fn situation(&self) -> &Situation;
-    fn pockets(&self) -> Option<&Pockets> { None }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-}
-
-impl<P> Setup for P where P: SetupFromSituation {
-    fn board(&self) -> &Board { &self.situation().board }
-    fn pockets(&self) -> Option<&Pockets> { self.pockets() }
-    fn turn(&self) -> Color { self.situation().turn }
-    fn castling_rights(&self) -> Bitboard { self.situation().castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.situation().ep_square }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks() }
-    fn halfmove_clock(&self) -> u32 { self.situation().halfmove_clock }
-    fn fullmoves(&self) -> u32 { self.situation().fullmoves }
-}
-
 #[derive(Default, Clone)]
 pub struct Chess {
     situation: Situation
 }
 
-impl SetupFromSituation for Chess {
-    fn situation(&self) -> &Situation { &self.situation }
+impl Setup for Chess {
+    fn board(&self) -> &Board { &self.situation.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.situation.turn }
+    fn castling_rights(&self) -> Bitboard { self.situation.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.situation.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.situation.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.situation.fullmoves }
 }
 
 impl Position for Chess {
