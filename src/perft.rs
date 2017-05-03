@@ -19,14 +19,14 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
             moves.len()
         } else {
             moves.iter().map(|m| {
-                let child = pos.clone().do_move(m);
+                let child = pos.clone().do_move(m).expect("legal move");
                 perft(&child, depth - 1)
             }).sum()
         }
     }
 }
 
-/// Like `perft()`, but also prints the perft of each child for debugging.
+/* /// Like `perft()`, but also prints the perft of each child for debugging.
 pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
@@ -41,7 +41,7 @@ pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
             nodes
         }).sum()
     }
-}
+} */
 
 #[cfg(test)]
 mod tests {

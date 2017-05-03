@@ -19,10 +19,7 @@ pub enum PositionError {
     OppositeCheck,
 }
 
-#[derive(Debug)]
-pub enum UciError {
-    IllegalUci
-}
+pub type MoveError = ();
 
 /// A chess or chess variant position.
 pub trait Position : Setup + Default + Clone {
@@ -47,7 +44,7 @@ pub trait Position : Setup + Default + Clone {
     fn legal_moves(&self, moves: &mut Vec<Move>);
 
     /// Plays a move.
-    fn do_move(self, m: &Move) -> Self;
+    fn do_move(self, m: &Move) -> Result<Self, MoveError>;
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
@@ -57,10 +54,10 @@ pub trait Position : Setup + Default + Clone {
     }
 
     /// Tries to convert an `Uci` to a legal move.
-    fn validate(&self, uci: &Uci) -> Result<Move, UciError> {
+    fn validate(&self, uci: &Uci) -> Result<Move, MoveError> {
         let candidate = match *uci {
             Uci::Normal { from, to, promotion } => {
-                let role = self.board().role_at(from).ok_or(UciError::IllegalUci)?;
+                let role = self.board().role_at(from).ok_or(())?;
 
                 if role == Role::King && self.castling_rights().contains(to) {
                     Move::Castle { king: from, rook: to }
@@ -84,7 +81,7 @@ pub trait Position : Setup + Default + Clone {
         if self.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(UciError::IllegalUci)
+            Err(())
         }
     }
 
@@ -290,9 +287,13 @@ impl Position for Chess {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
-    fn do_move(mut self, m: &Move) -> Chess {
-        self.situation.do_move(m);
-        self
+    fn do_move(mut self, m: &Move) -> Result<Chess, MoveError> {
+        if self.is_legal(m) {
+            self.situation.do_move(m);
+            Ok(self)
+        } else {
+            Err(())
+        }
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
