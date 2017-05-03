@@ -11,7 +11,6 @@ extern crate lazy_static;
 mod types;
 mod bitboard;
 mod board;
-mod situation;
 mod position;
 mod setup;
 
@@ -25,5 +24,4 @@ pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
-pub use situation::Situation;
 pub use position::{PositionError, Position, Standard};
