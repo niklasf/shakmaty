@@ -5,9 +5,8 @@ use bitboard::Bitboard;
 use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
-use std::ascii::AsciiExt;
 use std::str::FromStr;
-use std::cmp::max;
+use fen::Setup;
 
 #[derive(Debug)]
 pub enum PositionError {
@@ -22,121 +21,6 @@ pub enum PositionError {
     OppositeCheck,
 }
 
-#[derive(Clone, Default)]
-pub struct PositionBuilder {
-    pub situation: Situation,
-    pub pockets: Option<Pockets>,
-    pub remaining_checks: Option<RemainingChecks>,
-}
-
-impl PositionBuilder {
-    pub fn new() -> PositionBuilder {
-        PositionBuilder::default()
-    }
-
-    pub fn empty() -> PositionBuilder {
-        PositionBuilder {
-            situation: Situation::empty(),
-            pockets: None,
-            remaining_checks: None,
-        }
-    }
-
-    pub fn from_fen(fen: &str) -> Option<PositionBuilder> {
-        let mut sit = Situation::empty();
-        let mut parts = fen.split(' ');
-
-        let mut pockets: Option<Pockets> = None;
-
-        let maybe_board = parts.next().and_then(|board_part| {
-            if board_part.ends_with(']') {
-                if let Some(split_point) = board_part.find('[') {
-                    let mut tmp_pockets = Pockets::default();
-                    for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
-                        if let Some(piece) = Piece::from_char(ch) {
-                            *tmp_pockets.mut_by_piece(piece) += 1;
-                        } else {
-                            return None
-                        }
-                    }
-                    pockets = Some(tmp_pockets);
-                    Some(&board_part[..split_point])
-                } else {
-                    None
-                }
-            } else {
-                Some(&board_part)
-            }
-        });
-
-        if let Some(board) = maybe_board.and_then(|board_fen| Board::from_board_fen(board_fen)) {
-            sit.board = board;
-        } else {
-            return None;
-        }
-
-        match parts.next() {
-            Some("w") => sit.turn = White,
-            Some("b") => sit.turn = Black,
-            Some(_)   => return None,
-            None      => ()
-        }
-
-        if let Some(castling_part) = parts.next() {
-            for ch in castling_part.chars() {
-                if ch == '-' {
-                    continue;
-                }
-
-                let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
-
-                let candidates = Bitboard::relative_rank(color, 0) &
-                                 sit.board.by_piece(Role::Rook.of(color));
-
-                let flag = match ch.to_ascii_lowercase() {
-                    'k'  => candidates.last(),
-                    'q'  => candidates.first(),
-                    file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
-                };
-
-                match flag {
-                    Some(cr) => sit.castling_rights.add(cr),
-                    None     => return None
-                }
-            }
-        }
-
-        if let Some(ep_part) = parts.next() {
-            if ep_part != "-" {
-                match Square::from_str(ep_part) {
-                    Ok(sq) => sit.ep_square = Some(sq),
-                    _      => return None
-                }
-            }
-        }
-
-        if let Some(halfmoves_part) = parts.next() {
-            match halfmoves_part.parse::<u32>() {
-                Ok(halfmoves) => sit.halfmove_clock = halfmoves,
-                _             => return None
-            }
-        }
-
-        if let Some(fullmoves_part) = parts.next() {
-            match fullmoves_part.parse::<u32>() {
-                Ok(fullmoves) => sit.fullmoves = max(1, fullmoves),
-                _             => return None
-            }
-        }
-
-        Some(PositionBuilder { situation: sit, pockets, remaining_checks: None })
-    }
-
-    pub fn build<P: Position>(&self) -> Result<P, PositionError> {
-        P::from_builder(self)
-    }
-}
-
 /// A chess or chess variant position.
 pub trait Position : Default + Clone {
     /// The maximum number of legal moves in any valid position.
@@ -147,7 +31,7 @@ pub trait Position : Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
-    fn from_builder(builder: &PositionBuilder) -> Result<Self, PositionError>;
+    fn from_setup(builder: &Setup) -> Result<Self, PositionError>;
 
     fn situation(&self) -> &Situation;
     fn board(&self) -> &Board { &self.situation().board }
@@ -338,7 +222,7 @@ impl Position for Standard {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
-    fn from_builder(builder: &PositionBuilder) -> Result<Standard, PositionError> {
+    fn from_setup(builder: &Setup) -> Result<Standard, PositionError> {
         let pos = Standard {
             situation: builder.situation.clone()
         };
@@ -666,7 +550,7 @@ mod tests {
     #[test]
     fn test_from_fen() {
         // Test pocket.
-        let builder = PositionBuilder::from_fen("8/8/8/8/8/8/8/8[NNn]").unwrap();
+        let builder = Setup::from_fen("8/8/8/8/8/8/8/8[NNn]").unwrap();
         assert_eq!(builder.pockets.unwrap().white.knights, 2);
     }
 }
