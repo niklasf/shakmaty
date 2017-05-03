@@ -137,9 +137,15 @@ impl PositionBuilder {
     }
 }
 
+/// A chess or chess variant position.
 pub trait Position : Default + Clone {
+    /// The maximum number of legal moves in any valid position.
     const MAX_LEGAL_MOVES: usize;
-    const FEN_PROMOTED: bool;
+
+    /// Whether or not promoted pieces are special in the respective chess
+    /// variant. For example in Crazyhouse a promoted queen should be marked
+    /// as `Q~` in FENs and will become a pawn when captured.
+    const TRACK_PROMOTED: bool;
 
     fn from_builder(builder: &PositionBuilder) -> Result<Self, PositionError>;
 
@@ -290,7 +296,7 @@ pub trait Position : Default + Clone {
                          .map_or("".to_owned(), |r| format!(" {}", r));
 
         format!("{}{} {} {} {}{}",
-                self.board().board_fen(Self::FEN_PROMOTED),
+                self.board().board_fen(Self::TRACK_PROMOTED),
                 pockets,
                 self.turn().char(),
                 self.castling_xfen(),
@@ -330,7 +336,7 @@ pub struct Standard {
 
 impl Position for Standard {
     const MAX_LEGAL_MOVES: usize = 255;
-    const FEN_PROMOTED: bool = true;
+    const TRACK_PROMOTED: bool = false;
 
     fn from_builder(builder: &PositionBuilder) -> Result<Standard, PositionError> {
         let pos = Standard {

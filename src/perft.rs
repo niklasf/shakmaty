@@ -26,6 +26,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     }
 }
 
+/// Like `perft()`, but also prints the perft of each child for debugging.
 pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
