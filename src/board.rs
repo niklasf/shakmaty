@@ -189,7 +189,9 @@ impl Board {
     }
 
     pub fn role_at(&self, sq: Square) -> Option<Role> {
-        if self.pawns.contains(sq) {
+        if !self.occupied.contains(sq) {
+            None
+        } else if self.pawns.contains(sq) {
             Some(Role::Pawn)
         } else if self.knights.contains(sq) {
             Some(Role::Knight)
@@ -207,8 +209,8 @@ impl Board {
     }
 
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
-        self.color_at(sq).and_then(|color| {
-            self.role_at(sq).map(|role| Piece { color: color, role: role })
+        self.role_at(sq).map(|role| {
+            Piece { color: Color::from_bool(self.white.contains(sq)), role }
         })
     }
 
