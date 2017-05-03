@@ -38,7 +38,10 @@ pub trait Position : Setup + Default + Clone {
            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
-    fn validate(&self, uci: &Uci) -> Option<Move> {
+    fn legal_moves(&self, moves: &mut Vec<Move>);
+    fn do_move(self, m: &Move) -> Self;
+
+    /* fn validate(&self, uci: &Uci) -> Option<Move> {
         match *uci {
             Uci::Normal { from, to, promotion } => {
                 self.board().role_at(from).map(|role| {
@@ -55,7 +58,7 @@ pub trait Position : Setup + Default + Clone {
         }
     }
 
-    /* fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
+    fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
         let pos = self.position();
         self.legal_moves(moves);
         moves.retain(|m| match *m {
@@ -133,28 +136,6 @@ pub trait Position : Setup + Default + Clone {
             Move::Null => "--".to_owned()
         }
     } */
-
-    fn situation(&self) -> &Situation;
-
-    fn legal_moves(&self, moves: &mut Vec<Move>) {
-        let pos = self.situation();
-        let checkers = self.checkers();
-
-        if checkers.is_empty() {
-            gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
-            gen_en_passant(pos, moves);
-            gen_castling_moves(pos, moves);
-        } else {
-            evasions(pos, checkers, moves);
-        }
-
-        let blockers = slider_blockers(pos, pos.them(),
-                                       pos.board.king_of(pos.turn).unwrap());
-
-        moves.retain(|m| is_safe(self.situation(), m, blockers));
-    }
-
-    fn do_move(self, m: &Move) -> Self;
 }
 
 #[derive(Clone)]
@@ -300,10 +281,6 @@ impl Position for Chess {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
-    fn situation(&self) -> &Situation {
-        &self.situation
-    }
-
     fn do_move(mut self, m: &Move) -> Chess {
         self.situation.do_move(m);
         self
@@ -373,6 +350,24 @@ impl Position for Chess {
         }
 
         Ok(pos)
+    }
+
+    fn legal_moves(&self, moves: &mut Vec<Move>) {
+        let pos = &self.situation;
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
+            gen_en_passant(pos, moves);
+            gen_castling_moves(pos, moves);
+        } else {
+            evasions(pos, checkers, moves);
+        }
+
+        let blockers = slider_blockers(pos, pos.them(),
+                                       pos.board.king_of(pos.turn).unwrap());
+
+        moves.retain(|m| is_safe(pos, m, blockers));
     }
 }
 
