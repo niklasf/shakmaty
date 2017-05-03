@@ -291,26 +291,9 @@ impl Setup for Chess {
     fn fullmoves(&self) -> u32 { self.situation.fullmoves }
 }
 
-impl Position for Chess {
-    const MAX_LEGAL_MOVES: usize = 255;
-    const TRACK_PROMOTED: bool = false;
-
-    fn play_unchecked(mut self, m: &Move) -> Chess {
-        self.situation.do_move(m);
-        self
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
-        let pos = Chess {
-            situation: Situation {
-                board: setup.board().clone(),
-                turn: setup.turn(),
-                castling_rights: setup.castling_rights(),
-                ep_square: setup.ep_square(),
-                halfmove_clock: setup.halfmove_clock(),
-                fullmoves: setup.fullmoves(),
-            }
-        };
+impl Chess {
+    fn ensure_valid(self) -> Result<Chess, PositionError> {
+        let pos = self;
 
         if pos.board().occupied().is_empty() {
             return Err(PositionError::Empty)
@@ -364,6 +347,33 @@ impl Position for Chess {
         }
 
         Ok(pos)
+    }
+}
+
+impl Position for Chess {
+    const MAX_LEGAL_MOVES: usize = 255;
+    const TRACK_PROMOTED: bool = false;
+
+    fn play_unchecked(mut self, m: &Move) -> Chess {
+        self.situation.do_move(m);
+        self
+    }
+
+    fn play(self, m: &Move) -> Result<Chess, MoveError> {
+        self.play_unchecked(m).ensure_valid().map_err(|_| ())
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
+        Chess {
+            situation: Situation {
+                board: setup.board().clone(),
+                turn: setup.turn(),
+                castling_rights: setup.castling_rights(),
+                ep_square: setup.ep_square(),
+                halfmove_clock: setup.halfmove_clock(),
+                fullmoves: setup.fullmoves(),
+            }
+        }.ensure_valid()
     }
 
     fn legal_moves(&self, moves: &mut Vec<Move>) {
