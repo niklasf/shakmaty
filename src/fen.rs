@@ -32,89 +32,6 @@ impl Setup for Fen {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-/* pub trait Epd {
-    const MARK_PROMOTED_PIECES: bool;
-
-    fn board(&self) -> &Board;
-    fn pockets(&self) -> Option<&Pockets>;
-    fn turn(&self) -> Color;
-    fn castling_rights(&self) -> Bitboard;
-    fn ep_square(&self) -> Option<Square>;
-    fn remaining_checks(&self) -> Option<&RemainingChecks>;
-
-    fn castling_xfen(&self) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in &[White, Black] {
-            let king = self.board().king_of(*color);
-
-            let candidates = self.board().by_piece(color.rook()) &
-                             Bitboard::relative_rank(*color, 0);
-
-            for rook in (candidates & self.castling_rights()).rev() {
-                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
-                    fen.push(color.fold('Q', 'q'));
-                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
-                    fen.push(color.fold('K', 'k'));
-                } else {
-                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-                }
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
-    }
-
-    fn epd(&self) -> String {
-        let pockets = self.pockets()
-                          .map_or("".to_owned(), |p| format!("[{}]", p));
-
-        let checks = self.remaining_checks()
-                         .map_or("".to_owned(), |r| format!(" {}", r));
-
-        format!("{}{} {} {} {}{}",
-                self.board().board_fen(Self::MARK_PROMOTED_PIECES),
-                pockets,
-                self.turn().char(),
-                self.castling_xfen(),
-                self.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks)
-    }
-}
-
-pub trait Fen: Epd {
-    fn halfmove_clock(&self) -> u32;
-    fn fullmoves(&self) -> u32;
-
-    fn fen(&self) -> String {
-        format!("{} {} {}", self.epd(), self.halfmove_clock(), self.fullmoves())
-    }
-}
-
-#[derive(Clone, Default)]
-pub struct Setup {
-    pub situation: Situation,
-    pub pockets: Option<Pockets>,
-    pub remaining_checks: Option<RemainingChecks>,
-}
-
-impl Setup {
-    pub fn new() -> Setup {
-        Setup::default()
-    }
-
-    pub fn empty() -> Setup {
-        Setup {
-            situation: Situation::empty(),
-            pockets: None,
-            remaining_checks: None,
-        }
-    }*/
-
 #[derive(Debug)]
 pub enum FenError {
     InvalidBoard,
@@ -234,4 +151,51 @@ impl FromStr for Fen {
 
         Ok(result)
     }
+}
+
+fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
+    let mut fen = String::with_capacity(4);
+
+    for color in &[White, Black] {
+        let king = board.king_of(*color);
+
+        let candidates = board.by_piece(color.rook()) &
+                         Bitboard::relative_rank(*color, 0);
+
+        for rook in (candidates & castling_rights).rev() {
+            if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                fen.push(color.fold('Q', 'q'));
+            } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                fen.push(color.fold('K', 'k'));
+            } else {
+                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+            }
+        }
+    }
+
+    if fen.is_empty() {
+        fen.push('-');
+    }
+
+    fen
+}
+
+pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
+    let pockets = setup.pockets()
+                       .map_or("".to_owned(), |p| format!("[{}]", p));
+
+    let checks = setup.remaining_checks()
+                      .map_or("".to_owned(), |r| format!(" {}", r));
+
+    format!("{}{} {} {} {}{}",
+            setup.board().board_fen(promoted),
+            pockets,
+            setup.turn().char(),
+            castling_xfen(setup.board(), setup.castling_rights()),
+            setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+            checks)
+}
+
+pub fn fen<S: Setup>(setup: &S, promoted: bool) -> String {
+    format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
 }
