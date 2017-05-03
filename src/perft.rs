@@ -12,7 +12,8 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
-        let moves = pos.legal_moves();
+        let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
+        pos.legal_moves(&mut moves);
 
         if depth == 1 {
             moves.len()

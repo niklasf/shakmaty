@@ -1,5 +1,3 @@
-use std::cell::{Ref, RefCell};
-
 use attacks;
 use board::Board;
 use bitboard::Bitboard;
@@ -43,11 +41,13 @@ pub trait Position : Setup + Default + Clone {
     }
 
     /// Generates legal moves.
-    fn legal_moves(&self) -> Ref<Vec<Move>>;
+    fn legal_moves(&self, moves: &mut Vec<Move>);
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
-        self.legal_moves().contains(m)
+        let mut legals = Vec::with_capacity(Self::MAX_LEGAL_MOVES);
+        self.legal_moves(&mut legals);
+        legals.contains(m)
     }
 
     /// Validates and plays a move.
@@ -277,8 +277,7 @@ impl Situation {
 
 #[derive(Default, Clone)]
 pub struct Chess {
-    situation: Situation,
-    legals: RefCell<Vec<Move>>,
+    situation: Situation
 }
 
 impl Setup for Chess {
@@ -298,7 +297,6 @@ impl Position for Chess {
 
     fn play_unchecked(mut self, m: &Move) -> Chess {
         self.situation.do_move(m);
-        self.legals.borrow_mut().clear();
         self
     }
 
@@ -311,8 +309,7 @@ impl Position for Chess {
                 ep_square: setup.ep_square(),
                 halfmove_clock: setup.halfmove_clock(),
                 fullmoves: setup.fullmoves(),
-            },
-            legals: RefCell::new(Vec::with_capacity(Self::MAX_LEGAL_MOVES)),
+            }
         };
 
         if pos.board().occupied().is_empty() {
@@ -369,28 +366,22 @@ impl Position for Chess {
         Ok(pos)
     }
 
-    fn legal_moves(&self) -> Ref<Vec<Move>> {
-        if self.legals.borrow().is_empty() {
-            let mut moves = self.legals.borrow_mut();
+    fn legal_moves(&self, moves: &mut Vec<Move>) {
+        let pos = &self.situation;
+        let checkers = self.checkers();
 
-            let pos = &self.situation;
-            let checkers = self.checkers();
-
-            if checkers.is_empty() {
-                gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), &mut moves);
-                gen_en_passant(pos, &mut moves);
-                gen_castling_moves(pos, &mut moves);
-            } else {
-                evasions(pos, checkers, &mut moves);
-            }
-
-            let blockers = slider_blockers(pos, pos.them(),
-                                           pos.board.king_of(pos.turn).unwrap());
-
-            moves.retain(|m| is_safe(pos, m, blockers));
+        if checkers.is_empty() {
+            gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
+            gen_en_passant(pos, moves);
+            gen_castling_moves(pos, moves);
+        } else {
+            evasions(pos, checkers, moves);
         }
 
-        self.legals.borrow()
+        let blockers = slider_blockers(pos, pos.them(),
+                                       pos.board.king_of(pos.turn).unwrap());
+
+        moves.retain(|m| is_safe(pos, m, blockers));
     }
 }
 
