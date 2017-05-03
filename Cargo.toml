@@ -11,5 +11,9 @@ authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
 [dependencies]
 lazy_static = "0.2"
 
+[dependencies.arrayvec]
+version = "0.3.23"
+features = [ "use_union" ]
+
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }

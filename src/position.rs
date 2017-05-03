@@ -6,6 +6,8 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
 use setup::Setup;
 
+use arrayvec::ArrayVec;
+
 #[derive(Debug)]
 pub enum PositionError {
     Empty,
@@ -21,11 +23,10 @@ pub enum PositionError {
 
 pub type MoveError = ();
 
+pub type MoveList = ArrayVec<[Move; 512]>;
+
 /// A chess or chess variant position.
 pub trait Position : Setup + Default + Clone {
-    /// The maximum number of legal moves in any valid position.
-    const MAX_LEGAL_MOVES: usize;
-
     /// Whether or not promoted pieces are special in the respective chess
     /// variant. For example in Crazyhouse a promoted queen should be marked
     /// as `Q~` in FENs and will become a pawn when captured.
@@ -41,11 +42,11 @@ pub trait Position : Setup + Default + Clone {
     }
 
     /// Generates legal moves.
-    fn legal_moves(&self, moves: &mut Vec<Move>);
+    fn legal_moves(&self, moves: &mut MoveList);
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
-        let mut legals = Vec::with_capacity(Self::MAX_LEGAL_MOVES);
+        let mut legals = ArrayVec::new();
         self.legal_moves(&mut legals);
         legals.contains(m)
     }
@@ -351,7 +352,6 @@ impl Chess {
 }
 
 impl Position for Chess {
-    const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
     fn play_unchecked(mut self, m: &Move) -> Chess {
@@ -376,7 +376,7 @@ impl Position for Chess {
         }.ensure_valid()
     }
 
-    fn legal_moves(&self, moves: &mut Vec<Move>) {
+    fn legal_moves(&self, moves: &mut MoveList) {
         let pos = &self.situation;
         let checkers = self.checkers();
 
@@ -457,7 +457,7 @@ impl Variant for ThreeCheck {
     }
 } */
 
-fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut Vec<Move>) {
+fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut MoveList) {
     let king = pos.our(Role::King).first().unwrap();
     let sliders = checkers & pos.board.sliders();
 
@@ -477,7 +477,7 @@ fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut Vec<Move>) {
     }
 }
 
-fn gen_castling_moves(pos: &Situation, moves: &mut Vec<Move>) {
+fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
     let backrank = Bitboard::relative_rank(pos.turn, 0);
 
     for king in pos.our(Role::King) & backrank {
@@ -520,7 +520,7 @@ fn gen_castling_moves(pos: &Situation, moves: &mut Vec<Move>) {
     }
 }
 
-fn push_pawn_moves(pos: &Situation, moves: &mut Vec<Move>, from: Square, to: Square) {
+fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Square) {
     let capture = pos.board.role_at(to); // XXX
 
     if to.rank() == pos.turn.fold(7, 0) {
@@ -533,13 +533,13 @@ fn push_pawn_moves(pos: &Situation, moves: &mut Vec<Move>, from: Square, to: Squ
     }
 }
 
-fn push_moves(pos: &Situation, moves: &mut Vec<Move>, role: Role, from: Square, to: Bitboard) {
+fn push_moves(pos: &Situation, moves: &mut MoveList, role: Role, from: Square, to: Bitboard) {
     for square in to {
         moves.push(Move::Normal { role, from, capture: pos.board.role_at(square), to: square, promotion: None });
     }
 }
 
-fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut Vec<Move>) {
+fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::King) & selection {
         push_moves(pos, moves, Role::King, from,
                    attacks::king_attacks(from) & !pos.us() & target);
@@ -596,7 +596,7 @@ fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, move
     }
 }
 
-fn gen_en_passant(pos: &Situation, moves: &mut Vec<Move>) {
+fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
     if let Some(to) = pos.ep_square {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
             moves.push(Move::EnPassant { from, to, pawn: to.offset(pos.turn.fold(-8, 8)).unwrap() }); // XXX

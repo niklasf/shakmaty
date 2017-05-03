@@ -3,6 +3,8 @@
 use types::Move;
 use position::Position;
 
+use arrayvec::ArrayVec;
+
 /// Counts legal move paths of a given length.
 ///
 /// Paths with mate or stalemate are not counted unless it occurs in the final
@@ -12,14 +14,14 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
-        let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
+        let mut moves = ArrayVec::new();
         pos.legal_moves(&mut moves);
 
         if depth == 1 {
             moves.len()
         } else {
             moves.iter().map(|m| {
-                let child = pos.clone().play(m).expect("legal move");
+                let child = pos.clone().play_unchecked(m); // .expect("legal move");
                 perft(&child, depth - 1)
             }).sum()
         }
