@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use std::ascii::AsciiExt;
 use std::cmp::max;
+use std::fmt;
 
 use square::Square;
 use types::{Color, Black, White, Role, Piece, Pockets, RemainingChecks};
@@ -198,4 +199,10 @@ pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
 
 pub fn fen<S: Setup>(setup: &S, promoted: bool) -> String {
     format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
+}
+
+impl fmt::Display for Fen {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", fen(self, true))
+    }
 }
