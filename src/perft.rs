@@ -19,7 +19,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
             moves.len()
         } else {
             moves.iter().map(|m| {
-                let child = pos.clone().do_move(m).expect("legal move");
+                let child = pos.clone().play(m).expect("legal move");
                 perft(&child, depth - 1)
             }).sum()
         }

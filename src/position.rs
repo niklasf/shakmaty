@@ -37,14 +37,11 @@ pub trait Position : Setup + Default + Clone {
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.board().king_of(self.turn())
-           .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
+            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
     /// Generates legal moves.
     fn legal_moves(&self, moves: &mut Vec<Move>);
-
-    /// Plays a move.
-    fn do_move(self, m: &Move) -> Result<Self, MoveError>;
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
@@ -53,8 +50,19 @@ pub trait Position : Setup + Default + Clone {
         legals.contains(m)
     }
 
+    /// Validates and plays a move.
+    fn play(self, m: &Move) -> Result<Self, MoveError> {
+        if self.is_legal(m) {
+            Ok(self.play_unchecked(m))
+        } else {
+            Err(())
+        }
+    }
+
+    fn play_unchecked(self, m: &Move) -> Self;
+
     /// Tries to convert an `Uci` to a legal move.
-    fn validate(&self, uci: &Uci) -> Result<Move, MoveError> {
+    fn uci_to_move(&self, uci: &Uci) -> Result<Move, MoveError> {
         let candidate = match *uci {
             Uci::Normal { from, to, promotion } => {
                 let role = self.board().role_at(from).ok_or(())?;
@@ -287,13 +295,9 @@ impl Position for Chess {
     const MAX_LEGAL_MOVES: usize = 255;
     const TRACK_PROMOTED: bool = false;
 
-    fn do_move(mut self, m: &Move) -> Result<Chess, MoveError> {
-        if self.is_legal(m) {
-            self.situation.do_move(m);
-            Ok(self)
-        } else {
-            Err(())
-        }
+    fn play_unchecked(mut self, m: &Move) -> Chess {
+        self.situation.do_move(m);
+        self
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
