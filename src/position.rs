@@ -84,8 +84,76 @@ pub trait Position : Setup + Default + Clone {
     fn play_unchecked(self, m: &Move) -> Self;
 }
 
+fn do_move(board: &mut Board,
+           turn: &mut Color,
+           castling_rights: &mut Bitboard,
+           ep_square: &mut Option<Square>,
+           halfmove_clock: &mut u32,
+           fullmoves: &mut u32,
+           m: &Move) {
+    let color = *turn;
+    ep_square.take();
+    *halfmove_clock += 1;
+
+    match *m {
+        Move::Normal { role, from, capture, to, promotion } => {
+            if role == Role::Pawn || capture.is_some() {
+                *halfmove_clock = 0;
+            }
+
+            if role == Role::Pawn && square::distance(from, to) == 2 {
+                *ep_square = from.offset(color.fold(8, -8));
+            }
+
+            if role == Role::King {
+                castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+            } else {
+                castling_rights.discard(from);
+                castling_rights.discard(to);
+            }
+
+            let promoted = board.promoted().contains(from) || promotion.is_some();
+
+            board.remove_piece_at(from);
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
+        },
+        Move::Castle { king, rook } => {
+            let rook_to = square::combine(
+                if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
+                rook);
+
+            let king_to = square::combine(
+                if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
+                king);
+
+            board.remove_piece_at(king);
+            board.remove_piece_at(rook);
+            board.set_piece_at(rook_to, color.rook(), false);
+            board.set_piece_at(king_to, color.king(), false);
+
+            castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+        },
+        Move::EnPassant { from, to } => {
+            board.remove_piece_at(square::combine(to, from)); // captured pawn
+            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
+            *halfmove_clock = 0;
+        },
+        Move::Put { to, role } => {
+            board.set_piece_at(to, Piece { color, role }, false);
+        },
+        Move::Null => ()
+    }
+
+    if color.is_black() {
+        *fullmoves += 1;
+    }
+
+    *turn = !color;
+}
+
+/// A standard Chess position.
 #[derive(Clone)]
-struct Situation {
+pub struct Chess {
     board: Board,
     turn: Color,
     castling_rights: Bitboard,
@@ -94,9 +162,9 @@ struct Situation {
     fullmoves: u32,
 }
 
-impl Default for Situation {
-    fn default() -> Self {
-        Situation {
+impl Default for Chess {
+    fn default() -> Chess {
+        Chess {
             board: Board::default(),
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),
@@ -107,100 +175,15 @@ impl Default for Situation {
     }
 }
 
-impl Situation {
-    pub fn do_move(&mut self, m: &Move) {
-        let color = self.turn;
-        self.ep_square.take();
-        self.halfmove_clock += 1;
-
-        match *m {
-            Move::Normal { role, from, capture, to, promotion } => {
-                if role == Role::Pawn || capture.is_some() {
-                    self.halfmove_clock = 0;
-                }
-
-                if role == Role::Pawn && square::distance(from, to) == 2 {
-                    self.ep_square = from.offset(color.fold(8, -8));
-                }
-
-                if role == Role::King {
-                    self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-                } else {
-                    self.castling_rights.discard(from);
-                    self.castling_rights.discard(to);
-                }
-
-                let promoted = self.board.promoted().contains(from) || promotion.is_some();
-
-                self.board.remove_piece_at(from);
-                self.board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
-            },
-            Move::Castle { king, rook } => {
-                let rook_to = square::combine(
-                    if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
-                    rook);
-
-                let king_to = square::combine(
-                    if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
-                    king);
-
-                self.board.remove_piece_at(king);
-                self.board.remove_piece_at(rook);
-                self.board.set_piece_at(rook_to, color.rook(), false);
-                self.board.set_piece_at(king_to, color.king(), false);
-
-                self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-            },
-            Move::EnPassant { from, to } => {
-                self.board.remove_piece_at(square::combine(to, from)); // captured pawn
-                self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece, false));
-                self.halfmove_clock = 0;
-            },
-            Move::Put { to, role } => {
-                self.board.set_piece_at(to, Piece { color, role }, false);
-            },
-            Move::Null => ()
-        }
-
-        if color.is_black() {
-            self.fullmoves += 1;
-        }
-
-        self.turn = !color;
-    }
-
-    pub fn us(&self) -> Bitboard {
-        self.board.by_color(self.turn)
-    }
-
-    pub fn our(&self, role: Role) -> Bitboard {
-        self.us() & self.board.by_role(role)
-    }
-
-    pub fn them(&self) -> Bitboard {
-        self.board.by_color(!self.turn)
-    }
-
-    pub fn their(&self, role: Role) -> Bitboard {
-        self.them() & self.board.by_role(role)
-    }
-}
-
-/// A standard Chess position.
-#[derive(Default, Clone)]
-pub struct Chess {
-    situation: Situation
-}
-
 impl Setup for Chess {
-    fn board(&self) -> &Board { &self.situation.board }
+    fn board(&self) -> &Board { &self.board }
     fn pockets(&self) -> Option<&Pockets> { None }
-    fn turn(&self) -> Color { self.situation.turn }
-    fn castling_rights(&self) -> Bitboard { self.situation.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.situation.ep_square }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.situation.halfmove_clock }
-    fn fullmoves(&self) -> u32 { self.situation.fullmoves }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
 impl Chess {
@@ -243,7 +226,7 @@ impl Chess {
 
             // The last move must have been a double pawn push. Check for the
             // presence of that pawn.
-            if !pos.situation.their(Role::Pawn).contains(fifth_rank_sq) {
+            if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
                 return Err(PositionError::InvalidEpSquare)
             }
 
@@ -253,7 +236,7 @@ impl Chess {
         }
 
         if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-            if !(pos.board().attacks_to(their_king) & pos.situation.us()).is_empty() {
+            if !(pos.board().attacks_to(their_king) & pos.us()).is_empty() {
                 return Err(PositionError::OppositeCheck)
             }
         }
@@ -266,7 +249,9 @@ impl Position for Chess {
     const TRACK_PROMOTED: bool = false;
 
     fn play_unchecked(mut self, m: &Move) -> Chess {
-        self.situation.do_move(m);
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
         self
     }
 
@@ -276,14 +261,12 @@ impl Position for Chess {
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
         Chess {
-            situation: Situation {
-                board: setup.board().clone(),
-                turn: setup.turn(),
-                castling_rights: setup.castling_rights(),
-                ep_square: setup.ep_square(),
-                halfmove_clock: setup.halfmove_clock(),
-                fullmoves: setup.fullmoves(),
-            }
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
         }.ensure_valid()
     }
 
