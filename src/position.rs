@@ -37,7 +37,7 @@ pub trait Position : Setup + Default + Clone {
 
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
-        self.board().king_of(self.turn())
+        self.our(Role::King).first()
             .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
     }
 
@@ -389,7 +389,7 @@ impl Position for Chess {
         }
 
         let blockers = slider_blockers(pos, pos.them(),
-                                       pos.board.king_of(pos.turn).unwrap());
+                                       self.our(Role::King).first().unwrap());
 
         moves.retain(|m| is_safe(pos, m, blockers));
     }
