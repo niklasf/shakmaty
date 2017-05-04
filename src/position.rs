@@ -309,10 +309,9 @@ impl Position for Chess {
             evasions(pos, checkers, moves);
         }
 
-        let blockers = slider_blockers(pos, pos.them(),
-                                       self.our(Role::King).first().unwrap());
-
-        moves.retain(|m| is_safe(pos, m, blockers));
+        let king = self.our(Role::King).first().expect("has a king");
+        let blockers = slider_blockers(pos, pos.them(), king);
+        moves.retain(|m| is_safe(pos, king, m, blockers));
     }
 }
 
@@ -540,14 +539,14 @@ fn slider_blockers(pos: &Situation, sliders: Bitboard, sq: Square) -> Bitboard {
     blockers
 }
 
-fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
+fn is_safe(pos: &Situation, king: Square, m: &Move, blockers: Bitboard) -> bool {
     match *m {
         Move::Normal { role, from, to, .. } =>
             if role == Role::King {
                 (pos.board.attacks_to(to) & pos.them()).is_empty()
             } else {
                 !(pos.us() & blockers).contains(from) ||
-                attacks::aligned(from, to, pos.our(Role::King).first().unwrap())
+                attacks::aligned(from, to, king)
             },
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board.occupied();
@@ -555,10 +554,8 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
             occupied.flip(square::combine(to, from)); // captured pawn
             occupied.add(to);
 
-            pos.our(Role::King).first().map(|king| {
-                (attacks::rook_attacks(king, occupied) & pos.them() & pos.board.rooks_and_queens()).is_empty() &&
-                (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board.bishops_and_queens()).is_empty()
-            }).unwrap_or(true)
+            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board.rooks_and_queens()).is_empty() &&
+            (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board.bishops_and_queens()).is_empty()
         },
         Move::Castle { .. } => {
             true
