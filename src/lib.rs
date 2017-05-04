@@ -2,6 +2,7 @@
 #![feature(associated_consts)]
 #![feature(cfg_target_feature)]
 #![feature(platform_intrinsics)]
+#![feature(const_fn)]
 
 extern crate test;
 
