@@ -300,7 +300,9 @@ impl Position for Chess {
     fn legal_moves(&self, moves: &mut MoveList) {
         let king = self.our(Role::King).first().expect("has a king");
         let checkers = self.checkers();
+
         let pos = &self.situation;
+        gen_en_passant(pos, moves);
 
         if checkers.is_empty() {
             gen_non_king(pos, Bitboard::all(), moves);
@@ -542,9 +544,6 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
             push_pawn_moves(pos, moves, from, to, None);
         }
     }
-
-    // ignores target
-    gen_en_passant(pos, moves);
 }
 
 fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
