@@ -20,6 +20,7 @@ pub mod square;
 pub mod attacks;
 pub mod perft;
 pub mod fen;
+pub mod uci;
 
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};

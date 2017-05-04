@@ -3,8 +3,9 @@ use board::Board;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, Uci};
+use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup::Setup;
+use uci::Uci;
 
 use arrayvec::ArrayVec;
 
