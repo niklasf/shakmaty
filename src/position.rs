@@ -5,7 +5,6 @@ use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup::Setup;
-use uci::Uci;
 
 use arrayvec::ArrayVec;
 
@@ -62,38 +61,6 @@ pub trait Position : Setup + Default + Clone {
     }
 
     fn play_unchecked(self, m: &Move) -> Self;
-
-    /// Tries to convert an `Uci` to a legal move.
-    fn uci_to_move(&self, uci: &Uci) -> Result<Move, MoveError> {
-        let candidate = match *uci {
-            Uci::Normal { from, to, promotion } => {
-                let role = self.board().role_at(from).ok_or(())?;
-
-                if role == Role::King && self.castling_rights().contains(to) {
-                    Move::Castle { king: from, rook: to }
-                } else if role == Role::King &&
-                          from == self.turn().fold(square::E1, square::E8) &&
-                          to.rank() == self.turn().fold(0, 7) &&
-                          square::distance(from, to) == 2 {
-                    if from.file() < to.file() {
-                        Move::Castle { king: from, rook: self.turn().fold(square::H1, square::H8) }
-                    } else {
-                        Move::Castle { king: from, rook: self.turn().fold(square::A1, square::A8) }
-                    }
-                } else {
-                    Move::Normal { role, from, capture: self.board().role_at(to), to, promotion }
-                }
-            },
-            Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Ok(Move::Null)
-        };
-
-        if self.is_legal(&candidate) {
-            Ok(candidate)
-        } else {
-            Err(())
-        }
-    }
 
     /* fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
         let pos = self.position();

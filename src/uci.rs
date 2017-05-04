@@ -2,8 +2,10 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use std::str::FromStr;
 
+use square;
 use square::Square;
 use types::{Role, Move};
+use position::{Position, MoveError};
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -75,6 +77,41 @@ impl<'a> Into<Uci> for &'a Move {
                 Uci::Put { role, to },
             Move::Null =>
                 Uci::Null
+        }
+    }
+}
+
+impl Uci {
+    /// Tries to convert the `Uci` to a legal `Move` in the context of a
+    /// position.
+    pub fn to_move<P: Position>(self, pos: &P) -> Result<Move, MoveError> {
+        let candidate = match self {
+            Uci::Normal { from, to, promotion } => {
+                let role = pos.board().role_at(from).ok_or(())?;
+
+                if role == Role::King && pos.castling_rights().contains(to) {
+                    Move::Castle { king: from, rook: to }
+                } else if role == Role::King &&
+                          from == pos.turn().fold(square::E1, square::E8) &&
+                          to.rank() == pos.turn().fold(0, 7) &&
+                          square::distance(from, to) == 2 {
+                    if from.file() < to.file() {
+                        Move::Castle { king: from, rook: pos.turn().fold(square::H1, square::H8) }
+                    } else {
+                        Move::Castle { king: from, rook: pos.turn().fold(square::A1, square::A8) }
+                    }
+                } else {
+                    Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
+                }
+            },
+            Uci::Put { role, to } => Move::Put { role, to },
+            Uci::Null => return Ok(Move::Null)
+        };
+
+        if pos.is_legal(&candidate) {
+            Ok(candidate)
+        } else {
+            Err(())
         }
     }
 }
