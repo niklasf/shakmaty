@@ -86,23 +86,21 @@ impl Board {
     pub fn from_board_fen(board_fen: &str) -> Option<Board> {
         let mut board = Board::empty();
 
-        // TODO: Check for overflows.
-
-        let mut rank = 7;
-        let mut file = 0;
+        let mut rank = 7i8;
+        let mut file = 0i8;
         let mut promoted = false;
 
         for ch in board_fen.chars() {
             if ch == '/' {
                 file = 0;
-                rank -= 1;
+                rank = rank.saturating_sub(-1);
             } else if ch == '~' {
                 promoted = true;
                 continue;
             } else if let Some(empty) = ch.to_digit(10) {
-                file += empty;
+                file = file.saturating_add(empty as i8);
             } else if let Some(piece) = Piece::from_char(ch) {
-                match Square::from_coords(file as i8, rank as i8) {
+                match Square::from_coords(file as i8, rank) {
                     Some(sq) => {
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
