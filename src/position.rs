@@ -431,7 +431,7 @@ fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
     }
 }
 
-fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+fn push_pawn_moves(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
     if to.rank() != 0 && to.rank() < 7 {
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
     } else {
@@ -512,7 +512,7 @@ fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
 fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
-            push_pawn_moves(pos, moves, from, to, pos.board.role_at(to));
+            push_pawn_moves(moves, from, to, pos.board.role_at(to));
         }
     }
 
@@ -524,8 +524,9 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
                        !pos.board.occupied();
 
     for to in single_moves & target {
-        let from = to.offset(pos.turn.fold(-8, 8)).unwrap();
-        push_pawn_moves(pos, moves, from, to, None);
+        if let Some(from) = to.offset(pos.turn.fold(-8, 8)) {
+            push_pawn_moves(moves, from, to, None);
+        }
     }
 
     for to in double_moves & target {
