@@ -442,13 +442,13 @@ fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
 }
 
 fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
-    if to.rank() == pos.turn.fold(7, 0) {
+    if to.rank() != 0 && to.rank() < 7 {
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
+    } else {
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) } );
         moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) } );
-    } else {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
     }
 }
 
@@ -535,11 +535,7 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
 
     for to in single_moves & target {
         let from = to.offset(pos.turn.fold(-8, 8)).unwrap();
-        if 0 != to.rank() && to.rank() < 7 {
-            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
-        } else {
-            push_pawn_moves(pos, moves, from, to, None);
-        }
+        push_pawn_moves(pos, moves, from, to, None);
     }
 
     for to in double_moves & target {
