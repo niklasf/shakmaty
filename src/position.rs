@@ -296,11 +296,11 @@ impl Position for Chess {
         let pos = &self.situation;
 
         if checkers.is_empty() {
-            gen_non_king(pos, Bitboard::all(), moves);
-            KingTag::gen_moves(pos, Bitboard::all(), moves);
+            gen_non_king(self, Bitboard::all(), moves);
+            KingTag::gen_moves(self, Bitboard::all(), moves);
             gen_castling_moves(pos, moves);
         } else {
-            evasions(pos, king, checkers, moves);
+            evasions(self, king, checkers, moves);
         }
 
         let blockers = slider_blockers(self.board(), self.them(), king);
@@ -308,7 +308,7 @@ impl Position for Chess {
     }
 }
 
-fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     KnightTag::gen_moves(pos, target, moves);
     QueenTag::gen_moves(pos, target, moves);
     RookTag::gen_moves(pos, target, moves);
@@ -316,8 +316,8 @@ fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     gen_pawn_moves(pos, target, moves);
 }
 
-fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveList) {
-    let sliders = checkers & pos.board.sliders();
+fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
+    let sliders = checkers & pos.board().sliders();
 
     let mut attacked = Bitboard(0);
     for checker in sliders {
@@ -325,7 +325,7 @@ fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveL
     }
 
     moves.extend((attacks::king_attacks(king) & !pos.us() & !attacked).map(|to| {
-        Move::Normal { role: Role::King, from: king, capture: pos.board.role_at(to), to, promotion: None }
+        Move::Normal { role: Role::King, from: king, capture: pos.board().role_at(to), to, promotion: None }
     }));
 
     if let Some(checker) = checkers.single_square() {
@@ -383,10 +383,10 @@ trait Stepper {
 
     fn attacks(from: Square) -> Bitboard;
 
-    fn gen_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+    fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
         for from in pos.our(Self::ROLE) {
             moves.extend((Self::attacks(from) & !pos.us() & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
+                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
             }));
         }
     }
@@ -397,10 +397,10 @@ trait Slider {
 
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
-    fn gen_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+    fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
         for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from, pos.board.occupied()) & !pos.us() & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
+            moves.extend((Self::attacks(from, pos.board().occupied()) & !pos.us() & target).map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
             }));
         }
     }
@@ -437,28 +437,28 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
-        for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
-            push_pawn_moves(moves, from, to, pos.board.role_at(to));
+        for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
+            push_pawn_moves(moves, from, to, pos.board().role_at(to));
         }
     }
 
-    let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn, 8) &
-                       !pos.board.occupied();
+    let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) &
+                       !pos.board().occupied();
 
-    let double_moves = single_moves.relative_shift(pos.turn, 8) &
-                       Bitboard::relative_rank(pos.turn, 3) &
-                       !pos.board.occupied();
+    let double_moves = single_moves.relative_shift(pos.turn(), 8) &
+                       Bitboard::relative_rank(pos.turn(), 3) &
+                       !pos.board().occupied();
 
     for to in single_moves & target {
-        if let Some(from) = to.offset(pos.turn.fold(-8, 8)) {
+        if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
             push_pawn_moves(moves, from, to, None);
         }
     }
 
     for to in double_moves & target {
-        if let Some(from) = to.offset(pos.turn.fold(-16, 16)) {
+        if let Some(from) = to.offset(pos.turn().fold(-16, 16)) {
             moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
         }
     }
