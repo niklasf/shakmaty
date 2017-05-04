@@ -541,7 +541,7 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
 
     for to in double_moves & target {
         if let Some(from) = to.offset(pos.turn.fold(-16, 16)) {
-            push_pawn_moves(pos, moves, from, to, None);
+            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
         }
     }
 }
