@@ -63,8 +63,14 @@ mod tests {
     use position::Chess;
 
     #[bench]
-    fn bench_perft(b: &mut Bencher) {
+    fn bench_shallow_perft(b: &mut Bencher) {
         let pos = Chess::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
+    }
+
+    #[bench]
+    fn bench_deep_perft(b: &mut Bencher) {
+        let pos = Chess::default();
+        b.iter(|| assert_eq!(perft(&pos, 5), 4865609));
     }
 }
