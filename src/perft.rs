@@ -25,22 +25,22 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     }
 }
 
-/* /// Like `perft()`, but also prints the perft of each child for debugging.
+/// Like `perft()`, but also prints the perft of each child for debugging.
 pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
-        let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
+        let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
 
         moves.iter().map(|m| {
-            let child = pos.clone().do_move(m);
+            let child = pos.clone().play(m).expect("legal move");
             let nodes = perft(&child, depth - 1);
             println!("{} {} {}: {}", m.to_uci(), m, depth - 1, nodes);
             nodes
         }).sum()
     }
-} */
+}
 
 #[cfg(test)]
 mod tests {

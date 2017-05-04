@@ -252,7 +252,7 @@ impl Situation {
             Move::Null => ()
         }
 
-        if color == Black {
+        if color.is_black() {
             self.fullmoves += 1;
         }
 

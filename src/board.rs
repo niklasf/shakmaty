@@ -316,7 +316,7 @@ impl fmt::Debug for Board {
 mod tests {
     use super::*;
     use square;
-    use types::{ White, Black };
+    use types::{White, Black};
 
     #[test]
     fn test_piece_at() {
