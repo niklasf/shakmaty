@@ -124,7 +124,7 @@ impl Piece {
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
-    EnPassant { from: Square, to: Square, pawn: Square },
+    EnPassant { from: Square, to: Square },
     Castle { king: Square, rook: Square },
     Put { role: Role, to: Square },
     Null

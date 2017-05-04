@@ -81,6 +81,12 @@ pub fn distance(a: Square, b: Square) -> i8 {
     max((a.file() - b.file()).abs(), (a.rank() - b.rank()).abs())
 }
 
+/// Combines two squares, taking the file from the first and the rank from
+/// the second.
+pub fn combine(file: Square, rank: Square) -> Square {
+    Square(file.file() | (rank.rank() << 3))
+}
+
 pub const A1: Square = Square(0);
 pub const B1: Square = Square(1);
 pub const C1: Square = Square(2);

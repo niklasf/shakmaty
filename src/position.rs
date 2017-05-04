@@ -162,8 +162,8 @@ impl Situation {
 
                 self.castling_rights.discard_all(Bitboard::relative_rank(color, 0));
             },
-            Move::EnPassant { from, to, pawn } => {
-                self.board.remove_piece_at(pawn);
+            Move::EnPassant { from, to } => {
+                self.board.remove_piece_at(square::combine(to, from)); // captured pawn
                 self.board.remove_piece_at(from).map(|piece| self.board.set_piece_at(to, piece, false));
                 self.halfmove_clock = 0;
             },
@@ -518,7 +518,7 @@ fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, move
 fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
     if let Some(to) = pos.ep_square {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
-            moves.push(Move::EnPassant { from, to, pawn: to.offset(pos.turn.fold(-8, 8)).unwrap() }); // XXX
+            moves.push(Move::EnPassant { from, to });
         }
     }
 }
@@ -549,10 +549,10 @@ fn is_safe(pos: &Situation, m: &Move, blockers: Bitboard) -> bool {
                 !(pos.us() & blockers).contains(from) ||
                 attacks::aligned(from, to, pos.our(Role::King).first().unwrap())
             },
-        Move::EnPassant { from, to, pawn } => {
+        Move::EnPassant { from, to } => {
             let mut occupied = pos.board.occupied();
             occupied.flip(from);
-            occupied.flip(pawn);
+            occupied.flip(square::combine(to, from)); // captured pawn
             occupied.add(to);
 
             pos.our(Role::King).first().map(|king| {
