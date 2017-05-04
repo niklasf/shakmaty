@@ -291,8 +291,9 @@ impl Position for Chess {
         let king = self.our(Role::King).first().expect("has a king");
         let checkers = self.checkers();
 
+        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
+
         let pos = &self.situation;
-        gen_en_passant(pos, moves);
 
         if checkers.is_empty() {
             gen_non_king(pos, Bitboard::all(), moves);
@@ -307,67 +308,13 @@ impl Position for Chess {
     }
 }
 
-/* #[derive(Default, Clone)]
-pub struct Crazyhouse {
-    pos: Situation,
-    pockets: Pockets,
+fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+    KnightTag::gen_moves(pos, target, moves);
+    QueenTag::gen_moves(pos, target, moves);
+    RookTag::gen_moves(pos, target, moves);
+    BishopTag::gen_moves(pos, target, moves);
+    gen_pawn_moves(pos, target, moves);
 }
-
-impl Variant for Crazyhouse {
-    fn from_fen(fen: &str) -> Option<Crazyhouse> {
-        Situation::from_fen(fen).map(|pos| Crazyhouse { pos, ..Crazyhouse::default() })
-    }
-
-    fn position(&self) -> &Situation {
-        &self.pos
-    }
-
-    fn do_move(mut self, m: &Move) -> Crazyhouse {
-        let color = self.pos.turn();
-
-        match *m {
-            Move::Normal { capture: Some(role), to, .. } =>
-                if self.pos.board().promoted().contains(to) {
-                    *self.pockets.mut_by_color(color).mut_by_role(Role::Pawn) += 1;
-                } else {
-                    *self.pockets.mut_by_color(color).mut_by_role(role) += 1;
-                },
-            Move::Put { role, .. } =>
-                *self.pockets.mut_by_color(color).mut_by_role(role) -= 1,
-            _ => ()
-        }
-
-        self.pos = self.pos.do_move(m);
-
-        self
-    }
-} */
-
-/* #[derive(Default, Clone)]
-pub struct ThreeCheck {
-    pos: Situation,
-    remaining_checks: RemainingChecks,
-}
-
-impl Variant for ThreeCheck {
-    fn from_fen(fen: &str) -> Option<ThreeCheck> {
-        Situation::from_fen(fen).map(|pos| ThreeCheck { pos, ..ThreeCheck::default() })
-    }
-
-    fn position(&self) -> &Situation {
-        &self.pos
-    }
-
-    fn do_move(mut self, m: &Move) -> ThreeCheck {
-        self.pos = self.pos.do_move(m);
-
-        if !self.checkers().is_empty() {
-            *self.remaining_checks.mut_by_color(self.pos.turn()) -= 1;
-        }
-
-        self
-    }
-} */
 
 fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board.sliders();
@@ -431,17 +378,6 @@ fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
     }
 }
 
-fn push_pawn_moves(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
-    if to.rank() != 0 && to.rank() < 7 {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
-    } else {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) } );
-    }
-}
-
 trait Stepper {
     const ROLE: Role;
 
@@ -501,14 +437,6 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
-    KnightTag::gen_moves(pos, target, moves);
-    QueenTag::gen_moves(pos, target, moves);
-    RookTag::gen_moves(pos, target, moves);
-    BishopTag::gen_moves(pos, target, moves);
-    gen_pawn_moves(pos, target, moves);
-}
-
 fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
@@ -536,9 +464,20 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     }
 }
 
-fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
-    if let Some(to) = pos.ep_square {
-        for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
+fn push_pawn_moves(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+    if to.rank() != 0 && to.rank() < 7 {
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
+    } else {
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) } );
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) } );
+    }
+}
+
+fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) {
+    if let Some(to) = ep_square {
+        for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
             moves.push(Move::EnPassant { from, to });
         }
     }
