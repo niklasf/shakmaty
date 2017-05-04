@@ -5,7 +5,7 @@ use std::ascii::AsciiExt;
 use std::fmt;
 
 use square::Square;
-use types::{Color, Black, White, Role, Pockets, RemainingChecks};
+use types::{Color, Black, White, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
@@ -126,7 +126,7 @@ impl FromStr for Fen {
                 let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
 
                 let candidates = Bitboard::relative_rank(color, 0) &
-                                 result.board.by_piece(Role::Rook.of(color));
+                                 result.board.by_piece(&color.rook());
 
                 let flag = match ch.to_ascii_lowercase() {
                     'k'  => candidates.last(),
@@ -162,7 +162,7 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
     for color in &[White, Black] {
         let king = board.king_of(*color);
 
-        let candidates = board.by_piece(color.rook()) &
+        let candidates = board.by_piece(&color.rook()) &
                          Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {

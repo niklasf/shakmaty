@@ -301,13 +301,13 @@ impl Chess {
         }
 
         for color in &[White, Black] {
-            if (pos.board().by_piece(color.king()) & !pos.board().promoted()).is_empty() {
+            if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
                 return Err(PositionError::NoKing { color: *color })
             }
             if pos.board().by_color(*color).count() > 16 {
                 return Err(PositionError::TooManyPieces { color: *color })
             }
-            if pos.board().by_piece(color.pawn()).count() > 8 {
+            if pos.board().by_piece(&color.pawn()).count() > 8 {
                 return Err(PositionError::TooManyPawns { color: *color })
             }
         }
