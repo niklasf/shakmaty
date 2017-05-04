@@ -3,6 +3,7 @@ use bitboard::Bitboard;
 use types::{Color, Role, Pockets, RemainingChecks};
 use board::Board;
 
+/// A (not necessarily legal) position.
 pub trait Setup {
     fn board(&self) -> &Board;
     fn pockets(&self) -> Option<&Pockets>;

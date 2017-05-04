@@ -8,6 +8,7 @@ use setup::Setup;
 
 use arrayvec::ArrayVec;
 
+/// Reasons for a `Setup` not beeing a legal `Position`.
 #[derive(Debug)]
 pub enum PositionError {
     Empty,
@@ -23,9 +24,11 @@ pub enum PositionError {
 
 pub type MoveError = ();
 
+/// A stack-allocated container to hold legal moves.
 pub type MoveList = ArrayVec<[Move; 512]>;
 
-/// A chess or chess variant position.
+/// A legal chess or chess variant position. See `Chess` for a concrete
+/// implementation.
 pub trait Position : Setup + Default + Clone {
     /// Whether or not promoted pieces are special in the respective chess
     /// variant. For example in Crazyhouse a promoted queen should be marked
@@ -49,6 +52,17 @@ pub trait Position : Setup + Default + Clone {
         let mut legals = MoveList::new();
         self.legal_moves(&mut legals);
         legals.contains(m)
+    }
+
+    /// Tests for checkmate.
+    fn is_checkmate(&self) -> bool {
+        if self.checkers().is_empty() {
+            return false;
+        }
+
+        let mut legals = MoveList::new();
+        self.legal_moves(&mut legals);
+        legals.is_empty()
     }
 
     /// Validates and plays a move.
@@ -251,6 +265,7 @@ impl Situation {
     }
 }
 
+/// A standard Chess position.
 #[derive(Default, Clone)]
 pub struct Chess {
     situation: Situation

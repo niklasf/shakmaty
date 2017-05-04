@@ -1,3 +1,5 @@
+//! Parse and write moves in Universal Chess Interface representation.
+
 use std::fmt;
 use std::ascii::AsciiExt;
 use std::str::FromStr;
