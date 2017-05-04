@@ -31,7 +31,7 @@ impl Square {
 
     pub fn rank_char(self) -> char { (b'1' + self.rank() as u8) as char }
 
-    pub fn saturated_offset(self, delta: i8) -> Square {
+    pub fn saturating_offset(self, delta: i8) -> Square {
         let Square(sq) = self;
         Square(max(min(sq + delta, 63), 0))
     }
