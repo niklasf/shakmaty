@@ -303,7 +303,7 @@ impl Position for Chess {
         let pos = &self.situation;
 
         if checkers.is_empty() {
-            gen_pseudo_legal(pos, Bitboard::all(), moves);
+            gen_non_king(pos, Bitboard::all(), moves);
             KingTag::gen_moves(pos, Bitboard::all(), moves);
             gen_castling_moves(pos, moves);
         } else {
@@ -392,7 +392,7 @@ fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveL
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
 
-        gen_pseudo_legal(pos, target, moves);
+        gen_non_king(pos, target, moves);
     }
 }
 
@@ -509,7 +509,7 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn gen_pseudo_legal(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+fn gen_non_king(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     KnightTag::gen_moves(pos, target, moves);
     QueenTag::gen_moves(pos, target, moves);
     RookTag::gen_moves(pos, target, moves);
@@ -543,7 +543,11 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
         }
     }
 
-    // TODO: Ignores target
+    // ignores target
+    gen_en_passant(pos, moves);
+}
+
+fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
     if let Some(to) = pos.ep_square {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
             moves.push(Move::EnPassant { from, to });
