@@ -304,7 +304,6 @@ impl Position for Chess {
 
         if checkers.is_empty() {
             gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
-            gen_en_passant(pos, moves);
             gen_castling_moves(pos, moves);
         } else {
             evasions(pos, king, checkers, moves);
@@ -392,7 +391,6 @@ fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveL
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
         gen_pseudo_legal(pos, !pos.board.kings(), target, moves);
-        gen_en_passant(pos, moves);
     }
 }
 
@@ -450,6 +448,65 @@ fn push_pawn_moves(pos: &Situation, moves: &mut MoveList, from: Square, to: Squa
     }
 }
 
+trait Stepper {
+    const ROLE: Role;
+
+    fn attacks(from: Square) -> Bitboard;
+
+    fn gen_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) & selection {
+            moves.extend((Self::attacks(from) & !pos.us() & target).map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
+            }));
+        }
+    }
+}
+
+trait Slider {
+    const ROLE: Role;
+
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
+
+    fn gen_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) & selection {
+            moves.extend((Self::attacks(from, pos.board.occupied()) & !pos.us() & target).map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
+            }));
+        }
+    }
+}
+
+struct KingTag { }
+struct KnightTag { }
+struct BishopTag { }
+struct RookTag { }
+struct QueenTag { }
+
+impl Stepper for KingTag {
+    const ROLE: Role = Role::King;
+    fn attacks(from: Square) -> Bitboard { attacks::king_attacks(from) }
+}
+
+impl Stepper for KnightTag {
+    const ROLE: Role = Role::Knight;
+    fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
+}
+
+impl Slider for BishopTag {
+    const ROLE: Role = Role::Bishop;
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::bishop_attacks(from, occupied) }
+}
+
+impl Slider for RookTag {
+    const ROLE: Role = Role::Rook;
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::rook_attacks(from, occupied) }
+}
+
+impl Slider for QueenTag {
+    const ROLE: Role = Role::Queen;
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
+}
+
 fn push_moves(pos: &Situation, moves: &mut MoveList, role: Role, from: Square, to: Bitboard) {
     moves.extend(to.map(|square| {
         Move::Normal { role, from, capture: pos.board.role_at(square), to: square, promotion: None }
@@ -457,36 +514,15 @@ fn push_moves(pos: &Situation, moves: &mut MoveList, role: Role, from: Square, t
 }
 
 fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
-    for from in pos.our(Role::King) & selection {
-        push_moves(pos, moves, Role::King, from,
-                   attacks::king_attacks(from) & !pos.us() & target);
-    }
+    KingTag::gen_moves(pos, selection, target, moves);
+    KnightTag::gen_moves(pos, selection, target, moves);
+    QueenTag::gen_moves(pos, selection, target, moves);
+    RookTag::gen_moves(pos, selection, target, moves);
+    BishopTag::gen_moves(pos, selection, target, moves);
+    gen_pawn_moves(pos, selection, target, moves);
+}
 
-    for from in pos.our(Role::Knight) & selection {
-        push_moves(pos, moves, Role::Knight, from,
-                   attacks::knight_attacks(from) & !pos.us() & target);
-    }
-
-    for from in pos.our(Role::Rook) & selection {
-        push_moves(pos, moves, Role::Rook, from,
-                   attacks::rook_attacks(from, pos.board.occupied()) & !pos.us() & target);
-    }
-
-    for from in pos.our(Role::Queen) & selection {
-        push_moves(pos, moves, Role::Queen, from,
-                   attacks::rook_attacks(from, pos.board.occupied()) & !pos.us() & target);
-    }
-
-    for from in pos.our(Role::Bishop) & selection {
-        push_moves(pos, moves, Role::Bishop, from,
-                   attacks::bishop_attacks(from, pos.board.occupied()) & !pos.us() & target);
-    }
-
-    for from in pos.our(Role::Queen) & selection {
-        push_moves(pos, moves, Role::Queen, from,
-                   attacks::bishop_attacks(from, pos.board.occupied()) & !pos.us() & target);
-    }
-
+fn gen_pawn_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
             push_pawn_moves(pos, moves, from, to, pos.board.role_at(to));
@@ -511,9 +547,7 @@ fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, move
             push_pawn_moves(pos, moves, from, to, None);
         }
     }
-}
 
-fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
     if let Some(to) = pos.ep_square {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
             moves.push(Move::EnPassant { from, to });
