@@ -293,12 +293,10 @@ impl Position for Chess {
 
         gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
 
-        let pos = &self.situation;
-
         if checkers.is_empty() {
             gen_non_king(self, Bitboard::all(), moves);
             KingTag::gen_moves(self, Bitboard::all(), moves);
-            gen_castling_moves(pos, moves);
+            gen_castling_moves(self, moves);
         } else {
             evasions(self, king, checkers, moves);
         }
@@ -335,17 +333,17 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
-    let backrank = Bitboard::relative_rank(pos.turn, 0);
+fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
+    let backrank = Bitboard::relative_rank(pos.turn(), 0);
 
     for king in pos.our(Role::King) & backrank {
-        'next_rook: for rook in pos.castling_rights & backrank {
+        'next_rook: for rook in pos.castling_rights() & backrank {
             let (king_to, rook_to) = if king < rook {
-                (pos.turn.fold(square::G1, square::G8),
-                 pos.turn.fold(square::F1, square::F8))
+                (pos.turn().fold(square::G1, square::G8),
+                 pos.turn().fold(square::F1, square::F8))
             } else {
-                (pos.turn.fold(square::C1, square::C8),
-                 pos.turn.fold(square::D1, square::D8))
+                (pos.turn().fold(square::C1, square::C8),
+                 pos.turn().fold(square::D1, square::D8))
             };
 
             let empty_for_king = attacks::between(king, king_to).with(king_to)
@@ -354,22 +352,22 @@ fn gen_castling_moves(pos: &Situation, moves: &mut MoveList) {
             let empty_for_rook = attacks::between(rook, rook_to).with(rook_to)
                                         .without(rook).without(king);
 
-            if !(pos.board.occupied() & empty_for_king).is_empty() {
+            if !(pos.board().occupied() & empty_for_king).is_empty() {
                 continue;
             }
 
-            if !(pos.board.occupied() & empty_for_rook).is_empty() {
+            if !(pos.board().occupied() & empty_for_rook).is_empty() {
                 continue;
             }
 
             for sq in attacks::between(king, king_to).with(king).with(king_to) {
-                if !(pos.board.attacks_to(sq) & pos.them()).is_empty() {
+                if !(pos.board().attacks_to(sq) & pos.them()).is_empty() {
                     continue 'next_rook;
                 }
             }
 
-            if !(attacks::rook_attacks(king_to, pos.board.occupied().without(rook)) &
-                 pos.them() & pos.board.rooks_and_queens()).is_empty() {
+            if !(attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
+                 pos.them() & pos.board().rooks_and_queens()).is_empty() {
                 continue;
             }
 
