@@ -298,18 +298,18 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        let pos = &self.situation;
+        let king = self.our(Role::King).first().expect("has a king");
         let checkers = self.checkers();
+        let pos = &self.situation;
 
         if checkers.is_empty() {
             gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
             gen_en_passant(pos, moves);
             gen_castling_moves(pos, moves);
         } else {
-            evasions(pos, checkers, moves);
+            evasions(pos, king, checkers, moves);
         }
 
-        let king = self.our(Role::King).first().expect("has a king");
         let blockers = slider_blockers(pos, pos.them(), king);
         moves.retain(|m| is_safe(pos, king, m, blockers));
     }
@@ -377,8 +377,7 @@ impl Variant for ThreeCheck {
     }
 } */
 
-fn evasions(pos: &Situation, checkers: Bitboard, moves: &mut MoveList) {
-    let king = pos.our(Role::King).first().unwrap();
+fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board.sliders();
 
     let mut attacked = Bitboard(0);
