@@ -93,7 +93,7 @@ impl Board {
         for ch in board_fen.chars() {
             if ch == '/' {
                 file = 0;
-                rank = rank.saturating_sub(-1);
+                rank = rank.saturating_sub(1);
             } else if ch == '~' {
                 promoted = true;
                 continue;
@@ -332,7 +332,7 @@ mod tests {
 
     #[test]
     fn test_promoted() {
-        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").unwrap();
+        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").expect("valid fen");
         assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
         assert!(board.promoted.contains(square::C1));
     }
