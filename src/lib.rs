@@ -21,6 +21,7 @@ pub mod square;
 pub mod attacks;
 pub mod perft;
 pub mod fen;
+pub mod uci;
 
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
@@ -28,3 +29,8 @@ pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
 pub use position::{PositionError, MoveList, Position, Chess};
+
+pub mod variants {
+    //! Chess variants.
+    pub use Chess;
+}

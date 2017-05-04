@@ -1,11 +1,46 @@
 //! Parse and write Forsyth-Edwards-Notation.
+//!
+//! # Examples
+//!
+//! `fen::fen()` and `fen::epd()` can produce a FEN for any `Setup`.
+//!
+//! ```
+//! use shakmaty::fen;
+//! use shakmaty::Chess;
+//!
+//! let pos = Chess::default();
+//! assert_eq!(fen::epd(&pos, false), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
+//! ```
+//!
+//! `Fen` also implements `Display`:
+//!
+//! ```
+//! use shakmaty::fen::Fen;
+//!
+//! let empty_fen = Fen::empty();
+//! assert_eq!(empty_fen.to_string(), "8/8/8/8/8/8/8/8 w - - 0 1");
+//! ```
+//!
+//! Parsing FENs:
+//!
+//! ```
+//! # use shakmaty::fen::Fen;
+//! # use shakmaty::Chess;
+//! use shakmaty::Position;
+//!
+//! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
+//!
+//! let setup: Fen = input.parse().expect("invalid fen");
+//! let position: Chess = setup.position().expect("illegal position");
+//! assert!(position.is_checkmate());
+//! ```
 
 use std::str::FromStr;
 use std::ascii::AsciiExt;
 use std::fmt;
 
 use square::Square;
-use types::{Color, Black, White, Role, Pockets, RemainingChecks};
+use types::{Color, Black, White, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
@@ -126,7 +161,7 @@ impl FromStr for Fen {
                 let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
 
                 let candidates = Bitboard::relative_rank(color, 0) &
-                                 result.board.by_piece(Role::Rook.of(color));
+                                 result.board.by_piece(&color.rook());
 
                 let flag = match ch.to_ascii_lowercase() {
                     'k'  => candidates.last(),
@@ -162,7 +197,7 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
     for color in &[White, Black] {
         let king = board.king_of(*color);
 
-        let candidates = board.by_piece(color.rook()) &
+        let candidates = board.by_piece(&color.rook()) &
                          Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {
@@ -208,16 +243,5 @@ pub fn fen<S: Setup>(setup: &S, promoted: bool) -> String {
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", fen(self, true))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default() {
-        assert_eq!(Fen::empty().to_string(), "8/8/8/8/8/8/8/8 w - - 0 1");
-        assert_eq!(Fen::default().to_string(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
 }

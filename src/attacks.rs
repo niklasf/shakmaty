@@ -226,9 +226,9 @@ pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     PRECOMP.queen_attacks(sq, occupied)
 }
 
-pub fn attacks(sq: Square, Piece { color, role }: Piece, occupied: Bitboard) -> Bitboard {
-    match role {
-        Role::Pawn   => pawn_attacks(color, sq),
+pub fn attacks(sq: Square, piece: &Piece, occupied: Bitboard) -> Bitboard {
+    match piece.role {
+        Role::Pawn   => pawn_attacks(piece.color, sq),
         Role::Knight => knight_attacks(sq),
         Role::Bishop => bishop_attacks(sq, occupied),
         Role::Rook   => rook_attacks(sq, occupied),

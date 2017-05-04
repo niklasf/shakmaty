@@ -1,6 +1,19 @@
 //! Count legal move paths.
+//!
+//! # Examples
+//!
+//! ```
+//! use shakmaty::Chess;
+//! use shakmaty::perft::perft;
+//!
+//! let pos = Chess::default();
+//! assert_eq!(perft(&pos, 1), 20);
+//! assert_eq!(perft(&pos, 2), 400);
+//! assert_eq!(perft(&pos, 3), 8902);
+//! ```
 
 use position::{Position, MoveList};
+use uci::Uci;
 
 /// Counts legal move paths of a given length.
 ///
@@ -25,22 +38,23 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
     }
 }
 
-/* /// Like `perft()`, but also prints the perft of each child for debugging.
+/// Like `perft()`, but also prints the perft of each child for debugging.
 pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
-        let mut moves: Vec<Move> = Vec::with_capacity(P::MAX_LEGAL_MOVES);
+        let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
 
         moves.iter().map(|m| {
-            let child = pos.clone().do_move(m);
+            let child = pos.clone().play(m).expect("legal move");
             let nodes = perft(&child, depth - 1);
-            println!("{} {} {}: {}", m.to_uci(), m, depth - 1, nodes);
+            let uci: Uci = m.into();
+            println!("{} {} {}: {}", uci, m, depth - 1, nodes);
             nodes
         }).sum()
     }
-} */
+}
 
 #[cfg(test)]
 mod tests {
