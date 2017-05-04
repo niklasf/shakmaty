@@ -32,7 +32,7 @@ pub trait Position : Setup + Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
-    /// Validate a `Setup` and construct a position.
+    /// Validates a `Setup` and construct a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
     /// Bitboard of pieces giving check.
@@ -60,6 +60,13 @@ pub trait Position : Setup + Default + Clone {
         }
     }
 
+    /// Plays a move. It is the callers responsibility to ensure the move is
+    /// legal.
+    ///
+    /// # Panics
+    ///
+    /// Illegal moves can corrupt the state of the position and may
+    /// (or may not) panic or cause panics on future calls.
     fn play_unchecked(self, m: &Move) -> Self;
 
     /* fn san_candidates(&self, moves: &mut Vec<Move>, role: Role, target: Square) {
