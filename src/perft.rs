@@ -1,4 +1,16 @@
 //! Count legal move paths.
+//!
+//! # Examples
+//!
+//! ```
+//! use shakmaty::Chess;
+//! use shakmaty::perft::perft;
+//!
+//! let pos = Chess::default();
+//! assert_eq!(perft(&pos, 1), 20);
+//! assert_eq!(perft(&pos, 2), 400);
+//! assert_eq!(perft(&pos, 3), 8902);
+//! ```
 
 use position::{Position, MoveList};
 use uci::Uci;
