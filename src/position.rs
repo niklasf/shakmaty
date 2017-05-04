@@ -310,8 +310,8 @@ impl Position for Chess {
             evasions(pos, king, checkers, moves);
         }
 
-        let blockers = slider_blockers(pos, pos.them(), king);
-        moves.retain(|m| is_safe(pos, king, m, blockers));
+        let blockers = slider_blockers(self.board(), self.them(), king);
+        moves.retain(|m| is_safe(self, king, m, blockers));
     }
 }
 
@@ -521,40 +521,40 @@ fn gen_en_passant(pos: &Situation, moves: &mut MoveList) {
     }
 }
 
-fn slider_blockers(pos: &Situation, sliders: Bitboard, sq: Square) -> Bitboard {
-    let snipers = (attacks::rook_attacks(sq, Bitboard(0)) & pos.board.rooks_and_queens()) |
-                  (attacks::bishop_attacks(sq, Bitboard(0)) & pos.board.bishops_and_queens());
+fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
+    let snipers = (attacks::rook_attacks(king, Bitboard(0)) & board.rooks_and_queens()) |
+                  (attacks::bishop_attacks(king, Bitboard(0)) & board.bishops_and_queens());
 
     let mut blockers = Bitboard(0);
 
-    for sniper in snipers & sliders {
-        let b = attacks::between(sq, sniper) & pos.board.occupied();
+    for sniper in snipers & enemy {
+        let b = attacks::between(king, sniper) & board.occupied();
 
         if !b.more_than_one() {
-            blockers = blockers | b;
+            blockers.add_all(b);
         }
     }
 
     blockers
 }
 
-fn is_safe(pos: &Situation, king: Square, m: &Move, blockers: Bitboard) -> bool {
+fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
     match *m {
         Move::Normal { role, from, to, .. } =>
             if role == Role::King {
-                (pos.board.attacks_to(to) & pos.them()).is_empty()
+                (pos.board().attacks_to(to) & pos.them()).is_empty()
             } else {
                 !(pos.us() & blockers).contains(from) ||
                 attacks::aligned(from, to, king)
             },
         Move::EnPassant { from, to } => {
-            let mut occupied = pos.board.occupied();
+            let mut occupied = pos.board().occupied();
             occupied.flip(from);
             occupied.flip(square::combine(to, from)); // captured pawn
             occupied.add(to);
 
-            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board.rooks_and_queens()).is_empty() &&
-            (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board.bishops_and_queens()).is_empty()
+            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&
+            (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
         },
         Move::Castle { .. } => {
             true

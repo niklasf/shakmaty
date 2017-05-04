@@ -97,6 +97,10 @@ impl Bitboard {
         self.0 |= 1 << sq;
     }
 
+    pub fn add_all(&mut self, Bitboard(bb): Bitboard) {
+        self.0 |= bb;
+    }
+
     pub fn flip(&mut self, Square(sq): Square) {
         self.0 ^= 1 << sq;
     }
