@@ -27,8 +27,8 @@ pub type MoveError = ();
 /// A stack-allocated container to hold legal moves.
 pub type MoveList = ArrayVec<[Move; 512]>;
 
-/// A legal chess or chess variant position. See `Chess` for a concrete
-/// implementation.
+/// A legal chess or chess variant position. See `Chess` and
+/// `shakmaty::variants` for concrete implementations.
 pub trait Position : Setup + Default + Clone {
     /// Whether or not promoted pieces are special in the respective chess
     /// variant. For example in Crazyhouse a promoted queen should be marked

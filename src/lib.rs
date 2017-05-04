@@ -28,3 +28,8 @@ pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
 pub use position::{PositionError, MoveList, Position, Chess};
+
+pub mod variants {
+    //! Chess variants.
+    pub use Chess;
+}
