@@ -1,6 +1,6 @@
 //! Square constants and distance functions.
 
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::fmt;
 use std::str;
 
@@ -31,12 +31,7 @@ impl Square {
 
     pub fn rank_char(self) -> char { (b'1' + self.rank() as u8) as char }
 
-    pub fn saturated_offset(self, delta: i8) -> Square {
-        let Square(sq) = self;
-        Square(max(min(sq + delta, 63), 0))
-    }
-
-    pub fn checked_offset(self, delta: i8) -> Option<Square> {
+    pub fn offset(self, delta: i8) -> Option<Square> {
         let Square(sq) = self;
         if 0 <= sq + delta && sq + delta < 64 {
             Some(Square(sq + delta))
