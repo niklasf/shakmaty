@@ -534,7 +534,10 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
                        !pos.board.occupied();
 
     for to in single_moves & target {
-        if let Some(from) = to.offset(pos.turn.fold(-8, 8)) {
+        let from = to.offset(pos.turn.fold(-8, 8)).unwrap();
+        if 0 != to.rank() && to.rank() < 7 {
+            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+        } else {
             push_pawn_moves(pos, moves, from, to, None);
         }
     }
