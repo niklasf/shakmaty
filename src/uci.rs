@@ -86,8 +86,8 @@ impl<'a> Into<Uci> for &'a Move {
 impl Uci {
     /// Tries to convert the `Uci` to a legal `Move` in the context of a
     /// position.
-    pub fn to_move<P: Position>(self, pos: &P) -> Result<Move, MoveError> {
-        let candidate = match self {
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, MoveError> {
+        let candidate = match *self {
             Uci::Normal { from, to, promotion } => {
                 let role = pos.board().role_at(from).ok_or(())?;
 
