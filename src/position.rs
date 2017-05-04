@@ -147,13 +147,13 @@ impl Situation {
                 self.board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
             },
             Move::Castle { king, rook } => {
-                let rook_to = Square::from_coords(
-                    if square::delta(rook, king) < 0 { 3 } else { 5 },
-                    color.fold(0, 7)).unwrap();
+                let rook_to = square::combine(
+                    if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
+                    rook);
 
-                let king_to = Square::from_coords(
-                    if square::delta(rook, king) < 0 { 2 } else { 6 },
-                    color.fold(0, 7)).unwrap();
+                let king_to = square::combine(
+                    if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
+                    king);
 
                 self.board.remove_piece_at(king);
                 self.board.remove_piece_at(rook);
