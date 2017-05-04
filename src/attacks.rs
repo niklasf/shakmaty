@@ -40,7 +40,7 @@ fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
     for delta in deltas {
         let mut previous = sq;
 
-        while let Some(s) = previous.offset(*delta) {
+        while let Some(s) = previous.checked_offset(*delta) {
             if square::distance(s, previous) > 2 {
                 break;
             }
