@@ -238,8 +238,8 @@ impl Chess {
                 return Err(PositionError::InvalidEpSquare)
             }
 
-            let fifth_rank_sq = ep_square.saturating_offset(pos.turn().fold(-8, 8));
-            let seventh_rank_sq  = ep_square.saturating_offset(pos.turn().fold(8, -8));
+            let fifth_rank_sq = ep_square.saturated_offset(pos.turn().fold(-8, 8));
+            let seventh_rank_sq  = ep_square.saturated_offset(pos.turn().fold(8, -8));
 
             // The last move must have been a double pawn push. Check for the
             // presence of that pawn.
@@ -524,12 +524,12 @@ fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
                        !pos.board.occupied();
 
     for to in single_moves & target {
-        let from = to.saturating_offset(pos.turn.fold(-8, 8));
+        let from = to.saturated_offset(pos.turn.fold(-8, 8));
         push_pawn_moves(moves, from, to, None);
     }
 
     for to in double_moves & target {
-        let from = to.saturating_offset(pos.turn.fold(-16, 16));
+        let from = to.saturated_offset(pos.turn.fold(-16, 16));
         moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
     }
 }
