@@ -303,7 +303,8 @@ impl Position for Chess {
         let pos = &self.situation;
 
         if checkers.is_empty() {
-            gen_pseudo_legal(pos, Bitboard::all(), Bitboard::all(), moves);
+            gen_pseudo_legal(pos, Bitboard::all(), moves);
+            KingTag::gen_moves(pos, Bitboard::all(), moves);
             gen_castling_moves(pos, moves);
         } else {
             evasions(pos, king, checkers, moves);
@@ -390,7 +391,8 @@ fn evasions(pos: &Situation, king: Square, checkers: Bitboard, moves: &mut MoveL
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
-        gen_pseudo_legal(pos, !pos.board.kings(), target, moves);
+
+        gen_pseudo_legal(pos, target, moves);
     }
 }
 
@@ -453,8 +455,8 @@ trait Stepper {
 
     fn attacks(from: Square) -> Bitboard;
 
-    fn gen_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) & selection {
+    fn gen_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) {
             moves.extend((Self::attacks(from) & !pos.us() & target).map(|to| {
                 Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
             }));
@@ -467,8 +469,8 @@ trait Slider {
 
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
-    fn gen_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) & selection {
+    fn gen_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) {
             moves.extend((Self::attacks(from, pos.board.occupied()) & !pos.us() & target).map(|to| {
                 Move::Normal { role: Self::ROLE, from, capture: pos.board.role_at(to), to, promotion: None }
             }));
@@ -507,29 +509,22 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn push_moves(pos: &Situation, moves: &mut MoveList, role: Role, from: Square, to: Bitboard) {
-    moves.extend(to.map(|square| {
-        Move::Normal { role, from, capture: pos.board.role_at(square), to: square, promotion: None }
-    }));
+fn gen_pseudo_legal(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
+    KnightTag::gen_moves(pos, target, moves);
+    QueenTag::gen_moves(pos, target, moves);
+    RookTag::gen_moves(pos, target, moves);
+    BishopTag::gen_moves(pos, target, moves);
+    gen_pawn_moves(pos, target, moves);
 }
 
-fn gen_pseudo_legal(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
-    KingTag::gen_moves(pos, selection, target, moves);
-    KnightTag::gen_moves(pos, selection, target, moves);
-    QueenTag::gen_moves(pos, selection, target, moves);
-    RookTag::gen_moves(pos, selection, target, moves);
-    BishopTag::gen_moves(pos, selection, target, moves);
-    gen_pawn_moves(pos, selection, target, moves);
-}
-
-fn gen_pawn_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves: &mut MoveList) {
+fn gen_pawn_moves(pos: &Situation, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn, from) & pos.them() & target {
             push_pawn_moves(pos, moves, from, to, pos.board.role_at(to));
         }
     }
 
-    let single_moves = (pos.our(Role::Pawn) & selection).relative_shift(pos.turn, 8) &
+    let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn, 8) &
                        !pos.board.occupied();
 
     let double_moves = single_moves.relative_shift(pos.turn, 8) &
@@ -548,6 +543,7 @@ fn gen_pawn_moves(pos: &Situation, selection: Bitboard, target: Bitboard, moves:
         }
     }
 
+    // TODO: Ignores target
     if let Some(to) = pos.ep_square {
         for from in pos.our(Role::Pawn) & attacks::pawn_attacks(!pos.turn, to) {
             moves.push(Move::EnPassant { from, to });
