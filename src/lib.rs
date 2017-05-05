@@ -34,4 +34,5 @@ pub mod variants {
     //! Chess variants.
     pub use Chess;
     pub use position::Crazyhouse;
+    pub use position::KingOfTheHill;
 }

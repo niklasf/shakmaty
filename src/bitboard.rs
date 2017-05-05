@@ -224,6 +224,9 @@ pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa55aa55aa55aa);
 /// The four corner squares.
 pub const CORNERS: Bitboard = Bitboard(0x8100000000000081);
 
+/// The four center squares.
+pub const HILL: Bitboard = Bitboard(0x1818000000);
+
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
