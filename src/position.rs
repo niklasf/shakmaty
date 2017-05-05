@@ -217,8 +217,8 @@ impl Position for Chess {
         };
 
         validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+            .or_else(|| validate_kings(&pos))
+            .map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -347,8 +347,8 @@ impl Position for Crazyhouse {
         };
 
         validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+            .or_else(|| validate_kings(&pos))
+            .map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -432,8 +432,8 @@ impl Position for KingOfTheHill {
         };
 
         validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+            .or_else(|| validate_kings(&pos))
+            .map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -517,7 +517,7 @@ impl Position for Giveaway {
             fullmoves: setup.fullmoves(),
         };
 
-        validate_basic(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_basic(&pos).map_or(Ok(pos), Err)
     }
 
     fn is_variant_end(&self) -> bool {
@@ -638,8 +638,8 @@ impl Position for ThreeCheck {
         };
 
         validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+            .or_else(|| validate_kings(&pos))
+            .map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -758,7 +758,7 @@ impl Position for Horde {
             return Err(PositionError::BadCastlingRights);
         }
 
-        validate_ep(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_ep(&pos).map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -870,7 +870,7 @@ impl Position for Atomic {
             return Err(PositionError::NoKing { color: !pos.turn() });
         }
 
-        validate_basic(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_basic(&pos).map_or(Ok(pos), Err)
     }
 
     fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
@@ -1014,7 +1014,7 @@ impl Position for RacingKings {
         }
 
         validate_basic(&pos)
-            .or(validate_kings(&pos))
+            .or_else(||validate_kings(&pos))
             .or_else(|| {
                 if pos.board().pawns().any() {
                     return Some(PositionError::RacingKingsMaterial);
@@ -1037,7 +1037,7 @@ impl Position for RacingKings {
 
                 None
             })
-            .map_or(Ok(pos), |err| Err(err))
+            .map_or(Ok(pos), Err)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
