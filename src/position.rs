@@ -30,6 +30,9 @@ pub enum PositionError {
     InvalidEpSquare,
     OppositeCheck,
     ThreeCheckOver,
+    RacingKingsCheck,
+    RacingKingsOver,
+    RacingKingsMaterial,
 }
 
 pub type MoveError = ();
@@ -938,6 +941,157 @@ impl Position for Atomic {
 
     fn is_variant_end(&self) -> bool {
         self.variant_outcome().is_some()
+    }
+}
+
+/// A Racing kings position.
+#[derive(Clone)]
+pub struct RacingKings {
+    board: Board,
+    turn: Color,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for RacingKings {
+    fn default() -> RacingKings {
+        RacingKings {
+            board: Board::racing_kings(),
+            turn: White,
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for RacingKings {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { Bitboard::empty() }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for RacingKings {
+    const TRACK_PROMOTED: bool = false;
+    const KING_PROMOTIONS: bool = false;
+
+    fn play_unchecked(mut self, m: &Move) -> RacingKings {
+        let mut fake_castling_rights = Bitboard::empty();
+        do_move(&mut self.board, &mut self.turn, &mut fake_castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<RacingKings, PositionError> {
+        let pos = RacingKings {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        if setup.castling_rights().any() {
+            return Err(PositionError::BadCastlingRights);
+        }
+
+        if pos.checkers().any() {
+            return Err(PositionError::RacingKingsCheck);
+        }
+
+        if pos.turn().is_black() &&
+           (pos.board().by_piece(&Black.king()) & Bitboard::rank(7)).any() &&
+           (pos.board().by_piece(&White.king()) & Bitboard::rank(7)).any() {
+            return Err(PositionError::RacingKingsOver);
+        }
+
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .or_else(|| {
+                if pos.board().pawns().any() {
+                    return Some(PositionError::RacingKingsMaterial);
+                }
+
+                for color in &[White, Black] {
+                    if pos.board().by_piece(&color.knight()).count() > 2 {
+                        return Some(PositionError::RacingKingsMaterial);
+                    }
+                    if pos.board().by_piece(&color.bishop()).count() > 2 {
+                        return Some(PositionError::RacingKingsMaterial);
+                    }
+                    if pos.board().by_piece(&color.rook()).count() > 2 {
+                        return Some(PositionError::RacingKingsMaterial);
+                    }
+                    if pos.board().by_piece(&color.queen()).count() > 1 {
+                        return Some(PositionError::RacingKingsMaterial);
+                    }
+                }
+
+                None
+            })
+            .map_or(Ok(pos), |err| Err(err))
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        if !self.is_variant_end() {
+            gen_standard(self, moves);
+        }
+
+        // TODO: This could be more efficient.
+        moves.retain(|m| {
+            let after = self.clone().play_unchecked(m);
+            after.checkers().is_empty()
+        });
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        false
+    }
+
+    fn is_variant_end(&self) -> bool {
+        let in_goal = self.board().kings() & Bitboard::rank(7);
+
+        if in_goal.is_empty() {
+            return false;
+        }
+
+        if self.turn().is_white() || (in_goal & self.board().black()).any() {
+            return true;
+        }
+
+        // White has reached the backrank. Check if black can catch up.
+        if let Some(black_king) = self.board().by_piece(&Black.king()).first() {
+            for target in attacks::king_attacks(black_king) & Bitboard::rank(7) {
+                if self.king_attackers(target, White).is_empty() {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.is_variant_end() {
+            let in_goal = self.board().kings() & Bitboard::rank(7);
+            if (in_goal & self.board().white()).any() && (in_goal & self.board().black()).any() {
+                Some(Outcome::Draw)
+            } else if (in_goal & self.board().white()).any() {
+                Some(Outcome::Decisive { winner: White })
+            } else {
+                Some(Outcome::Decisive { winner: Black })
+            }
+        } else {
+            None
+        }
     }
 }
 

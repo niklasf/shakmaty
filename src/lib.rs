@@ -39,5 +39,5 @@ pub mod variants {
     pub use position::ThreeCheck;
     pub use position::Horde;
     pub use position::Atomic;
-    // TODO: Racing kings
+    pub use position::RacingKings;
 }

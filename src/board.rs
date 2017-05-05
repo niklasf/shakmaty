@@ -101,6 +101,24 @@ impl Board {
         }
     }
 
+    pub fn racing_kings() -> Board {
+        Board {
+            occupied: Bitboard(0xffff),
+
+            black: Bitboard(0xf0f),
+            white: Bitboard(0xf0f0),
+
+            pawns: Bitboard::empty(),
+            knights: Bitboard(0x1818),
+            bishops: Bitboard(0x2424),
+            rooks: Bitboard(0x4242),
+            queens: Bitboard(0x81),
+            kings: Bitboard(0x8100),
+
+            promoted: Bitboard(0),
+        }
+    }
+
     pub fn from_board_fen(board_fen: &str) -> Option<Board> {
         let mut board = Board::empty();
 

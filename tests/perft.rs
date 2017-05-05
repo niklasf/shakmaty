@@ -2,7 +2,7 @@ extern crate shakmaty;
 
 use shakmaty::Position;
 use shakmaty::Chess;
-use shakmaty::variants::{Crazyhouse, Giveaway, KingOfTheHill, Horde, Atomic};
+use shakmaty::variants::{Crazyhouse, Giveaway, KingOfTheHill, Horde, Atomic, RacingKings};
 use shakmaty::fen::Fen;
 use shakmaty::perft;
 
@@ -79,4 +79,9 @@ fn test_horde() {
 #[test]
 fn test_atomic() {
     test_perft_file::<Atomic>("tests/atomic.perft", 1000000);
+}
+
+#[test]
+fn test_racing_kings() {
+    test_perft_file::<RacingKings>("tests/racingkings.perft", 1000000);
 }
