@@ -51,10 +51,15 @@ pub trait Position : Setup + Default + Clone {
     /// Validates a `Setup` and construct a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
+    /// Attacks that a king on `square` would have to deal with.
+    fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
+        self.board().by_color(attacker) & self.board().attacks_to(square)
+    }
+
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first()
-            .map_or(Bitboard(0), |king| self.board().by_color(!self.turn()) & self.board().attacks_to(king))
+            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn()))
     }
 
     /// Generates legal moves.
@@ -911,7 +916,7 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-        if !(pos.board().attacks_to(their_king) & pos.us()).is_empty() {
+        if pos.king_attackers(their_king, pos.turn()).any() {
             return Some(PositionError::OppositeCheck)
         }
     }
@@ -996,7 +1001,7 @@ fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
             }
 
             for sq in attacks::between(king, king_to).with(king).with(king_to) {
-                if !(pos.board().attacks_to(sq) & pos.them()).is_empty() {
+                if pos.king_attackers(sq, !pos.turn()).any() {
                     continue 'next_rook;
                 }
             }
