@@ -43,8 +43,8 @@ use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
-use setup::Setup;
-use position::{Position, PositionError};
+use setup::{Setup, PositionError};
+use position::Position;
 
 /// A parsed FEN.
 #[derive(Clone)]

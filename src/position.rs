@@ -4,25 +4,11 @@ use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
+use types::{Color, White, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
-use setup::Setup;
+use setup::{Setup, PositionError};
 
 use arrayvec::ArrayVec;
-
-/// Reasons for a `Setup` not beeing a legal `Position`.
-#[derive(Debug)]
-pub enum PositionError {
-    Empty,
-    NoKing { color: Color },
-    TooManyPawns { color: Color },
-    TooManyPieces { color: Color },
-    TooManyKings,
-    PawnsOnBackrank,
-    BadCastlingRights,
-    InvalidEpSquare,
-    OppositeCheck,
-}
 
 /// Outcome of a game.
 pub enum Outcome {
@@ -185,67 +171,6 @@ impl Setup for Chess {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Chess {
-    fn ensure_valid(self) -> Result<Chess, PositionError> {
-        let pos = self;
-
-        if pos.board().occupied().is_empty() {
-            return Err(PositionError::Empty)
-        }
-
-        for color in &[White, Black] {
-            if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
-                return Err(PositionError::NoKing { color: *color })
-            }
-            if pos.board().by_color(*color).count() > 16 {
-                return Err(PositionError::TooManyPieces { color: *color })
-            }
-            if pos.board().by_piece(&color.pawn()).count() > 8 {
-                return Err(PositionError::TooManyPawns { color: *color })
-            }
-        }
-
-        if pos.board().kings().count() > 2 {
-            return Err(PositionError::TooManyKings)
-        }
-
-        if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
-            return Err(PositionError::PawnsOnBackrank)
-        }
-
-        if setup::clean_castling_rights(&pos, false) != pos.castling_rights() {
-            return Err(PositionError::BadCastlingRights)
-        }
-
-        if let Some(ep_square) = pos.ep_square() {
-            if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
-                return Err(PositionError::InvalidEpSquare)
-            }
-
-            let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8)).expect("ep square is on sixth rank");
-            let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8)).expect("ep square is on sixth rank");
-
-            // The last move must have been a double pawn push. Check for the
-            // presence of that pawn.
-            if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
-                return Err(PositionError::InvalidEpSquare)
-            }
-
-            if pos.board().occupied().contains(ep_square) | pos.board().occupied().contains(seventh_rank_sq) {
-                return Err(PositionError::InvalidEpSquare)
-            }
-        }
-
-        if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-            if !(pos.board().attacks_to(their_king) & pos.us()).is_empty() {
-                return Err(PositionError::OppositeCheck)
-            }
-        }
-
-        Ok(pos)
-    }
-}
-
 impl Position for Chess {
     const TRACK_PROMOTED: bool = false;
     const KING_PROMOTIONS: bool = false;
@@ -258,14 +183,16 @@ impl Position for Chess {
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
-        Chess {
+        let pos = Chess {
             board: setup.board().clone(),
             turn: setup.turn(),
             castling_rights: setup.castling_rights(),
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
-        }.ensure_valid()
+        };
+
+        setup::validate(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -338,10 +265,6 @@ impl Default for Crazyhouse {
 }
 
 impl Crazyhouse {
-    fn ensure_valid(self) -> Result<Crazyhouse, PositionError> {
-        Ok(self) // TODO
-    }
-
     fn legal_put_squares(&self) -> Bitboard {
         let checkers = self.checkers();
 
@@ -387,7 +310,8 @@ impl Position for Crazyhouse {
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> {
-        Crazyhouse {
+        // TODO: Validate
+        Ok(Crazyhouse {
             board: setup.board().clone(),
             pockets: setup.pockets().map_or(Pockets::default(), |p| p.clone()),
             turn: setup.turn(),
@@ -395,7 +319,7 @@ impl Position for Crazyhouse {
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
-        }.ensure_valid()
+        })
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {

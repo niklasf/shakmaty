@@ -27,8 +27,8 @@ pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
-pub use setup::Setup;
-pub use position::{PositionError, MoveList, Position, Chess};
+pub use setup::{Setup, PositionError};
+pub use position::{MoveList, Position, Chess};
 
 pub mod variants {
     //! Chess variants.
