@@ -130,6 +130,16 @@ pub enum Move {
     Null
 }
 
+impl Move {
+    pub fn capture(&self) -> Option<Role> {
+        match *self {
+            Move::Normal { capture, .. } => capture,
+            Move::EnPassant { .. } => Some(Pawn),
+            _ => None
+        }
+    }
+}
+
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

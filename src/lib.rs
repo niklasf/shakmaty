@@ -35,4 +35,5 @@ pub mod variants {
     pub use Chess;
     pub use position::Crazyhouse;
     pub use position::KingOfTheHill;
+    pub use position::Giveaway;
 }

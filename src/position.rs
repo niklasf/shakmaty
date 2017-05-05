@@ -449,6 +449,109 @@ impl Position for KingOfTheHill {
     }
 }
 
+/// A Giveaway position.
+#[derive(Clone)]
+pub struct Giveaway {
+    board: Board,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Giveaway {
+    fn default() -> Giveaway {
+        Giveaway {
+            board: Board::default(),
+            turn: White,
+            castling_rights: Bitboard::empty(),
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Giveaway {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Giveaway {
+    // prevent promoted kings from beeing able to castle
+    const TRACK_PROMOTED: bool = true;
+    const KING_PROMOTIONS: bool = true;
+
+    fn play_unchecked(mut self, m: &Move) -> Giveaway {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Giveaway, PositionError> {
+        let pos = Giveaway {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        validate_basic(&pos).map_or(Ok(pos), |err| Err(err))
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.board().white().is_empty() || self.board().black().is_empty()
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        gen_non_king(self, Bitboard::all(), moves);
+        KingTag::gen_moves(self, Bitboard::all(), moves);
+        gen_castling_moves(self, moves);
+
+        if moves.iter().any(|m| m.capture().is_some()) {
+            moves.retain(|m| m.capture().is_some());
+        }
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        if self.board().knights().any() || self.board().rooks_and_queens().any() || self.board().kings().any() {
+            return false;
+        }
+
+        if self.board().pawns().any() {
+            // TODO: Could detect blocked pawns.
+            return false;
+        }
+
+        // Bishops and pawns of each side on distinct color complexes.
+        if (self.board().white() & bitboard::DARK_SQUARES).is_empty() {
+            (self.board().black() & bitboard::LIGHT_SQUARES).is_empty()
+        } else if (self.board().white() & bitboard::LIGHT_SQUARES).is_empty() {
+            (self.board().black() & bitboard::DARK_SQUARES).is_empty()
+        } else {
+            false
+        }
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.us().is_empty() || self.is_stalemate() {
+            Some(Outcome::Decisive { winner: self.turn() })
+        } else {
+            None
+        }
+    }
+}
+
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castling_rights: &mut Bitboard,
@@ -634,6 +737,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
+// TODO: Deal with variants where kings ignore attacks
 fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
     let backrank = Bitboard::relative_rank(pos.turn(), 0);
 
