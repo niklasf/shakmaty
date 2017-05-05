@@ -780,6 +780,121 @@ impl Position for Horde {
     }
 }
 
+/// A standard Chess position.
+#[derive(Clone)]
+pub struct Atomic {
+    board: Board,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Atomic {
+    fn default() -> Atomic {
+        Atomic {
+            board: Board::default(),
+            turn: White,
+            castling_rights: bitboard::CORNERS,
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Atomic {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Atomic {
+    const TRACK_PROMOTED: bool = false;
+    const KING_PROMOTIONS: bool = false;
+
+    fn play_unchecked(mut self, m: &Move) -> Atomic {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+
+        // TODO: Explosion
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Atomic, PositionError> {
+        let pos = Atomic {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        // TODO: Allow single king
+
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        // TODO
+        gen_standard(self, moves);
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        if self.is_variant_end() {
+            return false;
+        }
+
+        if self.board().pawns().any() || self.board().queens().any() {
+            return false;
+        }
+
+        if (self.board().knights() | self.board().bishops() | self.board().rooks()).count() == 1 {
+            return true;
+        }
+
+        // Only knights.
+        if self.board().occupied() == self.board().kings() | self.board().knights() {
+            return self.board().knights().count() <= 2;
+        }
+
+        // Only bishops.
+        if self.board().occupied() == self.board().kings() | self.board().bishops() {
+            if (self.board().by_piece(&White.bishop()) & bitboard::DARK_SQUARES).is_empty() {
+                return (self.board().by_piece(&Black.bishop()) & bitboard::LIGHT_SQUARES).is_empty()
+            }
+            if (self.board().by_piece(&White.bishop()) & bitboard::LIGHT_SQUARES).is_empty() {
+                return (self.board().by_piece(&Black.bishop()) & bitboard::DARK_SQUARES).is_empty()
+            }
+        }
+
+        false
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        for color in &[White, Black] {
+            if self.board().by_piece(&color.king()).is_empty() {
+                return Some(Outcome::Decisive { winner: !*color })
+            }
+        }
+        None
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.variant_outcome().is_some()
+    }
+}
+
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castling_rights: &mut Bitboard,
