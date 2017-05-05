@@ -288,7 +288,7 @@ impl Position for Chess {
 
 /// A Crazyhouse position.
 #[derive(Clone)]
-struct Crazyhouse {
+pub struct Crazyhouse {
     board: Board,
     pockets: Pockets,
     turn: Color,
