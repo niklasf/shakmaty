@@ -824,7 +824,23 @@ impl Position for Atomic {
                 &mut self.ep_square, &mut self.halfmove_clock,
                 &mut self.fullmoves, m);
 
-        // TODO: Explosion
+        match *m {
+            Move::Normal { capture: Some(_), to, .. }  | Move::EnPassant { to, .. } => {
+                self.board.remove_piece_at(to);
+
+                let explosion_radius = attacks::king_attacks(to) &
+                                       self.board().occupied() &
+                                       !self.board.pawns();
+
+                for explosion in explosion_radius {
+                    self.board.remove_piece_at(explosion);
+                }
+
+                self.castling_rights.discard_all(explosion_radius);
+            },
+            _ => ()
+        }
+
         self
     }
 
@@ -853,9 +869,27 @@ impl Position for Atomic {
         validate_basic(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
+    fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
+        if (attacks::king_attacks(square) & self.board().by_piece(&attacker.king())).any() {
+            Bitboard::empty()
+        } else {
+            self.board().by_color(attacker) & self.board().attacks_to(square)
+        }
+    }
+
     fn legal_moves(&self, moves: &mut MoveList) {
-        // TODO
-        gen_standard(self, moves);
+        gen_non_king(self, Bitboard::all(), moves);
+        KingTag::gen_moves(self, Bitboard::all(), moves);
+        gen_castling_moves(self, moves);
+
+        moves.retain(|m| {
+            let after = self.clone().play_unchecked(m);
+            if let Some(our_king) = after.board().king_of(self.turn()) {
+                after.king_attackers(our_king, !self.turn()).is_empty()
+            } else {
+                false
+            }
+        });
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -1095,7 +1129,6 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-// TODO: Deal with variants where kings ignore attacks
 fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
     let backrank = Bitboard::relative_rank(pos.turn(), 0);
 
