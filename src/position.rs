@@ -1,5 +1,6 @@
 use attacks;
 use board::Board;
+use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
@@ -272,7 +273,26 @@ impl Position for Chess {
     }
 
     fn is_insufficient_material(&self) -> bool {
-        // TODO
+        if self.board().pawns().any() || self.board().rooks_and_queens().any() {
+            return false;
+        }
+
+        if self.board().occupied().count() < 3 {
+            return true; // single knight or bishop
+        }
+
+        if self.board().knights().any() {
+            return false; // more than a single knight
+        }
+
+        // all bishops on the same color
+        if (self.board().bishops() & bitboard::DARK_SQUARES).is_empty() {
+            return true;
+        }
+        if (self.board().bishops() & bitboard::LIGHT_SQUARES).is_empty() {
+            return true;
+        }
+
         false
     }
 

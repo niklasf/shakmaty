@@ -89,6 +89,10 @@ impl Bitboard {
         self.0 == 0
     }
 
+    pub fn any(self) -> bool {
+        self.0 != 0
+    }
+
     pub fn contains(self, sq: Square) -> bool {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
@@ -136,14 +140,6 @@ impl Bitboard {
 
     pub fn without(self, sq: Square) -> Bitboard {
         self & !Bitboard::from_square(sq)
-    }
-
-    pub fn lsb(self) -> Bitboard {
-        self & Bitboard(0u64.wrapping_sub(self.0))
-    }
-
-    pub fn msb(self) -> Bitboard {
-        self.last().map_or(Bitboard(0), |sq| Bitboard::from_square(sq))
     }
 
     pub fn first(self) -> Option<Square> {
@@ -221,6 +217,9 @@ impl Bitboard {
         CarryRippler::new(self)
     }
 }
+
+pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55aa55aa55aa55);
+pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa55aa55aa55aa);
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
