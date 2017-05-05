@@ -42,12 +42,12 @@ impl Bitboard {
     }
 
     /// Returns an empty bitboard.
-    pub fn empty() -> Bitboard {
+    pub const fn empty() -> Bitboard {
         Bitboard(0)
     }
 
     /// Returns the bitboard containing all squares.
-    pub fn all() -> Bitboard {
+    pub const fn all() -> Bitboard {
         Bitboard(!0u64)
     }
 
@@ -136,6 +136,14 @@ impl Bitboard {
 
     pub fn without(self, sq: Square) -> Bitboard {
         self & !Bitboard::from_square(sq)
+    }
+
+    pub fn lsb(self) -> Bitboard {
+        self & Bitboard(0u64.wrapping_sub(self.0))
+    }
+
+    pub fn msb(self) -> Bitboard {
+        self.last().map_or(Bitboard(0), |sq| Bitboard::from_square(sq))
     }
 
     pub fn first(self) -> Option<Square> {
@@ -234,6 +242,12 @@ impl ops::BitAnd<Bitboard> for Bitboard {
     fn bitand(self, Bitboard(rhs): Bitboard) -> Bitboard {
         let Bitboard(lhs) = self;
         Bitboard(lhs & rhs)
+    }
+}
+
+impl ops::BitAndAssign<Bitboard> for Bitboard {
+    fn bitand_assign(&mut self, Bitboard(rhs): Bitboard) {
+        self.0 &= rhs;
     }
 }
 

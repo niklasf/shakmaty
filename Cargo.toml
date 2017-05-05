@@ -10,6 +10,7 @@ authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
 
 [dependencies]
 lazy_static = "0.2"
+option-filter = "1.0"
 
 [dependencies.arrayvec]
 version = "0.3"

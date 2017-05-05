@@ -8,8 +8,8 @@ extern crate test;
 
 #[macro_use]
 extern crate lazy_static;
-
 extern crate arrayvec;
+extern crate option_filter;
 
 mod types;
 mod bitboard;

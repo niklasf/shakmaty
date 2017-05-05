@@ -4,6 +4,7 @@ use bitboard::Bitboard;
 use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
+use setup;
 use setup::Setup;
 
 use arrayvec::ArrayVec;
@@ -214,7 +215,9 @@ impl Chess {
             return Err(PositionError::PawnsOnBackrank)
         }
 
-        // TODO: Validate castling rights.
+        if setup::clean_castling_rights(&pos, true) != pos.castling_rights() {
+            return Err(PositionError::BadCastlingRights)
+        }
 
         if let Some(ep_square) = pos.ep_square() {
             if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
