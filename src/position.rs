@@ -838,11 +838,19 @@ impl Position for Atomic {
             fullmoves: setup.fullmoves(),
         };
 
-        // TODO: Allow single king
+        if pos.board().kings().count() > 2 {
+            return Err(PositionError::TooManyKings);
+        }
 
-        validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+        if let Some(their_king) = pos.board().king_of(!pos.turn()) {
+            if pos.king_attackers(their_king, pos.turn()).any() {
+                return Err(PositionError::OppositeCheck);
+            }
+        } else {
+            return Err(PositionError::NoKing { color: !pos.turn() });
+        }
+
+        validate_basic(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
