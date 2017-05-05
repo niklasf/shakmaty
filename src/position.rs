@@ -23,6 +23,12 @@ pub enum PositionError {
     OppositeCheck,
 }
 
+/// Outcome of a game.
+pub enum Outcome {
+    Decisive { winner: Color },
+    Draw
+}
+
 pub type MoveError = ();
 
 /// A stack-allocated container to hold legal moves.
@@ -59,10 +65,8 @@ pub trait Position : Setup + Default + Clone {
     ///
     /// Note that for example stalemate is not considered a variant-specific
     /// end condition (`is_variant_end()` will return `false`), but it can have
-    /// a special **result** in suicide chess.
-    fn is_variant_end() -> bool {
-        false
-    }
+    /// a special `variant_outcome()` in suicide chess.
+    fn is_variant_end(&self) -> bool;
 
     /// Tests for checkmate.
     fn is_checkmate(&self) -> bool {
@@ -81,9 +85,36 @@ pub trait Position : Setup + Default + Clone {
             false
         } else {
             let mut legals = MoveList::new();
-            self.legal_moves(&mut legals)
+            self.legal_moves(&mut legals);
             legals.is_empty()
         }
+    }
+
+    /// Tests for insufficient winning material.
+    fn is_insufficient_material(&self) -> bool;
+
+    /// Tests if the game is over due to checkmate, stalemate, insufficient
+    /// material or variant end.
+    fn is_game_over(&self) -> bool {
+        let mut legals = MoveList::new();
+        self.legal_moves(&mut legals);
+        legals.is_empty() || self.is_insufficient_material()
+    }
+
+    /// Tests special variant winning, losing and drawing conditions.
+    fn variant_outcome(&self) -> Option<Outcome>;
+
+    /// The outcome of the game, or `None` if the game is not over.
+    fn outcome(&self) -> Option<Outcome> {
+        self.variant_outcome().or_else(|| {
+            if self.is_checkmate() {
+                Some(Outcome::Decisive { winner: !self.turn() }) // checkmate
+            } else if self.is_stalemate() || self.is_insufficient_material() {
+                Some(Outcome::Draw)
+            } else {
+                None
+            }
+        })
     }
 
     /// Validates and plays a move.
@@ -278,10 +309,6 @@ impl Position for Chess {
         self
     }
 
-    fn play(self, m: &Move) -> Result<Chess, MoveError> {
-        self.play_unchecked(m).ensure_valid().map_err(|_| ())
-    }
-
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
         Chess {
             board: setup.board().clone(),
@@ -310,6 +337,14 @@ impl Position for Chess {
         let blockers = slider_blockers(self.board(), self.them(), king);
         moves.retain(|m| is_safe(self, king, m, blockers));
     }
+
+    fn is_insufficient_material(&self) -> bool {
+        // TODO
+        false
+    }
+
+    fn is_variant_end(&self) -> bool { false }
+    fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
