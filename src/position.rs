@@ -6,14 +6,29 @@ use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
-use setup::{Setup, PositionError};
+use setup::Setup;
 
 use arrayvec::ArrayVec;
 
 /// Outcome of a game.
+#[derive(Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw
+}
+
+/// Reasons for a `Setup` not beeing a legal `Position`.
+#[derive(Debug)]
+pub enum PositionError {
+    Empty,
+    NoKing { color: Color },
+    TooManyPawns,
+    TooManyPieces,
+    TooManyKings,
+    PawnsOnBackrank,
+    BadCastlingRights,
+    InvalidEpSquare,
+    OppositeCheck,
 }
 
 pub type MoveError = ();
@@ -29,7 +44,7 @@ pub trait Position : Setup + Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
-    /// Wether or not pawns can be promoted to kings in this variant.
+    /// Wether pawns can be promoted to kings in this variant.
     const KING_PROMOTIONS: bool;
 
     /// Validates a `Setup` and construct a position.
@@ -192,7 +207,7 @@ impl Position for Chess {
             fullmoves: setup.fullmoves(),
         };
 
-        setup::validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -320,7 +335,7 @@ impl Position for Crazyhouse {
             fullmoves: setup.fullmoves(),
         };
 
-        setup::validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -403,7 +418,7 @@ impl Position for KingOfTheHill {
             fullmoves: setup.fullmoves(),
         };
 
-        setup::validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -493,6 +508,75 @@ fn do_move(board: &mut Board,
     }
 
     *turn = !color;
+}
+
+fn validate<P: Position>(pos: &P) -> Option<PositionError> {
+    if pos.board().occupied().is_empty() {
+        return Some(PositionError::Empty)
+    }
+
+    for color in &[White, Black] {
+        if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
+            return Some(PositionError::NoKing { color: *color })
+        }
+    }
+
+    if let Some(pockets) = pos.pockets() {
+        if pos.board().pawns().count() + pockets.white.pawns as usize + pockets.black.pawns as usize > 16 {
+            return Some(PositionError::TooManyPawns)
+        }
+        if pos.board().occupied().count() + pockets.count() as usize > 32 {
+            return Some(PositionError::TooManyPieces)
+        }
+    } else {
+        for color in &[White, Black] {
+            if pos.board().by_color(*color).count() > 16 {
+                return Some(PositionError::TooManyPieces)
+            }
+            if pos.board().by_piece(&color.pawn()).count() > 8 {
+                return Some(PositionError::TooManyPawns)
+            }
+        }
+    }
+
+    if pos.board().kings().count() > 2 {
+        return Some(PositionError::TooManyKings)
+    }
+
+    if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
+        return Some(PositionError::PawnsOnBackrank)
+    }
+
+    if setup::clean_castling_rights(pos, false) != pos.castling_rights() {
+        return Some(PositionError::BadCastlingRights)
+    }
+
+    if let Some(ep_square) = pos.ep_square() {
+        if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
+            return Some(PositionError::InvalidEpSquare)
+        }
+
+        let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8)).expect("ep square is on sixth rank");
+        let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8)).expect("ep square is on sixth rank");
+
+        // The last move must have been a double pawn push. Check for the
+        // presence of that pawn.
+        if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
+            return Some(PositionError::InvalidEpSquare)
+        }
+
+        if pos.board().occupied().contains(ep_square) | pos.board().occupied().contains(seventh_rank_sq) {
+            return Some(PositionError::InvalidEpSquare)
+        }
+    }
+
+    if let Some(their_king) = pos.board().king_of(!pos.turn()) {
+        if !(pos.board().attacks_to(their_king) & pos.us()).is_empty() {
+            return Some(PositionError::OppositeCheck)
+        }
+    }
+
+    None
 }
 
 fn gen_standard<P: Position>(pos: &P, moves: &mut MoveList) {
