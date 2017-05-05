@@ -884,21 +884,24 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
 }
 
 fn gen_standard<P: Position>(pos: &P, moves: &mut MoveList) {
-    let king = pos.our(Role::King).first().expect("has a king");
-    let checkers = pos.checkers();
-
     gen_en_passant(pos.board(), pos.turn(), pos.ep_square(), moves);
+
+    let checkers = pos.checkers();
 
     if checkers.is_empty() {
         gen_non_king(pos, Bitboard::all(), moves);
         KingTag::gen_moves(pos, Bitboard::all(), moves);
         gen_castling_moves(pos, moves);
-    } else {
-        evasions(pos, king, checkers, moves);
     }
 
-    let blockers = slider_blockers(pos.board(), pos.them(), king);
-    moves.retain(|m| is_safe(pos, king, m, blockers));
+    if let Some(king) = pos.our(Role::King).first() {
+        if !checkers.is_empty() {
+            evasions(pos, king, checkers, moves);
+        }
+
+        let blockers = slider_blockers(pos.board(), pos.them(), king);
+        moves.retain(|m| is_safe(pos, king, m, blockers));
+    }
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
@@ -932,7 +935,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
 fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
     let backrank = Bitboard::relative_rank(pos.turn(), 0);
 
-    for king in pos.our(Role::King) & backrank {
+    for king in pos.our(Role::King) & backrank & !pos.board().promoted() {
         'next_rook: for rook in pos.castling_rights() & backrank {
             let (king_to, rook_to) = if king < rook {
                 (pos.turn().fold(square::G1, square::G8),
