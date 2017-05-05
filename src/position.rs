@@ -329,8 +329,16 @@ impl Crazyhouse {
     }
 
     fn legal_put_squares(&self) -> Bitboard {
-        // TODO
-        !self.board().occupied()
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            !self.board().occupied()
+        } else if let Some(checker) = checkers.single_square() {
+            let king = self.our(Role::King).first().expect("has a king");
+            return attacks::between(checker, king)
+        } else {
+            Bitboard::empty()
+        }
     }
 }
 
