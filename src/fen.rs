@@ -78,6 +78,7 @@ pub enum FenError {
     InvalidTurn,
     InvalidCastling,
     InvalidEpSquare,
+    InvalidRemainingChecks,
     InvalidHalfmoveClock,
     InvalidFullmoves,
 }
@@ -169,7 +170,22 @@ impl FromStr for Fen {
                 result.ep_square = Some(Square::from_str(ep_part).map_err(|_| FenError::InvalidEpSquare)?)
         }
 
-        if let Some(halfmoves_part) = parts.next() {
+        let halfmoves_part = if let Some(checks_part) = parts.next() {
+            let mut checks = checks_part.splitn(2, '+');
+            if let (Some(w), Some(b)) = (checks.next(), checks.next()) {
+                result.remaining_checks = Some(RemainingChecks {
+                    white: w.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
+                    black: b.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
+                });
+                parts.next()
+            } else {
+                Some(checks_part)
+            }
+        } else {
+            None
+        };
+
+        if let Some(halfmoves_part) = halfmoves_part {
             result.halfmove_clock = halfmoves_part.parse().map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
@@ -238,8 +254,20 @@ impl fmt::Display for Fen {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_pockets() {
-        // TODO
+        let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
+        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(&White.queen())), 1);
+    }
+
+    #[test]
+    fn test_remaining_checks() {
+        let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42".parse().expect("valid fen");
+        let expected = RemainingChecks { white: 1, black: 2 };
+        assert_eq!(fen.remaining_checks, Some(expected));
+        assert_eq!(fen.halfmove_clock, 12);
+        assert_eq!(fen.fullmoves, 42);
     }
 }

@@ -244,7 +244,7 @@ impl fmt::Display for Pockets {
 
 /// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-check).
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RemainingChecks {
     pub white: u8,
     pub black: u8,
