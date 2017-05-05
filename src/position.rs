@@ -887,6 +887,7 @@ impl Position for Atomic {
         moves.retain(|m| {
             let after = self.clone().play_unchecked(m);
             if let Some(our_king) = after.board().king_of(self.turn()) {
+                after.board().by_piece(&Role::King.of(!self.turn())).is_empty() ||
                 after.king_attackers(our_king, !self.turn()).is_empty()
             } else {
                 false
