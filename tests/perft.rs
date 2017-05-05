@@ -46,6 +46,7 @@ fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
     }
 }
 
+#[ignore]
 #[test]
 fn test_random() {
     test_perft_file::<Chess>("tests/random.perft", 10000);

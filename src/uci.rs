@@ -1,4 +1,52 @@
 //! Parse and write moves in Universal Chess Interface representation.
+//!
+//! # Examples
+//!
+//! Parsing UCIs:
+//!
+//! ```
+//! # use shakmaty::square;
+//! use shakmaty::uci::Uci;
+//!
+//! let uci: Uci = "g1f3".parse().expect("valid uci");
+//! assert_eq!(uci, Uci::Normal { from: square::G1, to: square::F3, promotion: None });
+//! ```
+//!
+//! Converting to a legal move in the context of a position:
+//!
+//! ```
+//! # use shakmaty::square;
+//! # use shakmaty::White;
+//! # use shakmaty::uci::Uci;
+//! use shakmaty::{Chess, Setup, Position};
+//!
+//! # let uci: Uci = "g1f3".parse().expect("valid uci");
+//! let pos = Chess::default();
+//! let m = uci.to_move(&pos).expect("legal move");
+//!
+//! let after = pos.play_unchecked(&m);
+//! assert_eq!(after.board().piece_at(square::F3), Some(White.knight()));
+//! ```
+//!
+//! Converting from `Move` to `Uci`:
+//!
+//! ```
+//! # use shakmaty::{Move, Role};
+//! # use shakmaty::square;
+//! # use shakmaty::uci::Uci;
+//! use std::convert::From;
+//!
+//! let m = Move::Normal {
+//!     role: Role::Queen,
+//!     from: square::A1,
+//!     to: square::H8,
+//!     capture: Some(Role::Rook),
+//!     promotion: None,
+//! };
+//!
+//! let uci: Uci = m.into();
+//! assert_eq!(uci.to_string(), "a1h8");
+//! ```
 
 use std::fmt;
 use std::ascii::AsciiExt;
@@ -80,6 +128,12 @@ impl<'a> Into<Uci> for &'a Move {
             Move::Null =>
                 Uci::Null
         }
+    }
+}
+
+impl Into<Uci> for Move {
+    fn into(self) -> Uci {
+        (&self).into()
     }
 }
 
