@@ -43,6 +43,9 @@ pub trait Position : Setup + Default + Clone {
     /// as `Q~` in FENs and will become a pawn when captured.
     const TRACK_PROMOTED: bool;
 
+    /// Wether or not pawns can be promoted to kings in this variant.
+    const KING_PROMOTIONS: bool;
+
     /// Validates a `Setup` and construct a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
@@ -245,6 +248,7 @@ impl Chess {
 
 impl Position for Chess {
     const TRACK_PROMOTED: bool = false;
+    const KING_PROMOTIONS: bool = false;
 
     fn play_unchecked(mut self, m: &Move) -> Chess {
         do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
@@ -354,8 +358,9 @@ impl Crazyhouse {
 
 impl Position for Crazyhouse {
     const TRACK_PROMOTED: bool = true;
+    const KING_PROMOTIONS: bool = false;
 
-    fn is_zeroing(&self, m: &Move) -> bool {
+    fn is_zeroing(&self, _: &Move) -> bool {
         false
     }
 
