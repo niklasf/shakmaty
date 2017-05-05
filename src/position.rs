@@ -29,6 +29,7 @@ pub enum PositionError {
     BadCastlingRights,
     InvalidEpSquare,
     OppositeCheck,
+    ThreeCheckOver,
 }
 
 pub type MoveError = ();
@@ -548,6 +549,109 @@ impl Position for Giveaway {
     fn variant_outcome(&self) -> Option<Outcome> {
         if self.us().is_empty() || self.is_stalemate() {
             Some(Outcome::Decisive { winner: self.turn() })
+        } else {
+            None
+        }
+    }
+}
+
+/// A Three Check position.
+#[derive(Clone)]
+pub struct ThreeCheck {
+    board: Board,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    remaining_checks: RemainingChecks,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for ThreeCheck {
+    fn default() -> ThreeCheck {
+        ThreeCheck {
+            board: Board::default(),
+            turn: White,
+            castling_rights: bitboard::CORNERS,
+            ep_square: None,
+            remaining_checks: RemainingChecks::default(),
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for ThreeCheck {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for ThreeCheck {
+    const TRACK_PROMOTED: bool = false;
+    const KING_PROMOTIONS: bool = false;
+
+    fn play_unchecked(mut self, m: &Move) -> ThreeCheck {
+        let turn = self.turn();
+
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+
+        if self.checkers().any() {
+            self.remaining_checks.subtract(turn);
+        }
+
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<ThreeCheck, PositionError> {
+        let checks = setup.remaining_checks()
+                          .map_or(RemainingChecks::default(), |c| c.clone());
+
+        if checks.white == 0 && checks.black == 0 {
+            return Err(PositionError::ThreeCheckOver);
+        }
+
+        let pos = ThreeCheck {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            remaining_checks: checks,
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        if !self.is_variant_end() {
+            gen_standard(self, moves);
+        }
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        self.board().occupied() == self.board().kings()
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.remaining_checks.white == 0 || self.remaining_checks.black == 0
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.remaining_checks.white == 0 {
+            Some(Outcome::Decisive { winner: White })
+        } else if self.remaining_checks.black == 0 {
+            Some(Outcome::Decisive { winner: Black })
         } else {
             None
         }

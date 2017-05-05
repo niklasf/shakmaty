@@ -290,6 +290,10 @@ impl RemainingChecks {
     pub fn mut_by_color(&mut self, color: Color) -> &mut u8 {
         color.fold(&mut self.white, &mut self.black)
     }
+
+    pub fn subtract(&mut self, color: Color) {
+        *self.mut_by_color(color) = self.by_color(color).saturating_sub(1);
+    }
 }
 
 impl fmt::Display for RemainingChecks {
