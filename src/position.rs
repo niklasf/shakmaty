@@ -62,6 +62,16 @@ pub trait Position : Setup + Default + Clone {
         legals.contains(m)
     }
 
+    /// Tests if a move zeros the halfmove clock.
+    fn is_zeroing(&self, m: &Move) -> bool {
+        match *m {
+            Move::Normal { capture: Some(_), .. } => true,
+            Move::Normal { role: Role::Pawn, .. } => true,
+            Move::EnPassant { .. } => true,
+            Move::Put { .. } | Move::Null => false,
+        }
+    }
+
     /// Checks if the game is over due to a special variant end condition.
     ///
     /// Note that for example stalemate is not considered a variant-specific
