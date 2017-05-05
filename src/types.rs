@@ -228,6 +228,10 @@ impl Pockets {
     pub fn add(&mut self, piece: Piece) {
         *self.mut_by_piece(&piece) = self.by_piece(&piece).saturating_add(1);
     }
+
+    pub fn remove(&mut self, piece: &Piece) {
+        *self.mut_by_piece(&piece) = self.by_piece(piece).saturating_sub(1);
+    }
 }
 
 impl fmt::Display for Pockets {

@@ -68,7 +68,7 @@ pub trait Position : Setup + Default + Clone {
             Move::Normal { capture: Some(_), .. } => true,
             Move::Normal { role: Role::Pawn, .. } => true,
             Move::EnPassant { .. } => true,
-            Move::Put { .. } | Move::Null => false,
+            _ => false
         }
     }
 
@@ -355,17 +355,29 @@ impl Crazyhouse {
 impl Position for Crazyhouse {
     const TRACK_PROMOTED: bool = true;
 
+    fn is_zeroing(&self, m: &Move) -> bool {
+        false
+    }
+
     fn play_unchecked(mut self, m: &Move) -> Crazyhouse {
+        let turn = self.turn();
+        let mut fake_halfmove_clock = 0;
+
         do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
-                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.ep_square, &mut fake_halfmove_clock,
                 &mut self.fullmoves, m);
 
-        // TODO: Captures & Drops
-        match m {
+        match *m {
+            Move::Normal { capture: Some(role), .. } =>
+                self.pockets.add(role.of(turn)),
+            Move::EnPassant { .. } =>
+                self.pockets.add(turn.pawn()),
+            Move::Put { role, .. } =>
+                self.pockets.remove(&role.of(turn)),
+            _ => ()
         }
 
-        // TODO: Fix halfmove counter
-
+        self.halfmove_clock += 1;
         self
     }
 
