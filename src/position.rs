@@ -51,7 +51,7 @@ pub trait Position : Setup + Default + Clone {
     /// Wether pawns can be promoted to kings in this variant.
     const KING_PROMOTIONS: bool;
 
-    /// Validates a `Setup` and construct a position.
+    /// Validates a `Setup` and constructs a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
     /// Attacks that a king on `square` would have to deal with.

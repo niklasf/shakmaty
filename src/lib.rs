@@ -30,7 +30,7 @@ pub use types::{Color, White, Black,
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
-pub use position::{MoveList, Position, PositionError, Chess};
+pub use position::{MoveList, Outcome, Position, PositionError, Chess};
 
 pub mod variants {
     //! Chess variants.
