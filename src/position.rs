@@ -879,6 +879,7 @@ impl Position for Atomic {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
+        // TODO: Atomic move generation could be much more efficient.
         gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
         gen_non_king(self, Bitboard::all(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);

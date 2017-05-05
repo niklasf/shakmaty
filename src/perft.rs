@@ -76,7 +76,7 @@ mod tests {
     }
 
     #[bench]
-    fn test_atomic(b: &mut Bencher) {
+    fn bench_atomic(b: &mut Bencher) {
         let fen = "rn2kb1r/1pp1p2p/p2q1pp1/3P4/2P3b1/4PN2/PP3PPP/R2QKB1R b KQkq -";
 
         let pos: Atomic = fen
@@ -87,7 +87,6 @@ mod tests {
             assert_eq!(perft(&pos, 1), 40);
             assert_eq!(perft(&pos, 2), 1238);
             assert_eq!(perft(&pos, 3), 45237);
-            assert_eq!(perft(&pos, 4), 1434825)
         });
     }
 }
