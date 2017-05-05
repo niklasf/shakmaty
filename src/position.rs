@@ -55,6 +55,15 @@ pub trait Position : Setup + Default + Clone {
         legals.contains(m)
     }
 
+    /// Checks if the game is over due to a special variant end condition.
+    ///
+    /// Note that for example stalemate is not considered a variant-specific
+    /// end condition (`is_variant_end()` will return `false`), but it can have
+    /// a special **result** in suicide chess.
+    fn is_variant_end() -> bool {
+        false
+    }
+
     /// Tests for checkmate.
     fn is_checkmate(&self) -> bool {
         if self.checkers().is_empty() {
@@ -64,6 +73,17 @@ pub trait Position : Setup + Default + Clone {
         let mut legals = MoveList::new();
         self.legal_moves(&mut legals);
         legals.is_empty()
+    }
+
+    /// Tests for stalemate.
+    fn is_stalemate(&self) -> bool {
+        if !self.checkers().is_empty() || self.is_variant_end() {
+            false
+        } else {
+            let mut legals = MoveList::new();
+            self.legal_moves(&mut legals)
+            legals.is_empty()
+        }
     }
 
     /// Validates and plays a move.
