@@ -658,6 +658,91 @@ impl Position for ThreeCheck {
     }
 }
 
+/// A Horde position.
+#[derive(Clone)]
+pub struct Horde {
+    board: Board,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Horde {
+    fn default() -> Horde {
+        Horde {
+            board: Board::horde(),
+            turn: White,
+            castling_rights: Bitboard::from_square(square::A8).with(square::H8),
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Horde {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Horde {
+    const TRACK_PROMOTED: bool = false;
+    const KING_PROMOTIONS: bool = false;
+
+    fn play_unchecked(mut self, m: &Move) -> Horde {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Horde, PositionError> {
+        let pos = Horde {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        // TODO: Fix
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        gen_standard(self, moves);
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        false
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.board().white().is_empty() || self.board().black().is_empty()
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.board().black().is_empty() {
+            Some(Outcome::Decisive { winner: White })
+        } else if self.board().white().is_empty() {
+            Some(Outcome::Decisive { winner: Black })
+        } else {
+            None
+        }
+    }
+}
+
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castling_rights: &mut Bitboard,

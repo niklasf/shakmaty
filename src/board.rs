@@ -83,6 +83,24 @@ impl Board {
         }
     }
 
+    pub fn horde() -> Board {
+        Board {
+            occupied: Bitboard(0xffff0066ffffffff),
+
+            black: Bitboard(0xffff000000000000),
+            white: Bitboard(0x66ffffffff),
+
+            pawns: Bitboard(0xff0066ffffffff),
+            knights: Bitboard(0x4200000000000000),
+            bishops: Bitboard(0x2400000000000000),
+            rooks: Bitboard(0x8100000000000000),
+            queens: Bitboard(0x800000000000000),
+            kings: Bitboard(0x1000000000000000),
+
+            promoted: Bitboard(0),
+        }
+    }
+
     pub fn from_board_fen(board_fen: &str) -> Option<Board> {
         let mut board = Board::empty();
 

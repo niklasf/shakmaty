@@ -37,4 +37,7 @@ pub mod variants {
     pub use position::KingOfTheHill;
     pub use position::Giveaway;
     pub use position::ThreeCheck;
+    pub use position::Horde;
+    // TODO: Racing kings
+    // TODO: Atomic
 }
