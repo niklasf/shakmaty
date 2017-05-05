@@ -1,5 +1,6 @@
 use square;
 use square::Square;
+use bitboard;
 use bitboard::Bitboard;
 use types::{Color, White, Black, Role, Pockets, RemainingChecks};
 use board::Board;
@@ -42,7 +43,9 @@ pub fn clean_castling_rights<S: Setup>(setup: &S, strict: bool) -> Bitboard {
     let clean_strict = |color: Color| -> Bitboard {
         let king = color.fold(square::E1, square::E8);
         if (setup.board().kings() & !setup.board().promoted()).contains(king) {
-            castling & setup.board().by_color(color) & Bitboard::relative_rank(color, 0)
+            castling & setup.board().by_color(color)
+                     & Bitboard::relative_rank(color, 0)
+                     & bitboard::CORNERS
         } else {
             Bitboard::empty()
         }

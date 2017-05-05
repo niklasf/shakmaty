@@ -153,7 +153,7 @@ impl Default for Chess {
         Chess {
             board: Board::default(),
             turn: White,
-            castling_rights: Bitboard(0x8100000000000081),
+            castling_rights: bitboard::CORNERS,
             ep_square: None,
             halfmove_clock: 0,
             fullmoves: 1,
@@ -279,6 +279,100 @@ impl Position for Chess {
             return true;
         }
 
+        false
+    }
+
+    fn is_variant_end(&self) -> bool { false }
+    fn variant_outcome(&self) -> Option<Outcome> { None }
+}
+
+/// A Crazyhouse position.
+#[derive(Clone)]
+struct Crazyhouse {
+    board: Board,
+    pockets: Pockets,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Setup for Crazyhouse {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { Some(&self.pockets) }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Default for Crazyhouse {
+    fn default() -> Crazyhouse {
+        Crazyhouse {
+            board: Board::default(),
+            pockets: Pockets::default(),
+            turn: White,
+            castling_rights: bitboard::CORNERS,
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Crazyhouse {
+    fn ensure_valid(self) -> Result<Crazyhouse, PositionError> {
+        Ok(self) // TODO
+    }
+
+    fn legal_put_squares(&self) -> Bitboard {
+        // TODO
+        !self.board().occupied()
+    }
+}
+
+impl Position for Crazyhouse {
+    const TRACK_PROMOTED: bool = true;
+
+    fn play_unchecked(mut self, m: &Move) -> Crazyhouse {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+        self
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> {
+        Crazyhouse {
+            board: setup.board().clone(),
+            pockets: setup.pockets().map_or(Pockets::default(), |p| p.clone()),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        }.ensure_valid()
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        gen_standard(self, moves);
+
+        for to in self.legal_put_squares() {
+            for role in &[Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
+                if self.pockets.by_piece(&role.of(self.turn())) > 0 {
+                    moves.push(Move::Put { role: *role, to });
+                }
+            }
+
+            if 0 < to.rank() && to.rank() < 7 {
+                moves.push(Move::Put { role: Role::Pawn, to });
+            }
+        }
+    }
+
+    fn is_insufficient_material(&self) -> bool {
         false
     }
 
