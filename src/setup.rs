@@ -36,10 +36,10 @@ pub trait Setup {
 }
 
 /// Returns valid castling rights filtered from a setup.
-pub fn clean_castling_rights<S: Setup>(setup: &S, chess960: bool) -> Bitboard {
+pub fn clean_castling_rights<S: Setup>(setup: &S, strict: bool) -> Bitboard {
     let castling = setup.castling_rights() & setup.board().rooks();
 
-    let clean_standard = |color: Color| -> Bitboard {
+    let clean_strict = |color: Color| -> Bitboard {
         let king = color.fold(square::E1, square::E8);
         if (setup.board().kings() & !setup.board().promoted()).contains(king) {
             castling & setup.board().by_color(color) & Bitboard::relative_rank(color, 0)
@@ -48,7 +48,7 @@ pub fn clean_castling_rights<S: Setup>(setup: &S, chess960: bool) -> Bitboard {
         }
     };
 
-    let pre_clean_960 = |color: Color| -> Bitboard {
+    let clean_loose = |color: Color| -> Bitboard {
         if let Some(king) = setup.board().king_of(color) {
             if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
                 return Bitboard::empty()
@@ -66,9 +66,9 @@ pub fn clean_castling_rights<S: Setup>(setup: &S, chess960: bool) -> Bitboard {
         }
     };
 
-    if chess960 {
-        pre_clean_960(Black) | pre_clean_960(White)
+    if strict {
+        clean_strict(Black) | clean_strict(White)
     } else {
-        clean_standard(Black) | clean_standard(White)
+        clean_loose(Black) | clean_loose(White)
     }
 }

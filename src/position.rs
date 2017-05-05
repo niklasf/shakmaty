@@ -215,7 +215,7 @@ impl Chess {
             return Err(PositionError::PawnsOnBackrank)
         }
 
-        if setup::clean_castling_rights(&pos, true) != pos.castling_rights() {
+        if setup::clean_castling_rights(&pos, false) != pos.castling_rights() {
             return Err(PositionError::BadCastlingRights)
         }
 
