@@ -1073,7 +1073,7 @@ impl Slider for QueenTag {
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::Pawn) {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            push_pawn_moves(moves, from, to, pos.board().role_at(to));
+            push_pawn_moves::<P>(moves, from, to, pos.board().role_at(to));
         }
     }
 
@@ -1086,7 +1086,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
 
     for to in single_moves & target {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            push_pawn_moves(moves, from, to, None);
+            push_pawn_moves::<P>(moves, from, to, None);
         }
     }
 
@@ -1097,14 +1097,18 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     }
 }
 
-fn push_pawn_moves(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+fn push_pawn_moves<P: Position>(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
     if to.rank() != 0 && to.rank() < 7 {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None } );
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None });
     } else {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) } );
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) } );
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
+
+        if P::KING_PROMOTIONS {
+            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::King) });
+        }
     }
 }
 
