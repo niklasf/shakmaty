@@ -40,7 +40,7 @@ use std::ascii::AsciiExt;
 use std::fmt;
 
 use square::Square;
-use types::{Color, Black, White, Pockets, RemainingChecks};
+use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
@@ -74,6 +74,7 @@ impl Setup for Fen {
 #[derive(Debug)]
 pub enum FenError {
     InvalidBoard,
+    InvalidPocket,
     InvalidTurn,
     InvalidCastling,
     InvalidEpSquare,
@@ -116,35 +117,24 @@ impl FromStr for Fen {
     fn from_str(fen: &str) -> Result<Fen, FenError> {
         let mut result = Fen::empty();
 
-        //let mut result = Fen:sit = Situation::empty();
         let mut parts = fen.split(' ');
 
         let board_part = parts.next().expect("splits have at least one part");
 
-        result.board = Board::from_board_fen(board_part).ok_or(FenError::InvalidBoard)?;
-
-        /* let mut pockets: Option<Pockets> = None;
-
-        let maybe_board = parts.next().and_then(|board_part| {
-            if board_part.ends_with(']') {
-                if let Some(split_point) = board_part.find('[') {
-                    let mut tmp_pockets = Pockets::default();
-                    for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
-                        if let Some(piece) = Piece::from_char(ch) {
-                            *tmp_pockets.mut_by_piece(piece) += 1;
-                        } else {
-                            return None
-                        }
-                    }
-                    pockets = Some(tmp_pockets);
-                    Some(&board_part[..split_point])
-                } else {
-                    None
-                }
-            } else {
-                Some(&board_part)
+        let (board_part, pockets) = if board_part.ends_with(']') {
+            let split_point = board_part.find('[').ok_or(FenError::InvalidBoard)?;
+            let mut pockets = Pockets::default();
+            for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
+                let piece = Piece::from_char(ch).ok_or(FenError::InvalidPocket)?;
+                pockets.add(piece);
             }
-        }); */
+            (&board_part[..split_point], Some(pockets))
+        } else {
+            (board_part, None)
+        };
+
+        result.board = Board::from_board_fen(board_part).ok_or(FenError::InvalidBoard)?;
+        result.pockets = pockets;
 
         result.turn = match parts.next() {
             Some("w") | None => White,

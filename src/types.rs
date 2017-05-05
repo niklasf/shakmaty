@@ -217,12 +217,16 @@ impl Pockets {
         color.fold(&mut self.white, &mut self.black)
     }
 
-    pub fn by_piece(&self, piece: Piece) -> u8 {
+    pub fn by_piece(&self, piece: &Piece) -> u8 {
         self.by_color(piece.color).by_role(piece.role)
     }
 
-    pub fn mut_by_piece(&mut self, piece: Piece) -> &mut u8 {
+    pub fn mut_by_piece(&mut self, piece: &Piece) -> &mut u8 {
         self.mut_by_color(piece.color).mut_by_role(piece.role)
+    }
+
+    pub fn add(&mut self, piece: Piece) {
+        *self.mut_by_piece(&piece) = self.by_piece(&piece).saturating_add(1);
     }
 }
 
@@ -231,7 +235,7 @@ impl fmt::Display for Pockets {
         for color in &[White, Black] {
             for role in &ROLES {
                 let piece = Piece { color: *color, role: *role };
-                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize)));
+                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(&piece) as usize)));
             }
         }
         Ok(())
