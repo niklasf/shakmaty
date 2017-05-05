@@ -349,6 +349,13 @@ impl Position for Crazyhouse {
         do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
                 &mut self.ep_square, &mut self.halfmove_clock,
                 &mut self.fullmoves, m);
+
+        // TODO: Captures & Drops
+        match m {
+        }
+
+        // TODO: Fix halfmove counter
+
         self
     }
 
