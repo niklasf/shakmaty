@@ -781,7 +781,7 @@ impl Position for Horde {
     }
 }
 
-/// A standard Chess position.
+/// An Atomic Chess position.
 #[derive(Clone)]
 pub struct Atomic {
     board: Board,
