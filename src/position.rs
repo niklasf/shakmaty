@@ -428,7 +428,9 @@ impl Position for KingOfTheHill {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        gen_standard(self, moves);
+        if !self.is_variant_end() {
+            gen_standard(self, moves);
+        }
     }
 
     fn is_insufficient_material(&self) -> bool {
