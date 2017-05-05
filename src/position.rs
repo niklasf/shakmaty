@@ -136,73 +136,6 @@ pub trait Position : Setup + Default + Clone {
     fn play_unchecked(self, m: &Move) -> Self;
 }
 
-fn do_move(board: &mut Board,
-           turn: &mut Color,
-           castling_rights: &mut Bitboard,
-           ep_square: &mut Option<Square>,
-           halfmove_clock: &mut u32,
-           fullmoves: &mut u32,
-           m: &Move) {
-    let color = *turn;
-    ep_square.take();
-    *halfmove_clock += 1;
-
-    match *m {
-        Move::Normal { role, from, capture, to, promotion } => {
-            if role == Role::Pawn || capture.is_some() {
-                *halfmove_clock = 0;
-            }
-
-            if role == Role::Pawn && square::distance(from, to) == 2 {
-                *ep_square = from.offset(color.fold(8, -8));
-            }
-
-            if role == Role::King {
-                castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-            } else {
-                castling_rights.discard(from);
-                castling_rights.discard(to);
-            }
-
-            let promoted = board.promoted().contains(from) || promotion.is_some();
-
-            board.remove_piece_at(from);
-            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
-        },
-        Move::Castle { king, rook } => {
-            let rook_to = square::combine(
-                if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
-                rook);
-
-            let king_to = square::combine(
-                if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
-                king);
-
-            board.remove_piece_at(king);
-            board.remove_piece_at(rook);
-            board.set_piece_at(rook_to, color.rook(), false);
-            board.set_piece_at(king_to, color.king(), false);
-
-            castling_rights.discard_all(Bitboard::relative_rank(color, 0));
-        },
-        Move::EnPassant { from, to } => {
-            board.remove_piece_at(square::combine(to, from)); // captured pawn
-            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
-            *halfmove_clock = 0;
-        },
-        Move::Put { to, role } => {
-            board.set_piece_at(to, Piece { color, role }, false);
-        },
-        Move::Null => ()
-    }
-
-    if color.is_black() {
-        *fullmoves += 1;
-    }
-
-    *turn = !color;
-}
-
 /// A standard Chess position.
 #[derive(Clone)]
 pub struct Chess {
@@ -346,6 +279,74 @@ impl Position for Chess {
     fn is_variant_end(&self) -> bool { false }
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
+
+fn do_move(board: &mut Board,
+           turn: &mut Color,
+           castling_rights: &mut Bitboard,
+           ep_square: &mut Option<Square>,
+           halfmove_clock: &mut u32,
+           fullmoves: &mut u32,
+           m: &Move) {
+    let color = *turn;
+    ep_square.take();
+    *halfmove_clock += 1;
+
+    match *m {
+        Move::Normal { role, from, capture, to, promotion } => {
+            if role == Role::Pawn || capture.is_some() {
+                *halfmove_clock = 0;
+            }
+
+            if role == Role::Pawn && square::distance(from, to) == 2 {
+                *ep_square = from.offset(color.fold(8, -8));
+            }
+
+            if role == Role::King {
+                castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+            } else {
+                castling_rights.discard(from);
+                castling_rights.discard(to);
+            }
+
+            let promoted = board.promoted().contains(from) || promotion.is_some();
+
+            board.remove_piece_at(from);
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
+        },
+        Move::Castle { king, rook } => {
+            let rook_to = square::combine(
+                if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
+                rook);
+
+            let king_to = square::combine(
+                if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
+                king);
+
+            board.remove_piece_at(king);
+            board.remove_piece_at(rook);
+            board.set_piece_at(rook_to, color.rook(), false);
+            board.set_piece_at(king_to, color.king(), false);
+
+            castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+        },
+        Move::EnPassant { from, to } => {
+            board.remove_piece_at(square::combine(to, from)); // captured pawn
+            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
+            *halfmove_clock = 0;
+        },
+        Move::Put { to, role } => {
+            board.set_piece_at(to, Piece { color, role }, false);
+        },
+        Move::Null => ()
+    }
+
+    if color.is_black() {
+        *fullmoves += 1;
+    }
+
+    *turn = !color;
+}
+
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     KnightTag::gen_moves(pos, target, moves);
