@@ -255,21 +255,7 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        let king = self.our(Role::King).first().expect("has a king");
-        let checkers = self.checkers();
-
-        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
-
-        if checkers.is_empty() {
-            gen_non_king(self, Bitboard::all(), moves);
-            KingTag::gen_moves(self, Bitboard::all(), moves);
-            gen_castling_moves(self, moves);
-        } else {
-            evasions(self, king, checkers, moves);
-        }
-
-        let blockers = slider_blockers(self.board(), self.them(), king);
-        moves.retain(|m| is_safe(self, king, m, blockers));
+        gen_standard(self, moves);
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -367,6 +353,23 @@ fn do_move(board: &mut Board,
     *turn = !color;
 }
 
+fn gen_standard<P: Position>(pos: &P, moves: &mut MoveList) {
+    let king = pos.our(Role::King).first().expect("has a king");
+    let checkers = pos.checkers();
+
+    gen_en_passant(pos.board(), pos.turn(), pos.ep_square(), moves);
+
+    if checkers.is_empty() {
+        gen_non_king(pos, Bitboard::all(), moves);
+        KingTag::gen_moves(pos, Bitboard::all(), moves);
+        gen_castling_moves(pos, moves);
+    } else {
+        evasions(pos, king, checkers, moves);
+    }
+
+    let blockers = slider_blockers(pos.board(), pos.them(), king);
+    moves.retain(|m| is_safe(pos, king, m, blockers));
+}
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     KnightTag::gen_moves(pos, target, moves);
