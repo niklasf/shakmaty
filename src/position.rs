@@ -374,7 +374,7 @@ impl Position for Crazyhouse {
                 }
             }
 
-            if 0 < to.rank() && to.rank() < 7 {
+            if 0 < to.rank() && to.rank() < 7 && self.pockets.by_color(self.turn()).pawns > 0 {
                 moves.push(Move::Put { role: Role::Pawn, to });
             }
         }
