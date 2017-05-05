@@ -1,0 +1,6 @@
+epd 8/5k2/1pp2p2/8/3P1PP1/P3K3/1P6/8 b - -
+perft 1 10
+perft 2 120
+perft 3 1000
+perft 4 12460
+perft 5 104314

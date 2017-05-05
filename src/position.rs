@@ -533,7 +533,7 @@ impl Position for Giveaway {
             return false;
         }
 
-        // Bishops and pawns of each side on distinct color complexes.
+        // Detect bishops and pawns of each side on distinct color complexes.
         if (self.board().white() & bitboard::DARK_SQUARES).is_empty() {
             (self.board().black() & bitboard::LIGHT_SQUARES).is_empty()
         } else if (self.board().white() & bitboard::LIGHT_SQUARES).is_empty() {
