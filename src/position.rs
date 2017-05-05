@@ -310,8 +310,7 @@ impl Position for Crazyhouse {
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> {
-        // TODO: Validate
-        Ok(Crazyhouse {
+        let pos = Crazyhouse {
             board: setup.board().clone(),
             pockets: setup.pockets().map_or(Pockets::default(), |p| p.clone()),
             turn: setup.turn(),
@@ -319,7 +318,9 @@ impl Position for Crazyhouse {
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
-        })
+        };
+
+        setup::validate(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {

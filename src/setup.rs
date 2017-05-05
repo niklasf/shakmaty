@@ -13,8 +13,8 @@ use option_filter::OptionFilterExt;
 pub enum PositionError {
     Empty,
     NoKing { color: Color },
-    TooManyPawns { color: Color },
-    TooManyPieces { color: Color },
+    TooManyPawns,
+    TooManyPieces,
     TooManyKings,
     PawnsOnBackrank,
     BadCastlingRights,
@@ -100,11 +100,23 @@ pub fn validate<S: Setup>(setup: &S) -> Option<PositionError> {
         if (setup.board().by_piece(&color.king()) & !setup.board().promoted()).is_empty() {
             return Some(PositionError::NoKing { color: *color })
         }
-        if setup.board().by_color(*color).count() > 16 {
-            return Some(PositionError::TooManyPieces { color: *color })
+    }
+
+    if let Some(pockets) = setup.pockets() {
+        if setup.board().pawns().count() + pockets.white.pawns as usize + pockets.black.pawns as usize > 16 {
+            return Some(PositionError::TooManyPawns)
         }
-        if setup.board().by_piece(&color.pawn()).count() > 8 {
-            return Some(PositionError::TooManyPawns { color: *color })
+        if setup.board().occupied().count() + pockets.count() as usize > 32 {
+            return Some(PositionError::TooManyPieces)
+        }
+    } else {
+        for color in &[White, Black] {
+            if setup.board().by_color(*color).count() > 16 {
+                return Some(PositionError::TooManyPieces)
+            }
+            if setup.board().by_piece(&color.pawn()).count() > 8 {
+                return Some(PositionError::TooManyPawns)
+            }
         }
     }
 

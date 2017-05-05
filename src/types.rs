@@ -199,6 +199,14 @@ impl Pocket {
             Role::King   => &mut self.kings,
         }
     }
+
+    pub fn count(&self) -> u8 {
+        self.pawns.saturating_add(self.knights)
+                  .saturating_add(self.bishops)
+                  .saturating_add(self.rooks)
+                  .saturating_add(self.queens)
+                  .saturating_add(self.kings)
+    }
 }
 
 /// Crazyhouse pockets for both sides, holding captured pieces.
@@ -231,6 +239,10 @@ impl Pockets {
 
     pub fn remove(&mut self, piece: &Piece) {
         *self.mut_by_piece(&piece) = self.by_piece(piece).saturating_sub(1);
+    }
+
+    pub fn count(&self) -> u8 {
+        self.black.count().saturating_add(self.white.count())
     }
 }
 
