@@ -37,8 +37,8 @@ extern "platform-intrinsic" {
 pub struct Bitboard(pub u64);
 
 impl Bitboard {
-    pub fn from_square(Square(sq): Square) -> Bitboard {
-        Bitboard(1 << sq)
+    pub fn from_square(sq: Square) -> Bitboard {
+        Bitboard(1 << sq.index())
     }
 
     /// Returns an empty bitboard.
@@ -97,20 +97,20 @@ impl Bitboard {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
 
-    pub fn add(&mut self, Square(sq): Square) {
-        self.0 |= 1 << sq;
+    pub fn add(&mut self, sq: Square) {
+        self.0 |= 1 << sq.index();
     }
 
     pub fn add_all(&mut self, Bitboard(bb): Bitboard) {
         self.0 |= bb;
     }
 
-    pub fn flip(&mut self, Square(sq): Square) {
-        self.0 ^= 1 << sq;
+    pub fn flip(&mut self, sq: Square) {
+        self.0 ^= 1 << sq.index();
     }
 
-    pub fn discard(&mut self, Square(sq): Square) {
-        self.0 &= !(1 << sq);
+    pub fn discard(&mut self, sq: Square) {
+        self.0 &= !(1 << sq.index());
     }
 
     pub fn discard_all(&mut self, Bitboard(bb): Bitboard) {
@@ -146,7 +146,7 @@ impl Bitboard {
         if self.is_empty() {
             None
         } else {
-            Some(Square(self.0.trailing_zeros() as i8))
+            Some(Square::from_index_unchecked(self.0.trailing_zeros() as i8))
         }
     }
 
@@ -313,7 +313,7 @@ impl Iterator for Bitboard {
         if self.is_empty() {
             None
         } else {
-            Some(Square(63 ^ self.0.leading_zeros() as i8))
+            Some(Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8))
         }
     }
 }
@@ -323,8 +323,8 @@ impl DoubleEndedIterator for Bitboard {
         if self.is_empty() {
             None
         } else {
-            let sq = Square(63 ^ self.0.leading_zeros() as i8);
-            self.0 ^= 1 << sq.0;
+            let sq = Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8);
+            self.0 ^= 1 << sq.index();
             Some(sq)
         }
     }

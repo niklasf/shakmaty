@@ -6,15 +6,31 @@ use std::str;
 
 /// A square index.
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
-pub struct Square(pub i8);
+pub struct Square(i8);
 
 impl Square {
+    pub fn from_index(index: i8) -> Option<Square> {
+        if 0 <= index && index < 64 {
+            Some(Square(index))
+        } else {
+            None
+        }
+    }
+
+    pub const fn from_index_unchecked(index: i8) -> Square {
+        Square(index)
+    }
+
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
             Some(Square(file | (rank << 3)))
         } else {
             None
         }
+    }
+
+    pub fn index(self) -> i8 {
+        self.0
     }
 
     pub fn file(self) -> i8 {

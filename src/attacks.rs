@@ -64,7 +64,7 @@ fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
 
 fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboard], attacks: &mut[u16], deltas: &[i8]) {
     for s in 0..64 {
-        let sq = Square(s);
+        let sq = Square::from_index(s).unwrap();
 
         let range = sliding_attacks(sq, Bitboard(0), deltas);
         ranges[s as usize] = range;
@@ -133,10 +133,10 @@ impl Precomp {
                     &BISHOP_DELTAS);
 
         for a in 0..64 {
-            let sa = Square(a as i8);
+            let sa = Square::from_index(a as i8).unwrap();
 
             for b in 0..64 {
-                let sb = Square(b as i8);
+                let sb = Square::from_index(b as i8).unwrap();
 
                 if precomp.bishop_attacks(sa, Bitboard(0)).contains(sb) {
                     precomp.bb_rays[a][b] =
@@ -159,17 +159,17 @@ impl Precomp {
         precomp
     }
 
-    pub fn rook_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
-        let mask = self.rook_masks[sq as usize];
-        let range = self.rook_ranges[sq as usize];
-        let index = self.rook_indexes[sq as usize] + occupied.extract(mask) as usize;
+    pub fn rook_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
+        let mask = self.rook_masks[sq.index() as usize];
+        let range = self.rook_ranges[sq.index() as usize];
+        let index = self.rook_indexes[sq.index() as usize] + occupied.extract(mask) as usize;
         Bitboard::deposit(self.rook_attacks[index] as u64, range)
     }
 
-    pub fn bishop_attacks(&self, Square(sq): Square, occupied: Bitboard) -> Bitboard {
-        let mask = self.bishop_masks[sq as usize];
-        let range = self.bishop_ranges[sq as usize];
-        let index = self.bishop_indexes[sq as usize] + occupied.extract(mask) as usize;
+    pub fn bishop_attacks(&self, sq: Square, occupied: Bitboard) -> Bitboard {
+        let mask = self.bishop_masks[sq.index() as usize];
+        let range = self.bishop_ranges[sq.index() as usize];
+        let index = self.bishop_indexes[sq.index() as usize] + occupied.extract(mask) as usize;
         Bitboard::deposit(self.bishop_attacks[index] as u64, range)
     }
 
@@ -182,19 +182,19 @@ lazy_static! {
     static ref PRECOMP: Precomp = Precomp::new();
 }
 
-pub fn pawn_attacks(color: Color, Square(sq): Square) -> Bitboard {
+pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
     Bitboard(match color {
-        Color::White => WHITE_PAWN_ATTACKS[sq as usize],
-        Color::Black => BLACK_PAWN_ATTACKS[sq as usize],
+        Color::White => WHITE_PAWN_ATTACKS[sq.index() as usize],
+        Color::Black => BLACK_PAWN_ATTACKS[sq.index() as usize],
     })
 }
 
-pub fn knight_attacks(Square(sq): Square) -> Bitboard {
-    Bitboard(KNIGHT_ATTACKS[sq as usize])
+pub fn knight_attacks(sq: Square) -> Bitboard {
+    Bitboard(KNIGHT_ATTACKS[sq.index() as usize])
 }
 
-pub fn king_attacks(Square(sq): Square) -> Bitboard {
-    Bitboard(KING_ATTACKS[sq as usize])
+pub fn king_attacks(sq: Square) -> Bitboard {
+    Bitboard(KING_ATTACKS[sq.index() as usize])
 }
 
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
@@ -237,13 +237,13 @@ pub fn attacks(sq: Square, piece: &Piece, occupied: Bitboard) -> Bitboard {
 /// // . . . . 1 . . .
 /// // . . . 1 . . . .
 /// ```
-pub fn ray(Square(a): Square, Square(b): Square) -> Bitboard {
-    PRECOMP.bb_rays[a as usize][b as usize]
+pub fn ray(a: Square, b: Square) -> Bitboard {
+    PRECOMP.bb_rays[a.index() as usize][b.index() as usize]
 }
 
 /// Like `ray`, but just the squares in-between (exluding the bounds).
-pub fn between(Square(a): Square, Square(b): Square) -> Bitboard {
-    PRECOMP.bb_between[a as usize][b as usize]
+pub fn between(a: Square, b: Square) -> Bitboard {
+    PRECOMP.bb_between[a.index() as usize][b.index() as usize]
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
