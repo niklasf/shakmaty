@@ -522,6 +522,7 @@ impl Position for Giveaway {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
+        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
         gen_non_king(self, Bitboard::all(), moves);
         KingTag::gen_moves(self, Bitboard::all(), moves);
         gen_castling_moves(self, moves);
@@ -878,6 +879,7 @@ impl Position for Atomic {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
+        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
         gen_non_king(self, Bitboard::all(), moves);
         KingTag::gen_moves(self, Bitboard::all(), moves);
         gen_castling_moves(self, moves);
