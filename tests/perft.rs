@@ -78,5 +78,6 @@ fn test_horde() {
 
 #[test]
 fn test_atomic() {
-    test_perft_file::<Atomic>("tests/atomic.perft", 1000000);
+    test_perft_file::<Atomic>("buggy.perft", 10000000);
+    //test_perft_file::<Atomic>("tests/atomic.perft", 1000000);
 }

@@ -60,7 +60,8 @@ pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
 mod tests {
     use super::*;
     use test::Bencher;
-    use position::Chess;
+    use position::{Chess, Atomic};
+    use fen::Fen;
 
     #[bench]
     fn bench_shallow_perft(b: &mut Bencher) {
@@ -72,5 +73,21 @@ mod tests {
     fn bench_deep_perft(b: &mut Bencher) {
         let pos = Chess::default();
         b.iter(|| assert_eq!(perft(&pos, 5), 4865609));
+    }
+
+    #[bench]
+    fn test_atomic(b: &mut Bencher) {
+        let fen = "rn2kb1r/1pp1p2p/p2q1pp1/3P4/2P3b1/4PN2/PP3PPP/R2QKB1R b KQkq -";
+
+        let pos: Atomic = fen
+            .parse::<Fen>().expect("valid fen")
+            .position().expect("legal atomic position");
+
+        b.iter(|| {
+            assert_eq!(perft(&pos, 1), 40);
+            assert_eq!(perft(&pos, 2), 1238);
+            assert_eq!(perft(&pos, 3), 45237);
+            assert_eq!(perft(&pos, 4), 1434825)
+        });
     }
 }
