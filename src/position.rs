@@ -714,10 +714,42 @@ impl Position for Horde {
             fullmoves: setup.fullmoves(),
         };
 
-        // TODO: Fix
-        validate_basic(&pos)
-            .or(validate_kings(&pos))
-            .map_or(Ok(pos), |err| Err(err))
+        if pos.board().occupied().is_empty() {
+            return Err(PositionError::Empty);
+        }
+
+        if pos.board().by_piece(&Black.king()).is_empty() {
+            return Err(PositionError::NoKing { color: Black });
+        }
+        if pos.board().kings().count() > 1 {
+            return Err(PositionError::TooManyKings);
+        }
+
+        if pos.board().black().count() > 16 {
+            return Err(PositionError::TooManyPieces);
+        }
+        if pos.board().white().count() > 36 {
+            return Err(PositionError::TooManyPieces);
+        }
+
+        if pos.board().by_piece(&Black.pawn()).count() > 8 {
+            return Err(PositionError::TooManyPawns);
+        }
+        if pos.board().by_piece(&White.pawn()).count() > 36 {
+            return Err(PositionError::TooManyPawns);
+        }
+
+        for color in &[White, Black] {
+            if (pos.board().by_piece(&color.pawn()) & Bitboard::relative_rank(*color, 7)).any() {
+                return Err(PositionError::PawnsOnBackrank);
+            }
+        }
+
+        if pos.castling_rights() != setup::clean_castling_rights(&pos, false) & Bitboard::rank(7) {
+            return Err(PositionError::BadCastlingRights);
+        }
+
+        validate_ep(&pos).map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -841,6 +873,10 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
         return Some(PositionError::BadCastlingRights)
     }
 
+    validate_ep(pos)
+}
+
+fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
     if let Some(ep_square) = pos.ep_square() {
         if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
             return Some(PositionError::InvalidEpSquare)
