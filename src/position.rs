@@ -78,9 +78,9 @@ pub trait Position : Setup + Default + Clone {
     /// Tests if a move zeros the halfmove clock.
     fn is_zeroing(&self, m: &Move) -> bool {
         match *m {
-            Move::Normal { capture: Some(_), .. } => true,
-            Move::Normal { role: Role::Pawn, .. } => true,
-            Move::EnPassant { .. } => true,
+            Move::Normal { capture: Some(_), .. } |
+                Move::Normal { role: Role::Pawn, .. } |
+                Move::EnPassant { .. } => true,
             _ => false
         }
     }

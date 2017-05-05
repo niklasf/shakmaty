@@ -226,7 +226,7 @@ impl Board {
 
     pub fn role_at(&self, sq: Square) -> Option<Role> {
         if !self.occupied.contains(sq) {
-            None // optimization
+            None // catch early
         } else if self.pawns.contains(sq) {
             Some(Role::Pawn)
         } else if self.knights.contains(sq) {
@@ -237,10 +237,8 @@ impl Board {
             Some(Role::Rook)
         } else if self.queens.contains(sq) {
             Some(Role::Queen)
-        } else if self.kings.contains(sq) {
-            Some(Role::King)
         } else {
-            None
+            Some(Role::King)
         }
     }
 

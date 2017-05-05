@@ -248,7 +248,7 @@ impl Pockets {
     }
 
     pub fn remove(&mut self, piece: &Piece) {
-        *self.mut_by_piece(&piece) = self.by_piece(piece).saturating_sub(1);
+        *self.mut_by_piece(piece) = self.by_piece(piece).saturating_sub(1);
     }
 
     pub fn count(&self) -> u8 {

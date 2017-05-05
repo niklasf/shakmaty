@@ -80,15 +80,14 @@ impl FromStr for Uci {
                 }).ok_or(()),
             (Ok(from), Ok(to), None) =>
                 return Ok(Uci::Normal { from, to, promotion: None }),
-            _ => ()
+            _ => (),
         }
 
-        match (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
-            (Some(piece), Some('@'), Ok(to)) =>
-                return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
-                    Uci::Put { role, to }
-                }).ok_or(()),
-            _ => ()
+        if let (Some(piece), Some('@'), Ok(to)) =
+               (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
+            return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
+                Uci::Put { role, to }
+            }).ok_or(());
         }
 
         if uci == "0000" {
