@@ -37,16 +37,17 @@ extern "platform-intrinsic" {
 pub struct Bitboard(pub u64);
 
 impl Bitboard {
+    /// A bitboard with a single square.
     pub fn from_square(sq: Square) -> Bitboard {
         Bitboard(1 << sq.index())
     }
 
-    /// Returns an empty bitboard.
+    /// An empty bitboard.
     pub const fn empty() -> Bitboard {
         Bitboard(0)
     }
 
-    /// Returns the bitboard containing all squares.
+    /// A bitboard containing all squares.
     pub const fn all() -> Bitboard {
         Bitboard(!0u64)
     }
@@ -218,7 +219,10 @@ impl Bitboard {
     }
 }
 
+/// All dark squares.
 pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55aa55aa55aa55);
+
+/// All light squares.
 pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa55aa55aa55aa);
 
 /// The four corner squares.
