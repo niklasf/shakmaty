@@ -245,3 +245,11 @@ impl fmt::Display for Fen {
         write!(f, "{}", fen(self, true))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_pockets() {
+        // TODO
+    }
+}

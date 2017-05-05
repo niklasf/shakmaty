@@ -499,9 +499,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&
             (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
         },
-        Move::Castle { .. } => {
-            true
-        },
+        Move::Castle { .. } => true,
         _ => false
     }
 }
