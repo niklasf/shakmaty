@@ -207,7 +207,9 @@ impl Position for Chess {
             fullmoves: setup.fullmoves(),
         };
 
-        validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -335,7 +337,9 @@ impl Position for Crazyhouse {
             fullmoves: setup.fullmoves(),
         };
 
-        validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -418,7 +422,9 @@ impl Position for KingOfTheHill {
             fullmoves: setup.fullmoves(),
         };
 
-        validate(&pos).map_or(Ok(pos), |err| Err(err))
+        validate_basic(&pos)
+            .or(validate_kings(&pos))
+            .map_or(Ok(pos), |err| Err(err))
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -510,15 +516,9 @@ fn do_move(board: &mut Board,
     *turn = !color;
 }
 
-fn validate<P: Position>(pos: &P) -> Option<PositionError> {
+fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
     if pos.board().occupied().is_empty() {
         return Some(PositionError::Empty)
-    }
-
-    for color in &[White, Black] {
-        if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
-            return Some(PositionError::NoKing { color: *color })
-        }
     }
 
     if let Some(pockets) = pos.pockets() {
@@ -537,10 +537,6 @@ fn validate<P: Position>(pos: &P) -> Option<PositionError> {
                 return Some(PositionError::TooManyPawns)
             }
         }
-    }
-
-    if pos.board().kings().count() > 2 {
-        return Some(PositionError::TooManyKings)
     }
 
     if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
@@ -568,6 +564,20 @@ fn validate<P: Position>(pos: &P) -> Option<PositionError> {
         if pos.board().occupied().contains(ep_square) | pos.board().occupied().contains(seventh_rank_sq) {
             return Some(PositionError::InvalidEpSquare)
         }
+    }
+
+    None
+}
+
+fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
+    for color in &[White, Black] {
+        if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
+            return Some(PositionError::NoKing { color: *color })
+        }
+    }
+
+    if pos.board().kings().count() > 2 {
+        return Some(PositionError::TooManyKings)
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
