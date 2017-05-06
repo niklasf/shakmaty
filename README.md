@@ -50,6 +50,9 @@ Features
 * [PDEP](https://chessprogramming.wikispaces.com/BMI2#Instructions-PDEP)
   attack tables.
 
+Documentation
+-------------
+
 [Read the documentation](https://docs.rs/shakmaty/0.0.1/shakmaty/)
 
 License
