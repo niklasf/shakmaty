@@ -102,7 +102,8 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
     }
 }
 
-struct Precomp {
+/// Precomputed slider tables. The struct uses about 200 KiB of stack memory.
+pub struct Precomp {
     rook_indexes: [usize; 64],
     rook_masks: [Bitboard; 64],
     rook_ranges: [Bitboard; 64],
@@ -118,8 +119,6 @@ struct Precomp {
 }
 
 impl Precomp {
-    /// Precomputes attack tables. The struct uses about 200 KiB of
-    /// stack memory.
     pub fn new() -> Precomp {
         let mut precomp = Precomp {
             rook_indexes: [0; 64],
@@ -195,7 +194,8 @@ impl Precomp {
 }
 
 lazy_static! {
-    static ref PRECOMP: Precomp = Precomp::new();
+    #[doc(hidden)]
+    pub static ref PRECOMP: Precomp = Precomp::new();
 }
 
 pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {

@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use attacks;
+use attacks::Precomp;
 use board::Board;
 use bitboard;
 use bitboard::Bitboard;
@@ -1293,9 +1294,10 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    RookTag::gen_moves(pos, target, moves);
-    BishopTag::gen_moves(pos, target, moves);
-    QueenTag::gen_moves(pos, target, moves);
+    let ref precomp = attacks::PRECOMP;
+    RookTag::gen_moves(pos, precomp, target, moves);
+    BishopTag::gen_moves(pos, precomp, target, moves);
+    QueenTag::gen_moves(pos, precomp, target, moves);
     KnightTag::gen_moves(pos, target, moves);
     gen_pawn_moves(pos, target, moves);
 }
@@ -1379,11 +1381,11 @@ trait Stepper {
 trait Slider {
     const ROLE: Role;
 
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
+    fn attacks(precomp: &Precomp, from: Square, occupied: Bitboard) -> Bitboard;
 
-    fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+    fn gen_moves<P: Position>(pos: &P, precomp: &Precomp, target: Bitboard, moves: &mut MoveList) {
         for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from, pos.board().occupied()) & !pos.us() & target).map(|to| {
+            moves.extend((Self::attacks(precomp, from, pos.board().occupied()) & !pos.us() & target).map(|to| {
                 Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
             }));
         }
@@ -1408,17 +1410,17 @@ impl Stepper for KnightTag {
 
 impl Slider for BishopTag {
     const ROLE: Role = Role::Bishop;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::bishop_attacks(from, occupied) }
+    fn attacks(precomp: &Precomp, from: Square, occupied: Bitboard) -> Bitboard { precomp.bishop_attacks(from, occupied) }
 }
 
 impl Slider for RookTag {
     const ROLE: Role = Role::Rook;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::rook_attacks(from, occupied) }
+    fn attacks(precomp: &Precomp, from: Square, occupied: Bitboard) -> Bitboard { precomp.rook_attacks(from, occupied) }
 }
 
 impl Slider for QueenTag {
     const ROLE: Role = Role::Queen;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
+    fn attacks(precomp: &Precomp, from: Square, occupied: Bitboard) -> Bitboard { precomp.queen_attacks(from, occupied) }
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
