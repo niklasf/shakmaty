@@ -225,7 +225,7 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
 }
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
+pub fn epd(setup: &Setup, promoted: bool) -> String {
     let pockets = setup.pockets()
                        .map_or("".to_owned(), |p| format!("[{}]", p));
 
@@ -242,7 +242,7 @@ pub fn epd<S: Setup>(setup: &S, promoted: bool) -> String {
 }
 
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-pub fn fen<S: Setup>(setup: &S, promoted: bool) -> String {
+pub fn fen(setup: &Setup, promoted: bool) -> String {
     format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
 }
 
