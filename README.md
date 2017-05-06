@@ -54,7 +54,7 @@ Features
 Documentation
 -------------
 
-[Read the documentation](https://docs.rs/shakmaty/0.0.1/shakmaty/)
+[Read the documentation](https://docs.rs/shakmaty)
 
 License
 -------
