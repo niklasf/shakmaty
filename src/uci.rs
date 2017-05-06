@@ -144,6 +144,10 @@ impl Uci {
             Uci::Normal { from, to, promotion } => {
                 let role = pos.board().role_at(from).ok_or(())?;
 
+                if promotion.is_some() && role != Role::Pawn {
+                    return Err(())
+                }
+
                 if role == Role::King && pos.castling_rights().contains(to) {
                     Move::Castle { king: from, rook: to }
                 } else if role == Role::King &&
