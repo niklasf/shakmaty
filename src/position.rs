@@ -529,12 +529,13 @@ impl Position for Giveaway {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
-        gen_non_king(self, Bitboard::all(), moves);
-        KingTag::gen_moves(self, Bitboard::all(), moves);
-        gen_castling_moves(self, moves);
+        gen_non_king(self, self.them(), moves);
+        KingTag::gen_moves(self, self.them(), moves);
 
-        if moves.iter().any(|m| m.capture().is_some()) {
-            moves.retain(|m| m.capture().is_some());
+        if moves.is_empty() {
+            gen_non_king(self, !self.board().occupied(), moves);
+            KingTag::gen_moves(self, !self.board().occupied(), moves);
+            gen_castling_moves(self, moves);
         }
     }
 
