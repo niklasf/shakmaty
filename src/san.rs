@@ -9,6 +9,7 @@ use std::ascii::AsciiExt;
 use option_filter::OptionFilterExt;
 use std::str::FromStr;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum San {
     Normal { role: Role, file: Option<i8>, rank: Option<i8>, capture: bool, to: Square, promotion: Option<Role> },
     CastleShort,
@@ -106,10 +107,10 @@ impl fmt::Display for San {
                     try!(write!(f, "{}", role.char().to_ascii_uppercase()));
                 }
                 if let Some(file) = file {
-                    try!(write!(f, "{}", b'a' + file as u8));
+                    try!(write!(f, "{}", (b'a' + file as u8) as char));
                 }
                 if let Some(rank) = rank {
-                    try!(write!(f, "{}", b'a' + rank as u8));
+                    try!(write!(f, "{}", (b'1' + rank as u8) as char));
                 }
                 if capture {
                     try!(write!(f, "x"));
@@ -250,5 +251,18 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
         Move::Castle { .. } => San::CastleShort,
         Move::Put { role, to } => San::Put { role, to },
         Move::Null => San::Null,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_write() {
+        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4", "K@b3",
+                     "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O"] {
+            assert_eq!(san.parse::<San>().expect("valid san").to_string(), *san);
+        }
     }
 }
