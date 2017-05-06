@@ -22,6 +22,7 @@ pub mod attacks;
 pub mod perft;
 pub mod fen;
 pub mod uci;
+pub mod san;
 
 pub use square::Square;
 pub use types::{Color, White, Black,
