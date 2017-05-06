@@ -45,7 +45,7 @@ Features
 * Read and write FENs, SANs and UCIs.
 
 * Supports Standard chess and these variants: Crazyhouse, King Of The Hill,
-  Giveaway, ThreeCheck, Horde, Atomic, and RacingKings.
+  Giveaway, Three-Check, Horde, Atomic, and Racing Kings.
 
 * Bitboards and
   [PDEP](https://chessprogramming.wikispaces.com/BMI2#Instructions-PDEP)
