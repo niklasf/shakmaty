@@ -47,7 +47,53 @@ impl FromStr for San {
                 Err(())
             }
         } else {
-            Err(())
+            let mut chars = san.chars();
+
+            let (role, next) = {
+                let ch = chars.next().ok_or(())?;
+                if ch.is_uppercase() {
+                    (Role::from_char(ch.to_ascii_lowercase()).ok_or(())?, chars.next().ok_or(())?)
+                } else {
+                    (Role::Pawn, ch)
+                }
+            };
+
+            let (file, next) = if 'a' <= next && next <= 'h' {
+                (Some(next as i8 - b'a' as i8), chars.next().ok_or(())?)
+            } else {
+                (None, next)
+            };
+
+            let (rank, next) = if '1' <= next && next <= '8' {
+                (Some(next as i8 - b'1' as i8), chars.next())
+            } else {
+                (None, Some(next))
+            };
+
+            let (capture, file, rank, to, next) = if let Some(next) = next {
+                if next == 'x' {
+                    let to_file = chars.next().ok_or(())? as i8 - b'a' as i8;
+                    let to_rank = chars.next().ok_or(())? as i8 - b'1' as i8;
+                    (true, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
+                } else if next == '=' {
+                    (false, None, None, Square::from_coords(file.ok_or(())?, rank.ok_or(())?).ok_or(())?, Some('='))
+                } else {
+                    let to_file = next as i8 - b'a' as i8;
+                    let to_rank = chars.next().ok_or(())? as i8 - b'1' as i8;
+                    (false, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
+                }
+            } else {
+                (false, None, None, Square::from_coords(file.ok_or(())?, rank.ok_or(())?).ok_or(())?, None)
+            };
+
+            let promotion = match next {
+                Some('=') =>
+                    Some(chars.next().and_then(|r| Role::from_char(r.to_ascii_lowercase())).ok_or(())?),
+                Some(_) => return Err(()),
+                None => None,
+            };
+
+            Ok(San::Normal { role, file, rank, capture, to, promotion })
         }
     }
 }
