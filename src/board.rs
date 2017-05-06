@@ -167,7 +167,7 @@ impl Board {
 
                 empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
                     if empty > 0 {
-                        fen.push(char::from_digit(empty, 10).unwrap());
+                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
                     }
                     fen.push(piece.char());
                     if promoted && self.promoted.contains(square) {
@@ -177,7 +177,7 @@ impl Board {
                 });
 
                 if file == 7 && empty > 0 {
-                    fen.push(char::from_digit(empty, 10).unwrap());
+                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
                 }
 
                 if file == 7 && rank > 0 {
@@ -328,8 +328,7 @@ impl fmt::Debug for Board {
         for rank in (0..8).rev() {
             for file in 0..8 {
                 try!(f.write_char(self.piece_at(Square::from_coords(file, rank).unwrap())
-                                      .map(|piece| piece.char())
-                                      .unwrap_or('.')));
+                                      .map_or('.', |piece| piece.char())));
 
                 if file < 7 {
                     try!(f.write_char(' '));
