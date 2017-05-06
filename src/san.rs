@@ -132,6 +132,20 @@ impl fmt::Display for San {
     }
 }
 
+impl FromStr for SanPlus {
+    type Err = ();
+
+    fn from_str(san: &str) -> Result<SanPlus, Self::Err> {
+        San::from_str(san).map(|result| {
+            SanPlus {
+                san: result,
+                checkmate: san.ends_with("#"),
+                check: san.ends_with("+"),
+            }
+        })
+    }
+}
+
 impl fmt::Display for SanPlus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.checkmate {
@@ -260,9 +274,9 @@ mod tests {
 
     #[test]
     fn test_read_write() {
-        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4", "K@b3",
-                     "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O"] {
-            assert_eq!(san.parse::<San>().expect("valid san").to_string(), *san);
+        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4#", "K@b3",
+                     "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+"] {
+            assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), *san);
         }
     }
 }
