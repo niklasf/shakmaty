@@ -1293,10 +1293,10 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    KnightTag::gen_moves(pos, target, moves);
-    QueenTag::gen_moves(pos, target, moves);
     RookTag::gen_moves(pos, target, moves);
     BishopTag::gen_moves(pos, target, moves);
+    QueenTag::gen_moves(pos, target, moves);
+    KnightTag::gen_moves(pos, target, moves);
     gen_pawn_moves(pos, target, moves);
 }
 
