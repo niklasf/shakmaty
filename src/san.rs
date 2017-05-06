@@ -9,6 +9,7 @@ use std::ascii::AsciiExt;
 use option_filter::OptionFilterExt;
 use std::str::FromStr;
 
+/// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum San {
     Normal { role: Role, file: Option<i8>, rank: Option<i8>, capture: bool, to: Square, promotion: Option<Role> },
@@ -18,6 +19,7 @@ pub enum San {
     Null,
 }
 
+/// A `San` and possible check and checkmate suffixes.
 pub struct SanPlus {
     pub san: San,
     pub check: bool,
@@ -158,6 +160,7 @@ impl fmt::Display for SanPlus {
     }
 }
 
+/// `IllegalSan` or `AmbiguousSan`.
 #[derive(Debug)]
 pub enum SanError {
     IllegalSan,
@@ -165,6 +168,8 @@ pub enum SanError {
 }
 
 impl San {
+    /// Tries to convert the `San` to a legal move in the context of a
+    /// position.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
         let mut legals = MoveList::new();
         pos.legal_moves(&mut legals);
@@ -212,6 +217,8 @@ impl San {
     }
 }
 
+/// Converts a move to Standard Algebraic Notation including possible
+/// check and checkmate suffixes.
 pub fn san_plus<P: Position>(pos: P, m: &Move) -> SanPlus {
     let san = san(&pos, m);
     let after = pos.play_unchecked(m);
@@ -222,6 +229,7 @@ pub fn san_plus<P: Position>(pos: P, m: &Move) -> SanPlus {
     SanPlus { san, checkmate, check: !checkmate && after.checkers().any() }
 }
 
+/// Converts a move to Standard Algebraic Notation.
 pub fn san<P: Position>(pos: &P, m: &Move) -> San {
     match *m {
         Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
