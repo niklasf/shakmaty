@@ -28,7 +28,7 @@ impl FromStr for San {
     type Err = ();
 
     fn from_str(san: &str) -> Result<San, Self::Err> {
-        let san = san.trim_right_matches('+').trim_right_matches('#');
+        let san = san.trim_right_matches('#').trim_right_matches('+');
         if san == "--" {
             Ok(San::Null)
         } else if san == "O-O" {
