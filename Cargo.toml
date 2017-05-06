@@ -5,7 +5,7 @@ description = "A library for chess move generation"
 homepage = "https://github.com/niklasf/shakmaty"
 repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
-license = "GPL3"
+license = "GPL-3.0+"
 authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
 
 [dependencies]
