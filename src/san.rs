@@ -7,6 +7,7 @@ use position::{Position, Outcome, MoveList};
 use std::fmt;
 use std::ascii::AsciiExt;
 use option_filter::OptionFilterExt;
+use std::str::FromStr;
 
 pub enum San {
     Normal { role: Role, file: Option<i8>, rank: Option<i8>, capture: bool, to: Square, promotion: Option<Role> },
@@ -20,6 +21,35 @@ pub struct SanPlus {
     pub san: San,
     pub check: bool,
     pub checkmate: bool,
+}
+
+impl FromStr for San {
+    type Err = ();
+
+    fn from_str(san: &str) -> Result<San, Self::Err> {
+        let san = san.trim_right_matches('+').trim_right_matches('#');
+        if san == "--" {
+            Ok(San::Null)
+        } else if san == "O-O" {
+            Ok(San::CastleShort)
+        } else if san == "O-O-O" {
+            Ok(San::CastleLong)
+        } else if let Some(sep) = san.find('@') {
+            if sep == 0 {
+                Ok(San::Put { role: Role::Pawn, to: san[1..].parse()? })
+            } else if sep == 1 {
+                Ok(San::Put {
+                    role: san.chars().next()
+                             .and_then(|r| Role::from_char(r.to_ascii_lowercase())).ok_or(())?,
+                    to: san[2..].parse()?,
+                })
+            } else {
+                Err(())
+            }
+        } else {
+            Err(())
+        }
+    }
 }
 
 impl fmt::Display for San {
