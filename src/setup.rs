@@ -37,7 +37,7 @@ pub trait Setup {
 }
 
 /// Returns valid castling rights filtered from a setup.
-pub fn clean_castling_rights<S: Setup>(setup: &S, strict: bool) -> Bitboard {
+pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
     let castling = setup.castling_rights() & setup.board().rooks();
 
     let clean_strict = |color: Color| -> Bitboard {
