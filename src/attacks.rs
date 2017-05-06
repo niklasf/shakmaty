@@ -118,6 +118,12 @@ pub struct Precomp {
     bb_between: [[Bitboard; 64]; 64],
 }
 
+impl Default for Precomp {
+    fn default() -> Precomp {
+        Precomp::new()
+    }
+}
+
 impl Precomp {
     pub fn new() -> Precomp {
         let mut precomp = Precomp {

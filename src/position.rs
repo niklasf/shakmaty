@@ -1294,7 +1294,7 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    let ref precomp = attacks::PRECOMP;
+    let precomp = &attacks::PRECOMP;
     RookTag::gen_moves(pos, precomp, target, moves);
     BishopTag::gen_moves(pos, precomp, target, moves);
     QueenTag::gen_moves(pos, precomp, target, moves);
