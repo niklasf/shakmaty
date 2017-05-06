@@ -16,7 +16,7 @@
 //!
 //! ```
 //! # use shakmaty::square;
-//! # use shakmaty::White;
+//! # use shakmaty::Color::White;
 //! # use shakmaty::uci::Uci;
 //! use shakmaty::{Chess, Setup, Position};
 //!
