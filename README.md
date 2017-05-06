@@ -47,7 +47,8 @@ Features
 * Supports Standard chess and these variants: Crazyhouse, King Of The Hill,
   Giveaway, ThreeCheck, Horde, Atomic, and RacingKings.
 
-* [PDEP](https://chessprogramming.wikispaces.com/BMI2#Instructions-PDEP)
+* Bitboards and
+  [PDEP](https://chessprogramming.wikispaces.com/BMI2#Instructions-PDEP)
   attack tables.
 
 Documentation
