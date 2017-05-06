@@ -9,14 +9,25 @@ use setup;
 use setup::Setup;
 
 use option_filter::OptionFilterExt;
-
 use arrayvec::ArrayVec;
 
+use std::fmt;
+
 /// Outcome of a game.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw
+}
+
+impl fmt::Display for Outcome {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match *self {
+            Outcome::Decisive { winner: White } => "1-0",
+            Outcome::Decisive { winner: Black } => "0-1",
+            Outcome::Draw => "1/2-1/2",
+        })
+    }
 }
 
 /// Reasons for a `Setup` not beeing a legal `Position`.
