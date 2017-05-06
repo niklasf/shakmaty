@@ -48,7 +48,7 @@ Features
   Giveaway, Three-Check, Horde, Atomic, and Racing Kings.
 
 * Bitboards and
-  [PDEP](https://chessprogramming.wikispaces.com/BMI2#Instructions-PDEP)
+  [PEXT/PDEP](https://chessprogramming.wikispaces.com/Applications-PEXT/PDEP%20Bitboards)
   attack tables.
 
 Documentation
