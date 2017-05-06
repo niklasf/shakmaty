@@ -63,6 +63,7 @@
 //! ```
 //!
 //! Also supports FEN, SAN and UCI formats for positions and moves.
+
 #![feature(test)]
 #![feature(associated_consts)]
 #![feature(cfg_target_feature)]
