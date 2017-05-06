@@ -1,4 +1,49 @@
 //! Read and write Standard Algebraic Notation.
+//!
+//! # Examples
+//!
+//! Parse and write SANs:
+//!
+//! ```
+//! use shakmaty::Chess;
+//! use shakmaty::Position;
+//! use shakmaty::san::San;
+//!
+//! let san: San = "Nf3".parse().expect("valid san");
+//! assert_eq!(san.to_string(), "Nf3");
+//! ```
+//!
+//! Converting to a move:
+//!
+//! ```
+//! # use shakmaty::{Chess, Position, Role, Move};
+//! # use shakmaty::san::San;
+//! # use shakmaty::square;
+//! # let san: San = "Nf3".parse().expect("valid san");
+//! let pos = Chess::default();
+//! let m = san.to_move(&pos).expect("legal move");
+//!
+//! assert_eq!(m, Move::Normal {
+//!     role: Role::Knight,
+//!     from: square::G1,
+//!     capture: None,
+//!     to: square::F3,
+//!     promotion: None,
+//! });
+//! ```
+//!
+//! Back to a (possibly disambiguated) SAN:
+//!
+//! ```
+//! use shakmaty::san;
+//! # use shakmaty::{Chess, Position, Role};
+//! # use shakmaty::san::San;
+//! # let pos = Chess::default();
+//! # let san: San = "Nf3".parse().expect("valid san");
+//! # let m = san.to_move(&pos).expect("legal move");
+//!
+//! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
+//! ```
 
 use square::Square;
 use types::{Move, Role};
