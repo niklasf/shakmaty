@@ -204,7 +204,7 @@ impl San {
                 Move::Put { role: r, to: t } => role == r && to == t,
                 _ => false,
             }),
-            San::Null => return Ok(Move::Null),
+            San::Null => return Err(SanError::IllegalSan),
         }
 
         legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
@@ -272,7 +272,6 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
         Move::Castle { rook, king } if rook.file() < king.file() => San::CastleLong,
         Move::Castle { .. } => San::CastleShort,
         Move::Put { role, to } => San::Put { role, to },
-        Move::Null => San::Null,
     }
 }
 

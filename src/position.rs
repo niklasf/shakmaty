@@ -157,9 +157,7 @@ pub trait Position : Setup + Default + Clone {
     /// Validates and plays a move. Accepts only legal moves and
     /// safe null moves.
     fn play(self, m: &Move) -> Result<Self, MoveError> {
-        if let Move::Null = *m {
-            Self::from_setup(&self.play_unchecked(m)).map_err(|_| ())
-        } else if self.is_legal(m) {
+        if self.is_legal(m) {
             Ok(self.play_unchecked(m))
         } else {
             Err(())
@@ -1171,7 +1169,6 @@ fn do_move(board: &mut Board,
         Move::Put { to, role } => {
             board.set_piece_at(to, Piece { color, role }, false);
         },
-        Move::Null => ()
     }
 
     if color.is_black() {

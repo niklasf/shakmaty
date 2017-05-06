@@ -124,8 +124,6 @@ impl<'a> Into<Uci> for &'a Move {
                 Uci::Normal { from: king, to: rook, promotion: None },  // Chess960-style
             Move::Put { role, to } =>
                 Uci::Put { role, to },
-            Move::Null =>
-                Uci::Null
         }
     }
 }
@@ -164,7 +162,7 @@ impl Uci {
                 }
             },
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Ok(Move::Null)
+            Uci::Null => return Err(())
         };
 
         if pos.is_legal(&candidate) {

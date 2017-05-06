@@ -127,7 +127,6 @@ pub enum Move {
     EnPassant { from: Square, to: Square },
     Castle { king: Square, rook: Square },
     Put { role: Role, to: Square },
-    Null
 }
 
 impl Move {
@@ -169,9 +168,6 @@ impl fmt::Display for Move {
             Move::Put { role, to } => {
                 write!(f, "{}@{}", role.char().to_ascii_uppercase(), to)
             },
-            Move::Null => {
-                write!(f, "--")
-            }
         }
     }
 }
