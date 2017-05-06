@@ -255,6 +255,7 @@ impl fmt::Display for Fen {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use position::Chess;
 
     #[test]
     fn test_pockets() {
@@ -269,5 +270,16 @@ mod tests {
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmove_clock, 12);
         assert_eq!(fen.fullmoves, 42);
+    }
+
+    #[test]
+    fn test_legal_ep_square() {
+        let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
+        let fen: Fen = original_epd.parse().expect("valid fen");
+        assert_eq!(epd(&fen, false), original_epd);
+
+        // The en passant square is not actually legal.
+        let pos: Chess = fen.position().expect("legal position");
+        assert_eq!(epd(&pos, false), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 }

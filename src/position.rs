@@ -8,6 +8,8 @@ use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
 use setup::Setup;
 
+use option_filter::OptionFilterExt;
+
 use arrayvec::ArrayVec;
 
 /// Outcome of a game.
@@ -192,7 +194,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -225,7 +227,7 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        gen_standard(self, moves);
+        gen_standard(self, self.ep_square, moves);
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -273,7 +275,7 @@ impl Setup for Crazyhouse {
     fn pockets(&self) -> Option<&Pockets> { Some(&self.pockets) }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -355,7 +357,7 @@ impl Position for Crazyhouse {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        gen_standard(self, moves);
+        gen_standard(self, self.ep_square, moves);
 
         for to in self.legal_put_squares() {
             for role in &[Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
@@ -407,7 +409,7 @@ impl Setup for KingOfTheHill {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -441,7 +443,7 @@ impl Position for KingOfTheHill {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         if !self.is_variant_end() {
-            gen_standard(self, moves);
+            gen_standard(self, self.ep_square, moves);
         }
     }
 
@@ -492,7 +494,7 @@ impl Setup for Giveaway {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -530,7 +532,7 @@ impl Position for Giveaway {
     fn legal_moves(&self, moves: &mut MoveList) {
         let them = self.them();
 
-        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
         gen_non_king(self, them, moves);
         KingTag::gen_moves(self, them, moves);
 
@@ -601,7 +603,7 @@ impl Setup for ThreeCheck {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -650,7 +652,7 @@ impl Position for ThreeCheck {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         if !self.is_variant_end() {
-            gen_standard(self, moves);
+            gen_standard(self, self.ep_square, moves);
         }
     }
 
@@ -702,7 +704,7 @@ impl Setup for Horde {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -768,7 +770,7 @@ impl Position for Horde {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        gen_standard(self, moves);
+        gen_standard(self, self.ep_square, moves);
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -819,7 +821,7 @@ impl Setup for Atomic {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -889,7 +891,7 @@ impl Position for Atomic {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         // TODO: Atomic move generation could be much more efficient.
-        gen_en_passant(self.board(), self.turn(), self.ep_square(), moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
         gen_non_king(self, Bitboard::all(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);
         gen_castling_moves(self, moves);
@@ -977,7 +979,7 @@ impl Setup for RacingKings {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { Bitboard::empty() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -1048,7 +1050,7 @@ impl Position for RacingKings {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         if !self.is_variant_end() {
-            gen_standard(self, moves);
+            gen_standard(self, self.ep_square, moves);
         }
 
         // TODO: This could be more efficient.
@@ -1245,8 +1247,8 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     None
 }
 
-fn gen_standard<P: Position>(pos: &P, moves: &mut MoveList) {
-    gen_en_passant(pos.board(), pos.turn(), pos.ep_square(), moves);
+fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut MoveList) {
+    gen_en_passant(pos.board(), pos.turn(), ep_square, moves);
 
     let checkers = pos.checkers();
 
@@ -1434,6 +1436,22 @@ fn push_pawn_moves<P: Position>(moves: &mut MoveList, from: Square, to: Square, 
         if P::KING_PROMOTIONS {
             moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::King) });
         }
+    }
+}
+
+fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
+    let mut moves = MoveList::new();
+    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves);
+
+    if moves.is_empty() {
+        false
+    } else {
+        moves.clear();
+        pos.legal_moves(&mut moves);
+        moves.iter().any(|m| match *m {
+            Move::EnPassant { to, .. } => to == ep_square,
+            _ => false
+        })
     }
 }
 
