@@ -202,8 +202,8 @@ impl FromStr for SanPlus {
         San::from_str(san).map(|result| {
             SanPlus {
                 san: result,
-                checkmate: san.ends_with("#"),
-                check: san.ends_with("+"),
+                checkmate: san.ends_with('#'),
+                check: san.ends_with('+'),
             }
         })
     }
