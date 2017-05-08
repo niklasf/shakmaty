@@ -362,7 +362,7 @@ impl Position for Crazyhouse {
             _ => ()
         }
 
-        self.halfmove_clock += 1;
+        self.halfmove_clock = self.halfmove_clock.saturating_add(1);
         self
     }
 
@@ -1138,7 +1138,7 @@ fn do_move(board: &mut Board,
            m: &Move) {
     let color = *turn;
     ep_square.take();
-    *halfmove_clock += 1;
+    *halfmove_clock = halfmove_clock.saturating_add(1);
 
     match *m {
         Move::Normal { role, from, capture, to, promotion } => {
@@ -1189,7 +1189,7 @@ fn do_move(board: &mut Board,
     }
 
     if color.is_black() {
-        *fullmoves += 1;
+        *fullmoves = fullmoves.saturating_add(1);
     }
 
     *turn = !color;
