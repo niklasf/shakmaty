@@ -1,5 +1,3 @@
-all: target/debug/fuzz-fen target/debug/fuzz-uci target/debug/fuzz-san
-
 .PHONY: fuzz-fen
 fuzz-fen: target/debug/fuzz-fen
 	./target/debug/fuzz-fen corpora/fen
