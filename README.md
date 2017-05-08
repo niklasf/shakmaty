@@ -44,8 +44,8 @@ Features
 
 * Read and write FENs, SANs and UCIs.
 
-* Supports Standard chess and these variants: Crazyhouse, King Of The Hill,
-  Giveaway, Three-Check, Horde, Atomic, and Racing Kings.
+* Supports Standard chess, Chess960, and these variants: Crazyhouse,
+  King Of The Hill, Giveaway, Three-Check, Horde, Atomic, and Racing Kings.
 
 * Bitboards and
   [PEXT/PDEP](https://chessprogramming.wikispaces.com/Applications-PEXT/PDEP%20Bitboards)
