@@ -225,7 +225,7 @@ impl Board {
     pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
     pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
 
-    /// The (royal, unpromoted) king of the given side.
+    /// The (unique, unpromoted) king of the given side.
     pub fn king_of(&self, color: Color) -> Option<Square> {
         (self.by_piece(&color.king()) & !self.promoted).single_square()
     }
