@@ -61,6 +61,7 @@
 //! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
 //! ```
 
+use square;
 use square::Square;
 use types::{Move, Role};
 use position::{Position, Outcome, MoveList};
@@ -136,14 +137,14 @@ impl FromStr for San {
 
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == 'x' {
-                    let to_file = chars.next().ok_or(())? as i8 - b'a' as i8;
-                    let to_rank = chars.next().ok_or(())? as i8 - b'1' as i8;
+                    let to_file = chars.next().and_then(square::file_from_char).ok_or(())?;
+                    let to_rank = chars.next().and_then(square::rank_from_char).ok_or(())?;
                     (true, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
                 } else if next == '=' {
                     (false, None, None, Square::from_coords(file.ok_or(())?, rank.ok_or(())?).ok_or(())?, Some('='))
                 } else {
-                    let to_file = next as i8 - b'a' as i8;
-                    let to_rank = chars.next().ok_or(())? as i8 - b'1' as i8;
+                    let to_file = square::file_from_char(next).ok_or(())?;
+                    let to_rank = chars.next().and_then(square::rank_from_char).ok_or(())?;
                     (false, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
                 }
             } else {

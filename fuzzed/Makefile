@@ -9,7 +9,7 @@ fuzz-uci: target/debug/fuzz-uci
 	./target/debug/fuzz-uci corpora/uci -max_len=16
 
 .PHONY: fuzz-san
-fuzz-uci: target/debug/fuzz-san
+fuzz-san: target/debug/fuzz-san
 	./target/debug/fuzz-san corpora/san -max_len=16
 
 .PHONY: target/debug/fuzz-fen
