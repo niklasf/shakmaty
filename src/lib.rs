@@ -69,6 +69,7 @@
 #![feature(cfg_target_feature)]
 #![feature(platform_intrinsics)]
 #![feature(const_fn)]
+#![feature(ascii_ctype)]
 
 extern crate test;
 

@@ -132,9 +132,8 @@ impl FromStr for Fen {
     type Err = FenError;
 
     fn from_str(fen: &str) -> Result<Fen, FenError> {
-        let mut result = Fen::empty();
-
         let mut parts = fen.split(' ');
+        let mut result = Fen::empty();
 
         let board_part = parts.next().expect("splits have at least one part");
 
@@ -159,24 +158,25 @@ impl FromStr for Fen {
             Some(_) => return Err(FenError::InvalidTurn),
         };
 
-        if let Some(castling_part) = parts.next() {
-            for ch in castling_part.chars() {
-                if ch == '-' {
-                    continue;
+        match parts.next() {
+            Some("-") | None => (),
+            Some(castling_part) => {
+                for ch in castling_part.chars() {
+                    let color = Color::from_bool(ch.is_ascii_uppercase());
+
+                    let candidates = Bitboard::relative_rank(color, 0) &
+                                     result.board.by_piece(&color.rook());
+
+                    let flag = match ch.to_ascii_lowercase() {
+                        'k' => candidates.last(),
+                        'q' => candidates.first(),
+                        file if 'a' <= file && file <= 'h' =>
+                            (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
+                        _ => return Err(FenError::InvalidCastling),
+                    };
+
+                    result.castling_rights.add(flag.ok_or(FenError::InvalidCastling)?);
                 }
-
-                let color = Color::from_bool(ch.to_ascii_uppercase() == ch);
-
-                let candidates = Bitboard::relative_rank(color, 0) &
-                                 result.board.by_piece(&color.rook());
-
-                let flag = match ch.to_ascii_lowercase() {
-                    'k'  => candidates.last(),
-                    'q'  => candidates.first(),
-                    file => (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
-                };
-
-                result.castling_rights.add(flag.ok_or(FenError::InvalidCastling)?);
             }
         }
 
