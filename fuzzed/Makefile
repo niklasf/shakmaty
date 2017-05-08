@@ -6,7 +6,7 @@ fuzz-fen: target/debug/fuzz-fen
 
 .PHONY: fuzz-uci
 fuzz-uci: target/debug/fuzz-uci
-	./target/debug/fuzz-uci corpora/uci
+	./target/debug/fuzz-uci corpora/uci -max_len=8
 
 .PHONY: target/debug/fuzz-fen
 target/debug/fuzz-fen:

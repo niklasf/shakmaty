@@ -85,7 +85,9 @@ impl FromStr for Uci {
     type Err = ();
 
     fn from_str(uci: &str) -> Result<Uci, ()> {
-        if uci.len() < 4 || uci.len() > 5 {
+        // Checking is_ascii() will allow us to safely slice at byte
+        // boundaries.
+        if uci.len() < 4 || uci.len() > 5 || !uci.is_ascii() {
             return Err(())
         }
 
