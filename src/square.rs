@@ -19,6 +19,7 @@
 use std::cmp::max;
 use std::fmt;
 use std::str;
+use option_filter::OptionFilterExt;
 
 /// A square index.
 #[derive(PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -81,12 +82,17 @@ impl str::FromStr for Square {
             return Err(())
         }
 
-        let file = s.chars().nth(0).map(|file| file as i8 - 'a' as i8);
-        let rank = s.chars().nth(1).map(|rank| rank as i8 - '1' as i8);
-        match (file, rank) {
-            (Some(file), Some(rank)) => Square::from_coords(file, rank).ok_or(()),
-            _ => Err(())
-        }
+        let file = s.chars().nth(0)
+                    .filter(|&c| 'a' <= c && c <= 'h')
+                    .map(|file| file as i8 - 'a' as i8)
+                    .ok_or(())?;
+
+        let rank = s.chars().nth(1)
+                    .filter(|&c| '1' <= c && c <= '8')
+                    .map(|file| file as i8 - '1' as i8)
+                    .ok_or(())?;
+
+        Square::from_coords(file, rank).ok_or(())
     }
 }
 
