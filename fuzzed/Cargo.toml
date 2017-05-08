@@ -1,0 +1,7 @@
+[package]
+name = "shakmaty-fuzzing"
+publish = false
+
+[dependencies]
+libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
+shakmaty = { path = ".." }
