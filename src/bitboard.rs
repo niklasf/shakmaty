@@ -88,13 +88,19 @@ impl Bitboard {
         }
     }
 
+    /// Like `rank()`, but from the point of view of `color`.
     pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
-        match color {
-            Color::White => Bitboard(0xff << (8 * rank)),
-            Color::Black => Bitboard(0xff00000000000000 >> (8 * rank))
+        if 0 <= rank && rank < 8 {
+            match color {
+                Color::White => Bitboard(0xff << (8 * rank)),
+                Color::Black => Bitboard(0xff00000000000000 >> (8 * rank))
+            }
+        } else {
+            Bitboard(0)
         }
     }
 
+    /// Shift using `<<` for `White` and `>>` for `Black`.
     pub fn relative_shift(self, color: Color, shift: u8) -> Bitboard {
         match color {
             Color::White => Bitboard(self.0 << shift),
