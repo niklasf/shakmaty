@@ -63,7 +63,7 @@ use setup::Setup;
 use position::{Position, PositionError};
 
 /// A parsed FEN.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Fen {
     pub board: Board,
     pub pockets: Option<Pockets>,
@@ -87,7 +87,7 @@ impl Setup for Fen {
 }
 
 /// Errors that can occur when parsing FENs.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum FenError {
     InvalidBoard,
     InvalidPocket,
@@ -297,5 +297,13 @@ mod tests {
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
         assert_eq!(epd(&pos, false), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+    }
+
+    #[test]
+    fn test_non_ascii() {
+        // mind the dot in the castling part
+        let input = "8/8/8/8/8/8/8/8 w · - 0 1";
+        let error = input.parse::<Fen>().expect_err("invalid fen");
+        assert_eq!(error, FenError::InvalidCastling);
     }
 }

@@ -189,7 +189,7 @@ impl fmt::Display for Move {
 }
 
 /// A players Crazyhouse pocket.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Pocket {
     pub pawns: u8,
     pub knights: u8,
@@ -232,7 +232,7 @@ impl Pocket {
 }
 
 /// Crazyhouse pockets for both sides, holding captured pieces.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Pockets {
     pub white: Pocket,
     pub black: Pocket,
