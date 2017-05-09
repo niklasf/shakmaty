@@ -75,21 +75,21 @@ use types::{Role, Move};
 use position::{Position, IllegalMove};
 
 /// Error when parsing an invalid UCI.
-pub struct UciError { _priv: () }
+pub struct InvalidUci { _priv: () }
 
-impl fmt::Debug for UciError {
+impl fmt::Debug for InvalidUci {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("UciError").finish()
+        f.debug_struct("InvalidUci").finish()
     }
 }
 
-impl fmt::Display for UciError {
+impl fmt::Display for InvalidUci {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "invalid uci".fmt(f)
     }
 }
 
-impl Error for UciError {
+impl Error for InvalidUci {
     fn description(&self) -> &str { "invalid uci" }
 }
 
@@ -102,20 +102,20 @@ pub enum Uci {
 }
 
 impl FromStr for Uci {
-    type Err = UciError;
+    type Err = InvalidUci;
 
-    fn from_str(uci: &str) -> Result<Uci, UciError> {
+    fn from_str(uci: &str) -> Result<Uci, InvalidUci> {
         // Checking is_ascii() will allow us to safely slice at byte
         // boundaries.
         if uci.len() < 4 || uci.len() > 5 || !uci.is_ascii() {
-            return Err(UciError { _priv: () })
+            return Err(InvalidUci { _priv: () })
         }
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
             (Ok(from), Ok(to), Some(promotion)) =>
                 return Role::from_char(promotion).map(|role| {
                     Uci::Normal { from, to, promotion: Some(role) }
-                }).ok_or(UciError { _priv: () }),
+                }).ok_or(InvalidUci { _priv: () }),
             (Ok(from), Ok(to), None) =>
                 return Ok(Uci::Normal { from, to, promotion: None }),
             _ => (),
@@ -125,14 +125,14 @@ impl FromStr for Uci {
                (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
             return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
                 Uci::Put { role, to }
-            }).ok_or(UciError { _priv: () });
+            }).ok_or(InvalidUci { _priv: () });
         }
 
         if uci == "0000" {
             return Ok(Uci::Null)
         }
 
-        Err(UciError { _priv: () })
+        Err(InvalidUci { _priv: () })
     }
 }
 
