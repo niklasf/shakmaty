@@ -1468,9 +1468,23 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    for from in pos.our(Role::Pawn) {
+    let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
+
+    for from in pos.our(Role::Pawn) & !seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            push_pawn_moves::<P>(moves, from, to, pos.board().role_at(to));
+            moves.push(Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture: pos.board().role_at(to),
+                to,
+                promotion: None
+            });
+        }
+    }
+
+    for from in seventh {
+        for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
+            push_promotions::<P>(moves, from, to, pos.board().role_at(to));
         }
     }
 
@@ -1481,9 +1495,15 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                        Bitboard::relative_rank(pos.turn(), 3) &
                        !pos.board().occupied();
 
-    for to in single_moves & target {
+    for to in single_moves & target & !bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            push_pawn_moves::<P>(moves, from, to, None);
+            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+        }
+    }
+
+    for to in single_moves & target & bitboard::BACKRANKS {
+        if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
+            push_promotions::<P>(moves, from, to, None);
         }
     }
 
@@ -1494,19 +1514,15 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     }
 }
 
-fn push_pawn_moves<P: Position>(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
-    if to.rank() != 0 && to.rank() < 7 {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: None });
-    } else {
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
-        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
-
-        if P::KING_PROMOTIONS {
-            moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::King) });
-        }
+fn push_promotions<P: Position>(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+    if P::KING_PROMOTIONS {
+        moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::King) });
     }
+
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
 }
 
 fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {

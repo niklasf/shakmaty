@@ -252,6 +252,9 @@ pub const CORNERS: Bitboard = Bitboard(0x8100000000000081);
 /// The four center squares.
 pub const HILL: Bitboard = Bitboard(0x1818000000);
 
+/// The backranks.
+pub const BACKRANKS: Bitboard = Bitboard(0xff000000000000ff);
+
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
