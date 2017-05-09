@@ -26,7 +26,7 @@ pub use self::Color::{Black, White};
 pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
 
 /// `White` or `Black`.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Color {
     Black,
     White,
@@ -74,7 +74,7 @@ impl ops::Not for Color {
 }
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Role {
     Pawn,
     Knight,
@@ -116,7 +116,7 @@ impl Role {
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
 /// A piece with `Color` and `Role`.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -137,7 +137,7 @@ impl Piece {
 }
 
 /// Information about a move.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square },
@@ -282,7 +282,7 @@ impl fmt::Display for Pockets {
 
 /// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-check).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct RemainingChecks {
     pub white: u8,
     pub black: u8,
