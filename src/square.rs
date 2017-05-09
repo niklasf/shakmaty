@@ -45,7 +45,8 @@ impl Error for InvalidSquareName {
 pub struct Square(i8);
 
 impl Square {
-    /// Try to create a `Square` from an integer index (`0` - `63`).
+    /// Tries to create a `Square` from an integer index in the range
+    /// `0` to `63`.
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
             Some(Square(index))
@@ -54,7 +55,7 @@ impl Square {
         }
     }
 
-    /// Create a square from an integer index in the range `0` to `63`.
+    /// Creates a `Square` from an integer index in the range `0` to `63`.
     ///
     /// # Panics
     ///
@@ -65,7 +66,7 @@ impl Square {
         Square(index)
     }
 
-    /// Try to create a square from zero-based file and rank indices.
+    /// Tries to create a square from zero-based file and rank indexes.
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
             Some(Square(file | (rank << 3)))
@@ -103,6 +104,12 @@ impl Square {
         } else {
             None
         }
+    }
+}
+
+impl From<Square> for i8 {
+    fn from(sq: Square) -> i8 {
+        sq.0
     }
 }
 
