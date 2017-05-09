@@ -108,7 +108,7 @@ impl From<BoardFenError> for FenError {
 }
 
 /// A parsed FEN.
-#[derive(Clone, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Fen {
     pub board: Board,
     pub pockets: Option<Pockets>,
@@ -245,6 +245,12 @@ impl FromStr for Fen {
     }
 }
 
+impl fmt::Display for Fen {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", fen(self, true))
+    }
+}
+
 fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
     let mut fen = String::with_capacity(4);
 
@@ -292,12 +298,6 @@ pub fn epd(setup: &Setup, promoted: bool) -> String {
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 pub fn fen(setup: &Setup, promoted: bool) -> String {
     format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
-}
-
-impl fmt::Display for Fen {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", fen(self, true))
-    }
 }
 
 #[cfg(test)]
