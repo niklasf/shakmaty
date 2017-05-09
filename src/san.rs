@@ -101,12 +101,12 @@ impl FromStr for San {
             Ok(San::CastleLong)
         } else if let Some(sep) = san.find('@') {
             if sep == 0 {
-                Ok(San::Put { role: Role::Pawn, to: san[1..].parse()? })
+                Ok(San::Put { role: Role::Pawn, to: san[1..].parse().map_err(|_| ())? })
             } else if sep == 1 {
                 Ok(San::Put {
                     role: san.chars().next()
                              .and_then(|r| Role::from_char(r.to_ascii_lowercase())).ok_or(())?,
-                    to: san[2..].parse()?,
+                    to: san[2..].parse().map_err(|_| ())?,
                 })
             } else {
                 Err(())

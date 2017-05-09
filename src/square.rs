@@ -19,6 +19,26 @@
 use std::cmp::max;
 use std::fmt;
 use std::str;
+use std::error::Error;
+
+/// Error when parsing an invalid square name.
+pub struct SquareParseError { _priv: () }
+
+impl fmt::Debug for SquareParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("SquareParseError").finish()
+    }
+}
+
+impl fmt::Display for SquareParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "invalid square name".fmt(f)
+    }
+}
+
+impl Error for SquareParseError {
+    fn description(&self) -> &str { "invalid square name" }
+}
 
 /// A square index.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -94,16 +114,22 @@ pub fn rank_from_char(ch: char) -> Option<i8> {
 }
 
 impl str::FromStr for Square {
-    type Err = ();
+    type Err = SquareParseError;
 
-    fn from_str(s: &str) -> Result<Square, ()> {
+    fn from_str(s: &str) -> Result<Square, SquareParseError> {
         if s.len() != 2 {
-            return Err(())
+            return Err(SquareParseError { _priv: () })
         }
 
-        let file = s.chars().nth(0).and_then(file_from_char).ok_or(())?;
-        let rank = s.chars().nth(1).and_then(rank_from_char).ok_or(())?;
-        Square::from_coords(file, rank).ok_or(())
+        let file = s.chars().nth(0)
+                    .and_then(file_from_char)
+                    .ok_or(SquareParseError { _priv: () })?;
+
+        let rank = s.chars().nth(1)
+                    .and_then(rank_from_char)
+                    .ok_or(SquareParseError { _priv: () })?;
+
+        Square::from_coords(file, rank).ok_or(SquareParseError { _priv: () })
     }
 }
 
