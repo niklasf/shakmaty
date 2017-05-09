@@ -262,6 +262,30 @@ impl fmt::Debug for Bitboard {
     }
 }
 
+impl fmt::UpperHex for Bitboard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:X}", self.0)
+    }
+}
+
+impl fmt::LowerHex for Bitboard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:x}", self.0)
+    }
+}
+
+impl fmt::Octal for Bitboard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:o}", self.0)
+    }
+}
+
+impl fmt::Binary for Bitboard {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:b}", self.0)
+    }
+}
+
 impl From<Square> for Bitboard {
     fn from(sq: Square) -> Bitboard {
         Bitboard::from_square(sq)
