@@ -43,6 +43,8 @@ use square::Square;
 use bitboard::Bitboard;
 use types::{Color, Role, Piece};
 
+use std::fmt;
+
 const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
 
@@ -116,6 +118,12 @@ pub struct Precomp {
 
     bb_rays: [[Bitboard; 64]; 64],
     bb_between: [[Bitboard; 64]; 64],
+}
+
+impl fmt::Debug for Precomp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Precomp").finish()
+    }
 }
 
 impl Default for Precomp {
