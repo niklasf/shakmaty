@@ -152,6 +152,10 @@ impl Bitboard {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.0 = 0;
+    }
+
     pub fn with(self, sq: Square) -> Bitboard {
         self | Bitboard::from_square(sq)
     }
