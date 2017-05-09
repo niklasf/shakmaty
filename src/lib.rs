@@ -96,7 +96,7 @@ pub use types::{Color, Role, Piece, Move, Pockets, Pocket, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
-pub use position::{MoveList, Outcome, Position, PositionError, Chess};
+pub use position::{MoveList, IllegalMove, Outcome, Position, PositionError, Chess};
 
 pub mod variants {
     //! Chess variants.
