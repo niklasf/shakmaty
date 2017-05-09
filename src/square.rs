@@ -53,7 +53,8 @@ impl Square {
         }
     }
 
-    pub const fn from_index_unchecked(index: i8) -> Square {
+    pub fn from_index_unchecked(index: i8) -> Square {
+        debug_assert!(0 <= index && index < 64);
         Square(index)
     }
 
