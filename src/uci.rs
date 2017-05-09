@@ -67,14 +67,34 @@
 use std::fmt;
 use std::ascii::AsciiExt;
 use std::str::FromStr;
+use std::error::Error;
 
 use square;
 use square::Square;
 use types::{Role, Move};
 use position::{Position, MoveError};
 
+/// Error when parsing an invalid UCI.
+pub struct UciError { _priv: () }
+
+impl fmt::Debug for UciError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("UciError").finish()
+    }
+}
+
+impl fmt::Display for UciError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "invalid uci".fmt(f)
+    }
+}
+
+impl Error for UciError {
+    fn description(&self) -> &str { "invalid uci" }
+}
+
 /// A move as represented in the UCI protocol.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Uci {
     Normal { from: Square, to: Square, promotion: Option<Role> },
     Put { role: Role, to: Square },
@@ -82,20 +102,20 @@ pub enum Uci {
 }
 
 impl FromStr for Uci {
-    type Err = ();
+    type Err = UciError;
 
-    fn from_str(uci: &str) -> Result<Uci, ()> {
+    fn from_str(uci: &str) -> Result<Uci, UciError> {
         // Checking is_ascii() will allow us to safely slice at byte
         // boundaries.
         if uci.len() < 4 || uci.len() > 5 || !uci.is_ascii() {
-            return Err(())
+            return Err(UciError { _priv: () })
         }
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
             (Ok(from), Ok(to), Some(promotion)) =>
                 return Role::from_char(promotion).map(|role| {
                     Uci::Normal { from, to, promotion: Some(role) }
-                }).ok_or(()),
+                }).ok_or(UciError { _priv: () }),
             (Ok(from), Ok(to), None) =>
                 return Ok(Uci::Normal { from, to, promotion: None }),
             _ => (),
@@ -105,14 +125,14 @@ impl FromStr for Uci {
                (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
             return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
                 Uci::Put { role, to }
-            }).ok_or(());
+            }).ok_or(UciError { _priv: () });
         }
 
         if uci == "0000" {
             return Ok(Uci::Null)
         }
 
-        Err(())
+        Err(UciError { _priv: () })
     }
 }
 
