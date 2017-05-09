@@ -54,13 +54,48 @@
 use std::str::FromStr;
 use std::ascii::AsciiExt;
 use std::fmt;
+use std::error::Error;
 
 use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
-use board::Board;
+use board::{Board, BoardFenError};
 use setup::Setup;
 use position::{Position, PositionError};
+
+/// Errors that can occur when parsing a FEN.
+#[derive(Eq, PartialEq, Debug)]
+pub enum FenError {
+    InvalidBoard,
+    InvalidPocket,
+    InvalidTurn,
+    InvalidCastling,
+    InvalidEpSquare,
+    InvalidRemainingChecks,
+    InvalidHalfmoveClock,
+    InvalidFullmoves,
+}
+
+impl fmt::Display for FenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            FenError::InvalidBoard => write!(f, "invalid board part in fen"),
+            FenError::InvalidPocket => write!(f, "invalid pocket in fen"),
+            FenError::InvalidTurn => write!(f, "invalid turn part in fen"),
+            FenError::InvalidCastling => write!(f, "invalid castling part in fen"),
+            FenError::InvalidEpSquare => write!(f, "invalid ep square in fen"),
+            FenError::InvalidRemainingChecks => write!(f, "invalid remaining checks in fen"),
+            FenError::InvalidHalfmoveClock => write!(f, "invalid halfmove clock in fen"),
+            FenError::InvalidFullmoves => write!(f, "invalid fullmove part in fen"),
+        }
+    }
+}
+
+impl From<BoardFenError> for FenError {
+    fn from(error: BoardFenError) -> FenError {
+        FenError::InvalidBoard
+    }
+}
 
 /// A parsed FEN.
 #[derive(Clone, Debug)]
@@ -84,19 +119,6 @@ impl Setup for Fen {
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
-}
-
-/// Errors that can occur when parsing FENs.
-#[derive(Debug, Eq, PartialEq)]
-pub enum FenError {
-    InvalidBoard,
-    InvalidPocket,
-    InvalidTurn,
-    InvalidCastling,
-    InvalidEpSquare,
-    InvalidRemainingChecks,
-    InvalidHalfmoveClock,
-    InvalidFullmoves,
 }
 
 impl Default for Fen {
@@ -149,7 +171,7 @@ impl FromStr for Fen {
             (board_part, None)
         };
 
-        result.board = Board::from_board_fen(board_part).ok_or(FenError::InvalidBoard)?;
+        result.board = Board::from_board_fen(board_part)?;
         result.pockets = pockets;
 
         result.turn = match parts.next() {

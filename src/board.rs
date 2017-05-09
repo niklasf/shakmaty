@@ -17,11 +17,31 @@
 use std::fmt;
 use std::fmt::Write;
 use std::char;
+use std::error::Error;
 
 use square::Square;
 use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks;
+
+/// Error when attempting to parse an invalid board.
+pub struct BoardFenError { _priv: () }
+
+impl fmt::Debug for BoardFenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+         f.debug_struct("BoardFenError").finish()
+    }
+}
+
+impl fmt::Display for BoardFenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "invalid board fen")
+    }
+}
+
+impl Error for BoardFenError {
+    fn description(&self) -> &str { "invalid board fen" }
+}
 
 /// Piece positions on a board.
 ///
@@ -45,7 +65,7 @@ use attacks;
 /// let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 /// assert_eq!(board.board_fen(false), fen);
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Board {
     occupied: Bitboard,
 
@@ -135,7 +155,7 @@ impl Board {
         }
     }
 
-    pub fn from_board_fen(board_fen: &str) -> Option<Board> {
+    pub fn from_board_fen(board_fen: &str) -> Result<Board, BoardFenError> {
         let mut board = Board::empty();
 
         let mut rank = 7i8;
@@ -157,19 +177,19 @@ impl Board {
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
                     },
-                    None => return None
+                    None => return Err(BoardFenError { _priv: () })
                 }
                 file += 1;
             } else {
-                return None
+                return Err(BoardFenError { _priv: () })
             }
 
             if promoted {
-                return None
+                return Err(BoardFenError { _priv: () })
             }
         }
 
-        Some(board)
+        Ok(board)
     }
 
     pub fn board_fen(&self, promoted: bool) -> String {
