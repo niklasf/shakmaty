@@ -76,23 +76,33 @@ pub enum FenError {
     InvalidFullmoves,
 }
 
-impl fmt::Display for FenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl FenError {
+    fn desc(&self) -> &str {
         match *self {
-            FenError::InvalidBoard => write!(f, "invalid board part in fen"),
-            FenError::InvalidPocket => write!(f, "invalid pocket in fen"),
-            FenError::InvalidTurn => write!(f, "invalid turn part in fen"),
-            FenError::InvalidCastling => write!(f, "invalid castling part in fen"),
-            FenError::InvalidEpSquare => write!(f, "invalid ep square in fen"),
-            FenError::InvalidRemainingChecks => write!(f, "invalid remaining checks in fen"),
-            FenError::InvalidHalfmoveClock => write!(f, "invalid halfmove clock in fen"),
-            FenError::InvalidFullmoves => write!(f, "invalid fullmove part in fen"),
+            FenError::InvalidBoard => "invalid board part in fen",
+            FenError::InvalidPocket => "invalid pocket in fen",
+            FenError::InvalidTurn => "invalid turn part in fen",
+            FenError::InvalidCastling => "invalid castling part in fen",
+            FenError::InvalidEpSquare => "invalid ep square in fen",
+            FenError::InvalidRemainingChecks => "invalid remaining checks in fen",
+            FenError::InvalidHalfmoveClock => "invalid halfmove clock in fen",
+            FenError::InvalidFullmoves => "invalid fullmove part in fen",
         }
     }
 }
 
+impl fmt::Display for FenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.desc().fmt(f)
+    }
+}
+
+impl Error for FenError {
+    fn description(&self) -> &str { self.desc() }
+}
+
 impl From<BoardFenError> for FenError {
-    fn from(error: BoardFenError) -> FenError {
+    fn from(_: BoardFenError) -> FenError {
         FenError::InvalidBoard
     }
 }

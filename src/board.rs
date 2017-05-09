@@ -35,7 +35,7 @@ impl fmt::Debug for BoardFenError {
 
 impl fmt::Display for BoardFenError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid board fen")
+        "invalid board fen".fmt(f)
     }
 }
 

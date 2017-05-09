@@ -1307,7 +1307,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
 
     let mut attacked = Bitboard(0);
     for checker in sliders {
-        attacked = attacked | attacks::ray(checker, king).without(checker);
+        attacked |= attacks::ray(checker, king).without(checker);
     }
 
     moves.extend((attacks::king_attacks(king) & !pos.us() & !attacked).map(|to| {
