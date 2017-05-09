@@ -382,12 +382,12 @@ impl Iterator for Bitboard {
         square
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(64))
-    }
-
     fn count(self) -> usize {
         self.0.count_ones() as usize
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, Some(self.count()))
     }
 
     fn last(self) -> Option<Square> {
