@@ -1436,11 +1436,11 @@ trait Slider {
     }
 }
 
-struct KingTag { }
-struct KnightTag { }
-struct BishopTag { }
-struct RookTag { }
-struct QueenTag { }
+enum KingTag { }
+enum KnightTag { }
+enum BishopTag { }
+enum RookTag { }
+enum QueenTag { }
 
 impl Stepper for KingTag {
     const ROLE: Role = Role::King;
