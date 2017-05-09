@@ -29,9 +29,10 @@ use option_filter::OptionFilterExt;
 use arrayvec::ArrayVec;
 
 use std::fmt;
+use std::error::Error;
 
 /// Outcome of a game.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw
@@ -65,14 +66,57 @@ pub enum PositionError {
     RacingKingsMaterial,
 }
 
-pub type MoveError = ();
+impl PositionError {
+    fn desc(&self) -> &str {
+        match *self {
+            PositionError::Empty => "empty board is not legal",
+            PositionError::NoKing { color: White } => "white king missing",
+            PositionError::NoKing { color: Black } => "black king missing",
+            PositionError::TooManyPawns => "too many pawns",
+            PositionError::TooManyPieces => "too many pieces",
+            PositionError::TooManyKings => "too many kings",
+            PositionError::PawnsOnBackrank => "pawns on backrank",
+            PositionError::BadCastlingRights => "bad castling rights",
+            PositionError::InvalidEpSquare => "invalid en passant square",
+            PositionError::OppositeCheck => "opponent is in check",
+            PositionError::ThreeCheckOver => "no remaining checks",
+            PositionError::RacingKingsCheck => "check in racing kings",
+            PositionError::RacingKingsOver => "race should have ended before",
+            PositionError::RacingKingsMaterial => "illegal racing kings material",
+        }
+    }
+}
+
+impl fmt::Display for PositionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.desc().fmt(f)
+    }
+}
+
+impl Error for PositionError {
+    fn description(&self) -> &str { self.desc() }
+}
+
+/// Error in case of illegal moves.
+#[derive(Debug)]
+pub struct MoveError { }
+
+impl fmt::Display for MoveError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "illegal move".fmt(f)
+    }
+}
+
+impl Error for MoveError {
+    fn description(&self) -> &str { "illegal move" }
+}
 
 /// A stack-allocated container to hold legal moves.
 pub type MoveList = ArrayVec<[Move; 512]>;
 
 /// A legal chess or chess variant position. See `Chess` and
 /// `shakmaty::variants` for concrete implementations.
-pub trait Position : Setup + Default + Clone {
+pub trait Position: Setup + Default + Clone {
     /// Whether or not promoted pieces are special in the respective chess
     /// variant. For example in Crazyhouse a promoted queen should be marked
     /// as `Q~` in FENs and will become a pawn when captured.
@@ -177,7 +221,7 @@ pub trait Position : Setup + Default + Clone {
         if self.is_legal(m) {
             Ok(self.play_unchecked(m))
         } else {
-            Err(())
+            Err(MoveError {})
         }
     }
 
@@ -192,7 +236,7 @@ pub trait Position : Setup + Default + Clone {
 }
 
 /// A standard Chess position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Chess {
     board: Board,
     turn: Color,
@@ -285,7 +329,7 @@ impl Position for Chess {
 }
 
 /// A Crazyhouse position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Crazyhouse {
     board: Board,
     pockets: Pockets,
@@ -407,7 +451,7 @@ impl Position for Crazyhouse {
 }
 
 /// A King of the Hill position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct KingOfTheHill {
     board: Board,
     turn: Color,
@@ -492,7 +536,7 @@ impl Position for KingOfTheHill {
 }
 
 /// A Giveaway position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Giveaway {
     board: Board,
     turn: Color,
@@ -599,7 +643,7 @@ impl Position for Giveaway {
 }
 
 /// A Three Check position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ThreeCheck {
     board: Board,
     turn: Color,
@@ -702,7 +746,7 @@ impl Position for ThreeCheck {
 }
 
 /// A Horde position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Horde {
     board: Board,
     turn: Color,
@@ -819,7 +863,7 @@ impl Position for Horde {
 }
 
 /// An Atomic Chess position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Atomic {
     board: Board,
     turn: Color,
@@ -979,7 +1023,7 @@ impl Position for Atomic {
 }
 
 /// A Racing kings position.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct RacingKings {
     board: Board,
     turn: Color,

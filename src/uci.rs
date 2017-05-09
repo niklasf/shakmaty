@@ -158,10 +158,10 @@ impl Uci {
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, MoveError> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {
-                let role = pos.board().role_at(from).ok_or(())?;
+                let role = pos.board().role_at(from).ok_or(MoveError {})?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(())
+                    return Err(MoveError {})
                 }
 
                 if role == Role::King && pos.castling_rights().contains(to) {
@@ -180,13 +180,13 @@ impl Uci {
                 }
             },
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(())
+            Uci::Null => return Err(MoveError {})
         };
 
         if pos.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(())
+            Err(MoveError {})
         }
     }
 }
