@@ -262,44 +262,56 @@ impl fmt::Debug for Bitboard {
     }
 }
 
-impl ops::BitAnd<Bitboard> for Bitboard {
+impl From<Square> for Bitboard {
+    fn from(sq: Square) -> Bitboard {
+        Bitboard::from_square(sq)
+    }
+}
+
+impl<T> ops::BitAnd<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
-    fn bitand(self, Bitboard(rhs): Bitboard) -> Bitboard {
+    fn bitand(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 & rhs)
     }
 }
 
-impl ops::BitAndAssign<Bitboard> for Bitboard {
-    fn bitand_assign(&mut self, Bitboard(rhs): Bitboard) {
+impl<T> ops::BitAndAssign<T> for Bitboard where T: Into<Bitboard> {
+    fn bitand_assign(&mut self, rhs: T) {
+        let Bitboard(rhs) = rhs.into();
         self.0 &= rhs;
     }
 }
 
-impl ops::BitOr<Bitboard> for Bitboard {
+impl<T> ops::BitOr<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
-    fn bitor(self, Bitboard(rhs): Bitboard) -> Bitboard {
+    fn bitor(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 | rhs)
     }
 }
 
-impl ops::BitOrAssign<Bitboard> for Bitboard {
-    fn bitor_assign(&mut self, Bitboard(rhs): Bitboard) {
+impl<T> ops::BitOrAssign<T> for Bitboard where T: Into<Bitboard> {
+    fn bitor_assign(&mut self, rhs: T) {
+        let Bitboard(rhs) = rhs.into();
         self.0 |= rhs;
     }
 }
 
-impl ops::BitXor<Bitboard> for Bitboard {
+impl<T> ops::BitXor<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
-    fn bitxor(self, Bitboard(rhs): Bitboard) -> Bitboard {
+    fn bitxor(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 ^ rhs)
     }
 }
 
-impl ops::BitXorAssign<Bitboard> for Bitboard {
-    fn bitxor_assign(&mut self, Bitboard(rhs): Bitboard) {
+impl<T> ops::BitXorAssign<T> for Bitboard where T: Into<Bitboard> {
+    fn bitxor_assign(&mut self, rhs: T) {
+        let Bitboard(rhs) = rhs.into();
         self.0 ^= rhs;
     }
 }
