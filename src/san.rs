@@ -70,6 +70,59 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use option_filter::OptionFilterExt;
 use std::str::FromStr;
+use std::error::Error;
+
+/// Error when parsing a syntactially invalid SAN.
+pub struct InvalidSan { _priv: () }
+
+impl fmt::Debug for InvalidSan {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("InvalidSan").finish()
+    }
+}
+
+impl fmt::Display for InvalidSan {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "invalid san".fmt(f)
+    }
+}
+
+impl Error for InvalidSan {
+    fn description(&self) -> &str { "invalid san" }
+}
+
+impl From<()> for InvalidSan {
+    fn from(_: ()) -> InvalidSan {
+        InvalidSan { _priv: () }
+    }
+}
+
+/// `IllegalSan` or `AmbiguousSan`.
+#[derive(Debug)]
+pub enum SanError {
+    IllegalSan,
+    AmbiguousSan,
+}
+
+impl SanError {
+    fn desc(&self) -> &str {
+        match *self {
+            SanError::IllegalSan => "illegal san",
+            SanError::AmbiguousSan => "ambiguous san",
+        }
+    }
+}
+
+impl fmt::Display for SanError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.desc().fmt(f)
+    }
+}
+
+impl Error for SanError {
+    fn description(&self) -> &str { self.desc() }
+}
+
 
 /// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -89,9 +142,9 @@ pub struct SanPlus {
 }
 
 impl FromStr for San {
-    type Err = ();
+    type Err = InvalidSan;
 
-    fn from_str(san: &str) -> Result<San, Self::Err> {
+    fn from_str(san: &str) -> Result<San, InvalidSan> {
         let san = san.trim_right_matches('#').trim_right_matches('+');
         if san == "--" {
             Ok(San::Null)
@@ -109,7 +162,7 @@ impl FromStr for San {
                     to: san[2..].parse().map_err(|_| ())?,
                 })
             } else {
-                Err(())
+                Err(InvalidSan { _priv: () })
             }
         } else {
             let mut chars = san.chars();
@@ -154,7 +207,7 @@ impl FromStr for San {
             let promotion = match next {
                 Some('=') =>
                     Some(chars.next().and_then(|r| Role::from_char(r.to_ascii_lowercase())).ok_or(())?),
-                Some(_) => return Err(()),
+                Some(_) => return Err(InvalidSan { _priv: () }),
                 None => None,
             };
 
@@ -197,9 +250,9 @@ impl fmt::Display for San {
 }
 
 impl FromStr for SanPlus {
-    type Err = ();
+    type Err = InvalidSan;
 
-    fn from_str(san: &str) -> Result<SanPlus, Self::Err> {
+    fn from_str(san: &str) -> Result<SanPlus, InvalidSan> {
         San::from_str(san).map(|result| {
             SanPlus {
                 san: result,
@@ -220,13 +273,6 @@ impl fmt::Display for SanPlus {
             write!(f, "{}", self.san)
         }
     }
-}
-
-/// `IllegalSan` or `AmbiguousSan`.
-#[derive(Debug)]
-pub enum SanError {
-    IllegalSan,
-    AmbiguousSan,
 }
 
 impl San {
