@@ -45,6 +45,7 @@ impl Error for SquareParseError {
 pub struct Square(i8);
 
 impl Square {
+    /// Try to create a `Square` from an integer index (`0` - `63`).
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
             Some(Square(index))
@@ -53,11 +54,18 @@ impl Square {
         }
     }
 
+    /// Create a square from an integer index in the range `0` to `63`.
+    ///
+    /// # Panics
+    ///
+    /// In debug mode, panics if the index is out of range. In release mode
+    /// panics might be caused when using invalid Squares.
     pub fn from_index_unchecked(index: i8) -> Square {
         debug_assert!(0 <= index && index < 64);
         Square(index)
     }
 
+    /// Try to create a square from zero-based file and rank indices.
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
             Some(Square(file | (rank << 3)))
@@ -98,6 +106,7 @@ impl Square {
     }
 }
 
+/// Converts `'a'` - `'h'` to `0` - `7`.
 pub fn file_from_char(ch: char) -> Option<i8> {
     if 'a' <= ch && ch <= 'h' {
         Some(ch as i8 - b'a' as i8)
@@ -106,6 +115,7 @@ pub fn file_from_char(ch: char) -> Option<i8> {
     }
 }
 
+/// Converts `'1'` - `'8'` to `0` - `7`.
 pub fn rank_from_char(ch: char) -> Option<i8> {
     if '1' <= ch && ch <= '8' {
         Some(ch as i8 - b'1' as i8)
