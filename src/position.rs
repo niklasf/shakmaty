@@ -99,15 +99,15 @@ impl Error for PositionError {
 
 /// Error in case of illegal moves.
 #[derive(Debug)]
-pub struct MoveError { }
+pub struct IllegalMove { }
 
-impl fmt::Display for MoveError {
+impl fmt::Display for IllegalMove {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "illegal move".fmt(f)
     }
 }
 
-impl Error for MoveError {
+impl Error for IllegalMove {
     fn description(&self) -> &str { "illegal move" }
 }
 
@@ -217,11 +217,11 @@ pub trait Position: Setup + Default + Clone {
 
     /// Validates and plays a move. Accepts only legal moves and
     /// safe null moves.
-    fn play(self, m: &Move) -> Result<Self, MoveError> {
+    fn play(self, m: &Move) -> Result<Self, IllegalMove> {
         if self.is_legal(m) {
             Ok(self.play_unchecked(m))
         } else {
-            Err(MoveError {})
+            Err(IllegalMove {})
         }
     }
 

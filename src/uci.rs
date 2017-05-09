@@ -72,7 +72,7 @@ use std::error::Error;
 use square;
 use square::Square;
 use types::{Role, Move};
-use position::{Position, MoveError};
+use position::{Position, IllegalMove};
 
 /// Error when parsing an invalid UCI.
 pub struct UciError { _priv: () }
@@ -175,13 +175,13 @@ impl From<Move> for Uci {
 impl Uci {
     /// Tries to convert the `Uci` to a legal `Move` in the context of a
     /// position.
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, MoveError> {
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMove> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {
-                let role = pos.board().role_at(from).ok_or(MoveError {})?;
+                let role = pos.board().role_at(from).ok_or(IllegalMove {})?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(MoveError {})
+                    return Err(IllegalMove {})
                 }
 
                 if role == Role::King && pos.castling_rights().contains(to) {
@@ -200,13 +200,13 @@ impl Uci {
                 }
             },
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(MoveError {})
+            Uci::Null => return Err(IllegalMove {})
         };
 
         if pos.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(MoveError {})
+            Err(IllegalMove {})
         }
     }
 }
