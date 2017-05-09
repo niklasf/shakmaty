@@ -267,8 +267,8 @@ impl Board {
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         self.piece_at(sq).map(|piece| {
             self.occupied.flip(sq);
-            self.mut_by_color(piece.color).flip(sq);
-            self.mut_by_role(piece.role).flip(sq);
+            self.by_color_mut(piece.color).flip(sq);
+            self.by_role_mut(piece.role).flip(sq);
             self.promoted.discard(sq);
             piece
         })
@@ -277,8 +277,8 @@ impl Board {
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
         self.remove_piece_at(sq);
         self.occupied.flip(sq);
-        self.mut_by_color(color).flip(sq);
-        self.mut_by_role(role).flip(sq);
+        self.by_color_mut(color).flip(sq);
+        self.by_role_mut(role).flip(sq);
         if promoted {
             self.promoted.flip(sq);
         }
@@ -288,7 +288,7 @@ impl Board {
         color.fold(self.white, self.black)
     }
 
-    fn mut_by_color(&mut self, color: Color) -> &mut Bitboard {
+    fn by_color_mut(&mut self, color: Color) -> &mut Bitboard {
         color.fold(&mut self.white, &mut self.black)
     }
 
@@ -303,7 +303,7 @@ impl Board {
         }
     }
 
-    fn mut_by_role(&mut self, role: Role) -> &mut Bitboard {
+    fn by_role_mut(&mut self, role: Role) -> &mut Bitboard {
         match role {
             Role::Pawn   => &mut self.pawns,
             Role::Knight => &mut self.knights,

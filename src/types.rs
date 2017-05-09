@@ -211,7 +211,7 @@ impl Pocket {
         }
     }
 
-    pub fn mut_by_role(&mut self, role: Role) -> &mut u8 {
+    pub fn by_role_mut(&mut self, role: Role) -> &mut u8 {
         match role {
             Role::Pawn   => &mut self.pawns,
             Role::Knight => &mut self.knights,
@@ -243,7 +243,7 @@ impl Pockets {
         color.fold(&self.white, &self.black)
     }
 
-    pub fn mut_by_color(&mut self, color: Color) -> &mut Pocket {
+    pub fn by_color_mut(&mut self, color: Color) -> &mut Pocket {
         color.fold(&mut self.white, &mut self.black)
     }
 
@@ -251,16 +251,16 @@ impl Pockets {
         self.by_color(piece.color).by_role(piece.role)
     }
 
-    pub fn mut_by_piece(&mut self, piece: &Piece) -> &mut u8 {
-        self.mut_by_color(piece.color).mut_by_role(piece.role)
+    pub fn by_piece_mut(&mut self, piece: &Piece) -> &mut u8 {
+        self.by_color_mut(piece.color).by_role_mut(piece.role)
     }
 
     pub fn add(&mut self, piece: Piece) {
-        *self.mut_by_piece(&piece) = self.by_piece(&piece).saturating_add(1);
+        *self.by_piece_mut(&piece) = self.by_piece(&piece).saturating_add(1);
     }
 
     pub fn remove(&mut self, piece: &Piece) {
-        *self.mut_by_piece(piece) = self.by_piece(piece).saturating_sub(1);
+        *self.by_piece_mut(piece) = self.by_piece(piece).saturating_sub(1);
     }
 
     pub fn count(&self) -> u8 {
@@ -299,12 +299,12 @@ impl RemainingChecks {
         color.fold(self.white, self.black)
     }
 
-    pub fn mut_by_color(&mut self, color: Color) -> &mut u8 {
+    pub fn by_color_mut(&mut self, color: Color) -> &mut u8 {
         color.fold(&mut self.white, &mut self.black)
     }
 
     pub fn subtract(&mut self, color: Color) {
-        *self.mut_by_color(color) = self.by_color(color).saturating_sub(1);
+        *self.by_color_mut(color) = self.by_color(color).saturating_sub(1);
     }
 }
 
