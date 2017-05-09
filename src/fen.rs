@@ -118,7 +118,7 @@ impl Fen {
     pub fn empty() -> Fen {
         Fen {
             board: Board::empty(),
-            castling_rights: Bitboard::empty(),
+            castling_rights: Bitboard(0),
             ..Fen::default()
         }
     }

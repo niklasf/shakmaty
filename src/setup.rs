@@ -63,14 +63,14 @@ pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
                      & Bitboard::relative_rank(color, 0)
                      & bitboard::CORNERS
         } else {
-            Bitboard::empty()
+            Bitboard(0)
         }
     };
 
     let clean_loose = |color: Color| -> Bitboard {
         if let Some(king) = setup.board().king_of(color) {
             if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
-                return Bitboard::empty()
+                return Bitboard(0)
             }
 
             let castling = castling & setup.board().by_color(color) &
@@ -81,7 +81,7 @@ pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
 
             Bitboard::from_iter(a_side) | Bitboard::from_iter(h_side)
         } else {
-            Bitboard::empty()
+            Bitboard(0)
         }
     };
 

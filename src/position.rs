@@ -331,7 +331,7 @@ impl Crazyhouse {
             let king = self.our(Role::King).first().expect("has a king");
             return attacks::between(checker, king)
         } else {
-            Bitboard::empty()
+            Bitboard(0)
         }
     }
 }
@@ -507,7 +507,7 @@ impl Default for Giveaway {
         Giveaway {
             board: Board::default(),
             turn: White,
-            castling_rights: Bitboard::empty(),
+            castling_rights: Bitboard(0),
             ep_square: None,
             halfmove_clock: 0,
             fullmoves: 1,
@@ -909,7 +909,7 @@ impl Position for Atomic {
 
     fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
         if (attacks::king_attacks(square) & self.board().by_piece(&attacker.king())).any() {
-            Bitboard::empty()
+            Bitboard(0)
         } else {
             self.board().by_color(attacker) & self.board().attacks_to(square)
         }
@@ -1004,7 +1004,7 @@ impl Setup for RacingKings {
     fn board(&self) -> &Board { &self.board }
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { Bitboard::empty() }
+    fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
@@ -1016,7 +1016,7 @@ impl Position for RacingKings {
     const KING_PROMOTIONS: bool = false;
 
     fn play_unchecked(mut self, m: &Move) -> RacingKings {
-        let mut fake_castling_rights = Bitboard::empty();
+        let mut fake_castling_rights = Bitboard(0);
         do_move(&mut self.board, &mut self.turn, &mut fake_castling_rights,
                 &mut self.ep_square, &mut self.halfmove_clock,
                 &mut self.fullmoves, m);

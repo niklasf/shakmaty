@@ -124,7 +124,7 @@ impl Board {
             black: Bitboard(0xf0f),
             white: Bitboard(0xf0f0),
 
-            pawns: Bitboard::empty(),
+            pawns: Bitboard(0),
             knights: Bitboard(0x1818),
             bishops: Bitboard(0x2424),
             rooks: Bitboard(0x4242),

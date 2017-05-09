@@ -49,18 +49,13 @@ extern "platform-intrinsic" {
 ///
 /// assert_eq!(mask.first(), Some(square::A3));
 /// ```
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
 
 impl Bitboard {
     /// A bitboard with a single square.
     pub fn from_square(sq: Square) -> Bitboard {
         Bitboard(1 << sq.index())
-    }
-
-    /// An empty bitboard.
-    pub const fn empty() -> Bitboard {
-        Bitboard(0)
     }
 
     /// A bitboard containing all squares.
@@ -271,8 +266,7 @@ impl ops::BitAnd<Bitboard> for Bitboard {
     type Output = Bitboard;
 
     fn bitand(self, Bitboard(rhs): Bitboard) -> Bitboard {
-        let Bitboard(lhs) = self;
-        Bitboard(lhs & rhs)
+        Bitboard(self.0 & rhs)
     }
 }
 
@@ -286,8 +280,13 @@ impl ops::BitOr<Bitboard> for Bitboard {
     type Output = Bitboard;
 
     fn bitor(self, Bitboard(rhs): Bitboard) -> Bitboard {
-        let Bitboard(lhs) = self;
-        Bitboard(lhs | rhs)
+        Bitboard(self.0 | rhs)
+    }
+}
+
+impl ops::BitOrAssign<Bitboard> for Bitboard {
+    fn bitor_assign(&mut self, Bitboard(rhs): Bitboard) {
+        self.0 |= rhs;
     }
 }
 
@@ -295,8 +294,13 @@ impl ops::BitXor<Bitboard> for Bitboard {
     type Output = Bitboard;
 
     fn bitxor(self, Bitboard(rhs): Bitboard) -> Bitboard {
-        let Bitboard(lhs) = self;
-        Bitboard(lhs ^ rhs)
+        Bitboard(self.0 ^ rhs)
+    }
+}
+
+impl ops::BitXorAssign<Bitboard> for Bitboard {
+    fn bitxor_assign(&mut self, Bitboard(rhs): Bitboard) {
+        self.0 ^= rhs;
     }
 }
 
@@ -315,6 +319,14 @@ impl FromIterator<Square> for Bitboard {
             result.add(square);
         }
         result
+    }
+}
+
+impl Extend<Square> for Bitboard {
+    fn extend<T: IntoIterator<Item=Square>>(&mut self, iter: T) {
+        for square in iter {
+            self.add(square);
+        }
     }
 }
 
@@ -357,6 +369,7 @@ impl DoubleEndedIterator for Bitboard {
 }
 
 /// Iterator over the subsets of a `Bitboard`.
+#[derive(Debug)]
 pub struct CarryRippler {
     bb: u64,
     subset: u64,
