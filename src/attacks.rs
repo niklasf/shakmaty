@@ -91,7 +91,7 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
         let mask = range & !edges;
         masks[s as usize] = mask;
 
-        for subset in mask.subsets() {
+        for subset in mask.carry_rippler() {
             let index = indexes[s as usize] + subset.extract(mask) as usize;
             attacks[index] = sliding_attacks(sq, subset, deltas).extract(range) as u16;
         }

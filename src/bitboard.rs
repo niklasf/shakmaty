@@ -236,7 +236,7 @@ impl Bitboard {
     }
 
     /// An iterator over the subsets of this bitboard.
-    pub fn subsets(self) -> CarryRippler {
+    pub fn carry_rippler(self) -> CarryRippler {
         CarryRippler::new(self)
     }
 }
