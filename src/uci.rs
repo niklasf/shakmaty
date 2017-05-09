@@ -151,9 +151,9 @@ impl fmt::Display for Uci {
     }
 }
 
-impl<'a> Into<Uci> for &'a Move {
-    fn into(self) -> Uci {
-        match *self {
+impl<'a> From<&'a Move> for Uci {
+    fn from(m: &'a Move) -> Uci {
+        match *m {
             Move::Normal { from, to, promotion, .. } =>
                 Uci::Normal { from, to, promotion },
             Move::EnPassant { from, to, .. } =>
@@ -166,9 +166,9 @@ impl<'a> Into<Uci> for &'a Move {
     }
 }
 
-impl Into<Uci> for Move {
-    fn into(self) -> Uci {
-        (&self).into()
+impl From<Move> for Uci {
+    fn from(m: Move) -> Uci {
+        (&m).into()
     }
 }
 
