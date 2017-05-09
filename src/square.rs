@@ -22,21 +22,21 @@ use std::str;
 use std::error::Error;
 
 /// Error when parsing an invalid square name.
-pub struct SquareParseError { _priv: () }
+pub struct InvalidSquareName { _priv: () }
 
-impl fmt::Debug for SquareParseError {
+impl fmt::Debug for InvalidSquareName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("SquareParseError").finish()
+        f.debug_struct("InvalidSquareName").finish()
     }
 }
 
-impl fmt::Display for SquareParseError {
+impl fmt::Display for InvalidSquareName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "invalid square name".fmt(f)
     }
 }
 
-impl Error for SquareParseError {
+impl Error for InvalidSquareName {
     fn description(&self) -> &str { "invalid square name" }
 }
 
@@ -125,22 +125,22 @@ pub fn rank_from_char(ch: char) -> Option<i8> {
 }
 
 impl str::FromStr for Square {
-    type Err = SquareParseError;
+    type Err = InvalidSquareName;
 
-    fn from_str(s: &str) -> Result<Square, SquareParseError> {
+    fn from_str(s: &str) -> Result<Square, InvalidSquareName> {
         if s.len() != 2 {
-            return Err(SquareParseError { _priv: () })
+            return Err(InvalidSquareName { _priv: () })
         }
 
         let file = s.chars().nth(0)
                     .and_then(file_from_char)
-                    .ok_or(SquareParseError { _priv: () })?;
+                    .ok_or(InvalidSquareName { _priv: () })?;
 
         let rank = s.chars().nth(1)
                     .and_then(rank_from_char)
-                    .ok_or(SquareParseError { _priv: () })?;
+                    .ok_or(InvalidSquareName { _priv: () })?;
 
-        Square::from_coords(file, rank).ok_or(SquareParseError { _priv: () })
+        Square::from_coords(file, rank).ok_or(InvalidSquareName { _priv: () })
     }
 }
 
