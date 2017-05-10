@@ -117,13 +117,15 @@ pub fn attacks(sq: Square, piece: &Piece, occupied: Bitboard) -> Bitboard {
 /// ```
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
-    Bitboard(BB_RAYS[a.index() as usize][b.index() as usize])
+    let idx = (a.index() as usize) * 64 + b.index() as usize;
+    unsafe { Bitboard(*BB_RAYS.get_unchecked(idx)) }
 }
 
 /// Like `ray`, but just the squares in-between (exluding the bounds).
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
-    Bitboard(BB_BETWEEN[a.index() as usize][b.index() as usize])
+    let idx = (a.index() as usize) * 64 + b.index() as usize;
+    unsafe { Bitboard(*BB_BETWEEN.get_unchecked(idx)) }
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.

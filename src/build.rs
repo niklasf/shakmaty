@@ -93,18 +93,6 @@ fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: 
     write!(w, "];\n")
 }
 
-fn dump_rays<W: Write>(w: &mut W, name: &str, table: [[Bitboard; 64]; 64]) -> io::Result<()> {
-    try!(write!(w, "const {}: [[u64; 64]; 64] = [", name));
-    for a in 0..64 {
-        try!(write!(w, "["));
-        for b in 0..64 {
-            try!(write!(w, "0x{:x}, ", table[a][b]));
-        }
-        try!(write!(w, "], "));
-    }
-    write!(w, "];\n")
-}
-
 fn main() {
     generate().unwrap()
 }
@@ -129,8 +117,8 @@ fn generate() -> io::Result<()> {
     let mut bishop_ranges = [Bitboard(0); 64];
     let mut bishop_attacks = [0u16; 0x1480];
 
-    let mut bb_rays = [[Bitboard(0); 64]; 64];
-    let mut bb_between = [[Bitboard(0); 64]; 64];
+    let mut bb_rays = [Bitboard(0); 4096];
+    let mut bb_between = [Bitboard(0); 4096];
 
     for s in 0..64 {
         let sq = Square::from_index_unchecked(s as i8);
@@ -151,19 +139,20 @@ fn generate() -> io::Result<()> {
 
         for b in 0..64 {
             let sb = Square::from_index_unchecked(b as i8);
+            let idx = a * 64 + b;
 
             if sliding_bishop_attacks(sa, Bitboard(0)).contains(sb) {
-                bb_rays[a][b] =
+                bb_rays[idx] =
                     (sliding_bishop_attacks(sa, Bitboard(0)) &
                      sliding_bishop_attacks(sb, Bitboard(0))).with(sa).with(sb);
-                bb_between[a][b] =
+                bb_between[idx] =
                     sliding_bishop_attacks(sa, Bitboard::from_square(sb)) &
                     sliding_bishop_attacks(sb, Bitboard::from_square(sa));
             } else if sliding_rook_attacks(sa, Bitboard(0)).contains(sb) {
-                bb_rays[a][b] =
+                bb_rays[idx] =
                     (sliding_rook_attacks(sa, Bitboard(0)) &
                      sliding_rook_attacks(sb, Bitboard(0))).with(sa).with(sb);
-                bb_between[a][b] =
+                bb_between[idx] =
                     sliding_rook_attacks(sa, Bitboard::from_square(sb)) &
                     sliding_rook_attacks(sb, Bitboard::from_square(sa));
             }
@@ -191,8 +180,8 @@ fn generate() -> io::Result<()> {
 
     try!(write!(f, "\n"));
 
-    dump_rays(&mut f, "BB_RAYS", bb_rays)?;
-    dump_rays(&mut f, "BB_BETWEEN", bb_between)?;
+    dump_slice(&mut f, "BB_RAYS", "u64", &bb_rays)?;
+    dump_slice(&mut f, "BB_BETWEEN", "u64", &bb_between)?;
 
     Ok(())
 }
