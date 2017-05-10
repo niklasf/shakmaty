@@ -6,11 +6,11 @@ repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
 license = "GPL-3.0+"
 authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
-categories = [ "games", "parsing" ]
-keywords = [ "chess" ]
+categories = ["games", "parsing"]
+keywords = ["chess"]
+build = "src/build.rs"
 
 [dependencies]
-lazy_static = "0.2"
 option-filter = "1.0"
 
 [dependencies.arrayvec]
