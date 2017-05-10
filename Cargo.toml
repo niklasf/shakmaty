@@ -5,9 +5,9 @@ description = "A library for chess move generation"
 repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
 license = "GPL-3.0+"
-authors = [ "Niklas Fiekas <niklas.fiekas@backscattering.de>" ]
-categories = [ "games", "parsing" ]
-keywords = [ "chess" ]
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+categories = ["games", "parsing"]
+keywords = ["chess"]
 
 [dependencies]
 lazy_static = "0.2"
@@ -15,7 +15,7 @@ option-filter = "1.0"
 
 [dependencies.arrayvec]
 version = "0.3"
-features = [ "use_union" ]
+features = ["use_union"]
 
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }
