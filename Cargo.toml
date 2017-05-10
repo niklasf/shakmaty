@@ -17,5 +17,9 @@ option-filter = "1.0"
 version = "0.3"
 features = ["use_union"]
 
+[profile.release]
+opt-level = 3
+debug = false
+
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }
