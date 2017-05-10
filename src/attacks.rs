@@ -47,35 +47,39 @@ include!(concat!(env!("OUT_DIR"), "/attacks.rs"));
 #[inline]
 pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
     Bitboard(match color {
-        Color::White => WHITE_PAWN_ATTACKS[sq.index() as usize],
-        Color::Black => BLACK_PAWN_ATTACKS[sq.index() as usize],
+        Color::White => unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
+        Color::Black => unsafe { *BLACK_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
     })
 }
 
 #[inline]
 pub fn knight_attacks(sq: Square) -> Bitboard {
-    Bitboard(KNIGHT_ATTACKS[sq.index() as usize])
+    unsafe { Bitboard(*KNIGHT_ATTACKS.get_unchecked(sq.index() as usize)) }
 }
 
 #[inline]
 pub fn king_attacks(sq: Square) -> Bitboard {
-    Bitboard(KING_ATTACKS[sq.index() as usize])
+    unsafe { Bitboard(*KING_ATTACKS.get_unchecked(sq.index() as usize)) }
 }
 
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let mask = Bitboard(ROOK_MASKS[sq.index() as usize]);
-    let range = Bitboard(ROOK_RANGES[sq.index() as usize]);
-    let index = ROOK_INDEXES[sq.index() as usize] + occupied.extract(mask) as usize;
-    Bitboard::deposit(ROOK_ATTACKS[index] as u64, range)
+    unsafe {
+        let mask = Bitboard(*ROOK_MASKS.get_unchecked(sq.index() as usize));
+        let range = Bitboard(*ROOK_RANGES.get_unchecked(sq.index() as usize));
+        let index = *ROOK_INDEXES.get_unchecked(sq.index() as usize) + occupied.extract(mask) as usize;
+        Bitboard::deposit(*ROOK_ATTACKS.get_unchecked(index) as u64, range)
+    }
 }
 
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let mask = Bitboard(BISHOP_MASKS[sq.index() as usize]);
-    let range = Bitboard(BISHOP_RANGES[sq.index() as usize]);
-    let index = BISHOP_INDEXES[sq.index() as usize] + occupied.extract(mask) as usize;
-    Bitboard::deposit(BISHOP_ATTACKS[index] as u64, range)
+    unsafe {
+        let mask = Bitboard(*BISHOP_MASKS.get_unchecked(sq.index() as usize));
+        let range = Bitboard(*BISHOP_RANGES.get_unchecked(sq.index() as usize));
+        let index = *BISHOP_INDEXES.get_unchecked(sq.index() as usize) + occupied.extract(mask) as usize;
+        Bitboard::deposit(*BISHOP_ATTACKS.get_unchecked(index) as u64, range)
+    }
 }
 
 #[inline]
