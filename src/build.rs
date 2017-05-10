@@ -2,6 +2,8 @@
 #![feature(platform_intrinsics)]
 #![feature(const_fn)]
 
+#![allow(dead_code)]
+
 use std::env;
 use std::fs::File;
 use std::io;
