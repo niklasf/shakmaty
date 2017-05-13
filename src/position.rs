@@ -1586,3 +1586,23 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
         _ => false
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+    use fen::Fen;
+
+    #[bench]
+    fn generate_moves(b: &mut Bencher) {
+        let mut moves = MoveList::new();
+        let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
+        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
+                            .position().expect("legal position");
+
+        b.iter(|| {
+            pos.legal_moves(&mut moves);
+            moves.drain(..);
+        })
+    }
+}
