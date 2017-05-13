@@ -47,8 +47,10 @@ include!(concat!(env!("OUT_DIR"), "/attacks.rs"));
 #[inline]
 pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
     Bitboard(match color {
-        Color::White => unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
-        Color::Black => unsafe { *BLACK_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
+        Color::White =>
+            unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
+        Color::Black =>
+            unsafe { *BLACK_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
     })
 }
 
@@ -67,7 +69,9 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     unsafe {
         let mask = Bitboard(*ROOK_MASKS.get_unchecked(sq.index() as usize));
         let range = Bitboard(*ROOK_RANGES.get_unchecked(sq.index() as usize));
-        let index = *ROOK_INDEXES.get_unchecked(sq.index() as usize) + occupied.extract(mask) as usize;
+        let index = *ROOK_INDEXES.get_unchecked(sq.index() as usize) +
+                    occupied.extract(mask) as usize;
+
         Bitboard::deposit(*ROOK_ATTACKS.get_unchecked(index) as u64, range)
     }
 }
@@ -77,7 +81,8 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     unsafe {
         let mask = Bitboard(*BISHOP_MASKS.get_unchecked(sq.index() as usize));
         let range = Bitboard(*BISHOP_RANGES.get_unchecked(sq.index() as usize));
-        let index = *BISHOP_INDEXES.get_unchecked(sq.index() as usize) + occupied.extract(mask) as usize;
+        let index = *BISHOP_INDEXES.get_unchecked(sq.index() as usize) +
+                    occupied.extract(mask) as usize;
         Bitboard::deposit(*BISHOP_ATTACKS.get_unchecked(index) as u64, range)
     }
 }
@@ -141,6 +146,7 @@ mod tests {
 
     #[test]
     fn test_rook_attacks() {
-        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)), Bitboard(0x8370808000000));
+        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)),
+                   Bitboard(0x8370808000000));
     }
 }
