@@ -14,7 +14,8 @@ build = "src/build.rs"
 option-filter = "1.0"
 
 [dependencies.arrayvec]
-version = "0.3"
+git = "https://github.com/niklasf/arrayvec.git"
+branch = "push-unchecked"
 features = ["use_union"]
 
 [profile.release]
