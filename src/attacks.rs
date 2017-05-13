@@ -46,6 +46,7 @@ include!(concat!(env!("OUT_DIR"), "/attacks.rs"));
 
 #[inline]
 pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
+    // This is safe because properly constructed squares are in bounds.
     Bitboard(match color {
         Color::White =>
             unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
@@ -56,22 +57,27 @@ pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
 
 #[inline]
 pub fn knight_attacks(sq: Square) -> Bitboard {
+    // This is safe because properly constructed squares are in bounds.
     unsafe { Bitboard(*KNIGHT_ATTACKS.get_unchecked(sq.index() as usize)) }
 }
 
 #[inline]
 pub fn king_attacks(sq: Square) -> Bitboard {
+    // This is safe because properly constructed squares are in bounds.
     unsafe { Bitboard(*KING_ATTACKS.get_unchecked(sq.index() as usize)) }
 }
 
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     unsafe {
+        // This is safe because properly constructed squares are in bounds.
         let mask = Bitboard(*ROOK_MASKS.get_unchecked(sq.index() as usize));
         let range = Bitboard(*ROOK_RANGES.get_unchecked(sq.index() as usize));
         let index = *ROOK_INDEXES.get_unchecked(sq.index() as usize) +
                     occupied.extract(mask) as usize;
 
+        // This is safe because a sufficient size for the attack tables was
+        // hand-selected.
         Bitboard::deposit(*ROOK_ATTACKS.get_unchecked(index) as u64, range)
     }
 }
@@ -79,10 +85,14 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     unsafe {
+        // This is safe because properly constructed squares are in bounds.
         let mask = Bitboard(*BISHOP_MASKS.get_unchecked(sq.index() as usize));
         let range = Bitboard(*BISHOP_RANGES.get_unchecked(sq.index() as usize));
         let index = *BISHOP_INDEXES.get_unchecked(sq.index() as usize) +
                     occupied.extract(mask) as usize;
+
+        // This is safe because a sufficient size for the attack tables was
+        // hand-selected.
         Bitboard::deposit(*BISHOP_ATTACKS.get_unchecked(index) as u64, range)
     }
 }
@@ -122,6 +132,7 @@ pub fn attacks(sq: Square, piece: &Piece, occupied: Bitboard) -> Bitboard {
 /// ```
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
+    // This is safe because properly constructed squares are in bounds.
     let idx = (a.index() as usize) * 64 + b.index() as usize;
     unsafe { Bitboard(*BB_RAYS.get_unchecked(idx)) }
 }
@@ -129,6 +140,7 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// Like `ray`, but just the squares in-between (exluding the bounds).
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
+    // This is safe because properly constructed squares are in bounds.
     let idx = (a.index() as usize) * 64 + b.index() as usize;
     unsafe { Bitboard(*BB_BETWEEN.get_unchecked(idx)) }
 }
