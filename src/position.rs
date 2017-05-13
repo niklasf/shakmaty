@@ -1594,7 +1594,7 @@ mod tests {
     use fen::Fen;
 
     #[bench]
-    fn generate_moves(b: &mut Bencher) {
+    fn bench_generate_moves(b: &mut Bencher) {
         let mut moves = MoveList::new();
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
         let pos: Chess = fen.parse::<Fen>().expect("valid fen")
@@ -1604,5 +1604,24 @@ mod tests {
             pos.legal_moves(&mut moves);
             moves.drain(..);
         })
+    }
+
+    #[bench]
+    fn bench_play_unchecked(b: &mut Bencher) {
+        let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
+        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
+                            .position().expect("legal position");
+        let m = Move::Normal {
+            role: Role::Bishop,
+            from: square::F8,
+            capture: None,
+            to: square::E7,
+            promotion: None,
+        };
+
+        b.iter(|| {
+            let after = pos.clone().play_unchecked(&m);
+            assert_eq!(after.turn(), White);
+        });
     }
 }
