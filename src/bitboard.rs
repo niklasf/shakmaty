@@ -236,7 +236,11 @@ impl Bitboard {
 
     /// An iterator over the subsets of this bitboard.
     pub fn carry_rippler(self) -> CarryRippler {
-        CarryRippler::new(self)
+        CarryRippler {
+            bb: self.0,
+            subset: 0,
+            first: true,
+        }
     }
 }
 
@@ -417,12 +421,6 @@ pub struct CarryRippler {
     bb: u64,
     subset: u64,
     first: bool,
-}
-
-impl CarryRippler {
-    fn new(Bitboard(bb): Bitboard) -> CarryRippler {
-        CarryRippler { bb: bb, subset: 0, first: true }
-    }
 }
 
 impl Iterator for CarryRippler {
