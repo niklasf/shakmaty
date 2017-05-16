@@ -1596,14 +1596,14 @@ mod tests {
 
     #[bench]
     fn bench_generate_moves(b: &mut Bencher) {
-        let mut moves = MoveList::new();
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
         let pos: Chess = fen.parse::<Fen>().expect("valid fen")
                             .position().expect("legal position");
 
         b.iter(|| {
+            let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
-            moves.drain(..);
+            assert_eq!(moves.len(), 39);
         })
     }
 
