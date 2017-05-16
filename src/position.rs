@@ -1566,8 +1566,8 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
 
 fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
     match *m {
-        Move::Normal { role, from, to, .. } =>
-            if role == Role::King {
+        Move::Normal { from, to, .. } =>
+            if from == king {
                 (pos.board().attacks_to(to) & pos.them()).is_empty()
             } else {
                 !blockers.contains(from) || attacks::aligned(from, to, king)
