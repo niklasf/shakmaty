@@ -18,9 +18,5 @@ git = "https://github.com/niklasf/arrayvec.git"
 branch = "push-unchecked"
 features = ["use_union"]
 
-[profile.release]
-opt-level = 3
-debug = false
-
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }
