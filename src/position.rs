@@ -606,8 +606,8 @@ impl Position for Giveaway {
         KingTag::gen_moves(self, them, moves);
 
         if moves.is_empty() {
-            gen_non_king(self, !them, moves);
-            KingTag::gen_moves(self, !them, moves);
+            gen_non_king(self, !self.board().occupied(), moves);
+            KingTag::gen_moves(self, !self.board().occupied(), moves);
             gen_castling_moves(self, moves);
         }
     }
@@ -961,7 +961,7 @@ impl Position for Atomic {
     fn legal_moves(&self, moves: &mut MoveList) {
         // TODO: Atomic move generation could be much more efficient.
         gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
-        gen_non_king(self, Bitboard::all(), moves);
+        gen_non_king(self, !self.us(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);
         gen_castling_moves(self, moves);
 
@@ -1321,8 +1321,9 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
     let checkers = pos.checkers();
 
     if checkers.is_empty() {
-        gen_non_king(pos, Bitboard::all(), moves);
-        KingTag::gen_moves(pos, Bitboard::all(), moves);
+        let target = !pos.us();
+        gen_non_king(pos, target, moves);
+        KingTag::gen_moves(pos, target, moves);
         gen_castling_moves(pos, moves);
     }
 
@@ -1413,7 +1414,7 @@ trait Stepper {
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
         for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from) & !pos.us() & target).map(|to| {
+            moves.extend((Self::attacks(from) & target).map(|to| {
                 Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
             }));
         }
@@ -1427,7 +1428,7 @@ trait Slider {
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
         for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from, pos.board().occupied()) & !pos.us() & target).map(|to| {
+            moves.extend((Self::attacks(from, pos.board().occupied()) & target).map(|to| {
                 Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
             }));
         }
