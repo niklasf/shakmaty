@@ -23,6 +23,7 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
 use setup::Setup;
+use util;
 
 use option_filter::OptionFilterExt;
 use arrayvec::ArrayVec;
@@ -965,7 +966,7 @@ impl Position for Atomic {
         KingTag::gen_moves(self, !self.board().occupied(), moves);
         gen_castling_moves(self, moves);
 
-        moves.retain(|m| {
+        util::swap_retain(moves, |m| {
             let after = self.clone().play_unchecked(m);
             if let Some(our_king) = after.board().king_of(self.turn()) {
                 after.board().by_piece(&Role::King.of(!self.turn())).is_empty() ||
@@ -1123,7 +1124,7 @@ impl Position for RacingKings {
         }
 
         // TODO: This could be more efficient.
-        moves.retain(|m| {
+        util::swap_retain(moves, |m| {
             let after = self.clone().play_unchecked(m);
             after.checkers().is_empty()
         });
@@ -1333,7 +1334,7 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
         }
 
         let blockers = slider_blockers(pos.board(), pos.them(), king);
-        moves.retain(|m| is_safe(pos, king, m, blockers));
+        util::swap_retain(moves, |m| is_safe(pos, king, m, blockers));
     }
 }
 

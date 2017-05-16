@@ -81,6 +81,7 @@ mod bitboard;
 mod board;
 mod position;
 mod setup;
+mod util;
 
 pub mod square;
 pub mod attacks;

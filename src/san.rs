@@ -61,6 +61,7 @@
 //! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
 //! ```
 
+use util;
 use square;
 use square::Square;
 use types::{Move, Role};
@@ -283,32 +284,33 @@ impl San {
         pos.legal_moves(&mut legals);
 
         match *self {
-            San::Normal { role, file, rank, capture, to, promotion } => legals.retain(|m| match *m {
-                Move::Normal { role: r, from, capture: c, to: t, promotion: p } =>
-                    role == r &&
-                    file.map_or(true, |f| f == from.file()) &&
-                    rank.map_or(true, |r| r == from.rank()) &&
-                    capture == c.is_some() &&
-                    to == t &&
-                    promotion == p,
-                Move::EnPassant { from, to: t } =>
-                    role == Role::Pawn &&
-                    file.map_or(true, |f| f == from.file()) &&
-                    rank.map_or(true, |r| r == from.rank()) &&
-                    capture &&
-                    to == t &&
-                    promotion.is_none(),
-                _ => false,
-            }),
-            San::CastleShort => legals.retain(|m| match *m {
+            San::Normal { role, file, rank, capture, to, promotion } =>
+                util::swap_retain(&mut legals, |m| match *m {
+                    Move::Normal { role: r, from, capture: c, to: t, promotion: p } =>
+                        role == r &&
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture == c.is_some() &&
+                        to == t &&
+                        promotion == p,
+                    Move::EnPassant { from, to: t } =>
+                        role == Role::Pawn &&
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture &&
+                        to == t &&
+                        promotion.is_none(),
+                    _ => false,
+                }),
+            San::CastleShort => util::swap_retain(&mut legals, |m| match *m {
                 Move::Castle { king, rook } => king.file() < rook.file(),
                 _ => false,
             }),
-            San::CastleLong => legals.retain(|m| match *m {
+            San::CastleLong => util::swap_retain(&mut legals, |m| match *m {
                 Move::Castle { king, rook } => rook.file() < king.file(),
                 _ => false,
             }),
-            San::Put { role, to } => legals.retain(|m| match *m {
+            San::Put { role, to } => util::swap_retain(&mut legals, |m| match *m {
                 Move::Put { role: r, to: t } => role == r && to == t,
                 _ => false,
             }),
