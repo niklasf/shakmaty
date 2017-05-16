@@ -1337,7 +1337,7 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    gen_pawn_moves(pos, target, moves);
+    gen_pawn_moves(pos, target, moves, |_, _| true);
     KnightTag::gen_moves(pos, target, moves);
     BishopTag::gen_moves(pos, target, moves);
     RookTag::gen_moves(pos, target, moves);
@@ -1346,11 +1346,8 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 
 fn gen_safe_non_king<P: Position>(pos: &P, target: Bitboard, king: Square, moves: &mut MoveList) {
     let blockers = slider_blockers(pos.board(), pos.them(), king);
-    gen_pawn_moves(pos, target, moves);
-    util::swap_retain(moves, |m| match *m {
-        Move::Normal { from, to, .. } =>
-            !blockers.contains(from) || attacks::aligned(from, to, king),
-        _ => true,
+    gen_pawn_moves(pos, target, moves, |from, to| {
+        !blockers.contains(from) || attacks::aligned(from, to, king)
     });
     KnightTag::gen_safe_moves(pos, target, king, blockers, moves);
     BishopTag::gen_safe_moves(pos, target, king, blockers, moves);
@@ -1513,24 +1510,30 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+fn gen_pawn_moves<P: Position, F>(pos: &P, target: Bitboard, moves: &mut MoveList, f: F)
+    where F: Fn(Square, Square) -> bool
+{
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
     for from in pos.our(Role::Pawn) & !seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            moves.push(Move::Normal {
-                role: Role::Pawn,
-                from,
-                capture: pos.board().role_at(to),
-                to,
-                promotion: None
-            });
+            if f(from, to) {
+                moves.push(Move::Normal {
+                    role: Role::Pawn,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None
+                });
+            }
         }
     }
 
     for from in seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            push_promotions::<P>(moves, from, to, pos.board().role_at(to));
+            if f(from, to) {
+                push_promotions::<P>(moves, from, to, pos.board().role_at(to));
+            }
         }
     }
 
@@ -1543,19 +1546,25 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
 
     for to in single_moves & target & !bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+            if f(from, to) {
+                moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+            }
         }
     }
 
     for to in single_moves & target & bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            push_promotions::<P>(moves, from, to, None);
+            if f(from, to) {
+                push_promotions::<P>(moves, from, to, None);
+            }
         }
     }
 
     for to in double_moves & target {
         if let Some(from) = to.offset(pos.turn().fold(-16, 16)) {
-            moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+            if f(from, to) {
+                moves.push(Move::Normal { role: Role::Pawn, from, capture: None, to, promotion: None });
+            }
         }
     }
 }
