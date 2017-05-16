@@ -1460,11 +1460,19 @@ trait Slider {
     }
 
     fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) {
-            moves.extend(
-                (Self::attacks(from, pos.board().occupied()) & target)
-                    .filter(|to| !blockers.contains(from) || attacks::aligned(from, *to, king))
-                    .map(|to| Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }));
+        let pieces = pos.our(Self::ROLE);
+
+        for from in pieces & !blockers {
+            moves.extend((Self::attacks(from, pos.board().occupied()) & target).map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
+            }));
+        }
+
+        for from in pieces & blockers {
+            let safe = Self::attacks(from, pos.board().occupied()) & target & attacks::ray(from, king);
+            moves.extend(safe.map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
+            }));
         }
     }
 }
