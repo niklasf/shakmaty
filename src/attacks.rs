@@ -99,7 +99,7 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 
 #[inline]
 pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    rook_attacks(sq, occupied) | bishop_attacks(sq, occupied)
+    rook_attacks(sq, occupied) ^ bishop_attacks(sq, occupied)
 }
 
 pub fn attacks(sq: Square, piece: &Piece, occupied: Bitboard) -> Bitboard {
