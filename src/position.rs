@@ -1606,7 +1606,8 @@ fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, safe_ki
                 let them = board.by_color(!turn);
                 let captured = square::combine(to, from);
 
-                // Impossible from a serious of legal moves.
+                // King in check, but not by the pawn.
+                // Impossible from a series of legal moves.
                 if (attacks::king_attacks(king) & them & board.kings()).any() ||
                    (attacks::knight_attacks(king) & them & board.knights()).any() ||
                    (attacks::pawn_attacks(turn, king) & them.without(captured) & board.pawns()).any() {
