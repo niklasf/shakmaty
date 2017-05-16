@@ -609,7 +609,7 @@ impl Position for Giveaway {
         if moves.is_empty() {
             gen_non_king(self, !self.board().occupied(), moves);
             KingTag::gen_moves(self, !self.board().occupied(), moves);
-            gen_castling_moves(self, moves);
+            self.board().king_of(self.turn()).map(|king| gen_castling_moves(self, king, moves));
         }
     }
 
@@ -964,7 +964,7 @@ impl Position for Atomic {
         gen_en_passant(self.board(), self.turn(), self.ep_square, None, moves);
         gen_non_king(self, !self.us(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);
-        gen_castling_moves(self, moves);
+        self.board().king_of(self.turn()).map(|king| gen_castling_moves(self, king, moves));
 
         util::swap_retain(moves, |m| {
             let after = self.clone().play_unchecked(m);
@@ -1327,7 +1327,7 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
             let target = !pos.us();
             gen_safe_non_king(pos, target, king, moves);
             gen_safe_king(pos, target, moves);
-            gen_castling_moves(pos, moves);
+            gen_castling_moves(pos, king, moves);
         } else {
             evasions(pos, king, checkers, moves);
         }
@@ -1386,46 +1386,47 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves<P: Position>(pos: &P, moves: &mut MoveList) {
-    let backrank = Bitboard::relative_rank(pos.turn(), 0);
-
-    for king in pos.our(Role::King) & backrank & !pos.board().promoted() {
-        'next_rook: for rook in pos.castling_rights() & backrank {
-            let (king_to, rook_to) = if king < rook {
-                (pos.turn().fold(square::G1, square::G8),
-                 pos.turn().fold(square::F1, square::F8))
-            } else {
-                (pos.turn().fold(square::C1, square::C8),
-                 pos.turn().fold(square::D1, square::D8))
-            };
-
-            let empty_for_king = attacks::between(king, king_to).with(king_to)
-                                        .without(rook).without(king);
-
-            let empty_for_rook = attacks::between(rook, rook_to).with(rook_to)
-                                        .without(rook).without(king);
-
-            if !(pos.board().occupied() & empty_for_king).is_empty() {
-                continue;
-            }
-
-            if !(pos.board().occupied() & empty_for_rook).is_empty() {
-                continue;
-            }
-
-            for sq in attacks::between(king, king_to).with(king).with(king_to) {
-                if pos.king_attackers(sq, !pos.turn()).any() {
-                    continue 'next_rook;
-                }
-            }
-
-            if !(attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
-                 pos.them() & pos.board().rooks_and_queens()).is_empty() {
-                continue;
-            }
-
-            moves.push(Move::Castle { king, rook });
+fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) {
+    'next_rook: for rook in pos.castling_rights() {
+        let backrank = pos.turn().fold(0, 7);
+        if rook.rank() != backrank || king.rank() != backrank {
+            continue;
         }
+
+        let (king_to, rook_to) = if king < rook {
+            (pos.turn().fold(square::G1, square::G8),
+             pos.turn().fold(square::F1, square::F8))
+        } else {
+            (pos.turn().fold(square::C1, square::C8),
+             pos.turn().fold(square::D1, square::D8))
+        };
+
+        let empty_for_king = attacks::between(king, king_to).with(king_to)
+                                    .without(rook).without(king);
+
+        let empty_for_rook = attacks::between(rook, rook_to).with(rook_to)
+                                    .without(rook).without(king);
+
+        if (pos.board().occupied() & empty_for_king).any() {
+            continue;
+        }
+
+        if (pos.board().occupied() & empty_for_rook).any() {
+            continue;
+        }
+
+        for sq in attacks::between(king, king_to).with(king).with(king_to) {
+            if pos.king_attackers(sq, !pos.turn()).any() {
+                continue 'next_rook;
+            }
+        }
+
+        if !(attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
+             pos.them() & pos.board().rooks_and_queens()).is_empty() {
+            continue;
+        }
+
+        moves.push(Move::Castle { king, rook });
     }
 }
 
