@@ -77,3 +77,15 @@ perft 1 19
 perft 2 628
 perft 3 12858
 perft 4 405636
+
+#
+# Regression tests
+#
+
+id ep-evasion
+epd 8/8/8/5k2/3p4/8/4P3/4K3 w - -
+perft 1 6
+perft 2 54
+perft 3 343
+perft 4 2810
+perft 5 19228

@@ -602,7 +602,7 @@ impl Position for Giveaway {
     fn legal_moves(&self, moves: &mut MoveList) {
         let them = self.them();
 
-        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, None, moves);
         gen_non_king(self, them, moves);
         KingTag::gen_moves(self, them, moves);
 
@@ -961,7 +961,7 @@ impl Position for Atomic {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         // TODO: Atomic move generation could be much more efficient.
-        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, None, moves);
         gen_non_king(self, !self.us(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);
         gen_castling_moves(self, moves);
@@ -1317,7 +1317,8 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
 }
 
 fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut MoveList) {
-    gen_en_passant(pos.board(), pos.turn(), ep_square, moves);
+    let our_king = pos.our(Role::King).first();
+    gen_en_passant(pos.board(), pos.turn(), ep_square, our_king, moves);
 
     let checkers = pos.checkers();
 
@@ -1328,7 +1329,7 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
         gen_castling_moves(pos, moves);
     }
 
-    if let Some(king) = pos.our(Role::King).first() {
+    if let Some(king) = our_king {
         if !checkers.is_empty() {
             evasions(pos, king, checkers, moves);
         }
@@ -1527,7 +1528,7 @@ fn push_promotions<P: Position>(moves: &mut MoveList, from: Square, to: Square, 
 
 fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     let mut moves = MoveList::new();
-    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves);
+    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), None, &mut moves);
 
     if moves.is_empty() {
         false
@@ -1541,9 +1542,33 @@ fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     }
 }
 
-fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) {
+fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, safe_king: Option<Square>, moves: &mut MoveList) {
     if let Some(to) = ep_square {
         for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
+            // Ensure we are not in check after en passant.
+            if let Some(king) = safe_king {
+                let them = board.by_color(!turn);
+                let captured = square::combine(to, from);
+
+                // Impossible from a serious of legal moves.
+                if (attacks::king_attacks(king) & them & board.kings()).any() ||
+                   (attacks::knight_attacks(king) & them & board.knights()).any() ||
+                   (attacks::pawn_attacks(turn, king) & them.without(captured) & board.pawns()).any() {
+                    continue;
+                }
+
+                // Detect pins.
+                let mut occupied = board.occupied();
+                occupied.flip(from);
+                occupied.flip(captured);
+                occupied.add(to);
+
+                if (attacks::rook_attacks(king, occupied) & them & board.rooks_and_queens()).any() ||
+                   (attacks::bishop_attacks(king, occupied) & them & board.bishops_and_queens()).any() {
+                    continue;
+                }
+            }
+
             moves.push(Move::EnPassant { from, to });
         }
     }
@@ -1574,15 +1599,6 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             } else {
                 !blockers.contains(from) || attacks::aligned(from, to, king)
             },
-        Move::EnPassant { from, to } => {
-            let mut occupied = pos.board().occupied();
-            occupied.flip(from);
-            occupied.flip(square::combine(to, from)); // captured pawn
-            occupied.add(to);
-
-            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&
-            (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
-        },
         _ => true,
     }
 }
