@@ -1349,7 +1349,7 @@ fn gen_safe_non_king<P: Position>(pos: &P, target: Bitboard, king: Square, moves
     gen_pawn_moves(pos, target, moves, |from, to| {
         !blockers.contains(from) || attacks::aligned(from, to, king)
     });
-    KnightTag::gen_safe_moves(pos, target, king, blockers, moves);
+    KnightTag::gen_safe_moves(pos, target, blockers, moves);
     BishopTag::gen_safe_moves(pos, target, king, blockers, moves);
     RookTag::gen_safe_moves(pos, target, king, blockers, moves);
     QueenTag::gen_safe_moves(pos, target, king, blockers, moves);
@@ -1443,14 +1443,7 @@ trait Stepper {
         }
     }
 
-    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) {
-            moves.extend(
-                (Self::attacks(from) & target)
-                    .filter(|to| !blockers.contains(from) || attacks::aligned(from, *to, king))
-                    .map(|to| Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }));
-        }
-    }
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, blockers: Bitboard, moves: &mut MoveList);
 }
 
 trait Slider {
@@ -1486,7 +1479,7 @@ impl Stepper for KingTag {
     const ROLE: Role = Role::King;
     fn attacks(from: Square) -> Bitboard { attacks::king_attacks(from) }
 
-    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, _king: Square, _blockers: Bitboard, moves: &mut MoveList) {
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, _blockers: Bitboard, moves: &mut MoveList) {
         gen_safe_king(pos, target, moves);
     }
 }
@@ -1494,6 +1487,14 @@ impl Stepper for KingTag {
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
+
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, blockers: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) & !blockers {
+            moves.extend((Self::attacks(from) & target).map(|to| {
+                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
+            }));
+        }
+    }
 }
 
 impl Slider for BishopTag {
