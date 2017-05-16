@@ -1320,22 +1320,19 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
     let our_king = pos.our(Role::King).first();
     gen_en_passant(pos.board(), pos.turn(), ep_square, our_king, moves);
 
-    let checkers = pos.checkers();
-
-    if checkers.is_empty() {
-        let target = !pos.us();
-        gen_non_king(pos, target, moves);
-        KingTag::gen_moves(pos, target, moves);
-        gen_castling_moves(pos, moves);
-    }
-
     if let Some(king) = our_king {
-        if !checkers.is_empty() {
+        let checkers = pos.checkers();
+
+        if checkers.is_empty() {
+            let target = !pos.us();
+            gen_safe_non_king(pos, target, king, moves);
+            gen_safe_king(pos, target, moves);
+            gen_castling_moves(pos, moves);
+        } else {
             evasions(pos, king, checkers, moves);
         }
-
-        let blockers = slider_blockers(pos.board(), pos.them(), king);
-        util::swap_retain(moves, |m| is_safe(pos, king, m, blockers));
+    } else {
+        gen_non_king(pos, !pos.us(), moves);
     }
 }
 
@@ -1347,6 +1344,35 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     QueenTag::gen_moves(pos, target, moves);
 }
 
+fn gen_safe_non_king<P: Position>(pos: &P, target: Bitboard, king: Square, moves: &mut MoveList) {
+    let blockers = slider_blockers(pos.board(), pos.them(), king);
+    gen_pawn_moves(pos, target, moves);
+    util::swap_retain(moves, |m| match *m {
+        Move::Normal { from, to, .. } =>
+            !blockers.contains(from) || attacks::aligned(from, to, king),
+        _ => true,
+    });
+    KnightTag::gen_safe_moves(pos, target, king, blockers, moves);
+    BishopTag::gen_safe_moves(pos, target, king, blockers, moves);
+    RookTag::gen_safe_moves(pos, target, king, blockers, moves);
+    QueenTag::gen_safe_moves(pos, target, king, blockers, moves);
+}
+
+fn gen_safe_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+    for from in pos.our(Role::King) {
+        moves.extend(
+            (attacks::king_attacks(from) & target)
+                .filter(|to| pos.board().attacks_to(*to, !pos.turn()).is_empty())
+                .map(|to| Move::Normal {
+                    role: Role::King,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                }));
+    }
+}
+
 fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board().sliders();
 
@@ -1355,14 +1381,11 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
         attacked |= attacks::ray(checker, king) ^ checker;
     }
 
-    moves.extend((attacks::king_attacks(king) & !pos.us() & !attacked).map(|to| {
-        Move::Normal { role: Role::King, from: king, capture: pos.board().role_at(to), to, promotion: None }
-    }));
+    gen_safe_king(pos, !pos.us() & !attacked, moves);
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
-
-        gen_non_king(pos, target, moves);
+        gen_safe_non_king(pos, target, king, moves);
     }
 }
 
@@ -1421,6 +1444,15 @@ trait Stepper {
             }));
         }
     }
+
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) {
+            moves.extend(
+                (Self::attacks(from) & target)
+                    .filter(|to| !blockers.contains(from) || attacks::aligned(from, *to, king))
+                    .map(|to| Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }));
+        }
+    }
 }
 
 trait Slider {
@@ -1435,6 +1467,15 @@ trait Slider {
             }));
         }
     }
+
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
+        for from in pos.our(Self::ROLE) {
+            moves.extend(
+                (Self::attacks(from, pos.board().occupied()) & target)
+                    .filter(|to| !blockers.contains(from) || attacks::aligned(from, *to, king))
+                    .map(|to| Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }));
+        }
+    }
 }
 
 enum KingTag { }
@@ -1446,6 +1487,10 @@ enum QueenTag { }
 impl Stepper for KingTag {
     const ROLE: Role = Role::King;
     fn attacks(from: Square) -> Bitboard { attacks::king_attacks(from) }
+
+    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, _king: Square, _blockers: Bitboard, moves: &mut MoveList) {
+        gen_safe_king(pos, target, moves);
+    }
 }
 
 impl Stepper for KnightTag {
@@ -1589,18 +1634,6 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
     }
 
     blockers
-}
-
-fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
-    match *m {
-        Move::Normal { from, to, .. } =>
-            if from == king {
-                pos.board().attacks_to(to, !pos.turn()).is_empty()
-            } else {
-                !blockers.contains(from) || attacks::aligned(from, to, king)
-            },
-        _ => true,
-    }
 }
 
 #[cfg(test)]
