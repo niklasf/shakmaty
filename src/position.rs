@@ -129,7 +129,7 @@ pub trait Position: Setup + Default + Clone {
 
     /// Attacks that a king on `square` would have to deal with.
     fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
-        self.board().by_color(attacker) & self.board().attacks_to(square)
+        self.board().attacks_to(square, attacker)
     }
 
     /// Bitboard of pieces giving check.
@@ -954,7 +954,7 @@ impl Position for Atomic {
         if (attacks::king_attacks(square) & self.board().by_piece(&attacker.king())).any() {
             Bitboard(0)
         } else {
-            self.board().by_color(attacker) & self.board().attacks_to(square)
+            self.board().attacks_to(square, attacker)
         }
     }
 
@@ -1569,7 +1569,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
     match *m {
         Move::Normal { from, to, .. } =>
             if from == king {
-                (pos.board().attacks_to(to) & pos.them()).is_empty()
+                pos.board().attacks_to(to, !pos.turn()).is_empty()
             } else {
                 !blockers.contains(from) || attacks::aligned(from, to, king)
             },
