@@ -1570,8 +1570,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             if role == Role::King {
                 (pos.board().attacks_to(to) & pos.them()).is_empty()
             } else {
-                !(pos.us() & blockers).contains(from) ||
-                attacks::aligned(from, to, king)
+                !blockers.contains(from) || attacks::aligned(from, to, king)
             },
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board().occupied();
