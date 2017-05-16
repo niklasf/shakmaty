@@ -1337,11 +1337,11 @@ fn gen_standard<P: Position>(pos: &P, ep_square: Option<Square>, moves: &mut Mov
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    RookTag::gen_moves(pos, target, moves);
-    BishopTag::gen_moves(pos, target, moves);
-    QueenTag::gen_moves(pos, target, moves);
-    KnightTag::gen_moves(pos, target, moves);
     gen_pawn_moves(pos, target, moves);
+    KnightTag::gen_moves(pos, target, moves);
+    BishopTag::gen_moves(pos, target, moves);
+    RookTag::gen_moves(pos, target, moves);
+    QueenTag::gen_moves(pos, target, moves);
 }
 
 fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
@@ -1349,7 +1349,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
 
     let mut attacked = Bitboard(0);
     for checker in sliders {
-        attacked |= attacks::ray(checker, king).without(checker);
+        attacked |= attacks::ray(checker, king) ^ checker;
     }
 
     moves.extend((attacks::king_attacks(king) & !pos.us() & !attacked).map(|to| {
