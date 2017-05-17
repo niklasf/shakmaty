@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty"
-version = "0.0.3"
+version = "0.0.4"
 description = "A library for chess move generation"
 repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
