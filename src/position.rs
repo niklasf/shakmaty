@@ -133,6 +133,12 @@ pub trait Position: Setup + Default + Clone {
         self.board().attacks_to(square, attacker)
     }
 
+    /// Tests the rare case where moving the rook to the other side during
+    /// castling would uncover a rank attack.
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        castling_uncovers_rank_attack(self, rook, king_to)
+    }
+
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first()
@@ -599,6 +605,14 @@ impl Position for Giveaway {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
+    fn king_attackers(&self, _square: Square, _attacker: Color) -> Bitboard {
+        Bitboard(0)
+    }
+
+    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
+        false
+    }
+
     fn legal_moves(&self, moves: &mut MoveList) {
         let them = self.them();
 
@@ -957,6 +971,11 @@ impl Position for Atomic {
         } else {
             self.board().attacks_to(square, attacker)
         }
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        (attacks::king_attacks(king_to) & self.board().kings() & self.them()).is_empty() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -1414,13 +1433,18 @@ fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) 
             }
         }
 
-        if !(attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
-             pos.them() & pos.board().rooks_and_queens()).is_empty() {
+        if pos.castling_uncovers_rank_attack(rook, king_to) {
             continue;
         }
 
         moves.push(Move::Castle { king, rook });
     }
+}
+
+fn castling_uncovers_rank_attack<P: Position>(pos: &P, rook: Square, king_to: Square) -> bool {
+    (attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
+     pos.them() & pos.board().rooks_and_queens() &
+     Bitboard::rank(king_to.rank())).any()
 }
 
 trait Stepper {
