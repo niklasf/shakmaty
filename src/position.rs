@@ -1401,21 +1401,14 @@ fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) 
              pos.turn().fold(square::D1, square::D8))
         };
 
-        let empty_for_king = attacks::between(king, king_to).with(king_to)
-                                    .without(rook).without(king);
+        let king_path = attacks::between(king, king_to).with(king_to);
+        let rook_path = attacks::between(rook, rook_to).with(rook_to);
 
-        let empty_for_rook = attacks::between(rook, rook_to).with(rook_to)
-                                    .without(rook).without(king);
-
-        if (pos.board().occupied() & empty_for_king).any() {
+        if ((pos.board().occupied() ^ king ^ rook) & (king_path | rook_path)).any() {
             continue;
         }
 
-        if (pos.board().occupied() & empty_for_rook).any() {
-            continue;
-        }
-
-        for sq in attacks::between(king, king_to).with(king).with(king_to) {
+        for sq in king_path.with(king) {
             if pos.king_attackers(sq, !pos.turn()).any() {
                 continue 'next_rook;
             }
