@@ -343,10 +343,10 @@ impl Board {
             .map_or(Bitboard(0), |ref piece| attacks::attacks(sq, piece, self.occupied))
     }
 
-    pub fn attacks_to(&self, sq: Square, attacker: Color) -> Bitboard {
+    pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.by_color(attacker) & (
-            (attacks::rook_attacks(sq, self.occupied) & (self.rooks | self.queens)) |
-            (attacks::bishop_attacks(sq, self.occupied) & (self.bishops | self.queens)) |
+            (attacks::rook_attacks(sq, occupied) & (self.rooks | self.queens)) |
+            (attacks::bishop_attacks(sq, occupied) & (self.bishops | self.queens)) |
             (attacks::knight_attacks(sq) & self.knights) |
             (attacks::king_attacks(sq) & self.kings) |
             (attacks::pawn_attacks(!attacker, sq) & self.pawns))

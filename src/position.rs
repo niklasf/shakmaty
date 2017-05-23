@@ -129,8 +129,8 @@ pub trait Position: Setup + Default + Clone {
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
     /// Attacks that a king on `square` would have to deal with.
-    fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
-        self.board().attacks_to(square, attacker)
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
+        self.board().attacks_to(square, attacker, occupied)
     }
 
     /// Tests the rare case where moving the rook to the other side during
@@ -142,7 +142,7 @@ pub trait Position: Setup + Default + Clone {
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first()
-            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn()))
+            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn(), self.board().occupied()))
     }
 
     /// Generates legal moves.
@@ -605,7 +605,7 @@ impl Position for Giveaway {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
-    fn king_attackers(&self, _square: Square, _attacker: Color) -> Bitboard {
+    fn king_attackers(&self, _square: Square, _attacker: Color, _occupied: Bitboard) -> Bitboard {
         Bitboard(0)
     }
 
@@ -955,7 +955,7 @@ impl Position for Atomic {
         }
 
         if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-            if pos.king_attackers(their_king, pos.turn()).any() {
+            if pos.king_attackers(their_king, pos.turn(), pos.board.occupied()).any() {
                 return Err(PositionError::OppositeCheck);
             }
         } else {
@@ -965,11 +965,11 @@ impl Position for Atomic {
         validate_basic(&pos).map_or(Ok(pos), Err)
     }
 
-    fn king_attackers(&self, square: Square, attacker: Color) -> Bitboard {
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         if (attacks::king_attacks(square) & self.board().by_piece(&attacker.king())).any() {
             Bitboard(0)
         } else {
-            self.board().attacks_to(square, attacker)
+            self.board().attacks_to(square, attacker, occupied)
         }
     }
 
@@ -989,7 +989,7 @@ impl Position for Atomic {
             let after = self.clone().play_unchecked(m);
             if let Some(our_king) = after.board().king_of(self.turn()) {
                 after.board().by_piece(&Role::King.of(!self.turn())).is_empty() ||
-                after.king_attackers(our_king, !self.turn()).is_empty()
+                after.king_attackers(our_king, !self.turn(), after.board.occupied()).is_empty()
             } else {
                 false
             }
@@ -1167,7 +1167,7 @@ impl Position for RacingKings {
         // White has reached the backrank. Check if black can catch up.
         if let Some(black_king) = self.board().by_piece(&Black.king()).first() {
             for target in attacks::king_attacks(black_king) & Bitboard::rank(7) {
-                if self.king_attackers(target, White).is_empty() {
+                if self.king_attackers(target, White, self.board.occupied()).is_empty() {
                     return false;
                 }
             }
@@ -1327,7 +1327,7 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-        if pos.king_attackers(their_king, pos.turn()).any() {
+        if pos.king_attackers(their_king, pos.turn(), pos.board().occupied()).any() {
             return Some(PositionError::OppositeCheck)
         }
     }
@@ -1378,7 +1378,7 @@ fn gen_safe_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     for from in pos.our(Role::King) {
         moves.extend(
             (attacks::king_attacks(from) & target)
-                .filter(|to| pos.board().attacks_to(*to, !pos.turn()).is_empty())
+                .filter(|to| pos.board().attacks_to(*to, !pos.turn(), pos.board().occupied()).is_empty())
                 .map(|to| Move::Normal {
                     role: Role::King,
                     from,
@@ -1428,7 +1428,7 @@ fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) 
         }
 
         for sq in king_path.with(king) {
-            if pos.king_attackers(sq, !pos.turn()).any() {
+            if pos.king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king).any() {
                 continue 'next_rook;
             }
         }
