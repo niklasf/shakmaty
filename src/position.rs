@@ -148,6 +148,17 @@ pub trait Position: Setup + Default + Clone {
     /// Generates legal moves.
     fn legal_moves(&self, moves: &mut MoveList);
 
+    /// Generates a subset of legal moves.
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        self.legal_moves(moves);
+        util::swap_retain(moves, |m| match *m {
+            Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
+                to == t && role == r,
+            Move::Castle { rook, .. } => role == Role::King && to == rook,
+            Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
+        });
+    }
+
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
         let mut legals = MoveList::new();
