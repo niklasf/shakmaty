@@ -151,12 +151,7 @@ pub trait Position: Setup + Default + Clone {
     /// Generates a subset of legal moves.
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.legal_moves(moves);
-        util::swap_retain(moves, |m| match *m {
-            Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
-                to == t && role == r,
-            Move::Castle { rook, .. } => role == Role::King && to == rook,
-            Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
-        });
+        filter_san_candidates(role, to, moves);
     }
 
     /// Tests a move for legality.
@@ -315,6 +310,42 @@ impl Position for Chess {
 
     fn legal_moves(&self, moves: &mut MoveList) {
         gen_standard(self, self.ep_square, moves);
+    }
+
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        let our_king = self.our(Role::King).first();
+        let king = our_king.expect("got a king");
+
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            let target = !self.us() & to;
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            match role {
+                Role::Pawn => {
+                    gen_en_passant(self.board(), self.turn(), self.ep_square, our_king, moves);
+                    gen_pawn_moves(self, target, moves, |from, to| {
+                        !blockers.contains(from) || attacks::aligned(from, to, king)
+                    });
+                },
+                Role::Knight =>
+                    KnightTag::gen_safe_moves(self, target, blockers, moves),
+                Role::Bishop =>
+                    BishopTag::gen_safe_moves(self, target, king, blockers, moves),
+                Role::Rook =>
+                    RookTag::gen_safe_moves(self, target, king, blockers, moves),
+                Role::Queen =>
+                    QueenTag::gen_safe_moves(self, target, king, blockers, moves),
+                Role::King => {
+                    gen_safe_king(self, target, moves);
+                    gen_castling_moves(self, king, moves);
+                },
+            }
+        } else {
+            gen_en_passant(self.board(), self.turn(), self.ep_square, our_king, moves);
+            evasions(self, king, checkers, moves);
+            filter_san_candidates(role, to, moves);
+        }
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -1682,6 +1713,15 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
     }
 
     blockers
+}
+
+fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
+    util::swap_retain(moves, |m| match *m {
+        Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
+            to == t && role == r,
+        Move::Castle { rook, .. } => role == Role::King && to == rook,
+        Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
+    });
 }
 
 #[cfg(test)]
