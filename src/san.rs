@@ -222,20 +222,20 @@ impl fmt::Display for San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    try!(write!(f, "{}", role.char().to_ascii_uppercase()));
+                    write!(f, "{}", role.char().to_ascii_uppercase())?;
                 }
                 if let Some(file) = file {
-                    try!(write!(f, "{}", (b'a' + file as u8) as char));
+                    write!(f, "{}", (b'a' + file as u8) as char)?;
                 }
                 if let Some(rank) = rank {
-                    try!(write!(f, "{}", (b'1' + rank as u8) as char));
+                    write!(f, "{}", (b'1' + rank as u8) as char)?;
                 }
                 if capture {
-                    try!(write!(f, "x"));
+                    write!(f, "x")?;
                 }
-                try!(write!(f, "{}", to));
+                write!(f, "{}", to)?;
                 if let Some(promotion) = promotion {
-                    try!(write!(f, "={}", promotion.char().to_ascii_uppercase()));
+                    write!(f, "={}", promotion.char().to_ascii_uppercase())?;
                 }
                 Ok(())
             },

@@ -88,9 +88,9 @@ fn init_magics(indexes: &mut[usize], masks: &mut[Bitboard], ranges: &mut[Bitboar
 }
 
 fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
-    try!(write!(w, "const {}: [{}; {}] = [", name, tname, slice.len()));
+    write!(w, "const {}: [{}; {}] = [", name, tname, slice.len())?;
     for v in slice {
-        try!(write!(w, "0x{:x}, ", v));
+        write!(w, "0x{:x}, ", v)?;
     }
     write!(w, "];\n")
 }
@@ -170,21 +170,21 @@ fn generate() -> io::Result<()> {
     dump_slice(&mut f, "WHITE_PAWN_ATTACKS", "u64", &white_pawn_attacks)?;
     dump_slice(&mut f, "BLACK_PAWN_ATTACKS", "u64", &black_pawn_attacks)?;
 
-    try!(write!(f, "\n"));
+    write!(f, "\n")?;
 
     dump_slice(&mut f, "ROOK_INDEXES", "usize", &rook_indexes)?;
     dump_slice(&mut f, "ROOK_MASKS", "u64", &rook_masks)?;
     dump_slice(&mut f, "ROOK_RANGES", "u64", &rook_ranges)?;
     dump_slice(&mut f, "ROOK_ATTACKS", "u16", &rook_attacks)?;
 
-    try!(write!(f, "\n"));
+    write!(f, "\n")?;
 
     dump_slice(&mut f, "BISHOP_INDEXES", "usize", &bishop_indexes)?;
     dump_slice(&mut f, "BISHOP_MASKS", "u64", &bishop_masks)?;
     dump_slice(&mut f, "BISHOP_RANGES", "u64", &bishop_ranges)?;
     dump_slice(&mut f, "BISHOP_ATTACKS", "u16", &bishop_attacks)?;
 
-    try!(write!(f, "\n"));
+    write!(f, "\n")?;
 
     dump_slice(&mut f, "BB_RAYS", "u64", &bb_rays)?;
     dump_slice(&mut f, "BB_BETWEEN", "u64", &bb_between)?;

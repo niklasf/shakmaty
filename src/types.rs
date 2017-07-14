@@ -160,13 +160,13 @@ impl fmt::Display for Move {
         match *self {
             Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    try!(write!(f, "{}", role.char().to_ascii_uppercase()));
+                    write!(f, "{}", role.char().to_ascii_uppercase())?;
                 }
 
-                try!(write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to));
+                write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to)?;
 
                 if let Some(p) = promotion {
-                    try!(write!(f, "={}", p.char().to_ascii_uppercase()));
+                    write!(f, "={}", p.char().to_ascii_uppercase())?;
                 }
 
                 Ok(())
@@ -273,7 +273,7 @@ impl fmt::Display for Pockets {
         for color in &[White, Black] {
             for role in &ROLES {
                 let piece = Piece { color: *color, role: *role };
-                try!(write!(f, "{}", piece.char().to_string().repeat(self.by_piece(&piece) as usize)));
+                write!(f, "{}", piece.char().to_string().repeat(self.by_piece(&piece) as usize))?;
             }
         }
         Ok(())

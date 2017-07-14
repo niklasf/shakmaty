@@ -363,13 +363,13 @@ impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                try!(f.write_char(self.piece_at(Square::from_coords(file, rank).unwrap())
-                                      .map_or('.', |piece| piece.char())));
+                f.write_char(self.piece_at(Square::from_coords(file, rank).unwrap())
+                                 .map_or('.', |piece| piece.char()))?;
 
                 if file < 7 {
-                    try!(f.write_char(' '));
+                    f.write_char(' ')?;
                 } else {
-                    try!(f.write_char('\n'));
+                    f.write_char('\n')?;
                 }
 
             }
