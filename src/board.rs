@@ -113,38 +113,6 @@ impl Board {
         }
     }
 
-    pub fn horde() -> Board {
-        Board {
-            occupied: Bitboard(0xffff0066ffffffff),
-
-            black: Bitboard(0xffff000000000000),
-            white: Bitboard(0x66ffffffff),
-
-            pawns: Bitboard(0xff0066ffffffff),
-            knights: Bitboard(0x4200000000000000),
-            bishops: Bitboard(0x2400000000000000),
-            rooks: Bitboard(0x8100000000000000),
-            queens: Bitboard(0x800000000000000),
-            kings: Bitboard(0x1000000000000000),
-        }
-    }
-
-    pub fn racing_kings() -> Board {
-        Board {
-            occupied: Bitboard(0xffff),
-
-            black: Bitboard(0xf0f),
-            white: Bitboard(0xf0f0),
-
-            pawns: Bitboard(0),
-            knights: Bitboard(0x1818),
-            bishops: Bitboard(0x2424),
-            rooks: Bitboard(0x4242),
-            queens: Bitboard(0x81),
-            kings: Bitboard(0x8100),
-        }
-    }
-
     pub fn from_board_fen(board_fen: &str) -> Result<Board, BoardFenError> {
         let mut board = Board::empty();
 
