@@ -184,10 +184,10 @@ impl Board {
     pub fn black(&self) -> Bitboard { self.black }
 
     /// Bishops, rooks and queens.
-    pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }
+    pub fn sliders(&self) -> Bitboard { self.bishops ^ self.rooks ^ self.queens }
 
-    pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
-    pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
+    pub fn rooks_and_queens(&self) -> Bitboard { self.rooks ^ self.queens }
+    pub fn bishops_and_queens(&self) -> Bitboard { self.bishops ^ self.queens }
 
     /// The (unique) king of the given side.
     pub fn king_of(&self, color: Color) -> Option<Square> {
@@ -285,8 +285,8 @@ impl Board {
 
     pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.by_color(attacker) & (
-            (attacks::rook_attacks(sq, occupied) & (self.rooks | self.queens)) |
-            (attacks::bishop_attacks(sq, occupied) & (self.bishops | self.queens)) |
+            (attacks::rook_attacks(sq, occupied) & (self.rooks ^ self.queens)) |
+            (attacks::bishop_attacks(sq, occupied) & (self.bishops ^ self.queens)) |
             (attacks::knight_attacks(sq) & self.knights) |
             (attacks::king_attacks(sq) & self.kings) |
             (attacks::pawn_attacks(!attacker, sq) & self.pawns))
