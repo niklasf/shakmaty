@@ -41,6 +41,7 @@
 use square::Square;
 use bitboard::Bitboard;
 use types::{Color, Role, Piece};
+use magics;
 
 include!(concat!(env!("OUT_DIR"), "/attacks.rs"));
 
@@ -69,31 +70,33 @@ pub fn king_attacks(sq: Square) -> Bitboard {
 
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    let magics = magics::ROOK_MAGICS;
+
     unsafe {
         // This is safe because properly constructed squares are in bounds.
         let mask = Bitboard(*ROOK_MASKS.get_unchecked(sq.index() as usize));
-        let range = Bitboard(*ROOK_RANGES.get_unchecked(sq.index() as usize));
-        let index = *ROOK_INDEXES.get_unchecked(sq.index() as usize) +
-                    occupied.extract(mask) as usize;
+        let m = magics.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.
-        Bitboard::deposit(*ROOK_ATTACKS.get_unchecked(index) as u64, range)
+        let idx = (m.factor.wrapping_mul((occupied & mask).0) >> (64 - 12)) as usize + m.offset;
+        Bitboard(*ATTACKS.get_unchecked(idx))
     }
 }
 
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    let magics = magics::BISHOP_MAGICS;
+
     unsafe {
         // This is safe because properly constructed squares are in bounds.
         let mask = Bitboard(*BISHOP_MASKS.get_unchecked(sq.index() as usize));
-        let range = Bitboard(*BISHOP_RANGES.get_unchecked(sq.index() as usize));
-        let index = *BISHOP_INDEXES.get_unchecked(sq.index() as usize) +
-                    occupied.extract(mask) as usize;
+        let m = magics.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.
-        Bitboard::deposit(*BISHOP_ATTACKS.get_unchecked(index) as u64, range)
+        let idx = (m.factor.wrapping_mul((occupied & mask).0) >> (64 - 9)) as usize + m.offset;
+        Bitboard(*ATTACKS.get_unchecked(idx))
     }
 }
 

@@ -22,14 +22,6 @@ use std::iter::FromIterator;
 use square::Square;
 use types::Color;
 
-extern "platform-intrinsic" {
-    #[cfg(target_feature="bmi2")]
-    fn x86_bmi2_pext_64(src: u64, mask: u64) -> u64;
-
-    #[cfg(target_feature="bmi2")]
-    fn x86_bmi2_pdep_64(src: u64, mask: u64) -> u64;
-}
-
 /// A set of squares represented by a 64 bit integer mask.
 ///
 /// # Examples
@@ -182,56 +174,6 @@ impl Bitboard {
         } else {
             self.first()
         }
-    }
-
-    #[cfg(target_feature="bmi2")]
-    pub fn extract(self, Bitboard(mask): Bitboard) -> u64 {
-        let Bitboard(src) = self;
-
-        // This is safe because we specifically checked for the bmi2 target
-        // feature.
-        unsafe { x86_bmi2_pext_64(src, mask) }
-    }
-
-    #[cfg(not(target_feature="bmi2"))]
-    pub fn extract(self, Bitboard(mut mask): Bitboard) -> u64 {
-        let Bitboard(src) = self;
-        let mut result = 0;
-        let mut bit = 1;
-
-        while mask != 0 {
-            if src & mask & 0u64.wrapping_sub(mask) != 0 {
-                result |= bit;
-            }
-
-            mask &= mask.wrapping_sub(1);
-            bit <<= 1;
-        }
-
-        result
-    }
-
-    #[cfg(target_feature="bmi2")]
-    pub fn deposit(src: u64, Bitboard(mask): Bitboard) -> Bitboard {
-        // This is safe because we specifically checked for the bmi2 target
-        // feature.
-        Bitboard(unsafe { x86_bmi2_pdep_64(src, mask) })
-    }
-
-    #[cfg(not(target_feature="bmi2"))]
-    pub fn deposit(src: u64, Bitboard(mut mask): Bitboard) -> Bitboard {
-        let mut result = 0;
-        let mut bit = 1;
-
-        while mask != 0 {
-            if src & bit != 0 {
-                result ^= mask & 0u64.wrapping_sub(mask);
-            }
-            mask &= mask.wrapping_sub(1);
-            bit <<= 1;
-        }
-
-        Bitboard(result)
     }
 
     /// An iterator over the subsets of this bitboard.
@@ -461,13 +403,6 @@ mod tests {
         assert_eq!(Bitboard::from_square(square::A1).last(), Some(square::A1));
         assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(), Some(square::H1));
         assert_eq!(Bitboard(0).last(), None);
-    }
-
-    #[test]
-    fn test_extract() {
-        assert_eq!(Bitboard::all().extract(Bitboard(0)), 0);
-        assert_eq!(Bitboard::all().extract(Bitboard::all()), !0u64);
-        assert_eq!(Bitboard(7).extract(Bitboard(1)), 1);
     }
 
     #[test]

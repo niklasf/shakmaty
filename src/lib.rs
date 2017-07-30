@@ -81,6 +81,7 @@ mod board;
 mod position;
 mod setup;
 mod util;
+mod magics;
 
 pub mod square;
 pub mod attacks;
