@@ -95,15 +95,3 @@ pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
 pub use position::{MoveList, IllegalMove, Outcome, Position, PositionError, Chess};
-
-pub mod variants {
-    //! Chess variants.
-    pub use Chess;
-    pub use position::Crazyhouse;
-    pub use position::KingOfTheHill;
-    pub use position::Giveaway;
-    pub use position::ThreeCheck;
-    pub use position::Horde;
-    pub use position::Atomic;
-    pub use position::RacingKings;
-}
