@@ -70,11 +70,9 @@ pub fn king_attacks(sq: Square) -> Bitboard {
 
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let magics = magics::ROOK_MAGICS;
-
     unsafe {
         // This is safe because properly constructed squares are in bounds.
-        let m = magics.get_unchecked(sq.index() as usize);
+        let m = magics::ROOK_MAGICS.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.
@@ -85,11 +83,9 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let magics = magics::BISHOP_MAGICS;
-
     unsafe {
         // This is safe because properly constructed squares are in bounds.
-        let m = magics.get_unchecked(sq.index() as usize);
+        let m = magics::BISHOP_MAGICS.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.

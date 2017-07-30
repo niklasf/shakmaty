@@ -7,7 +7,7 @@ pub struct Magic {
     pub offset: usize,
 }
 
-pub const BISHOP_MAGICS: [Magic; 64] = [
+pub static BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040201008040200, factor: 0x0000404040404040, offset: 33104 },
     Magic { mask: 0x0000402010080400, factor: 0x0000a060401007fc, offset:  4094 },
     Magic { mask: 0x0000004020100a00, factor: 0x0000401020200000, offset: 24764 },
@@ -74,7 +74,7 @@ pub const BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040201008040200, factor: 0x0000404040404040, offset: 10186 },
 ];
 
-pub const ROOK_MAGICS: [Magic; 64] = [
+pub static ROOK_MAGICS: [Magic; 64] = [
     Magic { mask: 0x000101010101017e, factor: 0x00280077ffebfffe, offset: 41305 },
     Magic { mask: 0x000202020202027c, factor: 0x2004010201097fff, offset: 14326 },
     Magic { mask: 0x000404040404047a, factor: 0x0010020010053fff, offset: 24477 },
