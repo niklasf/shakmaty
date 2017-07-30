@@ -63,7 +63,7 @@ impl Error for BoardFenError {
 /// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
 ///
 /// let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-/// assert_eq!(board.board_fen(false), fen);
+/// assert_eq!(board.board_fen(), fen);
 /// ```
 #[derive(Clone, Eq, PartialEq)]
 pub struct Board {
@@ -78,8 +78,6 @@ pub struct Board {
     rooks: Bitboard,
     queens: Bitboard,
     kings: Bitboard,
-
-    promoted: Bitboard,
 }
 
 impl Board {
@@ -96,8 +94,6 @@ impl Board {
             rooks: Bitboard(0x8100000000000081),
             queens: Bitboard(0x800000000000008),
             kings: Bitboard(0x1000000000000010),
-
-            promoted: Bitboard(0),
         }
     }
 
@@ -114,8 +110,6 @@ impl Board {
             rooks: Bitboard(0),
             queens: Bitboard(0),
             kings: Bitboard(0),
-
-            promoted: Bitboard(0),
         }
     }
 
@@ -132,8 +126,6 @@ impl Board {
             rooks: Bitboard(0x8100000000000000),
             queens: Bitboard(0x800000000000000),
             kings: Bitboard(0x1000000000000000),
-
-            promoted: Bitboard(0),
         }
     }
 
@@ -150,8 +142,6 @@ impl Board {
             rooks: Bitboard(0x4242),
             queens: Bitboard(0x81),
             kings: Bitboard(0x8100),
-
-            promoted: Bitboard(0),
         }
     }
 
@@ -160,22 +150,17 @@ impl Board {
 
         let mut rank = 7i8;
         let mut file = 0i8;
-        let mut promoted = false;
 
         for ch in board_fen.chars() {
             if ch == '/' {
                 file = 0;
                 rank = rank.saturating_sub(1);
-            } else if ch == '~' {
-                promoted = true;
-                continue;
             } else if let Some(empty) = ch.to_digit(10) {
                 file = file.saturating_add(empty as i8);
             } else if let Some(piece) = Piece::from_char(ch) {
                 match Square::from_coords(file as i8, rank) {
                     Some(sq) => {
-                        board.set_piece_at(sq, piece, promoted);
-                        promoted = false;
+                        board.set_piece_at(sq, piece);
                     },
                     None => return Err(BoardFenError { _priv: () })
                 }
@@ -183,16 +168,12 @@ impl Board {
             } else {
                 return Err(BoardFenError { _priv: () })
             }
-
-            if promoted {
-                return Err(BoardFenError { _priv: () })
-            }
         }
 
         Ok(board)
     }
 
-    pub fn board_fen(&self, promoted: bool) -> String {
+    pub fn board_fen(&self) -> String {
         let mut fen = String::with_capacity(15);
 
         for rank in (0..8).rev() {
@@ -206,9 +187,6 @@ impl Board {
                         fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
                     }
                     fen.push(piece.char());
-                    if promoted && self.promoted.contains(square) {
-                        fen.push('~');
-                    }
                     0
                 });
 
@@ -237,17 +215,15 @@ impl Board {
     pub fn white(&self) -> Bitboard { self.white }
     pub fn black(&self) -> Bitboard { self.black }
 
-    pub fn promoted(&self) -> Bitboard { self.promoted }
-
     /// Bishops, rooks and queens.
     pub fn sliders(&self) -> Bitboard { self.bishops | self.rooks | self.queens }
 
     pub fn rooks_and_queens(&self) -> Bitboard { self.rooks | self.queens }
     pub fn bishops_and_queens(&self) -> Bitboard { self.bishops | self.queens }
 
-    /// The (unique, unpromoted) king of the given side.
+    /// The (unique) king of the given side.
     pub fn king_of(&self, color: Color) -> Option<Square> {
-        (self.by_piece(&color.king()) & !self.promoted).single_square()
+        self.by_piece(&color.king()).single_square()
     }
 
     pub fn color_at(&self, sq: Square) -> Option<Color> {
@@ -289,19 +265,15 @@ impl Board {
             self.occupied.flip(sq);
             self.by_color_mut(piece.color).flip(sq);
             self.by_role_mut(piece.role).flip(sq);
-            self.promoted.discard(sq);
             piece
         })
     }
 
-    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
+    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
         self.remove_piece_at(sq);
         self.occupied.flip(sq);
         self.by_color_mut(color).flip(sq);
         self.by_role_mut(role).flip(sq);
-        if promoted {
-            self.promoted.flip(sq);
-        }
     }
 
     pub fn by_color(&self, color: Color) -> Bitboard {
@@ -383,7 +355,7 @@ impl fmt::Debug for Board {
 mod tests {
     use super::*;
     use square;
-    use types::{White, Black};
+    use types::White;
 
     #[test]
     fn test_piece_at() {
@@ -395,14 +367,7 @@ mod tests {
     #[test]
     fn test_set_piece_at() {
         let mut board = Board::new();
-        board.set_piece_at(square::A3, White.pawn(), false);
+        board.set_piece_at(square::A3, White.pawn());
         assert_eq!(board.piece_at(square::A3), Some(White.pawn()));
-    }
-
-    #[test]
-    fn test_promoted() {
-        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").expect("valid fen");
-        assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
-        assert!(board.promoted.contains(square::C1));
     }
 }

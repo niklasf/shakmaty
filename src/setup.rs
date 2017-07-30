@@ -58,7 +58,7 @@ pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
 
     let clean_strict = |color: Color| -> Bitboard {
         let king = color.fold(square::E1, square::E8);
-        if (setup.board().kings() & !setup.board().promoted()).contains(king) {
+        if setup.board().kings().contains(king) {
             castling & setup.board().by_color(color)
                      & Bitboard::relative_rank(color, 0)
                      & bitboard::CORNERS

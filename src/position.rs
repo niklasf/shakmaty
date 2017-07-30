@@ -393,10 +393,8 @@ fn do_move(board: &mut Board,
                 castling_rights.discard(to);
             }
 
-            let promoted = board.promoted().contains(from) || promotion.is_some();
-
             board.remove_piece_at(from);
-            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)));
         },
         Move::Castle { king, rook } => {
             let rook_to = square::combine(
@@ -409,18 +407,18 @@ fn do_move(board: &mut Board,
 
             board.remove_piece_at(king);
             board.remove_piece_at(rook);
-            board.set_piece_at(rook_to, color.rook(), false);
-            board.set_piece_at(king_to, color.king(), false);
+            board.set_piece_at(rook_to, color.rook());
+            board.set_piece_at(king_to, color.king());
 
             castling_rights.discard_all(Bitboard::relative_rank(color, 0));
         },
         Move::EnPassant { from, to } => {
             board.remove_piece_at(square::combine(to, from)); // captured pawn
-            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
+            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece));
             *halfmove_clock = 0;
         },
         Move::Put { to, role } => {
-            board.set_piece_at(to, Piece { color, role }, false);
+            board.set_piece_at(to, Piece { color, role });
         },
     }
 
@@ -490,7 +488,7 @@ fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
 
 fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     for color in &[White, Black] {
-        if (pos.board().by_piece(&color.king()) & !pos.board().promoted()).is_empty() {
+        if pos.board().by_piece(&color.king()).is_empty() {
             return Some(PositionError::NoKing { color: *color })
         }
     }

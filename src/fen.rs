@@ -25,7 +25,7 @@
 //! use shakmaty::Chess;
 //!
 //! let pos = Chess::default();
-//! assert_eq!(fen::epd(&pos, false), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
+//! assert_eq!(fen::epd(&pos), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 //!
 //! `Fen` also implements `Display`:
@@ -247,7 +247,7 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", fen(self, true))
+        write!(f, "{}", fen(self))
     }
 }
 
@@ -279,7 +279,7 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
 }
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-pub fn epd(setup: &Setup, promoted: bool) -> String {
+pub fn epd(setup: &Setup) -> String {
     let pockets = setup.pockets()
                        .map_or("".to_owned(), |p| format!("[{}]", p));
 
@@ -287,7 +287,7 @@ pub fn epd(setup: &Setup, promoted: bool) -> String {
                       .map_or("".to_owned(), |r| format!(" {}", r));
 
     format!("{}{} {} {} {}{}",
-            setup.board().board_fen(promoted),
+            setup.board().board_fen(),
             pockets,
             setup.turn().char(),
             castling_xfen(setup.board(), setup.castling_rights()),
@@ -296,8 +296,8 @@ pub fn epd(setup: &Setup, promoted: bool) -> String {
 }
 
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-pub fn fen(setup: &Setup, promoted: bool) -> String {
-    format!("{} {} {}", epd(setup, promoted), setup.halfmove_clock(), setup.fullmoves())
+pub fn fen(setup: &Setup) -> String {
+    format!("{} {} {}", epd(setup), setup.halfmove_clock(), setup.fullmoves())
 }
 
 #[cfg(test)]
@@ -324,11 +324,11 @@ mod tests {
     fn test_legal_ep_square() {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
-        assert_eq!(epd(&fen, false), original_epd);
+        assert_eq!(epd(&fen), original_epd);
 
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
-        assert_eq!(epd(&pos, false), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+        assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
     #[test]
