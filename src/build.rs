@@ -63,17 +63,9 @@ fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
     sliding_attacks(sq, Bitboard::all(), deltas)
 }
 
-fn init_magics(sq: Square, magic: &Magic, shift: u8, masks: &mut[Bitboard], attacks: &mut[Bitboard], deltas: &[i8]) {
-    let range = sliding_attacks(sq, Bitboard(0), deltas);
-
-    let edges = ((Bitboard::rank(0) | Bitboard::rank(7)) & !Bitboard::rank(sq.rank())) |
-                ((Bitboard::file(0) | Bitboard::file(7)) & !Bitboard::file(sq.file()));
-
-    let mask = range & !edges;
-    masks[sq.index() as usize] = mask;
-
-    for subset in mask.carry_rippler() {
-        let attack = sliding_attacks(Square::from_index_unchecked(sq.index()), subset, deltas);
+fn init_magics(sq: Square, magic: &Magic, shift: u8, attacks: &mut[Bitboard], deltas: &[i8]) {
+    for subset in Bitboard(magic.mask).carry_rippler() {
+        let attack = sliding_attacks(sq, subset, deltas);
         let idx = (magic.factor.wrapping_mul(subset.0) >> (64 - shift)) as usize + magic.offset;
         assert!(attacks[idx].is_empty() || attacks[idx] == attack);
         attacks[idx] = attack;
@@ -103,8 +95,6 @@ fn generate() -> io::Result<()> {
     let mut black_pawn_attacks = [Bitboard(0); 64];
 
     let mut attacks = [Bitboard(0); 89524];
-    let mut rook_masks = [Bitboard(0); 64];
-    let mut bishop_masks = [Bitboard(0); 64];
 
     let mut bb_rays = [Bitboard(0); 4096];
     let mut bb_between = [Bitboard(0); 4096];
@@ -115,8 +105,8 @@ fn generate() -> io::Result<()> {
         king_attacks[s] = step_attacks(sq, &KING_DELTAS);
         white_pawn_attacks[s] = step_attacks(sq, &WHITE_PAWN_DELTAS);
         black_pawn_attacks[s] = step_attacks(sq, &BLACK_PAWN_DELTAS);
-        init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut rook_masks, &mut attacks, &ROOK_DELTAS);
-        init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut bishop_masks, &mut attacks, &BISHOP_DELTAS);
+        init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut attacks, &ROOK_DELTAS);
+        init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut attacks, &BISHOP_DELTAS);
     }
 
     for a in 0..64 {
@@ -152,8 +142,6 @@ fn generate() -> io::Result<()> {
     write!(f, "\n")?;
 
     dump_slice(&mut f, "ATTACKS", "u64", &attacks)?;
-    dump_slice(&mut f, "ROOK_MASKS", "u64", &rook_masks)?;
-    dump_slice(&mut f, "BISHOP_MASKS", "u64", &bishop_masks)?;
 
     write!(f, "\n")?;
 

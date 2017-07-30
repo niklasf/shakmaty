@@ -74,12 +74,11 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 
     unsafe {
         // This is safe because properly constructed squares are in bounds.
-        let mask = Bitboard(*ROOK_MASKS.get_unchecked(sq.index() as usize));
         let m = magics.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.
-        let idx = (m.factor.wrapping_mul((occupied & mask).0) >> (64 - 12)) as usize + m.offset;
+        let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
         Bitboard(*ATTACKS.get_unchecked(idx))
     }
 }
@@ -90,12 +89,11 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 
     unsafe {
         // This is safe because properly constructed squares are in bounds.
-        let mask = Bitboard(*BISHOP_MASKS.get_unchecked(sq.index() as usize));
         let m = magics.get_unchecked(sq.index() as usize);
 
         // This is safe because a sufficient size for the attack tables was
         // hand-selected.
-        let idx = (m.factor.wrapping_mul((occupied & mask).0) >> (64 - 9)) as usize + m.offset;
+        let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
         Bitboard(*ATTACKS.get_unchecked(idx))
     }
 }
