@@ -616,19 +616,36 @@ trait Slider {
     }
 
     fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
+        assert!(moves.len() < moves.capacity() - 28);
+
         let pieces = pos.our(Self::ROLE);
 
         for from in pieces & !blockers {
-            moves.extend((Self::attacks(from, pos.board().occupied()) & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
-            }));
+            for to in Self::attacks(from, pos.board().occupied()) & target {
+                unsafe {
+                    moves.push_unchecked(Move::Normal {
+                        role: Self::ROLE,
+                        from,
+                        capture: pos.board().role_at(to),
+                        to,
+                        promotion: None,
+                    });
+                }
+            }
         }
 
         for from in pieces & blockers {
-            let safe = Self::attacks(from, pos.board().occupied()) & target & attacks::ray(from, king);
-            moves.extend(safe.map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
-            }));
+            for to in Self::attacks(from, pos.board().occupied()) & target & attacks::ray(from, king) {
+                unsafe {
+                    moves.push_unchecked(Move::Normal {
+                        role: Self::ROLE,
+                        from,
+                        capture: pos.board().role_at(to),
+                        to,
+                        promotion: None,
+                    });
+                }
+            }
         }
     }
 }
@@ -643,10 +660,18 @@ impl Stepper for KnightTag {
     fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
 
     fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, blockers: Bitboard, moves: &mut MoveList) {
+        assert!(moves.len() < moves.capacity() - 8);
+
         for from in pos.our(Self::ROLE) & !blockers {
-            moves.extend((Self::attacks(from) & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None, }
-            }));
+            for to in Self::attacks(from) & target {
+                unsafe { moves.push_unchecked(Move::Normal {
+                    role: Self::ROLE,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                }) };
+            }
         }
     }
 }
