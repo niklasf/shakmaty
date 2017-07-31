@@ -561,29 +561,16 @@ trait Stepper {
             }));
         }
     }
-
-    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, blockers: Bitboard, moves: &mut MoveList);
 }
 
 trait Slider {
     const ROLE: Role;
-
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from, pos.board().occupied()) & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
-            }));
-        }
-    }
-
-    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, king: Square, blockers: Bitboard, moves: &mut MoveList) {
         assert!(moves.len() < moves.capacity() - 28);
 
-        let pieces = pos.our(Self::ROLE);
-
-        for from in pieces & !blockers {
+        for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from, pos.board().occupied()) & target {
                 unsafe {
                     moves.push_unchecked(Move::Normal {
@@ -591,21 +578,7 @@ trait Slider {
                         from,
                         capture: pos.board().role_at(to),
                         to,
-                        promotion: None,
-                    });
-                }
-            }
-        }
-
-        for from in pieces & blockers {
-            for to in Self::attacks(from, pos.board().occupied()) & target & attacks::ray(from, king) {
-                unsafe {
-                    moves.push_unchecked(Move::Normal {
-                        role: Self::ROLE,
-                        from,
-                        capture: pos.board().role_at(to),
-                        to,
-                        promotion: None,
+                        promotion: None
                     });
                 }
             }
@@ -621,22 +594,6 @@ enum QueenTag { }
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
-
-    fn gen_safe_moves<P: Position>(pos: &P, target: Bitboard, blockers: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() < moves.capacity() - 8);
-
-        for from in pos.our(Self::ROLE) & !blockers {
-            for to in Self::attacks(from) & target {
-                unsafe { moves.push_unchecked(Move::Normal {
-                    role: Self::ROLE,
-                    from,
-                    capture: pos.board().role_at(to),
-                    to,
-                    promotion: None,
-                }) };
-            }
-        }
-    }
 }
 
 impl Slider for BishopTag {
