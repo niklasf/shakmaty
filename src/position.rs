@@ -293,22 +293,24 @@ impl Position for Chess {
         // standard chess.
         let king = unsafe { self.our(Role::King).first().unsafe_unwrap() };
 
-        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
-
         let checkers = self.king_attackers(king, !self.turn(),
                                            self.board().occupied());
+
+        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         if checkers.is_empty() {
             let target = !self.us();
             gen_non_king(self, target, moves);
-            KingTag::gen_moves(self, target, moves);
+            gen_safe_king(self, king, target, moves);
             gen_castling_moves(self, king, moves);
         } else {
             evasions(self, king, checkers, moves);
         }
 
         let blockers = slider_blockers(self.board(), self.them(), king);
-        util::swap_retain(moves, |m| is_safe(self, king, m, blockers));
+        if blockers.any() | has_ep {
+            util::swap_retain(moves, |m| is_safe(self, king, m, blockers));
+        }
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -476,6 +478,24 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     QueenTag::gen_moves(pos, target, moves);
 }
 
+fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
+    assert!(moves.len() < moves.capacity() - 8);
+
+    for to in attacks::king_attacks(king) & target {
+        if pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty() {
+            unsafe {
+                moves.push_unchecked(Move::Normal {
+                    role: Role::King,
+                    from: king,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                });
+            }
+        }
+    }
+}
+
 fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board().sliders();
 
@@ -484,7 +504,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
         attacked |= attacks::ray(checker, king) ^ checker;
     }
 
-    KingTag::gen_moves(pos, !pos.us() & !attacked, moves);
+    gen_safe_king(pos, king, !pos.us() & !attacked, moves);
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
@@ -572,7 +592,6 @@ trait Slider {
 }
 
 enum KnightTag { }
-enum KingTag { }
 enum BishopTag { }
 enum RookTag { }
 enum QueenTag { }
@@ -580,11 +599,6 @@ enum QueenTag { }
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
-}
-
-impl Stepper for KingTag {
-    const ROLE: Role = Role::King;
-    fn attacks(from: Square) -> Bitboard { attacks::king_attacks(from) }
 }
 
 impl Slider for BishopTag {
@@ -685,11 +699,7 @@ unsafe fn push_promotions<P: Position>(moves: &mut MoveList, from: Square, to: S
 
 fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     let mut moves = MoveList::new();
-    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves);
-
-    if moves.is_empty() {
-        false
-    } else {
+    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves) && {
         moves.clear();
         pos.legal_moves(&mut moves);
         moves.iter().any(|m| match *m {
@@ -699,12 +709,17 @@ fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     }
 }
 
-fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) {
+fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) -> bool {
+    let mut found = false;
+
     if let Some(to) = ep_square {
         for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
             moves.push(Move::EnPassant { from, to });
+            found = true;
         }
     }
+
+    found
 }
 
 fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
@@ -726,11 +741,8 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
 
 fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
     match *m {
-        Move::Normal { role: Role::King, to, .. } =>
-            pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty(),
         Move::Normal { from, to, .. } =>
-            !(pos.us() & blockers).contains(from) ||
-            attacks::aligned(from, to, king),
+            !(pos.us() & blockers).contains(from) || attacks::aligned(from, to, king),
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board().occupied();
             occupied.flip(from);
