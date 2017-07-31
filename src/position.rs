@@ -474,7 +474,7 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 }
 
 fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
-    assert!(moves.len() < moves.capacity() - 8);
+    assert!(moves.len() + 8 < moves.capacity());
 
     for to in attacks::king_attacks(king) & target {
         if pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty() {
@@ -562,7 +562,7 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() < moves.capacity() - 8);
+        assert!(moves.len() + 8 < moves.capacity());
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from) & target {
@@ -585,7 +585,7 @@ trait Slider {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() < moves.capacity() - 28);
+        assert!(moves.len() + 28 < moves.capacity());
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from, pos.board().occupied()) & target {
@@ -628,11 +628,10 @@ impl Slider for QueenTag {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
 }
 
-fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList)
-{
+fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     // Due to push_unchecked the safety of this function depends on this
     // assertion.
-    assert!(moves.len() < moves.capacity() - 108);
+    assert!(moves.len() + 108 < moves.capacity());
 
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
@@ -811,6 +810,7 @@ mod tests {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
         let pos: Chess = fen.parse::<Fen>().expect("valid fen")
                             .position().expect("legal position");
+
         let m = Move::Normal {
             role: Role::Bishop,
             from: square::F8,
