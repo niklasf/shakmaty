@@ -74,7 +74,6 @@ extern crate test;
 
 extern crate arrayvec;
 extern crate option_filter;
-extern crate unsafe_unwrap;
 
 mod types;
 mod bitboard;

@@ -26,7 +26,6 @@ use setup::Setup;
 use util;
 
 use option_filter::OptionFilterExt;
-use unsafe_unwrap::UnsafeUnwrap;
 use arrayvec::ArrayVec;
 
 use std::fmt;
@@ -289,15 +288,11 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        // This is safe because we validate that there is a king in
-        // standard chess.
-        let king = unsafe { self.our(Role::King).first().unsafe_unwrap() };
-
-        let checkers = self.king_attackers(king, !self.turn(),
-                                           self.board().occupied());
+        let king = self.our(Role::King).first().expect("king in standard chess");
 
         let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
+        let checkers = self.checkers();
         if checkers.is_empty() {
             let target = !self.us();
             gen_non_king(self, target, moves);
