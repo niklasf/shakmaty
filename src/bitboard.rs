@@ -95,10 +95,6 @@ impl Bitboard {
         }
     }
 
-    pub fn is_empty(self) -> bool {
-        self.0 == 0
-    }
-
     pub fn any(self) -> bool {
         self.0 != 0
     }
@@ -330,7 +326,8 @@ impl Iterator for Bitboard {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(self.count()))
+        let count = self.count();
+        (count, Some(count))
     }
 
     fn last(self) -> Option<Square> {
@@ -339,6 +336,16 @@ impl Iterator for Bitboard {
         } else {
             Some(Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8))
         }
+    }
+}
+
+impl ExactSizeIterator for Bitboard {
+    fn len(&self) -> usize {
+        self.count()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0 == 0
     }
 }
 

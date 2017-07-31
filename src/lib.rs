@@ -69,6 +69,7 @@
 #![feature(platform_intrinsics)]
 #![feature(const_fn)]
 #![feature(ascii_ctype)]
+#![feature(exact_size_is_empty)]
 
 extern crate test;
 
