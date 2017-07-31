@@ -646,7 +646,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList)
     for from in seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
             unsafe {
-                push_promotions::<P>(moves, from, to, pos.board().role_at(to));
+                push_promotions(moves, from, to, pos.board().role_at(to));
             }
         }
     }
@@ -675,7 +675,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList)
     for to in single_moves & target & bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
             unsafe {
-                push_promotions::<P>(moves, from, to, None);
+                push_promotions(moves, from, to, None);
             }
         }
     }
@@ -695,7 +695,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList)
     }
 }
 
-unsafe fn push_promotions<P: Position>(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+unsafe fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
