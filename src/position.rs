@@ -211,8 +211,7 @@ pub trait Position: Setup + Default + Clone {
         })
     }
 
-    /// Validates and plays a move. Accepts only legal moves and
-    /// safe null moves.
+    /// Validates and plays a move.
     fn play(self, m: &Move) -> Result<Self, IllegalMove> {
         if self.is_legal(m) {
             Ok(self.play_unchecked(m))
