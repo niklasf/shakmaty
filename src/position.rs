@@ -291,10 +291,9 @@ impl Position for Chess {
     fn legal_moves(&self, moves: &mut MoveList) {
         // This is safe because we validate that there is a king in
         // standard chess.
-        let our_king = self.our(Role::King).first();
-        let king = unsafe { our_king.unsafe_unwrap() };
+        let king = unsafe { self.our(Role::King).first().unsafe_unwrap() };
 
-        gen_en_passant(self.board(), self.turn(), self.ep_square, our_king, moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         let checkers = self.king_attackers(king, !self.turn(),
                                            self.board().occupied());
@@ -307,6 +306,9 @@ impl Position for Chess {
         } else {
             evasions(self, king, checkers, moves);
         }
+
+        let blockers = slider_blockers(self.board(), self.them(), king);
+        util::swap_retain(moves, |m| is_safe(self, king, m, blockers));
     }
 
     fn is_insufficient_material(&self) -> bool {
@@ -727,7 +729,7 @@ unsafe fn push_promotions<P: Position>(moves: &mut MoveList, from: Square, to: S
 
 fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     let mut moves = MoveList::new();
-    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), None, &mut moves);
+    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves);
 
     if moves.is_empty() {
         false
@@ -741,34 +743,9 @@ fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
     }
 }
 
-fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, safe_king: Option<Square>, moves: &mut MoveList) {
+fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) {
     if let Some(to) = ep_square {
         for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
-            // Ensure we are not in check after en passant.
-            if let Some(king) = safe_king {
-                let them = board.by_color(!turn);
-                let captured = square::combine(to, from);
-
-                // King in check, but not by the pawn.
-                // Impossible from a series of legal moves.
-                if (attacks::king_attacks(king) & them & board.kings()).any() ||
-                   (attacks::knight_attacks(king) & them & board.knights()).any() ||
-                   (attacks::pawn_attacks(turn, king) & them.without(captured) & board.pawns()).any() {
-                    continue;
-                }
-
-                // Detect pins.
-                let mut occupied = board.occupied();
-                occupied.flip(from);
-                occupied.flip(captured);
-                occupied.add(to);
-
-                if (attacks::rook_attacks(king, occupied) & them & board.rooks_and_queens()).any() ||
-                   (attacks::bishop_attacks(king, occupied) & them & board.bishops_and_queens()).any() {
-                    continue;
-                }
-            }
-
             moves.push(Move::EnPassant { from, to });
         }
     }
@@ -789,6 +766,26 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
     }
 
     blockers
+}
+
+fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
+    match *m {
+        Move::Normal { role: Role::King, to, .. } =>
+            pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty(),
+        Move::Normal { from, to, .. } =>
+            !(pos.us() & blockers).contains(from) ||
+            attacks::aligned(from, to, king),
+        Move::EnPassant { from, to } => {
+            let mut occupied = pos.board().occupied();
+            occupied.flip(from);
+            occupied.flip(square::combine(to, from)); // captured pawn
+            occupied.add(to);
+
+            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &
+            (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
+        },
+        Move::Castle { .. } => true,
+    }
 }
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
