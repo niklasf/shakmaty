@@ -309,42 +309,6 @@ impl Position for Chess {
         }
     }
 
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
-        let our_king = self.our(Role::King).first();
-        let king = our_king.expect("got a king");
-
-        let checkers = self.checkers();
-
-        if checkers.is_empty() {
-            let target = !self.us() & to;
-            let blockers = slider_blockers(self.board(), self.them(), king);
-            match role {
-                Role::Pawn => {
-                    gen_en_passant(self.board(), self.turn(), self.ep_square, our_king, moves);
-                    gen_pawn_moves(self, target, moves, |from, to| {
-                        !blockers.contains(from) || attacks::aligned(from, to, king)
-                    });
-                },
-                Role::Knight =>
-                    KnightTag::gen_safe_moves(self, target, blockers, moves),
-                Role::Bishop =>
-                    BishopTag::gen_safe_moves(self, target, king, blockers, moves),
-                Role::Rook =>
-                    RookTag::gen_safe_moves(self, target, king, blockers, moves),
-                Role::Queen =>
-                    QueenTag::gen_safe_moves(self, target, king, blockers, moves),
-                Role::King => {
-                    gen_safe_king(self, target, moves);
-                    gen_castling_moves(self, king, moves);
-                },
-            }
-        } else {
-            gen_en_passant(self.board(), self.turn(), self.ep_square, our_king, moves);
-            evasions(self, king, checkers, moves);
-            filter_san_candidates(role, to, moves);
-        }
-    }
-
     fn is_insufficient_material(&self) -> bool {
         if self.board().pawns().any() || self.board().rooks_and_queens().any() {
             return false;
