@@ -508,12 +508,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
 }
 
 fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) {
-    'next_rook: for rook in pos.castling_rights() {
-        let backrank = pos.turn().fold(0, 7);
-        if rook.rank() != backrank || king.rank() != backrank {
-            continue;
-        }
-
+    'next_rook: for rook in pos.castling_rights() & Bitboard::relative_rank(pos.turn(), 0) {
         let (king_to, rook_to) = if king < rook {
             (pos.turn().fold(square::G1, square::G8),
              pos.turn().fold(square::F1, square::F8))
