@@ -301,7 +301,7 @@ impl Position for Chess {
         if checkers.is_empty() {
             let target = !self.us();
             gen_non_king(self, target, moves);
-            gen_safe_king(self, target, moves);
+            KingTag::gen_moves(self, target, moves);
             gen_castling_moves(self, king, moves);
         } else {
             evasions(self, king, checkers, moves);
@@ -587,6 +587,7 @@ trait Slider {
 }
 
 enum KnightTag { }
+enum KingTag { }
 enum BishopTag { }
 enum RookTag { }
 enum QueenTag { }
@@ -594,6 +595,11 @@ enum QueenTag { }
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
+}
+
+impl Stepper for KingTag {
+    const ROLE: Role = Role::King;
+    fn attacks(from: Square) -> Bitboard { attacks::king_attacks(from) }
 }
 
 impl Slider for BishopTag {
