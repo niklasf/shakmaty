@@ -20,7 +20,7 @@ use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
+use types::{Color, White, Black, Role, Move};
 use setup;
 use setup::Setup;
 use util;
@@ -60,10 +60,6 @@ pub enum PositionError {
     BadCastlingRights,
     InvalidEpSquare,
     OppositeCheck,
-    ThreeCheckOver,
-    RacingKingsCheck,
-    RacingKingsOver,
-    RacingKingsMaterial,
 }
 
 impl PositionError {
@@ -79,10 +75,6 @@ impl PositionError {
             PositionError::BadCastlingRights => "bad castling rights",
             PositionError::InvalidEpSquare => "invalid en passant square",
             PositionError::OppositeCheck => "opponent is in check",
-            PositionError::ThreeCheckOver => "no remaining checks",
-            PositionError::RacingKingsCheck => "check in racing kings",
-            PositionError::RacingKingsOver => "race should have ended before",
-            PositionError::RacingKingsMaterial => "illegal racing kings material",
         }
     }
 }
@@ -112,7 +104,7 @@ impl Error for IllegalMove {
 }
 
 /// A stack-allocated container to hold legal moves.
-pub type MoveList = ArrayVec<[Move; 512]>;
+pub type MoveList = ArrayVec<[Move; 256]>;
 
 /// A legal chess or chess variant position. See `Chess` and
 /// `shakmaty::variants` for concrete implementations.
@@ -265,11 +257,9 @@ impl Default for Chess {
 
 impl Setup for Chess {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
@@ -417,9 +407,6 @@ fn do_move(board: &mut Board,
             board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece));
             *halfmove_clock = 0;
         },
-        Move::Put { to, role } => {
-            board.set_piece_at(to, Piece { color, role });
-        },
     }
 
     if color.is_black() {
@@ -434,21 +421,12 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
         return Some(PositionError::Empty)
     }
 
-    if let Some(pockets) = pos.pockets() {
-        if pos.board().pawns().count() + pockets.white.pawns as usize + pockets.black.pawns as usize > 16 {
-            return Some(PositionError::TooManyPawns)
-        }
-        if pos.board().occupied().count() + pockets.count() as usize > 32 {
+    for color in &[White, Black] {
+        if pos.board().by_color(*color).count() > 16 {
             return Some(PositionError::TooManyPieces)
         }
-    } else {
-        for color in &[White, Black] {
-            if pos.board().by_color(*color).count() > 16 {
-                return Some(PositionError::TooManyPieces)
-            }
-            if pos.board().by_piece(&color.pawn()).count() > 8 {
-                return Some(PositionError::TooManyPawns)
-            }
+        if pos.board().by_piece(&color.pawn()).count() > 8 {
+            return Some(PositionError::TooManyPawns)
         }
     }
 
@@ -832,8 +810,7 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
     util::swap_retain(moves, |m| match *m {
-        Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
-            to == t && role == r,
+        Move::Normal { role: r, to: t, .. } => to == t && role == r,
         Move::Castle { rook, .. } => role == Role::King && to == rook,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
     });
