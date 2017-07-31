@@ -300,7 +300,7 @@ impl Position for Chess {
 
         if checkers.is_empty() {
             let target = !self.us();
-            gen_safe_non_king(self, target, king, moves);
+            gen_non_king(self, target, moves);
             gen_safe_king(self, target, moves);
             gen_castling_moves(self, king, moves);
         } else {
@@ -468,13 +468,12 @@ fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     None
 }
 
-fn gen_safe_non_king<P: Position>(pos: &P, target: Bitboard, king: Square, moves: &mut MoveList) {
-    let blockers = slider_blockers(pos.board(), pos.them(), king);
+fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     gen_pawn_moves(pos, target, moves);
-    KnightTag::gen_safe_moves(pos, target, blockers, moves);
-    BishopTag::gen_safe_moves(pos, target, king, blockers, moves);
-    RookTag::gen_safe_moves(pos, target, king, blockers, moves);
-    QueenTag::gen_safe_moves(pos, target, king, blockers, moves);
+    KnightTag::gen_moves(pos, target, moves);
+    BishopTag::gen_moves(pos, target, moves);
+    RookTag::gen_moves(pos, target, moves);
+    QueenTag::gen_moves(pos, target, moves);
 }
 
 fn gen_safe_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
@@ -504,7 +503,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
-        gen_safe_non_king(pos, target, king, moves);
+        gen_non_king(pos, target, moves);
     }
 }
 
