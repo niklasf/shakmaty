@@ -615,7 +615,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList)
 {
     // Due to push_unchecked the safety of this function depends on this
     // assertion.
-    assert!(moves.len() < moves.capacity() - 104);
+    assert!(moves.len() < moves.capacity() - 108);
 
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
@@ -764,6 +764,17 @@ mod tests {
     use super::*;
     use test::Bencher;
     use fen::Fen;
+
+    #[test]
+    fn test_most_known_legals() {
+        let fen = "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1";
+        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
+                            .position().expect("legal position");
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        assert_eq!(moves.len(), 218);
+    }
 
     #[bench]
     fn bench_generate_moves(b: &mut Bencher) {
