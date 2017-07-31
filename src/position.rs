@@ -476,21 +476,6 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     QueenTag::gen_moves(pos, target, moves);
 }
 
-fn gen_safe_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    for from in pos.our(Role::King) {
-        moves.extend(
-            (attacks::king_attacks(from) & target)
-                .filter(|to| pos.board().attacks_to(*to, !pos.turn(), pos.board().occupied()).is_empty())
-                .map(|to| Move::Normal {
-                    role: Role::King,
-                    from,
-                    capture: pos.board().role_at(to),
-                    to,
-                    promotion: None,
-                }));
-    }
-}
-
 fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board().sliders();
 
@@ -499,7 +484,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
         attacked |= attacks::ray(checker, king) ^ checker;
     }
 
-    gen_safe_king(pos, !pos.us() & !attacked, moves);
+    KingTag::gen_moves(pos, !pos.us() & !attacked, moves);
 
     if let Some(checker) = checkers.single_square() {
         let target = attacks::between(king, checker).with(checker);
