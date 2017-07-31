@@ -12,9 +12,10 @@ build = "src/build.rs"
 
 [dependencies]
 option-filter = "1.0"
+unsafe_unwrap = "0.1"
 
 [dependencies.arrayvec]
-version = "0.3"
+git = "https://github.com/bluss/arrayvec.git"
 features = ["use_union"]
 
 [badges]
