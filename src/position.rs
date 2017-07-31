@@ -555,10 +555,20 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+        assert!(moves.len() < moves.capacity() - 8);
+
         for from in pos.our(Self::ROLE) {
-            moves.extend((Self::attacks(from) & target).map(|to| {
-                Move::Normal { role: Self::ROLE, from, capture: pos.board().role_at(to), to, promotion: None }
-            }));
+            for to in Self::attacks(from) & target {
+                unsafe {
+                    moves.push_unchecked(Move::Normal {
+                        role: Self::ROLE,
+                        from,
+                        capture: pos.board().role_at(to),
+                        to,
+                        promotion: None
+                    });
+                }
+            }
         }
     }
 }
