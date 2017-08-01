@@ -522,8 +522,11 @@ fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
             return Some(PositionError::InvalidEpSquare)
         }
 
-        let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8)).expect("ep square is on sixth rank");
-        let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8)).expect("ep square is on sixth rank");
+        let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8))
+                                     .expect("ep square is on sixth rank");
+
+        let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8))
+                                        .expect("ep square is on sixth rank");
 
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
