@@ -304,6 +304,61 @@ impl Position for Chess {
         }
     }
 
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        let king = self.our(Role::King).first().expect("king in standard chess");
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            let piece_from = match role {
+                Role::Pawn => Bitboard(0),
+                Role::Knight => attacks::knight_attacks(to),
+                Role::Bishop => attacks::bishop_attacks(to, self.board().occupied()),
+                Role::Rook => attacks::rook_attacks(to, self.board().occupied()),
+                Role::Queen => attacks::queen_attacks(to, self.board().occupied()),
+                Role::King => {
+                    gen_castling_moves(self, king, moves);
+                    filter_san_candidates(role, to, moves);
+                    Bitboard(0)
+                },
+            };
+
+            if !self.us().contains(to) {
+                match role {
+                    Role::Pawn => gen_pawn_moves(self, Bitboard::from_square(to), moves),
+                    Role::King => gen_safe_king(self, king, Bitboard::from_square(to), moves),
+                    _ => {}
+                }
+
+                assert!(moves.len() + 8 < MoveList::CAPACITY);
+
+                for from in piece_from & self.our(role) {
+                    unsafe {
+                        moves.push_unchecked(Move::Normal {
+                            role,
+                            from,
+                            capture: self.board().role_at(to),
+                            to,
+                            promotion: None,
+                        });
+                    };
+                }
+            }
+        } else {
+            evasions(self, king, checkers, moves);
+            filter_san_candidates(role, to, moves);
+        }
+
+        let has_ep =
+            role == Role::Pawn &&
+            Some(to) == self.ep_square &&
+            gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+
+        let blockers = slider_blockers(self.board(), self.them(), king);
+        if blockers.contains(to) | has_ep {
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+        }
+    }
+
     fn is_insufficient_material(&self) -> bool {
         if self.board().pawns().any() || self.board().rooks_and_queens().any() {
             return false;
