@@ -824,4 +824,18 @@ mod tests {
             assert_eq!(after.turn(), White);
         });
     }
+
+    #[bench]
+    fn bench_san_candidates(b: &mut Bencher) {
+        let fen = "r2q1rk1/pb1nbppp/5n2/1p2p3/3NP3/P1NB4/1P2QPPP/R1BR2K1 w - -";
+        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
+                             .position().expect("legal position");
+
+
+        b.iter(|| {
+            let mut moves = MoveList::new();
+            pos.san_candidates(Role::Knight, square::B5, &mut moves);
+            assert_eq!(moves.len(), 2);
+        })
+    }
 }
