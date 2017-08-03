@@ -91,7 +91,7 @@ pub mod uci;
 pub mod san;
 
 pub use square::Square;
-pub use types::{Color, Role, Piece, Move, RemainingChecks};
+pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;

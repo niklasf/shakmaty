@@ -57,7 +57,7 @@ use std::fmt;
 use std::error::Error;
 
 use square::Square;
-use types::{Color, Black, White, RemainingChecks};
+use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard::Bitboard;
 use board::{Board, BoardFenError};
 use setup::Setup;
@@ -111,6 +111,7 @@ impl From<BoardFenError> for FenError {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Fen {
     pub board: Board,
+    pub pockets: Option<Pockets>,
     pub turn: Color,
     pub castling_rights: Bitboard,
     pub ep_square: Option<Square>,
@@ -121,6 +122,7 @@ pub struct Fen {
 
 impl Setup for Fen {
     fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { self.pockets.as_ref() }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square }
@@ -133,6 +135,7 @@ impl Default for Fen {
     fn default() -> Fen {
         Fen {
             board: Board::default(),
+            pockets: None,
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
@@ -165,7 +168,21 @@ impl FromStr for Fen {
         let mut result = Fen::empty();
 
         let board_part = parts.next().expect("splits have at least one part");
+
+        let (board_part, pockets) = if board_part.ends_with(']') {
+            let split_point = board_part.find('[').ok_or(FenError::InvalidBoard)?;
+            let mut pockets = Pockets::default();
+            for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
+                let piece = Piece::from_char(ch).ok_or(FenError::InvalidPocket)?;
+                pockets.add(piece);
+            }
+            (&board_part[..split_point], Some(pockets))
+        } else {
+            (board_part, None)
+        };
+
         result.board = Board::from_board_fen(board_part)?;
+        result.pockets = pockets;
 
         result.turn = match parts.next() {
             Some("w") | None => White,
@@ -264,11 +281,15 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 pub fn epd(setup: &Setup) -> String {
+    let pockets = setup.pockets()
+                       .map_or("".to_owned(), |p| format!("[{}]", p));
+
     let checks = setup.remaining_checks()
                       .map_or("".to_owned(), |r| format!(" {}", r));
 
-    format!("{} {} {} {}{}",
+    format!("{}{} {} {} {}{}",
             setup.board().board_fen(),
+            pockets,
             setup.turn().char(),
             castling_xfen(setup.board(), setup.castling_rights()),
             setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
@@ -294,6 +315,12 @@ mod tests {
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
         assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+    }
+
+    #[test]
+    fn test_pockets() {
+        let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
+        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(&White.queen())), 1);
     }
 
     #[test]
