@@ -97,6 +97,7 @@ impl Error for InvalidUci {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Uci {
     Normal { from: Square, to: Square, promotion: Option<Role> },
+    Put { role: Role, to: Square },
     Null
 }
 
@@ -120,6 +121,13 @@ impl FromStr for Uci {
             _ => (),
         }
 
+        if let (Some(piece), Some('@'), Ok(to)) =
+               (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
+            return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
+                Uci::Put { role, to }
+            }).ok_or(InvalidUci { _priv: () });
+        }
+
         if uci == "0000" {
             return Ok(Uci::Null)
         }
@@ -135,6 +143,8 @@ impl fmt::Display for Uci {
                 write!(f, "{}{}", from, to),
             Uci::Normal { from, to, promotion: Some(promotion) } =>
                 write!(f, "{}{}{}", from, to, promotion.char()),
+            Uci::Put { to, role } =>
+                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
             Uci::Null =>
                 write!(f, "0000")
         }
@@ -187,6 +197,7 @@ impl Uci {
                     Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
                 }
             },
+            Uci::Put { role, to } => return Err(IllegalMove {}),
             Uci::Null => return Err(IllegalMove {})
         };
 
