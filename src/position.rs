@@ -20,7 +20,7 @@ use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Move};
+use types::{Color, White, Black, Role, Move, RemainingChecks};
 use setup;
 use setup::Setup;
 use util;
@@ -259,6 +259,7 @@ impl Setup for Chess {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }

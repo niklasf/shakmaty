@@ -181,3 +181,37 @@ impl fmt::Display for Move {
         }
     }
 }
+
+/// The number of checks the respective side needs to give in order to in
+/// (in a game of Three-Check).
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct RemainingChecks {
+    pub white: u8,
+    pub black: u8,
+}
+
+impl Default for RemainingChecks {
+    fn default() -> RemainingChecks {
+        RemainingChecks { white: 3, black: 3 }
+    }
+}
+
+impl RemainingChecks {
+    pub fn by_color(&self, color: Color) -> u8 {
+        color.fold(self.white, self.black)
+    }
+
+    pub fn by_color_mut(&mut self, color: Color) -> &mut u8 {
+        color.fold(&mut self.white, &mut self.black)
+    }
+
+    pub fn subtract(&mut self, color: Color) {
+        *self.by_color_mut(color) = self.by_color(color).saturating_sub(1);
+    }
+}
+
+impl fmt::Display for RemainingChecks {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}+{}", self.white, self.black)
+    }
+}

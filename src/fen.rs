@@ -57,7 +57,7 @@ use std::fmt;
 use std::error::Error;
 
 use square::Square;
-use types::{Color, Black, White};
+use types::{Color, Black, White, RemainingChecks};
 use bitboard::Bitboard;
 use board::{Board, BoardFenError};
 use setup::Setup;
@@ -114,6 +114,7 @@ pub struct Fen {
     pub turn: Color,
     pub castling_rights: Bitboard,
     pub ep_square: Option<Square>,
+    pub remaining_checks: Option<RemainingChecks>,
     pub halfmove_clock: u32,
     pub fullmoves: u32,
 }
@@ -123,6 +124,7 @@ impl Setup for Fen {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
@@ -134,6 +136,7 @@ impl Default for Fen {
             turn: White,
             castling_rights: Bitboard(0x8100000000000081),
             ep_square: None,
+            remaining_checks: None,
             halfmove_clock: 0,
             fullmoves: 1,
         }
@@ -198,7 +201,23 @@ impl FromStr for Fen {
                 result.ep_square = Some(Square::from_str(ep_part).map_err(|_| FenError::InvalidEpSquare)?)
         }
 
-        if let Some(halfmoves_part) = parts.next() {
+        let halfmoves_part = if let Some(checks_part) = parts.next() {
+            let mut checks = checks_part.splitn(2, '+');
+            if let (Some(w), Some(b)) = (checks.next(), checks.next()) {
+                result.remaining_checks = Some(RemainingChecks {
+                    white: w.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
+                    black: b.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
+                });
+                parts.next()
+            } else {
+                Some(checks_part)
+            }
+        } else {
+            None
+        };
+
+
+        if let Some(halfmoves_part) = halfmoves_part {
             result.halfmove_clock = halfmoves_part.parse().map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
@@ -245,11 +264,15 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 pub fn epd(setup: &Setup) -> String {
-    format!("{} {} {} {}",
+    let checks = setup.remaining_checks()
+                      .map_or("".to_owned(), |r| format!(" {}", r));
+
+    format!("{} {} {} {}{}",
             setup.board().board_fen(),
             setup.turn().char(),
             castling_xfen(setup.board(), setup.castling_rights()),
-            setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()))
+            setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+            checks)
 }
 
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
@@ -271,6 +294,15 @@ mod tests {
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
         assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+    }
+
+    #[test]
+    fn test_remaining_checks() {
+        let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42".parse().expect("valid fen");
+        let expected = RemainingChecks { white: 1, black: 2 };
+        assert_eq!(fen.remaining_checks, Some(expected));
+        assert_eq!(fen.halfmove_clock, 12);
+        assert_eq!(fen.fullmoves, 42);
     }
 
     #[test]

@@ -18,7 +18,7 @@ use square;
 use square::Square;
 use bitboard;
 use bitboard::Bitboard;
-use types::{Color, White, Black, Role};
+use types::{Color, White, Black, Role, RemainingChecks};
 use board::Board;
 
 use std::iter::FromIterator;
@@ -30,6 +30,7 @@ pub trait Setup {
     fn turn(&self) -> Color;
     fn castling_rights(&self) -> Bitboard;
     fn ep_square(&self) -> Option<Square>;
+    fn remaining_checks(&self) -> Option<&RemainingChecks>;
     fn halfmove_clock(&self) -> u32;
     fn fullmoves(&self) -> u32;
 
