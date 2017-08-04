@@ -73,7 +73,7 @@ impl Bitboard {
     #[inline]
     pub fn file(file: i8) -> Bitboard {
         if 0 <= file && file < 8 {
-            Bitboard(0x101010101010101 << file)
+            Bitboard(0x0101_0101_0101_0101 << file)
         } else {
             Bitboard(0)
         }
@@ -85,7 +85,7 @@ impl Bitboard {
         if 0 <= rank && rank < 8 {
             match color {
                 Color::White => Bitboard(0xff << (8 * rank)),
-                Color::Black => Bitboard(0xff00000000000000 >> (8 * rank))
+                Color::Black => Bitboard(0xff00_0000_0000_0000 >> (8 * rank))
             }
         } else {
             Bitboard(0)
@@ -205,16 +205,16 @@ impl Bitboard {
 }
 
 /// All dark squares.
-pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55aa55aa55aa55);
+pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
 
 /// All light squares.
-pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa55aa55aa55aa);
+pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa_55aa_55aa_55aa);
 
 /// The four corner squares.
-pub const CORNERS: Bitboard = Bitboard(0x8100000000000081);
+pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
 /// The backranks.
-pub const BACKRANKS: Bitboard = Bitboard(0xff000000000000ff);
+pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

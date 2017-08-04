@@ -323,7 +323,7 @@ impl San {
 
         legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
             if others.is_empty() {
-                Ok(m.clone())
+                Ok(*m)
             } else {
                 Err(SanError::AmbiguousSan)
             }

@@ -74,6 +74,7 @@ fn init_magics(sq: Square, magic: &Magic, shift: u8, attacks: &mut[Bitboard], de
 }
 
 fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
+    write!(w, "#[cfg_attr(feature = \"cargo-clippy\", allow(unreadable_literal))]")?;
     write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
     for v in slice {
         write!(w, "0x{:x}, ", v)?;

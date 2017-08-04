@@ -6,7 +6,7 @@ pub struct Magic {
     pub factor: u64,
     pub offset: usize,
 }
-
+#[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
 pub static BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040201008040200, factor: 0x0000404040404040, offset: 33104 },
     Magic { mask: 0x0000402010080400, factor: 0x0000a060401007fc, offset:  4094 },
@@ -74,6 +74,7 @@ pub static BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040201008040200, factor: 0x0000404040404040, offset: 10186 },
 ];
 
+#[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
 pub static ROOK_MAGICS: [Magic; 64] = [
     Magic { mask: 0x000101010101017e, factor: 0x00280077ffebfffe, offset: 41305 },
     Magic { mask: 0x000202020202027c, factor: 0x2004010201097fff, offset: 14326 },

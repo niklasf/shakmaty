@@ -110,17 +110,17 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            occupied: Bitboard(0xffff00000000ffff),
+            occupied: Bitboard(0xffff_0000_0000_ffff),
 
-            black: Bitboard(0xffff000000000000),
+            black: Bitboard(0xffff_0000_0000_0000),
             white: Bitboard(0xffff),
 
-            pawns: Bitboard(0xff00000000ff00),
-            knights: Bitboard(0x4200000000000042),
-            bishops: Bitboard(0x2400000000000024),
-            rooks: Bitboard(0x8100000000000081),
-            queens: Bitboard(0x800000000000008),
-            kings: Bitboard(0x1000000000000010),
+            pawns: Bitboard(0x00ff_0000_0000_ff00),
+            knights: Bitboard(0x4200_0000_0000_0042),
+            bishops: Bitboard(0x2400_0000_0000_0024),
+            rooks: Bitboard(0x8100_0000_0000_0081),
+            queens: Bitboard(0x800_0000_0000_0008),
+            kings: Bitboard(0x1000_0000_0000_0010),
 
             promoted: Bitboard(0),
         }

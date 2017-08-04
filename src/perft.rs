@@ -47,7 +47,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
         if depth == 1 {
             moves.len()
         } else {
-            moves.iter().map(|ref m| {
+            moves.iter().map(|m| {
                 let child = pos.clone().play_unchecked(m);
                 perft(&child, depth - 1)
             }).sum()
