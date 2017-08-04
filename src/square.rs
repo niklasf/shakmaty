@@ -47,6 +47,7 @@ pub struct Square(i8);
 impl Square {
     /// Tries to create a `Square` from an integer index in the range
     /// `0` to `63`.
+    #[inline]
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
             Some(Square(index))
@@ -61,12 +62,14 @@ impl Square {
     ///
     /// In debug mode, panics if the index is out of range. In release mode
     /// panics might be caused when using invalid Squares.
+    #[inline]
     pub fn from_index_unchecked(index: i8) -> Square {
         debug_assert!(0 <= index && index < 64);
         Square(index)
     }
 
     /// Tries to create a square from zero-based file and rank indexes.
+    #[inline]
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
             Some(Square(file | (rank << 3)))
@@ -75,28 +78,34 @@ impl Square {
         }
     }
 
+    #[inline]
     pub fn index(self) -> i8 {
         self.0
     }
 
+    #[inline]
     pub fn file(self) -> i8 {
         let Square(sq) = self;
         sq & 7
     }
 
+    #[inline]
     pub fn file_char(self) -> char {
         (b'a' + self.file() as u8) as char
     }
 
+    #[inline]
     pub fn rank(self) -> i8 {
         let Square(sq) = self;
         sq >> 3
     }
 
+    #[inline]
     pub fn rank_char(self) -> char {
         (b'1' + self.rank() as u8) as char
     }
 
+    #[inline]
     pub fn offset(self, delta: i8) -> Option<Square> {
         let Square(sq) = self;
         if 0 <= sq + delta && sq + delta < 64 {
@@ -108,12 +117,14 @@ impl Square {
 }
 
 impl From<Square> for i8 {
+    #[inline]
     fn from(sq: Square) -> i8 {
         sq.0
     }
 }
 
 /// Converts `'a'` - `'h'` to `0` - `7`.
+#[inline]
 pub fn file_from_char(ch: char) -> Option<i8> {
     if 'a' <= ch && ch <= 'h' {
         Some(ch as i8 - b'a' as i8)
@@ -123,6 +134,7 @@ pub fn file_from_char(ch: char) -> Option<i8> {
 }
 
 /// Converts `'1'` - `'8'` to `0` - `7`.
+#[inline]
 pub fn rank_from_char(ch: char) -> Option<i8> {
     if '1' <= ch && ch <= '8' {
         Some(ch as i8 - b'1' as i8)
@@ -164,6 +176,7 @@ impl fmt::Debug for Square {
 }
 
 /// The difference of the square indices.
+#[inline]
 pub fn delta(Square(a): Square, Square(b): Square) -> i8 {
     a - b
 }
@@ -176,6 +189,7 @@ pub fn distance(a: Square, b: Square) -> i8 {
 
 /// Combines two squares, taking the file from the first and the rank from
 /// the second.
+#[inline]
 pub fn combine(file: Square, rank: Square) -> Square {
     Square(file.file() | (rank.rank() << 3))
 }

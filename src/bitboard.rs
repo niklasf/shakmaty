@@ -46,17 +46,20 @@ pub struct Bitboard(pub u64);
 
 impl Bitboard {
     /// A bitboard with a single square.
+    #[inline]
     pub fn from_square(sq: Square) -> Bitboard {
         Bitboard(1 << sq.index())
     }
 
     /// A bitboard containing all squares.
+    #[inline]
     pub const fn all() -> Bitboard {
         Bitboard(!0u64)
     }
 
     /// Returns the bitboard containing all squares of the given rank
     /// (or an empty bitboard if the rank index is out of range).
+    #[inline]
     pub fn rank(rank: i8) -> Bitboard {
         if 0 <= rank && rank < 8 {
             Bitboard(0xff << (8 * rank))
@@ -67,6 +70,7 @@ impl Bitboard {
 
     /// Returns the bitboard containing all squares of the given file
     /// (or an empty bitboard if the file index is out of range).
+    #[inline]
     pub fn file(file: i8) -> Bitboard {
         if 0 <= file && file < 8 {
             Bitboard(0x101010101010101 << file)
@@ -76,6 +80,7 @@ impl Bitboard {
     }
 
     /// Like `rank()`, but from the point of view of `color`.
+    #[inline]
     pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
         if 0 <= rank && rank < 8 {
             match color {
@@ -88,6 +93,7 @@ impl Bitboard {
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
+    #[inline]
     pub fn relative_shift(self, color: Color, shift: u8) -> Bitboard {
         match color {
             Color::White => Bitboard(self.0 << shift),
@@ -95,34 +101,42 @@ impl Bitboard {
         }
     }
 
+    #[inline]
     pub fn any(self) -> bool {
         self.0 != 0
     }
 
+    #[inline]
     pub fn contains(self, sq: Square) -> bool {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
 
+    #[inline]
     pub fn add(&mut self, sq: Square) {
         self.0 |= 1 << sq.index();
     }
 
+    #[inline]
     pub fn add_all(&mut self, Bitboard(bb): Bitboard) {
         self.0 |= bb;
     }
 
+    #[inline]
     pub fn flip(&mut self, sq: Square) {
         self.0 ^= 1 << sq.index();
     }
 
+    #[inline]
     pub fn discard(&mut self, sq: Square) {
         self.0 &= !(1 << sq.index());
     }
 
+    #[inline]
     pub fn discard_all(&mut self, Bitboard(bb): Bitboard) {
         self.0 &= !bb;
     }
 
+    #[inline]
     pub fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {
             self.flip(sq);
@@ -132,6 +146,7 @@ impl Bitboard {
         }
     }
 
+    #[inline]
     pub fn set(&mut self, sq: Square, v: bool) {
         if v {
             self.discard(sq);
@@ -140,18 +155,22 @@ impl Bitboard {
         }
     }
 
+    #[inline]
     pub fn clear(&mut self) {
         self.0 = 0;
     }
 
+    #[inline]
     pub fn with(self, sq: Square) -> Bitboard {
         self | Bitboard::from_square(sq)
     }
 
+    #[inline]
     pub fn without(self, sq: Square) -> Bitboard {
         self & !Bitboard::from_square(sq)
     }
 
+    #[inline]
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
@@ -160,10 +179,12 @@ impl Bitboard {
         }
     }
 
+    #[inline]
     pub fn more_than_one(self) -> bool {
         self.0 & self.0.wrapping_sub(1) != 0
     }
 
+    #[inline]
     pub fn single_square(self) -> Option<Square> {
         if self.more_than_one() {
             None
@@ -173,6 +194,7 @@ impl Bitboard {
     }
 
     /// An iterator over the subsets of this bitboard.
+    #[inline]
     pub fn carry_rippler(self) -> CarryRippler {
         CarryRippler {
             bb: self.0,
@@ -241,6 +263,7 @@ impl From<Square> for Bitboard {
 impl<T> ops::BitAnd<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
+    #[inline]
     fn bitand(self, rhs: T) -> Bitboard {
         let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 & rhs)
@@ -248,6 +271,7 @@ impl<T> ops::BitAnd<T> for Bitboard where T: Into<Bitboard> {
 }
 
 impl<T> ops::BitAndAssign<T> for Bitboard where T: Into<Bitboard> {
+    #[inline]
     fn bitand_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
         self.0 &= rhs;
@@ -257,6 +281,7 @@ impl<T> ops::BitAndAssign<T> for Bitboard where T: Into<Bitboard> {
 impl<T> ops::BitOr<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
+    #[inline]
     fn bitor(self, rhs: T) -> Bitboard {
         let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 | rhs)
@@ -264,6 +289,7 @@ impl<T> ops::BitOr<T> for Bitboard where T: Into<Bitboard> {
 }
 
 impl<T> ops::BitOrAssign<T> for Bitboard where T: Into<Bitboard> {
+    #[inline]
     fn bitor_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
         self.0 |= rhs;
@@ -273,6 +299,7 @@ impl<T> ops::BitOrAssign<T> for Bitboard where T: Into<Bitboard> {
 impl<T> ops::BitXor<T> for Bitboard where T: Into<Bitboard> {
     type Output = Bitboard;
 
+    #[inline]
     fn bitxor(self, rhs: T) -> Bitboard {
         let Bitboard(rhs) = rhs.into();
         Bitboard(self.0 ^ rhs)
@@ -280,6 +307,7 @@ impl<T> ops::BitXor<T> for Bitboard where T: Into<Bitboard> {
 }
 
 impl<T> ops::BitXorAssign<T> for Bitboard where T: Into<Bitboard> {
+    #[inline]
     fn bitxor_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
         self.0 ^= rhs;
@@ -289,6 +317,7 @@ impl<T> ops::BitXorAssign<T> for Bitboard where T: Into<Bitboard> {
 impl ops::Not for Bitboard {
     type Output = Bitboard;
 
+    #[inline]
     fn not(self) -> Bitboard {
         Bitboard(!self.0)
     }
@@ -315,21 +344,25 @@ impl Extend<Square> for Bitboard {
 impl Iterator for Bitboard {
     type Item = Square;
 
+    #[inline]
     fn next(&mut self) -> Option<Square> {
         let square = self.first();
         self.0 &= self.0.wrapping_sub(1);
         square
     }
 
+    #[inline]
     fn count(self) -> usize {
         self.0.count_ones() as usize
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let count = self.count();
         (count, Some(count))
     }
 
+    #[inline]
     fn last(self) -> Option<Square> {
         if self.is_empty() {
             None
@@ -340,16 +373,19 @@ impl Iterator for Bitboard {
 }
 
 impl ExactSizeIterator for Bitboard {
+    #[inline]
     fn len(&self) -> usize {
         self.count()
     }
 
+    #[inline]
     fn is_empty(&self) -> bool {
         self.0 == 0
     }
 }
 
 impl DoubleEndedIterator for Bitboard {
+    #[inline]
     fn next_back(&mut self) -> Option<Square> {
         if self.is_empty() {
             None
@@ -372,6 +408,7 @@ pub struct CarryRippler {
 impl Iterator for CarryRippler {
     type Item = Bitboard;
 
+    #[inline]
     fn next(&mut self) -> Option<Bitboard> {
         let subset = self.subset;
         if subset != 0 || self.first {
