@@ -160,6 +160,8 @@ impl<'a> From<&'a Move> for Uci {
                 Uci::Normal { from, to, promotion: None },
             Move::Castle { king, rook } =>
                 Uci::Normal { from: king, to: rook, promotion: None },  // Chess960-style
+            Move::Put { role, to } =>
+                Uci::Put { role, to },
         }
     }
 }
@@ -197,7 +199,7 @@ impl Uci {
                     Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
                 }
             },
-            Uci::Put { role, to } => return Err(IllegalMove {}),
+            Uci::Put { role, to } => Move::Put { role, to },
             Uci::Null => return Err(IllegalMove {})
         };
 

@@ -140,6 +140,7 @@ pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square },
     Castle { king: Square, rook: Square },
+    Put { role: Role, to: Square },
 }
 
 impl Move {
@@ -177,6 +178,9 @@ impl fmt::Display for Move {
                 } else {
                     write!(f, "O-O-O")
                 }
+            },
+            Move::Put { role, to } => {
+                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to)
             },
         }
     }

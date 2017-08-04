@@ -131,6 +131,7 @@ pub enum San {
     Normal { role: Role, file: Option<i8>, rank: Option<i8>, capture: bool, to: Square, promotion: Option<Role> },
     CastleShort,
     CastleLong,
+    Put { role: Role, to: Square },
     Null,
 }
 
@@ -152,6 +153,18 @@ impl FromStr for San {
             Ok(San::CastleShort)
         } else if san == "O-O-O" {
             Ok(San::CastleLong)
+        } else if let Some(sep) = san.find('@') {
+            if sep == 0 {
+                Ok(San::Put { role: Role::Pawn, to: san[1..].parse().map_err(|_| ())? })
+            } else if sep == 1 {
+                Ok(San::Put {
+                    role: san.chars().next()
+                             .and_then(|r| Role::from_char(r.to_ascii_lowercase())).ok_or(())?,
+                    to: san[2..].parse().map_err(|_| ())?,
+                })
+            } else {
+                Err(InvalidSan { _priv: () })
+            }
         } else {
             let mut chars = san.chars();
 
@@ -228,6 +241,8 @@ impl fmt::Display for San {
             },
             San::CastleShort => write!(f, "O-O"),
             San::CastleLong => write!(f, "O-O-O"),
+            San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
+            San::Put { role, to } => write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
             San::Null => write!(f, "--"),
         }
     }
@@ -293,6 +308,13 @@ impl San {
                 pos.legal_moves(&mut legals);
                 legals.swap_retain(|m| match *m {
                     Move::Castle { king, rook } => rook.file() < king.file(),
+                    _ => false,
+                });
+            },
+            San::Put { role, to } => {
+                pos.san_candidates(role, to, &mut legals);
+                legals.swap_retain(|m| match *m {
+                    Move::Put { .. } => true,
                     _ => false,
                 });
             },
@@ -363,6 +385,7 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
             role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
         Move::Castle { rook, king } if rook.file() < king.file() => San::CastleLong,
         Move::Castle { .. } => San::CastleShort,
+        Move::Put { role, to } => San::Put { role, to },
     }
 }
 
@@ -372,7 +395,7 @@ mod tests {
 
     #[test]
     fn test_read_write() {
-        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N",
+        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4#", "K@b3",
                      "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+"] {
             assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), *san);
         }

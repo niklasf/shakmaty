@@ -20,7 +20,7 @@ use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Move, RemainingChecks};
+use types::{Color, White, Black, Role, Piece, Move, RemainingChecks};
 use setup;
 use setup::Setup;
 use movelist::MoveList;
@@ -439,6 +439,9 @@ fn do_move(board: &mut Board,
             board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece));
             *halfmove_clock = 0;
         },
+        Move::Put { role, to } => {
+            board.set_piece_at(to, Piece { color, role });
+        },
     }
 
     if color.is_black() {
@@ -814,13 +817,14 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &
             (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
         },
-        Move::Castle { .. } => true,
+        _ => true,
     }
 }
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
     moves.swap_retain(|m| match *m {
-        Move::Normal { role: r, to: t, .. } => to == t && role == r,
+        Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
+            to == t && role == r,
         Move::Castle { rook, .. } => role == Role::King && to == rook,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
     });
