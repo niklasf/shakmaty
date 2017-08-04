@@ -114,7 +114,7 @@ impl Role {
 }
 
 /// A piece with `Color` and `Role`.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -135,7 +135,7 @@ impl Piece {
 }
 
 /// Information about a move.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square },

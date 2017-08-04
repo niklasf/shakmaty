@@ -28,7 +28,8 @@
 //! assert_eq!(perft(&pos, 3), 8902);
 //! ```
 
-use position::{Position, MoveList};
+use position::Position;
+use movelist::MoveList;
 use uci::Uci;
 
 /// Counts legal move paths of a given length.
@@ -46,7 +47,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
         if depth == 1 {
             moves.len()
         } else {
-            moves.drain(..).map(|ref m| {
+            moves.iter().map(|ref m| {
                 let child = pos.clone().play_unchecked(m);
                 perft(&child, depth - 1)
             }).sum()

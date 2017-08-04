@@ -23,10 +23,9 @@ use square::Square;
 use types::{Color, White, Black, Role, Move, RemainingChecks};
 use setup;
 use setup::Setup;
-use util;
+use movelist::MoveList;
 
 use option_filter::OptionFilterExt;
-use arrayvec::ArrayVec;
 
 use std::fmt;
 use std::error::Error;
@@ -102,9 +101,6 @@ impl fmt::Display for IllegalMove {
 impl Error for IllegalMove {
     fn description(&self) -> &str { "illegal move" }
 }
-
-/// A stack-allocated container to hold legal moves.
-pub type MoveList = ArrayVec<[Move; 256]>;
 
 /// A legal chess or chess variant position. See `Chess` and
 /// `shakmaty::variants` for concrete implementations.
@@ -304,7 +300,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() | has_ep {
-            util::swap_retain(moves, |m| is_safe(self, king, m, blockers));
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
 
@@ -474,7 +470,7 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 }
 
 fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
-    assert!(moves.len() + 8 < moves.capacity());
+    assert!(moves.len() + 8 < MoveList::CAPACITY);
 
     for to in attacks::king_attacks(king) & target {
         if pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty() {
@@ -562,7 +558,7 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 8 < moves.capacity());
+        assert!(moves.len() + 8 < MoveList::CAPACITY);
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from) & target {
@@ -585,7 +581,7 @@ trait Slider {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 28 < moves.capacity());
+        assert!(moves.len() + 28 < MoveList::CAPACITY);
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from, pos.board().occupied()) & target {
@@ -631,7 +627,7 @@ impl Slider for QueenTag {
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     // Due to push_unchecked the safety of this function depends on this
     // assertion.
-    assert!(moves.len() + 108 < moves.capacity());
+    assert!(moves.len() + 108 < MoveList::CAPACITY);
 
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
@@ -768,7 +764,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
 }
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
-    util::swap_retain(moves, |m| match *m {
+    moves.swap_retain(|m| match *m {
         Move::Normal { role: r, to: t, .. } => to == t && role == r,
         Move::Castle { rook, .. } => role == Role::King && to == rook,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
