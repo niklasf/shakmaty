@@ -70,6 +70,7 @@ use position::{Position, PositionError};
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct FenOpts {
     board_opts: BoardFenOpts,
+    shredder: bool,
 }
 
 impl FenOpts {
@@ -82,9 +83,22 @@ impl FenOpts {
         self
     }
 
+    pub fn promoted(&self) -> bool {
+        self.board_opts.promoted()
+    }
+
     pub fn with_promoted(mut self, promoted: bool) -> FenOpts {
         let board_opts = self.board_opts.with_promoted(promoted);
         self.board_opts = board_opts;
+        self
+    }
+
+    pub fn shredder(&self) -> bool {
+        self.shredder
+    }
+
+    pub fn with_shredder(mut self, shredder: bool) -> FenOpts {
+        self.shredder = shredder;
         self
     }
 }
@@ -93,6 +107,7 @@ impl Default for FenOpts {
     fn default() -> FenOpts {
         FenOpts {
             board_opts: BoardFenOpts::default(),
+            shredder: false,
         }
     }
 }
@@ -286,7 +301,7 @@ impl fmt::Display for Fen {
     }
 }
 
-fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
+fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> String {
     let mut fen = String::with_capacity(4);
 
     for color in &[White, Black] {
@@ -296,9 +311,9 @@ fn castling_xfen(board: &Board, castling_rights: Bitboard) -> String {
                          Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {
-            if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+            if !opts.shredder() && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                 fen.push(color.fold('Q', 'q'));
-            } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+            } else if !opts.shredder() && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
                 fen.push(color.fold('K', 'k'));
             } else {
                 fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
@@ -325,7 +340,7 @@ pub fn epd(setup: &Setup, opts: &FenOpts) -> String {
             setup.board().board_fen(opts.board_opts()),
             pockets,
             setup.turn().char(),
-            castling_xfen(setup.board(), setup.castling_rights()),
+            castling_fen(setup.board(), setup.castling_rights(), opts),
             setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
             checks)
 }
@@ -348,13 +363,21 @@ mod tests {
 
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
-        assert_eq!(epd(&pos, &FenOpts::default()), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+        assert_eq!(epd(&pos, &FenOpts::default()),
+                   "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
     #[test]
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
         assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(&White.queen())), 1);
+    }
+
+    #[test]
+    fn test_shredder_fen() {
+        let pos = Chess::default();
+        assert_eq!(fen(&pos, &FenOpts::default().with_shredder(true)),
+                   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 
     #[test]
