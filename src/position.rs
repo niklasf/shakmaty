@@ -285,7 +285,7 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        let king = self.our(Role::King).first().expect("king in standard chess");
+        let king = self.board().king_of(self.turn()).expect("king in standard chess");
 
         let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
@@ -306,7 +306,7 @@ impl Position for Chess {
     }
 
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
-        let king = self.our(Role::King).first().expect("king in standard chess");
+        let king = self.board().king_of(self.turn()).expect("king in standard chess");
         let checkers = self.checkers();
 
         if checkers.is_empty() {
@@ -416,8 +416,10 @@ fn do_move(board: &mut Board,
                 castling_rights.discard(to);
             }
 
+            let promoted = board.promoted().contains(from) || promotion.is_some();
+
             board.remove_piece_at(from);
-            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)));
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
         },
         Move::Castle { king, rook } => {
             let rook_to = square::combine(
@@ -430,18 +432,18 @@ fn do_move(board: &mut Board,
 
             board.remove_piece_at(king);
             board.remove_piece_at(rook);
-            board.set_piece_at(rook_to, color.rook());
-            board.set_piece_at(king_to, color.king());
+            board.set_piece_at(rook_to, color.rook(), false);
+            board.set_piece_at(king_to, color.king(), false);
 
             castling_rights.discard_all(Bitboard::relative_rank(color, 0));
         },
         Move::EnPassant { from, to } => {
             board.remove_piece_at(square::combine(to, from)); // captured pawn
-            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece));
+            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
             *halfmove_clock = 0;
         },
         Move::Put { role, to } => {
-            board.set_piece_at(to, Piece { color, role });
+            board.set_piece_at(to, Piece { color, role }, false);
         },
     }
 
@@ -511,7 +513,7 @@ fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
 
 fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
     for color in &[White, Black] {
-        if pos.board().by_piece(&color.king()).is_empty() {
+        if pos.board().king_of(*color).is_none() {
             return Some(PositionError::NoKing { color: *color })
         }
     }
