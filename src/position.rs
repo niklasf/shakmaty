@@ -20,7 +20,7 @@ use bitboard;
 use bitboard::Bitboard;
 use square;
 use square::Square;
-use types::{Color, White, Black, Role, Move, RemainingChecks};
+use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
 use setup::Setup;
 use movelist::MoveList;
@@ -252,6 +252,7 @@ impl Default for Chess {
 
 impl Setup for Chess {
     fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
@@ -439,6 +440,9 @@ fn do_move(board: &mut Board,
             board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece));
             *halfmove_clock = 0;
         },
+        Move::Put { role, to } => {
+            board.set_piece_at(to, Piece { color, role });
+        },
     }
 
     if color.is_black() {
@@ -453,12 +457,21 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
         return Some(PositionError::Empty)
     }
 
-    for color in &[White, Black] {
-        if pos.board().by_color(*color).count() > 16 {
+    if let Some(pockets) = pos.pockets() {
+        if pos.board().pawns().count() + pockets.white.pawns as usize + pockets.black.pawns as usize > 16 {
+            return Some(PositionError::TooManyPawns)
+        }
+        if pos.board().occupied().count() + pockets.count() as usize > 32 {
             return Some(PositionError::TooManyPieces)
         }
-        if pos.board().by_piece(&color.pawn()).count() > 8 {
-            return Some(PositionError::TooManyPawns)
+    } else {
+        for color in &[White, Black] {
+            if pos.board().by_color(*color).count() > 16 {
+                return Some(PositionError::TooManyPieces)
+            }
+            if pos.board().by_piece(&color.pawn()).count() > 8 {
+                return Some(PositionError::TooManyPawns)
+            }
         }
     }
 
@@ -814,13 +827,14 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &
             (attacks::bishop_attacks(king, occupied) & pos.them() & pos.board().bishops_and_queens()).is_empty()
         },
-        Move::Castle { .. } => true,
+        _ => true,
     }
 }
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
     moves.swap_retain(|m| match *m {
-        Move::Normal { role: r, to: t, .. } => to == t && role == r,
+        Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
+            to == t && role == r,
         Move::Castle { rook, .. } => role == Role::King && to == rook,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
     });
