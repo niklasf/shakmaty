@@ -13,9 +13,9 @@ pub unsafe trait Array {
     fn as_mut_ptr(&mut self) -> *mut Self::Item;
 }
 
-unsafe impl<T> Array for [T; 256] {
+unsafe impl<T> Array for [T; 512] {
     type Item = T;
-    const CAPACITY: usize = 256;
+    const CAPACITY: usize = 512;
     fn as_ptr(&self) -> *const T { self as *const _ as *const _ }
     fn as_mut_ptr(&mut self) -> *mut T { self as *mut _ as *mut _ }
 }
@@ -118,4 +118,4 @@ impl<A: Array> AsMut<[A::Item]> for StackVec<A> where A::Item: Copy {
     fn as_mut(&mut self) -> &mut [A::Item] { self }
 }
 
-pub type MoveList = StackVec<[Move; 256]>;
+pub type MoveList = StackVec<[Move; 512]>;
