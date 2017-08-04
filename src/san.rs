@@ -61,11 +61,11 @@
 //! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
 //! ```
 
-use util;
 use square;
 use square::Square;
 use types::{Move, Role};
-use position::{Position, Outcome, MoveList};
+use position::{Position, Outcome};
+use movelist::MoveList;
 
 use std::fmt;
 use std::ascii::AsciiExt;
@@ -268,7 +268,7 @@ impl San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 pos.san_candidates(role, to, &mut legals);
-                util::swap_retain(&mut legals, |m| match *m {
+                legals.swap_retain(|m| match *m {
                     Move::Normal { from, capture: c, promotion: p, .. } =>
                         file.map_or(true, |f| f == from.file()) &&
                         rank.map_or(true, |r| r == from.rank()) &&
@@ -284,14 +284,14 @@ impl San {
             },
             San::CastleShort => {
                 pos.legal_moves(&mut legals);
-                util::swap_retain(&mut legals, |m| match *m {
+                legals.swap_retain(|m| match *m {
                     Move::Castle { king, rook } => king.file() < rook.file(),
                     _ => false,
                 });
             },
             San::CastleLong => {
                 pos.legal_moves(&mut legals);
-                util::swap_retain(&mut legals, |m| match *m {
+                legals.swap_retain(|m| match *m {
                     Move::Castle { king, rook } => rook.file() < king.file(),
                     _ => false,
                 });

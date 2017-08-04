@@ -73,7 +73,6 @@
 
 extern crate test;
 
-extern crate arrayvec;
 extern crate option_filter;
 
 mod types;
@@ -81,7 +80,7 @@ mod bitboard;
 mod board;
 mod position;
 mod setup;
-mod util;
+mod movelist;
 mod magics;
 
 pub mod square;
@@ -96,4 +95,5 @@ pub use types::{Color, Role, Piece, Move, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::Board;
 pub use setup::Setup;
-pub use position::{MoveList, IllegalMove, Outcome, Position, PositionError, Chess};
+pub use movelist::MoveList;
+pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};
