@@ -130,7 +130,22 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
     unsafe { Bitboard(*BB_RAYS.get_unchecked(idx)) }
 }
 
-/// Like `ray`, but just the squares in-between (exluding the bounds).
+/// The squares between the two squares (bounds not included), or an empty
+/// `Bitboard` if they are not on the same rank, file or diagonal.
+///
+/// ```
+/// # use shakmaty::square;
+/// # use shakmaty::attacks;
+///
+/// let between = attacks::between(square::B1, square::B7);
+/// // . . . . . . . .
+/// // . 0 . . . . . .
+/// // . 1 . . . . . .
+/// // . 1 . . . . . .
+/// // . 1 . . . . . .
+/// // . 1 . . . . . .
+/// // . 1 . . . . . .
+/// // . 0 . . . . . .
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
