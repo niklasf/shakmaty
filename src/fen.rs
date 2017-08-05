@@ -31,7 +31,7 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 //!
-//! `Fen` also implements `Display`:
+//! `Fen` and `Board` also implement `Display`:
 //!
 //! ```
 //! use shakmaty::fen::Fen;
