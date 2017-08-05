@@ -137,7 +137,7 @@ impl Piece {
 }
 
 /// Information about a move.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Move {
     Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
     EnPassant { from: Square, to: Square },

@@ -23,7 +23,7 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
 use setup::Setup;
-use movelist::MoveList;
+use movelist::{MoveList, ArrayVecExt};
 
 use option_filter::OptionFilterExt;
 
@@ -291,7 +291,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() | has_ep {
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
 
@@ -346,7 +346,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.contains(to) | has_ep {
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
 
