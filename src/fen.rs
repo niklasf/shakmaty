@@ -258,7 +258,7 @@ impl FromStr for Fen {
                     let color = Color::from_bool(ch.is_ascii_uppercase());
 
                     let candidates = Bitboard::relative_rank(color, 0) &
-                                     result.board.by_piece(&color.rook());
+                                     result.board.by_piece(color.rook());
 
                     let flag = match ch.to_ascii_lowercase() {
                         'k' => candidates.last(),
@@ -319,7 +319,7 @@ fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> Str
     for color in &[White, Black] {
         let king = board.king_of(*color);
 
-        let candidates = board.by_piece(&color.rook()) &
+        let candidates = board.by_piece(color.rook()) &
                          Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {
@@ -382,7 +382,7 @@ mod tests {
     #[test]
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
-        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(&White.queen())), 1);
+        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(White.queen())), 1);
     }
 
     #[test]

@@ -247,19 +247,19 @@ impl Pockets {
         color.fold(&mut self.white, &mut self.black)
     }
 
-    pub fn by_piece(&self, piece: &Piece) -> u8 {
+    pub fn by_piece(&self, piece: Piece) -> u8 {
         self.by_color(piece.color).by_role(piece.role)
     }
 
-    pub fn by_piece_mut(&mut self, piece: &Piece) -> &mut u8 {
+    pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
         self.by_color_mut(piece.color).by_role_mut(piece.role)
     }
 
     pub fn add(&mut self, piece: Piece) {
-        *self.by_piece_mut(&piece) = self.by_piece(&piece).saturating_add(1);
+        *self.by_piece_mut(piece) = self.by_piece(piece).saturating_add(1);
     }
 
-    pub fn remove(&mut self, piece: &Piece) {
+    pub fn remove(&mut self, piece: Piece) {
         *self.by_piece_mut(piece) = self.by_piece(piece).saturating_sub(1);
     }
 
@@ -273,7 +273,7 @@ impl fmt::Display for Pockets {
         for color in &[White, Black] {
             for role in &ROLES {
                 let piece = Piece { color: *color, role: *role };
-                write!(f, "{}", piece.char().to_string().repeat(self.by_piece(&piece) as usize))?;
+                write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize))?;
             }
         }
         Ok(())

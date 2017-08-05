@@ -461,7 +461,7 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
             if pos.board().by_color(*color).count() > 16 {
                 return Some(PositionError::TooManyPieces)
             }
-            if pos.board().by_piece(&color.pawn()).count() > 8 {
+            if pos.board().by_piece(color.pawn()).count() > 8 {
                 return Some(PositionError::TooManyPawns)
             }
         }
