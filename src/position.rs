@@ -155,6 +155,23 @@ pub trait Position: Setup + Default + Clone {
         legals.contains(m)
     }
 
+    /// Tests if a move is irreversible.
+    ///
+    /// In standard chess pawn moves, captures and moves that destroy castling
+    /// rights are irreversible.
+    fn is_irreversible(&self, m: &Move) -> bool {
+        match *m {
+            Move::Normal { role: Role::Pawn, .. } |
+                Move::Normal { capture: Some(_), .. } |
+                Move::Castle { .. } |
+                Move::EnPassant { .. } |
+                Move::Put { .. } => true,
+            Move::Normal { role, from, to, .. } =>
+                (self.castling_rights().contains(from) | self.castling_rights().contains(to)) ||
+                role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any()
+        }
+    }
+
     /// Checks if the game is over due to a special variant end condition.
     ///
     /// Note that for example stalemate is not considered a variant-specific
