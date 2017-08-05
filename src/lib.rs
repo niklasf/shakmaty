@@ -21,9 +21,7 @@
 //! Generate legal moves in the starting position:
 //!
 //! ```
-//! use shakmaty::Chess;
-//! use shakmaty::Position;
-//! use shakmaty::MoveList;
+//! use shakmaty::{Chess, Position, MoveList};
 //!
 //! let pos = Chess::default();
 //!
@@ -35,19 +33,30 @@
 //! Play moves:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! use shakmaty::Move;
 //! use shakmaty::Role;
 //! use shakmaty::square;
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
 //!
+//! // 1. e4
 //! let pos = pos.play(&Move::Normal {
 //!     role: Role::Pawn,
 //!     from: square::E2,
 //!     to: square::E4,
 //!     capture: None,
 //!     promotion: None,
-//! }).expect("1. e4 is legal");
+//! })?;
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Detect game end conditions:
