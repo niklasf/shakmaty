@@ -56,14 +56,10 @@ impl Square {
         }
     }
 
-    /// Creates a `Square` from an integer index in the range `0` to `63`.
-    ///
-    /// # Panics
-    ///
-    /// In debug mode, panics if the index is out of range. In release mode
-    /// panics might be caused when using invalid Squares.
+    /// Creates a `Square` from an integer index. It is the callers
+    /// responsibility to ensure it is in the range `0..=63`.
     #[inline]
-    pub fn from_index_unchecked(index: i8) -> Square {
+    pub unsafe fn from_index_unchecked(index: i8) -> Square {
         debug_assert!(0 <= index && index < 64);
         Square(index)
     }
