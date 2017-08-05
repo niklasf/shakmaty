@@ -75,7 +75,7 @@ use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard;
 use bitboard::Bitboard;
-use board::{Board, BoardFenError};
+use board::Board;
 use setup::Setup;
 use position::{Position, PositionError};
 
@@ -153,9 +153,51 @@ impl Error for FenError {
     fn description(&self) -> &str { self.desc() }
 }
 
-impl From<BoardFenError> for FenError {
-    fn from(_: BoardFenError) -> FenError {
-        FenError::InvalidBoard
+impl FromStr for Board {
+    type Err = FenError;
+
+    fn from_str(board_fen: &str) -> Result<Board, FenError> {
+        let mut board = Board::empty();
+
+        let mut rank = 7i8;
+        let mut file = 0i8;
+        let mut promoted = false;
+
+        for ch in board_fen.chars() {
+            if ch == '/' {
+                file = 0;
+                rank = rank.saturating_sub(1);
+            } else if ch == '~' {
+                promoted = true;
+                continue;
+            } else if let Some(empty) = ch.to_digit(10) {
+                file = file.saturating_add(empty as i8);
+            } else if let Some(piece) = Piece::from_char(ch) {
+                match Square::from_coords(file as i8, rank) {
+                    Some(sq) => {
+                        board.set_piece_at(sq, piece, promoted);
+                        promoted = false;
+                    },
+                    None => return Err(FenError::InvalidBoard)
+                }
+                file += 1;
+            } else {
+                return Err(FenError::InvalidBoard)
+            }
+
+            if promoted {
+                return Err(FenError::InvalidBoard)
+            }
+        }
+
+        Ok(board)
+    }
+}
+
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let opts = FenOpts::default().with_promoted(true);
+        write!(f, "{}", board_fen(&self, &opts))
     }
 }
 
@@ -233,7 +275,7 @@ impl FromStr for Fen {
             (board_part, None)
         };
 
-        result.board = Board::from_board_fen(board_part)?;
+        result.board = board_part.parse()?;
         result.pockets = pockets;
 
         result.turn = match parts.next() {

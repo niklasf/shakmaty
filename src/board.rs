@@ -16,31 +16,11 @@
 
 use std::fmt;
 use std::fmt::Write;
-use std::error::Error;
 
 use square::Square;
 use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks;
-
-/// Error when attempting to parse an invalid board.
-pub struct BoardFenError { _priv: () }
-
-impl fmt::Debug for BoardFenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-         f.debug_struct("BoardFenError").finish()
-    }
-}
-
-impl fmt::Display for BoardFenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        "invalid board fen".fmt(f)
-    }
-}
-
-impl Error for BoardFenError {
-    fn description(&self) -> &str { "invalid board fen" }
-}
 
 /// Piece positions on a board.
 ///
@@ -113,43 +93,6 @@ impl Board {
 
             promoted: Bitboard(0),
         }
-    }
-
-    pub fn from_board_fen(board_fen: &str) -> Result<Board, BoardFenError> {
-        let mut board = Board::empty();
-
-        let mut rank = 7i8;
-        let mut file = 0i8;
-        let mut promoted = false;
-
-        for ch in board_fen.chars() {
-            if ch == '/' {
-                file = 0;
-                rank = rank.saturating_sub(1);
-            } else if ch == '~' {
-                promoted = true;
-                continue;
-            } else if let Some(empty) = ch.to_digit(10) {
-                file = file.saturating_add(empty as i8);
-            } else if let Some(piece) = Piece::from_char(ch) {
-                match Square::from_coords(file as i8, rank) {
-                    Some(sq) => {
-                        board.set_piece_at(sq, piece, promoted);
-                        promoted = false;
-                    },
-                    None => return Err(BoardFenError { _priv: () })
-                }
-                file += 1;
-            } else {
-                return Err(BoardFenError { _priv: () })
-            }
-
-            if promoted {
-                return Err(BoardFenError { _priv: () })
-            }
-        }
-
-        Ok(board)
     }
 
     #[inline]
@@ -351,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_promoted() {
-        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").expect("valid fen");
+        let board: Board = "4k3/8/8/8/8/8/8/2~q1K3".parse().expect("valid fen");
         assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
         assert!(board.promoted().contains(square::C1));
     }
