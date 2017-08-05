@@ -6,6 +6,7 @@ pub struct Magic {
     pub factor: u64,
     pub offset: usize,
 }
+
 #[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
 pub static BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040201008040200, factor: 0x0000404040404040, offset: 33104 },
