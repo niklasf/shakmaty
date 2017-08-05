@@ -68,41 +68,32 @@
 use std::str::FromStr;
 use std::ascii::AsciiExt;
 use std::fmt;
+use std::char;
 use std::error::Error;
 
 use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard;
 use bitboard::Bitboard;
-use board::{Board, BoardFenError, BoardFenOpts};
+use board::{Board, BoardFenError};
 use setup::Setup;
 use position::{Position, PositionError};
 
 /// FEN formatting options.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct FenOpts {
-    board_opts: BoardFenOpts,
+    promoted: bool,
     shredder: bool,
 }
 
 impl FenOpts {
-    pub fn board_opts(&self) -> &BoardFenOpts {
-        &self.board_opts
-    }
-
-    pub fn with_board_opts(mut self, board_opts: BoardFenOpts) -> FenOpts {
-        self.board_opts = board_opts;
-        self
-    }
-
     pub fn promoted(&self) -> bool {
-        self.board_opts.promoted()
+        self.promoted
     }
 
     pub fn with_promoted(mut self, promoted: bool) -> FenOpts {
-        let board_opts = self.board_opts.with_promoted(promoted);
-        self.board_opts = board_opts;
-        self
+        self.promoted = promoted;
+        return self
     }
 
     pub fn shredder(&self) -> bool {
@@ -118,7 +109,7 @@ impl FenOpts {
 impl Default for FenOpts {
     fn default() -> FenOpts {
         FenOpts {
-            board_opts: BoardFenOpts::default(),
+            promoted: false,
             shredder: false,
         }
     }
@@ -340,6 +331,40 @@ fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> Str
     fen
 }
 
+/// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
+pub fn board_fen(board: &Board, opts: &FenOpts) -> String {
+    let mut fen = String::with_capacity(15);
+
+    for rank in (0..8).rev() {
+        let mut empty = 0;
+
+        for file in 0..8 {
+            let square = Square::from_coords(file, rank).unwrap();
+
+            empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
+                if empty > 0 {
+                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                }
+                fen.push(piece.char());
+                if opts.promoted && board.promoted().contains(square) {
+                    fen.push('~');
+                }
+                0
+            });
+
+            if file == 7 && empty > 0 {
+                fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+            }
+
+            if file == 7 && rank > 0 {
+                fen.push('/')
+            }
+        }
+    }
+
+    fen
+}
+
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 pub fn epd(setup: &Setup, opts: &FenOpts) -> String {
     let pockets = setup.pockets()
@@ -349,7 +374,7 @@ pub fn epd(setup: &Setup, opts: &FenOpts) -> String {
                       .map_or("".to_owned(), |r| format!(" {}", r));
 
     format!("{}{} {} {} {}{}",
-            setup.board().board_fen(opts.board_opts()),
+            board_fen(setup.board(), opts),
             pockets,
             setup.turn().char(),
             castling_fen(setup.board(), setup.castling_rights(), opts),

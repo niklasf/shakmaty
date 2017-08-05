@@ -16,38 +16,12 @@
 
 use std::fmt;
 use std::fmt::Write;
-use std::char;
 use std::error::Error;
 
 use square::Square;
 use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks;
-
-/// Board FEN formatting options.
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct BoardFenOpts {
-    promoted: bool,
-}
-
-impl BoardFenOpts {
-    pub fn promoted(&self) -> bool {
-        self.promoted
-    }
-
-    pub fn with_promoted(mut self, promoted: bool) -> BoardFenOpts {
-        self.promoted = promoted;
-        self
-    }
-}
-
-impl Default for BoardFenOpts {
-    fn default() -> BoardFenOpts {
-        BoardFenOpts {
-            promoted: false,
-        }
-    }
-}
 
 /// Error when attempting to parse an invalid board.
 pub struct BoardFenError { _priv: () }
@@ -73,7 +47,7 @@ impl Error for BoardFenError {
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Board, BoardFenOpts, square};
+/// # use shakmaty::{Board, square};
 /// # use shakmaty::Color::Black;
 /// let board = Board::new();
 /// // r n b q k b n r
@@ -86,9 +60,6 @@ impl Error for BoardFenError {
 /// // R N B Q K B N R
 ///
 /// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
-///
-/// let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-/// assert_eq!(board.board_fen(&BoardFenOpts::default()), fen);
 /// ```
 #[derive(Clone, Eq, PartialEq)]
 pub struct Board {
@@ -179,39 +150,6 @@ impl Board {
         }
 
         Ok(board)
-    }
-
-    pub fn board_fen(&self, opts: &BoardFenOpts) -> String {
-        let mut fen = String::with_capacity(15);
-
-        for rank in (0..8).rev() {
-            let mut empty = 0;
-
-            for file in 0..8 {
-                let square = Square::from_coords(file, rank).unwrap();
-
-                empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
-                    if empty > 0 {
-                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                    }
-                    fen.push(piece.char());
-                    if opts.promoted() && self.promoted.contains(square) {
-                        fen.push('~');
-                    }
-                    0
-                });
-
-                if file == 7 && empty > 0 {
-                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                }
-
-                if file == 7 && rank > 0 {
-                    fen.push('/')
-                }
-            }
-        }
-
-        fen
     }
 
     #[inline]

@@ -100,7 +100,7 @@ pub mod san;
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
-pub use board::{Board, BoardFenOpts, BoardFenError};
+pub use board::Board;
 pub use setup::Setup;
 pub use movelist::MoveList;
 pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};
