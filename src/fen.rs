@@ -87,20 +87,23 @@ pub struct FenOpts {
 }
 
 impl FenOpts {
-    pub fn promoted(&self) -> bool {
-        self.promoted
+    /// Standard X-FEN.
+    pub fn new() -> FenOpts {
+        FenOpts {
+            promoted: false,
+            shredder: false,
+        }
     }
 
-    pub fn with_promoted(mut self, promoted: bool) -> FenOpts {
+    /// Decide if promoted pieces should be tracked, e.g. `Q~`.
+    pub fn promoted(&mut self, promoted: bool) -> &mut FenOpts {
         self.promoted = promoted;
-        return self
+        self
     }
 
-    pub fn shredder(&self) -> bool {
-        self.shredder
-    }
-
-    pub fn with_shredder(mut self, shredder: bool) -> FenOpts {
+    /// Decide if castling rights should be displayed in Shredder format,
+    /// e.g. `HAha` instead of `KQkq`.
+    pub fn shredder(&mut self, shredder: bool) -> &mut FenOpts {
         self.shredder = shredder;
         self
     }
@@ -108,10 +111,7 @@ impl FenOpts {
 
 impl Default for FenOpts {
     fn default() -> FenOpts {
-        FenOpts {
-            promoted: false,
-            shredder: false,
-        }
+        FenOpts::new()
     }
 }
 
@@ -196,8 +196,7 @@ impl FromStr for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let opts = FenOpts::default().with_promoted(true);
-        write!(f, "{}", board_fen(&self, &opts))
+        write!(f, "{}", board_fen(self, FenOpts::new().promoted(true)))
     }
 }
 
@@ -347,7 +346,7 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", fen(self, &FenOpts::default().with_promoted(true)))
+        write!(f, "{}", fen(self, FenOpts::new().promoted(true)))
     }
 }
 
@@ -361,9 +360,9 @@ fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> Str
                          Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {
-            if !opts.shredder() && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+            if !opts.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                 fen.push(color.fold('Q', 'q'));
-            } else if !opts.shredder() && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+            } else if !opts.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
                 fen.push(color.fold('K', 'k'));
             } else {
                 fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
