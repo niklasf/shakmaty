@@ -110,7 +110,8 @@ pub trait Position: Setup + Default + Clone {
     /// # Errors
     ///
     /// Errors if the setup is not legal.
-    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
+    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>
+        where Self: Sized;
 
     /// Generates legal moves.
     ///
