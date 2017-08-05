@@ -21,9 +21,7 @@
 //! Generate legal moves in the starting position:
 //!
 //! ```
-//! use shakmaty::Chess;
-//! use shakmaty::Position;
-//! use shakmaty::MoveList;
+//! use shakmaty::{Chess, Position, MoveList};
 //!
 //! let pos = Chess::default();
 //!
@@ -35,19 +33,29 @@
 //! Play moves:
 //!
 //! ```
-//! use shakmaty::Move;
-//! use shakmaty::Role;
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
+//! use shakmaty::{Move, Role};
 //! use shakmaty::square;
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
 //!
+//! // 1. e4
 //! let pos = pos.play(&Move::Normal {
 //!     role: Role::Pawn,
 //!     from: square::E2,
 //!     to: square::E4,
 //!     capture: None,
 //!     promotion: None,
-//! }).expect("1. e4 is legal");
+//! })?;
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Detect game end conditions:
@@ -71,6 +79,7 @@
 
 extern crate test;
 
+extern crate arrayvec;
 extern crate option_filter;
 
 mod types;
@@ -91,7 +100,7 @@ pub mod san;
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
-pub use board::{Board, BoardFenOpts};
+pub use board::Board;
 pub use setup::Setup;
 pub use movelist::MoveList;
 pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};

@@ -24,7 +24,7 @@ use board::Board;
 use std::iter::FromIterator;
 use option_filter::OptionFilterExt;
 
-/// A (not necessarily legal) position.
+/// A not necessarily legal position.
 pub trait Setup {
     fn board(&self) -> &Board;
     fn pockets(&self) -> Option<&Pockets>;

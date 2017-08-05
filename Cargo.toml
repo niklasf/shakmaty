@@ -13,5 +13,9 @@ build = "src/build.rs"
 [dependencies]
 option-filter = "1.0"
 
+[dependencies.arrayvec]
+git = "https://github.com/bluss/arrayvec.git"
+features = ["use_union"]
+
 [badges]
 travis-ci = { repository = "shakmaty", branch = "master" }

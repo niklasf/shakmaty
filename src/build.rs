@@ -102,7 +102,7 @@ fn generate() -> io::Result<()> {
     let mut bb_between = [Bitboard(0); 4096];
 
     for s in 0..64 {
-        let sq = Square::from_index_unchecked(s as i8);
+        let sq = Square::from_index(s as i8).expect("square index s in range");
         knight_attacks[s] = step_attacks(sq, &KNIGHT_DELTAS);
         king_attacks[s] = step_attacks(sq, &KING_DELTAS);
         white_pawn_attacks[s] = step_attacks(sq, &WHITE_PAWN_DELTAS);
@@ -112,10 +112,10 @@ fn generate() -> io::Result<()> {
     }
 
     for a in 0..64 {
-        let sa = Square::from_index_unchecked(a as i8);
+        let sa = Square::from_index(a as i8).expect("square index a in range");
 
         for b in 0..64 {
-            let sb = Square::from_index_unchecked(b as i8);
+            let sb = Square::from_index(b as i8).expect("square index b in range");
             let idx = a * 64 + b;
 
             if sliding_bishop_attacks(sa, Bitboard(0)).contains(sb) {

@@ -175,7 +175,11 @@ impl Bitboard {
         if self.is_empty() {
             None
         } else {
-            Some(Square::from_index_unchecked(self.0.trailing_zeros() as i8))
+            // This is safe, because a non-zero u64 can have at most
+            // 63 trailing zeros.
+            Some(unsafe {
+                Square::from_index_unchecked(self.0.trailing_zeros() as i8)
+            })
         }
     }
 
@@ -367,7 +371,11 @@ impl Iterator for Bitboard {
         if self.is_empty() {
             None
         } else {
-            Some(Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8))
+            // This is safe because a non-zero u64 has between 0 and
+            // 63 (included) leading zeros.
+            Some(unsafe {
+                Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8)
+            })
         }
     }
 }
@@ -390,7 +398,11 @@ impl DoubleEndedIterator for Bitboard {
         if self.is_empty() {
             None
         } else {
-            let sq = Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8);
+            // This is safe because a non-zero u64 has between 0 and
+            // 63 (included) leading zeros.
+            let sq = unsafe {
+                Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8)
+            };
             self.0 ^= 1 << sq.index();
             Some(sq)
         }

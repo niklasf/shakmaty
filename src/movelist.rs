@@ -1,121 +1,36 @@
-use std::mem;
-use std::slice;
-use std::ops::{Deref, DerefMut};
-use std::ptr;
-
 use types::Move;
 
-pub unsafe trait Array {
+use arrayvec::{Array, ArrayVec};
+
+/// A stack allocated container for legal moves.
+pub type MoveList = ArrayVec<[Move; 512]>;
+
+pub trait ArrayVecExt {
     type Item;
-    const CAPACITY: usize;
 
-    fn as_ptr(&self) -> *const Self::Item;
-    fn as_mut_ptr(&mut self) -> *mut Self::Item;
+    /// Retains only the elements specified by the predicate.
+    ///
+    /// In other words, remove all elements `e` such that `f(&e)` returns
+    /// `false`.
+    ///
+    /// Like `ArrayVec::retain()`, but does not preserve order.
+    fn swap_retain<F>(&mut self, f: F)
+        where F: FnMut(&mut Self::Item) -> bool;
 }
 
-unsafe impl<T> Array for [T; 512] {
-    type Item = T;
-    const CAPACITY: usize = 512;
-    fn as_ptr(&self) -> *const T { self as *const _ as *const _ }
-    fn as_mut_ptr(&mut self) -> *mut T { self as *mut _ as *mut _ }
-}
+impl<A: Array> ArrayVecExt for ArrayVec<A> {
+    type Item = A::Item;
 
-pub struct StackVec<A: Array>
-    where A::Item: Copy
-{
-    xs: A,
-    len: usize,
-}
-
-impl<A: Array> StackVec<A> where A::Item: Copy {
-    pub const CAPACITY: usize = A::CAPACITY;
-
-    pub fn new() -> StackVec<A> {
-        StackVec {
-            xs: unsafe { mem::uninitialized() },
-            len: 0,
-        }
-    }
-
-    #[inline]
-    pub fn len(&self) -> usize { self.len }
-
-    #[inline]
-    pub fn push(&mut self, element: A::Item) {
-        assert!(self.len() < A::CAPACITY);
-        unsafe {
-            self.push_unchecked(element);
-        }
-    }
-
-    #[inline]
-    pub unsafe fn push_unchecked(&mut self, element: A::Item) {
-        let len = self.len();
-        debug_assert!(len < A::CAPACITY);
-        ptr::write(self.get_unchecked_mut(len), element);
-        self.len = len + 1;
-    }
-
-    pub fn swap_retain<F>(&mut self, mut f: F)
-        where F: FnMut(&mut A::Item) -> bool
+    fn swap_retain<F>(&mut self, mut f: F)
+        where F: FnMut(&mut Self::Item) -> bool
     {
-        let base = self.xs.as_mut_ptr();
-        let mut cur = 0;
-
-        while cur < self.len {
-            if !f(unsafe { self.get_unchecked_mut(cur) }) {
-                self.len -= 1;
-                unsafe {
-                    *base.offset(cur as isize) = *base.offset(self.len as isize);
-                }
+        let mut i = 0;
+        while i < self.len() {
+            if f(&mut self[i]) {
+                i += 1;
             } else {
-                cur += 1;
+                self.swap_remove(i);
             }
         }
     }
-
-    #[inline]
-    pub fn clear(&mut self) {
-        self.len = 0;
-    }
 }
-
-impl<'a, A: Array> IntoIterator for &'a StackVec<A> where A::Item: Copy {
-    type Item = &'a A::Item;
-    type IntoIter = slice::Iter<'a, A::Item>;
-
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
-}
-
-impl<A: Array> Default for StackVec<A> where A::Item: Copy {
-    fn default() -> StackVec<A> {
-        StackVec::new()
-    }
-}
-
-impl<A: Array> Deref for StackVec<A> where A::Item: Copy {
-    type Target = [A::Item];
-
-    #[inline]
-    fn deref(&self) -> &[A::Item] {
-        unsafe {
-            slice::from_raw_parts(self.xs.as_ptr(), self.len())
-        }
-    }
-}
-
-impl<A: Array> DerefMut for StackVec<A> where A::Item: Copy {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut [A::Item] {
-        unsafe {
-            slice::from_raw_parts_mut(self.xs.as_mut_ptr(), self.len())
-        }
-    }
-}
-
-impl<A: Array> AsMut<[A::Item]> for StackVec<A> where A::Item: Copy {
-    #[inline]
-    fn as_mut(&mut self) -> &mut [A::Item] { self }
-}
-
-pub type MoveList = StackVec<[Move; 512]>;

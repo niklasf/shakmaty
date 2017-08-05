@@ -21,23 +21,35 @@
 //! Parse and write SANs:
 //!
 //! ```
-//! use shakmaty::Chess;
-//! use shakmaty::Position;
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
+//! use shakmaty::{Chess, Position};
 //! use shakmaty::san::San;
 //!
-//! let san: San = "Nf3".parse().expect("valid san");
+//! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Converting to a move:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! # use shakmaty::{Chess, Position, Role, Move};
 //! # use shakmaty::san::San;
 //! # use shakmaty::square;
-//! # let san: San = "Nf3".parse().expect("valid san");
+//! # let san: San = "Nf3".parse()?;
 //! let pos = Chess::default();
-//! let m = san.to_move(&pos).expect("legal move");
+//! let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(m, Move::Normal {
 //!     role: Role::Knight,
@@ -46,19 +58,36 @@
 //!     to: square::F3,
 //!     promotion: None,
 //! });
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! use shakmaty::san;
 //! # use shakmaty::{Chess, Position, Role};
 //! # use shakmaty::san::San;
 //! # let pos = Chess::default();
-//! # let san: San = "Nf3".parse().expect("valid san");
-//! # let m = san.to_move(&pos).expect("legal move");
+//! # let san: San = "Nf3".parse()?;
+//! # let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 
 use square;
@@ -283,7 +312,7 @@ impl San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 pos.san_candidates(role, to, &mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Normal { from, capture: c, promotion: p, .. } =>
                         file.map_or(true, |f| f == from.file()) &&
                         rank.map_or(true, |r| r == from.rank()) &&
@@ -299,21 +328,21 @@ impl San {
             },
             San::CastleShort => {
                 pos.legal_moves(&mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Castle { king, rook } => king.file() < rook.file(),
                     _ => false,
                 });
             },
             San::CastleLong => {
                 pos.legal_moves(&mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Castle { king, rook } => rook.file() < king.file(),
                     _ => false,
                 });
             },
             San::Put { role, to } => {
                 pos.san_candidates(role, to, &mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Put { .. } => true,
                     _ => false,
                 });
@@ -323,7 +352,7 @@ impl San {
 
         legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
             if others.is_empty() {
-                Ok(*m)
+                Ok(m.clone())
             } else {
                 Err(SanError::AmbiguousSan)
             }

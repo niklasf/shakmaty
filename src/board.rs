@@ -16,64 +16,18 @@
 
 use std::fmt;
 use std::fmt::Write;
-use std::char;
-use std::error::Error;
 
 use square::Square;
 use types::{ Color, Role, Piece };
 use bitboard::Bitboard;
 use attacks;
 
-/// Board FEN formatting options.
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct BoardFenOpts {
-    promoted: bool,
-}
-
-impl BoardFenOpts {
-    pub fn promoted(&self) -> bool {
-        self.promoted
-    }
-
-    pub fn with_promoted(mut self, promoted: bool) -> BoardFenOpts {
-        self.promoted = promoted;
-        self
-    }
-}
-
-impl Default for BoardFenOpts {
-    fn default() -> BoardFenOpts {
-        BoardFenOpts {
-            promoted: false,
-        }
-    }
-}
-
-/// Error when attempting to parse an invalid board.
-pub struct BoardFenError { _priv: () }
-
-impl fmt::Debug for BoardFenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-         f.debug_struct("BoardFenError").finish()
-    }
-}
-
-impl fmt::Display for BoardFenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        "invalid board fen".fmt(f)
-    }
-}
-
-impl Error for BoardFenError {
-    fn description(&self) -> &str { "invalid board fen" }
-}
-
 /// Piece positions on a board.
 ///
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Board, BoardFenOpts, square};
+/// # use shakmaty::{Board, square};
 /// # use shakmaty::Color::Black;
 /// let board = Board::new();
 /// // r n b q k b n r
@@ -86,9 +40,6 @@ impl Error for BoardFenError {
 /// // R N B Q K B N R
 ///
 /// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
-///
-/// let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
-/// assert_eq!(board.board_fen(&BoardFenOpts::default()), fen);
 /// ```
 #[derive(Clone, Eq, PartialEq)]
 pub struct Board {
@@ -144,76 +95,6 @@ impl Board {
         }
     }
 
-    pub fn from_board_fen(board_fen: &str) -> Result<Board, BoardFenError> {
-        let mut board = Board::empty();
-
-        let mut rank = 7i8;
-        let mut file = 0i8;
-        let mut promoted = false;
-
-        for ch in board_fen.chars() {
-            if ch == '/' {
-                file = 0;
-                rank = rank.saturating_sub(1);
-            } else if ch == '~' {
-                promoted = true;
-                continue;
-            } else if let Some(empty) = ch.to_digit(10) {
-                file = file.saturating_add(empty as i8);
-            } else if let Some(piece) = Piece::from_char(ch) {
-                match Square::from_coords(file as i8, rank) {
-                    Some(sq) => {
-                        board.set_piece_at(sq, piece, promoted);
-                        promoted = false;
-                    },
-                    None => return Err(BoardFenError { _priv: () })
-                }
-                file += 1;
-            } else {
-                return Err(BoardFenError { _priv: () })
-            }
-
-            if promoted {
-                return Err(BoardFenError { _priv: () })
-            }
-        }
-
-        Ok(board)
-    }
-
-    pub fn board_fen(&self, opts: &BoardFenOpts) -> String {
-        let mut fen = String::with_capacity(15);
-
-        for rank in (0..8).rev() {
-            let mut empty = 0;
-
-            for file in 0..8 {
-                let square = Square::from_coords(file, rank).unwrap();
-
-                empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
-                    if empty > 0 {
-                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                    }
-                    fen.push(piece.char());
-                    if opts.promoted() && self.promoted.contains(square) {
-                        fen.push('~');
-                    }
-                    0
-                });
-
-                if file == 7 && empty > 0 {
-                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                }
-
-                if file == 7 && rank > 0 {
-                    fen.push('/')
-                }
-            }
-        }
-
-        fen
-    }
-
     #[inline]
     pub fn occupied(&self) -> Bitboard { self.occupied }
 
@@ -250,7 +131,7 @@ impl Board {
     /// The (unique, unpromoted) king of the given side.
     #[inline]
     pub fn king_of(&self, color: Color) -> Option<Square> {
-        (self.by_piece(&color.king()) & !self.promoted).single_square()
+        (self.by_piece(color.king()) & !self.promoted).single_square()
     }
 
     #[inline]
@@ -346,13 +227,13 @@ impl Board {
     }
 
     #[inline]
-    pub fn by_piece(&self, piece: &Piece) -> Bitboard {
+    pub fn by_piece(&self, piece: Piece) -> Bitboard {
         self.by_color(piece.color) & self.by_role(piece.role)
     }
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
         self.piece_at(sq)
-            .map_or(Bitboard(0), |ref piece| attacks::attacks(sq, piece, self.occupied))
+            .map_or(Bitboard(0), |piece| attacks::attacks(sq, piece, self.occupied))
     }
 
     pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
@@ -413,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_promoted() {
-        let board = Board::from_board_fen("4k3/8/8/8/8/8/8/2~q1K3").expect("valid fen");
+        let board: Board = "4k3/8/8/8/8/8/8/2~q1K3".parse().expect("valid fen");
         assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
         assert!(board.promoted().contains(square::C1));
     }
