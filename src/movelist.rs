@@ -28,8 +28,6 @@ pub struct StackVec<A: Array>
 }
 
 impl<A: Array> StackVec<A> where A::Item: Copy {
-    pub const CAPACITY: usize = A::CAPACITY;
-
     pub fn new() -> StackVec<A> {
         StackVec {
             xs: unsafe { mem::uninitialized() },
@@ -39,6 +37,9 @@ impl<A: Array> StackVec<A> where A::Item: Copy {
 
     #[inline]
     pub fn len(&self) -> usize { self.len }
+
+    #[inline]
+    pub fn capacity(&self) -> usize { A::CAPACITY }
 
     #[inline]
     pub fn push(&mut self, element: A::Item) {
@@ -56,7 +57,7 @@ impl<A: Array> StackVec<A> where A::Item: Copy {
         self.len = len + 1;
     }
 
-    pub fn swap_retain<F>(&mut self, mut f: F)
+    pub fn retain<F>(&mut self, mut f: F)
         where F: FnMut(&mut A::Item) -> bool
     {
         let base = self.xs.as_mut_ptr();

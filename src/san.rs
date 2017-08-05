@@ -283,7 +283,7 @@ impl San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 pos.san_candidates(role, to, &mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Normal { from, capture: c, promotion: p, .. } =>
                         file.map_or(true, |f| f == from.file()) &&
                         rank.map_or(true, |r| r == from.rank()) &&
@@ -299,21 +299,21 @@ impl San {
             },
             San::CastleShort => {
                 pos.legal_moves(&mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Castle { king, rook } => king.file() < rook.file(),
                     _ => false,
                 });
             },
             San::CastleLong => {
                 pos.legal_moves(&mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Castle { king, rook } => rook.file() < king.file(),
                     _ => false,
                 });
             },
             San::Put { role, to } => {
                 pos.san_candidates(role, to, &mut legals);
-                legals.swap_retain(|m| match *m {
+                legals.retain(|m| match *m {
                     Move::Put { .. } => true,
                     _ => false,
                 });

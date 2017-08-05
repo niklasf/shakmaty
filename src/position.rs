@@ -291,7 +291,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() | has_ep {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
     }
 
@@ -320,7 +320,7 @@ impl Position for Chess {
                     _ => {}
                 }
 
-                assert!(moves.len() + 8 < MoveList::CAPACITY);
+                assert!(moves.len() + 8 < moves.capacity());
 
                 for from in piece_from & self.our(role) {
                     unsafe {
@@ -346,7 +346,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.contains(to) | has_ep {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
     }
 
@@ -530,7 +530,7 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 }
 
 fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
-    assert!(moves.len() + 8 < MoveList::CAPACITY);
+    assert!(moves.len() + 8 < moves.capacity());
 
     for to in attacks::king_attacks(king) & target {
         if pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty() {
@@ -618,7 +618,7 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 8 < MoveList::CAPACITY);
+        assert!(moves.len() + 8 < moves.capacity());
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from) & target {
@@ -641,7 +641,7 @@ trait Slider {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 28 < MoveList::CAPACITY);
+        assert!(moves.len() + 28 < moves.capacity());
 
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from, pos.board().occupied()) & target {
@@ -687,7 +687,7 @@ impl Slider for QueenTag {
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     // Due to push_unchecked the safety of this function depends on this
     // assertion.
-    assert!(moves.len() + 108 < MoveList::CAPACITY);
+    assert!(moves.len() + 108 < moves.capacity());
 
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
@@ -824,7 +824,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
 }
 
 fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
-    moves.swap_retain(|m| match *m {
+    moves.retain(|m| match *m {
         Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
             to == t && role == r,
         Move::Castle { rook, .. } => role == Role::King && to == rook,
