@@ -171,6 +171,7 @@ impl Board {
         })
     }
 
+    #[inline]
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         self.piece_at(sq).map(|piece| {
             self.occupied.flip(sq);
