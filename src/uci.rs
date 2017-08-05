@@ -21,27 +21,52 @@
 //! Parsing UCIs:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! # use shakmaty::square;
 //! use shakmaty::uci::Uci;
 //!
-//! let uci: Uci = "g1f3".parse().expect("valid uci");
-//! assert_eq!(uci, Uci::Normal { from: square::G1, to: square::F3, promotion: None });
+//! let uci: Uci = "g1f3".parse()?;
+//!
+//! assert_eq!(uci, Uci::Normal {
+//!     from: square::G1,
+//!     to: square::F3,
+//!     promotion: None
+//! });
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! # use shakmaty::square;
 //! # use shakmaty::Color::White;
 //! # use shakmaty::uci::Uci;
 //! use shakmaty::{Chess, Setup, Position};
 //!
-//! # let uci: Uci = "g1f3".parse().expect("valid uci");
+//! # let uci: Uci = "g1f3".parse()?;
 //! let pos = Chess::default();
-//! let m = uci.to_move(&pos).expect("legal move");
+//! let m = uci.to_move(&pos)?;
 //!
 //! let after = pos.play_unchecked(&m);
 //! assert_eq!(after.board().piece_at(square::F3), Some(White.knight()));
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Converting from `Move` to `Uci`:
