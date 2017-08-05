@@ -106,6 +106,10 @@ impl Error for IllegalMove {
 /// implementation.
 pub trait Position: Setup + Default + Clone {
     /// Validates a `Setup` and constructs a position.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the setup is illegal for the chess variant.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
 
     /// Attacks that a king on `square` would have to deal with.
@@ -126,9 +130,19 @@ pub trait Position: Setup + Default + Clone {
     }
 
     /// Generates legal moves.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `moves` is too full. This can not happen if an empty
+    /// `MoveList` is passed.
     fn legal_moves(&self, moves: &mut MoveList);
 
     /// Generates a subset of legal moves.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `moves` is too full. This can not happen if an empty
+    /// `MoveList` is passed.
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.legal_moves(moves);
         filter_san_candidates(role, to, moves);
@@ -198,6 +212,10 @@ pub trait Position: Setup + Default + Clone {
     }
 
     /// Validates and plays a move.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the move is illegal in the position.
     fn play(self, m: &Move) -> Result<Self, IllegalMove> {
         if self.is_legal(m) {
             Ok(self.play_unchecked(m))
