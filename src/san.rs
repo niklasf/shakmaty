@@ -21,23 +21,35 @@
 //! Parse and write SANs:
 //!
 //! ```
-//! use shakmaty::Chess;
-//! use shakmaty::Position;
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
+//! use shakmaty::{Chess, Position};
 //! use shakmaty::san::San;
 //!
-//! let san: San = "Nf3".parse().expect("valid san");
+//! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Converting to a move:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! # use shakmaty::{Chess, Position, Role, Move};
 //! # use shakmaty::san::San;
 //! # use shakmaty::square;
-//! # let san: San = "Nf3".parse().expect("valid san");
+//! # let san: San = "Nf3".parse()?;
 //! let pos = Chess::default();
-//! let m = san.to_move(&pos).expect("legal move");
+//! let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(m, Move::Normal {
 //!     role: Role::Knight,
@@ -46,19 +58,36 @@
 //!     to: square::F3,
 //!     promotion: None,
 //! });
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! use shakmaty::san;
 //! # use shakmaty::{Chess, Position, Role};
 //! # use shakmaty::san::San;
 //! # let pos = Chess::default();
-//! # let san: San = "Nf3".parse().expect("valid san");
-//! # let m = san.to_move(&pos).expect("legal move");
+//! # let san: San = "Nf3".parse()?;
+//! # let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 
 use square;
