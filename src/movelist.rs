@@ -118,4 +118,5 @@ impl<A: Array> AsMut<[A::Item]> for StackVec<A> where A::Item: Copy {
     fn as_mut(&mut self) -> &mut [A::Item] { self }
 }
 
+/// A stack allocated container for moves.
 pub type MoveList = StackVec<[Move; 512]>;

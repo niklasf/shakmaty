@@ -36,8 +36,7 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! use shakmaty::Move;
-//! use shakmaty::Role;
+//! use shakmaty::{Move, Role};
 //! use shakmaty::square;
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
@@ -100,7 +99,7 @@ pub mod san;
 pub use square::Square;
 pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
-pub use board::{Board, BoardFenOpts};
+pub use board::{Board, BoardFenOpts, BoardFenError};
 pub use setup::Setup;
 pub use movelist::MoveList;
 pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};

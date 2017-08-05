@@ -102,8 +102,8 @@ impl Error for IllegalMove {
     fn description(&self) -> &str { "illegal move" }
 }
 
-/// A legal chess or chess variant position. See `Chess` and
-/// `shakmaty::variants` for concrete implementations.
+/// A legal chess or chess variant position. See `Chess` for a concrete
+/// implementation.
 pub trait Position: Setup + Default + Clone {
     /// Validates a `Setup` and constructs a position.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
@@ -139,16 +139,6 @@ pub trait Position: Setup + Default + Clone {
         let mut legals = MoveList::new();
         self.legal_moves(&mut legals);
         legals.contains(m)
-    }
-
-    /// Tests if a move zeros the halfmove clock.
-    fn is_zeroing(&self, m: &Move) -> bool {
-        match *m {
-            Move::Normal { capture: Some(_), .. } |
-                Move::Normal { role: Role::Pawn, .. } |
-                Move::EnPassant { .. } => true,
-            _ => false
-        }
     }
 
     /// Checks if the game is over due to a special variant end condition.

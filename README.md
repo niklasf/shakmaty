@@ -12,11 +12,9 @@ Features
 * Generate legal moves:
 
   ```rust
-  use shakmaty::Chess;
-  use shakmaty::Position;
-  use shakmaty::MoveList;
+  use shakmaty::{Chess, Position, MoveList};
 
-  let pos = Chess::default(); // starting position
+  let pos = Chess::default();
 
   let mut legals = MoveList::new();
   pos.legal_moves(&mut legals);
@@ -26,17 +24,17 @@ Features
 * Play moves:
 
   ```rust
-  use shakmaty::Move;
-  use shakmaty::Role;
+  use shakmaty::{Move, Role};
   use shakmaty::square;
 
+  // 1. e4
   let pos = pos.play(&Move::Normal {
       role: Role::Pawn,
       from: square::E2,
       to: square::E4,
       capture: None,
       promotion: None,
-  }).expect("1. e4 is legal");
+  })?;
   ```
 
 * Detect game end conditions: `pos.is_checkmate()`, `pos.is_stalemate()`,
@@ -44,7 +42,8 @@ Features
 
 * Read and write FENs, SANs and UCIs.
 
-* Supports Standard chess and Chess960.
+* Supports Standard chess and Chess960. Provides vocabulary to implement
+  other variants.
 
 * Bitboards and compact fixed shift magic attack tables.
 

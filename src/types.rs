@@ -231,7 +231,7 @@ impl Pocket {
     }
 }
 
-/// Crazyhouse pockets for both sides, holding captured pieces.
+/// Pockets to hold captured pieces for both sides (in Crazyhouse).
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct Pockets {
     pub white: Pocket,
