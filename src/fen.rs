@@ -249,6 +249,11 @@ impl Fen {
         }
     }
 
+    /// Set up a `Position`.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the setup is not a legal position.
     pub fn position<P: Position>(&self) -> Result<P, PositionError> {
         P::from_setup(self)
     }

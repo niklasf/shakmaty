@@ -200,6 +200,10 @@ impl From<Move> for Uci {
 impl Uci {
     /// Tries to convert the `Uci` to a legal `Move` in the context of a
     /// position.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the move is not legal.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMove> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {

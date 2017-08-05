@@ -105,29 +105,12 @@ impl Error for IllegalMove {
 /// A legal chess or chess variant position. See `Chess` for a concrete
 /// implementation.
 pub trait Position: Setup + Default + Clone {
-    /// Validates a `Setup` and constructs a position.
+    /// Set up a position.
     ///
     /// # Errors
     ///
-    /// Errors if the setup is illegal for the chess variant.
+    /// Errors if the setup is not legal.
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>;
-
-    /// Attacks that a king on `square` would have to deal with.
-    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
-        self.board().attacks_to(square, attacker, occupied)
-    }
-
-    /// Tests the rare case where moving the rook to the other side during
-    /// castling would uncover a rank attack.
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
-
-    /// Bitboard of pieces giving check.
-    fn checkers(&self) -> Bitboard {
-        self.our(Role::King).first()
-            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn(), self.board().occupied()))
-    }
 
     /// Generates legal moves.
     ///
@@ -171,6 +154,24 @@ pub trait Position: Setup + Default + Clone {
                 role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any()
         }
     }
+
+    /// Attacks that a king on `square` would have to deal with.
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
+        self.board().attacks_to(square, attacker, occupied)
+    }
+
+    /// Tests the rare case where moving the rook to the other side during
+    /// castling would uncover a rank attack.
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        castling_uncovers_rank_attack(self, rook, king_to)
+    }
+
+    /// Bitboard of pieces giving check.
+    fn checkers(&self) -> Bitboard {
+        self.our(Role::King).first()
+            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn(), self.board().occupied()))
+    }
+
 
     /// Checks if the game is over due to a special variant end condition.
     ///
@@ -228,7 +229,7 @@ pub trait Position: Setup + Default + Clone {
         })
     }
 
-    /// Validates and plays a move.
+    /// Plays a move.
     ///
     /// # Errors
     ///
