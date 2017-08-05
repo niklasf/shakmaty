@@ -459,7 +459,7 @@ mod tests {
     #[test]
     fn test_shredder_fen() {
         let pos = Chess::default();
-        assert_eq!(fen(&pos, &FenOpts::default().with_shredder(true)),
+        assert_eq!(fen(&pos, FenOpts::default().shredder(true)),
                    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 
