@@ -43,15 +43,26 @@
 //! Parsing FENs:
 //!
 //! ```
+//! # use std::error::Error;
+//! #
 //! # use shakmaty::fen::Fen;
 //! # use shakmaty::Chess;
+//! #
+//! # fn try_main() -> Result<(), Box<Error>> {
 //! use shakmaty::Position;
 //!
 //! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
 //!
-//! let setup: Fen = input.parse().expect("invalid fen");
-//! let position: Chess = setup.position().expect("illegal position");
+//! let setup: Fen = input.parse()?;
+//! let position: Chess = setup.position()?;
 //! assert!(position.is_checkmate());
+//! #
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().unwrap();
+//! # }
 //! ```
 
 use std::str::FromStr;
