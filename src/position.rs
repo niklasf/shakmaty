@@ -151,8 +151,9 @@ pub trait Position: Setup + Default + Clone {
                 Move::EnPassant { .. } |
                 Move::Put { .. } => true,
             Move::Normal { role, from, to, .. } =>
-                (self.castling_rights().contains(from) | self.castling_rights().contains(to)) ||
-                role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any()
+                self.castling_rights().contains(from) ||
+                self.castling_rights().contains(to) ||
+                (role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any())
         }
     }
 
@@ -327,7 +328,7 @@ impl Position for Chess {
         }
 
         let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.any() | has_ep {
+        if blockers.any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
@@ -382,7 +383,7 @@ impl Position for Chess {
             gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.contains(to) | has_ep {
+        if blockers.contains(to) || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
@@ -530,7 +531,7 @@ fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
             return Some(PositionError::InvalidEpSquare)
         }
 
-        if pos.board().occupied().contains(ep_square) | pos.board().occupied().contains(seventh_rank_sq) {
+        if pos.board().occupied().contains(ep_square) || pos.board().occupied().contains(seventh_rank_sq) {
             return Some(PositionError::InvalidEpSquare)
         }
     }
