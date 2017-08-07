@@ -45,7 +45,7 @@ Features
 * Supports Standard chess and Chess960. Provides vocabulary to implement
   other variants.
 
-* Bitboards and compact fixed shift magic attack tables.
+* Bitboards and compact fixed shift black magic attack tables.
 
 Documentation
 -------------
