@@ -41,10 +41,12 @@ impl Color {
         }
     }
 
+    #[inline]
     pub fn from_bool(white: bool) -> Color {
         if white { Color::White } else { Color::Black }
     }
 
+    #[inline]
     pub fn fold<T>(self, white: T, black: T) -> T {
         match self {
             Color::White => white,
@@ -52,22 +54,31 @@ impl Color {
         }
     }
 
+    #[inline]
     pub fn is_white(self) -> bool { self == Color::White }
+    #[inline]
     pub fn is_black(self) -> bool { self == Color::Black }
 
     pub fn char(self) -> char { self.fold('w', 'b') }
 
+    #[inline]
     pub const fn pawn(self)   -> Piece { Pawn.of(self) }
+    #[inline]
     pub const fn knight(self) -> Piece { Knight.of(self) }
+    #[inline]
     pub const fn bishop(self) -> Piece { Bishop.of(self) }
+    #[inline]
     pub const fn rook(self)   -> Piece { Rook.of(self) }
+    #[inline]
     pub const fn queen(self)  -> Piece { Queen.of(self) }
+    #[inline]
     pub const fn king(self)   -> Piece { King.of(self) }
 }
 
 impl ops::Not for Color {
     type Output = Color;
 
+    #[inline]
     fn not(self) -> Color {
         self.fold(Color::Black, Color::White)
     }
@@ -97,6 +108,7 @@ impl Role {
         }
     }
 
+    #[inline]
     pub const fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
