@@ -15,7 +15,7 @@ option-filter = "1.0"
 
 [dependencies.arrayvec]
 git = "https://github.com/bluss/arrayvec.git"
-rev = "7deb5c5db4c631baa6662049b633aac83819b0a4"
+rev = "2919af394edf92e3c7d9c1f189703b2736a6c1bd"
 features = ["use_union"]
 
 [badges]
