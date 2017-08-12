@@ -99,7 +99,7 @@ fn generate() -> io::Result<()> {
     let mut white_pawn_attacks = [Bitboard(0); 64];
     let mut black_pawn_attacks = [Bitboard(0); 64];
 
-    let mut attacks = [Bitboard(0); 88507];
+    let mut attacks = [Bitboard(0); 87988];
 
     let mut bb_rays = [Bitboard(0); 4096];
     let mut bb_between = [Bitboard(0); 4096];
