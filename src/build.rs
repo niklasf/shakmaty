@@ -65,12 +65,9 @@ fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
 }
 
 fn init_magics(sq: Square, magic: &Magic, shift: u8, attacks: &mut[Bitboard], deltas: &[i8]) {
-    // Black magic masks have all non-range squares.
-    let range = Bitboard(!magic.mask);
-
-    for subset in range.carry_rippler() {
+    for subset in Bitboard(magic.mask).carry_rippler() {
         let attack = sliding_attacks(sq, subset, deltas);
-        let idx = (magic.factor.wrapping_mul(subset.0 | magic.mask) >> (64 - shift)) as usize + magic.offset;
+        let idx = (magic.factor.wrapping_mul(subset.0) >> (64 - shift)) as usize + magic.offset;
         assert!(attacks[idx].is_empty() || attacks[idx] == attack);
         attacks[idx] = attack;
     }
@@ -99,7 +96,7 @@ fn generate() -> io::Result<()> {
     let mut white_pawn_attacks = [Bitboard(0); 64];
     let mut black_pawn_attacks = [Bitboard(0); 64];
 
-    let mut attacks = [Bitboard(0); 87988];
+    let mut attacks = [Bitboard(0); 88772];
 
     let mut bb_rays = [Bitboard(0); 4096];
     let mut bb_between = [Bitboard(0); 4096];
