@@ -158,6 +158,25 @@ pub enum Move {
 }
 
 impl Move {
+    /// Gets the origin square or `None` for drops.
+    pub fn from(&self) -> Option<Square> {
+        match *self {
+            Move::Normal { from, .. } | Move::EnPassant { from, .. } => Some(from),
+            Move::Castle { king, .. } => Some(king),
+            Move::Put { .. } => None,
+        }
+    }
+
+    /// Gets the target square. For castling moves this is the corresponding
+    /// rook square.
+    pub fn to(&self) -> Square {
+        match *self {
+            Move::Normal { to, .. } | Move::EnPassant { to, .. } | Move::Put { to, .. } => to,
+            Move::Castle { rook, .. } => rook,
+        }
+    }
+
+    /// Gets the role of the captured piece or `None`.
     pub fn capture(&self) -> Option<Role> {
         match *self {
             Move::Normal { capture, .. } => capture,
