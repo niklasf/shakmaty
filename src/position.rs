@@ -236,7 +236,9 @@ pub trait Position: Setup + Default + Clone {
     /// # Errors
     ///
     /// Errors if the move is illegal in the position.
-    fn play(self, m: &Move) -> Result<Self, IllegalMove> {
+    fn play(self, m: &Move) -> Result<Self, IllegalMove>
+        where Self: Sized
+    {
         if self.is_legal(m) {
             Ok(self.play_unchecked(m))
         } else {
@@ -251,7 +253,8 @@ pub trait Position: Setup + Default + Clone {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls.
-    fn play_unchecked(self, m: &Move) -> Self;
+    fn play_unchecked(self, m: &Move) -> Self
+        where Self: Sized;
 }
 
 /// A standard Chess position.
