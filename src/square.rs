@@ -110,6 +110,16 @@ impl Square {
             None
         }
     }
+
+    #[inline]
+    pub fn is_light(self) -> bool {
+        (self.rank() + self.file()) & 1 == 1
+    }
+
+    #[inline]
+    pub fn is_dark(self) -> bool {
+        (self.rank() + self.file()) & 1 == 0
+    }
 }
 
 impl From<Square> for i8 {
@@ -274,5 +284,11 @@ mod tests {
     #[test]
     fn test_distance() {
         assert_eq!(distance(square::D2, square::G3), 3);
+    }
+
+    #[test]
+    fn test_is_light() {
+        assert!(square::D1.is_light());
+        assert!(square::E1.is_dark());
     }
 }
