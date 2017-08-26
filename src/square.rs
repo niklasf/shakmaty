@@ -20,6 +20,7 @@ use std::cmp::max;
 use std::fmt;
 use std::str;
 use std::error::Error;
+use std::ops::Sub;
 
 /// Error when parsing an invalid square name.
 pub struct InvalidSquareName { _priv: () }
@@ -133,6 +134,15 @@ impl From<Square> for i8 {
     #[inline]
     fn from(sq: Square) -> i8 {
         sq.0
+    }
+}
+
+impl Sub for Square {
+    type Output = i8;
+
+    #[inline]
+    fn sub(self, Square(other): Square) -> i8 {
+        self.0 - other
     }
 }
 

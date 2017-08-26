@@ -454,11 +454,11 @@ fn do_move(board: &mut Board,
         },
         Move::Castle { king, rook } => {
             let rook_to = square::combine(
-                if square::delta(rook, king) < 0 { square::D1 } else { square::F1 },
+                if rook - king < 0 { square::D1 } else { square::F1 },
                 rook);
 
             let king_to = square::combine(
-                if square::delta(rook, king) < 0 { square::C1 } else { square::G1 },
+                if rook - king < 0 { square::C1 } else { square::G1 },
                 king);
 
             board.remove_piece_at(king);
