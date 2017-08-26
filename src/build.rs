@@ -35,7 +35,7 @@ fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
         let mut previous = sq;
 
         while let Some(s) = previous.offset(*delta) {
-            if square::distance(s, previous) > 2 {
+            if s.distance(previous) > 2 {
                 break;
             }
 

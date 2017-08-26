@@ -436,7 +436,7 @@ fn do_move(board: &mut Board,
                 *halfmove_clock = 0;
             }
 
-            if role == Role::Pawn && square::distance(from, to) == 2 {
+            if role == Role::Pawn && from.distance(to) == 2 {
                 *ep_square = from.offset(color.fold(8, -8));
             }
 

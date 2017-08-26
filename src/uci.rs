@@ -218,7 +218,7 @@ impl Uci {
                 } else if role == Role::King &&
                           from == pos.turn().fold(square::E1, square::E8) &&
                           to.rank() == pos.turn().fold(0, 7) &&
-                          square::distance(from, to) == 2 {
+                          from.distance(to) == 2 {
                     if from.file() < to.file() {
                         Move::Castle { king: from, rook: pos.turn().fold(square::H1, square::H8) }
                     } else {

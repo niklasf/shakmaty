@@ -120,6 +120,13 @@ impl Square {
     pub fn is_dark(self) -> bool {
         (self.rank() + self.file()) & 1 == 0
     }
+
+    /// The distance between the two squares, i.e. the number of king steps
+    /// to get from `a` to `b`.
+    pub fn distance(self, other: Square) -> i8 {
+        max((self.file() - other.file()).abs(),
+            (self.rank() - other.rank()).abs())
+    }
 }
 
 impl From<Square> for i8 {
@@ -179,18 +186,6 @@ impl fmt::Debug for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string().to_uppercase())
     }
-}
-
-/// The difference of the square indices.
-#[inline]
-pub fn delta(Square(a): Square, Square(b): Square) -> i8 {
-    a - b
-}
-
-/// The distance between the two squares, i.e. the number of king steps to get
-/// from `a` to `b`.
-pub fn distance(a: Square, b: Square) -> i8 {
-    max((a.file() - b.file()).abs(), (a.rank() - b.rank()).abs())
 }
 
 /// Combines two squares, taking the file from the first and the rank from
@@ -283,7 +278,7 @@ mod tests {
 
     #[test]
     fn test_distance() {
-        assert_eq!(distance(square::D2, square::G3), 3);
+        assert_eq!(square::D2.distance(square::G3), 3);
     }
 
     #[test]
