@@ -46,8 +46,18 @@ impl Error for InvalidSquareName {
 pub struct Square(i8);
 
 impl Square {
-    /// Tries to create a `Square` from an integer index in the range
-    /// `0` to `63`.
+    /// Create a `Square` from in integer index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not in the range `0..=63`.
+    #[inline]
+    pub fn new(index: i8) -> Square {
+        assert!(0 <= index && index < 64);
+        Square(index)
+    }
+
+    /// Tries to create a `Square` from an integer index in the range `0..=63`.
     #[inline]
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
