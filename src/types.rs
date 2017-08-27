@@ -184,6 +184,14 @@ impl Move {
             _ => None
         }
     }
+
+    /// Gets the promotion role.
+    pub fn promotion(&self) -> Option<Role> {
+        match *self {
+            Move::Normal { promotion, .. } => promotion,
+            _ => None
+        }
+    }
 }
 
 impl fmt::Display for Move {
