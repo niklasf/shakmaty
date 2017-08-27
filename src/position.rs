@@ -114,6 +114,13 @@ pub trait Position: Setup + Default + Clone {
         where Self: Sized;
 
     /// Generates legal moves.
+    fn legals(&self) -> MoveList {
+        let mut legals = MoveList::new();
+        self.legal_moves(&mut legals);
+        legals
+    }
+
+    /// Collects legal moves in an existing buffer.
     ///
     /// # Panics
     ///

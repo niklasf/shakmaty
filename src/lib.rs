@@ -24,9 +24,7 @@
 //! use shakmaty::{Chess, Position, MoveList};
 //!
 //! let pos = Chess::default();
-//!
-//! let mut legals = MoveList::new();
-//! pos.legal_moves(&mut legals);
+//! let legals = pos.legals();
 //! assert_eq!(legals.len(), 20);
 //! ```
 //!
