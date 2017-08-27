@@ -286,6 +286,7 @@ impl fmt::Debug for Board {
 }
 
 /// An iterator over the pieces of a `Board`.
+#[derive(Clone)]
 pub struct Pieces {
     pawns: Bitboard,
     knights: Bitboard,
@@ -294,6 +295,12 @@ pub struct Pieces {
     queens: Bitboard,
     kings: Bitboard,
     white: Bitboard,
+}
+
+impl fmt::Debug for Pieces {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Pieces").finish()
+    }
 }
 
 impl Iterator for Pieces {
