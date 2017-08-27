@@ -362,14 +362,14 @@ impl San {
 
 /// Converts a move to Standard Algebraic Notation including possible
 /// check and checkmate suffixes.
-pub fn san_plus<P: Position>(pos: P, m: &Move) -> SanPlus {
+pub fn san_plus<P: Position>(mut pos: P, m: &Move) -> SanPlus {
     let san = san(&pos, m);
-    let after = pos.play_unchecked(m);
-    let checkmate = match after.outcome() {
+    pos.play_unchecked(m);
+    let checkmate = match pos.outcome() {
         Some(Outcome::Decisive { .. }) => true,
         _ => false,
     };
-    SanPlus { san, checkmate, check: !checkmate && after.checkers().any() }
+    SanPlus { san, checkmate, check: !checkmate && pos.checkers().any() }
 }
 
 /// Converts a move to Standard Algebraic Notation.

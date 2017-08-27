@@ -243,11 +243,12 @@ pub trait Position: Setup + Default + Clone {
     /// # Errors
     ///
     /// Errors if the move is illegal in the position.
-    fn play(self, m: &Move) -> Result<Self, IllegalMove>
+    fn play(mut self, m: &Move) -> Result<Self, IllegalMove>
         where Self: Sized
     {
         if self.is_legal(m) {
-            Ok(self.play_unchecked(m))
+            self.play_unchecked(m);
+            Ok(self)
         } else {
             Err(IllegalMove {})
         }
@@ -260,8 +261,7 @@ pub trait Position: Setup + Default + Clone {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls.
-    fn play_unchecked(self, m: &Move) -> Self
-        where Self: Sized;
+    fn play_unchecked(&mut self, m: &Move);
 }
 
 /// A standard Chess position.
@@ -300,11 +300,10 @@ impl Setup for Chess {
 }
 
 impl Position for Chess {
-    fn play_unchecked(mut self, m: &Move) -> Chess {
+    fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
                 &mut self.ep_square, &mut self.halfmove_clock,
                 &mut self.fullmoves, m);
-        self
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
@@ -923,8 +922,9 @@ mod tests {
         };
 
         b.iter(|| {
-            let after = pos.clone().play_unchecked(&m);
-            assert_eq!(after.turn(), White);
+            let mut pos = pos.clone();
+            pos.play_unchecked(&m);
+            assert_eq!(pos.turn(), White);
         });
     }
 

@@ -55,11 +55,11 @@
 //! use shakmaty::{Chess, Setup, Position};
 //!
 //! # let uci: Uci = "g1f3".parse()?;
-//! let pos = Chess::default();
+//! let mut pos = Chess::default();
 //! let m = uci.to_move(&pos)?;
 //!
-//! let after = pos.play_unchecked(&m);
-//! assert_eq!(after.board().piece_at(square::F3), Some(White.knight()));
+//! pos.play_unchecked(&m);
+//! assert_eq!(pos.board().piece_at(square::F3), Some(White.knight()));
 //! #
 //! #     Ok(())
 //! # }
