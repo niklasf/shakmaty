@@ -285,7 +285,7 @@ impl fmt::Debug for Board {
     }
 }
 
-/// An iterator over the pieces of a `Board`.
+/// Iterator over the pieces of a `Board`.
 #[derive(Clone)]
 pub struct Pieces {
     pawns: Bitboard,
