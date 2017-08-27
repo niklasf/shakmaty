@@ -311,7 +311,6 @@ pub const H8: Square = Square(63);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use square;
 
     #[test]
     fn test_square() {

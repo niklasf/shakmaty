@@ -245,6 +245,18 @@ impl Board {
             (attacks::king_attacks(sq) & self.kings) |
             (attacks::pawn_attacks(!attacker, sq) & self.pawns))
     }
+
+    pub fn pieces(&self) -> Pieces {
+        Pieces {
+            pawns: self.pawns,
+            knights: self.knights,
+            bishops: self.bishops,
+            rooks: self.rooks,
+            queens: self.queens,
+            kings: self.kings,
+            white: self.white
+        }
+    }
 }
 
 impl Default for Board {
@@ -270,6 +282,66 @@ impl fmt::Debug for Board {
         }
 
         Ok(())
+    }
+}
+
+/// An iterator over the pieces of a `Board`.
+pub struct Pieces {
+    pawns: Bitboard,
+    knights: Bitboard,
+    bishops: Bitboard,
+    rooks: Bitboard,
+    queens: Bitboard,
+    kings: Bitboard,
+    white: Bitboard,
+}
+
+impl Iterator for Pieces {
+    type Item = (Square, Piece);
+
+    fn next(&mut self) -> Option<(Square, Piece)> {
+        if let Some(sq) = self.pawns.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).pawn())));
+        }
+        if let Some(sq) = self.knights.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).knight())));
+        }
+        if let Some(sq) = self.bishops.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).bishop())));
+        }
+        if let Some(sq) = self.rooks.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).rook())));
+        }
+        if let Some(sq) = self.queens.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).queen())));
+        }
+        if let Some(sq) = self.kings.next() {
+            return Some((sq, (Color::from_bool(self.white.contains(sq)).king())));
+        }
+        None
+    }
+
+    fn count(self) -> usize {
+        self.len()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.len();
+        (len, Some(len))
+    }
+}
+
+impl ExactSizeIterator for Pieces {
+    fn len(&self) -> usize {
+        self.pawns.len() + self.knights.len() + self.bishops.len() +
+        self.rooks.len() + self.queens.len() + self.kings.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.white.is_empty() && self.pawns.is_empty() &&
+        self.knights.is_empty() && self.bishops.is_empty() &&
+        self.rooks.is_empty() && self.queens.is_empty() &&
+        self.kings.is_empty()
     }
 }
 
