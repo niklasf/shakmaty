@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//! Square constants and distance functions.
+//! Square constants.
 
 use std::cmp::max;
 use std::fmt;
@@ -122,21 +122,56 @@ impl Square {
         }
     }
 
+    /// Tests is the square is a light square.
+    ///
+    /// ```
+    /// use shakmaty::square;
+    ///
+    /// assert!(square::D1.is_light());
+    /// assert!(!square::D8.is_light());
+    /// ```
     #[inline]
     pub fn is_light(self) -> bool {
         (self.rank() + self.file()) & 1 == 1
     }
 
+    /// Tests is the square is a dark square.
+    ///
+    /// ```
+    /// use shakmaty::square;
+    ///
+    /// assert!(square::E1.is_dark());
+    /// assert!(!square::E8.is_dark());
+    /// ```
     #[inline]
     pub fn is_dark(self) -> bool {
         (self.rank() + self.file()) & 1 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
-    /// to get from `a` to `b`.
+    /// to get from one square to the other.
+    ///
+    /// ```
+    /// use shakmaty::square;
+    ///
+    /// assert_eq!(square::A2.distance(square::B5), 3);
+    /// ```
     pub fn distance(self, other: Square) -> i8 {
         max((self.file() - other.file()).abs(),
             (self.rank() - other.rank()).abs())
+    }
+
+    /// Combines two squares, taking the file from the first and the rank from
+    /// the second.
+    ///
+    /// ```
+    /// use shakmaty::square;
+    ///
+    /// assert_eq!(square::D3.combine(square::F5), square::D5);
+    /// ```
+    #[inline]
+    pub fn combine(self, rank: Square) -> Square {
+        Square(self.file() | (rank.rank() << 3))
     }
 }
 
@@ -206,13 +241,6 @@ impl fmt::Debug for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_string().to_uppercase())
     }
-}
-
-/// Combines two squares, taking the file from the first and the rank from
-/// the second.
-#[inline]
-pub fn combine(file: Square, rank: Square) -> Square {
-    Square(file.file() | (rank.rank() << 3))
 }
 
 pub const A1: Square = Square(0);
@@ -294,16 +322,5 @@ mod tests {
                 assert_eq!(square.rank(), rank);
             }
         }
-    }
-
-    #[test]
-    fn test_distance() {
-        assert_eq!(square::D2.distance(square::G3), 3);
-    }
-
-    #[test]
-    fn test_is_light() {
-        assert!(square::D1.is_light());
-        assert!(square::E1.is_dark());
     }
 }
