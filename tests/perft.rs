@@ -25,7 +25,7 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
-fn test_perft_file<P: Position>(path: &str, node_limit: usize) {
+fn test_perft_file<P: Position + Default + Clone>(path: &str, node_limit: usize) {
     let file = File::open(path).expect("failed to open test suite");
     let reader = BufReader::new(file);
 
