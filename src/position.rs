@@ -59,6 +59,9 @@ pub enum PositionError {
     BadCastlingRights,
     InvalidEpSquare,
     OppositeCheck,
+
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 impl PositionError {
@@ -74,6 +77,7 @@ impl PositionError {
             PositionError::BadCastlingRights => "bad castling rights",
             PositionError::InvalidEpSquare => "invalid en passant square",
             PositionError::OppositeCheck => "opponent is in check",
+            PositionError::__Nonexhaustive => "illegal position",
         }
     }
 }
