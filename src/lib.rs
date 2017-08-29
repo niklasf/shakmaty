@@ -70,6 +70,8 @@
 //!
 //! Also supports FEN, SAN and UCI formats for positions and moves.
 
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.0.7")]
+
 #![feature(test)]
 #![feature(const_fn)]
 #![feature(ascii_ctype)]
