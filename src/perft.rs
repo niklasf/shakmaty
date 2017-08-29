@@ -37,7 +37,7 @@ use uci::Uci;
 /// Paths with mate or stalemate are not counted unless it occurs in the final
 /// position. Useful for comparing, testing and debugging move generation
 /// correctness and performance.
-pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
+pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {
@@ -57,7 +57,7 @@ pub fn perft<P: Position>(pos: &P, depth: u8) -> usize {
 }
 
 /// Like `perft()`, but also prints the perft of each child for debugging.
-pub fn debug_perft<P: Position>(pos: &P, depth: u8) -> usize {
+pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
     } else {

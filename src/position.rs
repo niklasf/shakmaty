@@ -104,7 +104,7 @@ impl Error for IllegalMove {
 
 /// A legal chess or chess variant position. See `Chess` for a concrete
 /// implementation.
-pub trait Position: Setup + Default + Clone {
+pub trait Position: Setup {
     /// Set up a position.
     ///
     /// # Errors
@@ -171,9 +171,7 @@ pub trait Position: Setup + Default + Clone {
 
     /// Tests the rare case where moving the rook to the other side during
     /// castling would uncover a rank attack.
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
 
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
@@ -319,6 +317,10 @@ impl Position for Chess {
         validate_basic(&pos)
             .or_else(|| validate_kings(&pos))
             .map_or(Ok(pos), Err)
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        castling_uncovers_rank_attack(self, rook, king_to)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -876,6 +878,8 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
     });
 }
+
+struct _AssertObjectSafe(Box<Position>);
 
 #[cfg(test)]
 mod tests {
