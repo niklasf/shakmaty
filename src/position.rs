@@ -34,7 +34,7 @@ use std::error::Error;
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
-    Draw
+    Draw,
 }
 
 impl fmt::Display for Outcome {
@@ -89,12 +89,14 @@ impl fmt::Display for PositionError {
 }
 
 impl Error for PositionError {
-    fn description(&self) -> &str { self.desc() }
+    fn description(&self) -> &str {
+        self.desc()
+    }
 }
 
 /// Error in case of illegal moves.
 #[derive(Debug)]
-pub struct IllegalMove { }
+pub struct IllegalMove {}
 
 impl fmt::Display for IllegalMove {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -103,7 +105,9 @@ impl fmt::Display for IllegalMove {
 }
 
 impl Error for IllegalMove {
-    fn description(&self) -> &str { "illegal move" }
+    fn description(&self) -> &str {
+        "illegal move"
+    }
 }
 
 /// A legal chess or chess variant position. See `Chess` for a concrete
@@ -114,8 +118,7 @@ pub trait Position: Setup {
     /// # Errors
     ///
     /// Errors if the setup is not legal.
-    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>
-        where Self: Sized;
+    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> where Self: Sized;
 
     /// Generates legal moves.
     fn legals(&self) -> MoveList {
@@ -363,7 +366,7 @@ impl Position for Chess {
                     gen_castling_moves(self, king, moves);
                     filter_san_candidates(role, to, moves);
                     Bitboard(0)
-                },
+                }
             };
 
             if !self.us().contains(to) {
@@ -494,7 +497,7 @@ fn do_move(board: &mut Board,
 
 fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
     if pos.board().occupied().is_empty() {
-        return Some(PositionError::Empty)
+        return Some(PositionError::Empty);
     }
 
     if let Some(pockets) = pos.pockets() {
@@ -502,25 +505,25 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
             return Some(PositionError::TooManyPawns)
         }
         if pos.board().occupied().count() + pockets.count() as usize > 32 {
-            return Some(PositionError::TooManyPieces)
+            return Some(PositionError::TooManyPieces);
         }
     } else {
         for color in &[White, Black] {
             if pos.board().by_color(*color).count() > 16 {
-                return Some(PositionError::TooManyPieces)
+                return Some(PositionError::TooManyPieces);
             }
             if pos.board().by_piece(color.pawn()).count() > 8 {
-                return Some(PositionError::TooManyPawns)
+                return Some(PositionError::TooManyPawns);
             }
         }
     }
 
     if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
-        return Some(PositionError::PawnsOnBackrank)
+        return Some(PositionError::PawnsOnBackrank);
     }
 
     if setup::clean_castling_rights(pos, false) != pos.castling_rights() {
-        return Some(PositionError::BadCastlingRights)
+        return Some(PositionError::BadCastlingRights);
     }
 
     validate_ep(pos)
@@ -529,7 +532,7 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
 fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
     if let Some(ep_square) = pos.ep_square() {
         if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
-            return Some(PositionError::InvalidEpSquare)
+            return Some(PositionError::InvalidEpSquare);
         }
 
         let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8))
@@ -541,7 +544,7 @@ fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
         if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
-            return Some(PositionError::InvalidEpSquare)
+            return Some(PositionError::InvalidEpSquare);
         }
 
         if pos.board().occupied().contains(ep_square) || pos.board().occupied().contains(seventh_rank_sq) {
@@ -717,22 +720,30 @@ enum QueenTag { }
 
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
-    fn attacks(from: Square) -> Bitboard { attacks::knight_attacks(from) }
+    fn attacks(from: Square) -> Bitboard {
+        attacks::knight_attacks(from)
+    }
 }
 
 impl Slider for BishopTag {
     const ROLE: Role = Role::Bishop;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::bishop_attacks(from, occupied) }
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
+        attacks::bishop_attacks(from, occupied)
+    }
 }
 
 impl Slider for RookTag {
     const ROLE: Role = Role::Rook;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::rook_attacks(from, occupied) }
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
+        attacks::rook_attacks(from, occupied)
+    }
 }
 
 impl Slider for QueenTag {
     const ROLE: Role = Role::Queen;
-    fn attacks(from: Square, occupied: Bitboard) -> Bitboard { attacks::queen_attacks(from, occupied) }
+    fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
+        attacks::queen_attacks(from, occupied)
+    }
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
@@ -894,8 +905,10 @@ mod tests {
     #[test]
     fn test_most_known_legals() {
         let fen = "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1";
-        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
-                            .position().expect("legal position");
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
 
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
@@ -905,21 +918,25 @@ mod tests {
     #[bench]
     fn bench_generate_moves(b: &mut Bencher) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
-        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
-                            .position().expect("legal position");
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
 
         b.iter(|| {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            assert_eq!(moves.len(), 39);
-        })
+                   let mut moves = MoveList::new();
+                   pos.legal_moves(&mut moves);
+                   assert_eq!(moves.len(), 39);
+               })
     }
 
     #[bench]
     fn bench_play_unchecked(b: &mut Bencher) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
-        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
-                            .position().expect("legal position");
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
 
         let m = Move::Normal {
             role: Role::Bishop,

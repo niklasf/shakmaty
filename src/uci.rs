@@ -100,7 +100,9 @@ use types::{Role, Move};
 use position::{Position, IllegalMove};
 
 /// Error when parsing an invalid UCI.
-pub struct InvalidUci { _priv: () }
+pub struct InvalidUci {
+    _priv: (),
+}
 
 impl fmt::Debug for InvalidUci {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -115,15 +117,21 @@ impl fmt::Display for InvalidUci {
 }
 
 impl Error for InvalidUci {
-    fn description(&self) -> &str { "invalid uci" }
+    fn description(&self) -> &str {
+        "invalid uci"
+    }
 }
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Uci {
-    Normal { from: Square, to: Square, promotion: Option<Role> },
+    Normal {
+        from: Square,
+        to: Square,
+        promotion: Option<Role>,
+    },
     Put { role: Role, to: Square },
-    Null
+    Null,
 }
 
 impl FromStr for Uci {
@@ -133,7 +141,7 @@ impl FromStr for Uci {
         // Checking is_ascii() will allow us to safely slice at byte
         // boundaries.
         if uci.len() < 4 || uci.len() > 5 || !uci.is_ascii() {
-            return Err(InvalidUci { _priv: () })
+            return Err(InvalidUci { _priv: () });
         }
 
         match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
@@ -154,7 +162,7 @@ impl FromStr for Uci {
         }
 
         if uci == "0000" {
-            return Ok(Uci::Null)
+            return Ok(Uci::Null);
         }
 
         Err(InvalidUci { _priv: () })

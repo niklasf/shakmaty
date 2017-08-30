@@ -14,8 +14,7 @@ pub trait ArrayVecExt {
     /// `false`.
     ///
     /// Like `ArrayVec::retain()`, but does not preserve order.
-    fn swap_retain<F>(&mut self, f: F)
-        where F: FnMut(&mut Self::Item) -> bool;
+    fn swap_retain<F>(&mut self, f: F) where F: FnMut(&mut Self::Item) -> bool;
 }
 
 impl<A: Array> ArrayVecExt for ArrayVec<A> {

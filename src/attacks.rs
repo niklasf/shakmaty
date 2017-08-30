@@ -104,12 +104,12 @@ pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// Looks up attacks for `piece` on `sq` with `occupied` squares.
 pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
     match piece.role {
-        Role::Pawn   => pawn_attacks(piece.color, sq),
+        Role::Pawn => pawn_attacks(piece.color, sq),
         Role::Knight => knight_attacks(sq),
         Role::Bishop => bishop_attacks(sq, occupied),
-        Role::Rook   => rook_attacks(sq, occupied),
-        Role::Queen  => queen_attacks(sq, occupied),
-        Role::King   => king_attacks(sq)
+        Role::Rook => rook_attacks(sq, occupied),
+        Role::Queen => queen_attacks(sq, occupied),
+        Role::King => king_attacks(sq),
     }
 }
 

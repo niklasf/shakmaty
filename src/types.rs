@@ -37,7 +37,7 @@ impl Color {
         match ch {
             'w' => Some(Color::White),
             'b' => Some(Color::Black),
-            _ => None
+            _ => None,
         }
     }
 
@@ -104,7 +104,7 @@ impl Role {
             'r' => Some(Role::Rook),
             'q' => Some(Role::Queen),
             'k' => Some(Role::King),
-            _ => None
+            _ => None,
         }
     }
 
@@ -115,12 +115,12 @@ impl Role {
 
     pub fn char(self) -> char {
         match self {
-            Role::Pawn =>   'p',
+            Role::Pawn => 'p',
             Role::Knight => 'n',
             Role::Bishop => 'b',
-            Role::Rook =>   'r',
-            Role::Queen =>  'q',
-            Role::King =>   'k'
+            Role::Rook => 'r',
+            Role::Queen => 'q',
+            Role::King => 'k',
         }
     }
 }
@@ -151,7 +151,13 @@ impl Piece {
 /// Information about a move.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Move {
-    Normal { role: Role, from: Square, capture: Option<Role>, to: Square, promotion: Option<Role> },
+    Normal {
+        role: Role,
+        from: Square,
+        capture: Option<Role>,
+        to: Square,
+        promotion: Option<Role>,
+    },
     EnPassant { from: Square, to: Square },
     Castle { king: Square, rook: Square },
     Put { role: Role, to: Square },
@@ -181,7 +187,7 @@ impl Move {
         match *self {
             Move::Normal { capture, .. } => capture,
             Move::EnPassant { .. } => Some(Pawn),
-            _ => None
+            _ => None,
         }
     }
 
@@ -189,7 +195,7 @@ impl Move {
     pub fn promotion(&self) -> Option<Role> {
         match *self {
             Move::Normal { promotion, .. } => promotion,
-            _ => None
+            _ => None,
         }
     }
 }
@@ -241,32 +247,33 @@ pub struct Pocket {
 impl Pocket {
     pub fn by_role(&self, role: Role) -> u8 {
         match role {
-            Role::Pawn   => self.pawns,
+            Role::Pawn => self.pawns,
             Role::Knight => self.knights,
             Role::Bishop => self.bishops,
-            Role::Rook   => self.rooks,
-            Role::Queen  => self.queens,
-            Role::King   => self.kings,
+            Role::Rook => self.rooks,
+            Role::Queen => self.queens,
+            Role::King => self.kings,
         }
     }
 
     pub fn by_role_mut(&mut self, role: Role) -> &mut u8 {
         match role {
-            Role::Pawn   => &mut self.pawns,
+            Role::Pawn => &mut self.pawns,
             Role::Knight => &mut self.knights,
             Role::Bishop => &mut self.bishops,
-            Role::Rook   => &mut self.rooks,
-            Role::Queen  => &mut self.queens,
-            Role::King   => &mut self.kings,
+            Role::Rook => &mut self.rooks,
+            Role::Queen => &mut self.queens,
+            Role::King => &mut self.kings,
         }
     }
 
     pub fn count(&self) -> u8 {
-        self.pawns.saturating_add(self.knights)
-                  .saturating_add(self.bishops)
-                  .saturating_add(self.rooks)
-                  .saturating_add(self.queens)
-                  .saturating_add(self.kings)
+        self.pawns
+            .saturating_add(self.knights)
+            .saturating_add(self.bishops)
+            .saturating_add(self.rooks)
+            .saturating_add(self.queens)
+            .saturating_add(self.kings)
     }
 }
 

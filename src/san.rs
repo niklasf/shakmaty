@@ -103,7 +103,9 @@ use std::str::FromStr;
 use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
-pub struct InvalidSan { _priv: () }
+pub struct InvalidSan {
+    _priv: (),
+}
 
 impl fmt::Debug for InvalidSan {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -118,7 +120,9 @@ impl fmt::Display for InvalidSan {
 }
 
 impl Error for InvalidSan {
-    fn description(&self) -> &str { "invalid san" }
+    fn description(&self) -> &str {
+        "invalid san"
+    }
 }
 
 impl From<()> for InvalidSan {
@@ -150,14 +154,23 @@ impl fmt::Display for SanError {
 }
 
 impl Error for SanError {
-    fn description(&self) -> &str { self.desc() }
+    fn description(&self) -> &str {
+        self.desc()
+    }
 }
 
 
 /// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum San {
-    Normal { role: Role, file: Option<i8>, rank: Option<i8>, capture: bool, to: Square, promotion: Option<Role> },
+    Normal {
+        role: Role,
+        file: Option<i8>,
+        rank: Option<i8>,
+        capture: bool,
+        to: Square,
+        promotion: Option<Role>,
+    },
     CastleShort,
     CastleLong,
     Put { role: Role, to: Square },

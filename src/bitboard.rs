@@ -85,7 +85,7 @@ impl Bitboard {
         if 0 <= rank && rank < 8 {
             match color {
                 Color::White => Bitboard(0xff << (8 * rank)),
-                Color::Black => Bitboard(0xff00_0000_0000_0000 >> (8 * rank))
+                Color::Black => Bitboard(0xff00_0000_0000_0000 >> (8 * rank)),
             }
         } else {
             Bitboard(0)
@@ -97,7 +97,7 @@ impl Bitboard {
     pub fn relative_shift(self, color: Color, shift: u8) -> Bitboard {
         match color {
             Color::White => Bitboard(self.0 << shift),
-            Color::Black => Bitboard(self.0 >> shift)
+            Color::Black => Bitboard(self.0 >> shift),
         }
     }
 
@@ -177,9 +177,7 @@ impl Bitboard {
         } else {
             // This is safe, because a non-zero u64 can have at most
             // 63 trailing zeros.
-            Some(unsafe {
-                Square::from_index_unchecked(self.0.trailing_zeros() as i8)
-            })
+            Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as i8) })
         }
     }
 
@@ -264,7 +262,9 @@ impl From<Square> for Bitboard {
     }
 }
 
-impl<T> ops::BitAnd<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitAnd<T> for Bitboard
+    where T: Into<Bitboard>
+{
     type Output = Bitboard;
 
     #[inline]
@@ -274,7 +274,9 @@ impl<T> ops::BitAnd<T> for Bitboard where T: Into<Bitboard> {
     }
 }
 
-impl<T> ops::BitAndAssign<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitAndAssign<T> for Bitboard
+    where T: Into<Bitboard>
+{
     #[inline]
     fn bitand_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
@@ -282,7 +284,9 @@ impl<T> ops::BitAndAssign<T> for Bitboard where T: Into<Bitboard> {
     }
 }
 
-impl<T> ops::BitOr<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitOr<T> for Bitboard
+    where T: Into<Bitboard>
+{
     type Output = Bitboard;
 
     #[inline]
@@ -292,7 +296,9 @@ impl<T> ops::BitOr<T> for Bitboard where T: Into<Bitboard> {
     }
 }
 
-impl<T> ops::BitOrAssign<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitOrAssign<T> for Bitboard
+    where T: Into<Bitboard>
+{
     #[inline]
     fn bitor_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
@@ -300,7 +306,9 @@ impl<T> ops::BitOrAssign<T> for Bitboard where T: Into<Bitboard> {
     }
 }
 
-impl<T> ops::BitXor<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitXor<T> for Bitboard
+    where T: Into<Bitboard>
+{
     type Output = Bitboard;
 
     #[inline]
@@ -310,7 +318,9 @@ impl<T> ops::BitXor<T> for Bitboard where T: Into<Bitboard> {
     }
 }
 
-impl<T> ops::BitXorAssign<T> for Bitboard where T: Into<Bitboard> {
+impl<T> ops::BitXorAssign<T> for Bitboard
+    where T: Into<Bitboard>
+{
     #[inline]
     fn bitxor_assign(&mut self, rhs: T) {
         let Bitboard(rhs) = rhs.into();
@@ -328,7 +338,9 @@ impl ops::Not for Bitboard {
 }
 
 impl FromIterator<Square> for Bitboard {
-    fn from_iter<T>(iter: T) -> Self where T: IntoIterator<Item=Square> {
+    fn from_iter<T>(iter: T) -> Self
+        where T: IntoIterator<Item = Square>
+    {
         let mut result = Bitboard(0);
         for square in iter {
             result.add(square);
@@ -338,7 +350,7 @@ impl FromIterator<Square> for Bitboard {
 }
 
 impl Extend<Square> for Bitboard {
-    fn extend<T: IntoIterator<Item=Square>>(&mut self, iter: T) {
+    fn extend<T: IntoIterator<Item = Square>>(&mut self, iter: T) {
         for square in iter {
             self.add(square);
         }
@@ -373,9 +385,7 @@ impl Iterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            Some(unsafe {
-                Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8)
-            })
+            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) })
         }
     }
 }
@@ -400,9 +410,7 @@ impl DoubleEndedIterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            let sq = unsafe {
-                Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8)
-            };
+            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
             self.0 ^= 1 << sq.index();
             Some(sq)
         }
@@ -457,7 +465,8 @@ mod tests {
     #[test]
     fn test_last() {
         assert_eq!(Bitboard::from_square(square::A1).last(), Some(square::A1));
-        assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(), Some(square::H1));
+        assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(),
+                   Some(square::H1));
         assert_eq!(Bitboard(0).last(), None);
     }
 
@@ -469,6 +478,7 @@ mod tests {
     #[test]
     fn test_from_iter() {
         assert_eq!(Bitboard::from_iter(None), Bitboard(0));
-        assert_eq!(Bitboard::from_iter(Some(square::D2)), Bitboard::from_square(square::D2));
+        assert_eq!(Bitboard::from_iter(Some(square::D2)),
+                   Bitboard::from_square(square::D2));
     }
 }

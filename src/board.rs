@@ -18,7 +18,7 @@ use std::fmt;
 use std::fmt::Write;
 
 use square::Square;
-use types::{ Color, Role, Piece };
+use types::{Color, Role, Piece};
 use bitboard::Bitboard;
 use attacks;
 
@@ -206,24 +206,24 @@ impl Board {
     #[inline]
     pub fn by_role(&self, role: Role) -> Bitboard {
         match role {
-            Role::Pawn   => self.pawns,
+            Role::Pawn => self.pawns,
             Role::Knight => self.knights,
             Role::Bishop => self.bishops,
-            Role::Rook   => self.rooks,
-            Role::Queen  => self.queens,
-            Role::King   => self.kings
+            Role::Rook => self.rooks,
+            Role::Queen => self.queens,
+            Role::King => self.kings,
         }
     }
 
     #[inline]
     fn by_role_mut(&mut self, role: Role) -> &mut Bitboard {
         match role {
-            Role::Pawn   => &mut self.pawns,
+            Role::Pawn => &mut self.pawns,
             Role::Knight => &mut self.knights,
             Role::Bishop => &mut self.bishops,
-            Role::Rook   => &mut self.rooks,
-            Role::Queen  => &mut self.queens,
-            Role::King   => &mut self.kings
+            Role::Rook => &mut self.rooks,
+            Role::Queen => &mut self.queens,
+            Role::King => &mut self.kings,
         }
     }
 
@@ -254,7 +254,7 @@ impl Board {
             rooks: self.rooks,
             queens: self.queens,
             kings: self.kings,
-            white: self.white
+            white: self.white,
         }
     }
 }
@@ -340,14 +340,13 @@ impl Iterator for Pieces {
 
 impl ExactSizeIterator for Pieces {
     fn len(&self) -> usize {
-        self.pawns.len() + self.knights.len() + self.bishops.len() +
-        self.rooks.len() + self.queens.len() + self.kings.len()
+        self.pawns.len() + self.knights.len() + self.bishops.len() + self.rooks.len() +
+        self.queens.len() + self.kings.len()
     }
 
     fn is_empty(&self) -> bool {
-        self.white.is_empty() && self.pawns.is_empty() &&
-        self.knights.is_empty() && self.bishops.is_empty() &&
-        self.rooks.is_empty() && self.queens.is_empty() &&
+        self.white.is_empty() && self.pawns.is_empty() && self.knights.is_empty() &&
+        self.bishops.is_empty() && self.rooks.is_empty() && self.queens.is_empty() &&
         self.kings.is_empty()
     }
 }

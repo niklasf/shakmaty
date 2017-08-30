@@ -23,7 +23,9 @@ use std::error::Error;
 use std::ops::Sub;
 
 /// Error when parsing an invalid square name.
-pub struct InvalidSquareName { _priv: () }
+pub struct InvalidSquareName {
+    _priv: (),
+}
 
 impl fmt::Debug for InvalidSquareName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -38,7 +40,9 @@ impl fmt::Display for InvalidSquareName {
 }
 
 impl Error for InvalidSquareName {
-    fn description(&self) -> &str { "invalid square name" }
+    fn description(&self) -> &str {
+        "invalid square name"
+    }
 }
 
 /// A square index.
@@ -216,16 +220,18 @@ impl str::FromStr for Square {
 
     fn from_str(s: &str) -> Result<Square, InvalidSquareName> {
         if s.len() != 2 {
-            return Err(InvalidSquareName { _priv: () })
+            return Err(InvalidSquareName { _priv: () });
         }
 
-        let file = s.chars().nth(0)
-                    .and_then(file_from_char)
-                    .ok_or(InvalidSquareName { _priv: () })?;
+        let file = s.chars()
+            .nth(0)
+            .and_then(file_from_char)
+            .ok_or(InvalidSquareName { _priv: () })?;
 
-        let rank = s.chars().nth(1)
-                    .and_then(rank_from_char)
-                    .ok_or(InvalidSquareName { _priv: () })?;
+        let rank = s.chars()
+            .nth(1)
+            .and_then(rank_from_char)
+            .ok_or(InvalidSquareName { _priv: () })?;
 
         Square::from_coords(file, rank).ok_or(InvalidSquareName { _priv: () })
     }

@@ -150,7 +150,9 @@ impl fmt::Display for FenError {
 }
 
 impl Error for FenError {
-    fn description(&self) -> &str { self.desc() }
+    fn description(&self) -> &str {
+        self.desc()
+    }
 }
 
 impl FromStr for Board {
@@ -177,16 +179,16 @@ impl FromStr for Board {
                     Some(sq) => {
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
-                    },
-                    None => return Err(FenError::InvalidBoard)
+                    }
+                    None => return Err(FenError::InvalidBoard),
                 }
                 file += 1;
             } else {
-                return Err(FenError::InvalidBoard)
+                return Err(FenError::InvalidBoard);
             }
 
             if promoted {
-                return Err(FenError::InvalidBoard)
+                return Err(FenError::InvalidBoard);
             }
         }
 
@@ -300,8 +302,9 @@ impl FromStr for Fen {
                     let flag = match ch.to_ascii_lowercase() {
                         'k' => candidates.last(),
                         'q' => candidates.first(),
-                        file if 'a' <= file && file <= 'h' =>
-                            (candidates & Bitboard::file(file as i8 - 'a' as i8)).first(),
+                        file if 'a' <= file && file <= 'h' => {
+                            (candidates & Bitboard::file(file as i8 - 'a' as i8)).first()
+                        }
                         _ => return Err(FenError::InvalidCastling),
                     };
 
@@ -333,11 +336,15 @@ impl FromStr for Fen {
 
 
         if let Some(halfmoves_part) = halfmoves_part {
-            result.halfmove_clock = halfmoves_part.parse().map_err(|_| FenError::InvalidHalfmoveClock)?;
+            result.halfmove_clock = halfmoves_part
+                .parse()
+                .map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
         if let Some(fullmoves_part) = parts.next() {
-            result.fullmoves = fullmoves_part.parse().map_err(|_| FenError::InvalidFullmoves)?;
+            result.fullmoves = fullmoves_part
+                .parse()
+                .map_err(|_| FenError::InvalidFullmoves)?;
         }
 
         Ok(result)

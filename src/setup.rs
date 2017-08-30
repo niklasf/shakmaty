@@ -70,7 +70,7 @@ pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
     let clean_loose = |color: Color| -> Bitboard {
         if let Some(king) = setup.board().king_of(color) {
             if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
-                return Bitboard(0)
+                return Bitboard(0);
             }
 
             let castling = castling & setup.board().by_color(color) &
