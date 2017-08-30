@@ -132,7 +132,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_light(self) -> bool {
-        (self.rank() + self.file()) & 1 == 1
+        (self.rank() + self.file()) % 2 == 1
     }
 
     /// Tests is the square is a dark square.
@@ -145,7 +145,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_dark(self) -> bool {
-        (self.rank() + self.file()) & 1 == 0
+        (self.rank() + self.file()) % 2 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
