@@ -98,12 +98,12 @@ pub enum Role {
 impl Role {
     pub fn from_char(ch: char) -> Option<Role> {
         match ch {
-            'p' => Some(Role::Pawn),
-            'n' => Some(Role::Knight),
-            'b' => Some(Role::Bishop),
-            'r' => Some(Role::Rook),
-            'q' => Some(Role::Queen),
-            'k' => Some(Role::King),
+            'p' | 'P' => Some(Role::Pawn),
+            'n' | 'N' => Some(Role::Knight),
+            'b' | 'B' => Some(Role::Bishop),
+            'r' | 'R' => Some(Role::Rook),
+            'q' | 'Q' => Some(Role::Queen),
+            'k' | 'K' => Some(Role::King),
             _ => None,
         }
     }
@@ -140,11 +140,9 @@ impl Piece {
     }
 
     pub fn from_char(ch: char) -> Option<Piece> {
-        if ch == ch.to_ascii_lowercase() {
-            Role::from_char(ch).map(|role| role.of(Color::Black))
-        } else {
-            Role::from_char(ch.to_ascii_lowercase()).map(|role| role.of(Color::White))
-        }
+        Role::from_char(ch).map(|role| {
+            role.of(Color::from_bool(ch == ch.to_ascii_uppercase()))
+        })
     }
 }
 
