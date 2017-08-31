@@ -95,7 +95,7 @@ impl Square {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
             Ok(Square((s[0] - b'a') as i8 | ((s[1] - b'1') << 3) as i8))
         } else {
-            return Err(InvalidSquareName { _priv: () });
+            Err(InvalidSquareName { _priv: () })
         }
     }
 
