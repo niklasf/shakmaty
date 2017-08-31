@@ -102,6 +102,7 @@ use std::str::FromStr;
 use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
+#[derive(Eq, PartialEq)]
 pub struct InvalidSan {
     _priv: (),
 }
@@ -462,6 +463,8 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
+    use square;
 
     #[test]
     fn test_read_write() {
@@ -471,5 +474,19 @@ mod tests {
                      "Ra1a8", "--", "O-O", "O-O-O+"] {
             assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), *san);
         }
+    }
+
+    #[bench]
+    fn bench_parse_san_move_complicated(b: &mut Bencher) {
+        b.iter(|| {
+            assert_eq!(San::from_bytes(b"bxc1=R+"), Ok(San::Normal {
+                role: Role::Pawn,
+                file: Some(1),
+                rank: None,
+                capture: true,
+                to: square::C1,
+                promotion: Some(Role::Rook),
+            }));
+        });
     }
 }
