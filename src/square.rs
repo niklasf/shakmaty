@@ -205,26 +205,6 @@ impl Sub for Square {
     }
 }
 
-/// Converts `'a'` - `'h'` to `0` - `7`.
-#[inline]
-pub fn file_from_char(ch: char) -> Option<i8> {
-    if 'a' <= ch && ch <= 'h' {
-        Some(ch as i8 - b'a' as i8)
-    } else {
-        None
-    }
-}
-
-/// Converts `'1'` - `'8'` to `0` - `7`.
-#[inline]
-pub fn rank_from_char(ch: char) -> Option<i8> {
-    if '1' <= ch && ch <= '8' {
-        Some(ch as i8 - b'1' as i8)
-    } else {
-        None
-    }
-}
-
 impl str::FromStr for Square {
     type Err = InvalidSquareName;
 
