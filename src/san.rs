@@ -177,12 +177,63 @@ pub enum San {
     Null,
 }
 
-/// A `San` and possible check and checkmate suffixes.
-pub struct SanPlus {
-    pub san: San,
-    pub check: bool,
-    pub checkmate: bool,
+impl San {
+    /// Tries to convert the `San` to a legal move in the context of a
+    /// position.
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
+        let mut legals = MoveList::new();
+
+        match *self {
+            San::Normal { role, file, rank, capture, to, promotion } => {
+                pos.san_candidates(role, to, &mut legals);
+                legals.retain(|m| match *m {
+                    Move::Normal { from, capture: c, promotion: p, .. } =>
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture == c.is_some() &&
+                        promotion == p,
+                    Move::EnPassant { from, .. } =>
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture &&
+                        promotion.is_none(),
+                    _ => false,
+                });
+            },
+            San::CastleShort => {
+                pos.legal_moves(&mut legals);
+                legals.retain(|m| match *m {
+                    Move::Castle { king, rook } => king.file() < rook.file(),
+                    _ => false,
+                });
+            },
+            San::CastleLong => {
+                pos.legal_moves(&mut legals);
+                legals.retain(|m| match *m {
+                    Move::Castle { king, rook } => rook.file() < king.file(),
+                    _ => false,
+                });
+            },
+            San::Put { role, to } => {
+                pos.san_candidates(role, to, &mut legals);
+                legals.retain(|m| match *m {
+                    Move::Put { .. } => true,
+                    _ => false,
+                });
+            },
+            San::Null => return Err(SanError::IllegalSan),
+        }
+
+        legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
+            if others.is_empty() {
+                Ok(m.clone())
+            } else {
+                Err(SanError::AmbiguousSan)
+            }
+        })
+    }
 }
+
 
 impl FromStr for San {
     type Err = InvalidSan;
@@ -290,6 +341,13 @@ impl fmt::Display for San {
     }
 }
 
+/// A `San` and possible check and checkmate suffixes.
+pub struct SanPlus {
+    pub san: San,
+    pub check: bool,
+    pub checkmate: bool,
+}
+
 impl FromStr for SanPlus {
     type Err = InvalidSan;
 
@@ -313,63 +371,6 @@ impl fmt::Display for SanPlus {
         } else {
             write!(f, "{}", self.san)
         }
-    }
-}
-
-impl San {
-    /// Tries to convert the `San` to a legal move in the context of a
-    /// position.
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
-        let mut legals = MoveList::new();
-
-        match *self {
-            San::Normal { role, file, rank, capture, to, promotion } => {
-                pos.san_candidates(role, to, &mut legals);
-                legals.retain(|m| match *m {
-                    Move::Normal { from, capture: c, promotion: p, .. } =>
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture == c.is_some() &&
-                        promotion == p,
-                    Move::EnPassant { from, .. } =>
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture &&
-                        promotion.is_none(),
-                    _ => false,
-                });
-            },
-            San::CastleShort => {
-                pos.legal_moves(&mut legals);
-                legals.retain(|m| match *m {
-                    Move::Castle { king, rook } => king.file() < rook.file(),
-                    _ => false,
-                });
-            },
-            San::CastleLong => {
-                pos.legal_moves(&mut legals);
-                legals.retain(|m| match *m {
-                    Move::Castle { king, rook } => rook.file() < king.file(),
-                    _ => false,
-                });
-            },
-            San::Put { role, to } => {
-                pos.san_candidates(role, to, &mut legals);
-                legals.retain(|m| match *m {
-                    Move::Put { .. } => true,
-                    _ => false,
-                });
-            },
-            San::Null => return Err(SanError::IllegalSan),
-        }
-
-        legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
-            if others.is_empty() {
-                Ok(m.clone())
-            } else {
-                Err(SanError::AmbiguousSan)
-            }
-        })
     }
 }
 
