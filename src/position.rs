@@ -401,7 +401,7 @@ impl Position for Chess {
             gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.contains(to) || has_ep {
+        if (blockers & self.our(role)).any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
@@ -956,14 +956,37 @@ mod tests {
     #[bench]
     fn bench_san_candidates(b: &mut Bencher) {
         let fen = "r2q1rk1/pb1nbppp/5n2/1p2p3/3NP3/P1NB4/1P2QPPP/R1BR2K1 w - -";
-        let pos: Chess = fen.parse::<Fen>().expect("valid fen")
-                             .position().expect("legal position");
-
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
 
         b.iter(|| {
             let mut moves = MoveList::new();
             pos.san_candidates(Role::Knight, square::B5, &mut moves);
             assert_eq!(moves.len(), 2);
         })
+    }
+
+    #[test]
+    fn test_pinned_san_candidate() {
+        let fen = "R2r2k1/6pp/1Np2p2/1p2pP2/4p3/4K3/3r2PP/8 b - - 5 37";
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+
+        let mut moves = MoveList::new();
+        pos.san_candidates(Role::Rook, square::D3, &mut moves);
+
+        assert_eq!(moves[0], Move::Normal {
+            role: Role::Rook,
+            from: square::D2,
+            capture: None,
+            to: square::D3,
+            promotion: None,
+        });
+
+        assert_eq!(moves.len(), 1);
     }
 }
