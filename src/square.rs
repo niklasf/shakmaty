@@ -102,7 +102,7 @@ impl Square {
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
-            Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, ((s[1] - b'1') << 3) as i8) })
+            Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, (s[1] - b'1') as i8) })
         } else {
             Err(InvalidSquareName { _priv: () })
         }
