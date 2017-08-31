@@ -220,8 +220,8 @@ impl San {
 
             let (role, next) = {
                 let ch = chars.next().ok_or(())?;
-                if let Some(role) = Role::from_char(*ch as char) {
-                    (role, chars.next().ok_or(())?)
+                if (*ch as char).is_uppercase() {
+                    (Role::from_char(*ch as char).ok_or(())?, chars.next().ok_or(())?)
                 } else {
                     (Role::Pawn, ch)
                 }
@@ -465,8 +465,8 @@ mod tests {
 
     #[test]
     fn test_read_write() {
-        for san in &["e4", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4#", "K@b3",
-                     "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+"] {
+        for san in &["e4", "b6", "hxg7", "N2c4", "Qh1=K", "d1=N", "@e4#",
+                     "K@b3", "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+"] {
             assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), *san);
         }
     }
