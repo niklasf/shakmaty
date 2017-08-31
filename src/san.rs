@@ -221,10 +221,10 @@ impl San {
 
             let (role, next) = {
                 let ch = chars.next().ok_or(())?;
-                if (*ch as char).is_uppercase() {
-                    (Role::from_char(*ch as char).ok_or(())?, chars.next().ok_or(())?)
-                } else {
+                if *ch >= b'a' {
                     (Role::Pawn, ch)
+                } else {
+                    (Role::from_char(*ch as char).ok_or(())?, chars.next().ok_or(())?)
                 }
             };
 
@@ -472,7 +472,8 @@ mod tests {
                      "Qh1=K", "d1=N", "@e4#",
                      "K@b3", "Ba5", "Bba5",
                      "Ra1a8", "--", "O-O", "O-O-O+"] {
-            assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), *san);
+            let result = san.parse::<SanPlus>().expect("valid san").to_string();
+            assert_eq!(*san, result, "read {} write {}", san, result);
         }
     }
 
