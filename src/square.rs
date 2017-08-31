@@ -89,6 +89,16 @@ impl Square {
         }
     }
 
+    /// Parse a square name.
+    #[inline]
+    pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
+        if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
+            Ok(Square((s[0] - b'a') as i8 | ((s[1] - b'1') << 3) as i8))
+        } else {
+            return Err(InvalidSquareName { _priv: () });
+        }
+    }
+
     #[inline]
     pub fn index(self) -> i8 {
         self.0
@@ -219,21 +229,7 @@ impl str::FromStr for Square {
     type Err = InvalidSquareName;
 
     fn from_str(s: &str) -> Result<Square, InvalidSquareName> {
-        if s.len() != 2 {
-            return Err(InvalidSquareName { _priv: () });
-        }
-
-        let file = s.chars()
-            .nth(0)
-            .and_then(file_from_char)
-            .ok_or(InvalidSquareName { _priv: () })?;
-
-        let rank = s.chars()
-            .nth(1)
-            .and_then(rank_from_char)
-            .ok_or(InvalidSquareName { _priv: () })?;
-
-        Square::from_coords(file, rank).ok_or(InvalidSquareName { _priv: () })
+        Square::from_bytes(s.as_bytes())
     }
 }
 
