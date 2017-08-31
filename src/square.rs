@@ -83,17 +83,26 @@ impl Square {
     #[inline]
     pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
         if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
-            Some(Square(file | (rank << 3)))
+            Some(unsafe { Square::from_coords_unchecked(file, rank) })
         } else {
             None
         }
+    }
+
+    /// Creates a `Square` from zero-based file and rank indexes. It is the
+    /// callers responsibility to ensure both are in the range `0..8`.
+    #[inline]
+    pub unsafe fn from_coords_unchecked(file: i8, rank: i8) -> Square {
+        debug_assert!(0 <= file && file < 8);
+        debug_assert!(0 <= rank && rank < 8);
+        Square(file | (rank << 3))
     }
 
     /// Parse a square name.
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
-            Ok(Square((s[0] - b'a') as i8 | ((s[1] - b'1') << 3) as i8))
+            Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, ((s[1] - b'1') << 3) as i8) })
         } else {
             Err(InvalidSquareName { _priv: () })
         }

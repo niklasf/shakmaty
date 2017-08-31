@@ -244,16 +244,20 @@ impl San {
                 if *next == b'x' {
                     let to_file = chars.next().and_then(|c| file_from_char(*c)).ok_or(())?;
                     let to_rank = chars.next().and_then(|c| rank_from_char(*c)).ok_or(())?;
-                    (true, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
+                    let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
+                    (true, file, rank, square, chars.next())
                 } else if *next == b'=' {
-                    (false, None, None, Square::from_coords(file.ok_or(())?, rank.ok_or(())?).ok_or(())?, Some(&b'='))
+                    let square = unsafe { Square::from_coords_unchecked(file.ok_or(())?, rank.ok_or(())?) };
+                    (false, None, None, square, Some(&b'='))
                 } else {
                     let to_file = file_from_char(*next).ok_or(())?;
                     let to_rank = chars.next().and_then(|c| rank_from_char(*c)).ok_or(())?;
-                    (false, file, rank, Square::from_coords(to_file, to_rank).ok_or(())?, chars.next())
+                    let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
+                    (false, file, rank, square, chars.next())
                 }
             } else {
-                (false, None, None, Square::from_coords(file.ok_or(())?, rank.ok_or(())?).ok_or(())?, None)
+                let square = unsafe { Square::from_coords_unchecked(file.ok_or(())?, rank.ok_or(())?) };
+                (false, None, None, square, None)
             };
 
             let promotion = match next.cloned() {
