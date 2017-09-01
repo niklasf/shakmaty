@@ -107,6 +107,13 @@ impl Square {
 
     /// Parses a square name.
     ///
+    /// # Errors
+    ///
+    /// Errors when the input is not a valid square name in lowercase ASCII
+    /// characters.
+    ///
+    /// # Example
+    ///
     /// ```
     /// # use std::error::Error;
     /// #
