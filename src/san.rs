@@ -472,8 +472,10 @@ mod tests {
 
     #[test]
     fn test_read_write() {
-        for san in &["e4", "b6", "hxg7", "N2c4", "Red3",
-                     "Qh1=K", "d1=N", "@e4#",
+        for san in &["a1", "a8", "h1", "h8", "e4", "b6", "e4=Q", "f1=N#",
+                     "hxg7", "bxc1", "axe4", "bxc1+", "bxa8=R+",
+                     "Nf3", "Ba5", "Qh8", "Kh1", "Qh1=K", "Ba5", "Bba5",
+                     "N2c4", "Red3", "Qh1=K", "d1=N", "@e4#",
                      "K@b3", "Ba5", "Bba5",
                      "Ra1a8", "--", "O-O", "O-O-O+"] {
             let result = san.parse::<SanPlus>().expect("valid san").to_string();
