@@ -240,6 +240,8 @@ impl San {
                 (None, Some(next))
             };
 
+            // This section is safe, because coordinates are already validated
+            // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if *next == b'x' {
                     let to_file = chars.next().and_then(|c| file_from_char(*c)).ok_or(())?;
