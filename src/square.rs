@@ -105,7 +105,24 @@ impl Square {
         Square(file | (rank << 3))
     }
 
-    /// Parse a square name.
+    /// Parses a square name.
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// #
+    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// # use shakmaty::Square;
+    /// use shakmaty::square;
+    ///
+    /// let sq = Square::from_bytes(b"a5")?;
+    /// assert_eq!(sq, square::A5);
+    /// #
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() {
+    /// #     try_main().unwrap();
+    /// # }
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
