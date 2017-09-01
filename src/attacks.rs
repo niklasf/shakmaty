@@ -161,6 +161,13 @@ pub fn between(a: Square, b: Square) -> Bitboard {
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
+///
+/// ```
+/// # use shakmaty::square;
+/// # use shakmaty::attacks;
+///
+/// assert!(attacks::aligned(square::A1, square::B2, square::C3));
+/// ```
 #[inline]
 pub fn aligned(a: Square, b: Square, c: Square) -> bool {
     ray(a, b).contains(c)
