@@ -71,8 +71,11 @@ impl Square {
         }
     }
 
-    /// Creates a `Square` from an integer index. It is the callers
-    /// responsibility to ensure it is in the range `0..=63`.
+    /// Creates a `Square` from an integer index.
+    ///
+    /// # Unsafety
+    ///
+    /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
     pub unsafe fn from_index_unchecked(index: i8) -> Square {
         debug_assert!(0 <= index && index < 64);
@@ -89,8 +92,12 @@ impl Square {
         }
     }
 
-    /// Creates a `Square` from zero-based file and rank indexes. It is the
-    /// callers responsibility to ensure both are in the range `0..8`.
+    /// Creates a `Square` from zero-based file and rank indexes.
+    ///
+    /// # Unsafety
+    ///
+    /// It is the callers responsibility to ensure that file and rank are in
+    /// the range `0..=7`.
     #[inline]
     pub unsafe fn from_coords_unchecked(file: i8, rank: i8) -> Square {
         debug_assert!(0 <= file && file < 8);
