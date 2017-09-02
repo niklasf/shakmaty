@@ -28,8 +28,8 @@ pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
 /// `White` or `Black`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Color {
-    Black,
-    White,
+    Black = 0,
+    White = 1,
 }
 
 impl Color {
@@ -87,12 +87,12 @@ impl ops::Not for Color {
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Role {
-    Pawn,
-    Knight,
-    Bishop,
-    Rook,
-    Queen,
-    King,
+    Pawn = 0,
+    Knight = 1,
+    Bishop = 2,
+    Rook = 3,
+    Queen = 4,
+    King = 5,
 }
 
 impl Role {
