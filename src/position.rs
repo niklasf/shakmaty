@@ -464,22 +464,22 @@ fn do_move(board: &mut Board,
 
             let promoted = board.promoted().contains(from) || promotion.is_some();
 
-            board.remove_piece_at(from);
+            board.discard_piece_at(from);
             board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
         },
         Move::Castle { king, rook } => {
             let rook_to = (if rook - king < 0 { square::D1 } else { square::F1 }).combine(rook);
             let king_to = (if rook - king < 0 { square::C1 } else { square::G1 }).combine(king);
 
-            board.remove_piece_at(king);
-            board.remove_piece_at(rook);
+            board.discard_piece_at(king);
+            board.discard_piece_at(rook);
             board.set_piece_at(rook_to, color.rook(), false);
             board.set_piece_at(king_to, color.king(), false);
 
             castling_rights.discard_all(Bitboard::relative_rank(color, 0));
         },
         Move::EnPassant { from, to } => {
-            board.remove_piece_at(to.combine(from)); // captured pawn
+            board.discard_piece_at(to.combine(from)); // captured pawn
             board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
             *halfmove_clock = 0;
         },

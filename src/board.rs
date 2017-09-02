@@ -183,8 +183,22 @@ impl Board {
     }
 
     #[inline]
+    pub fn discard_piece_at(&mut self, sq: Square) {
+        self.occupied.discard(sq);
+        self.white.discard(sq);
+        self.black.discard(sq);
+        self.pawns.discard(sq);
+        self.knights.discard(sq);
+        self.bishops.discard(sq);
+        self.rooks.discard(sq);
+        self.queens.discard(sq);
+        self.kings.discard(sq);
+        self.promoted.discard(sq);
+    }
+
+    #[inline]
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
-        self.remove_piece_at(sq);
+        self.discard_piece_at(sq);
         self.occupied.flip(sq);
         self.by_color_mut(color).flip(sq);
         self.by_role_mut(role).flip(sq);
