@@ -1,0 +1,25 @@
+[package]
+name = "shakmaty-fuzz"
+version = "0.0.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies.shakmaty]
+path = ".."
+
+[dependencies.libfuzzer-sys]
+git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+
+[[bin]]
+name = "fen"
+path = "fuzz_targets/fen.rs"
+
+[[bin]]
+name = "san"
+path = "fuzz_targets/san.rs"
+
+[[bin]]
+name = "uci"
+path = "fuzz_targets/uci.rs"
