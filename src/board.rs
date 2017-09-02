@@ -45,8 +45,7 @@ use attacks;
 pub struct Board {
     occupied: Bitboard,
 
-    white: Bitboard,
-    black: Bitboard,
+    occupied_co: [Bitboard; 2],
 
     pawns: Bitboard,
     knights: Bitboard,
@@ -63,8 +62,7 @@ impl Board {
         Board {
             occupied: Bitboard(0xffff_0000_0000_ffff),
 
-            black: Bitboard(0xffff_0000_0000_0000),
-            white: Bitboard(0xffff),
+            occupied_co: [Bitboard(0xffff_0000_0000_0000), Bitboard(0xffff)],
 
             pawns: Bitboard(0x00ff_0000_0000_ff00),
             knights: Bitboard(0x4200_0000_0000_0042),
@@ -81,8 +79,7 @@ impl Board {
         Board {
             occupied: Bitboard(0),
 
-            black: Bitboard(0),
-            white: Bitboard(0),
+            occupied_co: [Bitboard(0), Bitboard(0)],
 
             pawns: Bitboard(0),
             knights: Bitboard(0),
@@ -112,9 +109,9 @@ impl Board {
     pub fn kings(&self)   -> Bitboard { self.kings }
 
     #[inline]
-    pub fn white(&self) -> Bitboard { self.white }
+    pub fn white(&self) -> Bitboard { self.occupied_co[1] }
     #[inline]
-    pub fn black(&self) -> Bitboard { self.black }
+    pub fn black(&self) -> Bitboard { self.occupied_co[0] }
 
     #[inline]
     pub fn promoted(&self) -> Bitboard { self.promoted }
@@ -136,9 +133,9 @@ impl Board {
 
     #[inline]
     pub fn color_at(&self, sq: Square) -> Option<Color> {
-        if self.white.contains(sq) {
+        if self.white().contains(sq) {
             Some(Color::White)
-        } else if self.black.contains(sq) {
+        } else if self.black().contains(sq) {
             Some(Color::Black)
         } else {
             None
@@ -167,7 +164,7 @@ impl Board {
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.role_at(sq).map(|role| {
-            Piece { color: Color::from_bool(self.white.contains(sq)), role }
+            Piece { color: Color::from_bool(self.white().contains(sq)), role }
         })
     }
 
@@ -181,8 +178,8 @@ impl Board {
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
         self.occupied.discard(sq);
-        self.white.discard(sq);
-        self.black.discard(sq);
+        self.occupied_co[0].discard(sq);
+        self.occupied_co[1].discard(sq);
         self.pawns.discard(sq);
         self.knights.discard(sq);
         self.bishops.discard(sq);
@@ -205,12 +202,12 @@ impl Board {
 
     #[inline]
     pub fn by_color(&self, color: Color) -> Bitboard {
-        color.fold(self.white, self.black)
+        self.occupied_co[color as usize]
     }
 
     #[inline]
     fn by_color_mut(&mut self, color: Color) -> &mut Bitboard {
-        color.fold(&mut self.white, &mut self.black)
+        &mut self.occupied_co[color as usize]
     }
 
     #[inline]
@@ -264,7 +261,7 @@ impl Board {
             rooks: self.rooks,
             queens: self.queens,
             kings: self.kings,
-            white: self.white,
+            white: self.white(),
         }
     }
 }
