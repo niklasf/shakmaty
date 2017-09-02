@@ -72,11 +72,12 @@
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.0.8")]
 
-#![feature(test)]
+#![cfg_attr(test, feature(test))]
 #![feature(const_fn)]
 #![feature(ascii_ctype)]
 #![feature(exact_size_is_empty)]
 
+#[cfg(test)]
 extern crate test;
 
 extern crate arrayvec;
