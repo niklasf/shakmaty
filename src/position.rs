@@ -401,7 +401,7 @@ impl Position for Chess {
             gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
-        if (blockers & self.our(role)).any() || has_ep {
+        if blockers.any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
