@@ -122,6 +122,12 @@ impl Error for InvalidUci {
     }
 }
 
+impl From<()> for InvalidUci {
+    fn from(_: ()) -> InvalidUci {
+        InvalidUci { _priv: () }
+    }
+}
+
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Uci {
@@ -138,34 +144,7 @@ impl FromStr for Uci {
     type Err = InvalidUci;
 
     fn from_str(uci: &str) -> Result<Uci, InvalidUci> {
-        // Checking is_ascii() will allow us to safely slice at byte
-        // boundaries.
-        if uci.len() < 4 || uci.len() > 5 || !uci.is_ascii() {
-            return Err(InvalidUci { _priv: () });
-        }
-
-        match (Square::from_str(&uci[0..2]), Square::from_str(&uci[2..4]), uci.chars().nth(4)) {
-            (Ok(from), Ok(to), Some(promotion)) =>
-                return Role::from_char(promotion).map(|role| {
-                    Uci::Normal { from, to, promotion: Some(role) }
-                }).ok_or(InvalidUci { _priv: () }),
-            (Ok(from), Ok(to), None) =>
-                return Ok(Uci::Normal { from, to, promotion: None }),
-            _ => (),
-        }
-
-        if let (Some(piece), Some('@'), Ok(to)) =
-               (uci.chars().nth(0), uci.chars().nth(1), Square::from_str(&uci[2..4])) {
-            return Role::from_char(piece.to_ascii_lowercase()).map(|role| {
-                Uci::Put { role, to }
-            }).ok_or(InvalidUci { _priv: () });
-        }
-
-        if uci == "0000" {
-            return Ok(Uci::Null);
-        }
-
-        Err(InvalidUci { _priv: () })
+        Uci::from_bytes(uci.as_bytes())
     }
 }
 
@@ -206,6 +185,34 @@ impl From<Move> for Uci {
 }
 
 impl Uci {
+    /// Parses a move in UCI notation.
+    pub fn from_bytes(uci: &[u8]) -> Result<Uci, InvalidUci> {
+        if uci.len() != 4 && uci.len() != 5 {
+            return Err(InvalidUci { _priv: () });
+        }
+
+        if uci == b"0000" {
+            return Ok(Uci::Null);
+        }
+
+        let to = Square::from_bytes(&uci[2..4]).map_err(|_| ())?;
+
+        if uci[1] == b'@' {
+            Ok(Uci::Put { role: Role::from_char(uci[0] as char).ok_or(())?, to })
+        } else {
+            let from = Square::from_bytes(&uci[0..2]).map_err(|_| ())?;
+            if uci.len() == 5 {
+                Ok(Uci::Normal {
+                    from,
+                    to,
+                    promotion: Some(Role::from_char(uci[4] as char).ok_or(())?)
+                })
+            } else {
+                Ok(Uci::Normal { from, to, promotion: None })
+            }
+        }
+    }
+
     /// Tries to convert the `Uci` to a legal `Move` in the context of a
     /// position.
     ///
