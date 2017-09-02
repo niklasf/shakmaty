@@ -149,9 +149,9 @@ impl Bitboard {
     #[inline]
     pub fn set(&mut self, sq: Square, v: bool) {
         if v {
-            self.discard(sq);
-        } else {
             self.add(sq);
+        } else {
+            self.discard(sq);
         }
     }
 
