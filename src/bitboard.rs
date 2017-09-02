@@ -22,8 +22,6 @@ use std::iter::FromIterator;
 use square::Square;
 use types::Color;
 
-pub static SQUARES: [u64; 64] = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216, 33554432, 67108864, 134217728, 268435456, 536870912, 1073741824, 2147483648, 4294967296, 8589934592, 17179869184, 34359738368, 68719476736, 137438953472, 274877906944, 549755813888, 1099511627776, 2199023255552, 4398046511104, 8796093022208, 17592186044416, 35184372088832, 70368744177664, 140737488355328, 281474976710656, 562949953421312, 1125899906842624, 2251799813685248, 4503599627370496, 9007199254740992, 18014398509481984, 36028797018963968, 72057594037927936, 144115188075855872, 288230376151711744, 576460752303423488, 1152921504606846976, 2305843009213693952, 4611686018427387904, 9223372036854775808];
-
 /// A set of squares represented by a 64 bit integer mask.
 ///
 /// # Examples
@@ -50,6 +48,7 @@ impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
     pub fn from_square(sq: Square) -> Bitboard {
+        // This is safe because valid square indexes are in bounds.
         Bitboard(unsafe { *SQUARES.get_unchecked(sq.index() as usize) })
     }
 
@@ -115,7 +114,7 @@ impl Bitboard {
 
     #[inline]
     pub fn add(&mut self, sq: Square) {
-        self.0 |= unsafe { *SQUARES.get_unchecked(sq.index() as usize) };
+        *self |= Bitboard::from_square(sq);
     }
 
     #[inline]
@@ -125,12 +124,12 @@ impl Bitboard {
 
     #[inline]
     pub fn flip(&mut self, sq: Square) {
-        self.0 ^= unsafe { *SQUARES.get_unchecked(sq.index() as usize) };
+        *self ^= Bitboard::from_square(sq)
     }
 
     #[inline]
     pub fn discard(&mut self, sq: Square) {
-        self.0 &= unsafe { !*SQUARES.get_unchecked(sq.index() as usize) };
+        *self &= !Bitboard::from_square(sq);
     }
 
     #[inline]
@@ -219,6 +218,22 @@ pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
 /// The backranks.
 pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
+
+/// All square masks.
+static SQUARES: [u64; 64] = [0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100,
+    0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000,
+    0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000,
+    0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000,
+    0x80000000, 0x100000000, 0x200000000, 0x400000000, 0x800000000,
+    0x1000000000, 0x2000000000, 0x4000000000, 0x8000000000, 0x10000000000,
+    0x20000000000, 0x40000000000, 0x80000000000, 0x100000000000,
+    0x200000000000, 0x400000000000, 0x800000000000, 0x1000000000000,
+    0x2000000000000, 0x4000000000000, 0x8000000000000, 0x10000000000000,
+    0x20000000000000, 0x40000000000000, 0x80000000000000, 0x100000000000000,
+    0x200000000000000, 0x400000000000000, 0x800000000000000,
+    0x1000000000000000, 0x2000000000000000, 0x4000000000000000,
+    0x8000000000000000
+];
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -413,7 +428,7 @@ impl DoubleEndedIterator for Bitboard {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
             let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
-            self.0 ^= unsafe { *SQUARES.get_unchecked(sq.index() as usize) };
+            *self ^= Bitboard::from_square(sq);
             Some(sq)
         }
     }
