@@ -48,7 +48,8 @@ impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
     pub fn from_square(sq: Square) -> Bitboard {
-        Bitboard(1 << sq.index())
+        // This is safe because valid square indexes are in bounds.
+        Bitboard(unsafe { *SQUARES.get_unchecked(sq.index() as usize) })
     }
 
     /// A bitboard containing all squares.
@@ -57,39 +58,36 @@ impl Bitboard {
         Bitboard(!0u64)
     }
 
-    /// Returns the bitboard containing all squares of the given rank
-    /// (or an empty bitboard if the rank index is out of range).
+    /// Returns the bitboard containing all squares of the given rank.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
     pub fn rank(rank: i8) -> Bitboard {
-        if 0 <= rank && rank < 8 {
-            Bitboard(0xff << (8 * rank))
-        } else {
-            Bitboard(0)
-        }
+        // Note that a negative rank can not wrap around back into range.
+        Bitboard(RANKS[rank as usize])
     }
 
-    /// Returns the bitboard containing all squares of the given file
-    /// (or an empty bitboard if the file index is out of range).
+    /// Returns the bitboard containing all squares of the given file.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `file` is not in the range `0..=7`.
     #[inline]
     pub fn file(file: i8) -> Bitboard {
-        if 0 <= file && file < 8 {
-            Bitboard(0x0101_0101_0101_0101 << file)
-        } else {
-            Bitboard(0)
-        }
+        // Note that a negative file can not wrap around back into range.
+        Bitboard(FILES[file as usize])
     }
 
     /// Like `rank()`, but from the point of view of `color`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
     pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
-        if 0 <= rank && rank < 8 {
-            match color {
-                Color::White => Bitboard(0xff << (8 * rank)),
-                Color::Black => Bitboard(0xff00_0000_0000_0000 >> (8 * rank)),
-            }
-        } else {
-            Bitboard(0)
-        }
+        Bitboard::rank(color.fold(rank, 7 - rank))
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -113,7 +111,7 @@ impl Bitboard {
 
     #[inline]
     pub fn add(&mut self, sq: Square) {
-        self.0 |= 1 << sq.index();
+        *self |= Bitboard::from_square(sq);
     }
 
     #[inline]
@@ -123,12 +121,12 @@ impl Bitboard {
 
     #[inline]
     pub fn flip(&mut self, sq: Square) {
-        self.0 ^= 1 << sq.index();
+        *self ^= Bitboard::from_square(sq)
     }
 
     #[inline]
     pub fn discard(&mut self, sq: Square) {
-        self.0 &= !(1 << sq.index());
+        *self &= !Bitboard::from_square(sq);
     }
 
     #[inline]
@@ -217,6 +215,30 @@ pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
 /// The backranks.
 pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
+
+/// Square masks.
+#[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
+static SQUARES: [u64; 64] = [0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100,
+    0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000,
+    0x40000, 0x80000, 0x100000, 0x200000, 0x400000, 0x800000, 0x1000000,
+    0x2000000, 0x4000000, 0x8000000, 0x10000000, 0x20000000, 0x40000000,
+    0x80000000, 0x100000000, 0x200000000, 0x400000000, 0x800000000,
+    0x1000000000, 0x2000000000, 0x4000000000, 0x8000000000, 0x10000000000,
+    0x20000000000, 0x40000000000, 0x80000000000, 0x100000000000,
+    0x200000000000, 0x400000000000, 0x800000000000, 0x1000000000000,
+    0x2000000000000, 0x4000000000000, 0x8000000000000, 0x10000000000000,
+    0x20000000000000, 0x40000000000000, 0x80000000000000, 0x100000000000000,
+    0x200000000000000, 0x400000000000000, 0x800000000000000,
+    0x1000000000000000, 0x2000000000000000, 0x4000000000000000,
+    0x8000000000000000
+];
+
+/// Rank masks.
+#[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
+static RANKS: [u64; 8] = [0xff, 0xff00, 0xff0000, 0xff000000, 0xff00000000, 0xff0000000000, 0xff000000000000, 0xff00000000000000];
+
+/// File masks.
+static FILES: [u64; 8] = [0x101010101010101, 0x202020202020202, 0x404040404040404, 0x808080808080808, 0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080];
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -411,7 +433,7 @@ impl DoubleEndedIterator for Bitboard {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
             let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
-            self.0 ^= 1 << sq.index();
+            *self ^= Bitboard::from_square(sq);
             Some(sq)
         }
     }
