@@ -173,13 +173,9 @@ impl Board {
 
     #[inline]
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
-        self.piece_at(sq).map(|piece| {
-            self.occupied.flip(sq);
-            self.by_color_mut(piece.color).flip(sq);
-            self.by_role_mut(piece.role).flip(sq);
-            self.promoted.discard(sq);
-            piece
-        })
+        let piece = self.piece_at(sq);
+        self.discard_piece_at(sq);
+        piece
     }
 
     #[inline]
