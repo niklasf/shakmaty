@@ -16,12 +16,11 @@
 
 use square;
 use square::Square;
-use bitboard;
 use bitboard::Bitboard;
-use types::{Color, White, Black, Role, Pockets, RemainingChecks};
+use attacks;
+use types::{Color, Role, Pockets, RemainingChecks};
 use board::Board;
 
-use std::iter::FromIterator;
 use option_filter::OptionFilterExt;
 
 /// A not necessarily legal position.
@@ -52,42 +51,132 @@ pub trait Setup {
     }
 }
 
-/// Returns valid castling rights filtered from a setup.
-pub fn clean_castling_rights(setup: &Setup, strict: bool) -> Bitboard {
-    let castling = setup.castling_rights() & setup.board().rooks();
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum CastlingSide {
+    Short = 0,
+    Long = 1,
+}
 
-    let clean_strict = |color: Color| -> Bitboard {
-        let king = color.fold(square::E1, square::E8);
-        if setup.board().kings().contains(king) && !setup.board().promoted().contains(king) {
-            castling & setup.board().by_color(color)
-                     & Bitboard::relative_rank(color, 0)
-                     & bitboard::CORNERS
-        } else {
-            Bitboard(0)
+impl CastlingSide {
+    pub fn king_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::Short => color.fold(square::G1, square::G8),
+            CastlingSide::Long => color.fold(square::C1, square::C8),
         }
-    };
+    }
 
-    let clean_loose = |color: Color| -> Bitboard {
-        if let Some(king) = setup.board().king_of(color) {
-            if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
-                return Bitboard(0);
+    pub fn rook_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::Short => color.fold(square::F1, square::F8),
+            CastlingSide::Long => color.fold(square::D1, square::D8),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Castling {
+    rook: [Option<Square>; 4],
+    path: [Bitboard; 4],
+}
+
+impl Castling {
+    pub fn empty() -> Castling {
+        Castling {
+            rook: [None; 4],
+            path: [Bitboard(0); 4],
+        }
+    }
+
+    pub fn default() -> Castling {
+        Castling {
+            rook: [
+                Some(square::H8), // black short
+                Some(square::A8), // black long
+                Some(square::H1), // white short
+                Some(square::A1), // white long
+            ],
+            path: [
+                Bitboard(0x6000_0000_0000_0000), // black short
+                Bitboard(0x0e00_0000_0000_0000), // black long
+                Bitboard(0x0000_0000_0000_0060), // white short
+                Bitboard(0x0000_0000_0000_000e), // white long
+            ]
+        }
+    }
+
+    pub fn from_setup(setup: &Setup) -> Result<Castling, Castling> {
+        let mut castling = Castling::empty();
+
+        let castling_rights = setup.castling_rights();
+        let rooks = castling_rights & setup.board().rooks();
+
+        for color in &[Color::Black, Color::White] {
+            if let Some(king) = setup.board().king_of(*color) {
+                if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
+                    continue;
+                }
+
+                let side = rooks & setup.board().by_color(*color) &
+                           Bitboard::relative_rank(*color, 0);
+
+                if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
+                    let rto = CastlingSide::Long.rook_to(*color);
+                    let kto = CastlingSide::Long.king_to(*color);
+                    let idx = *color as usize * 2 + CastlingSide::Long as usize;
+                    castling.rook[idx] = Some(a_side);
+                    castling.path[idx] = attacks::between(king, a_side)
+                                        .with(rto).with(kto).without(king).without(a_side);
+                }
+
+                if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
+                    let rto = CastlingSide::Short.rook_to(*color);
+                    let kto = CastlingSide::Short.king_to(*color);
+                    let idx = *color as usize * 2 + CastlingSide::Short as usize;
+                    castling.rook[idx] = Some(h_side);
+                    castling.path[idx] = attacks::between(king, h_side)
+                                        .with(rto).with(kto).without(king).without(h_side);
+                }
             }
-
-            let castling = castling & setup.board().by_color(color) &
-                           Bitboard::relative_rank(color, 0);
-
-            let a_side = castling.first().filter(|rook| rook.file() < king.file());
-            let h_side = castling.last().filter(|rook| king.file() < rook.file());
-
-            Bitboard::from_iter(a_side) | Bitboard::from_iter(h_side)
-        } else {
-            Bitboard(0)
         }
-    };
 
-    if strict {
-        clean_strict(Black) | clean_strict(White)
-    } else {
-        clean_loose(Black) | clean_loose(White)
+        if castling.castling_rights() == castling_rights {
+            Ok(castling)
+        } else {
+            Err(castling)
+        }
+    }
+
+    pub fn discard_rook(&mut self, square: Square) {
+        self.rook[0] = self.rook[0].filter(|sq| *sq != square);
+        self.rook[1] = self.rook[1].filter(|sq| *sq != square);
+        self.rook[2] = self.rook[2].filter(|sq| *sq != square);
+        self.rook[3] = self.rook[3].filter(|sq| *sq != square);
+    }
+
+    pub fn discard_side(&mut self, color: Color) {
+        let idx = color as usize * 2;
+        unsafe {
+            *self.rook.get_unchecked_mut(idx) = None;
+            *self.rook.get_unchecked_mut(idx + 1) = None;
+        }
+    }
+
+    #[inline]
+    pub fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
+        unsafe { *self.rook.get_unchecked(2 * color as usize + side as usize) }
+    }
+
+    #[inline]
+    pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
+        unsafe { *self.path.get_unchecked(2 * color as usize + side as usize) }
+    }
+
+    pub fn castling_rights(&self) -> Bitboard {
+        let mut mask = Bitboard(0);
+        mask.extend(self.rook[0]);
+        mask.extend(self.rook[1]);
+        mask.extend(self.rook[2]);
+        mask.extend(self.rook[3]);
+        mask
     }
 }
