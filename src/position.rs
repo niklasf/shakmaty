@@ -126,7 +126,7 @@ pub trait Position: Setup {
         legals
     }
 
-    /// Collects legal moves in an existing buffer.
+    /// Collects all legal moves in an existing buffer.
     ///
     /// # Panics
     ///
@@ -143,6 +143,21 @@ pub trait Position: Setup {
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.legal_moves(moves);
         filter_san_candidates(role, to, moves);
+    }
+
+    /// Generates castling moves.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `moves` is too full. This can not happen if an empty
+    /// `MoveList` is passed.
+    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+        self.legal_moves(moves);
+        moves.retain(|m| match *m {
+            Move::Castle { rook, king } =>
+                (rook.file() > king.file()) == (side == CastlingSide::Short),
+            _ => false
+        });
     }
 
     /// Tests a move for legality.
@@ -184,7 +199,6 @@ pub trait Position: Setup {
         self.our(Role::King).first()
             .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn(), self.board().occupied()))
     }
-
 
     /// Checks if the game is over due to a special variant end condition.
     ///
@@ -349,6 +363,11 @@ impl Position for Chess {
         if blockers.any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
+    }
+
+    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+        let king = self.board().king_of(self.turn()).expect("king in standard chess");
+        gen_castling_moves(self, king, side, moves);
     }
 
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {

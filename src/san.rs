@@ -92,6 +92,7 @@
 
 use square::Square;
 use types::{Move, Role};
+use setup::CastlingSide;
 use position::{Position, Outcome};
 use movelist::MoveList;
 
@@ -171,8 +172,7 @@ pub enum San {
         to: Square,
         promotion: Option<Role>,
     },
-    CastleShort,
-    CastleLong,
+    Castle(CastlingSide),
     Put { role: Role, to: Square },
     Null,
 }
@@ -203,9 +203,9 @@ impl San {
         if san == b"--" {
             Ok(San::Null)
         } else if san == b"O-O" {
-            Ok(San::CastleShort)
+            Ok(San::Castle(CastlingSide::Short))
         } else if san == b"O-O-O" {
-            Ok(San::CastleLong)
+            Ok(San::Castle(CastlingSide::Long))
         } else if san.len() == 3 && san[0] == b'@' {
             Ok(San::Put {
                 role: Role::Pawn,
@@ -295,20 +295,7 @@ impl San {
                     _ => false,
                 });
             },
-            San::CastleShort => {
-                pos.legal_moves(&mut legals);
-                legals.retain(|m| match *m {
-                    Move::Castle { king, rook } => king.file() < rook.file(),
-                    _ => false,
-                });
-            },
-            San::CastleLong => {
-                pos.legal_moves(&mut legals);
-                legals.retain(|m| match *m {
-                    Move::Castle { king, rook } => rook.file() < king.file(),
-                    _ => false,
-                });
-            },
+            San::Castle(side) => pos.castling_moves(side, &mut legals),
             San::Put { role, to } => {
                 pos.san_candidates(role, to, &mut legals);
                 legals.retain(|m| match *m {
@@ -360,8 +347,8 @@ impl fmt::Display for San {
                 }
                 Ok(())
             },
-            San::CastleShort => write!(f, "O-O"),
-            San::CastleLong => write!(f, "O-O-O"),
+            San::Castle(CastlingSide::Short) => write!(f, "O-O"),
+            San::Castle(CastlingSide::Long) => write!(f, "O-O-O"),
             San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
             San::Put { role, to } => write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
             San::Null => write!(f, "--"),
@@ -460,8 +447,8 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
         },
         Move::EnPassant { from, to, .. } => San::Normal {
             role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
-        Move::Castle { rook, king } if rook.file() < king.file() => San::CastleLong,
-        Move::Castle { .. } => San::CastleShort,
+        Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::Long),
+        Move::Castle { .. } => San::Castle(CastlingSide::Short),
         Move::Put { role, to } => San::Put { role, to },
     }
 }

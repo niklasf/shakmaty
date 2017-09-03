@@ -51,6 +51,7 @@ pub trait Setup {
     }
 }
 
+/// `Short` or `Long`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CastlingSide {
     Short = 0,
