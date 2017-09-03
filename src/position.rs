@@ -21,8 +21,7 @@ use bitboard::Bitboard;
 use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
-use setup;
-use setup::{Setup, Castling};
+use setup::{Setup, Castling, CastlingSide};
 use movelist::{MoveList, ArrayVecExt};
 
 use option_filter::OptionFilterExt;
@@ -340,7 +339,8 @@ impl Position for Chess {
             let target = !self.us();
             gen_non_king(self, target, moves);
             gen_safe_king(self, king, target, moves);
-            gen_castling_moves(self, king, moves);
+            gen_castling_moves(self, king, CastlingSide::Short, moves);
+            gen_castling_moves(self, king, CastlingSide::Long, moves);
         } else {
             evasions(self, king, checkers, moves);
         }
@@ -363,7 +363,8 @@ impl Position for Chess {
                 Role::Rook => attacks::rook_attacks(to, self.board().occupied()),
                 Role::Queen => attacks::queen_attacks(to, self.board().occupied()),
                 Role::King => {
-                    gen_castling_moves(self, king, moves);
+                    gen_castling_moves(self, king, CastlingSide::Long, moves);
+                    gen_castling_moves(self, king, CastlingSide::Short, moves);
                     filter_san_candidates(role, to, moves);
                     Bitboard(0)
                 }
@@ -613,47 +614,27 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves<P: Position>(pos: &P, king: Square, moves: &mut MoveList) {
-    let castling_rights = pos.castling_rights() & Bitboard::relative_rank(pos.turn(), 0);
-
-    if let Some(rook) = castling_rights.first() {
-        if rook < king {
-            push_castling_move(pos, king, rook,
-                               pos.turn().fold(square::C1, square::C8),
-                               pos.turn().fold(square::D1, square::D8),
-                               moves);
-        }
-    }
-
-    if let Some(rook) = castling_rights.last() {
-        if king < rook {
-            push_castling_move(pos, king, rook,
-                               pos.turn().fold(square::G1, square::G8),
-                               pos.turn().fold(square::F1, square::F8),
-                               moves);
-        }
-    }
-}
-
-fn push_castling_move<P: Position>(pos: &P, king: Square, rook: Square, king_to: Square, rook_to: Square, moves: &mut MoveList) {
-    let king_path = attacks::between(king, king_to).with(king_to);
-    let rook_path = attacks::between(rook, rook_to).with(rook_to);
-
-    if ((pos.board().occupied() ^ king ^ rook) & (king_path | rook_path)).any() {
-        return;
-    }
-
-    for sq in king_path.with(king) {
-        if pos.king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king).any() {
+fn gen_castling_moves(pos: &Chess, king: Square, side: CastlingSide, moves: &mut MoveList) {
+    if let Some(rook) = pos.castling.rook(pos.turn(), side) {
+        let path = pos.castling.path(pos.turn(), side);
+        if (path & pos.board().occupied()).any() {
             return;
         }
-    }
 
-    if pos.castling_uncovers_rank_attack(rook, king_to) {
-        return;
-    }
+        let king_to = side.king_to(pos.turn());
+        let king_path = attacks::between(king, king_to).with(king_to).with(king);
+        for sq in king_path {
+            if pos.king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king).any() {
+                return;
+            }
+        }
 
-    moves.push(Move::Castle { king, rook });
+        if pos.castling_uncovers_rank_attack(rook, king_to) {
+            return;
+        }
+
+        moves.push(Move::Castle { king, rook });
+    }
 }
 
 fn castling_uncovers_rank_attack<P: Position>(pos: &P, rook: Square, king_to: Square) -> bool {

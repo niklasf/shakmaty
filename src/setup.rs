@@ -57,6 +57,22 @@ pub enum CastlingSide {
     Long = 1,
 }
 
+impl CastlingSide {
+    pub fn king_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::Short => color.fold(square::G1, square::G8),
+            CastlingSide::Long => color.fold(square::C1, square::C8),
+        }
+    }
+
+    pub fn rook_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::Short => color.fold(square::F1, square::F8),
+            CastlingSide::Long => color.fold(square::D1, square::D8),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Castling {
     rook: [Option<Square>; 4],
@@ -104,8 +120,8 @@ impl Castling {
                            Bitboard::relative_rank(*color, 0);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
-                    let rto = color.fold(square::D1, square::D8);
-                    let kto = color.fold(square::C1, square::C8);
+                    let rto = CastlingSide::Long.rook_to(*color);
+                    let kto = CastlingSide::Long.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::Long as usize;
                     castling.rook[idx] = Some(a_side);
                     castling.path[idx] = attacks::between(king, a_side)
@@ -113,8 +129,8 @@ impl Castling {
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
-                    let rto = color.fold(square::F1, square::F8);
-                    let kto = color.fold(square::G1, square::G8);
+                    let rto = CastlingSide::Short.rook_to(*color);
+                    let kto = CastlingSide::Short.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::Short as usize;
                     castling.rook[idx] = Some(h_side);
                     castling.path[idx] = attacks::between(king, h_side)
