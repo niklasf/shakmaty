@@ -95,7 +95,7 @@ impl Error for PositionError {
 
 /// Error in case of illegal moves.
 #[derive(Debug)]
-pub struct IllegalMove {}
+pub struct IllegalMove;
 
 impl fmt::Display for IllegalMove {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
