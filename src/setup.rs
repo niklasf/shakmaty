@@ -16,7 +16,6 @@
 
 use square;
 use square::Square;
-use bitboard;
 use bitboard::Bitboard;
 use attacks;
 use types::{Color, Role, Pockets, RemainingChecks};
@@ -76,9 +75,8 @@ impl CastlingSide {
 
 #[derive(Clone, Debug)]
 pub struct Castling {
-    mask: Bitboard,
-    path: [Bitboard; 4],
     rook: [Option<Square>; 4],
+    path: [Bitboard; 4],
 }
 
 impl Castling {
@@ -86,7 +84,6 @@ impl Castling {
         Castling {
             rook: [None; 4],
             path: [Bitboard(0); 4],
-            mask: Bitboard(0),
         }
     }
 
@@ -103,8 +100,7 @@ impl Castling {
                 Bitboard(0x0e00_0000_0000_0000), // black long
                 Bitboard(0x0000_0000_0000_0060), // white short
                 Bitboard(0x0000_0000_0000_000e), // white long
-            ],
-            mask: bitboard::CORNERS,
+            ]
         }
     }
 
@@ -143,33 +139,22 @@ impl Castling {
             }
         }
 
-        castling.mask.extend(castling.rook[0]);
-        castling.mask.extend(castling.rook[1]);
-        castling.mask.extend(castling.rook[2]);
-        castling.mask.extend(castling.rook[3]);
-
-        if castling.mask == castling_rights {
+        if castling.castling_rights() == castling_rights {
             Ok(castling)
         } else {
             Err(castling)
         }
     }
 
-    #[inline]
     pub fn discard_rook(&mut self, square: Square) {
-        if self.mask.contains(square) {
-            self.mask.flip(square);
-            self.rook[0] = self.rook[0].filter(|sq| *sq != square);
-            self.rook[1] = self.rook[1].filter(|sq| *sq != square);
-            self.rook[2] = self.rook[2].filter(|sq| *sq != square);
-            self.rook[3] = self.rook[3].filter(|sq| *sq != square);
-        }
+        self.rook[0] = self.rook[0].filter(|sq| *sq != square);
+        self.rook[1] = self.rook[1].filter(|sq| *sq != square);
+        self.rook[2] = self.rook[2].filter(|sq| *sq != square);
+        self.rook[3] = self.rook[3].filter(|sq| *sq != square);
     }
 
-    #[inline]
     pub fn discard_side(&mut self, color: Color) {
         let idx = color as usize * 2;
-        self.mask &= Bitboard::relative_rank(color, 7);
         self.rook[idx] = None;
         self.rook[idx + 1] = None;
     }
@@ -184,8 +169,12 @@ impl Castling {
         self.path[2 * color as usize + side as usize]
     }
 
-    #[inline]
     pub fn castling_rights(&self) -> Bitboard {
-        self.mask
+        let mut mask = Bitboard(0);
+        mask.extend(self.rook[0]);
+        mask.extend(self.rook[1]);
+        mask.extend(self.rook[2]);
+        mask.extend(self.rook[3]);
+        mask
     }
 }

@@ -458,8 +458,11 @@ fn do_move(board: &mut Board,
 
             if role == Role::King {
                 castling.discard_side(color);
-            } else {
+            } else if role == Role::Rook {
                 castling.discard_rook(from);
+            }
+
+            if capture == Some(Role::Rook) {
                 castling.discard_rook(to);
             }
 
