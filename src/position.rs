@@ -163,9 +163,18 @@ pub trait Position: Setup {
 
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
-        let mut legals = MoveList::new();
-        self.legal_moves(&mut legals);
-        legals.contains(m)
+        let mut moves = MoveList::new();
+        match *m {
+            Move::Normal { role, to, .. } | Move::Put { role, to } =>
+                self.san_candidates(role, to, &mut moves),
+            Move::EnPassant { to, .. } =>
+                self.san_candidates(Role::Pawn, to, &mut moves),
+            Move::Castle { king, rook } if king.file() < rook.file() =>
+                self.castling_moves(CastlingSide::Short, &mut moves),
+            Move::Castle { .. } =>
+                self.castling_moves(CastlingSide::Long, &mut moves),
+        }
+        moves.contains(m)
     }
 
     /// Tests if a move is irreversible.
