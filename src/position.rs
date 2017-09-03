@@ -134,7 +134,8 @@ pub trait Position: Setup {
     /// `MoveList` is passed.
     fn legal_moves(&self, moves: &mut MoveList);
 
-    /// Generates a subset of legal moves.
+    /// Generates a subset of legal moves: All piece moves and drops of type
+    /// `role` to the square `to`, excluding castling moves.
     ///
     /// # Panics
     ///
@@ -376,17 +377,11 @@ impl Position for Chess {
 
         if checkers.is_empty() {
             let piece_from = match role {
-                Role::Pawn => Bitboard(0),
+                Role::Pawn | Role::King => Bitboard(0),
                 Role::Knight => attacks::knight_attacks(to),
                 Role::Bishop => attacks::bishop_attacks(to, self.board().occupied()),
                 Role::Rook => attacks::rook_attacks(to, self.board().occupied()),
                 Role::Queen => attacks::queen_attacks(to, self.board().occupied()),
-                Role::King => {
-                    gen_castling_moves(self, king, CastlingSide::Long, moves);
-                    gen_castling_moves(self, king, CastlingSide::Short, moves);
-                    filter_san_candidates(role, to, moves);
-                    Bitboard(0)
-                }
             };
 
             if !self.us().contains(to) {
@@ -888,8 +883,8 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
     moves.retain(|m| match *m {
         Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } =>
             to == t && role == r,
-        Move::Castle { rook, .. } => role == Role::King && to == rook,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
+        Move::Castle { .. } => false,
     });
 }
 
