@@ -90,10 +90,10 @@ mod position;
 mod setup;
 mod movelist;
 mod magics;
+mod perft;
 
 pub mod square;
 pub mod attacks;
-pub mod perft;
 pub mod fen;
 pub mod uci;
 pub mod san;
@@ -105,3 +105,4 @@ pub use board::{Board, Pieces};
 pub use setup::{Setup, CastlingSide};
 pub use movelist::MoveList;
 pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};
+pub use perft::perft;

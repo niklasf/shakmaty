@@ -53,7 +53,7 @@ fn test_perft_file<P: Position + Default + Clone>(path: &str, node_limit: usize)
                                   .parse().expect("nodes not an integer");
 
                 if nodes <= node_limit {
-                    assert_eq!(perft::perft(&pos, depth), nodes);
+                    assert_eq!(perft(&pos, depth), nodes);
                 }
             },
             _ => {},

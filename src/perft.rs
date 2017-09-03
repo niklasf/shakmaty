@@ -14,20 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//! Count legal move paths.
-//!
-//! # Examples
-//!
-//! ```
-//! use shakmaty::Chess;
-//! use shakmaty::perft::perft;
-//!
-//! let pos = Chess::default();
-//! assert_eq!(perft(&pos, 1), 20);
-//! assert_eq!(perft(&pos, 2), 400);
-//! assert_eq!(perft(&pos, 3), 8902);
-//! ```
-
 use position::Position;
 use movelist::MoveList;
 use uci::Uci;
@@ -37,6 +23,18 @@ use uci::Uci;
 /// Paths with mate or stalemate are not counted unless it occurs in the final
 /// position. Useful for comparing, testing and debugging move generation
 /// correctness and performance.
+///
+/// # Examples
+///
+/// ```
+/// use shakmaty::Chess;
+/// use shakmaty::perft;
+///
+/// let pos = Chess::default();
+/// assert_eq!(perft(&pos, 1), 20);
+/// assert_eq!(perft(&pos, 2), 400);
+/// assert_eq!(perft(&pos, 3), 8902);
+/// ```
 pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
@@ -57,6 +55,7 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
 }
 
 /// Like `perft()`, but also prints the perft of each child for debugging.
+#[allow(unused)]
 pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
     if depth < 1 {
         1
