@@ -22,7 +22,7 @@ use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup;
-use setup::Setup;
+use setup::{Setup, Castling};
 use movelist::{MoveList, ArrayVecExt};
 
 use option_filter::OptionFilterExt;
@@ -274,7 +274,7 @@ pub trait Position: Setup {
 pub struct Chess {
     board: Board,
     turn: Color,
-    castling_rights: Bitboard,
+    castling: Castling,
     ep_square: Option<Square>,
     halfmove_clock: u32,
     fullmoves: u32,
@@ -285,7 +285,7 @@ impl Default for Chess {
         Chess {
             board: Board::default(),
             turn: White,
-            castling_rights: bitboard::CORNERS,
+            castling: Castling::default(),
             ep_square: None,
             halfmove_clock: 0,
             fullmoves: 1,
@@ -297,7 +297,7 @@ impl Setup for Chess {
     fn board(&self) -> &Board { &self.board }
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { self.castling_rights }
+    fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
@@ -306,7 +306,7 @@ impl Setup for Chess {
 
 impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castling_rights,
+        do_move(&mut self.board, &mut self.turn, &mut self.castling,
                 &mut self.ep_square, &mut self.halfmove_clock,
                 &mut self.fullmoves, m);
     }
@@ -315,7 +315,7 @@ impl Position for Chess {
         let pos = Chess {
             board: setup.board().clone(),
             turn: setup.turn(),
-            castling_rights: setup.castling_rights(),
+            castling: Castling::from_setup(setup).map_err(|_| PositionError::BadCastlingRights)?,
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
@@ -436,7 +436,7 @@ impl Position for Chess {
 
 fn do_move(board: &mut Board,
            turn: &mut Color,
-           castling_rights: &mut Bitboard,
+           castling: &mut Castling,
            ep_square: &mut Option<Square>,
            halfmove_clock: &mut u32,
            fullmoves: &mut u32,
@@ -456,10 +456,10 @@ fn do_move(board: &mut Board,
             }
 
             if role == Role::King {
-                castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+                castling.discard_side(color);
             } else {
-                castling_rights.discard(from);
-                castling_rights.discard(to);
+                castling.discard_rook(from);
+                castling.discard_rook(to);
             }
 
             let promoted = board.promoted().contains(from) || promotion.is_some();
@@ -476,7 +476,7 @@ fn do_move(board: &mut Board,
             board.set_piece_at(rook_to, color.rook(), false);
             board.set_piece_at(king_to, color.king(), false);
 
-            castling_rights.discard_all(Bitboard::relative_rank(color, 0));
+            castling.discard_side(color);
         },
         Move::EnPassant { from, to } => {
             board.discard_piece_at(to.combine(from)); // captured pawn
@@ -520,10 +520,6 @@ fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
 
     if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
         return Some(PositionError::PawnsOnBackrank);
-    }
-
-    if setup::clean_castling_rights(pos, false) != pos.castling_rights() {
-        return Some(PositionError::BadCastlingRights);
     }
 
     validate_ep(pos)
