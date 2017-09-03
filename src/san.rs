@@ -421,12 +421,12 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
             },
         Move::Normal { role, from, capture, to, promotion } => {
             let mut legals = MoveList::new();
-            pos.legal_moves(&mut legals);
+            pos.san_candidates(role, to, &mut legals);
 
             // Disambiguate.
             let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
-                Move::Normal { role: r, to: t, from: candidate, .. } =>
-                    if role != r || to != t || from == candidate {
+                Move::Normal { from: candidate, .. } =>
+                    if from == candidate {
                         (rank, file)
                     } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
                         (rank, true)
