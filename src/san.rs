@@ -203,9 +203,9 @@ impl San {
         if san == b"--" {
             Ok(San::Null)
         } else if san == b"O-O" {
-            Ok(San::Castle(CastlingSide::Short))
+            Ok(San::Castle(CastlingSide::KingSide))
         } else if san == b"O-O-O" {
-            Ok(San::Castle(CastlingSide::Long))
+            Ok(San::Castle(CastlingSide::QueenSide))
         } else if san.len() == 3 && san[0] == b'@' {
             Ok(San::Put {
                 role: Role::Pawn,
@@ -347,8 +347,8 @@ impl fmt::Display for San {
                 }
                 Ok(())
             },
-            San::Castle(CastlingSide::Short) => write!(f, "O-O"),
-            San::Castle(CastlingSide::Long) => write!(f, "O-O-O"),
+            San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
+            San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
             San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
             San::Put { role, to } => write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
             San::Null => write!(f, "--"),
@@ -447,8 +447,8 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
         },
         Move::EnPassant { from, to, .. } => San::Normal {
             role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
-        Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::Long),
-        Move::Castle { .. } => San::Castle(CastlingSide::Short),
+        Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
+        Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
         Move::Put { role, to } => San::Put { role, to },
     }
 }

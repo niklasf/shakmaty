@@ -51,25 +51,25 @@ pub trait Setup {
     }
 }
 
-/// `Short` or `Long`.
+/// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CastlingSide {
-    Short = 0,
-    Long = 1,
+    KingSide = 0,
+    QueenSide = 1,
 }
 
 impl CastlingSide {
     pub fn king_to(&self, color: Color) -> Square {
         match *self {
-            CastlingSide::Short => color.fold(square::G1, square::G8),
-            CastlingSide::Long => color.fold(square::C1, square::C8),
+            CastlingSide::KingSide => color.fold(square::G1, square::G8),
+            CastlingSide::QueenSide => color.fold(square::C1, square::C8),
         }
     }
 
     pub fn rook_to(&self, color: Color) -> Square {
         match *self {
-            CastlingSide::Short => color.fold(square::F1, square::F8),
-            CastlingSide::Long => color.fold(square::D1, square::D8),
+            CastlingSide::KingSide => color.fold(square::F1, square::F8),
+            CastlingSide::QueenSide => color.fold(square::D1, square::D8),
         }
     }
 }
@@ -121,18 +121,18 @@ impl Castling {
                            Bitboard::relative_rank(*color, 0);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
-                    let rto = CastlingSide::Long.rook_to(*color);
-                    let kto = CastlingSide::Long.king_to(*color);
-                    let idx = *color as usize * 2 + CastlingSide::Long as usize;
+                    let rto = CastlingSide::QueenSide.rook_to(*color);
+                    let kto = CastlingSide::QueenSide.king_to(*color);
+                    let idx = *color as usize * 2 + CastlingSide::QueenSide as usize;
                     castling.rook[idx] = Some(a_side);
                     castling.path[idx] = attacks::between(king, a_side)
                                         .with(rto).with(kto).without(king).without(a_side);
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
-                    let rto = CastlingSide::Short.rook_to(*color);
-                    let kto = CastlingSide::Short.king_to(*color);
-                    let idx = *color as usize * 2 + CastlingSide::Short as usize;
+                    let rto = CastlingSide::KingSide.rook_to(*color);
+                    let kto = CastlingSide::KingSide.king_to(*color);
+                    let idx = *color as usize * 2 + CastlingSide::KingSide as usize;
                     castling.rook[idx] = Some(h_side);
                     castling.path[idx] = attacks::between(king, h_side)
                                         .with(rto).with(kto).without(king).without(h_side);

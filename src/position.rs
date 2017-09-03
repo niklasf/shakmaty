@@ -156,7 +156,7 @@ pub trait Position: Setup {
         self.legal_moves(moves);
         moves.retain(|m| match *m {
             Move::Castle { rook, king } =>
-                (rook.file() > king.file()) == (side == CastlingSide::Short),
+                (rook.file() > king.file()) == (side == CastlingSide::KingSide),
             _ => false
         });
     }
@@ -170,9 +170,9 @@ pub trait Position: Setup {
             Move::EnPassant { to, .. } =>
                 self.san_candidates(Role::Pawn, to, &mut moves),
             Move::Castle { king, rook } if king.file() < rook.file() =>
-                self.castling_moves(CastlingSide::Short, &mut moves),
+                self.castling_moves(CastlingSide::KingSide, &mut moves),
             Move::Castle { .. } =>
-                self.castling_moves(CastlingSide::Long, &mut moves),
+                self.castling_moves(CastlingSide::QueenSide, &mut moves),
         }
         moves.contains(m)
     }
@@ -363,8 +363,8 @@ impl Position for Chess {
             let target = !self.us();
             gen_non_king(self, target, moves);
             gen_safe_king(self, king, target, moves);
-            gen_castling_moves(self, king, CastlingSide::Short, moves);
-            gen_castling_moves(self, king, CastlingSide::Long, moves);
+            gen_castling_moves(self, king, CastlingSide::KingSide, moves);
+            gen_castling_moves(self, king, CastlingSide::QueenSide, moves);
         } else {
             evasions(self, king, checkers, moves);
         }
