@@ -155,18 +155,20 @@ impl Castling {
 
     pub fn discard_side(&mut self, color: Color) {
         let idx = color as usize * 2;
-        self.rook[idx] = None;
-        self.rook[idx + 1] = None;
+        unsafe {
+            *self.rook.get_unchecked_mut(idx) = None;
+            *self.rook.get_unchecked_mut(idx + 1) = None;
+        }
     }
 
     #[inline]
     pub fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
-        self.rook[2 * color as usize + side as usize]
+        unsafe { *self.rook.get_unchecked(2 * color as usize + side as usize) }
     }
 
     #[inline]
     pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
-        self.path[2 * color as usize + side as usize]
+        unsafe { *self.path.get_unchecked(2 * color as usize + side as usize) }
     }
 
     pub fn castling_rights(&self) -> Bitboard {

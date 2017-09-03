@@ -190,22 +190,22 @@ impl Board {
 
     #[inline]
     pub fn by_color(&self, color: Color) -> Bitboard {
-        self.occupied_co[color as usize]
+        unsafe { *self.occupied_co.get_unchecked(color as usize) }
     }
 
     #[inline]
     fn by_color_mut(&mut self, color: Color) -> &mut Bitboard {
-        &mut self.occupied_co[color as usize]
+        unsafe { self.occupied_co.get_unchecked_mut(color as usize) }
     }
 
     #[inline]
     pub fn by_role(&self, role: Role) -> Bitboard {
-        self.pieces[role as usize]
+        unsafe { *self.pieces.get_unchecked(role as usize) }
     }
 
     #[inline]
     fn by_role_mut(&mut self, role: Role) -> &mut Bitboard {
-        &mut self.pieces[role as usize]
+        unsafe { self.pieces.get_unchecked_mut(role as usize) }
     }
 
     #[inline]
