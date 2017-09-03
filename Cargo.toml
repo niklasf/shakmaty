@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty"
-version = "0.0.8" # remember to update html_root_url
+version = "0.0.9" # remember to update html_root_url
 description = "A library for chess move generation"
 documentation = "https://docs.rs/shakmaty"
 repository = "https://github.com/niklasf/shakmaty"
