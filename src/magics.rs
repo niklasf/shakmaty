@@ -1,5 +1,5 @@
-// Fixed shift black magics found by Volker Annuss.
-// From: http://www.talkchess.com/forum/viewtopic.php?t=64790
+// Fixed shift white magics found by Volker Annuss.
+// From: http://www.talkchess.com/forum/viewtopic.php?p=727500&t=64790
 
 pub struct Magic {
     pub mask: u64,
