@@ -14,7 +14,7 @@ use madvise::{AccessPattern, AdviseMemory};
 use atoi::atoi;
 
 use shakmaty::{Color, CastlingSide, Outcome};
-//use shakmaty::{Chess, Setup, Position};
+use shakmaty::{Chess, Setup, Position};
 use shakmaty::san::San;
 
 #[derive(Debug)]
@@ -318,12 +318,14 @@ impl<'a, C: Consumer> Iterator for Scanner<'a, C> {
 
 struct Parser {
     moves: usize,
+    pos: Chess,
 }
 
 impl Parser {
     fn new() -> Parser {
         Parser {
             moves: 0,
+            pos: Chess::default(),
         }
     }
 }
@@ -331,8 +333,14 @@ impl Parser {
 impl Consumer for Parser {
     type Item = ();
 
-    fn san(&mut self, _: San) {
+    fn begin_game(&mut self) {
+        self.pos = Chess::default();
+    }
+
+    fn san(&mut self, san: San) {
         self.moves += 1;
+        let m = san.to_move(&self.pos).expect("legal");
+        self.pos.play_unchecked(&m);
     }
 
     fn end_game(&mut self, _: &[u8]) { }
