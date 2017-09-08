@@ -1,0 +1,11 @@
+[package]
+name = "pgnparser"
+version = "0.1.0"
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+
+[dependencies]
+memmap = "0.5"
+memchr = "1.0"
+atoi = "0.2"
+madvise = "0.1.0"
+shakmaty = "0.0.9"
