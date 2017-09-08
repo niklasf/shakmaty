@@ -83,20 +83,19 @@ fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: 
 }
 
 fn main() {
-    generate().unwrap()
-}
-
-fn generate() -> io::Result<()> {
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
     let dest_path = Path::new(&out_dir).join("attacks.rs");
     let mut f = File::create(&dest_path).expect("created attacks.rs");
 
+    generate_basics(&mut f).unwrap();
+    generate_sliding_attacks(&mut f).unwrap();
+}
+
+fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     let mut knight_attacks = [Bitboard(0); 64];
     let mut king_attacks = [Bitboard(0); 64];
     let mut white_pawn_attacks = [Bitboard(0); 64];
     let mut black_pawn_attacks = [Bitboard(0); 64];
-
-    let mut attacks = [Bitboard(0); 88772];
 
     let mut bb_rays = [Bitboard(0); 4096];
     let mut bb_between = [Bitboard(0); 4096];
@@ -107,8 +106,6 @@ fn generate() -> io::Result<()> {
         king_attacks[s] = step_attacks(sq, &KING_DELTAS);
         white_pawn_attacks[s] = step_attacks(sq, &WHITE_PAWN_DELTAS);
         black_pawn_attacks[s] = step_attacks(sq, &BLACK_PAWN_DELTAS);
-        init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut attacks, &ROOK_DELTAS);
-        init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut attacks, &BISHOP_DELTAS);
     }
 
     for a in 0..64 {
@@ -136,19 +133,31 @@ fn generate() -> io::Result<()> {
         }
     }
 
-    dump_slice(&mut f, "KNIGHT_ATTACKS", "u64", &knight_attacks)?;
-    dump_slice(&mut f, "KING_ATTACKS", "u64", &king_attacks)?;
-    dump_slice(&mut f, "WHITE_PAWN_ATTACKS", "u64", &white_pawn_attacks)?;
-    dump_slice(&mut f, "BLACK_PAWN_ATTACKS", "u64", &black_pawn_attacks)?;
+    dump_slice(f, "KNIGHT_ATTACKS", "u64", &knight_attacks)?;
+    dump_slice(f, "KING_ATTACKS", "u64", &king_attacks)?;
+    dump_slice(f, "WHITE_PAWN_ATTACKS", "u64", &white_pawn_attacks)?;
+    dump_slice(f, "BLACK_PAWN_ATTACKS", "u64", &black_pawn_attacks)?;
 
     write!(f, "\n")?;
 
-    dump_slice(&mut f, "ATTACKS", "u64", &attacks)?;
+    dump_slice(f, "BB_RAYS", "u64", &bb_rays)?;
+    dump_slice(f, "BB_BETWEEN", "u64", &bb_between)?;
 
     write!(f, "\n")?;
 
-    dump_slice(&mut f, "BB_RAYS", "u64", &bb_rays)?;
-    dump_slice(&mut f, "BB_BETWEEN", "u64", &bb_between)?;
+    Ok(())
+}
+
+fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
+    let mut attacks = [Bitboard(0); 88772];
+
+    for s in 0..64 {
+        let sq = Square::from_index(s as i8).expect("square index s in range");
+        init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut attacks, &ROOK_DELTAS);
+        init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut attacks, &BISHOP_DELTAS);
+    }
+
+    dump_slice(f, "ATTACKS", "u64", &attacks)?;
 
     Ok(())
 }
