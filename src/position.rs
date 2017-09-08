@@ -905,10 +905,10 @@ mod tests {
             .expect("legal position");
 
         b.iter(|| {
-                   let mut moves = MoveList::new();
-                   pos.legal_moves(&mut moves);
-                   assert_eq!(moves.len(), 39);
-               })
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            assert_eq!(moves.len(), 39);
+        });
     }
 
     #[bench]
@@ -946,7 +946,7 @@ mod tests {
             let mut moves = MoveList::new();
             pos.san_candidates(Role::Knight, square::B5, &mut moves);
             assert_eq!(moves.len(), 2);
-        })
+        });
     }
 
     #[test]
