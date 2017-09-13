@@ -18,7 +18,6 @@ use std::fmt;
 use std::ascii::AsciiExt;
 use std::char;
 use std::ops;
-use std::str;
 
 use square::Square;
 
