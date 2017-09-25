@@ -51,8 +51,6 @@ impl fmt::Display for Outcome {
 pub enum PositionError {
     Empty,
     NoKing { color: Color },
-    TooManyPawns,
-    TooManyPieces,
     TooManyKings,
     PawnsOnBackrank,
     BadCastlingRights,
@@ -69,8 +67,6 @@ impl PositionError {
             PositionError::Empty => "empty board is not legal",
             PositionError::NoKing { color: White } => "white king missing",
             PositionError::NoKing { color: Black } => "black king missing",
-            PositionError::TooManyPawns => "too many pawns",
-            PositionError::TooManyPieces => "too many pieces",
             PositionError::TooManyKings => "too many kings",
             PositionError::PawnsOnBackrank => "pawns on backrank",
             PositionError::BadCastlingRights => "bad castling rights",
@@ -525,24 +521,6 @@ fn do_move(board: &mut Board,
 fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
     if pos.board().occupied().is_empty() {
         return Some(PositionError::Empty);
-    }
-
-    if let Some(pockets) = pos.pockets() {
-        if pos.board().pawns().count() + pockets.white.pawns as usize + pockets.black.pawns as usize > 16 {
-            return Some(PositionError::TooManyPawns)
-        }
-        if pos.board().occupied().count() + pockets.count() as usize > 32 {
-            return Some(PositionError::TooManyPieces);
-        }
-    } else {
-        for color in &[White, Black] {
-            if pos.board().by_color(*color).count() > 16 {
-                return Some(PositionError::TooManyPieces);
-            }
-            if pos.board().by_piece(color.pawn()).count() > 8 {
-                return Some(PositionError::TooManyPawns);
-            }
-        }
     }
 
     if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
