@@ -2,17 +2,19 @@ extern crate memchr;
 extern crate atoi;
 extern crate shakmaty;
 
+use std::fmt;
+
 pub use shakmaty::san::San;
 pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
 
 use atoi::atoi;
 
 /// Tell the reader to skip over a game over variation.
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Skip(pub bool);
 
 /// A numeric annotation glyph like `?`, `!!` or `$42`.
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Nag(pub u8);
 
 impl Nag {
@@ -34,6 +36,12 @@ impl Nag {
         } else {
             None
         }
+    }
+}
+
+impl fmt::Display for Nag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "${}", self.0)
     }
 }
 
@@ -89,6 +97,12 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
 pub struct Reader<'a, V: Visitor> where V: 'a {
     visitor: &'a mut V,
     pgn: &'a[u8],
+}
+
+impl<'a, V: Visitor> fmt::Debug for Reader<'a, V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Reader").finish()
+    }
 }
 
 impl<'a, V: Visitor> Reader<'a, V> {
