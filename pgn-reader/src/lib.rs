@@ -91,6 +91,7 @@ use atoi::atoi;
 
 /// Tell the reader to skip over a game over variation.
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[must_use]
 pub struct Skip(pub bool);
 
 /// A numeric annotation glyph like `?`, `!!` or `$42`.
