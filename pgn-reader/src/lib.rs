@@ -391,14 +391,26 @@ impl<'a, V: Visitor> Reader<'a, V> {
                             };
                             pos += 1;
                             let value_pos = pos;
-                            pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
-                            if self.pgn[pos - 1] == b'\n' && self.pgn[pos - 2] == b']' && self.pgn[pos - 3] == b'"' {
-                                // ensure value_pos < value_end_pos with malformed headers
-                                let value_end_pos = max(pos - 3, value_pos + 1);
 
-                                self.visitor.header(&self.pgn[key_pos..key_end_pos],
-                                                    &self.pgn[value_pos..value_end_pos]);
-                            }
+                            pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
+                            let eol_pos = if self.pgn[pos - 1] == b'\n' {
+                                if self.pgn[pos - 2] == b'\r' {
+                                    pos - 2
+                                } else {
+                                    pos - 1
+                                }
+                            } else {
+                                continue;
+                            };
+
+                            let value_end_pos = if self.pgn[eol_pos - 1] == b']' && self.pgn[eol_pos - 2] == b'"' {
+                                max(value_pos + 1, eol_pos - 2)
+                            } else {
+                                continue;
+                            };
+
+                            self.visitor.header(&self.pgn[key_pos..key_end_pos],
+                                                &self.pgn[value_pos..value_end_pos]);
                         },
                         Some(delta) => pos += delta + 1,
                         None => pos = self.pgn.len(),
