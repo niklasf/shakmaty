@@ -152,6 +152,7 @@ extern crate atoi;
 extern crate shakmaty;
 
 use std::fmt;
+use std::cmp::max;
 use std::str::FromStr;
 use std::error::Error;
 
@@ -378,9 +379,11 @@ impl<'a, V: Visitor> Reader<'a, V> {
                             let value_pos = pos;
                             pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
                             if self.pgn[pos - 1] == b'\n' && self.pgn[pos - 2] == b']' && self.pgn[pos - 3] == b'"' {
-                                let value_end_pos = pos - 3;
+                                // ensure value_pos < value_end_pos with malformed headers
+                                let value_end_pos = max(pos - 3, value_pos + 1);
+
                                 self.visitor.header(&self.pgn[key_pos..key_end_pos],
-                                                     &self.pgn[value_pos..value_end_pos]);
+                                                    &self.pgn[value_pos..value_end_pos]);
                             }
                         },
                         Some(delta) => pos += delta + 1,
