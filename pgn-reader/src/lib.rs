@@ -436,12 +436,15 @@ impl<'a, V: Visitor> Reader<'a, V> {
                             pos += 1;
                             pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
                         },
-                        b'[' => {
+                        b'[' | b'\n' => {
                             break
                         },
-                        b'\n' => {
-                            break
-                        }
+                        b'\r' => {
+                            pos += 1;
+                            if pos < self.pgn.len() && self.pgn[pos] == b'\n' {
+                                break;
+                            }
+                        },
                         _ => continue,
                     }
                 },
@@ -494,6 +497,12 @@ impl<'a, V: Visitor> Reader<'a, V> {
                             // the first line break again (to end the game).
                             return pos - 1;
                         },
+                        b'\r' => {
+                            pos += 1;
+                            if pos < self.pgn.len() && self.pgn[pos] == b'\n' {
+                                return pos - 2;
+                            }
+                        },
                         _ => continue,
                     }
                 },
@@ -541,12 +550,15 @@ impl<'a, V: Visitor> Reader<'a, V> {
                             pos += 1;
                             pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
                         },
-                        b'[' => {
+                        b'[' | b'\n' => {
                             break
                         },
-                        b'\n' => {
-                            break
-                        }
+                        b'\r' => {
+                            pos += 1;
+                            if pos < self.pgn.len() && self.pgn[pos] == b'\n' {
+                                break
+                            }
+                        },
                         _ => continue,
                     }
                 },
