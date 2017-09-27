@@ -1,10 +1,10 @@
-extern crate pgn_lexer;
+extern crate pgn_reader;
 extern crate memmap;
 extern crate madvise;
 
 use std::env;
 
-use pgn_lexer::{Reader, Visitor, San};
+use pgn_reader::{Reader, Visitor, San};
 use memmap::{Mmap, Protection};
 use madvise::{AccessPattern, AdviseMemory};
 

@@ -1,3 +1,65 @@
+// This file is part of the shakmaty library.
+// Copyright (C) 2017 Niklas Fiekas <niklas.fiekas@backscattering.de>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+//! A fast non-allocating reader for chess games in PGN notation.
+//!
+//! # Examples
+//!
+//! A visitor that counts the number of moves in each game.
+//!
+//! ```
+//! use pgn_reader::{Visitor, Reader, San};
+//!
+//! struct MoveCounter {
+//!     moves: usize,
+//! }
+//!
+//! impl MoveCounter {
+//!     fn new() -> MoveCounter {
+//!         MoveCounter { moves: 0 }
+//!     }
+//! }
+//!
+//! impl Visitor for MoveCounter {
+//!     type Result = usize;
+//!
+//!     fn begin_game(&mut self) {
+//!         self.moves = 0;
+//!     }
+//!
+//!     fn san(&mut self, _san: San) {
+//!         self.moves += 1;
+//!     }
+//!
+//!     fn end_game(&mut self, _game: &[u8]) -> Self::Result {
+//!         self.moves
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let pgn = b"1. e4 e5 2. Nf3
+//!                 { game paused due to bad weather }
+//!                 2... Nf6 *";
+//!
+//!     let mut counter = MoveCounter::new();
+//!     let reader = Reader::new(&mut counter, pgn);
+//!
+//!     let moves: usize = reader.into_iter().sum();
+//!     assert_eq!(moves, 3);
+//! }
 extern crate memchr;
 extern crate atoi;
 extern crate shakmaty;
@@ -20,6 +82,12 @@ pub struct Skip(pub bool);
 pub struct Nag(pub u8);
 
 impl Nag {
+    /// Tries to parse a NAG from ASCII.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `InvalidNag` error if the input is neither a known glyph
+    /// (`?!`, `!`, ...) nor a valid numeric annotation (`$0`, ..., `$255`).
     fn from_bytes(s: &[u8]) -> Result<Nag, InvalidNag> {
         if s == b"?!" {
             Ok(Nag(6))
@@ -53,6 +121,7 @@ impl From<u8> for Nag {
     }
 }
 
+/// Error when parsing an invalid NAG.
 pub struct InvalidNag {
     _priv: (),
 }
@@ -361,10 +430,23 @@ impl<'a, V: Visitor> Reader<'a, V> {
     }
 }
 
-impl<'a, V: Visitor> Iterator for Reader<'a, V> {
+impl<'a, V: Visitor> IntoIterator for Reader<'a, V> {
+    type Item = V::Result;
+    type IntoIter = Iter<'a, V>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        Iter { reader: self }
+    }
+}
+
+pub struct Iter<'a, V: Visitor> where V: 'a {
+    reader: Reader<'a, V>,
+}
+
+impl<'a, V: Visitor> Iterator for Iter<'a, V> {
     type Item = V::Result;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.read_game()
+        self.reader.read_game()
     }
 }
