@@ -18,7 +18,6 @@ shakmaty = "0.0.9"
 [dev-dependencies]
 memmap = "0.5"
 madvise = "0.1.0"
-shakmaty = "0.0.9"
 
 [badges]
 travis-ci = { repository = "rust-pgn-reader", branch = "master" }
