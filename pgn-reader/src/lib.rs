@@ -430,9 +430,13 @@ impl<'a, V: Visitor> Reader<'a, V> {
                         _ => continue,
                     }
                 },
+                b';' => {
+                    pos += 1;
+                    pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
+                },
                 _ => {
                     pos += 1;
-                    pos = memchr::memchr2(b'\n', b'{', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
+                    pos = memchr::memchr3(b'\n', b'{', b';', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
                 },
             }
         }
@@ -443,7 +447,7 @@ impl<'a, V: Visitor> Reader<'a, V> {
     fn skip_token(&mut self, mut pos: usize) -> usize {
         while pos < self.pgn.len() {
             match self.pgn[pos] {
-                b' ' | b'\t' | b'\n' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' => break,
+                b' ' | b'\t' | b'\n' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' => break,
                 _ => pos += 1,
             }
         }
@@ -483,6 +487,10 @@ impl<'a, V: Visitor> Reader<'a, V> {
                         }
                         _ => continue,
                     }
+                },
+                b';' => {
+                    pos += 1;
+                    pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
                 },
                 b'1' => {
                     pos += 1;
