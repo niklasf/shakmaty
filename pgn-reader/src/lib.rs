@@ -16,6 +16,22 @@
 
 //! A fast non-allocating reader for chess games in PGN notation.
 //!
+//! `Reader` parses games and calls methods of a user provided `Visitor`.
+//! Implementing custom visitors gives maximum flexibility:
+//!
+//! * The reader itself does not allocate. The visitor can decide if and
+//!   how to represent games in memory.
+//! * The reader does not validate move legality. This allows implementing
+//!   support for custom chess variants.
+//! * The visitor can signal to the reader that it does not care about a game
+//!   or variation.
+//!
+//! # Flow
+//!
+//! Visitor methods are called in this order:
+//!
+//! ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
+//!
 //! # Examples
 //!
 //! A visitor that counts the number of moves in each game.
@@ -158,19 +174,34 @@ impl FromStr for Nag {
 pub trait Visitor {
     type Result;
 
+    /// Called at the start of a game.
     fn begin_game(&mut self) { }
 
+    /// Called directly before reading game headers.
     fn begin_headers(&mut self) { }
+    /// Called when parsing a game header like `[White "Deep Blue"]`.
     fn header(&mut self, _key: &[u8], _value: &[u8]) { }
+    /// Called after reading the headers of a game. May skip quickly over the
+    /// following move text directly to `end_game`.
     fn end_headers(&mut self) -> Skip { Skip(false) }
 
+    /// Called for each move, like `Nf3`.
     fn san(&mut self, _san: San) { }
+    /// Called for each numeric annotation glyph, like `!?` or `$7`.
     fn nag(&mut self, _nag: Nag) { }
+    /// Called for each `{ comment }` with the whole comment as a byte slice,
+    /// excluding the braces.
     fn comment(&mut self, _comment: &[u8]) { }
-    fn begin_variation(&mut self) { }
+    /// Called for each '('.
+    fn begin_variation(&mut self) -> Skip { Skip(false) }
+    /// Called for each `)`. It is **not** guaranteed that there was a
+    /// matching `(`. May skip directly to `end_variation` (or `end_game` in
+    /// case no matching `)` follows).
     fn end_variation(&mut self) { }
+    /// Called for each game termination, like `1-0`.
     fn outcome(&mut self, _outcome: Outcome) { }
 
+    /// Called after parsing a game. Can return a custom result.
     fn end_game(&mut self, game: &[u8]) -> Self::Result;
 }
 
@@ -439,6 +470,7 @@ impl<'a, V: Visitor> IntoIterator for Reader<'a, V> {
     }
 }
 
+/// View a `Reader` as an iterator.
 pub struct Iter<'a, V: Visitor> where V: 'a {
     reader: Reader<'a, V>,
 }
