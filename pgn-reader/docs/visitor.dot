@@ -5,18 +5,18 @@ digraph G {
     S -> begin_game;
 
     begin_game -> begin_headers;
-    header [shape=record,label="|header"];
+    header [shape=record,label="header|"];
     header -> header;
     begin_headers -> header;
     header -> end_headers;
 
-    end_headers -> moves [lhead=cluster0;label="Skip(false)"];
     end_headers -> end_game [label="Skip(true)",style=dotted];
+    end_headers -> moves [lhead=cluster0;label="Skip(false)"];
 
     E [shape=point];
     end_game -> E;
 
-    moves [shape=record,label="|<ral> begin_variation|<rar>end_variation|san|nag|comment|outcome"];
+    moves [shape=record,label="san|nag|comment|outcome|<ral> begin_variation|<rar>end_variation|"];
     moves:ral -> moves:rar [taillabel="Skip(true)",style="dotted"];
     moves -> moves;
 
