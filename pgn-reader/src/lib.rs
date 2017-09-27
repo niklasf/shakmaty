@@ -16,13 +16,13 @@
 
 //! A fast non-allocating reader for chess games in PGN notation.
 //!
-//! `Reader` parses games and calls methods of a user provided `Visitor`.
-//! Implementing custom visitors gives maximum flexibility:
+//! [`Reader`] parses games and calls methods of a user provided [`Visitor`].
+//! Implementing custom visitors allows for maximum flexibility:
 //!
 //! * The reader itself does not allocate. The visitor can decide if and
 //!   how to represent games in memory.
 //! * The reader does not validate move legality. This allows implementing
-//!   support for custom chess variants.
+//!   support for custom chess variants, for example using [shakmaty].
 //! * The visitor can signal to the reader that it does not care about a game
 //!   or variation.
 //!
@@ -76,6 +76,11 @@
 //!     let moves: usize = reader.into_iter().sum();
 //!     assert_eq!(moves, 3);
 //! }
+//!
+//! [`Reader`]: struct.Reader.html
+//! [`Visitor`]: trait.Visitor.html
+//! [shakmaty]: ../shakmaty/index.html
+
 extern crate memchr;
 extern crate atoi;
 extern crate shakmaty;
@@ -245,6 +250,9 @@ impl<'a, V: Visitor> fmt::Debug for Reader<'a, V> {
 }
 
 impl<'a, V: Visitor> Reader<'a, V> {
+    /// Creates a new reader with a custom [`Visitor`].
+    ///
+    /// [`Visitor`]: trait.Visitor.html
     pub fn new(visitor: &'a mut V, pgn: &'a[u8]) -> Reader<'a, V> {
         // Skip BOM.
         let pos = if pgn.starts_with(b"\xef\xbb\xbf") { 3 } else { 0 };
@@ -254,6 +262,8 @@ impl<'a, V: Visitor> Reader<'a, V> {
         Reader { visitor, pgn }
     }
 
+    /// Read the next game, returning the result from the visitor, or `None`
+    /// if there was no further game.
     pub fn read_game(&mut self) -> Option<V::Result> {
         // Scan game.
         self.visitor.begin_game();
@@ -277,6 +287,7 @@ impl<'a, V: Visitor> Reader<'a, V> {
         }
     }
 
+    /// Reads all games.
     pub fn read_all(&mut self) {
         while let Some(_) = self.read_game() { }
     }
