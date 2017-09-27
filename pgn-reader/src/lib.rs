@@ -155,6 +155,7 @@ use std::fmt;
 use std::cmp::max;
 use std::str::FromStr;
 use std::error::Error;
+use std::num::Wrapping;
 
 pub use shakmaty::san::San;
 pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
@@ -191,7 +192,9 @@ impl Nag {
         } else if s == b"!?" {
             Ok(Nag(5))
         } else if s.len() > 1 && s[0] == b'$' {
-            atoi(&s[1..]).map(Nag).ok_or(InvalidNag { _priv: () })
+            // Ignore overflows as a workaround for
+            // https://github.com/pacman82/atoi-rs/issues/1.
+            atoi::<Wrapping<_>>(&s[1..]).map(|n| Nag(n.0)).ok_or(InvalidNag { _priv: () })
         } else {
             Err(InvalidNag { _priv: () })
         }
