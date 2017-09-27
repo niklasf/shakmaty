@@ -358,7 +358,7 @@ impl<'a, V: Visitor> Reader<'a, V> {
     }
 
     /// Reads all games.
-    pub fn read_all(&mut self) {
+    pub fn read_all(mut self) {
         while let Some(_) = self.read_game() { }
     }
 
