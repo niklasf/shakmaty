@@ -7,9 +7,11 @@ pub use shakmaty::{Color, CastlingSide, Outcome};
 
 use atoi::atoi;
 
+/// Tell the reader to skip over a game over variation.
 #[derive(Debug)]
 pub struct Skip(pub bool);
 
+/// A numeric annotation glyph like `?`, `!!` or `$42`.
 #[derive(Debug)]
 pub struct Nag(pub u8);
 
@@ -35,6 +37,7 @@ impl Nag {
     }
 }
 
+/// Consumes games from a reader.
 pub trait Visitor {
     type Result;
 
@@ -93,11 +96,30 @@ impl<'a, V: Visitor> Reader<'a, V> {
     }
 
     pub fn read_game(&mut self) -> Option<V::Result> {
-        self.next()
+        // Scan game.
+        self.visitor.begin_game();
+        let pos = self.scan_headers();
+        let pos = if let Skip(false) = self.visitor.end_headers() {
+            self.scan_movetext(pos)
+        } else {
+            self.skip_movetext(pos)
+        };
+
+        // Skip trailing whitespace.
+        let (head, tail) = split_after_pgn_space(self.pgn, pos);
+        self.pgn = tail;
+
+        // Check for any content.
+        if head.iter().all(|c| is_space(*c)) {
+            self.visitor.end_game(head);
+            None
+        } else {
+            Some(self.visitor.end_game(head))
+        }
     }
 
     pub fn read_all(&mut self) {
-        while let Some(_) = self.next() { }
+        while let Some(_) = self.read_game() { }
     }
 
     fn scan_headers(&mut self) -> usize {
@@ -285,25 +307,6 @@ impl<'a, V: Visitor> Iterator for Reader<'a, V> {
     type Item = V::Result;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Scan game.
-        self.visitor.begin_game();
-        let pos = self.scan_headers();
-        let pos = if let Skip(false) = self.visitor.end_headers() {
-            self.scan_movetext(pos)
-        } else {
-            self.skip_movetext(pos)
-        };
-
-        // Skip trailing whitespace.
-        let (head, tail) = split_after_pgn_space(self.pgn, pos);
-        self.pgn = tail;
-
-        // Check for any content.
-        if head.iter().all(|c| is_space(*c)) {
-            self.visitor.end_game(head);
-            None
-        } else {
-            Some(self.visitor.end_game(head))
-        }
+        self.read_game()
     }
 }
