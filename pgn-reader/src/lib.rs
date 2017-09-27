@@ -4,6 +4,7 @@ extern crate shakmaty;
 
 use std::fmt;
 use std::str::FromStr;
+use std::error::Error;
 
 pub use shakmaty::san::San;
 pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
@@ -54,6 +55,24 @@ impl From<u8> for Nag {
 
 pub struct InvalidNag {
     _priv: (),
+}
+
+impl fmt::Debug for InvalidNag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("InvalidNag").finish()
+    }
+}
+
+impl fmt::Display for InvalidNag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "invalid nag".fmt(f)
+    }
+}
+
+impl Error for InvalidNag {
+    fn description(&self) -> &str {
+        "invalid nag"
+    }
 }
 
 impl FromStr for Nag {
