@@ -1,29 +1,16 @@
 digraph G {
-    compound=true;
+    S, E [shape=point];
 
-    S [shape=point];
-    S -> begin_game;
-
-    begin_game -> begin_headers;
+    S -> begin_game -> begin_headers -> header;
     header [shape=record,label="header|"];
-    header -> header;
-    begin_headers -> header;
-    header -> end_headers;
+    header -> header -> end_headers;
 
     end_headers -> end_game [label="Skip(true)",style=dotted];
-    end_headers -> moves [lhead=cluster0;label="Skip(false)"];
-
-    E [shape=point];
-    end_game -> E;
+    end_headers -> moves [label="Skip(false)"];
 
     moves [shape=record,label="san|nag|comment|outcome|<ral> begin_variation|<rar>end_variation|"];
     moves:ral -> moves:rar [taillabel="Skip(true)",style="dotted"];
     moves -> moves;
 
-    moves -> end_game;
-
-
-    //end_headers -> moves;
-    //end_headers -> end_game;
-    //end_headers -> end_game [label="Skip(true)"];
+    moves -> end_game -> E;
 }
