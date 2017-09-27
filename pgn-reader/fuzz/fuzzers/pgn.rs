@@ -6,11 +6,14 @@ extern crate pgn_reader;
 
 use pgn_reader::{Reader, Visitor};
 
-impl Visitor for () {
+struct MyVisitor;
+
+impl Visitor for MyVisitor {
     type Result = ();
     fn end_game(&mut self, _game: &[u8]) { }
 }
 
 fuzz_target!(|data: &[u8]| {
-    let _ = Reader::new((), data).read_all();
+    let mut visitor = MyVisitor;
+    let _ = Reader::new(&mut visitor, data).read_all();
 });
