@@ -162,7 +162,7 @@ pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
 
 use atoi::atoi;
 
-/// Tell the reader to skip over a game over variation.
+/// Tell the reader to skip over a game.
 #[derive(Clone, Eq, PartialEq, Debug)]
 #[must_use]
 pub struct Skip(pub bool);
@@ -269,10 +269,9 @@ pub trait Visitor {
     /// excluding the braces.
     fn comment(&mut self, _comment: &[u8]) { }
     /// Called for each '('.
-    fn begin_variation(&mut self) -> Skip { Skip(false) }
+    fn begin_variation(&mut self) { }
     /// Called for each `)`. It is **not** guaranteed that there was a
-    /// matching `(`. May skip directly to `end_variation` (or `end_game` in
-    /// case no matching `)` follows).
+    /// matching `(`.
     fn end_variation(&mut self) { }
     /// Called for each game termination, like `1-0`.
     fn outcome(&mut self, _outcome: Outcome) { }
