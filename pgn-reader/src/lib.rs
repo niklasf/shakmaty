@@ -91,7 +91,7 @@
 //! extern crate pgn_reader;
 //! extern crate shakmaty;
 //!
-//! use pgn_reader::{Visitor, Reader, San};
+//! use pgn_reader::{Visitor, Skip, Reader, San};
 //!
 //! use shakmaty::{Chess, Position};
 //! use shakmaty::fen::Fen;
