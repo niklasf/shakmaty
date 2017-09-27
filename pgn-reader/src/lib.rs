@@ -1,27 +1,17 @@
-#![feature(core_intrinsics)]
-
-extern crate memmap;
 extern crate memchr;
 extern crate atoi;
-extern crate madvise;
 extern crate shakmaty;
 
-use std::str;
-use std::env;
+pub use shakmaty::san::San;
+pub use shakmaty::{Color, CastlingSide, Outcome};
 
-use memmap::{Mmap, Protection};
-use madvise::{AccessPattern, AdviseMemory};
 use atoi::atoi;
 
-use shakmaty::{Color, CastlingSide, Outcome};
-use shakmaty::{Chess, Setup, Position};
-use shakmaty::san::San;
+#[derive(Debug)]
+pub struct Skip(pub bool);
 
 #[derive(Debug)]
-struct Skip(bool);
-
-#[derive(Debug)]
-struct Nag(u8);
+pub struct Nag(pub u8);
 
 impl Nag {
     fn from_bytes(s: &[u8]) -> Option<Nag> {
@@ -45,12 +35,12 @@ impl Nag {
     }
 }
 
-trait Consumer {
-    type Item;
+pub trait Visitor {
+    type Result;
 
     fn begin_game(&mut self) { }
     fn end_headers(&mut self) -> Skip { Skip(false) }
-    fn end_game(&mut self, game: &[u8]) -> Self::Item;
+    fn end_game(&mut self, game: &[u8]) -> Self::Result;
 
     fn header(&mut self, _key: &[u8], _value: &[u8]) { }
     fn comment(&mut self, _comment: &[u8]) { }
@@ -59,11 +49,6 @@ trait Consumer {
     fn outcome(&mut self, _outcome: Outcome) { }
     fn san(&mut self, _san: San) { }
     fn nag(&mut self, _nag: Nag) { }
-}
-
-#[inline(always)]
-fn unlikely(expr: bool) -> bool {
-    unsafe { ::std::intrinsics::unlikely(expr) }
 }
 
 fn is_space(b: u8) -> bool {
@@ -80,7 +65,7 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
             b'\n' => {
                 // Also skip % comments.
                 pos += 1;
-                if unlikely(pos < pgn.len() && pgn[pos] == b'%') {
+                if pos < pgn.len() && pgn[pos] == b'%' {
                     pos += 1;
                     pos = memchr::memchr(b'\n', &pgn[pos..]).map_or_else(|| pgn.len(), |p| pos + p + 1);
                 }
@@ -92,19 +77,27 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
     pgn.split_at(pos)
 }
 
-struct Scanner<'a, C: Consumer> where C: 'a {
-    consumer: &'a mut C,
+pub struct Reader<'a, V: Visitor> where V: 'a {
+    visitor: &'a mut V,
     pgn: &'a[u8],
 }
 
-impl<'a, C: Consumer> Scanner<'a, C> {
-    fn new(consumer: &'a mut C, pgn: &'a[u8]) -> Scanner<'a, C> {
+impl<'a, V: Visitor> Reader<'a, V> {
+    pub fn new(visitor: &'a mut V, pgn: &'a[u8]) -> Reader<'a, V> {
         // Skip BOM.
         let pos = if pgn.starts_with(b"\xef\xbb\xbf") { 3 } else { 0 };
 
         // Skip leading whitespace.
         let (_, pgn) = split_after_pgn_space(pgn, pos);
-        Scanner { consumer, pgn }
+        Reader { visitor, pgn }
+    }
+
+    pub fn read_game(&mut self) -> Option<V::Result> {
+        self.next()
+    }
+
+    pub fn read_all(&mut self) {
+        while let Some(_) = self.next() { }
     }
 
     fn scan_headers(&mut self) -> usize {
@@ -128,7 +121,7 @@ impl<'a, C: Consumer> Scanner<'a, C> {
                             pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
                             if self.pgn[pos - 1] == b'\n' && self.pgn[pos - 2] == b']' && self.pgn[pos - 3] == b'"' {
                                 let value_end_pos = pos - 3;
-                                self.consumer.header(&self.pgn[key_pos..key_end_pos],
+                                self.visitor.header(&self.pgn[key_pos..key_end_pos],
                                                      &self.pgn[value_pos..value_end_pos]);
                             }
                         },
@@ -201,10 +194,10 @@ impl<'a, C: Consumer> Scanner<'a, C> {
                     pos += 1;
                     pos = if let Some(delta) = memchr::memchr(b'}', &self.pgn[pos..]) {
                         let end = pos + delta;
-                        self.consumer.comment(&self.pgn[pos..end]);
+                        self.visitor.comment(&self.pgn[pos..end]);
                         end + 1
                     } else {
-                        self.consumer.comment(&self.pgn[pos..]);
+                        self.visitor.comment(&self.pgn[pos..]);
                         self.pgn.len()
                     };
                 },
@@ -231,10 +224,10 @@ impl<'a, C: Consumer> Scanner<'a, C> {
                     pos += 1;
                     if self.pgn[pos..].starts_with(b"-0") {
                         pos += 2;
-                        self.consumer.outcome(Outcome::Decisive { winner: Color::White });
+                        self.visitor.outcome(Outcome::Decisive { winner: Color::White });
                     } else if self.pgn[pos..].starts_with(b"/2-1/2") {
                         pos += 6;
-                        self.consumer.outcome(Outcome::Draw);
+                        self.visitor.outcome(Outcome::Draw);
                     } else {
                         pos = self.skip_token(pos);
                     }
@@ -243,30 +236,30 @@ impl<'a, C: Consumer> Scanner<'a, C> {
                     pos += 1;
                     if self.pgn[pos..].starts_with(b"-1") {
                         pos += 2;
-                        self.consumer.outcome(Outcome::Decisive { winner: Color::Black });
+                        self.visitor.outcome(Outcome::Decisive { winner: Color::Black });
                     } else if self.pgn[pos..].starts_with(b"-0-0") {
                         pos += 4;
-                        self.consumer.san(San::Castle(CastlingSide::QueenSide));
+                        self.visitor.san(San::Castle(CastlingSide::QueenSide));
                     } else if self.pgn[pos..].starts_with(b"-0") {
                         pos += 2;
-                        self.consumer.san(San::Castle(CastlingSide::KingSide));
+                        self.visitor.san(San::Castle(CastlingSide::KingSide));
                     } else {
                         pos = self.skip_token(pos);
                     }
                 },
                 b'(' => {
                     pos += 1;
-                    self.consumer.begin_variation();
+                    self.visitor.begin_variation();
                 },
                 b')' => {
                     pos += 1;
-                    self.consumer.end_variation();
+                    self.visitor.end_variation();
                 },
                 b'!' | b'?' | b'$' => {
                     let start = pos;
                     pos = self.skip_token(pos + 1);
                     if let Some(nag) = Nag::from_bytes(&self.pgn[start..pos]) {
-                        self.consumer.nag(nag);
+                        self.visitor.nag(nag);
                     }
                 },
                 b' ' | b'\t' | b'P' => {
@@ -275,9 +268,8 @@ impl<'a, C: Consumer> Scanner<'a, C> {
                 _ => {
                     let end = self.skip_token(pos + 1);
                     if self.pgn[pos] > b'9' {
-                        //self.consumer.san(San::Null);
                         if let Ok(san) = San::from_bytes(&self.pgn[pos..end]) {
-                            self.consumer.san(san);
+                            self.visitor.san(san);
                         }
                     }
                     pos = end;
@@ -289,14 +281,14 @@ impl<'a, C: Consumer> Scanner<'a, C> {
     }
 }
 
-impl<'a, C: Consumer> Iterator for Scanner<'a, C> {
-    type Item = C::Item;
+impl<'a, V: Visitor> Iterator for Reader<'a, V> {
+    type Item = V::Result;
 
     fn next(&mut self) -> Option<Self::Item> {
         // Scan game.
-        self.consumer.begin_game();
+        self.visitor.begin_game();
         let pos = self.scan_headers();
-        let pos = if let Skip(false) = self.consumer.end_headers() {
+        let pos = if let Skip(false) = self.visitor.end_headers() {
             self.scan_movetext(pos)
         } else {
             self.skip_movetext(pos)
@@ -308,61 +300,10 @@ impl<'a, C: Consumer> Iterator for Scanner<'a, C> {
 
         // Check for any content.
         if head.iter().all(|c| is_space(*c)) {
-            self.consumer.end_game(head);
+            self.visitor.end_game(head);
             None
         } else {
-            Some(self.consumer.end_game(head))
+            Some(self.visitor.end_game(head))
         }
-    }
-}
-
-struct Parser {
-    moves: usize,
-    pos: Chess,
-}
-
-impl Parser {
-    fn new() -> Parser {
-        Parser {
-            moves: 0,
-            pos: Chess::default(),
-        }
-    }
-}
-
-impl Consumer for Parser {
-    type Item = ();
-
-    fn begin_game(&mut self) {
-        self.pos = Chess::default();
-    }
-
-    fn san(&mut self, san: San) {
-        self.moves += 1;
-        let m = san.to_move(&self.pos).expect("legal");
-        self.pos.play_unchecked(&m);
-    }
-
-    fn end_game(&mut self, _: &[u8]) { }
-
-    fn header(&mut self, _key: &[u8], _value: &[u8]) { }
-}
-
-fn parse(pgn: &[u8]) {
-    let mut consumer = Parser::new();
-    {
-        let scanner = Scanner::new(&mut consumer, pgn);
-        eprintln!("% games: {}", scanner.count());
-    }
-    eprintln!("% moves: {}", consumer.moves);
-}
-
-fn main() {
-    for arg in env::args().skip(1) {
-        let mmap = Mmap::open_path(&arg, Protection::Read).expect("mmap");
-        let bytes = unsafe { mmap.as_slice() };
-        bytes.advise_memory_access(AccessPattern::Sequential).expect("madvise");
-        parse(bytes);
-        eprintln!("% file completed: {}", &arg);
     }
 }

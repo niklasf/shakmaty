@@ -1,11 +1,23 @@
 [package]
-name = "pgnparser"
-version = "0.1.0"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+name = "pgn-lexer"
+version = "0.1.0" # remember to update html_root_url
+description = "Lets you write visitors for chess games in PGN notation"
+documentation = "https://docs.rs/pgn-lexer"
+repository = "https://github.com/lakinwrecker/pgn-lexer.git"
+readme = "README.md"
+license = "GPL-3.0+"
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>", "Lakin Wecker <lakin@structuredabstraction.com>"]
+categories = ["games", "parser-implementations"]
+keywords = ["chess"]
 
 [dependencies]
-memmap = "0.5"
 memchr = "1.0"
 atoi = "0.2"
-madvise = "0.1.0"
 shakmaty = "0.0.9"
+
+[dev-dependencies]
+memmap = "0.5"
+madvise = "0.1.0"
+
+[badges]
+travis-ci = { repository = "pgn-lexer", branch = "master" }
