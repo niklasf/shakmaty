@@ -347,6 +347,7 @@ impl<'a, V: Visitor> Reader<'a, V> {
     pub fn read_game(&mut self) -> Option<V::Result> {
         // Scan game.
         self.visitor.begin_game();
+        self.visitor.begin_headers();
         let pos = self.scan_headers();
         let pos = if let Skip(false) = self.visitor.end_headers() {
             self.scan_movetext(pos)
