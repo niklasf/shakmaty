@@ -3,6 +3,7 @@ extern crate atoi;
 extern crate shakmaty;
 
 use std::fmt;
+use std::str::FromStr;
 
 pub use shakmaty::san::San;
 pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
@@ -18,23 +19,23 @@ pub struct Skip(pub bool);
 pub struct Nag(pub u8);
 
 impl Nag {
-    fn from_bytes(s: &[u8]) -> Option<Nag> {
+    fn from_bytes(s: &[u8]) -> Result<Nag, InvalidNag> {
         if s == b"?!" {
-            Some(Nag(6))
+            Ok(Nag(6))
         } else if s == b"?" {
-            Some(Nag(2))
+            Ok(Nag(2))
         } else if s == b"??" {
-            Some(Nag(4))
+            Ok(Nag(4))
         } else if s == b"!" {
-            Some(Nag(1))
+            Ok(Nag(1))
         } else if s == b"!!" {
-            Some(Nag(3))
+            Ok(Nag(3))
         } else if s == b"!?" {
-            Some(Nag(5))
+            Ok(Nag(5))
         } else if s.len() > 1 && s[0] == b'$' {
-            atoi(&s[1..]).map(Nag)
+            atoi(&s[1..]).map(Nag).ok_or(InvalidNag { _priv: () })
         } else {
-            None
+            Err(InvalidNag { _priv: () })
         }
     }
 }
@@ -42,6 +43,24 @@ impl Nag {
 impl fmt::Display for Nag {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "${}", self.0)
+    }
+}
+
+impl From<u8> for Nag {
+    fn from(nag: u8) -> Nag {
+        Nag(nag)
+    }
+}
+
+pub struct InvalidNag {
+    _priv: (),
+}
+
+impl FromStr for Nag {
+    type Err = InvalidNag;
+
+    fn from_str(s: &str) -> Result<Nag, InvalidNag> {
+        Nag::from_bytes(s.as_bytes())
     }
 }
 
@@ -300,7 +319,7 @@ impl<'a, V: Visitor> Reader<'a, V> {
                 b'!' | b'?' | b'$' => {
                     let start = pos;
                     pos = self.skip_token(pos + 1);
-                    if let Some(nag) = Nag::from_bytes(&self.pgn[start..pos]) {
+                    if let Ok(nag) = Nag::from_bytes(&self.pgn[start..pos]) {
                         self.visitor.nag(nag);
                     }
                 },
