@@ -124,6 +124,10 @@
 //!         }
 //!     }
 //!
+//!     fn begin_variation(&mut self) -> Skip {
+//!         Skip(true) // stay in the mainline
+//!     }
+//!
 //!     fn san(&mut self, san: San) {
 //!         if let Ok(m) = san.to_move(&self.pos) {
 //!             self.pos.play_unchecked(&m);
