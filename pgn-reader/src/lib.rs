@@ -34,12 +34,13 @@
 //!
 //! # Examples
 //!
-//! A visitor that counts the number of moves in each game.
+//! A visitor that counts the number of syntactically valid moves in mainline
+//! of each game.
 //!
 //! ```
 //! extern crate pgn_reader;
 //!
-//! use pgn_reader::{Visitor, Reader, San};
+//! use pgn_reader::{Visitor, Skip, Reader, San};
 //!
 //! struct MoveCounter {
 //!     moves: usize,
@@ -62,13 +63,17 @@
 //!         self.moves += 1;
 //!     }
 //!
+//!     fn begin_variation(&mut self) -> Skip {
+//!         Skip(true) // stay in the mainline
+//!     }
+//!
 //!     fn end_game(&mut self, _game: &[u8]) -> Self::Result {
 //!         self.moves
 //!     }
 //! }
 //!
 //! fn main() {
-//!     let pgn = b"1. e4 e5 2. Nf3
+//!     let pgn = b"1. e4 e5 2. Nf3 (2. f4)
 //!                 { game paused due to bad weather }
 //!                 2... Nf6 *";
 //!
