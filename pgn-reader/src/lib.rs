@@ -268,8 +268,10 @@ pub trait Visitor {
     /// Called for each `{ comment }` with the whole comment as a byte slice,
     /// excluding the braces.
     fn comment(&mut self, _comment: &[u8]) { }
-    /// Called for each '('.
-    fn begin_variation(&mut self) { }
+    /// Called for each '('. May skip over the following variation directly
+    /// to `end_variation` (or to `end_game` if no `)` follows before the end of
+    /// the game).
+    fn begin_variation(&mut self) -> Skip { Skip(false) }
     /// Called for each `)`. It is **not** guaranteed that there was a
     /// matching `(`.
     fn end_variation(&mut self) { }
@@ -410,6 +412,10 @@ impl<'a, V: Visitor> Reader<'a, V> {
                     pos += 1;
                     pos = memchr::memchr(b'}', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
                 },
+                b';' => {
+                    pos += 1;
+                    pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
+                },
                 b'\n' => {
                     pos += 1;
                     if pos >= self.pgn.len() {
@@ -429,14 +435,61 @@ impl<'a, V: Visitor> Reader<'a, V> {
                         _ => continue,
                     }
                 },
-                b';' => {
-                    pos += 1;
-                    pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
-                },
                 _ => {
                     pos += 1;
                     pos = memchr::memchr3(b'\n', b'{', b';', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
                 },
+            }
+        }
+
+        pos
+    }
+
+    fn skip_variation(&mut self, mut pos: usize) -> usize {
+        let mut depth = 0usize;
+
+        while pos < self.pgn.len() {
+            match self.pgn[pos] {
+                b'(' => {
+                    depth += 1;
+                    pos += 1;
+                },
+                b')' => {
+                    if let Some(d) = depth.checked_sub(1) {
+                        depth = d;
+                    } else {
+                        break;
+                    }
+                },
+                b'{' => {
+                    pos += 1;
+                    pos = memchr::memchr(b'}', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p + 1);
+                },
+                b';' => {
+                    pos += 1;
+                    pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
+                },
+                b'\n' => {
+                    pos += 1;
+                    if pos >= self.pgn.len() {
+                        break;
+                    }
+                    match self.pgn[pos] {
+                        b'%' => {
+                            pos += 1;
+                            pos = memchr::memchr(b'\n', &self.pgn[pos..]).map_or_else(|| self.pgn.len(), |p| pos + p);
+                        },
+                        b'[' | b'\n' => {
+                            // Return to the previous parser and let it handle
+                            // the first line break again (to end the game).
+                            return pos - 1;
+                        },
+                        _ => continue,
+                    }
+                },
+                _ => {
+                    pos += 1;
+                }
             }
         }
 
@@ -520,7 +573,9 @@ impl<'a, V: Visitor> Reader<'a, V> {
                 },
                 b'(' => {
                     pos += 1;
-                    self.visitor.begin_variation();
+                    if let Skip(true) = self.visitor.begin_variation() {
+                        pos = self.skip_variation(pos);
+                    }
                 },
                 b')' => {
                     pos += 1;
