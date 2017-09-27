@@ -1,14 +1,14 @@
 [package]
-name = "pgn-lexer"
+name = "pgn-reader"
 version = "0.1.0" # remember to update html_root_url
-description = "Lets you write visitors for chess games in PGN notation"
-documentation = "https://docs.rs/pgn-lexer"
-repository = "https://github.com/lakinwrecker/pgn-lexer.git"
+description = "Fast non-allocating reader for chess games in PGN notation"
+documentation = "https://docs.rs/pgn-reader"
+repository = "https://github.com/niklasf/rust-pgn-reader.git"
 readme = "README.md"
 license = "GPL-3.0+"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>", "Lakin Wecker <lakin@structuredabstraction.com>"]
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
-keywords = ["chess"]
+keywords = ["chess", "pgn"]
 
 [dependencies]
 memchr = "1.0"
@@ -20,4 +20,4 @@ memmap = "0.5"
 madvise = "0.1.0"
 
 [badges]
-travis-ci = { repository = "pgn-lexer", branch = "master" }
+travis-ci = { repository = "rust-pgn-reader", branch = "master" }

@@ -42,16 +42,19 @@ pub trait Visitor {
     type Result;
 
     fn begin_game(&mut self) { }
-    fn end_headers(&mut self) -> Skip { Skip(false) }
-    fn end_game(&mut self, game: &[u8]) -> Self::Result;
 
+    fn begin_headers(&mut self) { }
     fn header(&mut self, _key: &[u8], _value: &[u8]) { }
+    fn end_headers(&mut self) -> Skip { Skip(false) }
+
+    fn san(&mut self, _san: San) { }
+    fn nag(&mut self, _nag: Nag) { }
     fn comment(&mut self, _comment: &[u8]) { }
     fn begin_variation(&mut self) { }
     fn end_variation(&mut self) { }
     fn outcome(&mut self, _outcome: Outcome) { }
-    fn san(&mut self, _san: San) { }
-    fn nag(&mut self, _nag: Nag) { }
+
+    fn end_game(&mut self, game: &[u8]) -> Self::Result;
 }
 
 fn is_space(b: u8) -> bool {
