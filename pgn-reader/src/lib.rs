@@ -3,7 +3,7 @@ extern crate atoi;
 extern crate shakmaty;
 
 pub use shakmaty::san::San;
-pub use shakmaty::{Color, CastlingSide, Outcome};
+pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
 
 use atoi::atoi;
 
@@ -85,6 +85,7 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
     pgn.split_at(pos)
 }
 
+/// Reads a PGN.
 pub struct Reader<'a, V: Visitor> where V: 'a {
     visitor: &'a mut V,
     pgn: &'a[u8],
