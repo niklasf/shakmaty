@@ -22,7 +22,7 @@
 //! * The reader itself does not allocate. The visitor can decide if and
 //!   how to represent games in memory.
 //! * The reader does not validate move legality. This allows implementing
-//!   support for custom chess variants, for example using [shakmaty].
+//!   support for custom chess variants, or delaying move validation.
 //! * The visitor can signal to the reader that it does not care about a game
 //!   or variation.
 //!
@@ -37,6 +37,8 @@
 //! A visitor that counts the number of moves in each game.
 //!
 //! ```
+//! extern crate pgn_reader;
+//!
 //! use pgn_reader::{Visitor, Reader, San};
 //!
 //! struct MoveCounter {
@@ -74,12 +76,76 @@
 //!     let reader = Reader::new(&mut counter, pgn);
 //!
 //!     let moves: usize = reader.into_iter().sum();
-//!     assert_eq!(moves, 3);
+//!     assert_eq!(moves, 4);
 //! }
+//! ```
+//!
+//! A visitor that returns the final position using [Shakmaty].
+//!
+//! ```
+//! extern crate pgn_reader;
+//! extern crate shakmaty;
+//!
+//! use pgn_reader::{Visitor, Reader, San};
+//!
+//! use shakmaty::{Chess, Position};
+//! use shakmaty::fen::Fen;
+//!
+//! use std::str;
+//!
+//! struct LastPosition {
+//!     pos: Chess,
+//! }
+//!
+//! impl LastPosition {
+//!     fn new() -> LastPosition {
+//!         LastPosition { pos: Chess::default() }
+//!     }
+//! }
+//!
+//! impl Visitor for LastPosition {
+//!     type Result = Chess;
+//!
+//!     fn header(&mut self, key: &[u8], value: &[u8]) {
+//!         // Support games from a non-standard starting position.
+//!         if key == b"FEN" {
+//!             let pos = str::from_utf8(value).ok()
+//!                 .and_then(|h| h.parse::<Fen>().ok())
+//!                 .and_then(|f| f.position().ok());
+//!
+//!             if let Some(pos) = pos {
+//!                 self.pos = pos;
+//!             }
+//!         }
+//!     }
+//!
+//!     fn san(&mut self, san: San) {
+//!         if let Ok(m) = san.to_move(&self.pos) {
+//!             self.pos.play_unchecked(&m);
+//!         }
+//!     }
+//!
+//!     fn end_game(&mut self, _game: &[u8]) -> Self::Result {
+//!         ::std::mem::replace(&mut self.pos, Chess::default())
+//!     }
+//! }
+//!
+//! fn main() {
+//!     let pgn = b"1. f3 e5 2. g4 Qh4#";
+//!
+//!     let mut visitor = LastPosition::new();
+//!     let mut reader = Reader::new(&mut visitor, pgn);
+//!
+//!     let pos = reader.read_game();
+//!     assert!(pos.map_or(false, |p| p.is_checkmate()));
+//! }
+//! ```
 //!
 //! [`Reader`]: struct.Reader.html
 //! [`Visitor`]: trait.Visitor.html
-//! [shakmaty]: ../shakmaty/index.html
+//! [Shakmaty]: ../shakmaty/index.html
+
+#![doc(html_root_url = "https://docs.rs/pgn-reader/0.1.0")]
 
 extern crate memchr;
 extern crate atoi;
@@ -482,7 +548,9 @@ impl<'a, V: Visitor> IntoIterator for Reader<'a, V> {
     }
 }
 
-/// View a `Reader` as an iterator.
+/// View a [`Reader`] as an iterator.
+///
+/// [`Reader`]: struct.Reader.html
 pub struct Iter<'a, V: Visitor> where V: 'a {
     reader: Reader<'a, V>,
 }
