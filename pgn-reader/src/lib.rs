@@ -268,7 +268,7 @@ pub trait Visitor {
     /// Called for each `{ comment }` with the whole comment as a byte slice,
     /// excluding the braces.
     fn comment(&mut self, _comment: &[u8]) { }
-    /// Called for each '('. May skip over the following variation directly
+    /// Called for each `(`. May skip over the following variation directly
     /// to `end_variation` (or to `end_game` if no `)` follows before the end of
     /// the game).
     fn begin_variation(&mut self) -> Skip { Skip(false) }
