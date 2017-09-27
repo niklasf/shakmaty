@@ -38,6 +38,8 @@ impl Nag {
 }
 
 /// Consumes games from a reader.
+///
+/// ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
 pub trait Visitor {
     type Result;
 
