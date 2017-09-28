@@ -90,7 +90,7 @@ examples/stats.rs | 4.0s | 249.4 MB/s
 examples/validate.rs | 10.2s | 98.0 MB/s
 examples/lichess4545.rs | 1.6s | 625.0 MB/s
 [`scoutfish make`](https://github.com/mcostalba/scoutfish) | 10.9s | 96.1 MB/s
-`grep -F "[Event " -c` | 1.1 | 909.1 MB/s
+`grep -F "[Event " -c` | 1.1s | 909.1 MB/s
 
 License
 -------
