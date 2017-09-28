@@ -25,7 +25,7 @@ impl Stats {
     }
 }
 
-impl Visitor for Stats {
+impl<'pgn> Visitor<'pgn> for Stats {
     type Result = ();
 
     fn end_game(&mut self, game: &[u8]) {

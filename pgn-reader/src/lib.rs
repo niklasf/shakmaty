@@ -52,7 +52,7 @@
 //!     }
 //! }
 //!
-//! impl Visitor for MoveCounter {
+//! impl<'pgn> Visitor<'pgn> for MoveCounter {
 //!     type Result = usize;
 //!
 //!     fn begin_game(&mut self) {
@@ -108,7 +108,7 @@
 //!     }
 //! }
 //!
-//! impl Visitor for LastPosition {
+//! impl<'pgn> Visitor<'pgn> for LastPosition {
 //!     type Result = Chess;
 //!
 //!     fn header(&mut self, key: &[u8], value: &[u8]) {

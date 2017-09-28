@@ -26,7 +26,7 @@ impl Validator {
     }
 }
 
-impl Visitor for Validator {
+impl<'pgn> Visitor<'pgn> for Validator {
     type Result = bool;
 
     fn begin_game(&mut self) {

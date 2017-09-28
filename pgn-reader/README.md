@@ -41,7 +41,7 @@ impl MoveCounter {
     }
 }
 
-impl Visitor for MoveCounter {
+impl<'pgn> Visitor<'pgn> for MoveCounter {
     type Result = usize;
 
     fn begin_game(&mut self) {

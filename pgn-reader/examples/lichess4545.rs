@@ -194,7 +194,7 @@ impl<'a> ParticipantFilter<'a> {
     }
 }
 
-impl<'a> Visitor for ParticipantFilter<'a> {
+impl<'a, 'pgn> Visitor<'pgn> for ParticipantFilter<'a> {
     type Result = ();
 
     fn end_game(&mut self, game: &[u8]) {
