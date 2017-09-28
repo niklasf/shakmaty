@@ -8,9 +8,9 @@ use pgn_reader::{Reader, Visitor};
 
 struct MyVisitor;
 
-impl Visitor for MyVisitor {
+impl<'pgn> Visitor<'pgn> for MyVisitor {
     type Result = ();
-    fn end_game(&mut self, _game: &[u8]) { }
+    fn end_game(&mut self, _game: &'pgn [u8]) { }
 }
 
 fuzz_target!(|data: &[u8]| {
