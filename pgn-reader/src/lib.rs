@@ -276,7 +276,7 @@ pub trait Visitor<'pgn> {
     fn nag(&mut self, _nag: Nag) { }
     /// Called for each `{ comment }` with the whole comment as a byte slice,
     /// excluding the braces.
-    fn comment(&mut self, _comment: &[u8]) { }
+    fn comment(&mut self, _comment: &'pgn [u8]) { }
     /// Called for each `(`. May skip over the following variation directly
     /// to `end_variation` (or to `end_game` if no `)` follows before the end of
     /// the game).
@@ -288,7 +288,7 @@ pub trait Visitor<'pgn> {
     fn outcome(&mut self, _outcome: Outcome) { }
 
     /// Called after parsing a game. Can return a custom result.
-    fn end_game(&mut self, game: &[u8]) -> Self::Result;
+    fn end_game(&mut self, game: &'pgn [u8]) -> Self::Result;
 }
 
 fn is_space(b: u8) -> bool {
