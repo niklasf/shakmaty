@@ -1,0 +1,50 @@
+[Event "Rated Classical game"]
+[Site "https://lichess.org/LorxJd1b"]
+[Date "2017.09.27"]
+[Round "-"]
+[White "revoof"]
+[Black "Servasky"]
+[Result "1-0"]
+[UTCDate "2017.09.27"]
+[UTCTime "18:07:15"]
+[WhiteElo "1922"]
+[BlackElo "1860"]
+[WhiteRatingDiff "+9"]
+[BlackRatingDiff "-10"]
+[Variant "Standard"]
+[TimeControl "2700+45"]
+[ECO "E94"]
+[Opening "King's Indian Defense: Orthodox Variation, Positional Defense, Closed Line"]
+[Termination "Normal"]
+[Annotator "lichess.org"]
+
+1. d4 Nf6 2. c4 g6 3. Nc3 Bg7 4. e4 d6 5. Nf3 O-O 6. Be2 Nbd7 7. O-O e5 8. d5
+{ E94 King's Indian Defense: Orthodox Variation, Positional Defense, Closed Line }
+8... Nh5 9. Ne1 f5 $2 { (0.18 → 1.36) Mistake. Best move was Nf4. } ( 9...
+Nf4 10. Bf3 Nc5 11. Be3 f5 12. Bxc5 dxc5 13. Nd3 Nxd3 14. Qxd3 f4 15. a3 Bd7
+16. Rae1 ) 10. Bxh5 $2 { (1.36 → 0.29) Mistake. Best move was exf5. } ( 10.
+exf5 Nf4 11. fxg6 hxg6 12. Bg4 Nf6 13. Bxc8 Qxc8 14. Bxf4 exf4 15. Qb1 Ng4 16.
+Qxg6 Ne5 ) 10... gxh5 11. Qxh5 Nf6 12. Qe2 f4 $6
+{ (0.20 → 1.03) Inaccuracy. Best move was Nxe4. } ( 12... Nxe4 13. Nxe4 fxe4
+14. Qxe4 Bf5 15. Qe2 Qh4 16. Bd2 Bg6 17. Bc3 Qe4 18. Qxe4 Bxe4 19. f3 ) 13. f3
+Qe8 14. Nd3 Rf7 15. Bd2 Bf8 16. Kf2 Rg7 17. Ke1 Qg6 $6
+{ (0.60 → 1.13) Inaccuracy. Best move was Qh5. } ( 17... Qh5 ) 18. Rg1 Bh3 $6
+{ (0.88 → 1.79) Inaccuracy. Best move was c6. } ( 18... c6 19. g3 ) 19. g4
+fxg3 20. hxg3 Bd7 21. Qf2 Be7 22. Be3 a6 23. Kd2 Rf8 24. Qg2 h5 25. Raf1 $6
+{ (1.40 → 0.68) Inaccuracy. Best move was Qe2. } ( 25. Qe2 Nh7 26. Kc2 Ng5
+27. Bxg5 Bxg5 28. Raf1 Bh6 29. b3 Rgf7 30. Kb1 c6 31. Kb2 Bh3 ) 25... h4 26. g4
+Nh5 27. Ne2 Bg5 28. Qf2 $2 { (1.06 → -1.73) Mistake. Best move was Bxg5. } (
+28. Bxg5 Qxg5+ 29. Kc2 c5 30. dxc6 Bxc6 31. Qh2 Nf6 32. Rh1 Rgf7 33. f4 exf4
+34. Qxh4 Qxh4 ) 28... Nf4 $4 { (-1.73 → 1.42) Blunder. Best move was Nf6. } (
+28... Nf6 29. Qg2 Nxe4+ 30. fxe4 Bxe3+ 31. Kxe3 Qg5+ 32. Ndf4 exf4+ 33. Rxf4
+Rgf7 34. Qf2 c5 35. Rf1 ) 29. Nexf4 Bxf4 $4
+{ (1.09 → 4.15) Blunder. Best move was exf4. } ( 29... exf4 30. Bd4 Rh7 31.
+Bc3 h3 32. b3 a5 33. e5 dxe5 34. Nxe5 Qg7 35. Qc5 Be8 36. Nd3 ) 30. Nxf4 $2
+{ (4.15 → 2.86) Mistake. Best move was Bxf4. } ( 30. Bxf4 ) 30... exf4 31.
+Bd4 Rh7 32. Rh1 Qg5 33. Rh3 Kf7 $2
+{ (2.68 → 3.81) Mistake. Best move was Rff7. } ( 33... Rff7 34. Rfh1 ) 34.
+Rfh1 Ke8 35. Rxh4 Rxh4 36. Rxh4 c5 $2
+{ (3.33 → 4.69) Mistake. Best move was Qe7. } ( 36... Qe7 37. Qh2 ) 37. Bc3
+Qg6 $2 { (4.62 → 7.05) Mistake. Best move was b5. } ( 37... b5 38. b3 bxc4
+39. bxc4 Kd8 40. Rh7 Kc8 41. Qh2 Bxg4 42. Ra7 Bxf3 43. Ra8+ Kb7 44. Rxf8 ) 38.
+Qh2 Kd8 39. Rh6 Qe8 { Black resigns. } 1-0
