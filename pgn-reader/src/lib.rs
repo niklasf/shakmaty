@@ -1,4 +1,4 @@
-// This file is part of the shakmaty library.
+// This file is part of the pgn-reader library.
 // Copyright (C) 2017 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
