@@ -26,7 +26,7 @@ impl<'pgn> Visitor<'pgn> for NagVisitor {
     }
 }
 
-fn parse_nag(b: &mut Bencher) {
+fn bench_nag(b: &mut Bencher) {
     b.iter(|| {
         let mut visitor = NagVisitor::default();
         let nag = Reader::new(&mut visitor, black_box(b"$42"))
@@ -63,7 +63,7 @@ impl<'pgn> Visitor<'pgn> for HeaderVisitor<'pgn> {
     }
 }
 
-fn parse_headers(b: &mut Bencher) {
+fn bench_headers(b: &mut Bencher) {
     b.iter(|| {
         let mut visitor = HeaderVisitor::new();
         let headers = Reader::new(&mut visitor, black_box(FIXTURE))
@@ -75,5 +75,5 @@ fn parse_headers(b: &mut Bencher) {
     });
 }
 
-benchmark_group!(benches, parse_nag, parse_headers);
+benchmark_group!(benches, bench_nag, bench_headers);
 benchmark_main!(benches);
