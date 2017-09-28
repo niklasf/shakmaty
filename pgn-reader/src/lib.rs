@@ -256,7 +256,7 @@ impl FromStr for Nag {
 /// Consumes games from a reader.
 ///
 /// ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
-pub trait Visitor {
+pub trait Visitor<'pgn> {
     type Result;
 
     /// Called at the start of a game.
@@ -265,7 +265,7 @@ pub trait Visitor {
     /// Called directly before reading game headers.
     fn begin_headers(&mut self) { }
     /// Called when parsing a game header like `[White "Deep Blue"]`.
-    fn header(&mut self, _key: &[u8], _value: &[u8]) { }
+    fn header(&mut self, _key: &'pgn [u8], _value: &'pgn [u8]) { }
     /// Called after reading the headers of a game. May skip quickly over the
     /// following move text directly to `end_game`.
     fn end_headers(&mut self) -> Skip { Skip(false) }
@@ -318,22 +318,22 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
 }
 
 /// Reads a PGN.
-pub struct Reader<'a, V: Visitor> where V: 'a {
+pub struct Reader<'a, 'pgn, V: Visitor<'pgn>> where V: 'a {
     visitor: &'a mut V,
-    pgn: &'a[u8],
+    pgn: &'pgn[u8],
 }
 
-impl<'a, V: Visitor> fmt::Debug for Reader<'a, V> {
+impl<'a, 'pgn, V: Visitor<'pgn>> fmt::Debug for Reader<'a, 'pgn, V> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Reader").finish()
     }
 }
 
-impl<'a, V: Visitor> Reader<'a, V> {
+impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Creates a new reader with a custom [`Visitor`].
     ///
     /// [`Visitor`]: trait.Visitor.html
-    pub fn new(visitor: &'a mut V, pgn: &'a[u8]) -> Reader<'a, V> {
+    pub fn new(visitor: &'a mut V, pgn: &'pgn[u8]) -> Reader<'a, 'pgn, V> {
         // Skip BOM.
         let pos = if pgn.starts_with(b"\xef\xbb\xbf") { 3 } else { 0 };
 
@@ -641,9 +641,9 @@ impl<'a, V: Visitor> Reader<'a, V> {
     }
 }
 
-impl<'a, V: Visitor> IntoIterator for Reader<'a, V> {
+impl<'a, 'pgn, V: Visitor<'pgn>> IntoIterator for Reader<'a, 'pgn, V> {
     type Item = V::Result;
-    type IntoIter = Iter<'a, V>;
+    type IntoIter = Iter<'a, 'pgn, V>;
 
     fn into_iter(self) -> Self::IntoIter {
         Iter { reader: self }
@@ -653,11 +653,11 @@ impl<'a, V: Visitor> IntoIterator for Reader<'a, V> {
 /// View a [`Reader`] as an iterator.
 ///
 /// [`Reader`]: struct.Reader.html
-pub struct Iter<'a, V: Visitor> where V: 'a {
-    reader: Reader<'a, V>,
+pub struct Iter<'a, 'pgn, V: Visitor<'pgn>> where V: 'a {
+    reader: Reader<'a, 'pgn, V>,
 }
 
-impl<'a, V: Visitor> Iterator for Iter<'a, V> {
+impl<'a, 'pgn, V: Visitor<'pgn>> Iterator for Iter<'a, 'pgn, V> {
     type Item = V::Result;
 
     fn next(&mut self) -> Option<Self::Item> {
