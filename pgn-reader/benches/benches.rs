@@ -5,7 +5,9 @@ extern crate pgn_reader;
 use std::collections::HashMap;
 
 use bencher::{Bencher, black_box};
-use pgn_reader::{Reader, Visitor, Nag};
+use pgn_reader::{Reader, Visitor, Skip, Nag};
+
+const FIXTURE: &[u8] = include_bytes!("fixture.pgn");
 
 #[derive(Default)]
 struct NagVisitor {
@@ -27,7 +29,10 @@ impl<'pgn> Visitor<'pgn> for NagVisitor {
 fn parse_nag(b: &mut Bencher) {
     b.iter(|| {
         let mut visitor = NagVisitor::default();
-        let nag = Reader::new(&mut visitor, black_box(b"$42")).read_game().unwrap();
+        let nag = Reader::new(&mut visitor, black_box(b"$42"))
+            .read_game()
+            .unwrap();
+
         assert_eq!(nag, Some(Nag(42)));
     });
 }
@@ -49,10 +54,26 @@ impl<'pgn> Visitor<'pgn> for HeaderVisitor<'pgn> {
         self.headers.insert(key, value);
     }
 
+    fn end_headers(&mut self) -> Skip {
+        Skip(true)
+    }
+
     fn end_game(&mut self, _game: &[u8]) -> Self::Result {
         ::std::mem::replace(&mut self.headers, HashMap::with_capacity(7))
     }
 }
 
-benchmark_group!(benches, parse_nag);
+fn parse_headers(b: &mut Bencher) {
+    b.iter(|| {
+        let mut visitor = HeaderVisitor::new();
+        let headers = Reader::new(&mut visitor, black_box(FIXTURE))
+            .read_game()
+            .unwrap();
+
+        assert_eq!(headers[&b"White"[..]], b"revoof");
+        assert_eq!(headers[&b"Black"[..]], b"Servasky");
+    });
+}
+
+benchmark_group!(benches, parse_nag, parse_headers);
 benchmark_main!(benches);
