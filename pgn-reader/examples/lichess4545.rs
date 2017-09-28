@@ -197,7 +197,7 @@ impl<'a> ParticipantFilter<'a> {
 impl<'a, 'pgn> Visitor<'pgn> for ParticipantFilter<'a> {
     type Result = ();
 
-    fn end_game(&mut self, game: &[u8]) {
+    fn end_game(&mut self, game: &'pgn [u8]) {
         if self.matches {
             self.games += 1;
             self.matches = false;
@@ -205,7 +205,7 @@ impl<'a, 'pgn> Visitor<'pgn> for ParticipantFilter<'a> {
         }
     }
 
-    fn header(&mut self, key: &[u8], value: &[u8]) {
+    fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
         if !self.matches && (key == b"White" || key == b"Black") {
             if let Ok(name) = str::from_utf8(value) {
                 self.matches = self.participants.contains(name.to_ascii_lowercase().as_str());

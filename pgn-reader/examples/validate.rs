@@ -35,7 +35,7 @@ impl<'pgn> Visitor<'pgn> for Validator {
         self.success = true;
     }
 
-    fn header(&mut self, key: &[u8], value: &[u8]) {
+    fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
             let pos = str::from_utf8(value).ok()
@@ -71,7 +71,7 @@ impl<'pgn> Visitor<'pgn> for Validator {
         }
     }
 
-    fn end_game(&mut self, _game: &[u8]) -> Self::Result {
+    fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
         self.success
     }
 }

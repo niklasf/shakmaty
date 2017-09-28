@@ -56,7 +56,7 @@ impl<'pgn> Visitor<'pgn> for MoveCounter {
         Skip(true) // stay in the mainline
     }
 
-    fn end_game(&mut self, _game: &[u8]) -> Self::Result {
+    fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
         self.moves
     }
 }

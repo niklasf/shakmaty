@@ -28,13 +28,13 @@ impl Stats {
 impl<'pgn> Visitor<'pgn> for Stats {
     type Result = ();
 
-    fn end_game(&mut self, game: &[u8]) {
+    fn end_game(&mut self, game: &'pgn [u8]) {
         if game.len() > 0 {
             self.games += 1;
         }
     }
 
-    fn header(&mut self, _key: &[u8], _value: &[u8]) {
+    fn header(&mut self, _key: &'pgn [u8], _value: &'pgn [u8]) {
         self.headers += 1;
     }
 
@@ -46,7 +46,7 @@ impl<'pgn> Visitor<'pgn> for Stats {
         self.nags += 1;
     }
 
-    fn comment(&mut self, _comment: &[u8]) {
+    fn comment(&mut self, _comment: &'pgn [u8]) {
         self.comments += 1;
     }
 
