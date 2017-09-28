@@ -1,3 +1,6 @@
+// Counts games, moves and other tokens in PGNs.
+// Usage: cargo run --release --example stats -- [PGN]...
+
 extern crate pgn_reader;
 extern crate memmap;
 extern crate madvise;

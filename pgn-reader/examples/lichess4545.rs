@@ -1,3 +1,6 @@
+// Filters games of lichess4545.com participants from PGNs.
+// Usage: cargo run --release --example lichess4545 -- [PGN]...
+
 extern crate pgn_reader;
 extern crate memmap;
 extern crate madvise;

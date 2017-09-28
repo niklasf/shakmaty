@@ -1,3 +1,6 @@
+// Validates moves in PGNs.
+// Usage: cargo run --release --example validate -- [PGN]...
+
 extern crate pgn_reader;
 extern crate memmap;
 extern crate madvise;
