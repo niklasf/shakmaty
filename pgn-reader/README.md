@@ -79,6 +79,16 @@ Documentation
 
 [Read the documentation](https://docs.rs/pgn-reader)
 
+Bechmarks
+---------
+
+Run with [lichess_db_standard_rated_2014-07.pgn](https://database.lichess.org/lichess_db_standard_rated_2014-07.pgn.bz2) (1,048,440 games, 1000 MB uncompressed) on an SSD, Intel i7-5500U CPU @ 2.40GHz.
+
+Benchmark | Time | Throughput
+--- | --- | ---
+examples/stats.rs | 4.01s | 249.4 MB/s
+[scoutfish make](https://github.com/mcostalba/scoutfish) | 10.9s | 96.1 MB/s
+
 License
 -------
 
