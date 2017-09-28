@@ -685,3 +685,10 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Iterator for Iter<'a, 'pgn, V> {
         self.reader.read_game()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct _AssertObjectSafe<'pgn, R>(Box<Visitor<'pgn, Result=R>>);
+}
