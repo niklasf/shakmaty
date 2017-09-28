@@ -28,8 +28,10 @@ impl Stats {
 impl Visitor for Stats {
     type Result = ();
 
-    fn end_game(&mut self, _game: &[u8]) {
-        self.games += 1;
+    fn end_game(&mut self, game: &[u8]) {
+        if game.len() > 0 {
+            self.games += 1;
+        }
     }
 
     fn header(&mut self, _key: &[u8], _value: &[u8]) {
