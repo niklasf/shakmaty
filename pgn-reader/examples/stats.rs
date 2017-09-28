@@ -32,7 +32,7 @@ impl<'pgn> Visitor<'pgn> for Stats {
     type Result = ();
 
     fn end_game(&mut self, game: &'pgn [u8]) {
-        if game.len() > 0 {
+        if !game.is_empty() {
             self.games += 1;
         }
     }
