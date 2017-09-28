@@ -183,11 +183,32 @@ pub struct Nag(pub u8);
 impl Nag {
     /// Tries to parse a NAG from ASCII.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// #
+    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// use pgn_reader::Nag;
+    ///
+    /// assert_eq!(Nag::from_bytes(b"??")?, Nag(4));
+    /// assert_eq!(Nag::from_bytes(b"$24")?, Nag(24));
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() {
+    /// #     try_main().unwrap();
+    /// # }
+    /// ```
+    ///
     /// # Errors
     ///
-    /// Returns an `InvalidNag` error if the input is neither a known glyph
+    /// Returns an [`InvalidNag`] error if the input is neither a known glyph
     /// (`?!`, `!`, ...) nor a valid numeric annotation (`$0`, ..., `$255`).
-    fn from_bytes(s: &[u8]) -> Result<Nag, InvalidNag> {
+    ///
+    ///
+    /// [`InvalidNag`]: struct.InvalidNag.html
+    pub fn from_bytes(s: &[u8]) -> Result<Nag, InvalidNag> {
         if s == b"?!" {
             Ok(Nag(6))
         } else if s == b"?" {
