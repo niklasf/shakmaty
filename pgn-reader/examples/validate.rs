@@ -15,7 +15,6 @@ use memmap::{Mmap, Protection};
 use madvise::{AccessPattern, AdviseMemory};
 
 use std::env;
-use std::str;
 
 struct Validator {
     games: usize,
@@ -41,16 +40,23 @@ impl<'pgn> Visitor<'pgn> for Validator {
     fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
-            let pos = str::from_utf8(value).ok()
-                .and_then(|h| h.parse::<Fen>().ok())
-                .and_then(|f| f.position().ok());
+            let fen = match Fen::from_bytes(value) {
+                Ok(fen) => fen,
+                Err(err) => {
+                    eprintln!("invalid fen header in game {}: {} ({:?})", self.games, err, value);
+                    self.success = false;
+                    return;
+                },
+            };
 
-            if let Some(pos) = pos {
-                self.pos = pos;
-            } else {
-                eprintln!("invalid fen header in game {}: {:?}", self.games, value);
-                self.success = false;
-            }
+            self.pos = match fen.position() {
+                Ok(pos) => pos,
+                Err(err) => {
+                    eprintln!("illegal fen header in game {}: {} ({})", self.games, err, fen);
+                    self.success = false;
+                    return;
+                },
+            };
         }
     }
 

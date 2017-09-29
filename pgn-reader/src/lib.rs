@@ -96,8 +96,6 @@
 //! use shakmaty::{Chess, Position};
 //! use shakmaty::fen::Fen;
 //!
-//! use std::str;
-//!
 //! struct LastPosition {
 //!     pos: Chess,
 //! }
@@ -114,8 +112,7 @@
 //!     fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
-//!             let pos = str::from_utf8(value).ok()
-//!                 .and_then(|h| h.parse::<Fen>().ok())
+//!             let pos = Fen::from_bytes(value).ok()
 //!                 .and_then(|f| f.position().ok());
 //!
 //!             if let Some(pos) = pos {
