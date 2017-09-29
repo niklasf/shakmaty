@@ -130,6 +130,7 @@ impl Square {
     /// # fn main() {
     /// #     try_main().unwrap();
     /// # }
+    /// ```
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {

@@ -271,6 +271,30 @@ impl Fen {
         P::from_setup(self)
     }
 
+    /// Parses a FEN.
+    ///
+    /// # Errors
+    ///
+    /// Returns `FenError` when the input is not a valid FEN.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// #
+    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// use shakmaty::fen::Fen;
+    ///
+    /// let fen = Fen::from_bytes(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
+    /// assert_eq!(fen, Fen::default());
+    /// #
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() {
+    /// #     try_main().unwrap();
+    /// # }
+    /// ```
     pub fn from_bytes(fen: &[u8]) -> Result<Fen, FenError> {
         let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();
