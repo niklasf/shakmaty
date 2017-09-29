@@ -186,19 +186,10 @@ impl Nag {
     /// # Examples
     ///
     /// ```
-    /// # use std::error::Error;
-    /// #
-    /// # fn try_main() -> Result<(), Box<Error>> {
     /// use pgn_reader::Nag;
     ///
-    /// assert_eq!(Nag::from_bytes(b"??")?, Nag(4));
-    /// assert_eq!(Nag::from_bytes(b"$24")?, Nag(24));
-    /// #     Ok(())
-    /// # }
-    /// #
-    /// # fn main() {
-    /// #     try_main().unwrap();
-    /// # }
+    /// assert_eq!(Nag::from_bytes(b"??"), Ok(Nag(4)));
+    /// assert_eq!(Nag::from_bytes(b"$24"), Ok(Nag(24)));
     /// ```
     ///
     /// # Errors
@@ -244,6 +235,7 @@ impl From<u8> for Nag {
 }
 
 /// Error when parsing an invalid NAG.
+#[derive(Clone, Eq, PartialEq)]
 pub struct InvalidNag {
     _priv: (),
 }
