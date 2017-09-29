@@ -25,4 +25,4 @@ madvise = "0.1"
 bencher = "0.1"
 
 [badges]
-travis-ci = { repository = "rust-pgn-reader", branch = "master" }
+travis-ci = { repository = "niklasf/rust-pgn-reader", branch = "master" }
