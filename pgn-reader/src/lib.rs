@@ -157,19 +157,18 @@
 #![doc(html_root_url = "https://docs.rs/pgn-reader/0.1.0")]
 
 extern crate memchr;
-extern crate atoi;
+extern crate btoi;
 extern crate shakmaty;
 
 use std::fmt;
 use std::cmp::max;
 use std::str::FromStr;
 use std::error::Error;
-use std::num::Wrapping;
 
 pub use shakmaty::san::San;
 pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
 
-use atoi::atoi;
+use btoi::btou;
 
 /// Tell the reader to skip over a game.
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -213,9 +212,7 @@ impl Nag {
         } else if s == b"!?" {
             Ok(Nag(5))
         } else if s.len() > 1 && s[0] == b'$' {
-            // Ignore overflows as a workaround for
-            // https://github.com/pacman82/atoi-rs/issues/1.
-            atoi::<Wrapping<_>>(&s[1..]).map(|n| Nag(n.0)).ok_or(InvalidNag { _priv: () })
+            btou(&s[1..]).ok().map(Nag).ok_or(InvalidNag { _priv: () })
         } else {
             Err(InvalidNag { _priv: () })
         }
