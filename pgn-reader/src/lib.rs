@@ -153,6 +153,8 @@
 
 #![doc(html_root_url = "https://docs.rs/pgn-reader/0.1.0")]
 
+#![warn(missing_debug_implementations)]
+
 extern crate memchr;
 extern crate btoi;
 extern crate shakmaty;
@@ -662,6 +664,12 @@ impl<'a, 'pgn, V: Visitor<'pgn>> IntoIterator for Reader<'a, 'pgn, V> {
 /// [`Reader`]: struct.Reader.html
 pub struct Iter<'a, 'pgn, V: Visitor<'pgn>> where V: 'a {
     reader: Reader<'a, 'pgn, V>,
+}
+
+impl<'a, 'pgn, V: Visitor<'pgn>> fmt::Debug for Iter<'a, 'pgn, V> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("Iter").finish()
+    }
 }
 
 impl<'a, 'pgn, V: Visitor<'pgn>> Iterator for Iter<'a, 'pgn, V> {
