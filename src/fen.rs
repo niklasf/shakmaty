@@ -155,27 +155,25 @@ impl Error for FenError {
     }
 }
 
-impl FromStr for Board {
-    type Err = FenError;
-
-    fn from_str(board_fen: &str) -> Result<Board, FenError> {
+impl Board {
+    fn from_board_fen(board_fen: &[u8]) -> Result<Board, FenError> {
         let mut board = Board::empty();
 
         let mut rank = 7i8;
         let mut file = 0i8;
         let mut promoted = false;
 
-        for ch in board_fen.chars() {
-            if ch == '/' {
+        for ch in board_fen {
+            if *ch == b'/' && file == 8 {
                 file = 0;
                 rank = rank.saturating_sub(1);
-            } else if ch == '~' {
+            } else if *ch == b'~' {
                 promoted = true;
                 continue;
-            } else if let Some(empty) = ch.to_digit(10) {
-                file = file.saturating_add(empty as i8);
-            } else if let Some(piece) = Piece::from_char(ch) {
-                match Square::from_coords(file as i8, rank) {
+            } else if b'1' <= *ch && *ch <= b'8' {
+                file = file.saturating_add((*ch - b'0') as i8);
+            } else if let Some(piece) = Piece::from_char(*ch as char) {
+                match Square::from_coords(file, rank) {
                     Some(sq) => {
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
@@ -192,7 +190,19 @@ impl FromStr for Board {
             }
         }
 
-        Ok(board)
+        if rank == 0 && file == 8 {
+            Ok(board)
+        } else {
+            Err(FenError::InvalidBoard)
+        }
+    }
+}
+
+impl FromStr for Board {
+    type Err = FenError;
+
+    fn from_str(board_fen: &str) -> Result<Board, FenError> {
+        Board::from_board_fen(board_fen.as_bytes())
     }
 }
 
