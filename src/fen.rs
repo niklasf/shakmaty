@@ -339,7 +339,7 @@ impl Fen {
             Some(b"-") | None => (),
             Some(castling_part) => {
                 for &ch in castling_part {
-                    let color = Color::from_bool((ch as char).is_ascii_uppercase());
+                    let color = Color::from_bool(ch < b'a'); // uppercase
 
                     let candidates = Bitboard::relative_rank(color, 0) &
                                      result.board.by_piece(color.rook());
