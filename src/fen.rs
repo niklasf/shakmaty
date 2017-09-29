@@ -347,9 +347,8 @@ impl Fen {
                     let flag = match (ch as char).to_ascii_lowercase() {
                         'k' => candidates.last(),
                         'q' => candidates.first(),
-                        'a' ... 'h' => {
-                            let file = (ch - b'a') as i8;
-                            (candidates & Bitboard::file(file)).first()
+                        file @ 'a' ... 'h' => {
+                            (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
                         },
                         _ => return Err(FenError::InvalidCastling),
                     };
@@ -509,6 +508,11 @@ mod tests {
         let pos: Chess = fen.position().expect("legal position");
         assert_eq!(epd(&pos, &FenOpts::default()),
                    "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+    }
+
+    #[test]
+    fn test_invalid_fen() {
+        assert!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1".parse::<Fen>().is_err());
     }
 
     #[test]
