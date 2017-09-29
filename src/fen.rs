@@ -18,7 +18,8 @@
 //!
 //! # Examples
 //!
-//! `fen::fen()` and `fen::epd()` can produce a FEN for any `Setup`.
+//! [`fen::fen()`](fn.fen.html) and [`fen::epd()`](fn.epd.html) can produce a
+//! FEN for any [`Setup`].
 //!
 //! ```
 //! use shakmaty::fen;
@@ -31,7 +32,7 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 //!
-//! `Fen` and `Board` also implement `Display`:
+//! [`Fen`] and [`Board`] also implement [`Display`]:
 //!
 //! ```
 //! use shakmaty::fen::Fen;
@@ -64,6 +65,11 @@
 //! #     try_main().unwrap();
 //! # }
 //! ```
+//!
+//! [`Setup`]: ../trait.Setup.html
+//! [`Board`]: ../struct.Board.html
+//! [`Fen`]: struct.Fen.html
+//! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 
 use std::str::FromStr;
 use std::ascii::AsciiExt;
@@ -254,6 +260,7 @@ impl Default for Fen {
 }
 
 impl Fen {
+    /// The FEN of the empty position `8/8/8/8/8/8/8/8 w - - 0 1`.
     pub fn empty() -> Fen {
         Fen {
             board: Board::empty(),
@@ -262,11 +269,14 @@ impl Fen {
         }
     }
 
-    /// Set up a `Position`.
+    /// Set up a [`Position`].
     ///
     /// # Errors
     ///
-    /// Errors if the setup is not a legal position.
+    /// Returns [`PositionError`] if the setup is not a legal position.
+    ///
+    /// [`Position`]: ../trait.Position.html
+    /// [`PositionError`]: ../enum.PositionError.html
     pub fn position<P: Position>(&self) -> Result<P, PositionError> {
         P::from_setup(self)
     }
@@ -275,7 +285,7 @@ impl Fen {
     ///
     /// # Errors
     ///
-    /// Returns `FenError` when the input is not a valid FEN.
+    /// Returns [`FenError`] if the input is not a valid FEN.
     ///
     /// # Example
     ///
@@ -295,6 +305,8 @@ impl Fen {
     /// #     try_main().unwrap();
     /// # }
     /// ```
+    ///
+    /// [`FenError`]: enum.FenError.html
     pub fn from_bytes(fen: &[u8]) -> Result<Fen, FenError> {
         let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();

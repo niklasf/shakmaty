@@ -126,7 +126,10 @@ impl Role {
 
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
-/// A piece with `Color` and `Role`.
+/// A piece with [`Color`] and [`Role`].
+///
+/// [`Color`]: enum.Color.html
+/// [`Role`]: enum.Role.html
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Piece {
     pub color: Color,

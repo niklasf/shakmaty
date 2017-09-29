@@ -46,7 +46,10 @@ impl fmt::Display for Outcome {
     }
 }
 
-/// Reasons for a `Setup` not beeing a legal `Position`.
+/// Reasons for a [`Setup`] not beeing a legal [`Position`].
+///
+/// [`Setup`]: trait.Setup.html
+/// [`Position`]: trait.Position.html
 #[derive(Debug)]
 pub enum PositionError {
     Empty,
@@ -105,14 +108,18 @@ impl Error for IllegalMove {
     }
 }
 
-/// A legal chess or chess variant position. See `Chess` for a concrete
+/// A legal chess or chess variant position. See [`Chess`] for a concrete
 /// implementation.
+///
+/// [`Chess`]: struct.Chess.html
 pub trait Position: Setup {
     /// Set up a position.
     ///
     /// # Errors
     ///
-    /// Errors if the setup is not legal.
+    /// Returns [`PositionError`] if the setup is not legal.
+    ///
+    /// [`PositionError`]: enum.PositionError.html
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> where Self: Sized;
 
     /// Generates legal moves.
@@ -127,7 +134,9 @@ pub trait Position: Setup {
     /// # Panics
     ///
     /// Panics if `moves` is too full. This can not happen if an empty
-    /// `MoveList` is passed.
+    /// [`MoveList`] is passed.
+    ///
+    /// [`MoveList`]: type.MoveList.html
     fn legal_moves(&self, moves: &mut MoveList);
 
     /// Generates a subset of legal moves: All piece moves and drops of type
@@ -136,7 +145,9 @@ pub trait Position: Setup {
     /// # Panics
     ///
     /// Panics if `moves` is too full. This can not happen if an empty
-    /// `MoveList` is passed.
+    /// [`MoveList`] is passed.
+    ///
+    /// [`MoveList`]: type.MoveList.html
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.legal_moves(moves);
         filter_san_candidates(role, to, moves);
@@ -147,7 +158,9 @@ pub trait Position: Setup {
     /// # Panics
     ///
     /// Panics if `moves` is too full. This can not happen if an empty
-    /// `MoveList` is passed.
+    /// [`MoveList`] is passed.
+    ///
+    /// [`MoveList`]: type.MoveList.html
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
         self.legal_moves(moves);
         moves.retain(|m| match *m {
@@ -210,7 +223,8 @@ pub trait Position: Setup {
     ///
     /// Note that for example stalemate is not considered a variant-specific
     /// end condition (`is_variant_end()` will return `false`), but it can have
-    /// a special `variant_outcome()` in suicide chess.
+    /// a special [`variant_outcome()`](#tymethod.variant_outcome) in suicide
+    /// chess.
     fn is_variant_end(&self) -> bool;
 
     /// Tests for checkmate.
@@ -238,8 +252,10 @@ pub trait Position: Setup {
     /// Tests for insufficient winning material.
     fn is_insufficient_material(&self) -> bool;
 
-    /// Tests if the game is over due to checkmate, stalemate, insufficient
-    /// material or variant end.
+    /// Tests if the game is over due to [checkmate](#method.is_checkmate),
+    /// [stalemate](#method.is_stalemate),
+    /// [insufficient material](#tymethod.is_insufficient_material) or
+    /// [variant end](#tymethod.is_variant_end).
     fn is_game_over(&self) -> bool {
         let mut legals = MoveList::new();
         self.legal_moves(&mut legals);
@@ -266,7 +282,9 @@ pub trait Position: Setup {
     ///
     /// # Errors
     ///
-    /// Errors if the move is illegal in the position.
+    /// Returns [`IllegalMove`] if the move is not legal in the position.
+    ///
+    /// [`IllegalMove`]: struct.IllegalMove.html
     fn play(mut self, m: &Move) -> Result<Self, IllegalMove>
         where Self: Sized
     {

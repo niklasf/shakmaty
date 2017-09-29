@@ -113,7 +113,7 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
     }
 }
 
-/// The rank, file or diagonal with the two squares (or an empty `Bitboard`
+/// The rank, file or diagonal with the two squares (or an empty [`Bitboard`]
 /// if they are not aligned).
 ///
 /// ```
@@ -130,6 +130,8 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// // . . . . 1 . . .
 /// // . . . 1 . . . .
 /// ```
+///
+/// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
@@ -138,7 +140,7 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 }
 
 /// The squares between the two squares (bounds not included), or an empty
-/// `Bitboard` if they are not on the same rank, file or diagonal.
+/// [`Bitboard`] if they are not on the same rank, file or diagonal.
 ///
 /// ```
 /// # use shakmaty::square;
@@ -153,6 +155,8 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// // . 1 . . . . . .
 /// // . 1 . . . . . .
 /// // . 0 . . . . . .
+///
+/// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.

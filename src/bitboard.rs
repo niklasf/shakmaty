@@ -30,7 +30,8 @@ extern "platform-intrinsic" {
     fn x86_bmi2_pdep_64(src: u64, mask: u64) -> u64;
 }
 
-/// A set of squares represented by a 64 bit integer mask.
+/// A set of [squares](square/struct.Square.html) represented by a 64 bit
+/// integer mask.
 ///
 /// # Examples
 ///
@@ -500,7 +501,9 @@ impl DoubleEndedIterator for Bitboard {
     }
 }
 
-/// Iterator over the subsets of a `Bitboard`.
+/// Iterator over the subsets of a [`Bitboard`].
+///
+/// [`Bitboard`]: struct.Bitboard.html
 #[derive(Debug)]
 pub struct CarryRippler {
     bb: u64,

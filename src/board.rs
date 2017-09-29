@@ -22,7 +22,7 @@ use types::{Color, Role, Piece};
 use bitboard::Bitboard;
 use attacks;
 
-/// Piece positions on a board.
+/// [`Piece`] positions on a board.
 ///
 /// # Examples
 ///
@@ -41,6 +41,8 @@ use attacks;
 ///
 /// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
 /// ```
+///
+/// [`Piece`]: struct.Piece.html
 #[derive(Clone, Eq, PartialEq)]
 pub struct Board {
     occupied: Bitboard,
@@ -266,7 +268,9 @@ impl fmt::Debug for Board {
     }
 }
 
-/// Iterator over the pieces of a `Board`.
+/// Iterator over the pieces of a [`Board`].
+///
+/// [`Board`]: struct.Board.html
 #[derive(Clone)]
 pub struct Pieces {
     pawns: Bitboard,

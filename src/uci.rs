@@ -69,7 +69,7 @@
 //! # }
 //! ```
 //!
-//! Converting from `Move` to `Uci`:
+//! Converting from [`Move`] to [`Uci`]:
 //!
 //! ```
 //! # use shakmaty::{Move, Role};
@@ -88,6 +88,9 @@
 //! let uci: Uci = m.into();
 //! assert_eq!(uci.to_string(), "a1h8");
 //! ```
+//!
+//! [`Move`]: ../enum.Move.html
+//! [`Uci`]: enum.Uci.html
 
 use std::fmt;
 use std::ascii::AsciiExt;
@@ -186,6 +189,12 @@ impl From<Move> for Uci {
 
 impl Uci {
     /// Parses a move in UCI notation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`InvalidUci`] if `uci` is not syntactically valid.
+    ///
+    /// [`InvalidUci`]: struct.InvalidUci.html
     pub fn from_bytes(uci: &[u8]) -> Result<Uci, InvalidUci> {
         if uci.len() != 4 && uci.len() != 5 {
             return Err(InvalidUci { _priv: () });
@@ -213,12 +222,15 @@ impl Uci {
         }
     }
 
-    /// Tries to convert the `Uci` to a legal `Move` in the context of a
+    /// Tries to convert the `Uci` to a legal [`Move`] in the context of a
     /// position.
     ///
     /// # Errors
     ///
-    /// Errors if the move is not legal.
+    /// Returns [`IllegalMove`] if the move is not legal.
+    ///
+    /// [`Move`]: ../enum.Move.html
+    /// [`IllegalMove`]: ../struct.IllegalMove.html
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMove> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {

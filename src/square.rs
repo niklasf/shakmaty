@@ -109,8 +109,8 @@ impl Square {
     ///
     /// # Errors
     ///
-    /// Errors when the input is not a valid square name in lowercase ASCII
-    /// characters.
+    /// Returns [`InvalidSquareName`] if the input is not a valid square name
+    /// in lowercase ASCII characters.
     ///
     /// # Example
     ///
@@ -131,6 +131,8 @@ impl Square {
     /// #     try_main().unwrap();
     /// # }
     /// ```
+    ///
+    /// [`InvalidSquareName`]: struct.InvalidSquareName.html
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {

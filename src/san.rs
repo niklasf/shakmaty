@@ -194,7 +194,13 @@ fn file_from_char(ch: u8) -> Option<i8> {
 }
 
 impl San {
-    /// Parse SAN.
+    /// Parses a SAN. Ignores a possible check or checkmate suffix.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`InvalidSan`] if `san` is not syntactically valid.
+    ///
+    /// [`InvalidSan`]: struct.InvalidSan.html
     pub fn from_bytes(mut san: &[u8]) -> Result<San, InvalidSan> {
         if san.ends_with(b"#") || san.ends_with(b"+") {
             san = &san[0..(san.len() - 1)];
@@ -275,6 +281,12 @@ impl San {
 
     /// Tries to convert the `San` to a legal move in the context of a
     /// position.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`SanError`] if there is no matching legal move.
+    ///
+    /// [`SanError`]: enum.SanError.html
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
         let mut legals = MoveList::new();
 
@@ -356,7 +368,9 @@ impl fmt::Display for San {
     }
 }
 
-/// A `San` and possible check and checkmate suffixes.
+/// A [`San`] and possible check and checkmate suffixes.
+///
+/// [`San`]: enum.San.html
 pub struct SanPlus {
     pub san: San,
     pub check: bool,
@@ -364,6 +378,13 @@ pub struct SanPlus {
 }
 
 impl SanPlus {
+    /// Parses a SAN and possible check and checkmate suffix.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`InvalidSan`] if `san` is not syntactically valid.
+    ///
+    /// [`InvalidSan`]: struct.InvalidSan.html
     pub fn from_bytes(san: &[u8]) -> Result<SanPlus, InvalidSan> {
         San::from_bytes(san).map(|result| {
             SanPlus {

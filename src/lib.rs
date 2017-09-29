@@ -68,7 +68,8 @@
 //! assert_eq!(pos.outcome(), None); // no winner yet
 //! ```
 //!
-//! Also supports FEN, SAN and UCI formats for positions and moves.
+//! Also supports [FEN](fen/index.html), [SAN](san/index.html) and
+//! [UCI](uci/index.html) formats for positions and moves.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.0.9")]
 
