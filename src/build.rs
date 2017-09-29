@@ -1,6 +1,3 @@
-#![feature(cfg_target_feature)]
-#![feature(platform_intrinsics)]
-#![feature(const_fn)]
 #![feature(exact_size_is_empty)]
 
 #![allow(dead_code)]

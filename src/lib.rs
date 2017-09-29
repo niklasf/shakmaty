@@ -78,7 +78,6 @@
 #![cfg_attr(test, feature(test))]
 #![feature(ascii_ctype)]
 #![feature(exact_size_is_empty)]
-#![feature(cfg_target_feature)]
 
 #[cfg(test)]
 extern crate test;
