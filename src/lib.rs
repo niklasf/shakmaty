@@ -76,7 +76,6 @@
 #![warn(missing_debug_implementations)]
 
 #![cfg_attr(test, feature(test))]
-#![feature(const_fn)]
 #![feature(ascii_ctype)]
 #![feature(exact_size_is_empty)]
 #![feature(cfg_target_feature)]

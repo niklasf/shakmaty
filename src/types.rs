@@ -61,17 +61,17 @@ impl Color {
     pub fn char(self) -> char { self.fold('w', 'b') }
 
     #[inline]
-    pub const fn pawn(self)   -> Piece { Pawn.of(self) }
+    pub fn pawn(self)   -> Piece { Pawn.of(self) }
     #[inline]
-    pub const fn knight(self) -> Piece { Knight.of(self) }
+    pub fn knight(self) -> Piece { Knight.of(self) }
     #[inline]
-    pub const fn bishop(self) -> Piece { Bishop.of(self) }
+    pub fn bishop(self) -> Piece { Bishop.of(self) }
     #[inline]
-    pub const fn rook(self)   -> Piece { Rook.of(self) }
+    pub fn rook(self)   -> Piece { Rook.of(self) }
     #[inline]
-    pub const fn queen(self)  -> Piece { Queen.of(self) }
+    pub fn queen(self)  -> Piece { Queen.of(self) }
     #[inline]
-    pub const fn king(self)   -> Piece { King.of(self) }
+    pub fn king(self)   -> Piece { King.of(self) }
 }
 
 impl ops::Not for Color {
@@ -108,7 +108,7 @@ impl Role {
     }
 
     #[inline]
-    pub const fn of(self, color: Color) -> Piece {
+    pub fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
 

@@ -63,7 +63,7 @@ impl Bitboard {
 
     /// A bitboard containing all squares.
     #[inline]
-    pub const fn all() -> Bitboard {
+    pub fn all() -> Bitboard {
         Bitboard(!0u64)
     }
 
