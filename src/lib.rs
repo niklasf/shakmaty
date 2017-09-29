@@ -73,6 +73,8 @@
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.0.10")]
 
+#![warn(missing_debug_implementations)]
+
 #![cfg_attr(test, feature(test))]
 #![feature(const_fn)]
 #![feature(ascii_ctype)]

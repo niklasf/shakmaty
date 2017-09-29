@@ -371,6 +371,7 @@ impl fmt::Display for San {
 /// A [`San`] and possible check and checkmate suffixes.
 ///
 /// [`San`]: enum.San.html
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SanPlus {
     pub san: San,
     pub check: bool,
