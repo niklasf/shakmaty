@@ -3,6 +3,7 @@ name = "shakmaty"
 version = "0.0.9" # remember to update html_root_url
 description = "A library for chess move generation"
 documentation = "https://docs.rs/shakmaty"
+homepage = "https://github.com/niklasf/shakmaty"
 repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
 license = "GPL-3.0+"
@@ -20,4 +21,4 @@ version = "0.4"
 features = ["use_union"]
 
 [badges]
-travis-ci = { repository = "shakmaty", branch = "master" }
+travis-ci = { repository = "niklasf/shakmaty", branch = "master" }
