@@ -114,6 +114,11 @@ impl Bitboard {
     }
 
     #[inline]
+    pub fn is_empty(self) -> bool {
+        self.0 == 0
+    }
+
+    #[inline]
     pub fn contains(self, sq: Square) -> bool {
         !(self & Bitboard::from_square(sq)).is_empty()
     }
@@ -554,6 +559,12 @@ mod tests {
         assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(),
                    Some(square::H1));
         assert_eq!(Bitboard(0).last(), None);
+    }
+
+    #[test]
+    fn test_is_empty() {
+        assert!(Bitboard(0).is_empty());
+        assert!(!Bitboard(1).is_empty());
     }
 
     #[test]
