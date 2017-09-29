@@ -79,7 +79,6 @@
 #![feature(ascii_ctype)]
 #![feature(exact_size_is_empty)]
 #![feature(cfg_target_feature)]
-#![feature(platform_intrinsics)]
 
 #[cfg(test)]
 extern crate test;
