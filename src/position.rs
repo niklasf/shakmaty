@@ -875,13 +875,13 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
     });
 }
 
-struct _AssertObjectSafe(Box<Position>);
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use test::Bencher;
     use fen::Fen;
+
+    struct _AssertObjectSafe(Box<Position>);
 
     #[test]
     fn test_most_known_legals() {

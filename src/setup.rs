@@ -181,3 +181,10 @@ impl Castling {
         mask
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct _AssertObjectSafe(Box<Setup>);
+}
