@@ -84,6 +84,7 @@ extern crate test;
 
 extern crate arrayvec;
 extern crate option_filter;
+extern crate btoi;
 
 mod types;
 mod bitboard;

@@ -71,6 +71,8 @@ use std::fmt;
 use std::char;
 use std::error::Error;
 
+use btoi;
+
 use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
 use bitboard;
@@ -268,53 +270,51 @@ impl Fen {
     pub fn position<P: Position>(&self) -> Result<P, PositionError> {
         P::from_setup(self)
     }
-}
 
-impl FromStr for Fen {
-    type Err = FenError;
-
-    fn from_str(fen: &str) -> Result<Fen, FenError> {
-        let mut parts = fen.split(' ');
+    pub fn from_bytes(fen: &[u8]) -> Result<Fen, FenError> {
+        let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();
 
         let board_part = parts.next().expect("splits have at least one part");
 
-        let (board_part, pockets) = if board_part.ends_with(']') {
-            let split_point = board_part.find('[').ok_or(FenError::InvalidBoard)?;
+        let (board_part, pockets) = if board_part.ends_with(b"]") {
+            let split_point = board_part
+                .iter().position(|ch| *ch == b'[')
+                .ok_or(FenError::InvalidBoard)?;
             let mut pockets = Pockets::default();
-            for ch in board_part[(split_point + 1)..(board_part.len() - 1)].chars() {
-                let piece = Piece::from_char(ch).ok_or(FenError::InvalidPocket)?;
-                pockets.add(piece);
+            for &ch in &board_part[(split_point + 1)..(board_part.len() - 1)] {
+                pockets.add(Piece::from_char(ch as char).ok_or(FenError::InvalidPocket)?);
             }
             (&board_part[..split_point], Some(pockets))
         } else {
             (board_part, None)
         };
 
-        result.board = board_part.parse()?;
+        result.board = Board::from_board_fen(board_part)?;
         result.pockets = pockets;
 
         result.turn = match parts.next() {
-            Some("w") | None => White,
-            Some("b") => Black,
+            Some(b"w") | None => White,
+            Some(b"b") => Black,
             Some(_) => return Err(FenError::InvalidTurn),
         };
 
         match parts.next() {
-            Some("-") | None => (),
+            Some(b"-") | None => (),
             Some(castling_part) => {
-                for ch in castling_part.chars() {
-                    let color = Color::from_bool(ch.is_ascii_uppercase());
+                for &ch in castling_part {
+                    let color = Color::from_bool((ch as char).is_ascii_uppercase());
 
                     let candidates = Bitboard::relative_rank(color, 0) &
                                      result.board.by_piece(color.rook());
 
-                    let flag = match ch.to_ascii_lowercase() {
+                    let flag = match (ch as char).to_ascii_lowercase() {
                         'k' => candidates.last(),
                         'q' => candidates.first(),
-                        file if 'a' <= file && file <= 'h' => {
-                            (candidates & Bitboard::file(file as i8 - 'a' as i8)).first()
-                        }
+                        'a' ... 'h' => {
+                            let file = (ch - b'a') as i8;
+                            (candidates & Bitboard::file(file)).first()
+                        },
                         _ => return Err(FenError::InvalidCastling),
                     };
 
@@ -324,17 +324,20 @@ impl FromStr for Fen {
         }
 
         match parts.next() {
-            Some("-") | None => (),
-            Some(ep_part) =>
-                result.ep_square = Some(Square::from_str(ep_part).map_err(|_| FenError::InvalidEpSquare)?)
+            Some(b"-") | None => (),
+            Some(ep_part) => {
+                result.ep_square =
+                    Some(Square::from_bytes(ep_part)
+                            .map_err(|_| FenError::InvalidEpSquare)?);
+            },
         }
 
         let halfmoves_part = if let Some(checks_part) = parts.next() {
-            let mut checks = checks_part.splitn(2, '+');
+            let mut checks = checks_part.splitn(2, |ch| *ch == b'+');
             if let (Some(w), Some(b)) = (checks.next(), checks.next()) {
                 result.remaining_checks = Some(RemainingChecks {
-                    white: w.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
-                    black: b.parse().map_err(|_| FenError::InvalidRemainingChecks)?,
+                    white: btoi::btou(w).map_err(|_| FenError::InvalidRemainingChecks)?,
+                    black: btoi::btou(b).map_err(|_| FenError::InvalidRemainingChecks)?,
                 });
                 parts.next()
             } else {
@@ -344,20 +347,25 @@ impl FromStr for Fen {
             None
         };
 
-
         if let Some(halfmoves_part) = halfmoves_part {
-            result.halfmove_clock = halfmoves_part
-                .parse()
+            result.halfmove_clock = btoi::btou_saturating(halfmoves_part)
                 .map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
         if let Some(fullmoves_part) = parts.next() {
-            result.fullmoves = fullmoves_part
-                .parse()
+            result.fullmoves = btoi::btou_saturating(fullmoves_part)
                 .map_err(|_| FenError::InvalidFullmoves)?;
         }
 
         Ok(result)
+    }
+}
+
+impl FromStr for Fen {
+    type Err = FenError;
+
+    fn from_str(fen: &str) -> Result<Fen, FenError> {
+        Fen::from_bytes(fen.as_bytes())
     }
 }
 
