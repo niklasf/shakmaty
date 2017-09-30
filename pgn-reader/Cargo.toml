@@ -22,6 +22,7 @@ shakmaty = "0.0.10"
 [dev-dependencies]
 memmap = "0.5"
 madvise = "0.1"
+unicase = "2.0"
 bencher = "0.1"
 
 [badges]
