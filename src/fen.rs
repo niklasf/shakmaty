@@ -126,6 +126,7 @@ impl Default for FenOpts {
 /// Errors that can occur when parsing a FEN.
 #[derive(Eq, PartialEq, Debug)]
 pub enum FenError {
+    InvalidFen,
     InvalidBoard,
     InvalidPocket,
     InvalidTurn,
@@ -139,6 +140,7 @@ pub enum FenError {
 impl FenError {
     fn desc(&self) -> &str {
         match *self {
+            FenError::InvalidFen => "invalid fen",
             FenError::InvalidBoard => "invalid board part in fen",
             FenError::InvalidPocket => "invalid pocket in fen",
             FenError::InvalidTurn => "invalid turn part in fen",
@@ -392,7 +394,11 @@ impl Fen {
                 .map_err(|_| FenError::InvalidFullmoves)?;
         }
 
-        Ok(result)
+        if parts.next().is_some() {
+            Err(FenError::InvalidFen)
+        } else {
+            Ok(result)
+        }
     }
 }
 
