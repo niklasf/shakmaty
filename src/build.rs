@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+extern crate version_check;
+
 use std::env;
 use std::fs::File;
 use std::io;
@@ -78,10 +80,15 @@ fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: 
 }
 
 fn main() {
+    // detect support for nightly features
+    if let Some(true) = version_check::supports_features() {
+        println!("cargo:rustc-cfg=nightly");
+    }
+
+    // generate attacks.rs
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
     let dest_path = Path::new(&out_dir).join("attacks.rs");
     let mut f = File::create(&dest_path).expect("created attacks.rs");
-
     generate_basics(&mut f).unwrap();
     generate_sliding_attacks(&mut f).unwrap();
 }

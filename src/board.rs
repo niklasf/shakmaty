@@ -329,7 +329,7 @@ impl ExactSizeIterator for Pieces {
         self.queens.len() + self.kings.len()
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     fn is_empty(&self) -> bool {
         self.white.is_empty() && self.pawns.is_empty() && self.knights.is_empty() &&
         self.bishops.is_empty() && self.rooks.is_empty() && self.queens.is_empty() &&

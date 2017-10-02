@@ -425,7 +425,7 @@ impl ExactSizeIterator for Bitboard {
         self.0.count_ones() as usize
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     #[inline]
     fn is_empty(&self) -> bool {
         self.0 == 0

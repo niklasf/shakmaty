@@ -78,7 +78,7 @@ mod tests {
     use super::*;
     use position::Chess;
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     use test::Bencher;
 
     #[test]
@@ -88,14 +88,14 @@ mod tests {
         assert_eq!(perft(&pos, 1), 20);
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     #[bench]
     fn bench_shallow_perft(b: &mut Bencher) {
         let pos = Chess::default();
         b.iter(|| assert_eq!(perft(&pos, 4), 197281));
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     #[bench]
     fn bench_deep_perft(b: &mut Bencher) {
         let pos = Chess::default();

@@ -479,7 +479,7 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
 mod tests {
     use super::*;
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     use test::Bencher;
 
     #[test]
@@ -495,7 +495,7 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "nightly")]
+    #[cfg(nightly)]
     #[bench]
     fn bench_parse_san_move_complicated(b: &mut Bencher) {
         b.iter(|| {

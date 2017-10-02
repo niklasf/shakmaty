@@ -12,10 +12,6 @@ categories = ["games", "parsing"]
 keywords = ["chess"]
 build = "src/build.rs"
 
-[features]
-default = []
-nightly = []
-
 [dependencies]
 option-filter = "1.0"
 btoi = "0.1"
@@ -23,6 +19,9 @@ btoi = "0.1"
 [dependencies.arrayvec]
 version = "0.4"
 features = ["use_union"]
+
+[build-dependencies]
+version_check = "0.1"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty", branch = "master" }
