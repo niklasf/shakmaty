@@ -115,6 +115,21 @@ impl FenOpts {
         self.shredder = shredder;
         self
     }
+
+    /// See [`board_fen()`](fn.board_fen.html).
+    pub fn board_fen(&self, board: &Board) -> String {
+        board_fen(board, self)
+    }
+
+    /// See [`epd()`](fn.epd.html).
+    pub fn epd(&self, setup: &Setup) -> String {
+        epd(setup, self)
+    }
+
+    /// See [`fen()`](fn.fen.html)
+    pub fn fen(&self, setup: &Setup) -> String {
+        fen(setup, self)
+    }
 }
 
 impl Default for FenOpts {
