@@ -246,6 +246,13 @@ impl From<Square> for u8 {
     }
 }
 
+impl From<Square> for usize {
+    #[inline]
+    fn from(sq: Square) -> usize {
+        sq as usize
+    }
+}
+
 impl Sub for Square {
     type Output = i8;
 
