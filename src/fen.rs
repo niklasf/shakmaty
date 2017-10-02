@@ -173,22 +173,22 @@ impl Board {
         let mut file = 0u8;
         let mut promoted = false;
 
-        for ch in board_fen {
-            if *ch == b'/' && file == 8 {
+        for &ch in board_fen {
+            if ch == b'/' && file == 8 {
                 file = 0;
                 rank = match rank.checked_sub(1) {
                     Some(rank) => rank,
                     None => return Err(FenError::InvalidBoard),
                 };
-            } else if *ch == b'~' {
+            } else if ch == b'~' {
                 promoted = true;
                 continue;
-            } else if b'1' <= *ch && *ch <= b'8' {
-                file = match file.checked_add(*ch - b'0') {
-                    Some(file) if file <= 8 => file,
-                    _ => return Err(FenError::InvalidBoard),
-                };
-            } else if let Some(piece) = Piece::from_char(*ch as char) {
+            } else if b'1' <= ch && ch <= b'8' {
+                file += ch - b'0';
+                if file > 8 {
+                    return Err(FenError::InvalidBoard);
+                }
+            } else if let Some(piece) = Piece::from_char(ch as char) {
                 match Square::from_coords(file, rank) {
                     Some(sq) => {
                         board.set_piece_at(sq, piece, promoted);
