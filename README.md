@@ -50,6 +50,12 @@ Documentation
 
 [Read the documentation](https://docs.rs/shakmaty)
 
+Changelog
+---------
+
+* 0.1.0
+  - First release with support for stable Rust.
+
 License
 -------
 
