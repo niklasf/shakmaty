@@ -367,9 +367,7 @@ impl FromIterator<Square> for Bitboard {
         where T: IntoIterator<Item = Square>
     {
         let mut result = Bitboard(0);
-        for square in iter {
-            result.add(square);
-        }
+        result.extend(iter);
         result
     }
 }
