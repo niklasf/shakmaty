@@ -250,8 +250,8 @@ impl San {
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == b'x' {
-                    let to_file = chars.next().and_then(|c| file_from_char(c)).ok_or(())?;
-                    let to_rank = chars.next().and_then(|c| rank_from_char(c)).ok_or(())?;
+                    let to_file = chars.next().and_then(file_from_char).ok_or(())?;
+                    let to_rank = chars.next().and_then(rank_from_char).ok_or(())?;
                     let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
                     (true, file, rank, square, chars.next())
                 } else if next == b'=' {
@@ -259,7 +259,7 @@ impl San {
                     (false, None, None, square, Some(b'='))
                 } else {
                     let to_file = file_from_char(next).ok_or(())?;
-                    let to_rank = chars.next().and_then(|c| rank_from_char(c)).ok_or(())?;
+                    let to_rank = chars.next().and_then(rank_from_char).ok_or(())?;
                     let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
                     (false, file, rank, square, chars.next())
                 }
