@@ -73,6 +73,22 @@ impl CastlingSide {
     }
 }
 
+pub struct SwapTurn<S: Setup>(pub S);
+
+impl<S: Setup> Setup for SwapTurn<S> {
+    fn turn(&self) -> Color {
+        !self.0.turn()
+    }
+
+    fn board(&self) -> &Board { self.0.board() }
+    fn pockets(&self) -> Option<&Pockets> { self.0.pockets() }
+    fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.0.ep_square() }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }
+    fn halfmove_clock(&self) -> u32 { self.0.halfmove_clock() }
+    fn fullmoves(&self) -> u32 { self.0.fullmoves() }
+}
+
 #[derive(Clone, Debug)]
 pub struct Castling {
     rook: [Option<Square>; 4],

@@ -20,7 +20,7 @@ use bitboard;
 use bitboard::Bitboard;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
-use setup::{Setup, Castling, CastlingSide};
+use setup::{Setup, Castling, CastlingSide, SwapTurn};
 use movelist::{MoveList, ArrayVecExt};
 
 use option_filter::OptionFilterExt;
@@ -120,6 +120,16 @@ pub trait Position: Setup {
     ///
     /// [`PositionError`]: enum.PositionError.html
     fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> where Self: Sized;
+
+    /// Swap turns. This is sometimes called "playing a null move".
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PositionError`] if swapping turns is not legal (usually due
+    /// to a check that has to be averted).
+    fn swap_turn(self) -> Result<Self, PositionError> where Self: Sized {
+        Self::from_setup(&SwapTurn(self))
+    }
 
     /// Generates legal moves.
     fn legals(&self) -> MoveList {
