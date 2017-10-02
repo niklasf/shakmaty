@@ -16,7 +16,6 @@
 
 use attacks;
 use board::Board;
-use bitboard;
 use bitboard::Bitboard;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
@@ -467,10 +466,10 @@ impl Position for Chess {
         }
 
         // all bishops on the same color
-        if (self.board().bishops() & bitboard::DARK_SQUARES).is_empty() {
+        if (self.board().bishops() & Bitboard::DARK_SQUARES).is_empty() {
             return true;
         }
-        if (self.board().bishops() & bitboard::LIGHT_SQUARES).is_empty() {
+        if (self.board().bishops() & Bitboard::LIGHT_SQUARES).is_empty() {
             return true;
         }
 
@@ -790,7 +789,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                        Bitboard::relative_rank(pos.turn(), 3) &
                        !pos.board().occupied();
 
-    for to in single_moves & target & !bitboard::BACKRANKS {
+    for to in single_moves & target & !Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
             unsafe {
                 moves.push_unchecked(Move::Normal {
@@ -804,7 +803,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         }
     }
 
-    for to in single_moves & target & bitboard::BACKRANKS {
+    for to in single_moves & target & Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
             unsafe {
                 push_promotions(moves, from, to, None);

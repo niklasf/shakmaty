@@ -58,7 +58,7 @@ fn sliding_rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 }
 
 fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
-    sliding_attacks(sq, Bitboard::all(), deltas)
+    sliding_attacks(sq, Bitboard::ALL, deltas)
 }
 
 fn init_magics(sq: Square, magic: &Magic, shift: u8, attacks: &mut [Bitboard], deltas: &[i8]) {

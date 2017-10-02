@@ -81,7 +81,6 @@ use btoi;
 
 use square::Square;
 use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
-use bitboard;
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
@@ -273,7 +272,7 @@ impl Default for Fen {
             board: Board::default(),
             pockets: None,
             turn: White,
-            castling_rights: bitboard::CORNERS,
+            castling_rights: Bitboard::CORNERS,
             ep_square: None,
             remaining_checks: None,
             halfmove_clock: 0,

@@ -52,12 +52,6 @@ impl Bitboard {
         Bitboard(unsafe { *SQUARES.get_unchecked(sq.index() as usize) })
     }
 
-    /// A bitboard containing all squares.
-    #[inline]
-    pub fn all() -> Bitboard {
-        Bitboard(!0u64)
-    }
-
     /// Returns the bitboard containing all squares of the given rank.
     ///
     /// # Panics
@@ -207,19 +201,22 @@ impl Bitboard {
             first: true,
         }
     }
+
+    /// A bitboard containing all squares.
+    pub const ALL: Bitboard = Bitboard(!0u64);
+
+    /// All dark squares.
+    pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
+
+    /// All light squares.
+    pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa_55aa_55aa_55aa);
+
+    /// The four corner squares.
+    pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
+
+    /// The backranks.
+    pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 }
-
-/// All dark squares.
-pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
-
-/// All light squares.
-pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa_55aa_55aa_55aa);
-
-/// The four corner squares.
-pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
-
-/// The backranks.
-pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 
 /// Square masks.
 #[cfg_attr(feature = "cargo-clippy", allow(unreadable_literal))]
@@ -482,7 +479,7 @@ mod tests {
         assert_eq!(Bitboard(1).more_than_one(), false);
         assert_eq!(Bitboard(2).more_than_one(), false);
         assert_eq!(Bitboard(3).more_than_one(), true);
-        assert_eq!(Bitboard::all().more_than_one(), true);
+        assert_eq!(Bitboard::ALL.more_than_one(), true);
     }
 
     #[test]
