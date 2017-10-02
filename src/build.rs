@@ -1,5 +1,3 @@
-#![feature(exact_size_is_empty)]
-
 #![allow(dead_code)]
 
 use std::env;

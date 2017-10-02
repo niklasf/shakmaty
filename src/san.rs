@@ -223,25 +223,25 @@ impl San {
                 to: Square::from_bytes(&san[2..]).map_err(|_| ())?
             })
         } else {
-            let mut chars = san.iter();
+            let mut chars = san.iter().cloned();
 
             let (role, next) = {
                 let ch = chars.next().ok_or(())?;
-                if *ch >= b'a' {
+                if ch >= b'a' {
                     (Role::Pawn, ch)
                 } else {
-                    (Role::from_char(*ch as char).ok_or(())?, chars.next().ok_or(())?)
+                    (Role::from_char(ch as char).ok_or(())?, chars.next().ok_or(())?)
                 }
             };
 
-            let (file, next) = if b'a' <= *next && *next <= b'h' {
-                (Some(*next as i8 - b'a' as i8), chars.next().ok_or(())?)
+            let (file, next) = if b'a' <= next && next <= b'h' {
+                (Some(next as i8 - b'a' as i8), chars.next().ok_or(())?)
             } else {
                 (None, next)
             };
 
-            let (rank, next) = if b'1' <= *next && *next <= b'8' {
-                (Some(*next as i8 - b'1' as i8), chars.next())
+            let (rank, next) = if b'1' <= next && next <= b'8' {
+                (Some(next as i8 - b'1' as i8), chars.next())
             } else {
                 (None, Some(next))
             };
@@ -249,17 +249,17 @@ impl San {
             // This section is safe, because coordinates are already validated
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
-                if *next == b'x' {
-                    let to_file = chars.next().and_then(|c| file_from_char(*c)).ok_or(())?;
-                    let to_rank = chars.next().and_then(|c| rank_from_char(*c)).ok_or(())?;
+                if next == b'x' {
+                    let to_file = chars.next().and_then(|c| file_from_char(c)).ok_or(())?;
+                    let to_rank = chars.next().and_then(|c| rank_from_char(c)).ok_or(())?;
                     let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
                     (true, file, rank, square, chars.next())
-                } else if *next == b'=' {
+                } else if next == b'=' {
                     let square = unsafe { Square::from_coords_unchecked(file.ok_or(())?, rank.ok_or(())?) };
-                    (false, None, None, square, Some(&b'='))
+                    (false, None, None, square, Some(b'='))
                 } else {
-                    let to_file = file_from_char(*next).ok_or(())?;
-                    let to_rank = chars.next().and_then(|c| rank_from_char(*c)).ok_or(())?;
+                    let to_file = file_from_char(next).ok_or(())?;
+                    let to_rank = chars.next().and_then(|c| rank_from_char(c)).ok_or(())?;
                     let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
                     (false, file, rank, square, chars.next())
                 }
@@ -268,9 +268,9 @@ impl San {
                 (false, None, None, square, None)
             };
 
-            let promotion = match next.cloned() {
+            let promotion = match next {
                 Some(b'=') =>
-                    Some(chars.next().and_then(|r| Role::from_char(*r as char)).ok_or(())?),
+                    Some(chars.next().and_then(|r| Role::from_char(r as char)).ok_or(())?),
                 Some(_) => return Err(InvalidSan { _priv: () }),
                 None => None,
             };
@@ -478,8 +478,9 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "nightly")]
     use test::Bencher;
-    use square;
 
     #[test]
     fn test_read_write() {
@@ -494,6 +495,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "nightly")]
     #[bench]
     fn bench_parse_san_move_complicated(b: &mut Bencher) {
         b.iter(|| {
@@ -502,7 +504,7 @@ mod tests {
                 file: Some(1),
                 rank: None,
                 capture: true,
-                to: square::C1,
+                to: ::square::C1,
                 promotion: Some(Role::Rook),
             }));
         });

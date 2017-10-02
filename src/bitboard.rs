@@ -425,6 +425,7 @@ impl ExactSizeIterator for Bitboard {
         self.0.count_ones() as usize
     }
 
+    #[cfg(feature = "nightly")]
     #[inline]
     fn is_empty(&self) -> bool {
         self.0 == 0
@@ -434,7 +435,7 @@ impl ExactSizeIterator for Bitboard {
 impl DoubleEndedIterator for Bitboard {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
-        if self.is_empty() {
+        if Bitboard::is_empty(*self) {
             None
         } else {
             // This is safe because a non-zero u64 has between 0 and

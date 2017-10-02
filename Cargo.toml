@@ -12,6 +12,10 @@ categories = ["games", "parsing"]
 keywords = ["chess"]
 build = "src/build.rs"
 
+[features]
+default = []
+nightly = []
+
 [dependencies]
 option-filter = "1.0"
 btoi = "0.1"

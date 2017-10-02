@@ -896,8 +896,10 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
     use fen::Fen;
+
+    #[cfg(feature = "nightly")]
+    use test::Bencher;
 
     struct _AssertObjectSafe(Box<Position>);
 
@@ -914,6 +916,7 @@ mod tests {
         assert_eq!(moves.len(), 218);
     }
 
+    #[cfg(feature = "nightly")]
     #[bench]
     fn bench_generate_moves(b: &mut Bencher) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
@@ -929,6 +932,7 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "nightly")]
     #[bench]
     fn bench_play_unchecked(b: &mut Bencher) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
@@ -952,6 +956,7 @@ mod tests {
         });
     }
 
+    #[cfg(feature = "nightly")]
     #[bench]
     fn bench_san_candidates(b: &mut Bencher) {
         let fen = "r2q1rk1/pb1nbppp/5n2/1p2p3/3NP3/P1NB4/1P2QPPP/R1BR2K1 w - -";

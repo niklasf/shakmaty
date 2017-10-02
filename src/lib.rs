@@ -75,10 +75,10 @@
 
 #![warn(missing_debug_implementations)]
 
-#![cfg_attr(test, feature(test))]
-#![feature(exact_size_is_empty)]
+#![cfg_attr(all(test, feature = "nightly"), feature(test))]
+#![cfg_attr(feature = "nightly", feature(exact_size_is_empty))]
 
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 extern crate test;
 
 extern crate arrayvec;
