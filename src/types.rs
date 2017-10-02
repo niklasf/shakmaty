@@ -349,7 +349,7 @@ impl RemainingChecks {
         color.fold(&mut self.white, &mut self.black)
     }
 
-    pub fn subtract(&mut self, color: Color) {
+    pub fn decrement(&mut self, color: Color) {
         *self.by_color_mut(color) = self.by_color(color).saturating_sub(1);
     }
 }
