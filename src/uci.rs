@@ -24,14 +24,14 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! # use shakmaty::square;
+//! # use shakmaty::Square;
 //! use shakmaty::uci::Uci;
 //!
 //! let uci: Uci = "g1f3".parse()?;
 //!
 //! assert_eq!(uci, Uci::Normal {
-//!     from: square::G1,
-//!     to: square::F3,
+//!     from: Square::G1,
+//!     to: Square::F3,
 //!     promotion: None
 //! });
 //! #
@@ -49,17 +49,16 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! # use shakmaty::square;
 //! # use shakmaty::Color::White;
 //! # use shakmaty::uci::Uci;
-//! use shakmaty::{Chess, Setup, Position};
+//! use shakmaty::{Square, Chess, Setup, Position};
 //!
 //! # let uci: Uci = "g1f3".parse()?;
 //! let mut pos = Chess::default();
 //! let m = uci.to_move(&pos)?;
 //!
 //! pos.play_unchecked(&m);
-//! assert_eq!(pos.board().piece_at(square::F3), Some(White.knight()));
+//! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //! #
 //! #     Ok(())
 //! # }
@@ -72,15 +71,14 @@
 //! Converting from [`Move`] to [`Uci`]:
 //!
 //! ```
-//! # use shakmaty::{Move, Role};
-//! # use shakmaty::square;
+//! # use shakmaty::{Square, Move, Role};
 //! # use shakmaty::uci::Uci;
 //! use std::convert::From;
 //!
 //! let m = Move::Normal {
 //!     role: Role::Queen,
-//!     from: square::A1,
-//!     to: square::H8,
+//!     from: Square::A1,
+//!     to: Square::H8,
 //!     capture: Some(Role::Rook),
 //!     promotion: None,
 //! };
@@ -97,7 +95,6 @@ use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::error::Error;
 
-use square;
 use square::Square;
 use types::{Role, Move};
 use position::{Position, IllegalMove};
@@ -243,13 +240,13 @@ impl Uci {
                 if role == Role::King && pos.castling_rights().contains(to) {
                     Move::Castle { king: from, rook: to }
                 } else if role == Role::King &&
-                          from == pos.turn().fold(square::E1, square::E8) &&
+                          from == pos.turn().fold(Square::E1, Square::E8) &&
                           to.rank() == pos.turn().fold(0, 7) &&
                           from.distance(to) == 2 {
                     if from.file() < to.file() {
-                        Move::Castle { king: from, rook: pos.turn().fold(square::H1, square::H8) }
+                        Move::Castle { king: from, rook: pos.turn().fold(Square::H1, Square::H8) }
                     } else {
-                        Move::Castle { king: from, rook: pos.turn().fold(square::A1, square::A8) }
+                        Move::Castle { king: from, rook: pos.turn().fold(Square::A1, Square::A8) }
                     }
                 } else {
                     Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }

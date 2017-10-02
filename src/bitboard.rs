@@ -28,9 +28,8 @@ use types::Color;
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::Bitboard;
-/// # use shakmaty::square;
-/// let mask = Bitboard::rank(2).with(square::E5);
+/// # use shakmaty::{Square, Bitboard};
+/// let mask = Bitboard::rank(2).with(Square::E5);
 /// // . . . . . . . .
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -40,7 +39,7 @@ use types::Color;
 /// // . . . . . . . .
 /// // . . . . . . . .
 ///
-/// assert_eq!(mask.first(), Some(square::A3));
+/// assert_eq!(mask.first(), Some(Square::A3));
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
@@ -476,7 +475,6 @@ impl Iterator for CarryRippler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use square;
 
     #[test]
     fn test_more_than_one() {
@@ -489,16 +487,16 @@ mod tests {
 
     #[test]
     fn test_first() {
-        assert_eq!(Bitboard::from_square(square::A1).first(), Some(square::A1));
-        assert_eq!(Bitboard::from_square(square::D2).first(), Some(square::D2));
+        assert_eq!(Bitboard::from_square(Square::A1).first(), Some(Square::A1));
+        assert_eq!(Bitboard::from_square(Square::D2).first(), Some(Square::D2));
         assert_eq!(Bitboard(0).first(), None);
     }
 
     #[test]
     fn test_last() {
-        assert_eq!(Bitboard::from_square(square::A1).last(), Some(square::A1));
-        assert_eq!(Bitboard(0).with(square::A1).with(square::H1).last(),
-                   Some(square::H1));
+        assert_eq!(Bitboard::from_square(Square::A1).last(), Some(Square::A1));
+        assert_eq!(Bitboard(0).with(Square::A1).with(Square::H1).last(),
+                   Some(Square::H1));
         assert_eq!(Bitboard(0).last(), None);
     }
 
@@ -516,7 +514,7 @@ mod tests {
     #[test]
     fn test_from_iter() {
         assert_eq!(Bitboard::from_iter(None), Bitboard(0));
-        assert_eq!(Bitboard::from_iter(Some(square::D2)),
-                   Bitboard::from_square(square::D2));
+        assert_eq!(Bitboard::from_iter(Some(Square::D2)),
+                   Bitboard::from_square(Square::D2));
     }
 }

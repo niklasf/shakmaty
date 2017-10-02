@@ -27,7 +27,7 @@ use attacks;
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Board, square};
+/// # use shakmaty::{Square, Board};
 /// # use shakmaty::Color::Black;
 /// let board = Board::new();
 /// // r n b q k b n r
@@ -39,7 +39,7 @@ use attacks;
 /// // P P P P P P P P
 /// // R N B Q K B N R
 ///
-/// assert_eq!(board.piece_at(square::E8), Some(Black.king()));
+/// assert_eq!(board.piece_at(Square::E8), Some(Black.king()));
 /// ```
 ///
 /// [`Piece`]: struct.Piece.html
@@ -340,27 +340,26 @@ impl ExactSizeIterator for Pieces {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use square;
     use types::{White, Black};
 
     #[test]
     fn test_piece_at() {
         let board = Board::new();
-        assert_eq!(board.piece_at(square::A2), Some(White.pawn()));
-        assert_eq!(board.piece_at(square::B1), Some(White.knight()));
+        assert_eq!(board.piece_at(Square::A2), Some(White.pawn()));
+        assert_eq!(board.piece_at(Square::B1), Some(White.knight()));
     }
 
     #[test]
     fn test_set_piece_at() {
         let mut board = Board::new();
-        board.set_piece_at(square::A3, White.pawn(), false);
-        assert_eq!(board.piece_at(square::A3), Some(White.pawn()));
+        board.set_piece_at(Square::A3, White.pawn(), false);
+        assert_eq!(board.piece_at(Square::A3), Some(White.pawn()));
     }
 
     #[test]
     fn test_promoted() {
         let board: Board = "4k3/8/8/8/8/8/8/2~q1K3".parse().expect("valid fen");
-        assert_eq!(board.piece_at(square::C1), Some(Black.queen()));
-        assert!(board.promoted().contains(square::C1));
+        assert_eq!(board.piece_at(Square::C1), Some(Black.queen()));
+        assert!(board.promoted().contains(Square::C1));
     }
 }

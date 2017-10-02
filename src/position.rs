@@ -18,7 +18,6 @@ use attacks;
 use board::Board;
 use bitboard;
 use bitboard::Bitboard;
-use square;
 use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup::{Setup, Castling, CastlingSide};
@@ -509,8 +508,8 @@ fn do_move(board: &mut Board,
             board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
         },
         Move::Castle { king, rook } => {
-            let rook_to = (if rook - king < 0 { square::D1 } else { square::F1 }).combine(rook);
-            let king_to = (if rook - king < 0 { square::C1 } else { square::G1 }).combine(king);
+            let rook_to = (if rook - king < 0 { Square::D1 } else { Square::F1 }).combine(rook);
+            let king_to = (if rook - king < 0 { Square::C1 } else { Square::G1 }).combine(king);
 
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
@@ -943,9 +942,9 @@ mod tests {
 
         let m = Move::Normal {
             role: Role::Bishop,
-            from: square::F8,
+            from: Square::F8,
             capture: None,
-            to: square::E7,
+            to: Square::E7,
             promotion: None,
         };
 
@@ -967,7 +966,7 @@ mod tests {
 
         b.iter(|| {
             let mut moves = MoveList::new();
-            pos.san_candidates(Role::Knight, square::B5, &mut moves);
+            pos.san_candidates(Role::Knight, Square::B5, &mut moves);
             assert_eq!(moves.len(), 2);
         });
     }
@@ -981,13 +980,13 @@ mod tests {
             .expect("valid position");
 
         let mut moves = MoveList::new();
-        pos.san_candidates(Role::Rook, square::D3, &mut moves);
+        pos.san_candidates(Role::Rook, Square::D3, &mut moves);
 
         assert_eq!(moves[0], Move::Normal {
             role: Role::Rook,
-            from: square::D2,
+            from: Square::D2,
             capture: None,
-            to: square::D3,
+            to: Square::D3,
             promotion: None,
         });
 

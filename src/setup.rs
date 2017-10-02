@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use square;
 use square::Square;
 use bitboard::Bitboard;
 use attacks;
@@ -61,15 +60,15 @@ pub enum CastlingSide {
 impl CastlingSide {
     pub fn king_to(&self, color: Color) -> Square {
         match *self {
-            CastlingSide::KingSide => color.fold(square::G1, square::G8),
-            CastlingSide::QueenSide => color.fold(square::C1, square::C8),
+            CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
+            CastlingSide::QueenSide => color.fold(Square::C1, Square::C8),
         }
     }
 
     pub fn rook_to(&self, color: Color) -> Square {
         match *self {
-            CastlingSide::KingSide => color.fold(square::F1, square::F8),
-            CastlingSide::QueenSide => color.fold(square::D1, square::D8),
+            CastlingSide::KingSide => color.fold(Square::F1, Square::F8),
+            CastlingSide::QueenSide => color.fold(Square::D1, Square::D8),
         }
     }
 }
@@ -91,10 +90,10 @@ impl Castling {
     pub fn default() -> Castling {
         Castling {
             rook: [
-                Some(square::H8), // black short
-                Some(square::A8), // black long
-                Some(square::H1), // white short
-                Some(square::A1), // white long
+                Some(Square::H8), // black short
+                Some(Square::A8), // black long
+                Some(Square::H1), // white short
+                Some(Square::A1), // white long
             ],
             path: [
                 Bitboard(0x6000_0000_0000_0000), // black short
