@@ -214,8 +214,8 @@ impl Square {
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
     pub fn distance(self, other: Square) -> u8 {
-        max((self.file() as i8 - other.file() as i8).abs() as u8,
-            (self.rank() as i8 - other.rank() as i8).abs() as u8)
+        max((self.file() as i8 - other.file() as i8).abs(),
+            (self.rank() as i8 - other.rank() as i8).abs()) as u8
     }
 
     /// Combines two squares, taking the file from the first and the rank from
