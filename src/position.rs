@@ -44,49 +44,31 @@ impl fmt::Display for Outcome {
     }
 }
 
-/// Reasons for a [`Setup`] not beeing a legal [`Position`].
-///
-/// [`Setup`]: trait.Setup.html
-/// [`Position`]: trait.Position.html
-#[derive(Debug)]
-pub enum PositionError {
-    Empty,
-    NoKing { color: Color },
-    TooManyKings,
-    PawnsOnBackrank,
-    BadCastlingRights,
-    InvalidEpSquare,
-    OppositeCheck,
-
-    #[doc(hidden)]
-    __Nonexhaustive,
-}
-
-impl PositionError {
-    fn desc(&self) -> &str {
-        match *self {
-            PositionError::Empty => "empty board is not legal",
-            PositionError::NoKing { color: White } => "white king missing",
-            PositionError::NoKing { color: Black } => "black king missing",
-            PositionError::TooManyKings => "too many kings",
-            PositionError::PawnsOnBackrank => "pawns on backrank",
-            PositionError::BadCastlingRights => "bad castling rights",
-            PositionError::InvalidEpSquare => "invalid en passant square",
-            PositionError::OppositeCheck => "opponent is in check",
-            PositionError::__Nonexhaustive => "illegal position",
-        }
+bitflags! {
+    /// Reasons for a [`Setup`] not beeing a legal [`Position`].
+    ///
+    /// [`Setup`]: trait.Setup.html
+    /// [`Position`]: trait.Position.html
+    pub struct PositionError: u32 {
+        const EMPTY_BOARD = 1;
+        const MISSING_KING = 2;
+        const TOO_MANY_KINGS = 4;
+        const PAWNS_ON_BACKRANK = 8;
+        const BAD_CASTLING_RIGHTS = 16;
+        const INVALID_EP_SQUARE = 32;
+        const OPPOSITE_CHECK = 64;
     }
 }
 
 impl fmt::Display for PositionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.desc().fmt(f)
+        "illegal position".fmt(f)
     }
 }
 
 impl Error for PositionError {
     fn description(&self) -> &str {
-        self.desc()
+        "illegal position"
     }
 }
 
@@ -360,15 +342,18 @@ impl Position for Chess {
         let pos = Chess {
             board: setup.board().clone(),
             turn: setup.turn(),
-            castling: Castling::from_setup(setup).map_err(|_| PositionError::BadCastlingRights)?,
+            castling: Castling::from_setup(setup).map_err(|_| PositionError::BAD_CASTLING_RIGHTS)?,
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
         };
 
-        validate_basic(&pos)
-            .or_else(|| validate_kings(&pos))
-            .map_or(Ok(pos), Err)
+        let errors = validate(&pos);
+        if errors.is_empty() {
+            Ok(pos)
+        } else {
+            Err(errors)
+        }
     }
 
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
@@ -544,62 +529,57 @@ fn do_move(board: &mut Board,
     *turn = !color;
 }
 
-fn validate_basic<P: Position>(pos: &P) -> Option<PositionError> {
+fn validate<P: Position>(pos: &P) -> PositionError {
+    let mut errors = PositionError::empty();
+
     if pos.board().occupied().is_empty() {
-        return Some(PositionError::Empty);
+        errors |= PositionError::EMPTY_BOARD;
     }
 
-    if !(pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).is_empty() {
-        return Some(PositionError::PawnsOnBackrank);
+    if (pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).any() {
+        errors |= PositionError::PAWNS_ON_BACKRANK;
     }
 
-    validate_ep(pos)
-}
-
-fn validate_ep<P: Position>(pos: &P) -> Option<PositionError> {
+    // validate en passant square
     if let Some(ep_square) = pos.ep_square() {
         if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
-            return Some(PositionError::InvalidEpSquare);
-        }
+            errors |= PositionError::INVALID_EP_SQUARE;
+        } else {
+            let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8))
+                                         .expect("ep square is on sixth rank");
 
-        let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8))
-                                     .expect("ep square is on sixth rank");
+            let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8))
+                                            .expect("ep square is on sixth rank");
 
-        let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8))
-                                        .expect("ep square is on sixth rank");
+            // The last move must have been a double pawn push. Check for the
+            // presence of that pawn.
+            if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
+                errors |= PositionError::INVALID_EP_SQUARE;
+            }
 
-        // The last move must have been a double pawn push. Check for the
-        // presence of that pawn.
-        if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
-            return Some(PositionError::InvalidEpSquare);
-        }
-
-        if pos.board().occupied().contains(ep_square) || pos.board().occupied().contains(seventh_rank_sq) {
-            return Some(PositionError::InvalidEpSquare)
+            if pos.board().occupied().contains(ep_square) || pos.board().occupied().contains(seventh_rank_sq) {
+                errors |= PositionError::INVALID_EP_SQUARE;
+            }
         }
     }
 
-    None
-}
-
-fn validate_kings<P: Position>(pos: &P) -> Option<PositionError> {
-    for color in &[White, Black] {
-        if pos.board().king_of(*color).is_none() {
-            return Some(PositionError::NoKing { color: *color })
+    for &color in &[White, Black] {
+        if pos.board().king_of(color).is_none() {
+            errors |= PositionError::MISSING_KING;
         }
     }
 
     if pos.board().kings().count() > 2 {
-        return Some(PositionError::TooManyKings)
+        errors |= PositionError::TOO_MANY_KINGS;
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
         if pos.king_attackers(their_king, pos.turn(), pos.board().occupied()).any() {
-            return Some(PositionError::OppositeCheck)
+            errors |= PositionError::OPPOSITE_CHECK;
         }
     }
 
-    None
+    errors
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {

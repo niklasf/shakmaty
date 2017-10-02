@@ -81,6 +81,8 @@
 extern crate test;
 
 extern crate arrayvec;
+#[macro_use]
+extern crate bitflags;
 extern crate option_filter;
 extern crate btoi;
 
