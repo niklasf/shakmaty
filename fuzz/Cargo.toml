@@ -23,3 +23,7 @@ path = "fuzz_targets/san.rs"
 [[bin]]
 name = "uci"
 path = "fuzz_targets/uci.rs"
+
+[[bin]]
+name = "square"
+path = "fuzz_targets/square.rs"
