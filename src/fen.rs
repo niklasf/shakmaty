@@ -169,19 +169,25 @@ impl Board {
     fn from_board_fen(board_fen: &[u8]) -> Result<Board, FenError> {
         let mut board = Board::empty();
 
-        let mut rank = 7i8;
-        let mut file = 0i8;
+        let mut rank = 7u8;
+        let mut file = 0u8;
         let mut promoted = false;
 
         for ch in board_fen {
             if *ch == b'/' && file == 8 {
                 file = 0;
-                rank = rank.saturating_sub(1);
+                rank = match rank.checked_sub(1) {
+                    Some(rank) => rank,
+                    None => return Err(FenError::InvalidBoard),
+                };
             } else if *ch == b'~' {
                 promoted = true;
                 continue;
             } else if b'1' <= *ch && *ch <= b'8' {
-                file = file.saturating_add((*ch - b'0') as i8);
+                file = match file.checked_add(*ch - b'0') {
+                    Some(file) if file <= 8 => file,
+                    _ => return Err(FenError::InvalidBoard),
+                };
             } else if let Some(piece) = Piece::from_char(*ch as char) {
                 match Square::from_coords(file, rank) {
                     Some(sq) => {
@@ -350,7 +356,7 @@ impl Fen {
                         'k' => candidates.last(),
                         'q' => candidates.first(),
                         file @ 'a' ... 'h' => {
-                            (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
+                            (candidates & Bitboard::file(file as u8 - b'a')).first()
                         },
                         _ => return Err(FenError::InvalidCastling),
                     };

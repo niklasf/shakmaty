@@ -165,8 +165,8 @@ impl Error for SanError {
 pub enum San {
     Normal {
         role: Role,
-        file: Option<i8>,
-        rank: Option<i8>,
+        file: Option<u8>,
+        rank: Option<u8>,
         capture: bool,
         to: Square,
         promotion: Option<Role>,
@@ -176,17 +176,17 @@ pub enum San {
     Null,
 }
 
-fn rank_from_char(ch: u8) -> Option<i8> {
+fn rank_from_char(ch: u8) -> Option<u8> {
     if b'1' <= ch && ch <= b'8' {
-        Some((ch - b'1') as i8)
+        Some(ch - b'1')
     } else {
         None
     }
 }
 
-fn file_from_char(ch: u8) -> Option<i8> {
+fn file_from_char(ch: u8) -> Option<u8> {
     if b'a' <= ch && ch <= b'h' {
-        Some((ch - b'a') as i8)
+        Some(ch - b'a')
     } else {
         None
     }
@@ -234,13 +234,13 @@ impl San {
             };
 
             let (file, next) = if b'a' <= next && next <= b'h' {
-                (Some(next as i8 - b'a' as i8), chars.next().ok_or(())?)
+                (Some(next - b'a'), chars.next().ok_or(())?)
             } else {
                 (None, next)
             };
 
             let (rank, next) = if b'1' <= next && next <= b'8' {
-                (Some(next as i8 - b'1' as i8), chars.next())
+                (Some(next - b'1'), chars.next())
             } else {
                 (None, Some(next))
             };

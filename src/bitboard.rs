@@ -64,7 +64,7 @@ impl Bitboard {
     ///
     /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn rank(rank: i8) -> Bitboard {
+    pub fn rank(rank: u8) -> Bitboard {
         // Note that a negative rank can not wrap around back into range.
         Bitboard(RANKS[rank as usize])
     }
@@ -75,7 +75,7 @@ impl Bitboard {
     ///
     /// Panics if `file` is not in the range `0..=7`.
     #[inline]
-    pub fn file(file: i8) -> Bitboard {
+    pub fn file(file: u8) -> Bitboard {
         // Note that a negative file can not wrap around back into range.
         Bitboard(FILES[file as usize])
     }
@@ -86,7 +86,7 @@ impl Bitboard {
     ///
     /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
+    pub fn relative_rank(color: Color, rank: u8) -> Bitboard {
         Bitboard::rank(color.fold(rank, 7 - rank))
     }
 
@@ -180,7 +180,7 @@ impl Bitboard {
         } else {
             // This is safe, because a non-zero u64 can have at most
             // 63 trailing zeros.
-            Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as i8) })
+            Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as u8) })
         }
     }
 
@@ -413,7 +413,7 @@ impl Iterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) })
+            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as u8) })
         }
     }
 }
@@ -439,7 +439,7 @@ impl DoubleEndedIterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
+            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as u8) };
             *self ^= Bitboard::from_square(sq);
             Some(sq)
         }

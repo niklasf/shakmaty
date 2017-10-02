@@ -45,7 +45,7 @@ impl Error for InvalidSquareName {
 
 /// A square index.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
+#[repr(u8)]
 pub enum Square {
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
@@ -64,15 +64,15 @@ impl Square {
     ///
     /// Panics if the index is not in the range `0..=63`.
     #[inline]
-    pub fn new(index: i8) -> Square {
-        assert!(0 <= index && index < 64);
+    pub fn new(index: u8) -> Square {
+        assert!(index < 64);
         unsafe { Square::from_index_unchecked(index) }
     }
 
     /// Tries to create a `Square` from an integer index in the range `0..=63`.
     #[inline]
-    pub fn from_index(index: i8) -> Option<Square> {
-        if 0 <= index && index < 64 {
+    pub fn from_index(index: u8) -> Option<Square> {
+        if index < 64 {
             Some(unsafe { Square::from_index_unchecked(index) })
         } else {
             None
@@ -85,15 +85,15 @@ impl Square {
     ///
     /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
-    pub unsafe fn from_index_unchecked(index: i8) -> Square {
-        debug_assert!(0 <= index && index < 64);
+    pub unsafe fn from_index_unchecked(index: u8) -> Square {
+        debug_assert!(index < 64);
         ::std::mem::transmute(index)
     }
 
     /// Tries to create a square from zero-based file and rank indexes.
     #[inline]
-    pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
-        if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
+    pub fn from_coords(file: u8, rank: u8) -> Option<Square> {
+        if file < 8 && rank < 8 {
             Some(unsafe { Square::from_coords_unchecked(file, rank) })
         } else {
             None
@@ -107,9 +107,9 @@ impl Square {
     /// It is the callers responsibility to ensure that file and rank are in
     /// the range `0..=7`.
     #[inline]
-    pub unsafe fn from_coords_unchecked(file: i8, rank: i8) -> Square {
-        debug_assert!(0 <= file && file < 8);
-        debug_assert!(0 <= rank && rank < 8);
+    pub unsafe fn from_coords_unchecked(file: u8, rank: u8) -> Square {
+        debug_assert!(file < 8);
+        debug_assert!(rank < 8);
         Square::from_index_unchecked(file | (rank << 3))
     }
 
@@ -143,40 +143,40 @@ impl Square {
     #[inline]
     pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
-            Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, (s[1] - b'1') as i8) })
+            Ok(unsafe { Square::from_coords_unchecked(s[0] - b'a', s[1] - b'1') })
         } else {
             Err(InvalidSquareName { _priv: () })
         }
     }
 
     #[inline]
-    pub fn index(self) -> i8 {
-        self as i8
+    pub fn index(self) -> u8 {
+        self as u8
     }
 
     #[inline]
-    pub fn file(self) -> i8 {
-        (self as i8) & 7
+    pub fn file(self) -> u8 {
+        (self as u8) & 7
     }
 
     #[inline]
     pub fn file_char(self) -> char {
-        (b'a' + self.file() as u8) as char
+        (b'a' + self.file()) as char
     }
 
     #[inline]
-    pub fn rank(self) -> i8 {
-        (self as i8) >> 3
+    pub fn rank(self) -> u8 {
+        (self as u8) >> 3
     }
 
     #[inline]
     pub fn rank_char(self) -> char {
-        (b'1' + self.rank() as u8) as char
+        (b'1' + self.rank()) as char
     }
 
     #[inline]
     pub fn offset(self, delta: i8) -> Option<Square> {
-        (self as i8).checked_add(delta).and_then(Square::from_index)
+        (self as i8).checked_add(delta).and_then(|s| Square::from_index(s as u8))
     }
 
     /// Tests is the square is a light square.
@@ -213,9 +213,9 @@ impl Square {
     ///
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
-    pub fn distance(self, other: Square) -> i8 {
-        max((self.file() - other.file()).abs(),
-            (self.rank() - other.rank()).abs())
+    pub fn distance(self, other: Square) -> u8 {
+        max((self.file() as i8 - other.file() as i8).abs() as u8,
+            (self.rank() as i8 - other.rank() as i8).abs() as u8)
     }
 
     /// Combines two squares, taking the file from the first and the rank from
@@ -236,6 +236,13 @@ impl From<Square> for i8 {
     #[inline]
     fn from(sq: Square) -> i8 {
         sq as i8
+    }
+}
+
+impl From<Square> for u8 {
+    #[inline]
+    fn from(sq: Square) -> u8 {
+        sq as u8
     }
 }
 
