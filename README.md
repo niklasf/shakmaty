@@ -22,14 +22,13 @@ Features
 * Play moves:
 
   ```rust
-  use shakmaty::{Move, Role};
-  use shakmaty::square;
+  use shakmaty::{Square, Move, Role};
 
   // 1. e4
   let pos = pos.play(&Move::Normal {
       role: Role::Pawn,
-      from: square::E2,
-      to: square::E4,
+      from: Square::E2,
+      to: Square::E4,
       capture: None,
       promotion: None,
   })?;

@@ -44,18 +44,17 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! # use shakmaty::{Chess, Position, Role, Move};
+//! # use shakmaty::{Square, Chess, Position, Role, Move};
 //! # use shakmaty::san::San;
-//! # use shakmaty::square;
 //! # let san: San = "Nf3".parse()?;
 //! let pos = Chess::default();
 //! let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(m, Move::Normal {
 //!     role: Role::Knight,
-//!     from: square::G1,
+//!     from: Square::G1,
 //!     capture: None,
-//!     to: square::F3,
+//!     to: Square::F3,
 //!     promotion: None,
 //! });
 //! #
@@ -504,7 +503,7 @@ mod tests {
                 file: Some(1),
                 rank: None,
                 capture: true,
-                to: ::square::C1,
+                to: Square::C1,
                 promotion: Some(Role::Rook),
             }));
         });

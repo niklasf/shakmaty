@@ -34,16 +34,15 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! use shakmaty::{Move, Role};
-//! use shakmaty::square;
+//! use shakmaty::{Square, Move, Role};
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
 //!
 //! // 1. e4
 //! let pos = pos.play(&Move::Normal {
 //!     role: Role::Pawn,
-//!     from: square::E2,
-//!     to: square::E4,
+//!     from: Square::E2,
+//!     to: Square::E4,
 //!     capture: None,
 //!     promotion: None,
 //! })?;
@@ -85,6 +84,7 @@ extern crate arrayvec;
 extern crate option_filter;
 extern crate btoi;
 
+mod square;
 mod types;
 mod bitboard;
 mod board;
@@ -94,7 +94,6 @@ mod movelist;
 mod magics;
 mod perft;
 
-pub mod square;
 pub mod attacks;
 pub mod fen;
 pub mod uci;

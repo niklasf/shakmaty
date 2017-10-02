@@ -19,12 +19,11 @@
 //! # Examples
 //!
 //! ```
-//! # use shakmaty::square;
-//! # use shakmaty::Bitboard;
+//! # use shakmaty::{Square, Bitboard};
 //! use shakmaty::attacks;
 //!
 //! let occupied = Bitboard::rank(5); // blocking pieces
-//! let attacks = attacks::bishop_attacks(square::C2, occupied);
+//! let attacks = attacks::bishop_attacks(Square::C2, occupied);
 //! // . . . . . . . .
 //! // . . . . . . . .
 //! // 0 0 0 0 0 0 1 0
@@ -34,8 +33,8 @@
 //! // . . . . . . . .
 //! // . 1 . 1 . . . .
 //!
-//! assert!(attacks.contains(square::G6));
-//! assert!(!attacks.contains(square::H7));
+//! assert!(attacks.contains(Square::G6));
+//! assert!(!attacks.contains(Square::H7));
 //! ```
 
 use square::Square;
@@ -117,10 +116,10 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// if they are not aligned).
 ///
 /// ```
-/// # use shakmaty::square;
 /// # use shakmaty::attacks;
+/// # use shakmaty::Square;
 ///
-/// let ray = attacks::ray(square::E2, square::G4);
+/// let ray = attacks::ray(Square::E2, Square::G4);
 /// // . . . . . . . .
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -143,10 +142,10 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// [`Bitboard`] if they are not on the same rank, file or diagonal.
 ///
 /// ```
-/// # use shakmaty::square;
 /// # use shakmaty::attacks;
+/// # use shakmaty::Square;
 ///
-/// let between = attacks::between(square::B1, square::B7);
+/// let between = attacks::between(Square::B1, Square::B7);
 /// // . . . . . . . .
 /// // . 0 . . . . . .
 /// // . 1 . . . . . .
@@ -167,10 +166,10 @@ pub fn between(a: Square, b: Square) -> Bitboard {
 /// Tests if all three squares are aligned on a rank, file or diagonal.
 ///
 /// ```
-/// # use shakmaty::square;
 /// # use shakmaty::attacks;
+/// # use shakmaty::Square;
 ///
-/// assert!(attacks::aligned(square::A1, square::B2, square::C3));
+/// assert!(attacks::aligned(Square::A1, Square::B2, Square::C3));
 /// ```
 #[inline]
 pub fn aligned(a: Square, b: Square, c: Square) -> bool {
@@ -180,11 +179,10 @@ pub fn aligned(a: Square, b: Square, c: Square) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use square;
 
     #[test]
     fn test_rook_attacks() {
-        assert_eq!(rook_attacks(square::D6, Bitboard(0x3f7f28802826f5b9)),
+        assert_eq!(rook_attacks(Square::D6, Bitboard(0x3f7f28802826f5b9)),
                    Bitboard(0x8370808000000));
     }
 }
