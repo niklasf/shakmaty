@@ -52,6 +52,11 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - `Square` is now a `#[repr(u8)]` enum
+  - Use `bitflags` for `PositionError`
+  - Renamed `RemainingChecks::subtract()` to `decrement`
+  - Added `Position::swap_turn()`
 * 0.1.0
   - First release with support for stable Rust.
 
