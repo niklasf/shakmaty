@@ -339,16 +339,21 @@ impl Position for Chess {
     }
 
     fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
+        let (castling, errors) = match Castling::from_setup(setup) {
+            Ok(castling) => (castling, PositionError::empty()),
+            Err(castling) => (castling, PositionError::BAD_CASTLING_RIGHTS),
+        };
+
         let pos = Chess {
             board: setup.board().clone(),
             turn: setup.turn(),
-            castling: Castling::from_setup(setup).map_err(|_| PositionError::BAD_CASTLING_RIGHTS)?,
+            castling: castling,
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
         };
 
-        let errors = validate(&pos);
+        let errors = validate(&pos) | errors;
         if errors.is_empty() {
             Ok(pos)
         } else {
