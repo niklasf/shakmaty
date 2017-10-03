@@ -72,6 +72,16 @@ impl Error for PositionError {
     }
 }
 
+impl PositionError {
+    fn to_result<T>(self, ok: T) -> Result<T, PositionError> {
+        if self.is_empty() {
+            Ok(ok)
+        } else {
+            Err(self)
+        }
+    }
+}
+
 /// Error in case of illegal moves.
 #[derive(Debug)]
 pub struct IllegalMove;
@@ -353,12 +363,7 @@ impl Position for Chess {
             fullmoves: setup.fullmoves(),
         };
 
-        let errors = validate(&pos) | errors;
-        if errors.is_empty() {
-            Ok(pos)
-        } else {
-            Err(errors)
-        }
+        (validate(&pos) | errors).to_result(pos)
     }
 
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
