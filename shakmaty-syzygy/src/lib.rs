@@ -19,3 +19,23 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.1.0")]
 
 #![warn(missing_debug_implementations)]
+
+#[macro_use]
+extern crate bitflags;
+
+bitflags! {
+    struct Flag: u8 {
+        const STM = 1;
+        const MAPPED = 2;
+        const WIN_PLIES = 4;
+        const LOSS_PLIES = 8;
+        const SINGLE_VALUE = 128;
+    }
+}
+
+struct PairsData {
+
+}
+
+struct Table {
+}

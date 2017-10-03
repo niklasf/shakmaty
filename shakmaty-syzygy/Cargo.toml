@@ -12,7 +12,8 @@ categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 
 [dependencies]
-shakmaty = "0.1.0"
+bitflags = "1.0"
+shakmaty = "0.1"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty-syzygy", branch = "master" }
