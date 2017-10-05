@@ -123,6 +123,15 @@ impl MaterialSide {
     }
 }
 
+impl fmt::Display for MaterialSide {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for &role in &[Role::King, Role::Queen, Role::Rook, Role::Bishop, Role::Knight, Role::Pawn] {
+            write!(f, "{}", role.char().to_uppercase().to_string().repeat(self.by_role(role) as usize))?;
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     white: MaterialSide,
@@ -157,6 +166,12 @@ impl Material {
     }
 }
 
+impl fmt::Display for Material {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}v{}", self.white, self.black)
+    }
+}
+
 struct PairsData {
     pieces: [Piece; MAX_PIECES],
 }
@@ -180,8 +195,8 @@ impl PairsData {
             }
         }
 
-        println!("{:?}", key);
-        println!("{:?}", mirrored_key);
+        println!("{}", key);
+        println!("{}", mirrored_key);
 
         Ok(())
     }
