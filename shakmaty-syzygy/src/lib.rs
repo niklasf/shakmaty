@@ -25,9 +25,35 @@ extern crate bitflags;
 extern crate memmap;
 extern crate shakmaty;
 
+use std::fmt;
+use std::error::Error;
+
 use shakmaty::{Color, Role, Piece};
 
 const MAX_PIECES: usize = 6;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct SyzygyError {
+    _priv: (),
+}
+
+impl SyzygyError {
+    fn desc(&self) -> &str {
+        "corrupted syzygy table"
+    }
+}
+
+impl fmt::Display for SyzygyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.desc().fmt(f)
+    }
+}
+
+impl Error for SyzygyError {
+    fn description(&self) -> &str {
+        self.desc()
+    }
+}
 
 bitflags! {
     struct Flag: u8 {
@@ -59,7 +85,7 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
     queens: u8,
@@ -70,6 +96,10 @@ pub struct MaterialSide {
 }
 
 impl MaterialSide {
+    pub fn new() -> MaterialSide {
+        MaterialSide::default()
+    }
+
     pub fn by_role(&self, role: Role) -> u8 {
         match role {
             Role::Pawn => self.pawns,
@@ -93,13 +123,17 @@ impl MaterialSide {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     white: MaterialSide,
     black: MaterialSide,
 }
 
 impl Material {
+    pub fn new() -> Material {
+        Material::default()
+    }
+
     pub fn by_color(&self, color: Color) -> &MaterialSide {
         match color {
             Color::Black => &self.black,
@@ -128,20 +162,28 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn new(data: &[u8]) {
-        println!("order: {:?}", data[0] & 0x0f);
-        println!("{:?}", byte_to_piece(data[1] & 0x0f));
-        println!("{:?}", byte_to_piece(data[2] & 0x0f));
-        println!("{:?}", byte_to_piece(data[3] & 0x0f));
-        println!("{:?}", byte_to_piece(data[4] & 0x0f));
-        println!("{:?} {:?}", data[5], byte_to_piece(data[5] & 0x0f));
-        println!("---");
-        println!("order: {:?}", data[0] >> 4);
-        println!("{:?}", byte_to_piece(data[1] >> 4));
-        println!("{:?}", byte_to_piece(data[2] >> 4));
-        println!("{:?}", byte_to_piece(data[3] >> 4));
-        println!("{:?}", byte_to_piece(data[4] >> 4));
-        println!("{:?} {:?}", data[5], byte_to_piece(data[5] >> 4));
+    pub fn new(data: &[u8]) -> Result<(), SyzygyError> {
+        let order = data[0] & 0x0f;
+
+        let mut key = Material::new();
+        let mut mirrored_key = Material::new();
+
+        for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+            match byte_to_piece(p & 0x0f) {
+                Some(piece) => *key.by_piece_mut(piece) += 1,
+                None => return Err(SyzygyError { _priv: () }),
+            }
+
+            match byte_to_piece(p >> 4) {
+                Some(piece) => *mirrored_key.by_piece_mut(piece) += 1,
+                None => return Err(SyzygyError { _priv: () }),
+            }
+        }
+
+        println!("{:?}", key);
+        println!("{:?}", mirrored_key);
+
+        Ok(())
     }
 }
 
