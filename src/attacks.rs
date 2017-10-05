@@ -50,9 +50,9 @@ pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
     Bitboard(match color {
         Color::White =>
-            unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
+            unsafe { *WHITE_PAWN_ATTACKS.get_unchecked(usize::from(sq)) },
         Color::Black =>
-            unsafe { *BLACK_PAWN_ATTACKS.get_unchecked(sq.index() as usize) },
+            unsafe { *BLACK_PAWN_ATTACKS.get_unchecked(usize::from(sq)) },
     })
 }
 
@@ -60,21 +60,21 @@ pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
 #[inline]
 pub fn knight_attacks(sq: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    unsafe { Bitboard(*KNIGHT_ATTACKS.get_unchecked(sq.index() as usize)) }
+    unsafe { Bitboard(*KNIGHT_ATTACKS.get_unchecked(usize::from(sq))) }
 }
 
 /// Looks up attacks for a king on `sq`.
 #[inline]
 pub fn king_attacks(sq: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    unsafe { Bitboard(*KING_ATTACKS.get_unchecked(sq.index() as usize)) }
+    unsafe { Bitboard(*KING_ATTACKS.get_unchecked(usize::from(sq))) }
 }
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    let m = unsafe { magics::ROOK_MAGICS.get_unchecked(sq.index() as usize) };
+    let m = unsafe { magics::ROOK_MAGICS.get_unchecked(usize::from(sq)) };
 
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
@@ -86,7 +86,7 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    let m = unsafe { magics::BISHOP_MAGICS.get_unchecked(sq.index() as usize) };
+    let m = unsafe { magics::BISHOP_MAGICS.get_unchecked(usize::from(sq)) };
 
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
@@ -134,7 +134,7 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    let idx = (a.index() as usize) * 64 + b.index() as usize;
+    let idx = usize::from(a) * 64 + usize::from(b);
     unsafe { Bitboard(*BB_RAYS.get_unchecked(idx)) }
 }
 
@@ -159,7 +159,7 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
     // This is safe because properly constructed squares are in bounds.
-    let idx = (a.index() as usize) * 64 + b.index() as usize;
+    let idx = usize::from(a) * 64 + usize::from(b);
     unsafe { Bitboard(*BB_BETWEEN.get_unchecked(idx)) }
 }
 

@@ -52,6 +52,8 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - Switch to `#[repr(i8)]` for `Square`
 * 0.2.0
   - `Square` is now a `#[repr(u8)]` enum
   - Use `bitflags` for `PositionError`

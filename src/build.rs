@@ -103,7 +103,7 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     let mut bb_between = [Bitboard(0); 4096];
 
     for s in 0..64 {
-        let sq = Square::from_index(s as u8).expect("square index s in range");
+        let sq = Square::from_index(s as i8).expect("square index s in range");
         knight_attacks[s] = step_attacks(sq, &KNIGHT_DELTAS);
         king_attacks[s] = step_attacks(sq, &KING_DELTAS);
         white_pawn_attacks[s] = step_attacks(sq, &WHITE_PAWN_DELTAS);
@@ -111,10 +111,10 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     }
 
     for a in 0..64 {
-        let sa = Square::from_index(a as u8).expect("square index a in range");
+        let sa = Square::from_index(a as i8).expect("square index a in range");
 
         for b in 0..64 {
-            let sb = Square::from_index(b as u8).expect("square index b in range");
+            let sb = Square::from_index(b as i8).expect("square index b in range");
             let idx = a * 64 + b;
 
             if sliding_bishop_attacks(sa, Bitboard(0)).contains(sb) {
@@ -154,7 +154,7 @@ fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
     let mut attacks = [Bitboard(0); 88772];
 
     for s in 0..64 {
-        let sq = Square::from_index(s as u8).expect("square index s in range");
+        let sq = Square::from_index(s as i8).expect("square index s in range");
         init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut attacks, &ROOK_DELTAS);
         init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut attacks, &BISHOP_DELTAS);
     }
