@@ -23,6 +23,11 @@
 #[macro_use]
 extern crate bitflags;
 extern crate memmap;
+extern crate shakmaty;
+
+use shakmaty::{Color, Role, Piece};
+
+const MAX_PIECES: usize = 6;
 
 bitflags! {
     struct Flag: u8 {
@@ -34,7 +39,28 @@ bitflags! {
     }
 }
 
-struct MaterialSide {
+bitflags! {
+    struct Layout: u8 {
+        const SPLIT = 1;
+        const HAS_PAWNS = 2;
+    }
+}
+
+fn byte_to_piece(p: u8) -> Option<Piece> {
+    let color = Color::from_bool(p & 8 == 0);
+    Some(match p & !8 {
+        1 => color.pawn(),
+        2 => color.knight(),
+        3 => color.bishop(),
+        4 => color.rook(),
+        5 => color.queen(),
+        6 => color.king(),
+        _ => return None,
+    })
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct MaterialSide {
     kings: u8,
     queens: u8,
     rooks: u8,
@@ -43,33 +69,107 @@ struct MaterialSide {
     pawns: u8,
 }
 
-struct Material {
+impl MaterialSide {
+    pub fn by_role(&self, role: Role) -> u8 {
+        match role {
+            Role::Pawn => self.pawns,
+            Role::Knight => self.knights,
+            Role::Bishop => self.bishops,
+            Role::Rook => self.rooks,
+            Role::Queen => self.queens,
+            Role::King => self.kings,
+        }
+    }
+
+    pub fn by_role_mut(&mut self, role: Role) -> &mut u8 {
+        match role {
+            Role::Pawn => &mut self.pawns,
+            Role::Knight => &mut self.knights,
+            Role::Bishop => &mut self.bishops,
+            Role::Rook => &mut self.rooks,
+            Role::Queen => &mut self.queens,
+            Role::King => &mut self.kings,
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+pub struct Material {
     white: MaterialSide,
     black: MaterialSide,
 }
 
-struct PairsData {
+impl Material {
+    pub fn by_color(&self, color: Color) -> &MaterialSide {
+        match color {
+            Color::Black => &self.black,
+            Color::White => &self.white,
+        }
+    }
 
+    pub fn by_color_mut(&mut self, color: Color) -> &mut MaterialSide {
+        match color {
+            Color::Black => &mut self.black,
+            Color::White => &mut self.white,
+        }
+    }
+
+    pub fn by_piece(&self, piece: Piece) -> u8 {
+        self.by_color(piece.color).by_role(piece.role)
+    }
+
+    pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
+        self.by_color_mut(piece.color).by_role_mut(piece.role)
+    }
+}
+
+struct PairsData {
+    pieces: [Piece; MAX_PIECES],
+}
+
+impl PairsData {
+    pub fn new(data: &[u8]) {
+        println!("order: {:?}", data[0] & 0x0f);
+        println!("{:?}", byte_to_piece(data[1] & 0x0f));
+        println!("{:?}", byte_to_piece(data[2] & 0x0f));
+        println!("{:?}", byte_to_piece(data[3] & 0x0f));
+        println!("{:?}", byte_to_piece(data[4] & 0x0f));
+        println!("{:?} {:?}", data[5], byte_to_piece(data[5] & 0x0f));
+        println!("---");
+        println!("order: {:?}", data[0] >> 4);
+        println!("{:?}", byte_to_piece(data[1] >> 4));
+        println!("{:?}", byte_to_piece(data[2] >> 4));
+        println!("{:?}", byte_to_piece(data[3] >> 4));
+        println!("{:?}", byte_to_piece(data[4] >> 4));
+        println!("{:?} {:?}", data[5], byte_to_piece(data[5] >> 4));
+    }
 }
 
 struct Table {
     material: Material,
     unique_pieces: u8,
+    piece_entry: PairsData,
 }
 
 impl Table {
     pub fn new(data: &[u8]) {
+        assert!(data.starts_with(b"\x71\xe8\x23\x5d"));
+        let layout = Layout::from_bits_truncate(data[4]);
+        assert!(!layout.contains(Layout::HAS_PAWNS));
+        PairsData::new(&data[5..]);
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use memmap::{Mmap, Protection};
 
     #[test]
     fn test_table() {
-        let mmap = Mmap::open_path("KQvK.rtbw", Protection::Read).expect("mmap");
+        let mmap = Mmap::open_path("KQvKR.rtbw", Protection::Read).expect("mmap");
         let bytes = unsafe { mmap.as_slice() };
-        Table::new(bytes)
+        Table::new(bytes);
+        panic!("debugging ...");
     }
 }
