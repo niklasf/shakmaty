@@ -335,7 +335,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|s| is_relevant_ep(self, *s)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|&s| is_relevant_ep(self, s)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
