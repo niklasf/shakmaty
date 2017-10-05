@@ -35,7 +35,7 @@ use shakmaty::{Color, Role, Piece, Position, Chess, Outcome};
 
 pub use material::{Material, MaterialSide};
 
-trait Syzygy {
+pub trait Syzygy {
     const WDL_MAGIC: [u8; 4];
     const ONE_KING: bool;
 }
@@ -123,17 +123,18 @@ impl PairsData {
     }
 }
 
-struct Table<T: Syzygy> {
+#[derive(Debug)]
+pub struct Table<P: Position + Syzygy> {
     /* material: Material,
     unique_pieces: u8,
     piece_entry: PairsData, */
     key: Material,
     mirrored_key: Material,
-    syzygy: PhantomData<T>,
+    syzygy: PhantomData<P>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-enum Wdl {
+pub enum Wdl {
     Loss = -2,
     BlessedLoss = -1,
     Draw = 0,
@@ -141,9 +142,9 @@ enum Wdl {
     Win = 2,
 }
 
-impl<T: Syzygy> Table<T> {
-    pub fn new(data: &[u8]) -> Result<Table<T>, SyzygyError> {
-        if !data.starts_with(&T::WDL_MAGIC) {
+impl<P: Position + Syzygy> Table<P> {
+    pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
+        if !data.starts_with(&P::WDL_MAGIC) {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
 
@@ -168,10 +169,8 @@ impl<T: Syzygy> Table<T> {
         PairsData::new(&data[5..])?;
         Ok(Table { key, mirrored_key, syzygy: PhantomData })
     }
-}
 
-impl<P: Position + Syzygy> Table<P> {
-    fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
+    pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
         let key = Material::from_board(pos.board());
 
         if key != self.key && key != self.mirrored_key {
