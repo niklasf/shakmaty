@@ -128,6 +128,7 @@ struct Table {
     mirrored_key: Material,
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum Wdl {
     Loss = -2,
     BlessedLoss = -1,
@@ -162,7 +163,13 @@ impl Table {
     }
 
     fn probe_wdl_table<P: Position + Syzygy>(self, pos: &P) -> Result<Wdl, SyzygyError> {
-        Err(SyzygyError { kind: ErrorKind::CorruptedTable })
+        let key = Material::from_board(pos.board());
+
+        if key != self.key && key != self.mirrored_key {
+            return Err(SyzygyError { kind: ErrorKind::Material });
+        }
+
+        Ok(Wdl::Draw)
     }
 }
 
@@ -183,7 +190,8 @@ mod tests {
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
 
-        table.probe_wdl_table(&pos);
+        let result = table.probe_wdl_table(&pos);
+        println!("result: {:?}", result);
         panic!("debugging ...");
     }
 }
