@@ -18,7 +18,14 @@ use std::fmt;
 
 use shakmaty::{Color, Role, Piece, Board};
 
-const ROLES: [Role; 6] = [Role::King, Role::Queen, Role::Rook, Role::Bishop, Role::Knight, Role::Pawn];
+const ROLES: [Role; 6] = [
+    Role::King,
+    Role::Queen,
+    Role::Rook,
+    Role::Bishop,
+    Role::Knight,
+    Role::Pawn,
+];
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
