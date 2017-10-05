@@ -30,20 +30,37 @@ mod material;
 use std::fmt;
 use std::error::Error;
 
-use shakmaty::{Color, Role, Piece};
+use shakmaty::{Color, Role, Piece, Position, Chess, Outcome};
 
 pub use material::{Material, MaterialSide};
+
+trait Syzygy {
+    const ONE_KING: bool;
+}
+
+impl Syzygy for Chess {
+    const ONE_KING: bool = true;
+}
 
 const MAX_PIECES: usize = 6;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct SyzygyError {
-    _priv: (),
+pub struct SyzygyError {
+    kind: ErrorKind,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum ErrorKind {
+    Material,
+    CorruptedTable,
 }
 
 impl SyzygyError {
     fn desc(&self) -> &str {
-        "corrupted syzygy table"
+        match self.kind {
+            ErrorKind::Material => "material signature mismatch",
+            ErrorKind::CorruptedTable => "corrupted table",
+        }
     }
 }
 
@@ -96,41 +113,56 @@ struct PairsData {
 impl PairsData {
     pub fn new(data: &[u8]) -> Result<(), SyzygyError> {
         let order = data[0] & 0x0f;
+        let mirrored_order = data[0] >> 4;
 
-        let mut key = Material::new();
-        let mut mirrored_key = Material::new();
-
-        for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-            match byte_to_piece(p & 0x0f) {
-                Some(piece) => *key.by_piece_mut(piece) += 1,
-                None => return Err(SyzygyError { _priv: () }),
-            }
-
-            match byte_to_piece(p >> 4) {
-                Some(piece) => *mirrored_key.by_piece_mut(piece) += 1,
-                None => return Err(SyzygyError { _priv: () }),
-            }
-        }
-
-        println!("{}", key);
-        println!("{}", mirrored_key);
 
         Ok(())
     }
 }
 
 struct Table {
-    material: Material,
+    /* material: Material,
     unique_pieces: u8,
-    piece_entry: PairsData,
+    piece_entry: PairsData, */
+    key: Material,
+    mirrored_key: Material,
+}
+
+enum Wdl {
+    Loss = -2,
+    BlessedLoss = -1,
+    Draw = 0,
+    CursedWin = 1,
+    Win = 2,
 }
 
 impl Table {
-    pub fn new(data: &[u8]) {
+    pub fn new(data: &[u8]) -> Result<Table, SyzygyError> {
         assert!(data.starts_with(b"\x71\xe8\x23\x5d"));
         let layout = Layout::from_bits_truncate(data[4]);
         assert!(!layout.contains(Layout::HAS_PAWNS));
-        PairsData::new(&data[5..]);
+
+        let mut key = Material::new();
+        let mut mirrored_key = Material::new();
+
+        for p in data[6..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+            match byte_to_piece(p & 0x0f) {
+                Some(piece) => *key.by_piece_mut(piece) += 1,
+                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
+            }
+
+            match byte_to_piece(p >> 4) {
+                Some(piece) => *mirrored_key.by_piece_mut(piece) += 1,
+                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
+            }
+        }
+
+        PairsData::new(&data[5..])?;
+        Ok(Table { key, mirrored_key })
+    }
+
+    fn probe_wdl_table<P: Position + Syzygy>(self, pos: &P) -> Result<Wdl, SyzygyError> {
+        Err(SyzygyError { kind: ErrorKind::CorruptedTable })
     }
 }
 
@@ -139,11 +171,19 @@ mod tests {
     use super::*;
     use memmap::{Mmap, Protection};
 
+    use shakmaty::fen::Fen;
+    use shakmaty::Chess;
+
     #[test]
     fn test_table() {
         let mmap = Mmap::open_path("KQvKR.rtbw", Protection::Read).expect("mmap");
         let bytes = unsafe { mmap.as_slice() };
-        Table::new(bytes);
+        let table = Table::new(bytes).expect("good table");
+
+        let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
+        let pos: Chess = fen.position().expect("legal position");
+
+        table.probe_wdl_table(&pos);
         panic!("debugging ...");
     }
 }

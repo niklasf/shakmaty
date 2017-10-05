@@ -16,7 +16,7 @@
 
 use std::fmt;
 
-use shakmaty::{Color, Role, Piece};
+use shakmaty::{Color, Role, Piece, Board};
 
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
@@ -74,6 +74,27 @@ pub struct Material {
 impl Material {
     pub fn new() -> Material {
         Material::default()
+    }
+
+    pub fn from_board(board: &Board) -> Material {
+        Material {
+            white: MaterialSide {
+                pawns: (board.pawns() & board.white()).len() as u8,
+                knights: (board.knights() & board.white()).len() as u8,
+                bishops: (board.bishops() & board.white()).len() as u8,
+                rooks: (board.rooks() & board.white()).len() as u8,
+                queens: (board.queens() & board.white()).len() as u8,
+                kings: (board.kings() & board.white()).len() as u8,
+            },
+            black: MaterialSide {
+                pawns: (board.pawns() & board.black()).len() as u8,
+                knights: (board.knights() & board.black()).len() as u8,
+                bishops: (board.bishops() & board.black()).len() as u8,
+                rooks: (board.rooks() & board.black()).len() as u8,
+                queens: (board.queens() & board.black()).len() as u8,
+                kings: (board.kings() & board.black()).len() as u8,
+            }
+        }
     }
 
     pub fn by_color(&self, color: Color) -> &MaterialSide {
