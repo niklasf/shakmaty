@@ -130,6 +130,9 @@ pub struct Table<P: Position + Syzygy> {
     piece_entry: PairsData, */
     key: Material,
     mirrored_key: Material,
+    num_pieces: u8,
+    num_unique_pieces: u8,
+    min_like_man: u8,
     syzygy: PhantomData<P>,
 }
 
@@ -167,7 +170,14 @@ impl<P: Position + Syzygy> Table<P> {
         }
 
         PairsData::new(&data[5..])?;
-        Ok(Table { key, mirrored_key, syzygy: PhantomData })
+        Ok(Table {
+            num_pieces: key.count(),
+            num_unique_pieces: key.unique_pieces(),
+            min_like_man: key.min_like_man(),
+            key,
+            mirrored_key,
+            syzygy: PhantomData
+        })
     }
 
     pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {

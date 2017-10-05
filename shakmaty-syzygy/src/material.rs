@@ -18,6 +18,8 @@ use std::fmt;
 
 use shakmaty::{Color, Role, Piece, Board};
 
+const ROLES: [Role; 6] = [Role::King, Role::Queen, Role::Rook, Role::Bishop, Role::Knight, Role::Pawn];
+
 #[derive(Debug, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
@@ -54,11 +56,19 @@ impl MaterialSide {
             Role::King => &mut self.kings,
         }
     }
+
+    pub fn count(&self) -> u8 {
+        self.pawns + self.knights + self.bishops + self.rooks + self.queens + self.kings
+    }
+
+    pub(crate) fn unique_roles(&self) -> u8 {
+        ROLES.iter().map(|&r| self.by_role(r)).filter(|&c| c == 1).sum()
+    }
 }
 
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for &role in &[Role::King, Role::Queen, Role::Rook, Role::Bishop, Role::Knight, Role::Pawn] {
+        for &role in &ROLES {
             write!(f, "{}", role.char().to_uppercase().to_string().repeat(self.by_role(role) as usize))?;
         }
         Ok(())
@@ -117,6 +127,21 @@ impl Material {
 
     pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
         self.by_color_mut(piece.color).by_role_mut(piece.role)
+    }
+
+    pub fn count(&self) -> u8 {
+        self.white.count() + self.black.count()
+    }
+
+    pub(crate) fn unique_pieces(&self) -> u8 {
+        self.white.unique_roles() + self.black.unique_roles()
+    }
+
+    pub(crate) fn min_like_man(&self) -> u8 {
+        ROLES.iter().map(|&r| self.white.by_role(r))
+            .chain(ROLES.iter().map(|&r| self.black.by_role(r)))
+            .filter(|&c| 2 <= c)
+            .min().unwrap_or(0)
     }
 }
 
