@@ -20,7 +20,7 @@ use shakmaty::{Color, Role, Piece, Board};
 
 const ROLES: [Role; 6] = [Role::King, Role::Queen, Role::Rook, Role::Bishop, Role::Knight, Role::Pawn];
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
     queens: u8,
@@ -64,6 +64,10 @@ impl MaterialSide {
     pub(crate) fn unique_roles(&self) -> u8 {
         ROLES.iter().map(|&r| self.by_role(r)).filter(|&c| c == 1).sum()
     }
+
+    pub(crate) fn has_pawns(&self) -> bool {
+        self.pawns > 0
+    }
 }
 
 impl fmt::Display for MaterialSide {
@@ -75,7 +79,7 @@ impl fmt::Display for MaterialSide {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     white: MaterialSide,
     black: MaterialSide,
@@ -105,6 +109,17 @@ impl Material {
                 kings: (board.kings() & board.black()).len() as u8,
             }
         }
+    }
+
+    pub fn flip(&self) -> Material {
+        Material {
+            white: self.black.clone(),
+            black: self.white.clone(),
+        }
+    }
+
+    pub fn is_symmetric(&self) -> bool {
+        self.white == self.black
     }
 
     pub fn by_color(&self, color: Color) -> &MaterialSide {
@@ -142,6 +157,10 @@ impl Material {
             .chain(ROLES.iter().map(|&r| self.black.by_role(r)))
             .filter(|&c| 2 <= c)
             .min().unwrap_or(0)
+    }
+
+    pub(crate) fn has_pawns(&self) -> bool {
+        self.white.has_pawns() || self.black.has_pawns()
     }
 }
 

@@ -20,8 +20,8 @@
 
 #![warn(missing_debug_implementations)]
 
-#[macro_use]
-extern crate bitflags;
+extern crate arrayvec;
+#[macro_use] extern crate bitflags;
 extern crate memmap;
 extern crate shakmaty;
 
@@ -30,6 +30,8 @@ mod material;
 use std::fmt;
 use std::error::Error;
 use std::marker::PhantomData;
+
+use arrayvec::ArrayVec;
 
 use shakmaty::{Color, Role, Piece, Position, Chess, Outcome};
 
@@ -56,6 +58,7 @@ pub struct SyzygyError {
 enum ErrorKind {
     Material,
     CorruptedTable,
+    Todo,
 }
 
 impl SyzygyError {
@@ -63,6 +66,7 @@ impl SyzygyError {
         match self.kind {
             ErrorKind::Material => "material signature mismatch",
             ErrorKind::CorruptedTable => "corrupted table",
+            ErrorKind::Todo => "not yet implemented",
         }
     }
 }
@@ -109,31 +113,41 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
+#[derive(Debug)]
 struct PairsData {
-    pieces: [Piece; MAX_PIECES],
+    pieces: ArrayVec<[Piece; MAX_PIECES]>,
 }
 
 impl PairsData {
-    pub fn new(data: &[u8]) -> Result<(), SyzygyError> {
-        let order = data[0] & 0x0f;
-        let mirrored_order = data[0] >> 4;
+    pub fn new(side: Color, data: &[u8]) -> Result<PairsData, SyzygyError> {
+        let mut pieces = ArrayVec::new();
 
+        let _order = side.fold(data[0] >> 4, data[0] & 0xf);
 
-        Ok(())
+        for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+            match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
+                Some(piece) => pieces.push(piece),
+                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
+            }
+        }
+
+        Ok(PairsData { pieces })
     }
 }
 
 #[derive(Debug)]
 pub struct Table<P: Position + Syzygy> {
-    /* material: Material,
-    unique_pieces: u8,
-    piece_entry: PairsData, */
     key: Material,
-    mirrored_key: Material,
     num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
+    sections: WdlSections,
     syzygy: PhantomData<P>,
+}
+
+#[derive(Debug)]
+enum WdlSections {
+    Pawnless { black: PairsData, white: PairsData }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -147,35 +161,45 @@ pub enum Wdl {
 
 impl<P: Position + Syzygy> Table<P> {
     pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
+        // Check magic.
         if !data.starts_with(&P::WDL_MAGIC) {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
 
+        // Read layout flags.
         let layout = Layout::from_bits_truncate(data[4]);
-        assert!(!layout.contains(Layout::HAS_PAWNS));
+        let has_pawns = layout.contains(Layout::HAS_PAWNS);
+        let split = layout.contains(Layout::SPLIT);
 
+        // Read the material key.
         let mut key = Material::new();
-        let mut mirrored_key = Material::new();
-
         for p in data[6..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-            match byte_to_piece(p & 0x0f) {
+            match byte_to_piece(p & 0xf) {
                 Some(piece) => *key.by_piece_mut(piece) += 1,
-                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
-            }
-
-            match byte_to_piece(p >> 4) {
-                Some(piece) => *mirrored_key.by_piece_mut(piece) += 1,
                 None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
             }
         }
 
-        PairsData::new(&data[5..])?;
+        // Check consistency of layout and material key.
+        if has_pawns != key.has_pawns() || split == key.is_symmetric() {
+            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+        }
+
+        let sections = if has_pawns {
+            return Err(SyzygyError { kind: ErrorKind::Todo });
+        } else {
+            WdlSections::Pawnless {
+                black: PairsData::new(Color::Black, &data[5..])?,
+                white: PairsData::new(Color::White, &data[5..])?,
+            }
+        };
+
         Ok(Table {
             num_pieces: key.count(),
             num_unique_pieces: key.unique_pieces(),
             min_like_man: key.min_like_man(),
             key,
-            mirrored_key,
+            sections,
             syzygy: PhantomData
         })
     }
@@ -183,9 +207,9 @@ impl<P: Position + Syzygy> Table<P> {
     pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
         let key = Material::from_board(pos.board());
 
-        if key != self.key && key != self.mirrored_key {
+        /* TODO: if key != self.key && key != self.mirrored_key {
             return Err(SyzygyError { kind: ErrorKind::Material });
-        }
+        } */
 
         Ok(Wdl::Draw)
     }
