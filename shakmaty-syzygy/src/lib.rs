@@ -22,6 +22,7 @@
 
 #[macro_use]
 extern crate bitflags;
+extern crate memmap;
 
 bitflags! {
     struct Flag: u8 {
@@ -33,9 +34,42 @@ bitflags! {
     }
 }
 
+struct MaterialSide {
+    kings: u8,
+    queens: u8,
+    rooks: u8,
+    bishops: u8,
+    knights: u8,
+    pawns: u8,
+}
+
+struct Material {
+    white: MaterialSide,
+    black: MaterialSide,
+}
+
 struct PairsData {
 
 }
 
 struct Table {
+    material: Material,
+    unique_pieces: u8,
+}
+
+impl Table {
+    pub fn new(data: &[u8]) {
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use memmap::{Mmap, Protection};
+
+    #[test]
+    fn test_table() {
+        let mmap = Mmap::open_path("KQvK.rtbw", Protection::Read).expect("mmap");
+        let bytes = unsafe { mmap.as_slice() };
+        Table::new(bytes)
+    }
 }

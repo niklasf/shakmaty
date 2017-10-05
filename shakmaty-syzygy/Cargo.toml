@@ -13,7 +13,8 @@ keywords = ["chess", "syzygy", "tablebase"]
 
 [dependencies]
 bitflags = "1.0"
-shakmaty = "0.1"
+shakmaty = "0.2"
+memmap = "0.5"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty-syzygy", branch = "master" }
