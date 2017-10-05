@@ -141,7 +141,7 @@ enum Wdl {
     Win = 2,
 }
 
-impl<T: Position + Syzygy> Table<T> {
+impl<T: Syzygy> Table<T> {
     pub fn new(data: &[u8]) -> Result<Table<T>, SyzygyError> {
         if !data.starts_with(&T::WDL_MAGIC) {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
@@ -168,8 +168,10 @@ impl<T: Position + Syzygy> Table<T> {
         PairsData::new(&data[5..])?;
         Ok(Table { key, mirrored_key, syzygy: PhantomData })
     }
+}
 
-    fn probe_wdl_table(self, pos: &T) -> Result<Wdl, SyzygyError> {
+impl<P: Position + Syzygy> Table<P> {
+    fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
         let key = Material::from_board(pos.board());
 
         if key != self.key && key != self.mirrored_key {
