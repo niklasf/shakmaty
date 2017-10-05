@@ -316,9 +316,9 @@ impl Pockets {
 
 impl fmt::Display for Pockets {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for color in &[White, Black] {
-            for role in &ROLES {
-                let piece = Piece { color: *color, role: *role };
+        for &color in &[White, Black] {
+            for &role in &ROLES {
+                let piece = Piece { color, role };
                 write!(f, "{}", piece.char().to_string().repeat(self.by_piece(piece) as usize))?;
             }
         }
