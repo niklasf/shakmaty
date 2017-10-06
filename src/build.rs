@@ -102,35 +102,31 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     let mut bb_rays = [Bitboard(0); 4096];
     let mut bb_between = [Bitboard(0); 4096];
 
-    for s in 0..64 {
-        let sq = Square::from_index(s as i8).expect("square index s in range");
-        knight_attacks[s] = step_attacks(sq, &KNIGHT_DELTAS);
-        king_attacks[s] = step_attacks(sq, &KING_DELTAS);
-        white_pawn_attacks[s] = step_attacks(sq, &WHITE_PAWN_DELTAS);
-        black_pawn_attacks[s] = step_attacks(sq, &BLACK_PAWN_DELTAS);
+    for sq in Bitboard::ALL {
+        knight_attacks[usize::from(sq)] = step_attacks(sq, &KNIGHT_DELTAS);
+        king_attacks[usize::from(sq)] = step_attacks(sq, &KING_DELTAS);
+        white_pawn_attacks[usize::from(sq)] = step_attacks(sq, &WHITE_PAWN_DELTAS);
+        black_pawn_attacks[usize::from(sq)] = step_attacks(sq, &BLACK_PAWN_DELTAS);
     }
 
-    for a in 0..64 {
-        let sa = Square::from_index(a as i8).expect("square index a in range");
+    for a in Bitboard::ALL {
+        for b in Bitboard::ALL {
+            let idx = usize::from(a) * 64 + usize::from(b);
 
-        for b in 0..64 {
-            let sb = Square::from_index(b as i8).expect("square index b in range");
-            let idx = a * 64 + b;
-
-            if sliding_bishop_attacks(sa, Bitboard(0)).contains(sb) {
+            if sliding_bishop_attacks(a, Bitboard(0)).contains(b) {
                 bb_rays[idx] =
-                    (sliding_bishop_attacks(sa, Bitboard(0)) &
-                     sliding_bishop_attacks(sb, Bitboard(0))).with(sa).with(sb);
+                    (sliding_bishop_attacks(a, Bitboard(0)) &
+                     sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
                 bb_between[idx] =
-                    sliding_bishop_attacks(sa, Bitboard::from_square(sb)) &
-                    sliding_bishop_attacks(sb, Bitboard::from_square(sa));
-            } else if sliding_rook_attacks(sa, Bitboard(0)).contains(sb) {
+                    sliding_bishop_attacks(a, Bitboard::from_square(b)) &
+                    sliding_bishop_attacks(b, Bitboard::from_square(a));
+            } else if sliding_rook_attacks(a, Bitboard(0)).contains(b) {
                 bb_rays[idx] =
-                    (sliding_rook_attacks(sa, Bitboard(0)) &
-                     sliding_rook_attacks(sb, Bitboard(0))).with(sa).with(sb);
+                    (sliding_rook_attacks(a, Bitboard(0)) &
+                     sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
                 bb_between[idx] =
-                    sliding_rook_attacks(sa, Bitboard::from_square(sb)) &
-                    sliding_rook_attacks(sb, Bitboard::from_square(sa));
+                    sliding_rook_attacks(a, Bitboard::from_square(b)) &
+                    sliding_rook_attacks(b, Bitboard::from_square(a));
             }
         }
     }
@@ -153,10 +149,9 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
     let mut attacks = [Bitboard(0); 88772];
 
-    for s in 0..64 {
-        let sq = Square::from_index(s as i8).expect("square index s in range");
-        init_magics(sq, &magics::ROOK_MAGICS[s], 12, &mut attacks, &ROOK_DELTAS);
-        init_magics(sq, &magics::BISHOP_MAGICS[s], 9, &mut attacks, &BISHOP_DELTAS);
+    for sq in Bitboard::ALL {
+        init_magics(sq, &magics::ROOK_MAGICS[usize::from(sq)], 12, &mut attacks, &ROOK_DELTAS);
+        init_magics(sq, &magics::BISHOP_MAGICS[usize::from(sq)], 9, &mut attacks, &BISHOP_DELTAS);
     }
 
     dump_slice(f, "ATTACKS", "u64", &attacks)?;
