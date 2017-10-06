@@ -21,7 +21,7 @@
 //! Generate legal moves in the starting position:
 //!
 //! ```
-//! use shakmaty::{Chess, Position, MoveList};
+//! use shakmaty::{Chess, Position};
 //!
 //! let pos = Chess::default();
 //! let legals = pos.legals();
