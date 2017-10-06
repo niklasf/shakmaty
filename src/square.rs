@@ -170,7 +170,7 @@ impl Square {
 
     #[inline]
     pub fn offset(self, delta: i8) -> Option<Square> {
-        (self as i8).checked_add(delta).and_then(|s| Square::from_index(s))
+        (self as i8).checked_add(delta).and_then(Square::from_index)
     }
 
     /// Tests is the square is a light square.
