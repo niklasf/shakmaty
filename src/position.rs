@@ -73,7 +73,7 @@ impl Error for PositionError {
 }
 
 impl PositionError {
-    fn to_result<T>(self, ok: T) -> Result<T, PositionError> {
+    fn into_result<T>(self, ok: T) -> Result<T, PositionError> {
         if self.is_empty() {
             Ok(ok)
         } else {
@@ -363,7 +363,7 @@ impl Position for Chess {
             fullmoves: setup.fullmoves(),
         };
 
-        (validate(&pos) | errors).to_result(pos)
+        (validate(&pos) | errors).into_result(pos)
     }
 
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
