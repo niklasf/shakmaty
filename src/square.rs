@@ -173,29 +173,29 @@ impl Square {
         (self as i8).checked_add(delta).and_then(Square::from_index)
     }
 
-    /// Flip the square horizontally.
+    /// Mirror the square horizontally.
     ///
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::H1.flip_horizontal(), Square::A1);
-    /// assert_eq!(Square::D3.flip_horizontal(), Square::E3);
+    /// assert_eq!(Square::H1.mirror_horizontal(), Square::A1);
+    /// assert_eq!(Square::D3.mirror_horizontal(), Square::E3);
     /// ```
     #[inline]
-    pub fn flip_horizontal(self) -> Square {
-        unsafe { Square::from_index_unchecked((self as i8) ^ 7) }
+    pub fn mirror_horizontal(self) -> Square {
+        unsafe { Square::from_index_unchecked((self as i8) ^ 0x07) }
     }
 
-    /// Flip the square vertically.
+    /// Mirror the square vertically.
     ///
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::A8.flip_vertical(), Square::A1);
-    /// assert_eq!(Square::D3.flip_vertical(), Square::D6);
+    /// assert_eq!(Square::A8.mirror_vertical(), Square::A1);
+    /// assert_eq!(Square::D3.mirror_vertical(), Square::D6);
     /// ```
     #[inline]
-    pub fn flip_vertical(self) -> Square {
+    pub fn mirror_vertical(self) -> Square {
         unsafe { Square::from_index_unchecked((self as i8) ^ 0x38) }
     }
 
