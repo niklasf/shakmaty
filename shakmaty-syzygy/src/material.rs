@@ -88,8 +88,8 @@ impl fmt::Display for MaterialSide {
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
-    white: MaterialSide,
-    black: MaterialSide,
+    pub white: MaterialSide,
+    pub black: MaterialSide,
 }
 
 impl Material {

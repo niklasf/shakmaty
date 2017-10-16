@@ -24,6 +24,7 @@ extern crate arrayvec;
 #[macro_use] extern crate bitflags;
 extern crate memmap;
 extern crate shakmaty;
+extern crate num_integer;
 
 mod material;
 
@@ -32,7 +33,7 @@ use std::error::Error;
 use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
-
+use num_integer::binomial;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
 
 pub use material::{Material, MaterialSide};
@@ -130,9 +131,10 @@ fn offdiag(sq: Square) -> bool {
 
 #[derive(Debug)]
 struct PairsData {
-    flags: Flag,
+    //flags: Flag,
     pieces: ArrayVec<[Piece; MAX_PIECES]>,
     group_len: ArrayVec<[u8; MAX_PIECES]>,
+    group_idx: [u32; MAX_PIECES],
 }
 
 impl PairsData {
@@ -143,6 +145,7 @@ impl PairsData {
         let order = side.fold(data[0] >> 4, data[0] & 0xf);
         let order2 = side.fold(data[0] & 0xf, data[0] >> 4);
 
+        // initialize pieces
         for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
             match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
                 Some(piece) => {
@@ -153,11 +156,12 @@ impl PairsData {
             }
         }
 
-        let mut group_len = ArrayVec::new();
+        // initialize group_len
+        let mut group_len: ArrayVec<[u8; MAX_PIECES]> = ArrayVec::new();
         let mut first_len = if material.has_pawns() { 0 } else { if material.unique_pieces() > 2 { 3 } else { 2 } };
         group_len.push(1);
         for window in pieces.windows(2) {
-            if first_len > 1 { first_len -= 1 };
+            if first_len > 0 { first_len -= 1 };
             if first_len > 0 || window[0] == window[1] {
                 let len = group_len.len();
                 group_len[len - 1] += 1;
@@ -166,7 +170,39 @@ impl PairsData {
             }
         }
 
-        Ok(PairsData { pieces, group_len })
+        // initialize group_idx
+        let mut group_idx = [0u32; MAX_PIECES];
+        let pp = material.white.has_pawns() && material.black.has_pawns();
+        let mut next = if pp { 2 } else { 1 };
+        let mut free_squares = 64 - u32::from(group_len[0]) - if pp { u32::from(group_len[1]) } else { 0 };
+        let mut idx = 1;
+
+        let mut k = 0;
+        while next < group_len.len() || k == order || k == order2 {
+            if k == order {
+                println!("leading {}", idx);
+                group_idx[0] = idx;
+                assert!(!material.has_pawns());
+                idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
+            } else if k == order2 {
+                group_idx[1] = idx;
+                idx *= binomial(48 - u32::from(group_len[0]), u32::from(group_len[1]));
+            } else {
+                println!("remaining pieces {}", idx);
+                group_idx[next] = idx;
+                println!("binom({}, {})", group_len[next], free_squares);
+                idx *= binomial(free_squares, u32::from(group_len[next]));
+                free_squares -= u32::from(group_len[next]);
+                next += 1;
+            }
+            k += 1;
+        }
+
+        group_idx[group_len.len()] = idx;
+
+        println!("group idx {:?}", group_idx);
+
+        Ok(PairsData { pieces, group_len, group_idx })
     }
 }
 
@@ -289,7 +325,7 @@ impl<P: Position + Syzygy> Table<P> {
             break;
         }
 
-        let idx = if self.num_unique_pieces > 2 {
+        let mut idx = if self.num_unique_pieces > 2 {
             let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
             let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } + if squares[2] > squares[1] { 1 } else { 0 };
 
@@ -303,6 +339,8 @@ impl<P: Position + Syzygy> Table<P> {
         } else {
             panic!("mapkk not implemented");
         };
+
+        idx *= side.group_idx[0];
 
         println!("idx: {:?}", idx);
 
