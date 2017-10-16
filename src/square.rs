@@ -186,6 +186,19 @@ impl Square {
         unsafe { Square::from_index_unchecked((self as i8) ^ 7) }
     }
 
+    /// Flip the square vertically.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A8.flip_vertical(), Square::A1);
+    /// assert_eq!(Square::D3.flip_vertical(), Square::D6);
+    /// ```
+    #[inline]
+    pub fn flip_vertical(self) -> Square {
+        unsafe { Square::from_index_unchecked((self as i8) ^ 0x38) }
+    }
+
     /// Tests is the square is a light square.
     ///
     /// ```
