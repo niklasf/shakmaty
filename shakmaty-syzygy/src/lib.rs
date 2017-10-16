@@ -33,7 +33,7 @@ use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
 
-use shakmaty::{Color, Role, Piece, Square, Bitboard, Position, Chess, Outcome};
+use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
 
 pub use material::{Material, MaterialSide};
 
@@ -113,21 +113,44 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
+#[derive(Debug)]
+struct PairsData {
+    pieces: ArrayVec<[Piece; MAX_PIECES]>,
+    group_len: ArrayVec<[u8; MAX_PIECES]>,
+}
 
 impl PairsData {
     pub fn new(side: Color, data: &[u8]) -> Result<PairsData, SyzygyError> {
+        let mut material = Material::new();
         let mut pieces = ArrayVec::new();
 
-        let _order = side.fold(data[0] >> 4, data[0] & 0xf);
+        let order = side.fold(data[0] >> 4, data[0] & 0xf);
+        let order2 = side.fold(data[0] & 0xf, data[0] >> 4);
 
         for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
             match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
-                Some(piece) => pieces.push(piece),
+                Some(piece) => {
+                    *material.by_piece_mut(piece) += 1;
+                    pieces.push(piece);
+                }
                 None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
             }
         }
 
-        Ok(PairsData { pieces })
+        let mut group_len = ArrayVec::new();
+        let mut first_len = if material.has_pawns() { 0 } else { if material.unique_pieces() > 0 { 3 } else { 2 } };
+        group_len.push(1);
+        for window in pieces.windows(2) {
+            if first_len > 1 { first_len -= 1 };
+            if first_len > 0 || window[0] == window[1] {
+                let len = group_len.len();
+                group_len[len - 1] += 1;
+            } else {
+                group_len.push(1);
+            }
+        }
+
+        Ok(PairsData { pieces, group_len })
     }
 }
 
@@ -144,11 +167,6 @@ pub struct Table<P: Position + Syzygy> {
 #[derive(Debug)]
 struct FileData {
     sides: ArrayVec<[PairsData; 2]>,
-}
-
-#[derive(Debug)]
-struct PairsData {
-    pieces: ArrayVec<[Piece; MAX_PIECES]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -185,14 +203,14 @@ impl<P: Position + Syzygy> Table<P> {
 
         let mut files = ArrayVec::new();
 
-        let sections = if has_pawns {
+        if has_pawns {
             return Err(SyzygyError { kind: ErrorKind::Todo });
         } else {
             let mut sides = ArrayVec::new();
             sides.push(PairsData::new(Color::Black, &data[5..])?);
             sides.push(PairsData::new(Color::White, &data[5..])?);
             files.push(FileData { sides });
-        };
+        }
 
         Ok(Table {
             num_pieces: key.count(),
@@ -215,6 +233,8 @@ impl<P: Position + Syzygy> Table<P> {
 
         let side = &self.files[0].sides[stm.fold(0, 1)];
 
+        println!("{:?}", side);
+
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
 
         let mut used = Bitboard(0);
@@ -225,11 +245,33 @@ impl<P: Position + Syzygy> Table<P> {
             used.add(square);
         }
 
-        println!("{:?}", squares);
+        if squares[0].file() >= 4 {
+            for square in &mut squares {
+                *square = square.mirror_horizontal();
+            }
+        }
 
-        /* TODO: if key != self.key && key != self.mirrored_key {
-            return Err(SyzygyError { kind: ErrorKind::Material });
-        } */
+        assert!(!key.has_pawns());
+
+        if squares[0].rank() >= 4 {
+            for square in &mut squares {
+                *square = square.mirror_vertical();
+            }
+        }
+
+        for i in 0..usize::from(side.group_len[0]) {
+            if squares[i].file() == squares[i].rank() {
+                continue;
+            }
+
+            if squares[i].rank() > squares[i].file() {
+                for square in &mut squares[i..] {
+                    *square = square.mirror_diagonal();
+                }
+            }
+
+            break;
+        }
 
         Ok(Wdl::Draw)
     }

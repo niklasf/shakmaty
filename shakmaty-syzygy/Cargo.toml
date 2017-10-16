@@ -14,7 +14,7 @@ keywords = ["chess", "syzygy", "tablebase"]
 [dependencies]
 arrayvec = "0.4"
 bitflags = "1.0"
-shakmaty = "0.2"
+shakmaty = { path = "../shakmaty" }
 memmap = "0.5"
 
 [badges]
