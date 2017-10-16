@@ -50,7 +50,7 @@ impl Syzygy for Chess {
 
 const MAX_PIECES: usize = 6;
 
-const TRIANGLE: [u32; 64] = [
+const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
     0, 7, 3, 4, 4, 3, 7, 0,
     1, 3, 8, 5, 5, 8, 3, 1,
@@ -68,7 +68,6 @@ pub struct SyzygyError {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ErrorKind {
-    Material,
     CorruptedTable,
     Todo,
 }
@@ -76,7 +75,6 @@ enum ErrorKind {
 impl SyzygyError {
     fn desc(&self) -> &str {
         match self.kind {
-            ErrorKind::Material => "material signature mismatch",
             ErrorKind::CorruptedTable => "corrupted table",
             ErrorKind::Todo => "not yet implemented",
         }
@@ -134,7 +132,7 @@ struct PairsData {
     //flags: Flag,
     pieces: ArrayVec<[Piece; MAX_PIECES]>,
     group_len: ArrayVec<[u8; MAX_PIECES]>,
-    group_idx: [u32; MAX_PIECES],
+    group_idx: [u64; MAX_PIECES],
 }
 
 impl PairsData {
@@ -171,10 +169,10 @@ impl PairsData {
         }
 
         // initialize group_idx
-        let mut group_idx = [0u32; MAX_PIECES];
+        let mut group_idx = [0u64; MAX_PIECES];
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let mut next = if pp { 2 } else { 1 };
-        let mut free_squares = 64 - u32::from(group_len[0]) - if pp { u32::from(group_len[1]) } else { 0 };
+        let mut free_squares = 64 - u64::from(group_len[0]) - if pp { u64::from(group_len[1]) } else { 0 };
         let mut idx = 1;
 
         let mut k = 0;
@@ -186,13 +184,13 @@ impl PairsData {
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
             } else if k == order2 {
                 group_idx[1] = idx;
-                idx *= binomial(48 - u32::from(group_len[0]), u32::from(group_len[1]));
+                idx *= binomial(48 - u64::from(group_len[0]), u64::from(group_len[1]));
             } else {
                 println!("remaining pieces {}", idx);
                 group_idx[next] = idx;
                 println!("binom({}, {})", group_len[next], free_squares);
-                idx *= binomial(free_squares, u32::from(group_len[next]));
-                free_squares -= u32::from(group_len[next]);
+                idx *= binomial(free_squares, u64::from(group_len[next]));
+                free_squares -= u64::from(group_len[next]);
                 next += 1;
             }
             k += 1;
@@ -331,8 +329,8 @@ impl<P: Position + Syzygy> Table<P> {
 
             if offdiag(squares[0]) {
                 TRIANGLE[usize::from(squares[0])] * 63 * 62 +
-                (u32::from(squares[1]) - adjust1) * 62 +
-                (u32::from(squares[2]) - adjust2)
+                (u64::from(squares[1]) - adjust1) * 62 +
+                (u64::from(squares[2]) - adjust2)
             } else {
                 panic!("enc 0 not fully implemented");
             }
@@ -340,7 +338,29 @@ impl<P: Position + Syzygy> Table<P> {
             panic!("mapkk not implemented");
         };
 
+        println!("index before remaining: {:?}", idx);
         idx *= side.group_idx[0];
+
+        let mut remaining_pawns = false;
+        let mut next = 1;
+        let mut group_sq = side.group_len[0];
+        for group_len in side.group_len.iter().cloned().skip(1) {
+            let (prev_squares, group_squares) = squares.split_at_mut(usize::from(group_sq));
+            let group_squares = &mut group_squares[..(usize::from(group_len))];
+            group_squares.sort();
+
+            let mut n = 0;
+
+            for i in 0..usize::from(group_len) {
+                let adjust = prev_squares[..usize::from(group_sq)].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
+                n += binomial(u64::from(group_squares[i]) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
+            }
+
+            remaining_pawns = false;
+            idx += n * side.group_idx[next];
+            group_sq += side.group_len[next];
+            next += 1;
+        }
 
         println!("idx: {:?}", idx);
 
