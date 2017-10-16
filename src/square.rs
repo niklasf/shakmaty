@@ -278,10 +278,24 @@ impl From<Square> for u8 {
     }
 }
 
+impl From<Square> for u16 {
+    #[inline]
+    fn from(sq: Square) -> u16 {
+        sq as u16
+    }
+}
+
 impl From<Square> for u32 {
     #[inline]
     fn from(sq: Square) -> u32 {
         sq as u32
+    }
+}
+
+impl From<Square> for u64 {
+    #[inline]
+    fn from(sq: Square) -> u64 {
+        sq as u64
     }
 }
 
