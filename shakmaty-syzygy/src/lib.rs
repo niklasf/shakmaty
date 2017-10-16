@@ -113,10 +113,6 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
-#[derive(Debug)]
-struct PairsData {
-    pieces: ArrayVec<[Piece; MAX_PIECES]>,
-}
 
 impl PairsData {
     pub fn new(side: Color, data: &[u8]) -> Result<PairsData, SyzygyError> {
@@ -141,13 +137,18 @@ pub struct Table<P: Position + Syzygy> {
     num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
-    sections: WdlSections,
+    files: ArrayVec<[FileData; 4]>,
     syzygy: PhantomData<P>,
 }
 
 #[derive(Debug)]
-enum WdlSections {
-    Pawnless { black: PairsData, white: PairsData }
+struct FileData {
+    sides: ArrayVec<[PairsData; 2]>,
+}
+
+#[derive(Debug)]
+struct PairsData {
+    pieces: ArrayVec<[Piece; MAX_PIECES]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -162,18 +163,16 @@ pub enum Wdl {
 impl<P: Position + Syzygy> Table<P> {
     pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
         // Check magic.
-        if !data.starts_with(&P::WDL_MAGIC) {
-            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
-        }
+        assert!(data.starts_with(&P::WDL_MAGIC);
 
         // Read layout flags.
         let layout = Layout::from_bits_truncate(data[4]);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
-        // Read the material key.
+        // Read material key.
         let mut key = Material::new();
-        for p in data[6..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+        for p in data[6..].iter().cloned().take(MAX_PIECES).take_while(|&p| p != 0) {
             match byte_to_piece(p & 0xf) {
                 Some(piece) => *key.by_piece_mut(piece) += 1,
                 None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
@@ -181,9 +180,8 @@ impl<P: Position + Syzygy> Table<P> {
         }
 
         // Check consistency of layout and material key.
-        if has_pawns != key.has_pawns() || split == key.is_symmetric() {
-            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
-        }
+        assert!(has_pawns == key.has_pawns());
+        assert!(split != key.is_symmetric());
 
         let sections = if has_pawns {
             return Err(SyzygyError { kind: ErrorKind::Todo });
