@@ -49,6 +49,17 @@ impl Syzygy for Chess {
 
 const MAX_PIECES: usize = 6;
 
+const TRIANGLE: [u32; 64] = [
+    6, 0, 1, 2, 2, 1, 0, 6,
+    0, 7, 3, 4, 4, 3, 7, 0,
+    1, 3, 8, 5, 5, 8, 3, 1,
+    2, 4, 5, 9, 9, 5, 4, 2,
+    2, 4, 5, 9, 9, 5, 4, 2,
+    1, 3, 8, 5, 5, 8, 3, 1,
+    0, 7, 3, 4, 4, 3, 7, 0,
+    6, 0, 1, 2, 2, 1, 0, 6,
+];
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SyzygyError {
     kind: ErrorKind,
@@ -113,8 +124,13 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
+fn offdiag(sq: Square) -> bool {
+    sq.file() != sq.rank()
+}
+
 #[derive(Debug)]
 struct PairsData {
+    flags: Flag,
     pieces: ArrayVec<[Piece; MAX_PIECES]>,
     group_len: ArrayVec<[u8; MAX_PIECES]>,
 }
@@ -138,7 +154,7 @@ impl PairsData {
         }
 
         let mut group_len = ArrayVec::new();
-        let mut first_len = if material.has_pawns() { 0 } else { if material.unique_pieces() > 0 { 3 } else { 2 } };
+        let mut first_len = if material.has_pawns() { 0 } else { if material.unique_pieces() > 2 { 3 } else { 2 } };
         group_len.push(1);
         for window in pieces.windows(2) {
             if first_len > 1 { first_len -= 1 };
@@ -272,6 +288,23 @@ impl<P: Position + Syzygy> Table<P> {
 
             break;
         }
+
+        let idx = if self.num_unique_pieces > 2 {
+            let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
+            let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } + if squares[2] > squares[1] { 1 } else { 0 };
+
+            if offdiag(squares[0]) {
+                TRIANGLE[usize::from(squares[0])] * 63 * 62 +
+                (u32::from(squares[1]) - adjust1) * 62 +
+                (u32::from(squares[2]) - adjust2)
+            } else {
+                panic!("enc 0 not fully implemented");
+            }
+        } else {
+            panic!("mapkk not implemented");
+        };
+
+        println!("idx: {:?}", idx);
 
         Ok(Wdl::Draw)
     }
