@@ -173,6 +173,19 @@ impl Square {
         (self as i8).checked_add(delta).and_then(Square::from_index)
     }
 
+    /// Flip the square horizontally.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::H1.flip_horizontal(), Square::A1);
+    /// assert_eq!(Square::D3.flip_horizontal(), Square::E3);
+    /// ```
+    #[inline]
+    pub fn flip_horizontal(self) -> Square {
+        unsafe { Square::from_index_unchecked((self as i8) ^ 7) }
+    }
+
     /// Tests is the square is a light square.
     ///
     /// ```
