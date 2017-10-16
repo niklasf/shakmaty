@@ -199,6 +199,18 @@ impl Square {
         unsafe { Square::from_index_unchecked((self as i8) ^ 0x38) }
     }
 
+    /// Mirror along the A1-H8 diagonal.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A1.mirror_diagonal(), Square::A1);
+    /// assert_eq!(Square::A3.mirror_diagonal(), Square::C3);
+    /// ```
+    pub fn mirror_diagonal(self) -> Square {
+        unsafe { Square::from_index_unchecked((((self as i8) >> 3) | ((self as i8) << 3)) & 63) }
+    }
+
     /// Tests is the square is a light square.
     ///
     /// ```
