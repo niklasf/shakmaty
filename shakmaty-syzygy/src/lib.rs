@@ -33,7 +33,7 @@ use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
 
-use shakmaty::{Color, Role, Piece, Position, Chess, Outcome};
+use shakmaty::{Color, Role, Piece, Square, Bitboard, Position, Chess, Outcome};
 
 pub use material::{Material, MaterialSide};
 
@@ -163,7 +163,7 @@ pub enum Wdl {
 impl<P: Position + Syzygy> Table<P> {
     pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
         // Check magic.
-        assert!(data.starts_with(&P::WDL_MAGIC);
+        assert!(data.starts_with(&P::WDL_MAGIC));
 
         // Read layout flags.
         let layout = Layout::from_bits_truncate(data[4]);
@@ -183,13 +183,15 @@ impl<P: Position + Syzygy> Table<P> {
         assert!(has_pawns == key.has_pawns());
         assert!(split != key.is_symmetric());
 
+        let mut files = ArrayVec::new();
+
         let sections = if has_pawns {
             return Err(SyzygyError { kind: ErrorKind::Todo });
         } else {
-            WdlSections::Pawnless {
-                black: PairsData::new(Color::Black, &data[5..])?,
-                white: PairsData::new(Color::White, &data[5..])?,
-            }
+            let mut sides = ArrayVec::new();
+            sides.push(PairsData::new(Color::Black, &data[5..])?);
+            sides.push(PairsData::new(Color::White, &data[5..])?);
+            files.push(FileData { sides });
         };
 
         Ok(Table {
@@ -197,13 +199,33 @@ impl<P: Position + Syzygy> Table<P> {
             num_unique_pieces: key.unique_pieces(),
             min_like_man: key.min_like_man(),
             key,
-            sections,
+            files,
             syzygy: PhantomData
         })
     }
 
     pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
         let key = Material::from_board(pos.board());
+
+        let symmetric_btm = self.key.is_symmetric() && pos.turn().is_black();
+        let black_stronger = key != self.key;
+        let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_white());
+
+        assert!(!key.has_pawns());
+
+        let side = &self.files[0].sides[stm.fold(0, 1)];
+
+        let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
+
+        let mut used = Bitboard(0);
+        for piece in &side.pieces {
+            let color = Color::from_bool(piece.color.is_white() ^ (symmetric_btm || black_stronger));
+            let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
+            squares.push(square);
+            used.add(square);
+        }
+
+        println!("{:?}", squares);
 
         /* TODO: if key != self.key && key != self.mirrored_key {
             return Err(SyzygyError { kind: ErrorKind::Material });
