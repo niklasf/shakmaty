@@ -17,6 +17,7 @@ bitflags = "1.0"
 shakmaty = { path = "../shakmaty" }
 memmap = "0.5"
 num-integer = "0.1"
+byteorder = "1.1"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty-syzygy", branch = "master" }

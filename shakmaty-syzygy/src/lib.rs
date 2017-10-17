@@ -25,6 +25,7 @@ extern crate arrayvec;
 extern crate memmap;
 extern crate shakmaty;
 extern crate num_integer;
+extern crate byteorder;
 
 mod material;
 
@@ -35,6 +36,7 @@ use std::marker::PhantomData;
 use arrayvec::ArrayVec;
 use num_integer::binomial;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
+use byteorder::{LittleEndian, ByteOrder};
 
 pub use material::{Material, MaterialSide};
 
@@ -177,7 +179,6 @@ impl GroupData {
         let mut k = 0;
         while next < group_len.len() || k == order || k == order2 {
             if k == order {
-                println!("leading {}", idx);
                 group_idx[0] = idx;
                 assert!(!material.has_pawns());
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
@@ -185,9 +186,7 @@ impl GroupData {
                 group_idx[1] = idx;
                 idx *= binomial(48 - u64::from(group_len[0]), u64::from(group_len[1]));
             } else {
-                println!("remaining pieces {}", idx);
                 group_idx[next] = idx;
-                println!("binom({}, {})", group_len[next], free_squares);
                 idx *= binomial(free_squares, u64::from(group_len[next]));
                 free_squares -= u64::from(group_len[next]);
                 next += 1;
@@ -197,25 +196,61 @@ impl GroupData {
 
         group_idx[group_len.len()] = idx;
 
-        println!("group idx {:?}", group_idx);
-
         Ok(GroupData { pieces, group_len, group_idx })
     }
 }
 
 #[derive(Debug)]
-pub struct Table<P: Position + Syzygy> {
+struct PairsData<'a> {
+    flags: Flag,
+    groups: GroupData,
+    data: &'a [u8],
+    min_len: u8,
+}
+
+impl<'a> PairsData<'a> {
+    pub fn new(data: &[u8], groups: GroupData) -> Result<(PairsData, &[u8]), SyzygyError> {
+        let flags = Flag::from_bits_truncate(data[0]);
+
+        if flags.contains(Flag::SINGLE_VALUE) {
+            panic!("single value not yet implemented");
+        }
+
+        let blocksize = data[1];
+        let idxbits = data[2];
+
+        let real_num_blocks = LittleEndian::read_u32(&data[4..]);
+        println!("real num blocks: {}", real_num_blocks);
+        let num_blocks = real_num_blocks + u32::from(data[3]);
+        let max_len = data[8];
+        let min_len = data[9];
+        let h = max_len - min_len + 1;
+        let num_syms = LittleEndian::read_u16(&data[10 + 2 * usize::from(h)..]);
+
+        let pairs = PairsData {
+            flags,
+            groups,
+            data: &data[10..],
+            min_len,
+        };
+
+        Ok((pairs, &data[12 + 2 * usize::from(h) + 3 * (num_syms + (num_syms & 1)) as usize..]))
+    }
+}
+
+#[derive(Debug)]
+pub struct Table<'a, P: Position + Syzygy> {
     key: Material,
     num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
-    files: ArrayVec<[FileData; 4]>,
+    files: ArrayVec<[FileData<'a>; 4]>,
     syzygy: PhantomData<P>,
 }
 
 #[derive(Debug)]
-struct FileData {
-    sides: ArrayVec<[GroupData; 2]>,
+struct FileData<'a> {
+    sides: ArrayVec<[PairsData<'a>; 2]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -227,7 +262,7 @@ pub enum Wdl {
     Win = 2,
 }
 
-impl<P: Position + Syzygy> Table<P> {
+impl<'a, P: Position + Syzygy> Table<'a, P> {
     pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
         // Check magic.
         assert!(data.starts_with(&P::WDL_MAGIC));
@@ -255,9 +290,16 @@ impl<P: Position + Syzygy> Table<P> {
         if has_pawns {
             return Err(SyzygyError { kind: ErrorKind::Todo });
         } else {
+            let group = GroupData::new(Color::Black, &data[5..])?;
+
+            let mut ptr = 5 + group.pieces.len() + 1;
+            ptr += ptr & 0x1;
+
             let mut sides = ArrayVec::new();
-            sides.push(GroupData::new(Color::Black, &data[5..])?);
-            sides.push(GroupData::new(Color::White, &data[5..])?);
+            let (pairs, data) = PairsData::new(&data[ptr..], group)?;
+            sides.push(pairs);
+            let (pairs, _data) = PairsData::new(&data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
+            sides.push(pairs);
             files.push(FileData { sides });
         }
 
@@ -282,12 +324,10 @@ impl<P: Position + Syzygy> Table<P> {
 
         let side = &self.files[0].sides[stm.fold(0, 1)];
 
-        println!("{:?}", side);
-
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
 
         let mut used = Bitboard(0);
-        for piece in &side.pieces {
+        for piece in &side.groups.pieces {
             let color = Color::from_bool(piece.color.is_white() ^ (symmetric_btm || black_stronger));
             let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
             squares.push(square);
@@ -308,7 +348,7 @@ impl<P: Position + Syzygy> Table<P> {
             }
         }
 
-        for i in 0..usize::from(side.group_len[0]) {
+        for i in 0..usize::from(side.groups.group_len[0]) {
             if squares[i].file() == squares[i].rank() {
                 continue;
             }
@@ -337,13 +377,12 @@ impl<P: Position + Syzygy> Table<P> {
             panic!("mapkk not implemented");
         };
 
-        println!("index before remaining: {:?}", idx);
-        idx *= side.group_idx[0];
+        idx *= side.groups.group_idx[0];
 
         let mut remaining_pawns = false;
         let mut next = 1;
-        let mut group_sq = side.group_len[0];
-        for group_len in side.group_len.iter().cloned().skip(1) {
+        let mut group_sq = side.groups.group_len[0];
+        for group_len in side.groups.group_len.iter().cloned().skip(1) {
             let (prev_squares, group_squares) = squares.split_at_mut(usize::from(group_sq));
             let group_squares = &mut group_squares[..(usize::from(group_len))];
             group_squares.sort();
@@ -356,8 +395,8 @@ impl<P: Position + Syzygy> Table<P> {
             }
 
             remaining_pawns = false;
-            idx += n * side.group_idx[next];
-            group_sq += side.group_len[next];
+            idx += n * side.groups.group_idx[next];
+            group_sq += side.groups.group_len[next];
             next += 1;
         }
 
