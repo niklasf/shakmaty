@@ -20,8 +20,11 @@
 
 #![warn(missing_debug_implementations)]
 
+#![feature(inclusive_range_syntax)]
+
 extern crate arrayvec;
-#[macro_use] extern crate bitflags;
+#[macro_use]
+extern crate bitflags;
 extern crate memmap;
 extern crate shakmaty;
 extern crate num_integer;
@@ -201,40 +204,86 @@ impl GroupData {
 }
 
 #[derive(Debug)]
-struct PairsData<'a> {
+struct PairsData {
     flags: Flag,
     groups: GroupData,
-    data: &'a [u8],
-    min_len: u8,
+    lowest_sym: usize,
+    btree: usize,
+    base_64: Vec<u64>,
 }
 
-impl<'a> PairsData<'a> {
-    pub fn new(data: &[u8], groups: GroupData) -> Result<(PairsData, &[u8]), SyzygyError> {
-        let flags = Flag::from_bits_truncate(data[0]);
+fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree: usize, s: usize) {
+    let w = btree + 3 * s;
+    let sr = ((u16::from(data[w + 2]) << 4) | (u16::from(data[w + 1]) >> 4)) as usize;
+    if sr == 0xfff {
+        symlen[s] = 0;
+    } else {
+        let sl = (((u16::from(data[w + 1]) & 0xf) << 8) | u16::from(data[w])) as usize;
+        if !visited[sl] {
+            calc_symlen(data, symlen, visited, btree, sl);
+        }
+        if !visited[sr] {
+            calc_symlen(data, symlen, visited, btree, sr);
+        }
+        symlen[s] = symlen[sl] + symlen[sr] + 1;
+    }
+    visited[s] = true;
+}
+
+impl PairsData {
+    pub fn new(data: &[u8], mut ptr: usize, groups: GroupData) -> Result<(PairsData, usize), SyzygyError> {
+        let flags = Flag::from_bits_truncate(data[ptr]);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             panic!("single value not yet implemented");
         }
 
-        let blocksize = data[1];
-        let idxbits = data[2];
+        let tb_size = groups.group_idx[groups.group_len.len()];
+        let block_size = 1 << data[ptr + 1];
+        let span = 1 << data[ptr + 2];
+        let sparse_index_size = (tb_size + span - 1) / span;
+        let padding = data[ptr + 3];
+        let blocks_num = LittleEndian::read_u32(&data[ptr + 4..]);
+        let block_length_size = blocks_num + u32::from(padding);
 
-        let real_num_blocks = LittleEndian::read_u32(&data[4..]);
-        println!("real num blocks: {}", real_num_blocks);
-        let num_blocks = real_num_blocks + u32::from(data[3]);
-        let max_len = data[8];
-        let min_len = data[9];
-        let h = max_len - min_len + 1;
-        let num_syms = LittleEndian::read_u16(&data[10 + 2 * usize::from(h)..]);
+        let max_sym_len = data[ptr + 8];
+        let min_sym_len = data[ptr + 9];
+        let h = usize::from(max_sym_len - min_sym_len + 1);
+        let lowest_sym = ptr + 10;
+        let num_syms = data[ptr + 10 + 2 * h];
+        let mut base_64 = vec![0; h];
+
+        for i in (0..=h - 2).rev() {
+            base_64[i] = ((base_64[i + 1] + u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2..])))
+                                          - u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2 + 2..]))) / 2;
+            assert!(base_64[i] * 2 >= base_64[i + 1]);
+        }
+
+        for i in 0..h {
+            base_64[i] <<= 64 - (min_sym_len + i as u8);
+        }
+
+        ptr += 10 + h * 2;
+        let mut symlen = vec![0; LittleEndian::read_u16(&data[ptr..]) as usize];
+        ptr += 2;
+        let btree = ptr;
+
+        let mut visited = vec![false; symlen.len()];
+        for s in 0..symlen.len() {
+            if !visited[s] {
+                calc_symlen(data, &mut symlen, &mut visited, btree, s);
+            }
+        }
 
         let pairs = PairsData {
             flags,
             groups,
-            data: &data[10..],
-            min_len,
+            lowest_sym,
+            btree,
+            base_64,
         };
 
-        Ok((pairs, &data[12 + 2 * usize::from(h) + 3 * (num_syms + (num_syms & 1)) as usize..]))
+        Ok((pairs, ptr + symlen.len() * 3 + (symlen.len() & 1)))
     }
 }
 
@@ -244,13 +293,14 @@ pub struct Table<'a, P: Position + Syzygy> {
     num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
-    files: ArrayVec<[FileData<'a>; 4]>,
+    files: ArrayVec<[FileData; 4]>,
+    data: &'a [u8],
     syzygy: PhantomData<P>,
 }
 
 #[derive(Debug)]
-struct FileData<'a> {
-    sides: ArrayVec<[PairsData<'a>; 2]>,
+struct FileData {
+    sides: ArrayVec<[PairsData; 2]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -296,10 +346,10 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             ptr += ptr & 0x1;
 
             let mut sides = ArrayVec::new();
-            let (pairs, data) = PairsData::new(&data[ptr..], group)?;
+            let (pairs, ptr) = PairsData::new(data, ptr, group)?;
             sides.push(pairs);
-            let (pairs, _data) = PairsData::new(&data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
-            sides.push(pairs);
+            //let (pairs, _data) = PairsData::new(&next_data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
+            //sides.push(pairs);
             files.push(FileData { sides });
         }
 
@@ -309,8 +359,21 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             min_like_man: key.min_like_man(),
             key,
             files,
+            data,
             syzygy: PhantomData
         })
+    }
+
+    fn decompress_pairs(self, d: &PairsData, idx: u64) -> u8 {
+        /* if d.idxbits == 0 {
+            return d.min_len;
+        }
+
+        let mainidx = idx >> d.idxbits;
+        let litidx = (idx & (1 << d.idxbits) - 1) - (1 << (d.idxbits - 1));
+        //let block = LittleEndian::read_u32(self.data[&d.indextable + 6 * mainidx); */
+
+        return 0;
     }
 
     pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
