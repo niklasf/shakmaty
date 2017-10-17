@@ -74,14 +74,12 @@ pub struct SyzygyError {
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ErrorKind {
     CorruptedTable,
-    Todo,
 }
 
 impl SyzygyError {
     fn desc(&self) -> &str {
         match self.kind {
             ErrorKind::CorruptedTable => "corrupted table",
-            ErrorKind::Todo => "not yet implemented",
         }
     }
 }
@@ -97,6 +95,8 @@ impl Error for SyzygyError {
         self.desc()
     }
 }
+
+type SyzygyResult<T> = Result<T, SyzygyError>;
 
 bitflags! {
     struct Flag: u8 {
@@ -140,15 +140,17 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn new(side: Color, data: &[u8]) -> Result<GroupData, SyzygyError> {
+    pub fn parse(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
         let mut material = Material::new();
         let mut pieces = ArrayVec::new();
 
-        let order = side.fold(data[0] >> 4, data[0] & 0xf);
-        let order2 = side.fold(data[0] & 0xf, data[0] >> 4);
+        let order = [
+            side.fold(data[ptr] >> 4, data[ptr] & 0xf),
+            side.fold(data[ptr] & 0xf, data[ptr] >> 4),
+        ];
 
         // initialize pieces
-        for p in data[1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+        for p in data[ptr + 1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
             match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
                 Some(piece) => {
                     *material.by_piece_mut(piece) += 1;
@@ -157,6 +159,8 @@ impl GroupData {
                 None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
             }
         }
+
+        println!("{:?}", pieces);
 
         // initialize group_len
         let mut group_len: ArrayVec<[u8; MAX_PIECES]> = ArrayVec::new();
@@ -180,12 +184,12 @@ impl GroupData {
         let mut idx = 1;
 
         let mut k = 0;
-        while next < group_len.len() || k == order || k == order2 {
-            if k == order {
+        while next < group_len.len() || k == order[0] || k == order[1] {
+            if k == order[0] {
                 group_idx[0] = idx;
                 assert!(!material.has_pawns());
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
-            } else if k == order2 {
+            } else if k == order[1] {
                 group_idx[1] = idx;
                 idx *= binomial(48 - u64::from(group_len[0]), u64::from(group_len[1]));
             } else {
@@ -260,7 +264,7 @@ impl PairsData {
         let min_sym_len = data[ptr + 9];
         let h = usize::from(max_sym_len - min_sym_len + 1);
         let lowest_sym = ptr + 10;
-        let num_syms = data[ptr + 10 + 2 * h];
+        //let num_syms = data[ptr + 10 + 2 * h];
         let mut base_64 = vec![0; h];
 
         for i in (0..=h - 2).rev() {
@@ -360,9 +364,9 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         let mut files = ArrayVec::new();
 
         if has_pawns {
-            return Err(SyzygyError { kind: ErrorKind::Todo });
+            panic!("not yet implemented");
         } else {
-            let group = GroupData::new(Color::Black, &data[5..])?;
+            let group = GroupData::parse(&data, 5, Color::Black)?;
 
             let mut ptr = 5 + group.pieces.len() + 1;
             ptr += ptr & 0x1;
@@ -370,7 +374,8 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             let mut sides: ArrayVec<[PairsData; 2]> = ArrayVec::new();
             let (pairs, ptr) = PairsData::new(data, ptr, group)?;
             sides.push(pairs);
-            let (pairs, mut ptr) = PairsData::new(data, ptr, GroupData::new(Color::White, &data[5..])?)?;
+            let group = GroupData::parse(&data, 5, Color::White)?;
+            let (pairs, mut ptr) = PairsData::new(&data, ptr, group)?;
             sides.push(pairs);
 
             sides[0].sparse_index = ptr;
@@ -596,7 +601,6 @@ mod tests {
         let pos: Chess = fen.position().expect("legal position");
 
         let result = table.probe_wdl_table(&pos);
-        println!("result: {:?}", result);
-        panic!("debugging ...");
+        assert_eq!(result, Ok(Wdl::Win));
     }
 }
