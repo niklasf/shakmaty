@@ -128,15 +128,14 @@ fn offdiag(sq: Square) -> bool {
 }
 
 #[derive(Debug)]
-struct PairsData {
-    //flags: Flag,
+struct GroupData {
     pieces: ArrayVec<[Piece; MAX_PIECES]>,
     group_len: ArrayVec<[u8; MAX_PIECES]>,
     group_idx: [u64; MAX_PIECES],
 }
 
-impl PairsData {
-    pub fn new(side: Color, data: &[u8]) -> Result<PairsData, SyzygyError> {
+impl GroupData {
+    pub fn new(side: Color, data: &[u8]) -> Result<GroupData, SyzygyError> {
         let mut material = Material::new();
         let mut pieces = ArrayVec::new();
 
@@ -200,7 +199,7 @@ impl PairsData {
 
         println!("group idx {:?}", group_idx);
 
-        Ok(PairsData { pieces, group_len, group_idx })
+        Ok(GroupData { pieces, group_len, group_idx })
     }
 }
 
@@ -216,7 +215,7 @@ pub struct Table<P: Position + Syzygy> {
 
 #[derive(Debug)]
 struct FileData {
-    sides: ArrayVec<[PairsData; 2]>,
+    sides: ArrayVec<[GroupData; 2]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -257,8 +256,8 @@ impl<P: Position + Syzygy> Table<P> {
             return Err(SyzygyError { kind: ErrorKind::Todo });
         } else {
             let mut sides = ArrayVec::new();
-            sides.push(PairsData::new(Color::Black, &data[5..])?);
-            sides.push(PairsData::new(Color::White, &data[5..])?);
+            sides.push(GroupData::new(Color::Black, &data[5..])?);
+            sides.push(GroupData::new(Color::White, &data[5..])?);
             files.push(FileData { sides });
         }
 
