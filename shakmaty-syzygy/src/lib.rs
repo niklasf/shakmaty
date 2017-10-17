@@ -39,7 +39,7 @@ use std::marker::PhantomData;
 use arrayvec::ArrayVec;
 use num_integer::binomial;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
-use byteorder::{LittleEndian, ByteOrder};
+use byteorder::{LittleEndian, BigEndian, ByteOrder};
 
 pub use material::{Material, MaterialSide};
 
@@ -211,11 +211,13 @@ struct PairsData {
     lowest_sym: usize,
     btree: usize,
     base_64: Vec<u64>,
+    symlen: Vec<u8>,
     span: u64,
     sparse_index: usize,
     sparse_index_size: u64,
     block_lengths: usize,
     block_length_size: u32,
+    block_size: usize,
 }
 
 fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree: usize, s: usize) {
@@ -281,9 +283,11 @@ impl PairsData {
             }
         }
 
+        let next_ptr = ptr + symlen.len() * 3 + (symlen.len() & 1);
         let pairs = PairsData {
             flags,
             groups,
+            block_size,
             lowest_sym,
             min_sym_len,
             btree,
@@ -293,9 +297,10 @@ impl PairsData {
             sparse_index_size,
             block_lengths: 0,
             block_length_size,
+            symlen,
         };
 
-        Ok((pairs, ptr + symlen.len() * 3 + (symlen.len() & 1)))
+        Ok((pairs, next_ptr))
     }
 }
 
@@ -413,6 +418,43 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         }
 
         println!("offset: {}", offset);
+
+        let mut ptr = block * d.block_size;
+
+        let mut buf_64 = BigEndian::read_u64(&self.data[ptr..]);
+        ptr += 8;
+        let mut buf_64_size = 64;
+
+        let mut sym;
+
+        loop {
+            let mut len = 0;
+
+            while buf_64 < d.base_64[len] {
+                len += 1;
+            }
+
+            sym = ((buf_64 - d.base_64[len]) >> (64 - len - d.min_sym_len as usize)) as u16;
+            sym += LittleEndian::read_u16(&self.data[d.lowest_sym + 2 * len..]);
+
+            if offset < i64::from(d.symlen[sym as usize]) + 1 {
+                break;
+            }
+
+            offset -= i64::from(d.symlen[sym as usize]) + 1;
+            len += usize::from(d.min_sym_len);
+            buf_64 <<= len;
+            buf_64_size -= len;
+
+            if buf_64_size <= 32 {
+                buf_64_size += 32;
+                buf_64 |= u64::from(BigEndian::read_u32(&self.data[ptr..])) << (64 - buf_64_size);
+                ptr += 4;
+            }
+        }
+
+        println!("sym: {}", sym);
+
         /* if d.idxbits == 0 {
             return d.min_len;
         }
