@@ -20,6 +20,7 @@
 
 #![warn(missing_debug_implementations)]
 
+#![feature(try_trait)]
 #![feature(inclusive_range_syntax)]
 
 extern crate arrayvec;
@@ -35,6 +36,7 @@ mod material;
 use std::fmt;
 use std::error::Error;
 use std::marker::PhantomData;
+use std::option::NoneError;
 
 use arrayvec::ArrayVec;
 use num_integer::binomial;
@@ -96,6 +98,12 @@ impl Error for SyzygyError {
     }
 }
 
+impl From<NoneError> for SyzygyError {
+    fn from(_: NoneError) -> SyzygyError {
+        SyzygyError { kind: ErrorKind::CorruptedTable }
+    }
+}
+
 type SyzygyResult<T> = Result<T, SyzygyError>;
 
 bitflags! {
@@ -141,22 +149,18 @@ struct GroupData {
 
 impl GroupData {
     pub fn parse(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
-        let order = [
-            side.fold(data[ptr] >> 4, data[ptr] & 0xf),
-            side.fold(data[ptr] & 0xf, data[ptr] >> 4),
-        ];
+        let mut order = [data.get(ptr)? >> 4, data.get(ptr)? & 0xf];
+        if side.is_black() {
+            order.reverse();
+        }
 
         // Initialize pieces.
         let mut pieces = ArrayVec::new();
         let mut material = Material::new();
-        for p in data[ptr + 1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-            match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
-                Some(piece) => {
-                    pieces.push(piece);
-                    *material.by_piece_mut(piece) += 1;
-                }
-                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
-            }
+        for p in data.get(ptr + 1..)?.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+            let piece = byte_to_piece(side.fold(p >> 4, p & 0xf))?;
+            pieces.push(piece);
+            *material.by_piece_mut(piece) += 1;
         }
 
         // initialize group_len
