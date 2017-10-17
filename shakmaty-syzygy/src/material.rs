@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::fmt;
+use std::iter::FromIterator;
 
 use shakmaty::{Color, Role, Piece, Board};
 
@@ -174,5 +175,23 @@ impl Material {
 impl fmt::Display for Material {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}v{}", self.white, self.black)
+    }
+}
+
+impl Extend<Piece> for Material {
+    fn extend<T: IntoIterator<Item = Piece>>(&mut self, iter: T) {
+        for piece in iter {
+            *self.by_piece_mut(piece) += 1;
+        }
+    }
+}
+
+impl FromIterator<Piece> for Material {
+    fn from_iter<T>(iter: T) -> Self
+        where T: IntoIterator<Item = Piece>
+    {
+        let mut result = Material::new();
+        result.extend(iter);
+        result
     }
 }

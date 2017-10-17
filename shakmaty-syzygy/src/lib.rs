@@ -141,26 +141,23 @@ struct GroupData {
 
 impl GroupData {
     pub fn parse(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
-        let mut material = Material::new();
-        let mut pieces = ArrayVec::new();
-
         let order = [
             side.fold(data[ptr] >> 4, data[ptr] & 0xf),
             side.fold(data[ptr] & 0xf, data[ptr] >> 4),
         ];
 
-        // initialize pieces
+        // Initialize pieces.
+        let mut pieces = ArrayVec::new();
+        let mut material = Material::new();
         for p in data[ptr + 1..].iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
             match byte_to_piece(side.fold(p >> 4, p & 0xf)) {
                 Some(piece) => {
-                    *material.by_piece_mut(piece) += 1;
                     pieces.push(piece);
+                    *material.by_piece_mut(piece) += 1;
                 }
                 None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
             }
         }
-
-        println!("{:?}", pieces);
 
         // initialize group_len
         let mut group_len: ArrayVec<[u8; MAX_PIECES]> = ArrayVec::new();
