@@ -207,9 +207,15 @@ impl GroupData {
 struct PairsData {
     flags: Flag,
     groups: GroupData,
+    min_sym_len: u8,
     lowest_sym: usize,
     btree: usize,
     base_64: Vec<u64>,
+    span: u64,
+    sparse_index: usize,
+    sparse_index_size: u64,
+    block_lengths: usize,
+    block_length_size: u32,
 }
 
 fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree: usize, s: usize) {
@@ -279,8 +285,14 @@ impl PairsData {
             flags,
             groups,
             lowest_sym,
+            min_sym_len,
             btree,
             base_64,
+            span,
+            sparse_index: 0,
+            sparse_index_size,
+            block_lengths: 0,
+            block_length_size,
         };
 
         Ok((pairs, ptr + symlen.len() * 3 + (symlen.len() & 1)))
@@ -345,9 +357,22 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             let mut ptr = 5 + group.pieces.len() + 1;
             ptr += ptr & 0x1;
 
-            let mut sides = ArrayVec::new();
+            let mut sides: ArrayVec<[PairsData; 2]> = ArrayVec::new();
             let (pairs, ptr) = PairsData::new(data, ptr, group)?;
             sides.push(pairs);
+            let (pairs, mut ptr) = PairsData::new(data, ptr, GroupData::new(Color::White, &data[5..])?)?;
+            sides.push(pairs);
+
+            sides[0].sparse_index = ptr;
+            ptr += sides[0].sparse_index_size as usize * 6;
+            sides[1].sparse_index = ptr;
+            ptr += sides[1].sparse_index_size as usize * 6;
+
+            sides[0].block_lengths = ptr;
+            ptr += sides[0].block_length_size as usize * 2;
+            sides[1].block_lengths = ptr;
+            ptr += sides[1].block_length_size as usize * 2;
+
             //let (pairs, _data) = PairsData::new(&next_data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
             //sides.push(pairs);
             files.push(FileData { sides });
@@ -364,7 +389,30 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         })
     }
 
-    fn decompress_pairs(self, d: &PairsData, idx: u64) -> u8 {
+    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> u8 {
+        if d.flags.contains(Flag::SINGLE_VALUE) {
+            return d.min_sym_len;
+        }
+
+        let k = (idx / d.span) as usize;
+
+        let mut block = LittleEndian::read_u32(&self.data[d.sparse_index + 6 * k..]) as usize;
+        let mut offset = i64::from(LittleEndian::read_u16(&self.data[d.sparse_index + 6 * k + 4..]));
+
+        let diff = idx as i64 % d.span as i64 - d.span as i64 / 2;
+        offset += diff;
+
+        while offset < 0 {
+            block -= 1;
+            offset += i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) + 1;
+        }
+
+        while offset > i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) {
+            offset -= i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) + 1;
+            block += 1;
+        }
+
+        println!("offset: {}", offset);
         /* if d.idxbits == 0 {
             return d.min_len;
         }
@@ -464,6 +512,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         }
 
         println!("idx: {:?}", idx);
+        self.decompress_pairs(side, idx);
 
         Ok(Wdl::Draw)
     }
