@@ -218,6 +218,8 @@ struct PairsData {
     block_lengths: usize,
     block_length_size: u32,
     block_size: usize,
+    data: usize,
+    blocks_num: u32,
 }
 
 fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree: usize, s: usize) {
@@ -298,6 +300,8 @@ impl PairsData {
             block_lengths: 0,
             block_length_size,
             symlen,
+            data: 0,
+            blocks_num,
         };
 
         Ok((pairs, next_ptr))
@@ -321,6 +325,7 @@ struct FileData {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(i8)]
 pub enum Wdl {
     Loss = -2,
     BlessedLoss = -1,
@@ -378,6 +383,12 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             sides[1].block_lengths = ptr;
             ptr += sides[1].block_length_size as usize * 2;
 
+            ptr = (ptr + 0x3f) & !0x3f;
+            sides[0].data = ptr;
+            ptr += sides[0].blocks_num as usize * sides[0].block_size;
+            ptr = (ptr + 0x3f) & !0x3f;
+            sides[1].data = ptr;
+
             //let (pairs, _data) = PairsData::new(&next_data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
             //sides.push(pairs);
             files.push(FileData { sides });
@@ -417,9 +428,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             block += 1;
         }
 
-        println!("offset: {}", offset);
-
-        let mut ptr = block * d.block_size;
+        let mut ptr = d.data + block * d.block_size;
 
         let mut buf_64 = BigEndian::read_u64(&self.data[ptr..]);
         ptr += 8;
@@ -455,15 +464,19 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
 
         println!("sym: {}", sym);
 
-        /* if d.idxbits == 0 {
-            return d.min_len;
+        while d.symlen[sym as usize] != 0 {
+            let w = d.btree + 3 * sym as usize;
+            let left = ((u16::from(self.data[w + 2]) << 4) | (u16::from(self.data[w + 1]) >> 4)) as usize;
+
+            if offset < i64::from(d.symlen[left]) + 1 {
+                sym = left as u16;
+            } else {
+                offset -= i64::from(d.symlen[left]) + 1;
+                sym = ((u16::from(self.data[w + 1]) & 0xf) << 8) | u16::from(self.data[w]);
+            }
         }
 
-        let mainidx = idx >> d.idxbits;
-        let litidx = (idx & (1 << d.idxbits) - 1) - (1 << (d.idxbits - 1));
-        //let block = LittleEndian::read_u32(self.data[&d.indextable + 6 * mainidx); */
-
-        return 0;
+        return self.data[d.btree + 3 * sym as usize];
     }
 
     pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
@@ -554,9 +567,14 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         }
 
         println!("idx: {:?}", idx);
-        self.decompress_pairs(side, idx);
-
-        Ok(Wdl::Draw)
+        Ok(match self.decompress_pairs(side, idx) {
+            0 => Wdl::Loss,
+            1 => Wdl::BlessedLoss,
+            2 => Wdl::Draw,
+            3 => Wdl::CursedWin,
+            4 => Wdl::Win,
+            _ => unreachable!("invalid decompressed wdl"),
+        })
     }
 }
 
