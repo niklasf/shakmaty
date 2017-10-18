@@ -30,6 +30,7 @@ extern crate memmap;
 extern crate shakmaty;
 extern crate num_integer;
 extern crate byteorder;
+extern crate itertools;
 
 mod material;
 
@@ -41,6 +42,7 @@ use std::iter::FromIterator;
 
 use arrayvec::ArrayVec;
 use num_integer::binomial;
+use itertools::Itertools;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
 
@@ -107,6 +109,8 @@ impl From<NoneError> for SyzygyError {
 
 type SyzygyResult<T> = Result<T, SyzygyError>;
 
+type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
+
 bitflags! {
     struct Flag: u8 {
         const STM = 1;
@@ -141,18 +145,45 @@ fn offdiag(sq: Square) -> bool {
     sq.file() != sq.rank()
 }
 
-fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<ArrayVec<[Piece; MAX_PIECES]>> {
-    let mut pieces = ArrayVec::new();
+fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<Pieces> {
+    let mut pieces = Pieces::new();
     for p in data.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
         pieces.push(byte_to_piece(side.fold(p >> 4, p & 0xf))?);
     }
     Ok(pieces)
 }
 
+/// Group pieces that will be encoded together.
+fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
+    let mut result = ArrayVec::new();
+    let material = Material::from_iter(pieces.clone());
+
+    // For pawnless positions: If there are at least 3 unique pieces then 3
+    // unique pieces wil form the leading group. Otherwise the two kings will
+    // form the leading group.
+    let first_len = if material.has_pawns() {
+        0
+    } else {
+        if material.unique_pieces() >= 3 { 3 } else { 2 }
+    };
+
+    if first_len > 0 {
+        result.push(first_len);
+    }
+
+    // The remaining identical pieces are grouped together.
+    result.extend(pieces.iter()
+        .skip(first_len)
+        .group_by(|p| *p)
+        .into_iter().map(|(_, g)| g.count()));
+
+    result
+}
+
 #[derive(Debug)]
 struct GroupData {
-    pieces: ArrayVec<[Piece; MAX_PIECES]>,
-    group_len: ArrayVec<[u8; MAX_PIECES]>,
+    pieces: Pieces,
+    group_lens: ArrayVec<[usize; MAX_PIECES]>,
     group_idx: [u64; MAX_PIECES],
 }
 
@@ -167,48 +198,40 @@ impl GroupData {
         let pieces = parse_pieces(data.get(ptr + 1..)?, side)?;
         let material = Material::from_iter(pieces.clone());
 
-        // initialize group_len
-        let mut group_len: ArrayVec<[u8; MAX_PIECES]> = ArrayVec::new();
-        let mut first_len = if material.has_pawns() { 0 } else { if material.unique_pieces() > 2 { 3 } else { 2 } };
-        group_len.push(1);
-        for window in pieces.windows(2) {
-            if first_len > 0 { first_len -= 1 };
-            if first_len > 0 || window[0] == window[1] {
-                let len = group_len.len();
-                group_len[len - 1] += 1;
-            } else {
-                group_len.push(1);
-            }
+        if pieces.len() < 2 {
+            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
+
+        let group_lens = group_pieces(&pieces);
 
         // initialize group_idx
         let mut group_idx = [0u64; MAX_PIECES];
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let mut next = if pp { 2 } else { 1 };
-        let mut free_squares = 64 - u64::from(group_len[0]) - if pp { u64::from(group_len[1]) } else { 0 };
+        let mut free_squares = 64 - group_lens[0] as u64 - if pp { group_lens[1] as u64 } else { 0 };
         let mut idx = 1;
 
         let mut k = 0;
-        while next < group_len.len() || k == order[0] || k == order[1] {
+        while next < group_lens.len() || k == order[0] || k == order[1] {
             if k == order[0] {
                 group_idx[0] = idx;
                 assert!(!material.has_pawns());
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
             } else if k == order[1] {
                 group_idx[1] = idx;
-                idx *= binomial(48 - u64::from(group_len[0]), u64::from(group_len[1]));
+                idx *= binomial(48 - group_lens[0] as u64, group_lens[1] as u64);
             } else {
                 group_idx[next] = idx;
-                idx *= binomial(free_squares, u64::from(group_len[next]));
-                free_squares -= u64::from(group_len[next]);
+                idx *= binomial(free_squares, group_lens[next] as u64);
+                free_squares -= group_lens[next] as u64;
                 next += 1;
             }
             k += 1;
         }
 
-        group_idx[group_len.len()] = idx;
+        group_idx[group_lens.len()] = idx;
 
-        Ok(GroupData { pieces, group_len, group_idx })
+        Ok(GroupData { pieces, group_lens, group_idx })
     }
 }
 
@@ -257,7 +280,7 @@ impl PairsData {
             panic!("single value not yet implemented");
         }
 
-        let tb_size = groups.group_idx[groups.group_len.len()];
+        let tb_size = groups.group_idx[groups.group_lens.len()];
         let block_size = 1 << data[ptr + 1];
         let span = 1 << data[ptr + 2];
         let sparse_index_size = (tb_size + span - 1) / span;
@@ -518,7 +541,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             }
         }
 
-        for i in 0..usize::from(side.groups.group_len[0]) {
+        for i in 0..usize::from(side.groups.group_lens[0]) {
             if squares[i].file() == squares[i].rank() {
                 continue;
             }
@@ -551,22 +574,22 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
 
         let mut remaining_pawns = false;
         let mut next = 1;
-        let mut group_sq = side.groups.group_len[0];
-        for group_len in side.groups.group_len.iter().cloned().skip(1) {
+        let mut group_sq = side.groups.group_lens[0];
+        for group_lens in side.groups.group_lens.iter().cloned().skip(1) {
             let (prev_squares, group_squares) = squares.split_at_mut(usize::from(group_sq));
-            let group_squares = &mut group_squares[..(usize::from(group_len))];
+            let group_squares = &mut group_squares[..(usize::from(group_lens))];
             group_squares.sort();
 
             let mut n = 0;
 
-            for i in 0..usize::from(group_len) {
+            for i in 0..usize::from(group_lens) {
                 let adjust = prev_squares[..usize::from(group_sq)].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
                 n += binomial(u64::from(group_squares[i]) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
             }
 
             remaining_pawns = false;
             idx += n * side.groups.group_idx[next];
-            group_sq += side.groups.group_len[next];
+            group_sq += side.groups.group_lens[next];
             next += 1;
         }
 
