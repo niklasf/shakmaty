@@ -26,6 +26,7 @@
 extern crate arrayvec;
 #[macro_use]
 extern crate bitflags;
+extern crate bit_vec;
 extern crate memmap;
 extern crate shakmaty;
 extern crate num_integer;
@@ -41,6 +42,7 @@ use std::option::NoneError;
 use std::iter::FromIterator;
 
 use arrayvec::ArrayVec;
+use bit_vec::BitVec;
 use num_integer::binomial;
 use itertools::Itertools;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
@@ -275,7 +277,7 @@ struct PairsData {
     blocks_num: u32,
 }
 
-fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree: usize, s: usize) {
+fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut BitVec, btree: usize, s: usize) {
     let w = btree + 3 * s;
     let sr = ((u16::from(data[w + 2]) << 4) | (u16::from(data[w + 1]) >> 4)) as usize;
     if sr == 0xfff {
@@ -290,7 +292,7 @@ fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut Vec<bool>, btree
         }
         symlen[s] = symlen[sl] + symlen[sr] + 1;
     }
-    visited[s] = true;
+    visited.set(s, true);
 }
 
 impl PairsData {
@@ -331,7 +333,7 @@ impl PairsData {
         ptr += 2;
         let btree = ptr;
 
-        let mut visited = vec![false; symlen.len()];
+        let mut visited = BitVec::from_elem(symlen.len(), false);
         for s in 0..symlen.len() {
             if !visited[s] {
                 calc_symlen(data, &mut symlen, &mut visited, btree, s);

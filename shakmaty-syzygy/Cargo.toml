@@ -19,6 +19,7 @@ memmap = "0.5"
 num-integer = "0.1"
 byteorder = "1.1"
 itertools = "0.7"
+bit-vec = "0.4"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty-syzygy", branch = "master" }
