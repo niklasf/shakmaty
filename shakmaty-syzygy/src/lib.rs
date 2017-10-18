@@ -183,7 +183,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
 #[derive(Debug)]
 struct GroupData {
     pieces: Pieces,
-    group_lens: ArrayVec<[usize; MAX_PIECES]>,
+    lens: ArrayVec<[usize; MAX_PIECES]>,
     group_idx: [u64; MAX_PIECES],
 }
 
@@ -202,36 +202,37 @@ impl GroupData {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
 
-        let group_lens = group_pieces(&pieces);
+        // Compute group lengths.
+        let lens = group_pieces(&pieces);
 
         // initialize group_idx
         let mut group_idx = [0u64; MAX_PIECES];
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let mut next = if pp { 2 } else { 1 };
-        let mut free_squares = 64 - group_lens[0] as u64 - if pp { group_lens[1] as u64 } else { 0 };
+        let mut free_squares = 64 - lens[0] as u64 - if pp { lens[1] as u64 } else { 0 };
         let mut idx = 1;
 
         let mut k = 0;
-        while next < group_lens.len() || k == order[0] || k == order[1] {
+        while next < lens.len() || k == order[0] || k == order[1] {
             if k == order[0] {
                 group_idx[0] = idx;
                 assert!(!material.has_pawns());
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
             } else if k == order[1] {
                 group_idx[1] = idx;
-                idx *= binomial(48 - group_lens[0] as u64, group_lens[1] as u64);
+                idx *= binomial(48 - lens[0] as u64, lens[1] as u64);
             } else {
                 group_idx[next] = idx;
-                idx *= binomial(free_squares, group_lens[next] as u64);
-                free_squares -= group_lens[next] as u64;
+                idx *= binomial(free_squares, lens[next] as u64);
+                free_squares -= lens[next] as u64;
                 next += 1;
             }
             k += 1;
         }
 
-        group_idx[group_lens.len()] = idx;
+        group_idx[lens.len()] = idx;
 
-        Ok(GroupData { pieces, group_lens, group_idx })
+        Ok(GroupData { pieces, lens, group_idx })
     }
 }
 
@@ -280,7 +281,7 @@ impl PairsData {
             panic!("single value not yet implemented");
         }
 
-        let tb_size = groups.group_idx[groups.group_lens.len()];
+        let tb_size = groups.group_idx[groups.lens.len()];
         let block_size = 1 << data[ptr + 1];
         let span = 1 << data[ptr + 2];
         let sparse_index_size = (tb_size + span - 1) / span;
@@ -541,7 +542,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             }
         }
 
-        for i in 0..usize::from(side.groups.group_lens[0]) {
+        for i in 0..usize::from(side.groups.lens[0]) {
             if squares[i].file() == squares[i].rank() {
                 continue;
             }
@@ -574,22 +575,22 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
 
         let mut remaining_pawns = false;
         let mut next = 1;
-        let mut group_sq = side.groups.group_lens[0];
-        for group_lens in side.groups.group_lens.iter().cloned().skip(1) {
+        let mut group_sq = side.groups.lens[0];
+        for lens in side.groups.lens.iter().cloned().skip(1) {
             let (prev_squares, group_squares) = squares.split_at_mut(usize::from(group_sq));
-            let group_squares = &mut group_squares[..(usize::from(group_lens))];
+            let group_squares = &mut group_squares[..(usize::from(lens))];
             group_squares.sort();
 
             let mut n = 0;
 
-            for i in 0..usize::from(group_lens) {
+            for i in 0..usize::from(lens) {
                 let adjust = prev_squares[..usize::from(group_sq)].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
                 n += binomial(u64::from(group_squares[i]) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
             }
 
             remaining_pawns = false;
             idx += n * side.groups.group_idx[next];
-            group_sq += side.groups.group_lens[next];
+            group_sq += side.groups.lens[next];
             next += 1;
         }
 
