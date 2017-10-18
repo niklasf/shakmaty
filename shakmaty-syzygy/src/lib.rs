@@ -60,6 +60,7 @@ impl Syzygy for Chess {
 
 const MAX_PIECES: usize = 6;
 
+/// Maps squares into the a1-d1-d4 triangle.
 const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
     0, 7, 3, 4, 4, 3, 7, 0,
@@ -112,19 +113,19 @@ type SyzygyResult<T> = Result<T, SyzygyError>;
 type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
 bitflags! {
+    struct Layout: u8 {
+        const SPLIT = 1;
+        const HAS_PAWNS = 2;
+    }
+}
+
+bitflags! {
     struct Flag: u8 {
         const STM = 1;
         const MAPPED = 2;
         const WIN_PLIES = 4;
         const LOSS_PLIES = 8;
         const SINGLE_VALUE = 128;
-    }
-}
-
-bitflags! {
-    struct Layout: u8 {
-        const SPLIT = 1;
-        const HAS_PAWNS = 2;
     }
 }
 
@@ -141,10 +142,12 @@ fn byte_to_piece(p: u8) -> Option<Piece> {
     })
 }
 
+/// Checks if a square is on the a1-h8 diagonal.
 fn offdiag(sq: Square) -> bool {
     sq.file() != sq.rank()
 }
 
+/// Parse a piece list.
 fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<Pieces> {
     let mut pieces = Pieces::new();
     for p in data.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
@@ -184,7 +187,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
 struct GroupData {
     pieces: Pieces,
     lens: ArrayVec<[usize; MAX_PIECES]>,
-    group_idx: [u64; MAX_PIECES],
+    factors: [u64; MAX_PIECES],
 }
 
 impl GroupData {
@@ -205,8 +208,8 @@ impl GroupData {
         // Compute group lengths.
         let lens = group_pieces(&pieces);
 
-        // initialize group_idx
-        let mut group_idx = [0u64; MAX_PIECES];
+        // initialize factors
+        let mut factors = [0u64; MAX_PIECES];
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let mut next = if pp { 2 } else { 1 };
         let mut free_squares = 64 - lens[0] as u64 - if pp { lens[1] as u64 } else { 0 };
@@ -215,14 +218,14 @@ impl GroupData {
         let mut k = 0;
         while next < lens.len() || k == order[0] || k == order[1] {
             if k == order[0] {
-                group_idx[0] = idx;
+                factors[0] = idx;
                 assert!(!material.has_pawns());
                 idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
             } else if k == order[1] {
-                group_idx[1] = idx;
+                factors[1] = idx;
                 idx *= binomial(48 - lens[0] as u64, lens[1] as u64);
             } else {
-                group_idx[next] = idx;
+                factors[next] = idx;
                 idx *= binomial(free_squares, lens[next] as u64);
                 free_squares -= lens[next] as u64;
                 next += 1;
@@ -230,9 +233,9 @@ impl GroupData {
             k += 1;
         }
 
-        group_idx[lens.len()] = idx;
+        factors[lens.len()] = idx;
 
-        Ok(GroupData { pieces, lens, group_idx })
+        Ok(GroupData { pieces, lens, factors })
     }
 }
 
@@ -281,7 +284,7 @@ impl PairsData {
             panic!("single value not yet implemented");
         }
 
-        let tb_size = groups.group_idx[groups.lens.len()];
+        let tb_size = groups.factors[groups.lens.len()];
         let block_size = 1 << data[ptr + 1];
         let span = 1 << data[ptr + 2];
         let sparse_index_size = (tb_size + span - 1) / span;
@@ -571,7 +574,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             panic!("mapkk not implemented");
         };
 
-        idx *= side.groups.group_idx[0];
+        idx *= side.groups.factors[0];
 
         let mut remaining_pawns = false;
         let mut next = 1;
@@ -589,7 +592,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             }
 
             remaining_pawns = false;
-            idx += n * side.groups.group_idx[next];
+            idx += n * side.groups.factors[next];
             group_sq += side.groups.lens[next];
             next += 1;
         }
