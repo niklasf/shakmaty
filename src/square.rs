@@ -205,10 +205,10 @@ impl Square {
     /// use shakmaty::Square;
     ///
     /// assert_eq!(Square::A1.mirror_diagonal(), Square::A1);
-    /// assert_eq!(Square::A3.mirror_diagonal(), Square::C3);
+    /// assert_eq!(Square::A3.mirror_diagonal(), Square::C1);
     /// ```
     pub fn mirror_diagonal(self) -> Square {
-        unsafe { Square::from_index_unchecked((((self as i8) >> 3) | ((self as i8) << 3)) & 63) }
+        unsafe { Square::from_coords_unchecked(self.rank(), self.file()) }
     }
 
     /// Tests is the square is a light square.
@@ -260,7 +260,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn combine(self, rank: Square) -> Square {
-        unsafe { Square::from_index_unchecked(self.file() | (rank.rank() << 3)) }
+        unsafe { Square::from_coords_unchecked(self.file(), rank.rank()) }
     }
 }
 
