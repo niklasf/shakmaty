@@ -51,11 +51,13 @@ pub use material::{Material, MaterialSide};
 pub trait Syzygy {
     const WDL_MAGIC: [u8; 4];
     const ONE_KING: bool;
+    const CONNECTED_KINGS: bool;
 }
 
 impl Syzygy for Chess {
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const ONE_KING: bool = true;
+    const CONNECTED_KINGS: bool = false;
 }
 
 const MAX_PIECES: usize = 6;
@@ -183,6 +185,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
     result
 }
 
+/// Description of the encoding used for a piece configuration.
 #[derive(Debug)]
 struct GroupData {
     pieces: Pieces,
@@ -191,7 +194,7 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn parse(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
+    pub fn parse<S: Syzygy>(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
         let mut order = [data.get(ptr)? >> 4, data.get(ptr)? & 0xf];
         if side.is_black() {
             order.reverse();
@@ -208,31 +211,45 @@ impl GroupData {
         // Compute group lengths.
         let lens = group_pieces(&pieces);
 
-        // initialize factors
-        let mut factors = [0u64; MAX_PIECES];
+        // Compute a factor for each group.
         let pp = material.white.has_pawns() && material.black.has_pawns();
+        let mut factors = [0u64; MAX_PIECES];
+        let mut free_squares = 64 - lens[0] - if pp { lens[1] } else { 0 };
         let mut next = if pp { 2 } else { 1 };
-        let mut free_squares = 64 - lens[0] as u64 - if pp { lens[1] as u64 } else { 0 };
         let mut idx = 1;
-
         let mut k = 0;
+
         while next < lens.len() || k == order[0] || k == order[1] {
             if k == order[0] {
+                // Leading pawns or pieces.
                 factors[0] = idx;
-                assert!(!material.has_pawns());
-                idx *= if material.unique_pieces() > 2 { 31332 } else { 462 };
+
+                if material.has_pawns() {
+                    panic!("TODO: Compute LEAD_PAWNS_SIZE");
+                } else if material.unique_pieces() >= 3 {
+                    idx *= 31332;
+                } else if material.unique_pieces() == 2 {
+                    idx *= if S::CONNECTED_KINGS { 518 } else { 462 };
+                } else if material.min_like_man() == 2 {
+                    idx *= 278;
+                } else {
+                    panic!("TODO: Compute MULT_FACTOR");
+                }
             } else if k == order[1] {
+                // Remaining pawns.
                 factors[1] = idx;
-                idx *= binomial(48 - lens[0] as u64, lens[1] as u64);
+                idx *= binomial(48 - lens[0], lens[1]) as u64;
             } else {
+                // Remaining pieces.
                 factors[next] = idx;
-                idx *= binomial(free_squares, lens[next] as u64);
-                free_squares -= lens[next] as u64;
+                idx *= binomial(free_squares, lens[next]) as u64;
+                free_squares -= lens[next];
                 next += 1;
             }
             k += 1;
         }
 
+        // TODO: Review panic safety.
         factors[lens.len()] = idx;
 
         Ok(GroupData { pieces, lens, factors })
@@ -392,7 +409,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         if has_pawns {
             panic!("not yet implemented");
         } else {
-            let group = GroupData::parse(&data, 5, Color::Black)?;
+            let group = GroupData::parse::<P>(&data, 5, Color::Black)?;
 
             let mut ptr = 5 + group.pieces.len() + 1;
             ptr += ptr & 0x1;
@@ -400,7 +417,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             let mut sides: ArrayVec<[PairsData; 2]> = ArrayVec::new();
             let (pairs, ptr) = PairsData::new(data, ptr, group)?;
             sides.push(pairs);
-            let group = GroupData::parse(&data, 5, Color::White)?;
+            let group = GroupData::parse::<P>(&data, 5, Color::White)?;
             let (pairs, mut ptr) = PairsData::new(&data, ptr, group)?;
             sides.push(pairs);
 
