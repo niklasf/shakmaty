@@ -264,47 +264,18 @@ impl Square {
     }
 }
 
-impl From<Square> for i8 {
-    #[inline]
-    fn from(sq: Square) -> i8 {
-        sq as i8
+macro_rules! from_square_impl {
+    ($($t:ty)+) => {
+        $(impl From<Square> for $t {
+            #[inline]
+            fn from(sq: Square) -> $t {
+                sq as $t
+            }
+        })+
     }
 }
 
-impl From<Square> for u8 {
-    #[inline]
-    fn from(sq: Square) -> u8 {
-        sq as u8
-    }
-}
-
-impl From<Square> for u16 {
-    #[inline]
-    fn from(sq: Square) -> u16 {
-        sq as u16
-    }
-}
-
-impl From<Square> for u32 {
-    #[inline]
-    fn from(sq: Square) -> u32 {
-        sq as u32
-    }
-}
-
-impl From<Square> for u64 {
-    #[inline]
-    fn from(sq: Square) -> u64 {
-        sq as u64
-    }
-}
-
-impl From<Square> for usize {
-    #[inline]
-    fn from(sq: Square) -> usize {
-        sq as usize
-    }
-}
+from_square_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
 impl Sub for Square {
     type Output = i8;
