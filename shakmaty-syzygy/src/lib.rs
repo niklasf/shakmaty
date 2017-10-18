@@ -37,6 +37,7 @@ use std::fmt;
 use std::error::Error;
 use std::marker::PhantomData;
 use std::option::NoneError;
+use std::iter::FromIterator;
 
 use arrayvec::ArrayVec;
 use num_integer::binomial;
@@ -140,6 +141,14 @@ fn offdiag(sq: Square) -> bool {
     sq.file() != sq.rank()
 }
 
+fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<ArrayVec<[Piece; MAX_PIECES]>> {
+    let mut pieces = ArrayVec::new();
+    for p in data.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
+        pieces.push(byte_to_piece(side.fold(p >> 4, p & 0xf))?);
+    }
+    Ok(pieces)
+}
+
 #[derive(Debug)]
 struct GroupData {
     pieces: ArrayVec<[Piece; MAX_PIECES]>,
@@ -155,13 +164,8 @@ impl GroupData {
         }
 
         // Initialize pieces.
-        let mut pieces = ArrayVec::new();
-        let mut material = Material::new();
-        for p in data.get(ptr + 1..)?.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-            let piece = byte_to_piece(side.fold(p >> 4, p & 0xf))?;
-            pieces.push(piece);
-            *material.by_piece_mut(piece) += 1;
-        }
+        let pieces = parse_pieces(data.get(ptr + 1..)?, side)?;
+        let material = Material::from_iter(pieces.clone());
 
         // initialize group_len
         let mut group_len: ArrayVec<[u8; MAX_PIECES]> = ArrayVec::new();
@@ -350,13 +354,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         let split = layout.contains(Layout::SPLIT);
 
         // Read material key.
-        let mut key = Material::new();
-        for p in data[6..].iter().cloned().take(MAX_PIECES).take_while(|&p| p != 0) {
-            match byte_to_piece(p & 0xf) {
-                Some(piece) => *key.by_piece_mut(piece) += 1,
-                None => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
-            }
-        }
+        let key = Material::from_iter(parse_pieces(&data[6..], Color::White)?);
 
         // Check consistency of layout and material key.
         assert!(has_pawns == key.has_pawns());
