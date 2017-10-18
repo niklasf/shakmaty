@@ -282,8 +282,23 @@ impl fmt::Binary for Bitboard {
 }
 
 impl From<Square> for Bitboard {
+    #[inline]
     fn from(sq: Square) -> Bitboard {
         Bitboard::from_square(sq)
+    }
+}
+
+impl From<u64> for Bitboard {
+    #[inline]
+    fn from(bb: u64) -> Bitboard {
+        Bitboard(bb)
+    }
+}
+
+impl From<Bitboard> for u64 {
+    #[inline]
+    fn from(bb: Bitboard) -> u64 {
+        bb.0
     }
 }
 
