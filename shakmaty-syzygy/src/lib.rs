@@ -337,6 +337,7 @@ impl PairsData {
         let h = usize::from(max_symlen - min_symlen + 1);
         let lowest_sym = ptr + 10;
 
+        // Initialize base.
         let mut base = vec![0u64; h];
         for i in (0..=h - 2).rev() {
             let ptr = lowest_sym + i * 2;
@@ -354,8 +355,9 @@ impl PairsData {
             base[i] <<= 64 - (min_symlen + i as u8);
         }
 
+        // Initialize symlen.
         ptr += 10 + h * 2;
-        let mut symlen = vec![0; LittleEndian::read_u16(&data[ptr..]) as usize];
+        let mut symlen = vec![0; LittleEndian::read_u16(data.get(ptr..ptr + 2)?) as usize];
         ptr += 2;
         let btree = ptr;
 
@@ -366,26 +368,31 @@ impl PairsData {
             }
         }
 
-        let next_ptr = ptr + symlen.len() * 3 + (symlen.len() & 1);
-        let pairs = PairsData {
+        ptr += symlen.len() * 3 + (symlen.len() & 1);
+
+        // Result.
+        Ok((PairsData {
             flags,
             groups,
-            block_size,
-            lowest_sym,
-            min_symlen,
-            btree,
-            base,
-            span,
-            sparse_index: 0,
-            sparse_index_size,
-            block_lengths: 0,
-            block_length_size,
-            symlen,
-            data: 0,
-            blocks_num,
-        };
 
-        Ok((pairs, next_ptr))
+            block_size,
+            span,
+            blocks_num,
+
+            btree,
+            min_symlen,
+            lowest_sym,
+            base,
+            symlen,
+
+            sparse_index: 0, // to be initialized later
+            sparse_index_size,
+
+            block_lengths: 0, // to be initialized later
+            block_length_size,
+
+            data: 0, // to be initialized later
+        }, ptr))
     }
 }
 
