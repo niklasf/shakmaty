@@ -318,31 +318,36 @@ fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut BitVec, btree: u
 
 impl PairsData {
     pub fn new(data: &[u8], mut ptr: usize, groups: GroupData) -> Result<(PairsData, usize), SyzygyError> {
-        let flags = Flag::from_bits_truncate(data[ptr]);
+        let flags = Flag::from_bits_truncate(*data.get(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             panic!("TODO: Implement SINGLE_VALUE PairsData");
         }
 
         let tb_size = groups.factors[groups.lens.len()];
-        let block_size = 1 << data[ptr + 1];
-        let span: usize = 1 << data[ptr + 2];
+        let block_size = 1 << *data.get(ptr + 1)?;
+        let span = 1 << *data.get(ptr + 2)?;
         let sparse_index_size = ((tb_size + span as u64 - 1) / span as u64) as usize;
-        let padding = data[ptr + 3];
-        let blocks_num = LittleEndian::read_u32(&data[ptr + 4..]);
+        let padding = *data.get(ptr + 3)?;
+        let blocks_num = LittleEndian::read_u32(data.get(ptr + 4..ptr + 4 + 4)?);
         let block_length_size = blocks_num + u32::from(padding);
 
-        let max_symlen = data[ptr + 8];
-        let min_symlen = data[ptr + 9];
+        let max_symlen = *data.get(ptr + 8)?;
+        let min_symlen = *data.get(ptr + 9)?;
         let h = usize::from(max_symlen - min_symlen + 1);
         let lowest_sym = ptr + 10;
-        //let num_syms = data[ptr + 10 + 2 * h];
-        let mut base = vec![0; h];
 
+        let mut base = vec![0u64; h];
         for i in (0..=h - 2).rev() {
-            base[i] = ((base[i + 1] + u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2..])))
-                                    - u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2 + 2..]))) / 2;
-            assert!(base[i] * 2 >= base[i + 1]);
+            let ptr = lowest_sym + i * 2;
+
+            base[i] = base[i + 1]
+                .checked_add(u64::from(LittleEndian::read_u16(data.get(ptr..ptr + 2)?)))?
+                .checked_sub(u64::from(LittleEndian::read_u16(data.get(ptr + 2..ptr + 4)?)))? / 2;
+
+            if base[i] * 2 < base[i + 1] {
+                return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+            }
         }
 
         for i in 0..h {
