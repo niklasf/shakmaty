@@ -298,26 +298,29 @@ struct PairsData {
 }
 
 /// Build the symlen table.
-fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut BitVec, btree: usize, s: usize) {
-    let w = btree + 3 * s;
-    let sr = ((u16::from(data[w + 2]) << 4) | (u16::from(data[w + 1]) >> 4)) as usize;
-    if sr == 0xfff {
-        symlen[s] = 0;
-    } else {
-        let sl = (((u16::from(data[w + 1]) & 0xf) << 8) | u16::from(data[w])) as usize;
-        if !visited[sl] {
-            calc_symlen(data, symlen, visited, btree, sl);
-        }
-        if !visited[sr] {
-            calc_symlen(data, symlen, visited, btree, sr);
-        }
-        symlen[s] = symlen[sl] + symlen[sr] + 1;
+fn read_symlen(data: &[u8], btree: usize, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
+    if visited.get(sym as usize)? {
+        return Ok(());
     }
-    visited.set(s, true);
+
+    let ptr = btree + 3 * sym as usize;
+    let left = ((u16::from(*data.get(ptr + 1)?) & 0xf) << 8) | u16::from(*data.get(ptr)?);
+    let right = (u16::from(*data.get(ptr + 2)?) << 4) | (u16::from(*data.get(ptr + 1)?) >> 4);
+
+    if right == 0xfff {
+        symlen[sym as usize] = 0;
+    } else {
+        read_symlen(data, btree, symlen, visited, left)?;
+        read_symlen(data, btree, symlen, visited, right)?;
+        symlen[sym as usize] = symlen[left as usize] + symlen[right as usize] + 1;
+    }
+
+    visited.set(sym as usize, true);
+    Ok(())
 }
 
 impl PairsData {
-    pub fn new(data: &[u8], mut ptr: usize, groups: GroupData) -> Result<(PairsData, usize), SyzygyError> {
+    pub fn new(data: &[u8], mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
         let flags = Flag::from_bits_truncate(*data.get(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
@@ -357,17 +360,14 @@ impl PairsData {
 
         // Initialize symlen.
         ptr += 10 + h * 2;
-        let mut symlen = vec![0; LittleEndian::read_u16(data.get(ptr..ptr + 2)?) as usize];
+        let sym = LittleEndian::read_u16(data.get(ptr..ptr + 2)?);
         ptr += 2;
         let btree = ptr;
-
+        let mut symlen = vec![0; sym as usize];
         let mut visited = BitVec::from_elem(symlen.len(), false);
-        for s in 0..symlen.len() {
-            if !visited[s] {
-                calc_symlen(data, &mut symlen, &mut visited, btree, s);
-            }
+        for s in 0..sym {
+           read_symlen(data, btree, &mut symlen, &mut visited, s)?;
         }
-
         ptr += symlen.len() * 3 + (symlen.len() & 1);
 
         // Result.
