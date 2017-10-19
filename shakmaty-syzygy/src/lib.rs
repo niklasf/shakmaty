@@ -213,7 +213,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
 }
 
 /// Description of the encoding used for a piece configuration.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct GroupData {
     pieces: Pieces,
     lens: ArrayVec<[usize; MAX_PIECES]>,
@@ -221,27 +221,18 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn parse<S: Syzygy>(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
-        // Initialize pieces.
-        let pieces = parse_pieces(data.get(ptr + 1..)?, side)?;
-        let material = Material::from_iter(pieces.clone());
-
+    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2]) -> SyzygyResult<GroupData> {
         if pieces.len() < 2 {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
+
+        let material = Material::from_iter(pieces.clone());
 
         // Compute group lengths.
         let lens = group_pieces(&pieces);
 
         // Compute a factor for each group.
         let pp = material.white.has_pawns() && material.black.has_pawns();
-
-        let order = if side.is_white() {
-            [*data.get(ptr)? & 0xf, if pp { *data.get(ptr + 1)? & 0xf } else { 0xf }]
-        } else {
-            [*data.get(ptr)? >> 4, if pp { *data.get(ptr + 1)? >> 4 } else { 0xf }]
-        };
-
         let mut factors = ArrayVec::from([0, 0, 0, 0, 0, 0, 0]);
         factors.truncate(lens.len() + 1);
         let mut free_squares = 64 - lens[0] - if pp { lens[1] } else { 0 };
@@ -348,7 +339,7 @@ fn read_symlen(data: &[u8], btree: usize, symlen: &mut Vec<u8>, visited: &mut Bi
 }
 
 impl PairsData {
-    pub fn new(data: &[u8], mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
+    pub fn parse(data: &[u8], mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
         let flags = Flag::from_bits_truncate(*data.get(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
@@ -487,53 +478,93 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
 
-        let mut files = ArrayVec::new();
+        // Read group data.
+        let pp = key.white.has_pawns() && key.black.has_pawns();
+        let num_files = if has_pawns { 4 } else { 1 };
+        let num_sides = if T::IS_WDL && !key.is_symmetric() { 2 } else { 1 };
 
-        if has_pawns {
-            panic!("not yet implemented");
-        } else {
-            let group = GroupData::parse::<P>(&data, 5, Color::White)?;
+        let mut groups: ArrayVec<[ArrayVec<[GroupData; 2]>; 4]> = ArrayVec::new();
+        let mut ptr = 5;
 
-            let mut ptr = 5 + group.pieces.len() + 1;
-            ptr += ptr & 0x1;
+        for _ in 0..num_files {
+            let mut sides = ArrayVec::new();
 
-            let mut sides: ArrayVec<[PairsData; 2]> = ArrayVec::new();
-            let (pairs, ptr) = PairsData::new(data, ptr, group)?;
-            sides.push(pairs);
-            let group = GroupData::parse::<P>(&data, 5, Color::Black)?;
-            let (pairs, mut ptr) = PairsData::new(&data, ptr, group)?;
-            sides.push(pairs);
+            let order = [
+                [*data.get(ptr)? & 0xf, if pp { *data.get(ptr + 1)? & 0xf } else { 0xf }],
+                [*data.get(ptr)? >> 4, if pp { *data.get(ptr + 1)? >> 4 } else { 0xf }],
+            ];
 
-            sides[0].sparse_index = ptr;
-            ptr += sides[0].sparse_index_size as usize * 6;
-            sides[1].sparse_index = ptr;
-            ptr += sides[1].sparse_index_size as usize * 6;
+            ptr += 1 + if pp { 1 } else { 0 };
 
-            sides[0].block_lengths = ptr;
-            ptr += sides[0].block_length_size as usize * 2;
-            sides[1].block_lengths = ptr;
-            ptr += sides[1].block_length_size as usize * 2;
+            for side in [Color::White, Color::Black].iter().take(num_sides) {
+                let pieces = parse_pieces(&data.get(ptr..)?, *side)?;
+                let group = GroupData::new::<P>(pieces, &order[side.fold(0, 1)])?;
+                sides.push(group);
+            }
 
-            ptr = (ptr + 0x3f) & !0x3f;
-            sides[0].data = ptr;
-            ptr += sides[0].blocks_num as usize * sides[0].block_size;
-            ptr = (ptr + 0x3f) & !0x3f;
-            sides[1].data = ptr;
+            ptr += key.count() as usize;
 
-            //let (pairs, _data) = PairsData::new(&next_data[ptr..], GroupData::new(Color::Black, &data[5..])?)?;
-            //sides.push(pairs);
+            groups.push(sides);
+        }
+
+        ptr += ptr & 1; // TODO: Check
+
+        let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
+
+        for f in 0..num_files {
+            let mut sides = ArrayVec::new();
+
+            for side in [Color::White, Color::Black].iter().take(num_sides) {
+                let group = groups[f][side.fold(0, 1)].clone();
+                let (pairs, next_ptr) = PairsData::parse(&data, ptr, group)?;
+
+                if !T::IS_WDL {
+                    panic!("TODO: Antichess");
+                }
+
+                sides.push(pairs);
+                ptr = next_ptr;
+            }
+
             files.push(FileData { sides });
         }
 
+        if !T::IS_WDL {
+            panic!("TODO: set dtz map");
+        }
+
+        for f in 0..num_files {
+            for s in 0..num_sides {
+                files[f].sides[s].sparse_index = ptr;
+                ptr += files[f].sides[s].sparse_index_size * 6;
+            }
+        }
+
+        for f in 0..num_files {
+            for s in 0..num_sides {
+                files[f].sides[s].block_lengths = ptr;
+                ptr += files[f].sides[s].block_length_size as usize * 2;
+            }
+        }
+
+        for f in 0..num_files {
+            for s in 0..num_sides {
+                ptr = (ptr + 0x3f) & !0x3f; // TODO: Check 64 byte alignment
+                files[f].sides[s].data = ptr;
+                ptr += files[f].sides[s].blocks_num as usize * files[f].sides[s].block_size;
+            }
+        }
+
+        // Result.
         Ok(Table {
+            is_wdl: PhantomData,
+            syzygy: PhantomData,
+            data,
             num_pieces: key.count(),
             num_unique_pieces: key.unique_pieces(),
             min_like_man: key.min_like_man(),
-            key,
             files,
-            data,
-            is_wdl: PhantomData,
-            syzygy: PhantomData,
+            key,
         })
     }
 
