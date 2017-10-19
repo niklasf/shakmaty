@@ -260,21 +260,41 @@ impl GroupData {
 
 #[derive(Debug)]
 struct PairsData {
+    /// Encoding flags.
     flags: Flag,
+    /// Piece configuration encoding info.
     groups: GroupData,
-    min_sym_len: u8,
-    lowest_sym: usize,
-    btree: usize,
-    base_64: Vec<u64>,
-    symlen: Vec<u8>,
-    span: u64,
-    sparse_index: usize,
-    sparse_index_size: u64,
-    block_lengths: usize,
-    block_length_size: u32,
+
+    /// Block size in bytes.
     block_size: usize,
-    data: usize,
+    /// About every span values there is a sparse index entry.
+    span: usize,
+    /// Number of blocks in the table.
     blocks_num: u32,
+
+    /// Offset of the symbol table.
+    btree: usize,
+    /// Minimum length in bits of the Huffman symbols.
+    min_symlen: u8,
+    /// Offset of the lowest symbols for each length.
+    lowest_sym: usize,
+    /// 64-bit padded lowest symbols for each length.
+    base: Vec<u64>,
+    /// Number of values represented by a given Huffman symbol.
+    symlen: Vec<u8>,
+
+    /// Offset of the sparse index.
+    sparse_index: usize,
+    /// Size of the sparse index.
+    sparse_index_size: usize,
+
+    /// Offset of the block length table.
+    block_lengths: usize,
+    /// Size of the block length table, padded to be bigger than `blocks_num`.
+    block_length_size: u32,
+
+    /// Start of compressed data.
+    data: usize,
 }
 
 fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut BitVec, btree: usize, s: usize) {
@@ -305,27 +325,27 @@ impl PairsData {
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = 1 << data[ptr + 1];
-        let span = 1 << data[ptr + 2];
-        let sparse_index_size = (tb_size + span - 1) / span;
+        let span: usize = 1 << data[ptr + 2];
+        let sparse_index_size = ((tb_size + span as u64 - 1) / span as u64) as usize;
         let padding = data[ptr + 3];
         let blocks_num = LittleEndian::read_u32(&data[ptr + 4..]);
         let block_length_size = blocks_num + u32::from(padding);
 
-        let max_sym_len = data[ptr + 8];
-        let min_sym_len = data[ptr + 9];
-        let h = usize::from(max_sym_len - min_sym_len + 1);
+        let max_symlen = data[ptr + 8];
+        let min_symlen = data[ptr + 9];
+        let h = usize::from(max_symlen - min_symlen + 1);
         let lowest_sym = ptr + 10;
         //let num_syms = data[ptr + 10 + 2 * h];
-        let mut base_64 = vec![0; h];
+        let mut base = vec![0; h];
 
         for i in (0..=h - 2).rev() {
-            base_64[i] = ((base_64[i + 1] + u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2..])))
-                                          - u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2 + 2..]))) / 2;
-            assert!(base_64[i] * 2 >= base_64[i + 1]);
+            base[i] = ((base[i + 1] + u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2..])))
+                                    - u64::from(LittleEndian::read_u16(&data[lowest_sym + i * 2 + 2..]))) / 2;
+            assert!(base[i] * 2 >= base[i + 1]);
         }
 
         for i in 0..h {
-            base_64[i] <<= 64 - (min_sym_len + i as u8);
+            base[i] <<= 64 - (min_symlen + i as u8);
         }
 
         ptr += 10 + h * 2;
@@ -346,9 +366,9 @@ impl PairsData {
             groups,
             block_size,
             lowest_sym,
-            min_sym_len,
+            min_symlen,
             btree,
-            base_64,
+            base,
             span,
             sparse_index: 0,
             sparse_index_size,
@@ -457,10 +477,10 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
 
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> u8 {
         if d.flags.contains(Flag::SINGLE_VALUE) {
-            return d.min_sym_len;
+            return d.min_symlen;
         }
 
-        let k = (idx / d.span) as usize;
+        let k = (idx / d.span as u64) as usize;
 
         let mut block = LittleEndian::read_u32(&self.data[d.sparse_index + 6 * k..]) as usize;
         let mut offset = i64::from(LittleEndian::read_u16(&self.data[d.sparse_index + 6 * k + 4..]));
@@ -489,11 +509,11 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
         loop {
             let mut len = 0;
 
-            while buf_64 < d.base_64[len] {
+            while buf_64 < d.base[len] {
                 len += 1;
             }
 
-            sym = ((buf_64 - d.base_64[len]) >> (64 - len - d.min_sym_len as usize)) as u16;
+            sym = ((buf_64 - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
             sym += LittleEndian::read_u16(&self.data[d.lowest_sym + 2 * len..]);
 
             if offset < i64::from(d.symlen[sym as usize]) + 1 {
@@ -501,7 +521,7 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             }
 
             offset -= i64::from(d.symlen[sym as usize]) + 1;
-            len += usize::from(d.min_sym_len);
+            len += usize::from(d.min_symlen);
             buf_64 <<= len;
             buf_64_size -= len;
 
