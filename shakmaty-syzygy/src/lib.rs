@@ -159,7 +159,7 @@ bitflags! {
 }
 
 fn byte_to_piece(p: u8) -> Option<Piece> {
-    let color = Color::from_bool(p & 8 == 0);
+    let color = Color::from_bool(p & 8 != 0);
     Some(match p & !8 {
         1 => color.pawn(),
         2 => color.knight(),
@@ -180,7 +180,7 @@ fn offdiag(sq: Square) -> bool {
 fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<Pieces> {
     let mut pieces = Pieces::new();
     for p in data.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-        pieces.push(byte_to_piece(side.fold(p >> 4, p & 0xf))?);
+        pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
     }
     Ok(pieces)
 }
@@ -234,12 +234,14 @@ impl GroupData {
         let lens = group_pieces(&pieces);
 
         // Compute a factor for each group.
-        let mut order = [data.get(ptr)? >> 4, data.get(ptr)? & 0xf];
-        if side.is_black() {
-            order.reverse();
-        }
-
         let pp = material.white.has_pawns() && material.black.has_pawns();
+
+        let order = if side.is_white() {
+            [*data.get(ptr)? & 0xf, if pp { *data.get(ptr + 1)? & 0xf } else { 0xf }]
+        } else {
+            [*data.get(ptr)? >> 4, if pp { *data.get(ptr + 1)? >> 4 } else { 0xf }]
+        };
+
         let mut factors = ArrayVec::from([0, 0, 0, 0, 0, 0, 0]);
         factors.truncate(lens.len() + 1);
         let mut free_squares = 64 - lens[0] - if pp { lens[1] } else { 0 };
@@ -490,7 +492,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
         if has_pawns {
             panic!("not yet implemented");
         } else {
-            let group = GroupData::parse::<P>(&data, 5, Color::Black)?;
+            let group = GroupData::parse::<P>(&data, 5, Color::White)?;
 
             let mut ptr = 5 + group.pieces.len() + 1;
             ptr += ptr & 0x1;
@@ -498,7 +500,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             let mut sides: ArrayVec<[PairsData; 2]> = ArrayVec::new();
             let (pairs, ptr) = PairsData::new(data, ptr, group)?;
             sides.push(pairs);
-            let group = GroupData::parse::<P>(&data, 5, Color::White)?;
+            let group = GroupData::parse::<P>(&data, 5, Color::Black)?;
             let (pairs, mut ptr) = PairsData::new(&data, ptr, group)?;
             sides.push(pairs);
 
@@ -614,7 +616,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
 
         let symmetric_btm = self.key.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != self.key;
-        let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_white());
+        let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_black());
 
         assert!(!key.has_pawns());
 
