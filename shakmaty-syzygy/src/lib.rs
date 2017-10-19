@@ -50,22 +50,29 @@ use byteorder::{LittleEndian, BigEndian, ByteOrder};
 
 pub use material::{Material, MaterialSide};
 
+/// A chess variant with Syzygy support.
 pub trait Syzygy {
+    const WDL_SUFFIX: &'static [u8];
+    const DTZ_SUFFIX: &'static [u8];
     const WDL_MAGIC: [u8; 4];
     const DTZ_MAGIC: [u8; 4];
     const PAWNLESS_WDL_MAGIC: [u8; 4];
     const PAWNLESS_DTZ_MAGIC: [u8; 4];
     const ONE_KING: bool;
     const CONNECTED_KINGS: bool;
+    const CAPTURES_COMPULSORY: bool;
 }
 
 impl Syzygy for Chess {
+    const WDL_SUFFIX: &'static [u8] = b".rtbw";
+    const DTZ_SUFFIX: &'static [u8] = b".rtbz";
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
     const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
+    const CAPTURES_COMPULSORY: bool = false;
 }
 
 const MAX_PIECES: usize = 6;
