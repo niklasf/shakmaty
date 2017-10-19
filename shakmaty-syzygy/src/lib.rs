@@ -83,12 +83,14 @@ pub struct SyzygyError {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum ErrorKind {
+    Magic,
     CorruptedTable,
 }
 
 impl SyzygyError {
     fn desc(&self) -> &str {
         match self.kind {
+            ErrorKind::Magic => "invalid magic bytes",
             ErrorKind::CorruptedTable => "corrupted table",
         }
     }
@@ -258,6 +260,7 @@ impl GroupData {
     }
 }
 
+/// Description of encoding and compression.
 #[derive(Debug)]
 struct PairsData {
     /// Encoding flags.
@@ -396,20 +399,24 @@ impl PairsData {
     }
 }
 
+/// Descripton of encoding and compression for both sides of a table.
+#[derive(Debug)]
+struct FileData {
+    sides: ArrayVec<[PairsData; 2]>,
+}
+
+/// A Syzygy table.
 #[derive(Debug)]
 pub struct Table<'a, P: Position + Syzygy> {
     key: Material,
+
+    data: &'a [u8],
+    syzygy: PhantomData<P>,
+
     num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
     files: ArrayVec<[FileData; 4]>,
-    data: &'a [u8],
-    syzygy: PhantomData<P>,
-}
-
-#[derive(Debug)]
-struct FileData {
-    sides: ArrayVec<[PairsData; 2]>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -423,21 +430,24 @@ pub enum Wdl {
 }
 
 impl<'a, P: Position + Syzygy> Table<'a, P> {
-    pub fn new(data: &[u8]) -> Result<Table<P>, SyzygyError> {
+    pub fn new(data: &[u8]) -> SyzygyResult<Table<P>> {
         // Check magic.
-        assert!(data.starts_with(&P::WDL_MAGIC));
+        if !data.starts_with(&P::WDL_MAGIC) {
+            return Err(SyzygyError { kind: ErrorKind::Magic });
+        }
 
         // Read layout flags.
-        let layout = Layout::from_bits_truncate(data[4]);
+        let layout = Layout::from_bits_truncate(*data.get(4)?);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
         // Read material key.
-        let key = Material::from_iter(parse_pieces(&data[6..], Color::White)?);
+        let key = Material::from_iter(parse_pieces(data.get(6..)?, Color::White)?);
 
         // Check consistency of layout and material key.
-        assert!(has_pawns == key.has_pawns());
-        assert!(split != key.is_symmetric());
+        if has_pawns != key.has_pawns() || split == key.is_symmetric() {
+            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+        }
 
         let mut files = ArrayVec::new();
 
