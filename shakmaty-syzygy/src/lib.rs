@@ -52,12 +52,18 @@ pub use material::{Material, MaterialSide};
 
 pub trait Syzygy {
     const WDL_MAGIC: [u8; 4];
+    const DTZ_MAGIC: [u8; 4];
+    const PAWNLESS_WDL_MAGIC: [u8; 4];
+    const PAWNLESS_DTZ_MAGIC: [u8; 4];
     const ONE_KING: bool;
     const CONNECTED_KINGS: bool;
 }
 
 impl Syzygy for Chess {
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
+    const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
+    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
+    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
 }
@@ -117,6 +123,23 @@ impl From<NoneError> for SyzygyError {
 type SyzygyResult<T> = Result<T, SyzygyError>;
 
 type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
+
+#[derive(Debug)]
+pub enum WdlTag { }
+#[derive(Debug)]
+pub enum DtzTag { }
+
+pub trait IsWdl {
+    const IS_WDL: bool;
+}
+
+impl IsWdl for WdlTag {
+    const IS_WDL: bool = true;
+}
+
+impl IsWdl for DtzTag {
+    const IS_WDL: bool = false;
+}
 
 bitflags! {
     struct Layout: u8 {
@@ -407,11 +430,13 @@ struct FileData {
 
 /// A Syzygy table.
 #[derive(Debug)]
-pub struct Table<'a, P: Position + Syzygy> {
-    key: Material,
+pub struct Table<'a, T: IsWdl, P: Position + Syzygy> {
+    is_wdl: PhantomData<T>,
+    syzygy: PhantomData<P>,
 
     data: &'a [u8],
-    syzygy: PhantomData<P>,
+
+    key: Material,
 
     num_pieces: u8,
     num_unique_pieces: u8,
@@ -429,10 +454,16 @@ pub enum Wdl {
     Win = 2,
 }
 
-impl<'a, P: Position + Syzygy> Table<'a, P> {
-    pub fn new(data: &[u8]) -> SyzygyResult<Table<P>> {
+impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
+    pub fn new(data: &[u8]) -> SyzygyResult<Table<T, P>> {
         // Check magic.
-        if !data.starts_with(&P::WDL_MAGIC) {
+        let (magic, pawnless_magic) = if T::IS_WDL {
+            (&P::WDL_MAGIC, &P::PAWNLESS_WDL_MAGIC)
+        } else {
+            (&P::DTZ_MAGIC, &P::PAWNLESS_DTZ_MAGIC)
+        };
+
+        if !data.starts_with(magic) && !data.starts_with(pawnless_magic) {
             return Err(SyzygyError { kind: ErrorKind::Magic });
         }
 
@@ -443,6 +474,11 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
 
         // Read material key.
         let key = Material::from_iter(parse_pieces(data.get(6..)?, Color::White)?);
+
+        // Check magic again.
+        if key.has_pawns() && !data.starts_with(magic) {
+            return Err(SyzygyError { kind: ErrorKind::Magic });
+        }
 
         // Check consistency of layout and material key.
         if has_pawns != key.has_pawns() || split == key.is_symmetric() {
@@ -494,7 +530,8 @@ impl<'a, P: Position + Syzygy> Table<'a, P> {
             key,
             files,
             data,
-            syzygy: PhantomData
+            is_wdl: PhantomData,
+            syzygy: PhantomData,
         })
     }
 
@@ -683,7 +720,7 @@ mod tests {
     fn test_table() {
         let mmap = Mmap::open_path("KQvKR.rtbw", Protection::Read).expect("mmap");
         let bytes = unsafe { mmap.as_slice() };
-        let table = Table::new(bytes).expect("good table");
+        let table = Table::<WdlTag, _>::new(bytes).expect("good table");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
