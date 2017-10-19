@@ -197,11 +197,6 @@ struct GroupData {
 
 impl GroupData {
     pub fn parse<S: Syzygy>(data: &[u8], ptr: usize, side: Color) -> SyzygyResult<GroupData> {
-        let mut order = [data.get(ptr)? >> 4, data.get(ptr)? & 0xf];
-        if side.is_black() {
-            order.reverse();
-        }
-
         // Initialize pieces.
         let pieces = parse_pieces(data.get(ptr + 1..)?, side)?;
         let material = Material::from_iter(pieces.clone());
@@ -214,6 +209,11 @@ impl GroupData {
         let lens = group_pieces(&pieces);
 
         // Compute a factor for each group.
+        let mut order = [data.get(ptr)? >> 4, data.get(ptr)? & 0xf];
+        if side.is_black() {
+            order.reverse();
+        }
+
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let mut factors = ArrayVec::from([0, 0, 0, 0, 0, 0, 0]);
         factors.truncate(lens.len() + 1);
@@ -297,6 +297,7 @@ struct PairsData {
     data: usize,
 }
 
+/// Build the symlen table.
 fn calc_symlen(data: &[u8], symlen: &mut Vec<u8>, visited: &mut BitVec, btree: usize, s: usize) {
     let w = btree + 3 * s;
     let sr = ((u16::from(data[w + 2]) << 4) | (u16::from(data[w + 1]) >> 4)) as usize;
@@ -320,7 +321,7 @@ impl PairsData {
         let flags = Flag::from_bits_truncate(data[ptr]);
 
         if flags.contains(Flag::SINGLE_VALUE) {
-            panic!("single value not yet implemented");
+            panic!("TODO: Implement SINGLE_VALUE PairsData");
         }
 
         let tb_size = groups.factors[groups.lens.len()];
