@@ -75,6 +75,7 @@ impl Syzygy for Chess {
     const CAPTURES_COMPULSORY: bool = false;
 }
 
+/// Syzygy tables are available for up to 6 pieces.
 const MAX_PIECES: usize = 6;
 
 /// Maps squares into the a1-d1-d4 triangle.
@@ -89,6 +90,10 @@ const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
 ];
 
+/// Error initializing or probing a table.
+///
+/// * Unexpected magic header bytes
+/// * Corrupted table
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SyzygyError {
     kind: ErrorKind,
@@ -514,7 +519,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             groups.push(sides);
         }
 
-        ptr += ptr & 1; // TODO: Check
+        ptr += ptr & 1;
 
         let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
 
@@ -556,7 +561,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
 
         for f in 0..num_files {
             for s in 0..num_sides {
-                ptr = (ptr + 0x3f) & !0x3f; // TODO: Check 64 byte alignment
+                ptr = (ptr + 0x3f) & !0x3f; // Check 64 byte alignment
                 files[f].sides[s].data = ptr;
                 ptr += files[f].sides[s].blocks_num as usize * files[f].sides[s].block_size;
             }
@@ -625,14 +630,13 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             buf_64 <<= len;
             buf_64_size -= len;
 
+            // Refill the buffer.
             if buf_64_size <= 32 {
                 buf_64_size += 32;
                 buf_64 |= u64::from(BigEndian::read_u32(&self.data[ptr..])) << (64 - buf_64_size);
                 ptr += 4;
             }
         }
-
-        println!("sym: {}", sym);
 
         while d.symlen[sym as usize] != 0 {
             let w = d.btree + 3 * sym as usize;
@@ -649,7 +653,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
         return self.data[d.btree + 3 * sym as usize];
     }
 
-    pub fn probe_wdl_table(self, pos: &P) -> Result<Wdl, SyzygyError> {
+    fn encode(&self, pos: &P) -> SyzygyResult<(&PairsData, u64)> {
         let key = Material::from_board(pos.board());
 
         let symmetric_btm = self.key.is_symmetric() && pos.turn().is_black();
@@ -707,10 +711,10 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
                 (u64::from(squares[1]) - adjust1) * 62 +
                 (u64::from(squares[2]) - adjust2)
             } else {
-                panic!("enc 0 not fully implemented");
+                panic!("TODO: enc 0 not fully implemented");
             }
         } else {
-            panic!("mapkk not implemented");
+            panic!("TODO: mapkk not implemented");
         };
 
         idx *= side.groups.factors[0];
@@ -735,6 +739,12 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             group_sq += side.groups.lens[next];
             next += 1;
         }
+
+        Ok((side, idx))
+    }
+
+    pub fn probe_wdl_table(&self, pos: &P) -> SyzygyResult<Wdl> {
+        let (side, idx) = self.encode(pos)?;
 
         println!("idx: {:?}", idx);
         Ok(match self.decompress_pairs(side, idx) {
