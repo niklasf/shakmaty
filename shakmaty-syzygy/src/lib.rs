@@ -170,6 +170,14 @@ bitflags! {
     }
 }
 
+fn read_u16_le(data: &[u8], ptr: usize) -> Option<u16> {
+    Some(LittleEndian::read_u16(&data.get(ptr..ptr+2)?))
+}
+
+fn read_u32_le(data: &[u8], ptr: usize) -> Option<u32> {
+    Some(LittleEndian::read_u32(&data.get(ptr..ptr+4)?))
+}
+
 fn byte_to_piece(p: u8) -> Option<Piece> {
     let color = Color::from_bool(p & 8 != 0);
     Some(match p & !8 {
@@ -363,7 +371,7 @@ impl PairsData {
         let span = 1 << *data.get(ptr + 2)?;
         let sparse_index_size = ((tb_size + span as u64 - 1) / span as u64) as usize;
         let padding = *data.get(ptr + 3)?;
-        let blocks_num = LittleEndian::read_u32(data.get(ptr + 4..ptr + 4 + 4)?);
+        let blocks_num = read_u32_le(data, ptr + 4)?;
         let block_length_size = blocks_num + u32::from(padding);
 
         let max_symlen = *data.get(ptr + 8)?;
@@ -377,8 +385,8 @@ impl PairsData {
             let ptr = lowest_sym + i * 2;
 
             base[i] = base[i + 1]
-                .checked_add(u64::from(LittleEndian::read_u16(data.get(ptr..ptr + 2)?)))?
-                .checked_sub(u64::from(LittleEndian::read_u16(data.get(ptr + 2..ptr + 4)?)))? / 2;
+                .checked_add(u64::from(read_u16_le(data, ptr)?))?
+                .checked_sub(u64::from(read_u16_le(data, ptr + 2)?))? / 2;
 
             if base[i] * 2 < base[i + 1] {
                 return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
@@ -391,7 +399,7 @@ impl PairsData {
 
         // Initialize symlen.
         ptr += 10 + h * 2;
-        let sym = LittleEndian::read_u16(data.get(ptr..ptr + 2)?);
+        let sym = read_u16_le(data, ptr)?;
         ptr += 2;
         let btree = ptr;
         let mut symlen = vec![0; sym as usize];
@@ -580,32 +588,32 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
         })
     }
 
-    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> u8 {
+    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
         if d.flags.contains(Flag::SINGLE_VALUE) {
-            return d.min_symlen;
+            return Ok(d.min_symlen);
         }
 
         let k = (idx / d.span as u64) as usize;
 
-        let mut block = LittleEndian::read_u32(&self.data[d.sparse_index + 6 * k..]) as usize;
-        let mut offset = i64::from(LittleEndian::read_u16(&self.data[d.sparse_index + 6 * k + 4..]));
+        let mut block = read_u32_le(self.data, d.sparse_index + 6 * k)? as usize;
+        let mut offset = i64::from(read_u16_le(self.data, d.sparse_index + 6 * k + 4)?);
 
         let diff = idx as i64 % d.span as i64 - d.span as i64 / 2;
         offset += diff;
 
         while offset < 0 {
             block -= 1;
-            offset += i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) + 1;
+            offset += i64::from(read_u16_le(self.data, d.block_lengths + block * 2)?) + 1;
         }
 
-        while offset > i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) {
-            offset -= i64::from(LittleEndian::read_u16(&self.data[d.block_lengths + block * 2..])) + 1;
+        while offset > i64::from(read_u16_le(self.data, d.block_lengths + block * 2)?) {
+            offset -= i64::from(read_u16_le(self.data, d.block_lengths + block * 2)?) + 1;
             block += 1;
         }
 
         let mut ptr = d.data + block * d.block_size;
 
-        let mut buf_64 = BigEndian::read_u64(&self.data[ptr..]);
+        let mut buf_64 = BigEndian::read_u64(self.data.get(ptr..ptr + 8)?);
         ptr += 8;
         let mut buf_64_size = 64;
 
@@ -619,13 +627,13 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             }
 
             sym = ((buf_64 - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
-            sym += LittleEndian::read_u16(&self.data[d.lowest_sym + 2 * len..]);
+            sym += read_u16_le(self.data, d.lowest_sym + 2 * len)?;
 
-            if offset < i64::from(d.symlen[sym as usize]) + 1 {
+            if offset < i64::from(*d.symlen.get(sym as usize)?) + 1 {
                 break;
             }
 
-            offset -= i64::from(d.symlen[sym as usize]) + 1;
+            offset -= i64::from(*d.symlen.get(sym as usize)?) + 1;
             len += usize::from(d.min_symlen);
             buf_64 <<= len;
             buf_64_size -= len;
@@ -633,24 +641,24 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             // Refill the buffer.
             if buf_64_size <= 32 {
                 buf_64_size += 32;
-                buf_64 |= u64::from(BigEndian::read_u32(&self.data[ptr..])) << (64 - buf_64_size);
+                buf_64 |= u64::from(BigEndian::read_u32(self.data.get(ptr..ptr + 4)?)) << (64 - buf_64_size);
                 ptr += 4;
             }
         }
 
-        while d.symlen[sym as usize] != 0 {
+        while *d.symlen.get(sym as usize)? != 0 {
             let w = d.btree + 3 * sym as usize;
-            let left = ((u16::from(self.data[w + 2]) << 4) | (u16::from(self.data[w + 1]) >> 4)) as usize;
+            let left = (u16::from(*self.data.get(w + 2)?) << 4) | (u16::from(*self.data.get(w + 1)?) >> 4);
 
-            if offset < i64::from(d.symlen[left]) + 1 {
+            if offset < i64::from(*d.symlen.get(left as usize)?) + 1 {
                 sym = left as u16;
             } else {
-                offset -= i64::from(d.symlen[left]) + 1;
-                sym = ((u16::from(self.data[w + 1]) & 0xf) << 8) | u16::from(self.data[w]);
+                offset -= i64::from(*d.symlen.get(left as usize)?) + 1;
+                sym = ((u16::from(*self.data.get(w + 1)?) & 0xf) << 8) | u16::from(*self.data.get(w)?);
             }
         }
 
-        return self.data[d.btree + 3 * sym as usize];
+        Ok(*self.data.get(d.btree + 3 * sym as usize)?)
     }
 
     fn encode(&self, pos: &P) -> SyzygyResult<(&PairsData, u64)> {
@@ -747,7 +755,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
         let (side, idx) = self.encode(pos)?;
 
         println!("idx: {:?}", idx);
-        Ok(match self.decompress_pairs(side, idx) {
+        Ok(match self.decompress_pairs(side, idx)? {
             0 => Wdl::Loss,
             1 => Wdl::BlessedLoss,
             2 => Wdl::Draw,
