@@ -613,20 +613,20 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
 
         let mut ptr = d.data + block * d.block_size;
 
-        let mut buf_64 = BigEndian::read_u64(self.data.get(ptr..ptr + 8)?);
+        let mut buf = BigEndian::read_u64(self.data.get(ptr..ptr + 8)?);
         ptr += 8;
-        let mut buf_64_size = 64;
+        let mut buf_size = 64;
 
         let mut sym;
 
         loop {
             let mut len = 0;
 
-            while buf_64 < d.base[len] {
+            while buf < d.base[len] {
                 len += 1;
             }
 
-            sym = ((buf_64 - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
+            sym = ((buf - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
             sym += read_u16_le(self.data, d.lowest_sym + 2 * len)?;
 
             if offset < i64::from(*d.symlen.get(sym as usize)?) + 1 {
@@ -635,13 +635,13 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
 
             offset -= i64::from(*d.symlen.get(sym as usize)?) + 1;
             len += usize::from(d.min_symlen);
-            buf_64 <<= len;
-            buf_64_size -= len;
+            buf <<= len;
+            buf_size -= len;
 
             // Refill the buffer.
-            if buf_64_size <= 32 {
-                buf_64_size += 32;
-                buf_64 |= u64::from(BigEndian::read_u32(self.data.get(ptr..ptr + 4)?)) << (64 - buf_64_size);
+            if buf_size <= 32 {
+                buf_size += 32;
+                buf |= u64::from(BigEndian::read_u32(self.data.get(ptr..ptr + 4)?)) << (64 - buf_size);
                 ptr += 4;
             }
         }
@@ -754,7 +754,6 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
     pub fn probe_wdl_table(&self, pos: &P) -> SyzygyResult<Wdl> {
         let (side, idx) = self.encode(pos)?;
 
-        println!("idx: {:?}", idx);
         Ok(match self.decompress_pairs(side, idx)? {
             0 => Wdl::Loss,
             1 => Wdl::BlessedLoss,
