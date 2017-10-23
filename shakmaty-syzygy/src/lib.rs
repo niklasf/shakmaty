@@ -27,11 +27,13 @@ extern crate arrayvec;
 #[macro_use]
 extern crate bitflags;
 extern crate bit_vec;
-extern crate memmap;
-extern crate shakmaty;
-extern crate num_integer;
 extern crate byteorder;
 extern crate itertools;
+#[macro_use]
+extern crate lazy_static;
+extern crate memmap;
+extern crate num_integer;
+extern crate shakmaty;
 
 mod material;
 
@@ -77,18 +79,6 @@ impl Syzygy for Chess {
 
 /// Syzygy tables are available for up to 6 pieces.
 const MAX_PIECES: usize = 6;
-
-/// Maps squares into the a1-d1-d4 triangle.
-const TRIANGLE: [u64; 64] = [
-    6, 0, 1, 2, 2, 1, 0, 6,
-    0, 7, 3, 4, 4, 3, 7, 0,
-    1, 3, 8, 5, 5, 8, 3, 1,
-    2, 4, 5, 9, 9, 5, 4, 2,
-    2, 4, 5, 9, 9, 5, 4, 2,
-    1, 3, 8, 5, 5, 8, 3, 1,
-    0, 7, 3, 4, 4, 3, 7, 0,
-    6, 0, 1, 2, 2, 1, 0, 6,
-];
 
 /// Error initializing or probing a table.
 ///
@@ -167,6 +157,32 @@ bitflags! {
         const WIN_PLIES = 4;
         const LOSS_PLIES = 8;
         const SINGLE_VALUE = 128;
+    }
+}
+
+lazy_static! {
+    static ref CONSTS: Consts = Consts::new();
+}
+
+struct Consts {
+    /// Maps squares into the a1-d1-d4 triangle.
+    triangle: [u64; 64],
+}
+
+impl Consts {
+    fn new() -> Consts {
+        let triangle = [
+            6, 0, 1, 2, 2, 1, 0, 6,
+            0, 7, 3, 4, 4, 3, 7, 0,
+            1, 3, 8, 5, 5, 8, 3, 1,
+            2, 4, 5, 9, 9, 5, 4, 2,
+            2, 4, 5, 9, 9, 5, 4, 2,
+            1, 3, 8, 5, 5, 8, 3, 1,
+            0, 7, 3, 4, 4, 3, 7, 0,
+            6, 0, 1, 2, 2, 1, 0, 6,
+        ];
+
+        Consts { triangle }
     }
 }
 
@@ -715,7 +731,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } + if squares[2] > squares[1] { 1 } else { 0 };
 
             if offdiag(squares[0]) {
-                TRIANGLE[usize::from(squares[0])] * 63 * 62 +
+                CONSTS.triangle[usize::from(squares[0])] * 63 * 62 +
                 (u64::from(squares[1]) - adjust1) * 62 +
                 (u64::from(squares[2]) - adjust2)
             } else {
@@ -760,7 +776,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             2 => Wdl::Draw,
             3 => Wdl::CursedWin,
             4 => Wdl::Win,
-            _ => unreachable!("invalid decompressed wdl"),
+            _ => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
         })
     }
 }
