@@ -72,7 +72,6 @@
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 
 use std::str::FromStr;
-use std::ascii::AsciiExt;
 use std::fmt;
 use std::char;
 use std::error::Error;
@@ -363,10 +362,10 @@ impl Fen {
                     let candidates = Bitboard::relative_rank(color, 0) &
                                      result.board.by_piece(color.rook());
 
-                    let flag = match (ch as char).to_ascii_lowercase() {
-                        'k' => candidates.last(),
-                        'q' => candidates.first(),
-                        file @ 'a' ... 'h' => {
+                    let flag = match ch | 32 {
+                        b'k' => candidates.last(),
+                        b'q' => candidates.first(),
+                        file @ b'a' ... b'h' => {
                             (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
                         },
                         _ => return Err(FenError::InvalidCastling),
