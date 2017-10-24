@@ -15,7 +15,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::fmt;
-use std::ascii::AsciiExt;
 use std::char;
 use std::ops;
 
@@ -96,13 +95,13 @@ pub enum Role {
 
 impl Role {
     pub fn from_char(ch: char) -> Option<Role> {
-        match ch {
-            'p' | 'P' => Some(Role::Pawn),
-            'n' | 'N' => Some(Role::Knight),
-            'b' | 'B' => Some(Role::Bishop),
-            'r' | 'R' => Some(Role::Rook),
-            'q' | 'Q' => Some(Role::Queen),
-            'k' | 'K' => Some(Role::King),
+        match 32 | ch as u8 {
+            b'p' => Some(Role::Pawn),
+            b'n' => Some(Role::Knight),
+            b'b' => Some(Role::Bishop),
+            b'r' => Some(Role::Rook),
+            b'q' => Some(Role::Queen),
+            b'k' => Some(Role::King),
             _ => None,
         }
     }
@@ -138,12 +137,12 @@ pub struct Piece {
 
 impl Piece {
     pub fn char(&self) -> char {
-        self.color.fold(self.role.char().to_ascii_uppercase(), self.role.char())
+        self.color.fold((32 ^ self.role.char() as u8) as char, self.role.char())
     }
 
     pub fn from_char(ch: char) -> Option<Piece> {
         Role::from_char(ch).map(|role| {
-            role.of(Color::from_bool(ch == ch.to_ascii_uppercase()))
+            role.of(Color::from_bool(32 & ch as u8 == 0))
         })
     }
 }
@@ -205,13 +204,13 @@ impl fmt::Display for Move {
         match *self {
             Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", role.char().to_ascii_uppercase())?;
+                    write!(f, "{}", (32 ^ role.char() as u8) as char)?;
                 }
 
                 write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to)?;
 
                 if let Some(p) = promotion {
-                    write!(f, "={}", p.char().to_ascii_uppercase())?;
+                    write!(f, "={}", (32 ^ p.char() as u8) as char)?;
                 }
 
                 Ok(())
@@ -227,7 +226,7 @@ impl fmt::Display for Move {
                 }
             },
             Move::Put { role, to } => {
-                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to)
+                write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to)
             },
         }
     }

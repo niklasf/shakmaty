@@ -96,7 +96,6 @@ use position::{Position, Outcome};
 use movelist::MoveList;
 
 use std::fmt;
-use std::ascii::AsciiExt;
 use option_filter::OptionFilterExt;
 use std::str::FromStr;
 use std::error::Error;
@@ -341,7 +340,7 @@ impl fmt::Display for San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", role.char().to_ascii_uppercase())?;
+                    write!(f, "{}", (32 ^ role.char() as u8) as char)?;
                 }
                 if let Some(file) = file {
                     write!(f, "{}", (b'a' + file as u8) as char)?;
@@ -354,14 +353,14 @@ impl fmt::Display for San {
                 }
                 write!(f, "{}", to)?;
                 if let Some(promotion) = promotion {
-                    write!(f, "={}", promotion.char().to_ascii_uppercase())?;
+                    write!(f, "={}", (32 ^ promotion.char() as u8) as char)?;
                 }
                 Ok(())
             },
             San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
             San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
             San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
-            San::Put { role, to } => write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
+            San::Put { role, to } => write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to),
             San::Null => write!(f, "--"),
         }
     }
