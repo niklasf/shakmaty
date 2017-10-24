@@ -95,13 +95,13 @@ pub enum Role {
 
 impl Role {
     pub fn from_char(ch: char) -> Option<Role> {
-        match ch {
-            'p' | 'P' => Some(Role::Pawn),
-            'n' | 'N' => Some(Role::Knight),
-            'b' | 'B' => Some(Role::Bishop),
-            'r' | 'R' => Some(Role::Rook),
-            'q' | 'Q' => Some(Role::Queen),
-            'k' | 'K' => Some(Role::King),
+        match 32 | ch as u8 {
+            b'p' => Some(Role::Pawn),
+            b'n' => Some(Role::Knight),
+            b'b' => Some(Role::Bishop),
+            b'r' => Some(Role::Rook),
+            b'q' => Some(Role::Queen),
+            b'k' => Some(Role::King),
             _ => None,
         }
     }
