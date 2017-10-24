@@ -91,7 +91,6 @@
 //! [`Uci`]: enum.Uci.html
 
 use std::fmt;
-use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::error::Error;
 
@@ -156,7 +155,7 @@ impl fmt::Display for Uci {
             Uci::Normal { from, to, promotion: Some(promotion) } =>
                 write!(f, "{}{}{}", from, to, promotion.char()),
             Uci::Put { to, role } =>
-                write!(f, "{}@{}", role.char().to_ascii_uppercase(), to),
+                write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to),
             Uci::Null =>
                 write!(f, "0000")
         }
