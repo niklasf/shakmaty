@@ -63,7 +63,7 @@ pub fn knight_attacks(sq: Square) -> Bitboard {
 /// Looks up attacks for a king on `sq`.
 #[inline]
 pub fn king_attacks(sq: Square) -> Bitboard {
-    Bitboard(KING_ATTACKS[sq as usize]))
+    Bitboard(KING_ATTACKS[sq as usize])
 }
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
