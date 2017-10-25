@@ -164,27 +164,25 @@ lazy_static! {
     static ref CONSTS: Consts = Consts::new();
 }
 
-struct Consts {
-    /// Maps squares into the a1-d1-d4 triangle.
-    triangle: [u64; 64],
+/// Maps squares into the a1-d1-d4 triangle.
+const TRIANGLE: [u64; 64] = [
+    6, 0, 1, 2, 2, 1, 0, 6,
+    0, 7, 3, 4, 4, 3, 7, 0,
+    1, 3, 8, 5, 5, 8, 3, 1,
+    2, 4, 5, 9, 9, 5, 4, 2,
+    2, 4, 5, 9, 9, 5, 4, 2,
+    1, 3, 8, 5, 5, 8, 3, 1,
+    0, 7, 3, 4, 4, 3, 7, 0,
+    6, 0, 1, 2, 2, 1, 0, 6,
+];
 
+struct Consts {
     lead_pawn_idx: [[u64; 64]; 5],
     lead_pawns_size: [[u64; 4]; 5],
 }
 
 impl Consts {
     fn new() -> Consts {
-        let triangle = [
-            6, 0, 1, 2, 2, 1, 0, 6,
-            0, 7, 3, 4, 4, 3, 7, 0,
-            1, 3, 8, 5, 5, 8, 3, 1,
-            2, 4, 5, 9, 9, 5, 4, 2,
-            2, 4, 5, 9, 9, 5, 4, 2,
-            1, 3, 8, 5, 5, 8, 3, 1,
-            0, 7, 3, 4, 4, 3, 7, 0,
-            6, 0, 1, 2, 2, 1, 0, 6,
-        ];
-
         let mut available_squares = 48;
 
         let mut map_pawns = [0; 64];
@@ -211,7 +209,7 @@ impl Consts {
             }
         }
 
-        Consts { triangle, lead_pawn_idx, lead_pawns_size }
+        Consts { lead_pawn_idx, lead_pawns_size }
     }
 }
 
@@ -760,7 +758,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
             let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } + if squares[2] > squares[1] { 1 } else { 0 };
 
             if offdiag(squares[0]) {
-                CONSTS.triangle[usize::from(squares[0])] * 63 * 62 +
+                TRIANGLE[usize::from(squares[0])] * 63 * 62 +
                 (u64::from(squares[1]) - adjust1) * 62 +
                 (u64::from(squares[2]) - adjust2)
             } else {
