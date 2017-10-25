@@ -167,6 +167,9 @@ lazy_static! {
 struct Consts {
     /// Maps squares into the a1-d1-d4 triangle.
     triangle: [u64; 64],
+
+    lead_pawn_idx: [[u64; 64]; 5],
+    lead_pawns_size: [[u64; 4]; 5],
 }
 
 impl Consts {
@@ -182,7 +185,33 @@ impl Consts {
             6, 0, 1, 2, 2, 1, 0, 6,
         ];
 
-        Consts { triangle }
+        let mut available_squares = 48;
+
+        let mut map_pawns = [0; 64];
+        let mut lead_pawn_idx = [[0; 64]; 5];
+        let mut lead_pawns_size = [[0; 4]; 5];
+
+        for lead_pawns_cnt in 1..=4 {
+            for file in 0..4 {
+                let mut idx = 0;
+
+                for rank in 1..7 {
+                    let sq = Square::from_coords(file as i8, rank).expect("valid coords");
+                    if lead_pawns_cnt == 1 {
+                        available_squares -= 1;
+                        map_pawns[usize::from(sq)] = available_squares;
+                        available_squares -= 1;
+                        map_pawns[usize::from(sq.mirror_horizontal())] = available_squares;
+                    }
+                    lead_pawn_idx[lead_pawns_cnt][usize::from(sq)] = idx;
+                    idx += binomial(map_pawns[usize::from(sq)], lead_pawns_cnt as u64 - 1);
+                }
+
+                lead_pawns_size[lead_pawns_cnt][file] = idx;
+            }
+        }
+
+        Consts { triangle, lead_pawn_idx, lead_pawns_size }
     }
 }
 
@@ -257,7 +286,7 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2]) -> SyzygyResult<GroupData> {
+    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> SyzygyResult<GroupData> {
         if pieces.len() < 2 {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
@@ -282,7 +311,7 @@ impl GroupData {
                 factors[0] = idx;
 
                 if material.has_pawns() {
-                    panic!("TODO: Compute LEAD_PAWNS_SIZE");
+                    idx *= CONSTS.lead_pawns_size[lens[0]][file];
                 } else if material.unique_pieces() >= 3 {
                     idx *= 31332;
                 } else if material.unique_pieces() == 2 {
@@ -522,7 +551,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
         let mut groups: ArrayVec<[ArrayVec<[GroupData; 2]>; 4]> = ArrayVec::new();
         let mut ptr = 5;
 
-        for _ in 0..num_files {
+        for file in 0..num_files {
             let mut sides = ArrayVec::new();
 
             let order = [
@@ -534,7 +563,7 @@ impl<'a, T: IsWdl, P: Position + Syzygy> Table<'a, T, P> {
 
             for side in [Color::White, Color::Black].iter().take(num_sides) {
                 let pieces = parse_pieces(&data.get(ptr..)?, *side)?;
-                let group = GroupData::new::<P>(pieces, &order[side.fold(0, 1)])?;
+                let group = GroupData::new::<P>(pieces, &order[side.fold(0, 1)], file)?;
                 sides.push(group);
             }
 
