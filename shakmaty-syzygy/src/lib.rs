@@ -433,7 +433,25 @@ impl PairsData {
         let flags = Flag::from_bits_truncate(*data.get(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
-            panic!("TODO: Implement SINGLE_VALUE PairsData");
+            ptr += 1;
+
+            return Ok((PairsData {
+                flags,
+                min_symlen: *data.get(ptr + 1)?,
+                base: Vec::new(),
+                block_lengths: 0,
+                block_length_size: 0,
+                block_size: 0,
+                blocks_num: 0,
+                btree: 0,
+                data: 0,
+                lowest_sym: 0,
+                span: 0,
+                sparse_index: 0,
+                sparse_index_size: 0,
+                symlen: Vec::new(),
+                groups
+            }, ptr));
         }
 
         let tb_size = groups.factors[groups.lens.len()];
