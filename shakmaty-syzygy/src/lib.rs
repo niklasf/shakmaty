@@ -176,13 +176,40 @@ const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
 ];
 
+const MULT_TWIST: [u64; 64] = [
+    15, 63, 55, 47, 40, 48, 56, 12,
+    62, 11, 39, 31, 24, 32,  8, 57,
+    54, 38,  7, 23, 16,  4, 33, 49,
+    46, 30, 22,  3,  0, 17, 25, 41,
+    45, 29, 21,  2,  1, 18, 26, 42,
+    53, 37,  6, 20, 19,  5, 34, 50,
+    61, 10, 36, 28, 27, 35,  9, 58,
+    14, 60, 52, 44, 43, 51, 59, 13,
+];
+
+const INV_TRIANGLE: [usize; 10] = [1, 2, 3, 10, 11, 19, 0, 9, 18, 27];
+
 struct Consts {
+    mult_idx: [[u64; 10]; 5],
+    mult_factor: [u64; 5],
     lead_pawn_idx: [[u64; 64]; 5],
     lead_pawns_size: [[u64; 4]; 5],
 }
 
 impl Consts {
     fn new() -> Consts {
+        let mut mult_idx = [[0; 10]; 5];
+        let mut mult_factor = [0; 5];
+
+        for i in 0..5 {
+            let mut s = 0;
+            for j in 0..10 {
+                mult_idx[i][j] = s;
+                s += if i == 0 { 1 } else { binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64) }
+            }
+            mult_factor[i] = s;
+        }
+
         let mut available_squares = 48;
 
         let mut map_pawns = [0; 64];
@@ -209,7 +236,7 @@ impl Consts {
             }
         }
 
-        Consts { lead_pawn_idx, lead_pawns_size }
+        Consts { mult_idx, mult_factor, lead_pawn_idx, lead_pawns_size }
     }
 }
 
@@ -317,7 +344,7 @@ impl GroupData {
                 } else if material.min_like_man() == 2 {
                     idx *= 278;
                 } else {
-                    panic!("TODO: Compute MULT_FACTOR");
+                    idx *= CONSTS.mult_factor[usize::from(material.min_like_man()) - 1];
                 }
             } else if k == order[1] {
                 // Remaining pawns.
