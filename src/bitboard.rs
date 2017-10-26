@@ -465,6 +465,15 @@ impl Iterator for CarryRippler {
             None
         }
     }
+
+    #[inline]
+    fn last(self) -> Option<Bitboard> {
+        if subset != 0 || self.first {
+            Some(Bitboard(self.bb))
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
