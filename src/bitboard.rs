@@ -49,7 +49,7 @@ impl Bitboard {
     #[inline]
     pub fn from_square(sq: Square) -> Bitboard {
         // This is safe because valid square indexes are in bounds.
-        Bitboard(unsafe { *SQUARES.get_unchecked(usize::from(sq)) })
+        Bitboard(SQUARES[usize::from(sq)])
     }
 
     /// Returns the bitboard containing all squares of the given rank.
