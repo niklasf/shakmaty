@@ -52,13 +52,18 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
-  - Switch to `#[repr(i8)]` for `Square`
+* 0.3.0
+  - Switch to `#[repr(i8)]` for `Square`. Implement all lossless integer
+    conversions `From<Square>`.
+  - Add `Square::flip_horizontal()`, `flip_vertical()` and `flip_diagonal()`.
+  - Efficiently implement `CarryRippler::last()` by @nvzqz.
+  - Eliminate some unchecked indexing by @nvzqz.
+  - Faster ASCII case conversions and tests by @nvzqz.
 * 0.2.0
-  - `Square` is now a `#[repr(u8)]` enum
-  - Use `bitflags` for `PositionError`
-  - Renamed `RemainingChecks::subtract()` to `decrement()`
-  - Added `Position::swap_turn()`
+  - `Square` is now a `#[repr(u8)]` enum.
+  - Use `bitflags` for `PositionError`.
+  - Rename `RemainingChecks::subtract()` to `decrement()`.
+  - Add `Position::swap_turn()`.
 * 0.1.0
   - First release with support for stable Rust.
 
