@@ -6,9 +6,10 @@ extern crate memmap;
 extern crate madvise;
 
 use std::env;
+use std::fs::File;
 
 use pgn_reader::{Reader, Visitor, San, Nag, Outcome};
-use memmap::{Mmap, Protection};
+use memmap::Mmap;
 use madvise::{AccessPattern, AdviseMemory};
 
 #[derive(Debug, Default)]
@@ -64,12 +65,12 @@ impl<'pgn> Visitor<'pgn> for Stats {
 
 fn main() {
     for arg in env::args().skip(1) {
-        let mmap = Mmap::open_path(&arg, Protection::Read).expect("mmap");
-        let pgn = unsafe { mmap.as_slice() };
+        let file = File::open(&arg).expect("fopen");
+        let pgn = unsafe { Mmap::map(&file).expect("mmap") };
         pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut stats = Stats::new();
-        Reader::new(&mut stats, pgn).read_all();
+        Reader::new(&mut stats, &pgn[..]).read_all();
 
         println!("{}: {:?}", arg, stats);
     }

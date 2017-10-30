@@ -11,10 +11,11 @@ use pgn_reader::{Visitor, Skip, Reader, San};
 use shakmaty::{Chess, Position};
 use shakmaty::fen::Fen;
 
-use memmap::{Mmap, Protection};
+use memmap::Mmap;
 use madvise::{AccessPattern, AdviseMemory};
 
 use std::env;
+use std::fs::File;
 
 struct Validator {
     games: usize,
@@ -89,12 +90,12 @@ fn main() {
     let mut success = true;
 
     for arg in env::args().skip(1) {
-        let mmap = Mmap::open_path(&arg, Protection::Read).expect("mmap");
-        let pgn = unsafe { mmap.as_slice() };
+        let file = File::open(&arg).expect("fopen");
+        let pgn = unsafe { Mmap::map(&file).expect("mmap") };
         pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut validator = Validator::new();
-        success &= Reader::new(&mut validator, pgn).into_iter().all(|s| s);
+        success &= Reader::new(&mut validator, &pgn[..]).into_iter().all(|s| s);
 
         println!("{}: {}", arg, if success { "success" } else { "errors" });
     }

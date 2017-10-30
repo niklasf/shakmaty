@@ -8,10 +8,11 @@ extern crate unicase;
 
 use std::env;
 use std::str;
+use std::fs::File;
 use std::collections::HashSet;
 
 use pgn_reader::{Reader, Visitor, Skip};
-use memmap::{Mmap, Protection};
+use memmap::Mmap;
 use madvise::{AccessPattern, AdviseMemory};
 
 struct ParticipantFilter<'a> {
@@ -103,12 +104,12 @@ impl<'a, 'pgn> Visitor<'pgn> for ParticipantFilter<'a> {
 
 fn main() {
     for arg in env::args().skip(1) {
-        let mmap = Mmap::open_path(&arg, Protection::Read).expect("mmap");
-        let pgn = unsafe { mmap.as_slice() };
+        let file = File::open(&arg).expect("fopen");
+        let pgn = unsafe { Mmap::map(&file).expect("mmap") };
         pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut filter = ParticipantFilter::lichess4545_season_9();
-        let total = Reader::new(&mut filter, pgn).into_iter().count();
+        let total = Reader::new(&mut filter, &pgn[..]).into_iter().count();
         eprintln!("% {}: {} games total, {} matches", arg, total, filter.games);
     }
 }

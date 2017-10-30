@@ -20,7 +20,7 @@ btoi = "0.1"
 shakmaty = "0.3"
 
 [dev-dependencies]
-memmap = "0.5"
+memmap = "0.6"
 madvise = "0.1"
 unicase = "2.0"
 bencher = "0.1"
