@@ -173,41 +173,41 @@ impl Square {
         (self as i8).checked_add(delta).and_then(Square::from_index)
     }
 
-    /// Mirror the square horizontally.
+    /// Flip the square horizontally.
     ///
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::H1.mirror_horizontal(), Square::A1);
-    /// assert_eq!(Square::D3.mirror_horizontal(), Square::E3);
+    /// assert_eq!(Square::H1.flip_horizontal(), Square::A1);
+    /// assert_eq!(Square::D3.flip_horizontal(), Square::E3);
     /// ```
     #[inline]
-    pub fn mirror_horizontal(self) -> Square {
+    pub fn flip_horizontal(self) -> Square {
         unsafe { Square::from_index_unchecked((self as i8) ^ 0x07) }
     }
 
-    /// Mirror the square vertically.
+    /// Flip the square vertically.
     ///
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::A8.mirror_vertical(), Square::A1);
-    /// assert_eq!(Square::D3.mirror_vertical(), Square::D6);
+    /// assert_eq!(Square::A8.flip_vertical(), Square::A1);
+    /// assert_eq!(Square::D3.flip_vertical(), Square::D6);
     /// ```
     #[inline]
-    pub fn mirror_vertical(self) -> Square {
+    pub fn flip_vertical(self) -> Square {
         unsafe { Square::from_index_unchecked((self as i8) ^ 0x38) }
     }
 
-    /// Mirror along the A1-H8 diagonal.
+    /// Flip at the a1-h8 diagonal by swapping file and rank.
     ///
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::A1.mirror_diagonal(), Square::A1);
-    /// assert_eq!(Square::A3.mirror_diagonal(), Square::C1);
+    /// assert_eq!(Square::A1.flip_diagonal(), Square::A1);
+    /// assert_eq!(Square::A3.flip_diagonal(), Square::C1);
     /// ```
-    pub fn mirror_diagonal(self) -> Square {
+    pub fn flip_diagonal(self) -> Square {
         unsafe { Square::from_coords_unchecked(self.rank(), self.file()) }
     }
 
