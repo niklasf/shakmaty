@@ -100,6 +100,7 @@ enum ErrorKind {
     CorruptedTable,
     Read,
     MissingTable,
+    Position,
 }
 
 impl SyzygyError {
@@ -109,6 +110,7 @@ impl SyzygyError {
             ErrorKind::CorruptedTable => "corrupted table",
             ErrorKind::Read => "i/o error when reading a table",
             ErrorKind::MissingTable => "required table not found",
+            ErrorKind::Position => "position not contained in tables",
         }
     }
 }
@@ -933,16 +935,36 @@ pub struct Tablebases<S: Position + Syzygy> {
 
 impl<S: Position + Syzygy> Tablebases<S> {
     pub fn new() -> Tablebases<S> {
-        let table = Table::<WdlTag, S>::open("KQvKR.rtbw").expect("good table");
+        Tablebases {
+            wdl: HashMap::new(),
+        }
+    }
 
-        let mut wdl = HashMap::new();
-        wdl.insert(table.key.clone(), table);
-        Tablebases { wdl }
+    pub fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
+        let table = Table::<WdlTag, S>::open(path)?;
+        self.wdl.insert(table.key.clone(), table);
+        Ok(())
+    }
+
+    fn key(pos: &S) -> SyzygyResult<Material> {
+        if pos.castling_rights().any() {
+            return Err(SyzygyError { kind: ErrorKind::Position });
+        }
+
+        let key = Material::from_board(pos.board());
+        if key.count() > 6 {
+            return Err(SyzygyError { kind: ErrorKind::Position });
+        }
+
+        Ok(key)
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        let key = Material::from_board(pos.board());
+        if pos.castling_rights().any() {
+            return Err(SyzygyError { kind: ErrorKind::Position });
+        }
 
+        let key = Self::key(pos)?;
         if let Some(table) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
             table.probe_wdl_table(pos)
         } else {
@@ -960,7 +982,8 @@ mod tests {
 
     #[test]
     fn test_table() {
-        let tables = Tablebases::new();
+        let mut tables = Tablebases::new();
+        tables.open_wdl_table("KQvKR.rtbw").expect("good table");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
