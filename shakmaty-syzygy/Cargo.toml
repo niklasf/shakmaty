@@ -12,10 +12,10 @@ categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 
 [dependencies]
-arrayvec = { path = "../arrayvec" }
+arrayvec = "0.4"
 bitflags = "1.0"
-shakmaty = { path = "../shakmaty" }
-memmap = "0.5"
+shakmaty = "0.3"
+memmap = "0.6"
 num-integer = "0.1"
 byteorder = "1.1"
 itertools = "0.7"
