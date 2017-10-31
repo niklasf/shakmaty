@@ -31,9 +31,9 @@ extern crate byteorder;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
-extern crate memmap;
 extern crate num_integer;
 extern crate shakmaty;
+extern crate positioned_io;
 
 mod material;
 
@@ -45,8 +45,6 @@ use std::iter::FromIterator;
 use std::collections::HashMap;
 use std::path::Path;
 use std::io;
-use std::io::Read;
-use std::io::Seek;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
@@ -54,7 +52,7 @@ use num_integer::binomial;
 use itertools::Itertools;
 use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
-use memmap::Mmap;
+use positioned_io::ReadAt;
 
 pub use material::{Material, MaterialSide};
 
@@ -269,43 +267,37 @@ impl RandomAccessFile {
 
      fn read_u8(&self, ptr: usize) -> SyzygyResult<u8> {
          let mut buf = [0; 1];
-         self.file.seek(io::SeekFrom::Start(ptr as u64))?;
-         self.file.read_exact(&mut buf)?;
+         self.file.read_exact_at(ptr as u64, &mut buf)?;
          Ok(buf[0])
      }
 
      fn read_u16_le(&self, ptr: usize) -> SyzygyResult<u16> {
          let mut buf = [0; 2];
-         self.file.seek(io::SeekFrom::Start(ptr as u64))?;
-         self.file.read_exact(&mut buf)?;
+         self.file.read_exact_at(ptr as u64, &mut buf)?;
          Ok(LittleEndian::read_u16(&buf))
      }
 
      fn read_u32_le(&self, ptr: usize) -> SyzygyResult<u32> {
          let mut buf = [0; 4];
-         self.file.seek(io::SeekFrom::Start(ptr as u64))?;
-         self.file.read_exact(&mut buf)?;
+         self.file.read_exact_at(ptr as u64, &mut buf)?;
          Ok(LittleEndian::read_u32(&buf))
      }
 
      fn read_u32_be(&self, ptr: usize) -> SyzygyResult<u32> {
          let mut buf = [0; 4];
-         self.file.seek(io::SeekFrom::Start(ptr as u64))?;
-         self.file.read_exact(&mut buf)?;
+         self.file.read_exact_at(ptr as u64, &mut buf)?;
          Ok(BigEndian::read_u32(&buf))
      }
 
      fn read_u64_be(&self, ptr: usize) -> SyzygyResult<u64> {
          let mut buf = [0; 8];
-         self.file.seek(io::SeekFrom::Start(ptr as u64))?;
-         self.file.read_exact(&mut buf)?;
+         self.file.read_exact_at(ptr as u64, &mut buf)?;
          Ok(BigEndian::read_u64(&buf))
      }
 
      fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
          let mut buf = [0; 4];
-         self.file.seek(io::SeekFrom::Start(0))?;
-         if let Err(err) = self.file.read_exact(&mut buf) {
+         if let Err(err) = self.file.read_exact_at(0, &mut buf) {
              match err.kind() {
                  io::ErrorKind::UnexpectedEof => Ok(false),
                  _ => Err(SyzygyError { kind: ErrorKind::Read }),
@@ -931,7 +923,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     }
 }
 
-struct Tablebases<S: Position + Syzygy> {
+#[derive(Debug)]
+pub struct Tablebases<S: Position + Syzygy> {
     wdl: HashMap<Material, Table<WdlTag, S>>,
 }
 
@@ -954,14 +947,13 @@ mod tests {
 
     #[test]
     fn test_table() {
-        /* let mmap = Mmap::open_path("KQvKR.rtbw", Protection::Read).expect("mmap");
-        let bytes = unsafe { mmap.as_slice() };
-        let table = Table::<WdlTag, _>::new(bytes).expect("good table");
+        let file = File::open("KQvKR.rtbw").expect("fopen");
+        let table = Table::<WdlTag, _>::open(file).expect("good table");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
 
         let result = table.probe_wdl_table(&pos);
-        assert_eq!(result, Ok(Wdl::Win)); */
+        assert_eq!(result, Ok(Wdl::Win));
     }
 }
