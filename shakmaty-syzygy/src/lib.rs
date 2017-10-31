@@ -133,7 +133,7 @@ impl From<NoneError> for SyzygyError {
 impl From<io::Error> for SyzygyError {
     fn from(error: io::Error) -> SyzygyError {
         match error.kind() {
-            UnexpectedEof => SyzygyError { kind: ErrorKind::CorruptedTable },
+            io::ErrorKind::UnexpectedEof => SyzygyError { kind: ErrorKind::CorruptedTable },
             _ => SyzygyError { kind: ErrorKind::Read },
         }
     }
@@ -307,7 +307,7 @@ impl RandomAccessFile {
          self.file.seek(io::SeekFrom::Start(0))?;
          if let Err(err) = self.file.read_exact(&mut buf) {
              match err.kind() {
-                 UnexpectedEof => Ok(false),
+                 io::ErrorKind::UnexpectedEof => Ok(false),
                  _ => Err(SyzygyError { kind: ErrorKind::Read }),
             }
          } else {
@@ -335,11 +335,19 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(data: &[u8], side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces(raf: &RandomAccessFile, ptr: usize, side: Color) -> SyzygyResult<Pieces> {
     let mut pieces = Pieces::new();
-    for p in data.iter().cloned().take(MAX_PIECES).take_while(|p| *p != 0) {
-        pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
+
+    for i in 0..6 {
+        let p = raf.read_u8(ptr + i)?;
+        if p == 0 {
+            // TODO: Wishful thinking?
+            break;
+        } else {
+            pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
+        }
     }
+
     Ok(pieces)
 }
 
@@ -644,7 +652,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let split = layout.contains(Layout::SPLIT);
 
         // Read material key.
-        let key = Material::from_iter(parse_pieces(data.get(6..)?, Color::White)?);
+        let key = Material::from_iter(parse_pieces(&raf, 6, Color::White)?);
 
         // Check magic again.
         if key.has_pawns() && !raf.starts_with_magic(magic)? {
@@ -675,7 +683,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             ptr += 1 + if pp { 1 } else { 0 };
 
             for side in [Color::White, Color::Black].iter().take(num_sides) {
-                let pieces = parse_pieces(&data.get(ptr..)?, *side)?;
+                let pieces = parse_pieces(&raf, ptr, *side)?;
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
                 sides.push(group);
             }
