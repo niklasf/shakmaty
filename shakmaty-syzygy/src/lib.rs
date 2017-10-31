@@ -928,6 +928,14 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     }
 }
 
+fn outcome_to_wdl(outcome: Outcome, turn: Color) -> Wdl {
+    match outcome {
+        Outcome::Draw => Wdl::Draw,
+        Outcome::Decisive { winner } if winner == turn => Wdl::Win,
+        _ => Wdl::Loss,
+    }
+}
+
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Syzygy> {
     wdl: HashMap<Material, Table<WdlTag, S>>,
@@ -946,17 +954,21 @@ impl<S: Position + Syzygy> Tablebases<S> {
         Ok(())
     }
 
-    fn key(pos: &S) -> SyzygyResult<Material> {
-        if pos.castling_rights().any() {
-            return Err(SyzygyError { kind: ErrorKind::Position });
+    fn probe_ab(&self, pos: &S, alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
+        if S::CAPTURES_COMPULSORY {
+            if let Some(outcome) = pos.variant_outcome() {
+                return Ok((outcome_to_wdl(outcome, pos.turn()), 2))
+            }
+
+            return self.sprobe_ab(pos, alpha, beta, threats);
         }
 
-        let key = Material::from_board(pos.board());
-        if key.count() > 6 {
-            return Err(SyzygyError { kind: ErrorKind::Position });
-        }
+        // Generate non-ep captures.
+        panic!("TODO: implement")
+    }
 
-        Ok(key)
+    fn sprobe_ab(&self, pos: &S, alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
+        panic!("TODO: implement")
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
@@ -967,14 +979,11 @@ impl<S: Position + Syzygy> Tablebases<S> {
             }
         } else if let Some(outcome) = pos.variant_outcome() {
             // Suicide game end.
-            return Ok(match outcome {
-                Outcome::Draw => Wdl::Draw,
-                Outcome::Decisive { winner } if winner == pos.turn() => Wdl::Win,
-                _ => Wdl::Loss,
-            });
+            return Ok(outcome_to_wdl(outcome, pos.turn()));
         }
 
-        let key = Self::key(pos)?;
+        let key = Material::from_board(pos.board());
+
         if let Some(table) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
             table.probe_wdl_table(pos)
         } else {
@@ -983,6 +992,10 @@ impl<S: Position + Syzygy> Tablebases<S> {
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        if pos.castling_rights().any() || pos.board().occupied().count() > 6 {
+            return Err(SyzygyError { kind: ErrorKind::Position });
+        }
+
         self.probe_wdl_table(pos)
     }
 }
