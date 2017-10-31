@@ -45,6 +45,7 @@ use std::iter::FromIterator;
 use std::collections::HashMap;
 use std::path::Path;
 use std::io;
+use std::fs::File;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
@@ -257,12 +258,12 @@ impl Consts {
 
 #[derive(Debug)]
 struct RandomAccessFile {
-    file: ::std::fs::File,
+    file: File,
 }
 
 impl RandomAccessFile {
      fn open<P: AsRef<Path>>(path: P) -> io::Result<RandomAccessFile> {
-         ::std::fs::File::open(path).map(|file| RandomAccessFile { file })
+         File::open(path).map(|file| RandomAccessFile { file })
      }
 
      fn read_u8(&self, ptr: usize) -> SyzygyResult<u8> {
@@ -947,8 +948,7 @@ mod tests {
 
     #[test]
     fn test_table() {
-        let file = File::open("KQvKR.rtbw").expect("fopen");
-        let table = Table::<WdlTag, _>::open(file).expect("good table");
+        let table = Table::<WdlTag, _>::open("KQvKR.rtbw").expect("good table");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
