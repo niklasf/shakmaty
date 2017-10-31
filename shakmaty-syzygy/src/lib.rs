@@ -302,9 +302,17 @@ impl RandomAccessFile {
          Ok(BigEndian::read_u64(&buf))
      }
 
-     fn starts_with(&self, buf: &[u8]) -> SyzygyResult<bool> {
-         // TODO
-         Ok(true)
+     fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
+         let mut buf = [0; 4];
+         self.file.seek(io::SeekFrom::Start(0))?;
+         if let Err(err) = self.file.read_exact(&mut buf) {
+             match err.kind() {
+                 UnexpectedEof => Ok(false),
+                 _ => Err(SyzygyError { kind: ErrorKind::Read }),
+            }
+         } else {
+            Ok(&buf == magic)
+        }
      }
 }
 
@@ -626,7 +634,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             (&S::DTZ_MAGIC, &S::PAWNLESS_DTZ_MAGIC)
         };
 
-        if !raf.starts_with(magic)? && !raf.starts_with(pawnless_magic)? {
+        if !raf.starts_with_magic(magic)? && !raf.starts_with_magic(pawnless_magic)? {
             return Err(SyzygyError { kind: ErrorKind::Magic });
         }
 
@@ -639,7 +647,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let key = Material::from_iter(parse_pieces(data.get(6..)?, Color::White)?);
 
         // Check magic again.
-        if key.has_pawns() && !raf.starts_with(magic)? {
+        if key.has_pawns() && !raf.starts_with_magic(magic)? {
             return Err(SyzygyError { kind: ErrorKind::Magic });
         }
 
