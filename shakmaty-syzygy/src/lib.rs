@@ -99,6 +99,7 @@ enum ErrorKind {
     Magic,
     CorruptedTable,
     Read,
+    MissingTable,
 }
 
 impl SyzygyError {
@@ -107,6 +108,7 @@ impl SyzygyError {
             ErrorKind::Magic => "invalid magic bytes",
             ErrorKind::CorruptedTable => "corrupted table",
             ErrorKind::Read => "i/o error when reading a table",
+            ErrorKind::MissingTable => "required table not found",
         }
     }
 }
@@ -937,6 +939,16 @@ impl<S: Position + Syzygy> Tablebases<S> {
         wdl.insert(table.key.clone(), table);
         Tablebases { wdl }
     }
+
+    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        let key = Material::from_board(pos.board());
+
+        if let Some(table) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
+            table.probe_wdl_table(pos)
+        } else {
+            Err(SyzygyError { kind: ErrorKind::MissingTable })
+        }
+    }
 }
 
 #[cfg(test)]
@@ -948,12 +960,12 @@ mod tests {
 
     #[test]
     fn test_table() {
-        let table = Table::<WdlTag, _>::open("KQvKR.rtbw").expect("good table");
+        let tables = Tablebases::new();
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
 
-        let result = table.probe_wdl_table(&pos);
+        let result = tables.probe_wdl(&pos);
         assert_eq!(result, Ok(Wdl::Win));
     }
 }
