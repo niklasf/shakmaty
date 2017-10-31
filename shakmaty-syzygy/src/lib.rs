@@ -51,7 +51,7 @@ use arrayvec::ArrayVec;
 use bit_vec::BitVec;
 use num_integer::binomial;
 use itertools::Itertools;
-use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess};
+use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess, Outcome};
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
 use positioned_io::ReadAt;
 
@@ -959,9 +959,19 @@ impl<S: Position + Syzygy> Tablebases<S> {
         Ok(key)
     }
 
-    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        if pos.castling_rights().any() {
-            return Err(SyzygyError { kind: ErrorKind::Position });
+    fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
+        if S::ONE_KING {
+            // Test for KvK.
+            if pos.board().kings() == pos.board().occupied() {
+                return Ok(Wdl::Draw);
+            }
+        } else if let Some(outcome) = pos.variant_outcome() {
+            // Suicide game end.
+            return Ok(match outcome {
+                Outcome::Draw => Wdl::Draw,
+                Outcome::Decisive { winner } if winner == pos.turn() => Wdl::Win,
+                _ => Wdl::Loss,
+            });
         }
 
         let key = Self::key(pos)?;
@@ -970,6 +980,10 @@ impl<S: Position + Syzygy> Tablebases<S> {
         } else {
             Err(SyzygyError { kind: ErrorKind::MissingTable })
         }
+    }
+
+    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        self.probe_wdl_table(pos)
     }
 }
 
