@@ -46,12 +46,13 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::io;
 use std::fs::File;
+use std::ops::Neg;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
 use num_integer::binomial;
 use itertools::Itertools;
-use shakmaty::{Color, Piece, Square, Bitboard, Position, Chess, Outcome};
+use shakmaty::{Color, Piece, Square, Move, Bitboard, Position, Chess, Outcome, MoveList};
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
 use positioned_io::ReadAt;
 
@@ -628,6 +629,20 @@ pub enum Wdl {
     Win = 2,
 }
 
+impl Neg for Wdl {
+    type Output = Wdl;
+
+    fn neg(self) -> Wdl {
+        match self {
+            Wdl::Loss => Wdl::Win,
+            Wdl::BlessedLoss => Wdl::CursedWin,
+            Wdl::Draw => Wdl::Draw,
+            Wdl::CursedWin => Wdl::BlessedLoss,
+            Wdl::Win => Wdl::Loss,
+        }
+    }
+}
+
 impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     pub fn open<P: AsRef<Path>>(path: P) -> SyzygyResult<Table<T, S>> {
         let raf = RandomAccessFile::open(path)?;
@@ -937,11 +952,11 @@ fn outcome_to_wdl(outcome: Outcome, turn: Color) -> Wdl {
 }
 
 #[derive(Debug)]
-pub struct Tablebases<S: Position + Syzygy> {
+pub struct Tablebases<S: Position + Clone + Syzygy> {
     wdl: HashMap<Material, Table<WdlTag, S>>,
 }
 
-impl<S: Position + Syzygy> Tablebases<S> {
+impl<S: Position + Clone + Syzygy> Tablebases<S> {
     pub fn new() -> Tablebases<S> {
         Tablebases {
             wdl: HashMap::new(),
@@ -954,7 +969,7 @@ impl<S: Position + Syzygy> Tablebases<S> {
         Ok(())
     }
 
-    fn probe_ab(&self, pos: &S, alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
+    fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
         if S::CAPTURES_COMPULSORY {
             if let Some(outcome) = pos.variant_outcome() {
                 return Ok((outcome_to_wdl(outcome, pos.turn()), 2))
@@ -963,11 +978,34 @@ impl<S: Position + Syzygy> Tablebases<S> {
             return self.sprobe_ab(pos, alpha, beta, threats);
         }
 
-        // Generate non-ep captures.
-        panic!("TODO: implement")
+        // Search non-ep captures.
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        for m in moves {
+            if let Move::Normal { capture: Some(_), .. } = m {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+
+                let (v, _) = self.probe_ab(&after, -beta, -alpha, false)?;
+                if v > alpha {
+                    if v >= beta {
+                        return Ok((v, 2))
+                    }
+                    alpha = v;
+                }
+            }
+        }
+
+        let v = self.probe_wdl_table(pos)?;
+
+        if alpha >= v {
+            Ok((alpha, if alpha > Wdl::Draw { 2 } else { 1 }))
+        } else {
+            Ok((v, 1))
+        }
     }
 
-    fn sprobe_ab(&self, pos: &S, alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
+    fn sprobe_ab(&self, _pos: &S, _alpha: Wdl, _beta: Wdl, _threats: bool) -> SyzygyResult<(Wdl, u8)> {
         panic!("TODO: implement")
     }
 
