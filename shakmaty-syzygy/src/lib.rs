@@ -47,6 +47,7 @@ use std::path::Path;
 use std::io;
 use std::fs::File;
 use std::ops::Neg;
+use std::cmp::max;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
@@ -1045,7 +1046,47 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             return Err(SyzygyError { kind: ErrorKind::Position });
         }
 
-        self.probe_wdl_table(pos)
+        // Probe.
+        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
+
+        // If en passant is not possible we are done.
+        let ep_square = match pos.ep_square() {
+            _ if S::CAPTURES_COMPULSORY => return Ok(v),
+            None => return Ok(v),
+            Some(ep_square) => ep_square,
+        };
+
+        // Now look at all legal en passant captures.
+        let mut v1 = Wdl::Loss;
+        let mut ep_only = true;
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        for m in moves {
+            if let Move::EnPassant { .. } = m {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+
+                let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+                let v0 = -v0_plus;
+
+                v1 = max(v0, v1);
+            } else {
+                ep_only = false;
+            }
+        }
+
+        if v1 >= v {
+            v = v1;
+        } else if v == Wdl::Draw {
+            // If there is not at least one legal non-en-passant move we are
+            // forced to play the losing en passant move.
+            if ep_only {
+                v = v1;
+            }
+        }
+
+        Ok(v)
     }
 }
 
