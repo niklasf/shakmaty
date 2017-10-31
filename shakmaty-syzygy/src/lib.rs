@@ -951,6 +951,15 @@ fn outcome_to_wdl(outcome: Outcome, turn: Color) -> Wdl {
     }
 }
 
+enum ProbeState {
+    /// Probe successful.
+    Normal,
+    /// Best move is zeroing.
+    ZeroingBestMove,
+    /// Threatening to force a capture.
+    Threat,
+}
+
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
     wdl: HashMap<Material, Table<WdlTag, S>>,
@@ -969,10 +978,10 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         Ok(())
     }
 
-    fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, u8)> {
+    fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         if S::CAPTURES_COMPULSORY {
             if let Some(outcome) = pos.variant_outcome() {
-                return Ok((outcome_to_wdl(outcome, pos.turn()), 2))
+                return Ok((outcome_to_wdl(outcome, pos.turn()), ProbeState::ZeroingBestMove))
             }
 
             return self.sprobe_ab(pos, alpha, beta, threats);
@@ -986,10 +995,12 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
 
-                let (v, _) = self.probe_ab(&after, -beta, -alpha, false)?;
+                let (v_plus, _) = self.probe_ab(&after, -beta, -alpha, false)?;
+                let v = -v_plus;
+
                 if v > alpha {
                     if v >= beta {
-                        return Ok((v, 2))
+                        return Ok((v, ProbeState::ZeroingBestMove))
                     }
                     alpha = v;
                 }
@@ -999,13 +1010,13 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         let v = self.probe_wdl_table(pos)?;
 
         if alpha >= v {
-            Ok((alpha, if alpha > Wdl::Draw { 2 } else { 1 }))
+            Ok((alpha, if alpha > Wdl::Draw { ProbeState::ZeroingBestMove } else { ProbeState::Normal }))
         } else {
-            Ok((v, 1))
+            Ok((v, ProbeState::Normal))
         }
     }
 
-    fn sprobe_ab(&self, _pos: &S, _alpha: Wdl, _beta: Wdl, _threats: bool) -> SyzygyResult<(Wdl, u8)> {
+    fn sprobe_ab(&self, _pos: &S, _alpha: Wdl, _beta: Wdl, _threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         panic!("TODO: implement")
     }
 
