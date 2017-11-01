@@ -33,18 +33,19 @@ use shakmaty::{Square, Color, Piece, Bitboard, Position};
 use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
 
-#[derive(Debug)]
-pub enum WdlTag { }
-#[derive(Debug)]
-pub enum DtzTag { }
-
 pub trait IsWdl {
     const IS_WDL: bool;
 }
 
+#[derive(Debug)]
+pub enum WdlTag { }
+
 impl IsWdl for WdlTag {
     const IS_WDL: bool = true;
 }
+
+#[derive(Debug)]
+pub enum DtzTag { }
 
 impl IsWdl for DtzTag {
     const IS_WDL: bool = false;
@@ -67,10 +68,6 @@ bitflags! {
     }
 }
 
-lazy_static! {
-    static ref CONSTS: Consts = Consts::new();
-}
-
 /// Maps squares into the a1-d1-d4 triangle.
 const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
@@ -83,16 +80,8 @@ const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
 ];
 
-const MULT_TWIST: [u64; 64] = [
-    15, 63, 55, 47, 40, 48, 56, 12,
-    62, 11, 39, 31, 24, 32,  8, 57,
-    54, 38,  7, 23, 16,  4, 33, 49,
-    46, 30, 22,  3,  0, 17, 25, 41,
-    45, 29, 21,  2,  1, 18, 26, 42,
-    53, 37,  6, 20, 19,  5, 34, 50,
-    61, 10, 36, 28, 27, 35,  9, 58,
-    14, 60, 52, 44, 43, 51, 59, 13,
-];
+/// Inverse of `TRIANGLE`.
+const INV_TRIANGLE: [usize; 10] = [1, 2, 3, 10, 11, 19, 0, 9, 18, 27];
 
 /// Maps the b1-h1-h7 triangle to `0..=27`.
 const LOWER: [u64; 64] = [
@@ -106,8 +95,22 @@ const LOWER: [u64; 64] = [
      6, 12, 17, 21, 24, 26, 27, 35,
 ];
 
+/// Used to initialize `Consts::mult_idx` and `Consts::mult_factor`.
+const MULT_TWIST: [u64; 64] = [
+    15, 63, 55, 47, 40, 48, 56, 12,
+    62, 11, 39, 31, 24, 32,  8, 57,
+    54, 38,  7, 23, 16,  4, 33, 49,
+    46, 30, 22,  3,  0, 17, 25, 41,
+    45, 29, 21,  2,  1, 18, 26, 42,
+    53, 37,  6, 20, 19,  5, 34, 50,
+    61, 10, 36, 28, 27, 35,  9, 58,
+    14, 60, 52, 44, 43, 51, 59, 13,
+];
+
+/// Unused.
 const Z0: u64 = 0;
 
+/// Encoding of all 461 configurations of two not-connected kings.
 const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,   0,   1,   2,   3,   4,
      Z0,  Z0,  Z0,   5,   6,   7,   8,   9,
@@ -200,7 +203,9 @@ const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,  Z0,  Z0,  Z0,  Z0, 461,
 ]];
 
-const INV_TRIANGLE: [usize; 10] = [1, 2, 3, 10, 11, 19, 0, 9, 18, 27];
+lazy_static! {
+    static ref CONSTS: Consts = Consts::new();
+}
 
 struct Consts {
     mult_idx: [[u64; 10]; 5],
