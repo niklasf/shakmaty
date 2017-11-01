@@ -962,29 +962,28 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         if S::CAPTURES_COMPULSORY {
             if let Some(outcome) = pos.variant_outcome() {
-                return Ok((outcome_to_wdl(outcome, pos.turn()), ProbeState::ZeroingBestMove))
+                return Ok((outcome_to_wdl(outcome, pos.turn()), ProbeState::ZeroingBestMove));
             }
 
-            return self.sprobe_ab(pos, alpha, beta, threats);
+            return self.probe_compulsory_captures(pos, alpha, beta, threats);
         }
 
         // Search non-ep captures.
         let mut captures = MoveList::new();
         pos.capture_moves(&mut captures);
+        captures.retain(|m| !m.is_en_passant());
         for m in captures {
-            if let Move::Normal { .. } = m {
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
 
-                let (v_plus, _) = self.probe_ab(&after, -beta, -alpha, false)?;
-                let v = -v_plus;
+            let (v_plus, _) = self.probe_ab(&after, -beta, -alpha, false)?;
+            let v = -v_plus;
 
-                if v > alpha {
-                    if v >= beta {
-                        return Ok((v, ProbeState::ZeroingBestMove))
-                    }
-                    alpha = v;
+            if v > alpha {
+                if v >= beta {
+                    return Ok((v, ProbeState::ZeroingBestMove));
                 }
+                alpha = v;
             }
         }
 
@@ -997,9 +996,9 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    fn sprobe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+    fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         if pos.them().count() > 1 {
-            let (v, captures_found) = self.sprobe_capts(pos, alpha, beta)?;
+            let (v, captures_found) = self.probe_captures(pos, alpha, beta)?;
             if captures_found {
                 return Ok((v, ProbeState::ZeroingBestMove));
             }
@@ -1021,7 +1020,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                     let mut after = pos.clone();
                     after.play_unchecked(&threat);
 
-                    let (v_plus, captures_found) = self.sprobe_capts(&after, -beta, -alpha)?;
+                    let (v_plus, captures_found) = self.probe_captures(&after, -beta, -alpha)?;
                     let v = -v_plus;
 
                     if captures_found && v > alpha {
@@ -1043,7 +1042,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    fn sprobe_capts(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
+    fn probe_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
         let mut captures = MoveList::new();
         pos.capture_moves(&mut captures);
         let captures_found = !captures.is_empty();
@@ -1052,7 +1051,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
-            let (v_plus, state) = self.sprobe_ab(pos, -beta, -alpha, false)?;
+            let (v_plus, _) = self.probe_compulsory_captures(pos, -beta, -alpha, false)?;
             let v = -v_plus;
 
             alpha = max(v, alpha);
