@@ -186,6 +186,19 @@ pub trait Position: Setup {
         });
     }
 
+    /// Generates capture moves.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `moves` is too full. This can not happen if an empty
+    /// [`MoveList`] is passed.
+    ///
+    /// [`MoveList`]: type.MoveList.html
+    fn capture_moves(&self, moves: &mut MoveList) {
+        self.legal_moves(moves);
+        moves.retain(|m| m.capture().is_some());
+    }
+
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
         let mut moves = MoveList::new();
