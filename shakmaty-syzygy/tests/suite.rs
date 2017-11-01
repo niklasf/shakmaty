@@ -8,7 +8,7 @@ use shakmaty::fen::Fen;
 
 fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
     let mut tables = Tablebases::new();
-    tables.open_directory("/opt/syzygy/regular/syzygy").expect("good tables");
+    tables.add_directory("/opt/syzygy/regular/syzygy");
 
     let mut reader = csv::Reader::from_path(path).expect("reader");
 

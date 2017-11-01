@@ -22,6 +22,7 @@ use shakmaty::{Role, Position, MoveList};
 
 use types::Wdl;
 use material::Material;
+use lazy::Lazy;
 use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Syzygy, Table};
 
 fn rotate_role(role: Role) -> Role {
@@ -75,7 +76,7 @@ enum ProbeState {
 
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
-    wdl: HashMap<Material, Table<WdlTag, S>>,
+    wdl: HashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
@@ -91,38 +92,38 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    pub fn open_directory<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
+    pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) {
         use self::Role::*;
 
         let base = path.as_ref();
 
         if S::ONE_KING {
             for a in RoleRange::excl(Pawn, King) {
-                self.open_both(base, &[King, a], &[King])?;
+                self.add_both(base, &[King, a], &[King]);
 
                 for b in RoleRange::incl(Pawn, a) {
-                    self.open_both(base, &[King, a, b], &[King])?;
-                    self.open_both(base, &[King, a], &[King, b])?;
+                    self.add_both(base, &[King, a, b], &[King]);
+                    self.add_both(base, &[King, a], &[King, b]);
 
                     for c in RoleRange::excl(Pawn, King) {
-                        self.open_both(base, &[King, a, b], &[King, c])?;
+                        self.add_both(base, &[King, a, b], &[King, c]);
                     }
 
                     for c in RoleRange::incl(Pawn, b) {
-                        self.open_both(base, &[King, a, b, c], &[King])?;
+                        self.add_both(base, &[King, a, b, c], &[King]);
 
                         for d in RoleRange::incl(Pawn, c) {
-                            self.open_both(base, &[King, a, b, c, d], &[King])?;
+                            self.add_both(base, &[King, a, b, c, d], &[King]);
                         }
 
                         for d in RoleRange::excl(Pawn, King) {
-                            self.open_both(base, &[King, a, b, c], &[King, d])?;
+                            self.add_both(base, &[King, a, b, c], &[King, d]);
                         }
                     }
 
                     for c in RoleRange::incl(Pawn, a) {
                         for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.open_both(base, &[King, a, b], &[King, c, d])?;
+                            self.add_both(base, &[King, a, b], &[King, c, d]);
                         }
                     }
                 }
@@ -130,33 +131,33 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         } else {
             for a in RoleRange::incl(Pawn, King) {
                 for b in RoleRange::incl(Pawn, a) {
-                    self.open_both(base, &[a], &[b])?;
+                    self.add_both(base, &[a], &[b]);
 
                     for c in RoleRange::incl(Pawn, King) {
-                        self.open_both(base, &[a, b], &[c])?;
+                        self.add_both(base, &[a, b], &[c]);
                     }
 
                     for c in RoleRange::incl(Pawn, b) {
                         for d in RoleRange::incl(Pawn, King) {
-                            self.open_both(base, &[a, b, c], &[d])?;
+                            self.add_both(base, &[a, b, c], &[d]);
 
                             for e in RoleRange::incl(Pawn, d) {
-                                self.open_both(base, &[a, b, c], &[d, e])?;
+                                self.add_both(base, &[a, b, c], &[d, e]);
                             }
                         }
 
                         for d in RoleRange::incl(Pawn, c) {
                             for e in RoleRange::incl(Pawn, King) {
-                                self.open_both(base, &[a, b, c, d], &[e])?;
+                                self.add_both(base, &[a, b, c, d], &[e]);
 
                                 for f in RoleRange::incl(Pawn, e) {
-                                    self.open_both(base, &[a, b, c, d], &[e, f])?;
+                                    self.add_both(base, &[a, b, c, d], &[e, f]);
                                 }
                             }
 
                             for e in RoleRange::incl(Pawn, d) {
                                 for f in RoleRange::incl(Pawn, King) {
-                                    self.open_both(base, &[a, b, c, d, e], &[f])?;
+                                    self.add_both(base, &[a, b, c, d, e], &[f]);
                                 }
                             }
                         }
@@ -164,7 +165,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                         for d in RoleRange::incl(Pawn, a) {
                             for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
                                 for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
-                                    self.open_both(base, &[a, b, c], &[d, e, f])?;
+                                    self.add_both(base, &[a, b, c], &[d, e, f]);
                                 }
                             }
                         }
@@ -172,17 +173,15 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
                     for c in RoleRange::incl(Pawn, a) {
                         for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.open_both(base, &[a, b], &[c, d])?;
+                            self.add_both(base, &[a, b], &[c, d]);
                         }
                     }
                 }
             }
         }
-
-        Ok(())
     }
 
-    fn open_both(&mut self, base: &Path, white: &[Role], black: &[Role]) -> SyzygyResult<()> {
+    fn add_both(&mut self, base: &Path, white: &[Role], black: &[Role]) {
         let material = Material {
             white: white.iter().cloned().collect(),
             black: black.iter().cloned().collect(),
@@ -193,16 +192,12 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         path.set_extension(S::WDL_SUFFIX);
         if path.is_file() {
-            self.open_wdl_table(path, &material)?;
+            self.add_wdl_table(&path, &material);
         }
-
-        Ok(())
     }
 
-    fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P, material: &Material) -> SyzygyResult<()> {
-        let table = Table::<WdlTag, S>::open(path, material)?;
-        self.wdl.insert(material.clone(), table);
-        Ok(())
+    fn add_wdl_table(&mut self, path: &Path, material: &Material) {
+        self.wdl.insert(material.clone(), (path.to_path_buf(), Lazy::new()));
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
@@ -371,7 +366,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         // Probe table.
         let key = Material::from_board(pos.board());
-        if let Some(table) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
+        if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
+            let table = table.get_or_init(|| Table::open(path, &key))?;
             table.probe_wdl_table(pos)
         } else {
             Err(SyzygyError::new(ErrorKind::MissingTable))

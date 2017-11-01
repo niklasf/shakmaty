@@ -38,6 +38,7 @@ extern crate positioned_io;
 mod material;
 mod types;
 mod table;
+mod lazy;
 mod tablebases;
 
 pub use types::{Wdl};
