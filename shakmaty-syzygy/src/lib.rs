@@ -53,7 +53,7 @@ use arrayvec::ArrayVec;
 use bit_vec::BitVec;
 use num_integer::binomial;
 use itertools::Itertools;
-use shakmaty::{Color, Piece, Square, Move, Bitboard, Position, Chess, Outcome, MoveList};
+use shakmaty::{Color, Role, Piece, Square, Move, Bitboard, Position, Chess, Outcome, MoveList};
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
 use positioned_io::ReadAt;
 
@@ -995,8 +995,73 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    fn sprobe_ab(&self, _pos: &S, _alpha: Wdl, _beta: Wdl, _threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
-        panic!("TODO: implement")
+    fn sprobe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        if pos.them().count() > 1 {
+            let (v, captures_found) = self.sprobe_capts(pos, alpha, beta)?;
+            if captures_found {
+                return Ok((v, ProbeState::ZeroingBestMove));
+            }
+        } else {
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            if moves.iter().any(|m| m.capture().is_some()) {
+                return Ok((Wdl::Loss, ProbeState::ZeroingBestMove));
+            }
+        }
+
+        let mut threats_found = false;
+
+        if threats || pos.board().occupied().count() >= 6 {
+            let mut moves = MoveList::new();
+            for threat in moves {
+                if threat.role() != Role::Pawn {
+                    let mut after = pos.clone();
+                    after.play_unchecked(&threat);
+
+                    let (v_plus, captures_found) = self.sprobe_capts(&after, -beta, -alpha)?;
+                    let v = -v_plus;
+
+                    if captures_found && v > alpha {
+                        threats_found = true;
+                        alpha = v;
+                        if alpha >= beta {
+                            return Ok((v, ProbeState::Threat));
+                        }
+                    }
+                }
+            }
+        }
+
+        let v = self.probe_wdl_table(pos)?;
+        if v > alpha {
+            Ok((v, ProbeState::Normal))
+        } else {
+            Ok((alpha, if threats_found { ProbeState::Threat } else { ProbeState::Normal }))
+        }
+    }
+
+    fn sprobe_capts(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
+        let mut captures_found = false;
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        for m in moves {
+            if m.capture().is_some() {
+                captures_found = true;
+
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+                let (v_plus, state) = self.sprobe_ab(pos, -beta, -alpha, false)?;
+                let v = -v_plus;
+
+                alpha = max(v, alpha);
+                if alpha >= beta {
+                    break;
+                }
+            }
+        }
+
+        Ok((alpha, captures_found))
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
