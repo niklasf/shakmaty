@@ -24,6 +24,46 @@ use types::Wdl;
 use material::Material;
 use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, Syzygy, Table};
 
+fn rotate_role(role: Role) -> Role {
+    match role {
+        Role::Pawn => Role::Knight,
+        Role::Knight => Role::Bishop,
+        Role::Bishop => Role::Rook,
+        Role::Rook => Role::Queen,
+        Role::Queen => Role::King,
+        Role::King => Role::Pawn,
+    }
+}
+
+struct RoleRange {
+    from: Role,
+    to: Role,
+}
+
+impl RoleRange {
+    fn excl(from: Role, to: Role) -> RoleRange {
+        RoleRange { from, to }
+    }
+
+    fn incl(from: Role, to: Role) -> RoleRange {
+        RoleRange { from, to: rotate_role(to) }
+    }
+}
+
+impl Iterator for RoleRange {
+    type Item = Role;
+
+    fn next(&mut self) -> Option<Role> {
+        if self.from != self.to {
+            let from = self.from;
+            self.from = rotate_role(from);
+            Some(from)
+        } else {
+            None
+        }
+    }
+}
+
 enum ProbeState {
     /// Probe successful.
     Normal,
@@ -43,6 +83,101 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         Tablebases {
             wdl: HashMap::new(),
         }
+    }
+
+    fn open_material(&mut self, _base: &Path, _white: &[Role], _black: &[Role]) -> SyzygyResult<()> {
+        panic!("implement");
+    }
+
+    pub fn open_directory<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
+        use self::Role::*;
+
+        let base = path.as_ref();
+
+        if !S::ONE_KING {
+            for a in RoleRange::incl(Pawn, King) {
+                for b in RoleRange::incl(Pawn, a) {
+                    self.open_material(base, &[a], &[b])?;
+
+                    for c in RoleRange::incl(Pawn, King) {
+                        self.open_material(base, &[a, b], &[c])?;
+                    }
+
+                    for c in RoleRange::incl(Pawn, b) {
+                        for d in RoleRange::incl(Pawn, King) {
+                            self.open_material(base, &[a, b, c], &[d])?;
+
+                            for e in RoleRange::incl(Pawn, d) {
+                                self.open_material(base, &[a, b, c], &[d, e])?;
+                            }
+                        }
+
+                        for d in RoleRange::incl(Pawn, c) {
+                            for e in RoleRange::incl(Pawn, King) {
+                                self.open_material(base, &[a, b, c, d], &[e])?;
+
+                                for f in RoleRange::incl(Pawn, e) {
+                                    self.open_material(base, &[a, b, c, d], &[e, f])?;
+                                }
+                            }
+
+                            for e in RoleRange::incl(Pawn, d) {
+                                for f in RoleRange::incl(Pawn, King) {
+                                    self.open_material(base, &[a, b, c, d, e], &[f])?;
+                                }
+                            }
+                        }
+
+                        for d in RoleRange::incl(Pawn, a) {
+                            for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
+                                for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
+                                    self.open_material(base, &[a, b, c], &[d, e, f])?;
+                                }
+                            }
+                        }
+                    }
+
+                    for c in RoleRange::incl(Pawn, a) {
+                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                            self.open_material(base, &[a, b], &[c, d])?;
+                        }
+                    }
+                }
+            }
+        } else {
+            for a in RoleRange::excl(Pawn, King) {
+                self.open_material(base, &[King, a], &[King])?;
+
+                for b in RoleRange::incl(Pawn, a) {
+                    self.open_material(base, &[King, a, b], &[King])?;
+                    self.open_material(base, &[King, a], &[King, b])?;
+
+                    for c in RoleRange::excl(Pawn, King) {
+                        self.open_material(base, &[King, a, b], &[King, c])?;
+                    }
+
+                    for c in RoleRange::incl(Pawn, b) {
+                        self.open_material(base, &[King, a, b, c], &[King])?;
+
+                        for d in RoleRange::incl(Pawn, c) {
+                            self.open_material(base, &[King, a, b, c, d], &[King])?;
+                        }
+
+                        for d in RoleRange::excl(Pawn, King) {
+                            self.open_material(base, &[King, a, b, c], &[King, d])?;
+                        }
+                    }
+
+                    for c in RoleRange::incl(Pawn, a) {
+                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                            self.open_material(base, &[King, a, b], &[King, c, d])?;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
