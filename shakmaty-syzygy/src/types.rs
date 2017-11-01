@@ -16,6 +16,8 @@
 
 use std::ops::Neg;
 
+use shakmaty::{Color, Outcome};
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Wdl {
@@ -24,6 +26,16 @@ pub enum Wdl {
     Draw = 0,
     CursedWin = 1,
     Win = 2,
+}
+
+impl Wdl {
+    pub fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
+        match outcome {
+            Outcome::Draw => Wdl::Draw,
+            Outcome::Decisive { winner } if winner == pov => Wdl::Win,
+            _ => Wdl::Loss,
+        }
+    }
 }
 
 impl Neg for Wdl {

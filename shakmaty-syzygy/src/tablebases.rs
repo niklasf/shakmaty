@@ -1,0 +1,227 @@
+// This file is part of the shakmaty-syzygy library.
+// Copyright (C) 2017 Niklas Fiekas <niklas.fiekas@backscattering.de>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+use std::cmp::max;
+use std::path::Path;
+use std::collections::HashMap;
+
+use shakmaty::{Role, Position, MoveList};
+
+use types::Wdl;
+use material::Material;
+use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, Syzygy, Table};
+
+enum ProbeState {
+    /// Probe successful.
+    Normal,
+    /// Best move is zeroing.
+    ZeroingBestMove,
+    /// Threatening to force a capture.
+    Threat,
+}
+
+#[derive(Debug)]
+pub struct Tablebases<S: Position + Clone + Syzygy> {
+    wdl: HashMap<Material, Table<WdlTag, S>>,
+}
+
+impl<S: Position + Clone + Syzygy> Tablebases<S> {
+    pub fn new() -> Tablebases<S> {
+        Tablebases {
+            wdl: HashMap::new(),
+        }
+    }
+
+    pub fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
+        let table = Table::<WdlTag, S>::open(path)?;
+        let key = table.material().clone();
+        self.wdl.insert(key, table);
+        Ok(())
+    }
+
+    fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        if S::CAPTURES_COMPULSORY {
+            if let Some(outcome) = pos.variant_outcome() {
+                return Ok((Wdl::from_outcome(outcome, pos.turn()), ProbeState::ZeroingBestMove));
+            }
+
+            return self.probe_compulsory_captures(pos, alpha, beta, threats);
+        }
+
+        // Search non-ep captures.
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
+        captures.retain(|m| !m.is_en_passant());
+        for m in captures {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+
+            let (v_plus, _) = self.probe_ab(&after, -beta, -alpha, false)?;
+            let v = -v_plus;
+
+            if v > alpha {
+                if v >= beta {
+                    return Ok((v, ProbeState::ZeroingBestMove));
+                }
+                alpha = v;
+            }
+        }
+
+        let v = self.probe_wdl_table(pos)?;
+
+        if alpha >= v {
+            Ok((alpha, if alpha > Wdl::Draw { ProbeState::ZeroingBestMove } else { ProbeState::Normal }))
+        } else {
+            Ok((v, ProbeState::Normal))
+        }
+    }
+
+    fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        if pos.them().count() > 1 {
+            let (v, captures_found) = self.probe_captures(pos, alpha, beta)?;
+            if captures_found {
+                return Ok((v, ProbeState::ZeroingBestMove));
+            }
+        } else {
+            let mut captures = MoveList::new();
+            pos.capture_moves(&mut captures);
+            if !captures.is_empty() {
+                return Ok((Wdl::Loss, ProbeState::ZeroingBestMove));
+            }
+        }
+
+        let mut threats_found = false;
+
+        if threats || pos.board().occupied().count() >= 6 {
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            for threat in moves {
+                if threat.role() != Role::Pawn {
+                    let mut after = pos.clone();
+                    after.play_unchecked(&threat);
+
+                    let (v_plus, captures_found) = self.probe_captures(&after, -beta, -alpha)?;
+                    let v = -v_plus;
+
+                    if captures_found && v > alpha {
+                        threats_found = true;
+                        alpha = v;
+                        if alpha >= beta {
+                            return Ok((v, ProbeState::Threat));
+                        }
+                    }
+                }
+            }
+        }
+
+        let v = self.probe_wdl_table(pos)?;
+        if v > alpha {
+            Ok((v, ProbeState::Normal))
+        } else {
+            Ok((alpha, if threats_found { ProbeState::Threat } else { ProbeState::Normal }))
+        }
+    }
+
+    fn probe_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
+        let captures_found = !captures.is_empty();
+
+        for m in captures {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+
+            let (v_plus, _) = self.probe_compulsory_captures(pos, -beta, -alpha, false)?;
+            let v = -v_plus;
+
+            alpha = max(v, alpha);
+            if alpha >= beta {
+                break;
+            }
+        }
+
+        Ok((alpha, captures_found))
+    }
+
+    fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
+        // Test for KvK.
+        if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
+            return Ok(Wdl::Draw);
+        }
+
+        // Variant game end.
+        if let Some(outcome) = pos.variant_outcome() {
+            return Ok(Wdl::from_outcome(outcome, pos.turn()));
+        }
+
+        // Probe table.
+        let key = Material::from_board(pos.board());
+        if let Some(table) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
+            table.probe_wdl_table(pos)
+        } else {
+            Err(SyzygyError::new(ErrorKind::MissingTable))
+        }
+    }
+
+    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        if pos.board().occupied().count() > 6 {
+            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
+        }
+        if pos.castling_rights().any() {
+            return Err(SyzygyError::new(ErrorKind::Castling));
+        }
+
+        // Probe.
+        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
+
+        if S::CAPTURES_COMPULSORY {
+            return Ok(v);
+        }
+
+        // If en passant is not possible we are done.
+        let mut ep_moves = MoveList::new();
+        pos.en_passant_moves(&mut ep_moves);
+        if ep_moves.is_empty() {
+            return Ok(v);
+        }
+
+        // Now look at all legal en passant captures.
+        let mut v1 = Wdl::Loss;
+        for m in ep_moves {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+
+            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+            let v0 = -v0_plus;
+
+            v1 = max(v0, v1);
+        }
+
+        if v1 >= v {
+            v = v1;
+        } else if v == Wdl::Draw {
+            // If there is not at least one legal non-en-passant move we are
+            // forced to play the losing en passant move.
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            if moves.iter().all(|m| m.is_en_passant()) {
+                v = v1;
+            }
+        }
+
+        Ok(v)
+    }
+}
