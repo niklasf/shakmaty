@@ -193,12 +193,12 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         let mut path = PathBuf::from(base);
         path.push(material.to_string());
 
-        path.set_extension(S::WDL_SUFFIX);
+        path.set_extension(S::TBW_EXTENSION);
         if path.is_file() {
             self.wdl.insert(material.clone(), (path.clone(), Lazy::new()));
         }
 
-        path.set_extension(S::DTZ_SUFFIX);
+        path.set_extension(S::TBZ_EXTENSION);
         if path.is_file() {
             self.dtz.insert(material, (path, Lazy::new()));
         }

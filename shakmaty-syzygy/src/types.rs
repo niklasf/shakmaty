@@ -26,24 +26,38 @@ use shakmaty::{Color, Piece, Outcome, Chess};
 
 /// A chess variant with Syzygy support.
 pub trait Syzygy {
-    const WDL_SUFFIX: &'static str;
-    const DTZ_SUFFIX: &'static str;
+    /// Extension of WDL table files, e.g. `rtbw`.
+    const TBW_EXTENSION: &'static str;
+    /// Extension of DTZ table files, e.g. `rtbz`.
+    const TBZ_EXTENSION: &'static str;
+
+    /// Magic initial bytes of a WDL table.
     const WDL_MAGIC: [u8; 4];
+    /// Magic initial bytes of a DTZ table.
     const DTZ_MAGIC: [u8; 4];
+    /// Alternative WDL magic.
     const PAWNLESS_WDL_MAGIC: [u8; 4];
+    /// Alternative DTZ magic.
     const PAWNLESS_DTZ_MAGIC: [u8; 4];
+
+    /// Whether both players will have exactly one king unless the game
+    /// is over.
     const ONE_KING: bool;
+    /// Wether kings are allowed to be on adjacent squares.
     const CONNECTED_KINGS: bool;
+    /// Whether captures are compulsory.
     const CAPTURES_COMPULSORY: bool;
 }
 
 impl Syzygy for Chess {
-    const WDL_SUFFIX: &'static str = "rtbw";
-    const DTZ_SUFFIX: &'static str = "rtbz";
+    const TBW_EXTENSION: &'static str = "rtbw";
+    const TBZ_EXTENSION: &'static str = "rtbz";
+
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
     const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
+
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
     const CAPTURES_COMPULSORY: bool = false;
