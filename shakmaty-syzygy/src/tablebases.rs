@@ -91,7 +91,98 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    fn open_material(&mut self, base: &Path, white: &[Role], black: &[Role]) -> SyzygyResult<()> {
+    pub fn open_directory<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
+        use self::Role::*;
+
+        let base = path.as_ref();
+
+        if S::ONE_KING {
+            for a in RoleRange::excl(Pawn, King) {
+                self.open_both(base, &[King, a], &[King])?;
+
+                for b in RoleRange::incl(Pawn, a) {
+                    self.open_both(base, &[King, a, b], &[King])?;
+                    self.open_both(base, &[King, a], &[King, b])?;
+
+                    for c in RoleRange::excl(Pawn, King) {
+                        self.open_both(base, &[King, a, b], &[King, c])?;
+                    }
+
+                    for c in RoleRange::incl(Pawn, b) {
+                        self.open_both(base, &[King, a, b, c], &[King])?;
+
+                        for d in RoleRange::incl(Pawn, c) {
+                            self.open_both(base, &[King, a, b, c, d], &[King])?;
+                        }
+
+                        for d in RoleRange::excl(Pawn, King) {
+                            self.open_both(base, &[King, a, b, c], &[King, d])?;
+                        }
+                    }
+
+                    for c in RoleRange::incl(Pawn, a) {
+                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                            self.open_both(base, &[King, a, b], &[King, c, d])?;
+                        }
+                    }
+                }
+            }
+        } else {
+            for a in RoleRange::incl(Pawn, King) {
+                for b in RoleRange::incl(Pawn, a) {
+                    self.open_both(base, &[a], &[b])?;
+
+                    for c in RoleRange::incl(Pawn, King) {
+                        self.open_both(base, &[a, b], &[c])?;
+                    }
+
+                    for c in RoleRange::incl(Pawn, b) {
+                        for d in RoleRange::incl(Pawn, King) {
+                            self.open_both(base, &[a, b, c], &[d])?;
+
+                            for e in RoleRange::incl(Pawn, d) {
+                                self.open_both(base, &[a, b, c], &[d, e])?;
+                            }
+                        }
+
+                        for d in RoleRange::incl(Pawn, c) {
+                            for e in RoleRange::incl(Pawn, King) {
+                                self.open_both(base, &[a, b, c, d], &[e])?;
+
+                                for f in RoleRange::incl(Pawn, e) {
+                                    self.open_both(base, &[a, b, c, d], &[e, f])?;
+                                }
+                            }
+
+                            for e in RoleRange::incl(Pawn, d) {
+                                for f in RoleRange::incl(Pawn, King) {
+                                    self.open_both(base, &[a, b, c, d, e], &[f])?;
+                                }
+                            }
+                        }
+
+                        for d in RoleRange::incl(Pawn, a) {
+                            for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
+                                for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
+                                    self.open_both(base, &[a, b, c], &[d, e, f])?;
+                                }
+                            }
+                        }
+                    }
+
+                    for c in RoleRange::incl(Pawn, a) {
+                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                            self.open_both(base, &[a, b], &[c, d])?;
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn open_both(&mut self, base: &Path, white: &[Role], black: &[Role]) -> SyzygyResult<()> {
         let material = Material {
             white: white.iter().cloned().collect(),
             black: black.iter().cloned().collect(),
@@ -114,95 +205,53 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         Ok(())
     }
 
-    pub fn open_directory<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
-        use self::Role::*;
+    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        if pos.board().occupied().count() > 6 {
+            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
+        }
+        if pos.castling_rights().any() {
+            return Err(SyzygyError::new(ErrorKind::Castling));
+        }
 
-        let base = path.as_ref();
+        // Probe.
+        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
 
-        if !S::ONE_KING {
-            for a in RoleRange::incl(Pawn, King) {
-                for b in RoleRange::incl(Pawn, a) {
-                    self.open_material(base, &[a], &[b])?;
+        if S::CAPTURES_COMPULSORY {
+            return Ok(v);
+        }
 
-                    for c in RoleRange::incl(Pawn, King) {
-                        self.open_material(base, &[a, b], &[c])?;
-                    }
+        // If en passant is not possible we are done.
+        let mut ep_moves = MoveList::new();
+        pos.en_passant_moves(&mut ep_moves);
+        if ep_moves.is_empty() {
+            return Ok(v);
+        }
 
-                    for c in RoleRange::incl(Pawn, b) {
-                        for d in RoleRange::incl(Pawn, King) {
-                            self.open_material(base, &[a, b, c], &[d])?;
+        // Now look at all legal en passant captures.
+        let mut v1 = Wdl::Loss;
+        for m in ep_moves {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
 
-                            for e in RoleRange::incl(Pawn, d) {
-                                self.open_material(base, &[a, b, c], &[d, e])?;
-                            }
-                        }
+            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+            let v0 = -v0_plus;
 
-                        for d in RoleRange::incl(Pawn, c) {
-                            for e in RoleRange::incl(Pawn, King) {
-                                self.open_material(base, &[a, b, c, d], &[e])?;
+            v1 = max(v0, v1);
+        }
 
-                                for f in RoleRange::incl(Pawn, e) {
-                                    self.open_material(base, &[a, b, c, d], &[e, f])?;
-                                }
-                            }
-
-                            for e in RoleRange::incl(Pawn, d) {
-                                for f in RoleRange::incl(Pawn, King) {
-                                    self.open_material(base, &[a, b, c, d, e], &[f])?;
-                                }
-                            }
-                        }
-
-                        for d in RoleRange::incl(Pawn, a) {
-                            for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
-                                for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
-                                    self.open_material(base, &[a, b, c], &[d, e, f])?;
-                                }
-                            }
-                        }
-                    }
-
-                    for c in RoleRange::incl(Pawn, a) {
-                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.open_material(base, &[a, b], &[c, d])?;
-                        }
-                    }
-                }
-            }
-        } else {
-            for a in RoleRange::excl(Pawn, King) {
-                self.open_material(base, &[King, a], &[King])?;
-
-                for b in RoleRange::incl(Pawn, a) {
-                    self.open_material(base, &[King, a, b], &[King])?;
-                    self.open_material(base, &[King, a], &[King, b])?;
-
-                    for c in RoleRange::excl(Pawn, King) {
-                        self.open_material(base, &[King, a, b], &[King, c])?;
-                    }
-
-                    for c in RoleRange::incl(Pawn, b) {
-                        self.open_material(base, &[King, a, b, c], &[King])?;
-
-                        for d in RoleRange::incl(Pawn, c) {
-                            self.open_material(base, &[King, a, b, c, d], &[King])?;
-                        }
-
-                        for d in RoleRange::excl(Pawn, King) {
-                            self.open_material(base, &[King, a, b, c], &[King, d])?;
-                        }
-                    }
-
-                    for c in RoleRange::incl(Pawn, a) {
-                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.open_material(base, &[King, a, b], &[King, c, d])?;
-                        }
-                    }
-                }
+        if v1 >= v {
+            v = v1;
+        } else if v == Wdl::Draw {
+            // If there is not at least one legal non-en-passant move we are
+            // forced to play the losing en passant move.
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            if moves.iter().all(|m| m.is_en_passant()) {
+                v = v1;
             }
         }
 
-        Ok(())
+        Ok(v)
     }
 
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
@@ -327,54 +376,5 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         } else {
             Err(SyzygyError::new(ErrorKind::MissingTable))
         }
-    }
-
-    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        if pos.board().occupied().count() > 6 {
-            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
-        }
-        if pos.castling_rights().any() {
-            return Err(SyzygyError::new(ErrorKind::Castling));
-        }
-
-        // Probe.
-        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
-
-        if S::CAPTURES_COMPULSORY {
-            return Ok(v);
-        }
-
-        // If en passant is not possible we are done.
-        let mut ep_moves = MoveList::new();
-        pos.en_passant_moves(&mut ep_moves);
-        if ep_moves.is_empty() {
-            return Ok(v);
-        }
-
-        // Now look at all legal en passant captures.
-        let mut v1 = Wdl::Loss;
-        for m in ep_moves {
-            let mut after = pos.clone();
-            after.play_unchecked(&m);
-
-            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
-            let v0 = -v0_plus;
-
-            v1 = max(v0, v1);
-        }
-
-        if v1 >= v {
-            v = v1;
-        } else if v == Wdl::Draw {
-            // If there is not at least one legal non-en-passant move we are
-            // forced to play the losing en passant move.
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            if moves.iter().all(|m| m.is_en_passant()) {
-                v = v1;
-            }
-        }
-
-        Ok(v)
     }
 }
