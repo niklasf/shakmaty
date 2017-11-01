@@ -96,7 +96,6 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         path.push(material.to_string());
 
         path.set_extension(S::WDL_SUFFIX);
-        println!("opening: {:?}", path);
         if path.is_file() {
             self.open_wdl_table(path, &material)?;
         }
