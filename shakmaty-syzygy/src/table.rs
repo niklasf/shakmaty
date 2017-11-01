@@ -969,8 +969,16 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 squares[0].rank() as u64 * 28 * 62 +
                 LOWER[usize::from(squares[1])] * 62 +
                 u64::from(squares[2]) - adjust2
+            } else if offdiag(squares[2]) {
+                6 * 63 * 62 + 4 * 28 * 62 +
+                squares[0].rank() as u64 * 7 * 28 +
+                (squares[1].rank() as u64 - adjust1) * 28 +
+                LOWER[usize::from(squares[2])]
             } else {
-                panic!("TODO: enc 0 not fully implemented")
+                6 * 63 * 62 + 4 * 28 * 62 + 4 * 7 * 28 +
+                squares[0].rank() as u64 * 7 * 6 +
+                (squares[1].rank() as u64 - adjust1) * 6 +
+                (squares[2].rank() as u64 - adjust2)
             }
         } else if self.num_unique_pieces == 2 {
             if S::CONNECTED_KINGS {
