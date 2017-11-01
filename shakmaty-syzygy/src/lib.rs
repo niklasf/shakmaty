@@ -1095,41 +1095,37 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         // Probe.
         let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
 
+        if S::CAPTURES_COMPULSORY {
+            return Ok(v);
+        }
+
         // If en passant is not possible we are done.
-        if S::CAPTURES_COMPULSORY || pos.ep_square().is_none() {
+        let mut ep_moves = MoveList::new();
+        pos.en_passant_moves(&mut ep_moves);
+        if ep_moves.is_empty() {
             return Ok(v);
         }
 
         // Now look at all legal en passant captures.
         let mut v1 = Wdl::Loss;
-        let mut ep_found = false;
-        let mut ep_only = true;
+        for m in ep_moves {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
 
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-        for m in moves {
-            if let Move::EnPassant { .. } = m {
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
+            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+            let v0 = -v0_plus;
 
-                let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
-                let v0 = -v0_plus;
-
-                v1 = max(v0, v1);
-                ep_found = true;
-            } else {
-                ep_only = false;
-            }
+            v1 = max(v0, v1);
         }
-
-        assert!(ep_found);
 
         if v1 >= v {
             v = v1;
         } else if v == Wdl::Draw {
             // If there is not at least one legal non-en-passant move we are
             // forced to play the losing en passant move.
-            if ep_only {
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            if moves.iter().all(|m| m.is_en_passant()) {
                 v = v1;
             }
         }
