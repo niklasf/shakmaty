@@ -87,6 +87,24 @@ impl fmt::Display for MaterialSide {
     }
 }
 
+impl Extend<Role> for MaterialSide {
+    fn extend<T: IntoIterator<Item = Role>>(&mut self, iter: T) {
+        for role in iter {
+            *self.by_role_mut(role) += 1;
+        }
+    }
+}
+
+impl FromIterator<Role> for MaterialSide {
+    fn from_iter<T>(iter: T) -> Self
+        where T: IntoIterator<Item = Role>
+    {
+        let mut result = MaterialSide::new();
+        result.extend(iter);
+        result
+    }
+}
+
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     pub white: MaterialSide,

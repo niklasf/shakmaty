@@ -15,8 +15,9 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::max;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::collections::HashMap;
+use std::str;
 
 use shakmaty::{Role, Position, MoveList};
 
@@ -85,8 +86,22 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    fn open_material(&mut self, _base: &Path, _white: &[Role], _black: &[Role]) -> SyzygyResult<()> {
-        panic!("implement");
+    fn open_material(&mut self, base: &Path, white: &[Role], black: &[Role]) -> SyzygyResult<()> {
+        let material = Material {
+            white: white.iter().cloned().collect(),
+            black: black.iter().cloned().collect(),
+        };
+
+        let mut path = PathBuf::from(base);
+        path.push(material.to_string());
+
+        path.set_extension(S::WDL_SUFFIX);
+        println!("opening: {:?}", path);
+        if path.is_file() {
+            self.open_wdl_table(path)?;
+        }
+
+        Ok(())
     }
 
     pub fn open_directory<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {

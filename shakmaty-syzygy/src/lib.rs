@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_table() {
         let mut tables = Tablebases::new();
-        tables.open_wdl_table("/opt/syzygy/regular/syzygy/KQvKR.rtbw").expect("good table");
+        tables.open_directory("/opt/syzygy/regular/syzygy").expect("good tables");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");

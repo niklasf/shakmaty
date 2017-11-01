@@ -37,8 +37,8 @@ use material::Material;
 
 /// A chess variant with Syzygy support.
 pub trait Syzygy {
-    const WDL_SUFFIX: &'static [u8];
-    const DTZ_SUFFIX: &'static [u8];
+    const WDL_SUFFIX: &'static str;
+    const DTZ_SUFFIX: &'static str;
     const WDL_MAGIC: [u8; 4];
     const DTZ_MAGIC: [u8; 4];
     const PAWNLESS_WDL_MAGIC: [u8; 4];
@@ -49,8 +49,8 @@ pub trait Syzygy {
 }
 
 impl Syzygy for Chess {
-    const WDL_SUFFIX: &'static [u8] = b".rtbw";
-    const DTZ_SUFFIX: &'static [u8] = b".rtbz";
+    const WDL_SUFFIX: &'static str = "rtbw";
+    const DTZ_SUFFIX: &'static str = "rtbz";
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
     const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
