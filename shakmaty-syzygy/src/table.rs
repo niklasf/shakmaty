@@ -37,7 +37,7 @@ use types::{Syzygy, Wdl};
 use material::Material;
 
 /// Syzygy tables are available for up to 6 pieces.
-const MAX_PIECES: usize = 6;
+pub const MAX_PIECES: usize = 6;
 
 /// Error initializing or probing a table.
 ///

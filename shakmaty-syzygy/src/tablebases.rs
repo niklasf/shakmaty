@@ -25,7 +25,7 @@ use shakmaty::{Role, Position, MoveList};
 use types::{Syzygy, Wdl};
 use material::Material;
 use lazy::Lazy;
-use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Table};
+use table::{SyzygyError, SyzygyResult, ErrorKind, MAX_PIECES, WdlTag, DtzTag, Table};
 
 fn rotate_role(role: Role) -> Role {
     match role {
@@ -206,7 +206,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        if pos.board().occupied().count() > 6 {
+        if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::new(ErrorKind::TooManyPieces));
         }
         if pos.castling_rights().any() {
