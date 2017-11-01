@@ -30,6 +30,7 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
             continue;
         }
 
+        println!("{} | expected wdl: {}", fen, expected_wdl);
         let wdl = tables.probe_wdl(&pos).expect("probe");
         assert_eq!(i8::from(wdl), expected_wdl);
     }
