@@ -36,6 +36,7 @@ extern crate shakmaty;
 extern crate positioned_io;
 
 mod material;
+mod types;
 
 use std::fmt;
 use std::error::Error;
@@ -46,7 +47,6 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::io;
 use std::fs::File;
-use std::ops::Neg;
 use std::cmp::max;
 
 use arrayvec::ArrayVec;
@@ -57,6 +57,7 @@ use shakmaty::{Color, Piece, Square, Move, Bitboard, Position, Chess, Outcome, M
 use byteorder::{LittleEndian, BigEndian, ByteOrder};
 use positioned_io::ReadAt;
 
+pub use types::{Wdl};
 pub use material::{Material, MaterialSide};
 
 /// A chess variant with Syzygy support.
@@ -620,29 +621,6 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
     files: ArrayVec<[FileData; 4]>,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
-pub enum Wdl {
-    Loss = -2,
-    BlessedLoss = -1,
-    Draw = 0,
-    CursedWin = 1,
-    Win = 2,
-}
-
-impl Neg for Wdl {
-    type Output = Wdl;
-
-    fn neg(self) -> Wdl {
-        match self {
-            Wdl::Loss => Wdl::Win,
-            Wdl::BlessedLoss => Wdl::CursedWin,
-            Wdl::Draw => Wdl::Draw,
-            Wdl::CursedWin => Wdl::BlessedLoss,
-            Wdl::Win => Wdl::Loss,
-        }
-    }
-}
 
 impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     pub fn open<P: AsRef<Path>>(path: P) -> SyzygyResult<Table<T, S>> {
