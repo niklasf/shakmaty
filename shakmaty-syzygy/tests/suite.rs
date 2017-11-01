@@ -25,11 +25,6 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
 
         let pos: S = fen.position().expect("legal");
 
-        if pos.board().pawns().any() {
-            // TODO: Skip pawnful tables for now
-            continue;
-        }
-
         println!("{} | expected wdl: {}", fen, expected_wdl);
         let wdl = tables.probe_wdl(&pos).expect("probe");
         assert_eq!(i8::from(wdl), expected_wdl);
