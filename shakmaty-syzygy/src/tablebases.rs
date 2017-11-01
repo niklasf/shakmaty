@@ -98,9 +98,15 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         path.set_extension(S::WDL_SUFFIX);
         println!("opening: {:?}", path);
         if path.is_file() {
-            self.open_wdl_table(path)?;
+            self.open_wdl_table(path, &material)?;
         }
 
+        Ok(())
+    }
+
+    fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P, material: &Material) -> SyzygyResult<()> {
+        let table = Table::<WdlTag, S>::open(path, material)?;
+        self.wdl.insert(material.clone(), table);
         Ok(())
     }
 
@@ -192,13 +198,6 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             }
         }
 
-        Ok(())
-    }
-
-    pub fn open_wdl_table<P: AsRef<Path>>(&mut self, path: P) -> SyzygyResult<()> {
-        let table = Table::<WdlTag, S>::open(path)?;
-        let key = table.material().clone();
-        self.wdl.insert(key, table);
         Ok(())
     }
 

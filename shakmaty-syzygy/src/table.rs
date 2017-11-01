@@ -22,6 +22,7 @@ use std::fs::File;
 use std::iter::FromIterator;
 use std::io;
 use std::fmt;
+use std::cmp::min;
 
 use num_integer::binomial;
 use arrayvec::ArrayVec;
@@ -320,17 +321,12 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(raf: &RandomAccessFile, ptr: usize, side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces(raf: &RandomAccessFile, ptr: usize, count: u8, side: Color) -> SyzygyResult<Pieces> {
     let mut pieces = Pieces::new();
 
-    for i in 0..6 {
+    for i in 0..min(usize::from(count), MAX_PIECES) {
         let p = raf.read_u8(ptr + i)?;
-        if p == 0 {
-            // TODO: Wishful thinking?
-            break;
-        } else {
-            pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
-        }
+        pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
     }
 
     Ok(pieces)
@@ -598,7 +594,7 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
 
     raf: RandomAccessFile,
 
-    key: Material,
+    material: Material,
 
     num_pieces: u8,
     num_unique_pieces: u8,
@@ -608,8 +604,9 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
 
 
 impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
-    pub fn open<P: AsRef<Path>>(path: P) -> SyzygyResult<Table<T, S>> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
         let raf = RandomAccessFile::open(path)?;
+        let material = material.clone();
 
         // Check magic.
         let (magic, pawnless_magic) = if T::IS_WDL {
@@ -618,7 +615,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             (&S::DTZ_MAGIC, &S::PAWNLESS_DTZ_MAGIC)
         };
 
-        if !raf.starts_with_magic(magic)? && !raf.starts_with_magic(pawnless_magic)? {
+        if !raf.starts_with_magic(magic)? && (material.has_pawns() || !raf.starts_with_magic(pawnless_magic)?) {
             return Err(SyzygyError { kind: ErrorKind::Magic });
         }
 
@@ -627,23 +624,15 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
-        // Read material key.
-        let key = Material::from_iter(parse_pieces(&raf, 6, Color::White)?);
-
-        // Check magic again.
-        if key.has_pawns() && !raf.starts_with_magic(magic)? {
-            return Err(SyzygyError { kind: ErrorKind::Magic });
-        }
-
         // Check consistency of layout and material key.
-        if has_pawns != key.has_pawns() || split == key.is_symmetric() {
+        if has_pawns != material.has_pawns() || split == material.is_symmetric() {
             return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
         }
 
         // Read group data.
-        let pp = key.white.has_pawns() && key.black.has_pawns();
+        let pp = material.white.has_pawns() && material.black.has_pawns();
         let num_files = if has_pawns { 4 } else { 1 };
-        let num_sides = if T::IS_WDL && !key.is_symmetric() { 2 } else { 1 };
+        let num_sides = if T::IS_WDL && !material.is_symmetric() { 2 } else { 1 };
 
         let mut groups: ArrayVec<[ArrayVec<[GroupData; 2]>; 4]> = ArrayVec::new();
         let mut ptr = 5;
@@ -659,12 +648,17 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             ptr += 1 + if pp { 1 } else { 0 };
 
             for side in [Color::White, Color::Black].iter().take(num_sides) {
-                let pieces = parse_pieces(&raf, ptr, *side)?;
+                let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
+                let key = Material::from_iter(pieces.clone());
+                if key != material && key.flip() != material {
+                    return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+                }
+
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
                 sides.push(group);
             }
 
-            ptr += key.count() as usize;
+            ptr += material.count() as usize;
 
             groups.push(sides);
         }
@@ -722,16 +716,16 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             is_wdl: PhantomData,
             syzygy: PhantomData,
             raf,
-            num_pieces: key.count(),
-            num_unique_pieces: key.unique_pieces(),
-            min_like_man: key.min_like_man(),
+            num_pieces: material.count(),
+            num_unique_pieces: material.unique_pieces(),
+            min_like_man: material.min_like_man(),
             files,
-            key,
+            material: material,
         })
     }
 
     pub fn material(&self) -> &Material {
-        &self.key
+        &self.material
     }
 
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
@@ -810,8 +804,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     fn encode(&self, pos: &S) -> SyzygyResult<(&PairsData, u64)> {
         let key = Material::from_board(pos.board());
 
-        let symmetric_btm = self.key.is_symmetric() && pos.turn().is_black();
-        let black_stronger = key != self.key;
+        let symmetric_btm = self.material.is_symmetric() && pos.turn().is_black();
+        let black_stronger = key != self.material;
         let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_black());
 
         assert!(!key.has_pawns());
