@@ -34,6 +34,7 @@ extern crate lazy_static;
 extern crate num_integer;
 extern crate shakmaty;
 extern crate positioned_io;
+extern crate fnv;
 
 mod material;
 mod types;

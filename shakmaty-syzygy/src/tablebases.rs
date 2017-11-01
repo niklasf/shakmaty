@@ -18,6 +18,8 @@ use std::cmp::max;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 
+use fnv::FnvHashMap;
+
 use shakmaty::{Role, Position, MoveList};
 
 use types::Wdl;
@@ -76,7 +78,7 @@ enum ProbeState {
 
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
-    wdl: HashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,
+    wdl: FnvHashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
@@ -88,7 +90,7 @@ impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
 impl<S: Position + Clone + Syzygy> Tablebases<S> {
     pub fn new() -> Tablebases<S> {
         Tablebases {
-            wdl: HashMap::new(),
+            wdl: FnvHashMap::default()
         }
     }
 
