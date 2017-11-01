@@ -859,6 +859,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let mut ptr = d.data + block * d.block_size;
 
+        println!("initial ptr: {}", ptr);
+
         let mut buf = self.raf.read_u64_be(ptr)?;
         ptr += 8;
         let mut buf_size = 64;
@@ -891,6 +893,9 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 ptr += 4;
             }
         }
+
+        println!("sym: {}", sym);
+        println!("btree: {}", d.btree);
 
         while *d.symlen.get(sym as usize)? != 0 {
             let w = d.btree + 3 * sym as usize;
@@ -1018,7 +1023,9 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         let (side, idx) = self.encode(pos)?;
+        println!("idx: {}", idx);
         let decompressed = self.decompress_pairs(side, idx)?;
+        println!("decompressed: {}", decompressed);
 
         Ok(match decompressed {
             0 => Wdl::Loss,
