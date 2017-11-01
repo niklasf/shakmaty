@@ -63,18 +63,25 @@ impl Syzygy for Chess {
     const CAPTURES_COMPULSORY: bool = false;
 }
 
+/// A 5-valued evaluation of a position in the context of the 50-move drawing
+/// rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Wdl {
+    /// Unconditional loss for the side to move.
     Loss = -2,
+    /// Loss that can be saved by the 50-move rule.
     BlessedLoss = -1,
+    /// Unconditional draw.
     Draw = 0,
+    /// Win that can be frustrated by the 50-move rule.
     CursedWin = 1,
+    /// Unconditional win.
     Win = 2,
 }
 
 impl Wdl {
-    pub fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
+    pub(crate) fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
         match outcome {
             Outcome::Draw => Wdl::Draw,
             Outcome::Decisive { winner } if winner == pov => Wdl::Win,
