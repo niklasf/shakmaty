@@ -88,10 +88,6 @@ impl SyzygyError {
         SyzygyError { kind }
     }
 
-    pub(crate) fn kind(&self) -> ErrorKind {
-        self.kind
-    }
-
     fn desc(&self) -> &str {
         match self.kind {
             ErrorKind::Magic => "invalid magic bytes",
@@ -448,8 +444,10 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
     // form the leading group.
     let first_len = if material.has_pawns() {
         0
+    } else if material.unique_pieces() >= 3 {
+        3
     } else {
-        if material.unique_pieces() >= 3 { 3 } else { 2 }
+        2
     };
 
     if first_len > 0 {
@@ -501,7 +499,7 @@ impl GroupData {
                 if material.has_pawns() {
                     idx *= CONSTS.lead_pawns_size[lens[0]][file];
                 } else if material.unique_pieces() >= 3 {
-                    idx *= 31332;
+                    idx *= 31_332;
                 } else if material.unique_pieces() == 2 {
                     idx *= if S::CONNECTED_KINGS { 518 } else { 462 };
                 } else if material.min_like_man() == 2 {
@@ -598,9 +596,10 @@ impl PairsData {
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::IS_WDL {
                 raf.read_u8(ptr + 1)?
+            } else if S::CAPTURES_COMPULSORY {
+                1 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
             } else {
-                // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
-                if S::CAPTURES_COMPULSORY { 1 } else { 0 }
+                0
             };
 
             return Ok((PairsData {
@@ -835,10 +834,6 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         })
     }
 
-    pub fn material(&self) -> &Material {
-        &self.material
-    }
-
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
         if d.flags.contains(Flag::SINGLE_VALUE) {
             return Ok(d.min_symlen);
@@ -947,7 +942,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        for i in 0..usize::from(side.groups.lens[0]) {
+        for i in 0..side.groups.lens[0] {
             if squares[i].file() == squares[i].rank() {
                 continue;
             }
@@ -975,16 +970,16 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 LOWER[usize::from(squares[1])] * 62 +
                 u64::from(squares[2]) - adjust2
             } else {
-                panic!("TODO: enc 0 not fully implemented");
+                panic!("TODO: enc 0 not fully implemented")
             }
         } else if self.num_unique_pieces == 2 {
             if S::CONNECTED_KINGS {
-                panic!("connected kings not implemented");
+                panic!("connected kings not implemented")
             } else {
                 KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
             }
         } else {
-            panic!("TODO: minlikeman not implemented");
+            panic!("TODO: minlikeman not implemented")
         };
 
         idx *= side.groups.factors[0];
@@ -993,14 +988,14 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
         for lens in side.groups.lens.iter().cloned().skip(1) {
-            let (prev_squares, group_squares) = squares.split_at_mut(usize::from(group_sq));
-            let group_squares = &mut group_squares[..(usize::from(lens))];
+            let (prev_squares, group_squares) = squares.split_at_mut(group_sq);
+            let group_squares = &mut group_squares[..lens];
             group_squares.sort();
 
             let mut n = 0;
 
-            for i in 0..usize::from(lens) {
-                let adjust = prev_squares[..usize::from(group_sq)].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
+            for i in 0..lens {
+                let adjust = prev_squares[..group_sq].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
                 n += binomial(u64::from(group_squares[i]) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
             }
 

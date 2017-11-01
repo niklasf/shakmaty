@@ -17,13 +17,12 @@
 use std::cmp::max;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
-use std::str;
 
 use shakmaty::{Role, Position, MoveList};
 
 use types::Wdl;
 use material::Material;
-use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, Syzygy, Table};
+use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Syzygy, Table};
 
 fn rotate_role(role: Role) -> Role {
     match role {
@@ -77,6 +76,12 @@ enum ProbeState {
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
     wdl: HashMap<Material, Table<WdlTag, S>>,
+}
+
+impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
+    fn default() -> Tablebases<S> {
+        Tablebases::new()
+    }
 }
 
 impl<S: Position + Clone + Syzygy> Tablebases<S> {
