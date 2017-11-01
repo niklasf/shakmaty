@@ -508,7 +508,7 @@ impl PairsData {
                 sparse_index: 0,
                 sparse_index_size: 0,
                 symlen: Vec::new(),
-            }, ptr));
+            }, ptr + 1));
         }
 
         let tb_size = groups.factors[groups.lens.len()];
