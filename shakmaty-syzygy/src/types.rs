@@ -15,6 +15,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::ops::Neg;
+use std::option::NoneError;
+use std::error::Error;
+use std::io;
+use std::fmt;
 
 use arrayvec::ArrayVec;
 
@@ -90,3 +94,68 @@ impl From<Wdl> for i8 {
 pub const MAX_PIECES: usize = 6;
 
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
+
+/// Error initializing or probing a table.
+///
+/// * Unexpected magic header bytes
+/// * Corrupted table
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SyzygyError {
+    kind: ErrorKind,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) enum ErrorKind {
+    Magic,
+    CorruptedTable,
+    Read,
+    MissingTable,
+    Castling,
+    TooManyPieces,
+}
+
+impl SyzygyError {
+    pub(crate) fn new(kind: ErrorKind) -> SyzygyError {
+        SyzygyError { kind }
+    }
+
+    fn desc(&self) -> &str {
+        match self.kind {
+            ErrorKind::Magic => "invalid magic bytes",
+            ErrorKind::CorruptedTable => "corrupted table",
+            ErrorKind::Read => "i/o error when reading a table",
+            ErrorKind::MissingTable => "required table not found",
+            ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
+            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 6 pieces",
+        }
+    }
+}
+
+impl fmt::Display for SyzygyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.desc().fmt(f)
+    }
+}
+
+impl Error for SyzygyError {
+    fn description(&self) -> &str {
+        self.desc()
+    }
+}
+
+impl From<NoneError> for SyzygyError {
+    fn from(_: NoneError) -> SyzygyError {
+        SyzygyError { kind: ErrorKind::CorruptedTable }
+    }
+}
+
+impl From<io::Error> for SyzygyError {
+    fn from(error: io::Error) -> SyzygyError {
+        match error.kind() {
+            io::ErrorKind::UnexpectedEof => SyzygyError { kind: ErrorKind::CorruptedTable },
+            _ => SyzygyError { kind: ErrorKind::Read },
+        }
+    }
+}
+
+pub type SyzygyResult<T> = Result<T, SyzygyError>;

@@ -16,12 +16,9 @@
 
 use std::marker::PhantomData;
 use std::path::Path;
-use std::error::Error;
-use std::option::NoneError;
 use std::fs::File;
 use std::iter::FromIterator;
 use std::io;
-use std::fmt;
 use std::cmp::min;
 
 use num_integer::binomial;
@@ -33,73 +30,8 @@ use positioned_io::ReadAt;
 
 use shakmaty::{Square, Color, Piece, Bitboard, Position};
 
-use types::{Syzygy, Wdl, Pieces, MAX_PIECES};
+use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
-
-/// Error initializing or probing a table.
-///
-/// * Unexpected magic header bytes
-/// * Corrupted table
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SyzygyError {
-    kind: ErrorKind,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub(crate) enum ErrorKind {
-    Magic,
-    CorruptedTable,
-    Read,
-    MissingTable,
-    Castling,
-    TooManyPieces,
-}
-
-impl SyzygyError {
-    pub(crate) fn new(kind: ErrorKind) -> SyzygyError {
-        SyzygyError { kind }
-    }
-
-    fn desc(&self) -> &str {
-        match self.kind {
-            ErrorKind::Magic => "invalid magic bytes",
-            ErrorKind::CorruptedTable => "corrupted table",
-            ErrorKind::Read => "i/o error when reading a table",
-            ErrorKind::MissingTable => "required table not found",
-            ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
-            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 6 pieces",
-        }
-    }
-}
-
-impl fmt::Display for SyzygyError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.desc().fmt(f)
-    }
-}
-
-impl Error for SyzygyError {
-    fn description(&self) -> &str {
-        self.desc()
-    }
-}
-
-impl From<NoneError> for SyzygyError {
-    fn from(_: NoneError) -> SyzygyError {
-        SyzygyError { kind: ErrorKind::CorruptedTable }
-    }
-}
-
-impl From<io::Error> for SyzygyError {
-    fn from(error: io::Error) -> SyzygyError {
-        match error.kind() {
-            io::ErrorKind::UnexpectedEof => SyzygyError { kind: ErrorKind::CorruptedTable },
-            _ => SyzygyError { kind: ErrorKind::Read },
-        }
-    }
-}
-
-pub type SyzygyResult<T> = Result<T, SyzygyError>;
 
 #[derive(Debug)]
 pub enum WdlTag { }
@@ -366,7 +298,7 @@ impl RandomAccessFile {
          if let Err(err) = self.file.read_exact_at(0, &mut buf) {
              match err.kind() {
                  io::ErrorKind::UnexpectedEof => Ok(false),
-                 _ => Err(SyzygyError { kind: ErrorKind::Read }),
+                 _ => Err(SyzygyError::new(ErrorKind::Read)),
             }
          } else {
             Ok(&buf == magic)
@@ -444,7 +376,7 @@ struct GroupData {
 impl GroupData {
     pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> SyzygyResult<GroupData> {
         if pieces.len() < 2 {
-            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+            return Err(SyzygyError::new(ErrorKind::CorruptedTable));
         }
 
         let material = Material::from_iter(pieces.clone());
@@ -614,7 +546,7 @@ impl PairsData {
                 .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?))? / 2;
 
             if base[i] * 2 < base[i + 1] {
-                return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+                return Err(SyzygyError::new(ErrorKind::CorruptedTable));
             }
         }
 
@@ -696,7 +628,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         };
 
         if !raf.starts_with_magic(magic)? && (material.has_pawns() || !raf.starts_with_magic(pawnless_magic)?) {
-            return Err(SyzygyError { kind: ErrorKind::Magic });
+            return Err(SyzygyError::new(ErrorKind::Magic));
         }
 
         // Read layout flags.
@@ -706,7 +638,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         // Check consistency of layout and material key.
         if has_pawns != material.has_pawns() || split == material.is_symmetric() {
-            return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+            return Err(SyzygyError::new(ErrorKind::CorruptedTable));
         }
 
         // Read group data.
@@ -731,7 +663,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 if key != material && key.flip() != material {
-                    return Err(SyzygyError { kind: ErrorKind::CorruptedTable });
+                    return Err(SyzygyError::new(ErrorKind::CorruptedTable));
                 }
 
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
@@ -1003,7 +935,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             2 => Wdl::Draw,
             3 => Wdl::CursedWin,
             4 => Wdl::Win,
-            _ => return Err(SyzygyError { kind: ErrorKind::CorruptedTable }),
+            _ => return Err(SyzygyError::new(ErrorKind::CorruptedTable)),
         })
     }
 }
