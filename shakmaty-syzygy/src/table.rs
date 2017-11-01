@@ -805,7 +805,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let key = Material::from_board(pos.board());
 
         let symmetric_btm = self.material.is_symmetric() && pos.turn().is_black();
-        let black_stronger = key != self.material;
+        let black_stronger = key != Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
         let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_black());
 
         assert!(!key.has_pawns());
