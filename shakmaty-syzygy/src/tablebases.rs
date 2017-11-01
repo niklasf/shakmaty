@@ -16,16 +16,15 @@
 
 use std::cmp::max;
 use std::path::{Path, PathBuf};
-use std::collections::HashMap;
 
 use fnv::FnvHashMap;
 
 use shakmaty::{Role, Position, MoveList};
 
-use types::{Syzygy, Wdl};
+use types::{Syzygy, Wdl, MAX_PIECES};
 use material::Material;
 use lazy::Lazy;
-use table::{SyzygyError, SyzygyResult, ErrorKind, MAX_PIECES, WdlTag, DtzTag, Table};
+use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Table};
 
 fn rotate_role(role: Role) -> Role {
     match role {

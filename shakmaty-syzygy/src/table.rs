@@ -31,13 +31,10 @@ use byteorder::{ByteOrder, LittleEndian, BigEndian};
 use itertools::Itertools;
 use positioned_io::ReadAt;
 
-use shakmaty::{Square, Color, Piece, Bitboard, Chess, Position};
+use shakmaty::{Square, Color, Piece, Bitboard, Position};
 
-use types::{Syzygy, Wdl};
+use types::{Syzygy, Wdl, Pieces, MAX_PIECES};
 use material::Material;
-
-/// Syzygy tables are available for up to 6 pieces.
-pub const MAX_PIECES: usize = 6;
 
 /// Error initializing or probing a table.
 ///
@@ -103,8 +100,6 @@ impl From<io::Error> for SyzygyError {
 }
 
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
-
-type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
 #[derive(Debug)]
 pub enum WdlTag { }

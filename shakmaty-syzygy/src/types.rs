@@ -16,7 +16,9 @@
 
 use std::ops::Neg;
 
-use shakmaty::{Color, Outcome, Chess};
+use arrayvec::ArrayVec;
+
+use shakmaty::{Color, Piece, Outcome, Chess};
 
 /// A chess variant with Syzygy support.
 pub trait Syzygy {
@@ -83,3 +85,8 @@ impl From<Wdl> for i8 {
         wdl as i8
     }
 }
+
+/// Syzygy tables are available for up to 6 pieces.
+pub const MAX_PIECES: usize = 6;
+
+pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
