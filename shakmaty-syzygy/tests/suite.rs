@@ -2,15 +2,13 @@ extern crate shakmaty;
 extern crate shakmaty_syzygy;
 extern crate csv;
 
-use std::error::Error;
-
 use shakmaty::{Position, Chess};
 use shakmaty_syzygy::{Tablebases, Syzygy};
 use shakmaty::fen::Fen;
 
-fn test_csv<S: Position + Clone + Syzygy>(path: &str) -> Result<(), Box<Error>> {
+fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
     let mut tables = Tablebases::new();
-    tables.open_directory("/opt/syzygy/regular/syzygy");
+    tables.open_directory("/opt/syzygy/regular/syzygy").expect("good tables");
 
     let mut reader = csv::Reader::from_path(path).expect("reader");
 
@@ -26,11 +24,15 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) -> Result<(), Box<Error>> 
             .parse().expect("valid wdl");
 
         let pos: S = fen.position().expect("legal");
+
+        if pos.board().pawns().any() {
+            // TODO: Skip pawnful tables for now
+            continue;
+        }
+
         let wdl = tables.probe_wdl(&pos).expect("probe");
         assert_eq!(i8::from(wdl), expected_wdl);
     }
-
-    Ok(())
 }
 
 #[test]
