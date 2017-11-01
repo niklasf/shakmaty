@@ -163,6 +163,15 @@ pub enum Move {
 }
 
 impl Move {
+    /// Gets the role of the moved piece.
+    pub fn role(&self) -> Role {
+        match *self {
+            Move::Normal { role, .. } | Move::Put { role, .. } => role,
+            Move::EnPassant { .. } => Role::Pawn,
+            Move::Castle { .. } => Role::King,
+        }
+    }
+
     /// Gets the origin square or `None` for drops.
     pub fn from(&self) -> Option<Square> {
         match *self {
