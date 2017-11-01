@@ -967,10 +967,10 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
 
         // Search non-ep captures.
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-        for m in moves {
-            if let Move::Normal { capture: Some(_), .. } = m {
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
+        for m in captures {
+            if let Move::Normal { .. } = m {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
 
@@ -1002,9 +1002,9 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 return Ok((v, ProbeState::ZeroingBestMove));
             }
         } else {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            if moves.iter().any(|m| m.capture().is_some()) {
+            let mut captures = MoveList::new();
+            pos.capture_moves(&mut captures);
+            if !captures.is_empty() {
                 return Ok((Wdl::Loss, ProbeState::ZeroingBestMove));
             }
         }
@@ -1013,6 +1013,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         if threats || pos.board().occupied().count() >= 6 {
             let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
             for threat in moves {
                 if threat.role() != Role::Pawn {
                     let mut after = pos.clone();
@@ -1041,23 +1042,20 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     fn sprobe_capts(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
-        let mut captures_found = false;
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
+        let captures_found = !captures.is_empty();
 
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-        for m in moves {
-            if m.capture().is_some() {
-                captures_found = true;
+        for m in captures {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
 
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
-                let (v_plus, state) = self.sprobe_ab(pos, -beta, -alpha, false)?;
-                let v = -v_plus;
+            let (v_plus, state) = self.sprobe_ab(pos, -beta, -alpha, false)?;
+            let v = -v_plus;
 
-                alpha = max(v, alpha);
-                if alpha >= beta {
-                    break;
-                }
+            alpha = max(v, alpha);
+            if alpha >= beta {
+                break;
             }
         }
 
@@ -1093,11 +1091,9 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
 
         // If en passant is not possible we are done.
-        let ep_square = match pos.ep_square() {
-            _ if S::CAPTURES_COMPULSORY => return Ok(v),
-            None => return Ok(v),
-            Some(ep_square) => ep_square,
-        };
+        if S::CAPTURES_COMPULSORY || pos.ep_square().is_none() {
+            return Ok(v);
+        }
 
         // Now look at all legal en passant captures.
         let mut v1 = Wdl::Loss;
@@ -1147,7 +1143,7 @@ mod tests {
     #[test]
     fn test_table() {
         let mut tables = Tablebases::new();
-        tables.open_wdl_table("KQvKR.rtbw").expect("good table");
+        tables.open_wdl_table("/opt/syzygy/regular/syzygy/KQvKR.rtbw").expect("good table");
 
         let fen: Fen = "4kr2/8/Q7/8/8/8/8/4K3 w - - 0 1".parse().expect("valid fen");
         let pos: Chess = fen.position().expect("legal position");
