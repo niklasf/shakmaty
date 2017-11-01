@@ -53,7 +53,7 @@ Changelog
 ---------
 
 * Upcoming
-  - Add `Move::role()`.
+  - Add `Move::role()`, `Move::is_en_passant()` and `Move::is_castle()`.
   - Add `Position::en_passant_moves()` and `Position::capture_moves()`.
 * 0.3.0
   - Switch to `#[repr(i8)]` for `Square`. Implement all lossless integer

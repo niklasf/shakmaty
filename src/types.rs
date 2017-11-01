@@ -199,6 +199,22 @@ impl Move {
         }
     }
 
+    /// Checks if the move is en passant.
+    pub fn is_en_passant(&self) -> bool {
+        match *self {
+            Move::EnPassant { .. } => true,
+            _ => false,
+        }
+    }
+
+    /// Checks if the move is a castling move.
+    pub fn is_castle(&self) -> bool {
+        match *self {
+            Move::Castle { .. } => true,
+            _ => false,
+        }
+    }
+
     /// Gets the promotion role.
     pub fn promotion(&self) -> Option<Role> {
         match *self {
