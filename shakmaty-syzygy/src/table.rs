@@ -822,7 +822,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         assert!(!key.has_pawns());
 
-        let side = &self.files[0].sides[stm.fold(0, 1)];
+        let side = &self.files[0].sides[stm.fold(0, self.files[0].sides.len() - 1)];
 
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
 
