@@ -42,7 +42,6 @@ mod table;
 mod lazy;
 mod tablebases;
 
-pub use types::{Wdl};
+pub use types::{Syzygy, Wdl};
 pub use material::{Material, MaterialSide};
-pub use table::Syzygy;
 pub use tablebases::Tablebases;

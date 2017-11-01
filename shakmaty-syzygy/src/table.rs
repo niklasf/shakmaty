@@ -33,33 +33,8 @@ use positioned_io::ReadAt;
 
 use shakmaty::{Square, Color, Piece, Bitboard, Chess, Position};
 
-use types::Wdl;
+use types::{Syzygy, Wdl};
 use material::Material;
-
-/// A chess variant with Syzygy support.
-pub trait Syzygy {
-    const WDL_SUFFIX: &'static str;
-    const DTZ_SUFFIX: &'static str;
-    const WDL_MAGIC: [u8; 4];
-    const DTZ_MAGIC: [u8; 4];
-    const PAWNLESS_WDL_MAGIC: [u8; 4];
-    const PAWNLESS_DTZ_MAGIC: [u8; 4];
-    const ONE_KING: bool;
-    const CONNECTED_KINGS: bool;
-    const CAPTURES_COMPULSORY: bool;
-}
-
-impl Syzygy for Chess {
-    const WDL_SUFFIX: &'static str = "rtbw";
-    const DTZ_SUFFIX: &'static str = "rtbz";
-    const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
-    const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
-    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
-    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
-    const ONE_KING: bool = true;
-    const CONNECTED_KINGS: bool = false;
-    const CAPTURES_COMPULSORY: bool = false;
-}
 
 /// Syzygy tables are available for up to 6 pieces.
 const MAX_PIECES: usize = 6;

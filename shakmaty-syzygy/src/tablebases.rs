@@ -22,10 +22,10 @@ use fnv::FnvHashMap;
 
 use shakmaty::{Role, Position, MoveList};
 
-use types::Wdl;
+use types::{Syzygy, Wdl};
 use material::Material;
 use lazy::Lazy;
-use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Syzygy, Table};
+use table::{SyzygyError, SyzygyResult, ErrorKind, WdlTag, DtzTag, Table};
 
 fn rotate_role(role: Role) -> Role {
     match role {
