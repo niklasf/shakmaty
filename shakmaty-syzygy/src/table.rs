@@ -894,13 +894,13 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         while *d.symlen.get(sym as usize)? != 0 {
             let w = d.btree + 3 * sym as usize;
-            let left = (u16::from(self.raf.read_u8(w + 2)?) << 4) | (u16::from(self.raf.read_u8(w + 1)?) >> 4);
+            let left = ((u16::from(self.raf.read_u8(w + 1)?) & 0xf) << 8) | u16::from(self.raf.read_u8(w)?);
 
             if offset < i64::from(*d.symlen.get(left as usize)?) + 1 {
                 sym = left as u16;
             } else {
                 offset -= i64::from(*d.symlen.get(left as usize)?) + 1;
-                sym = ((u16::from(self.raf.read_u8(w + 1)?) & 0xf) << 8) | u16::from(self.raf.read_u8(w)?);
+                sym = (u16::from(self.raf.read_u8(w + 2)?) << 4) | (u16::from(self.raf.read_u8(w + 1)?) >> 4);
             }
         }
 
