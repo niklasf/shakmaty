@@ -114,10 +114,14 @@ impl From<Wdl> for i8 {
 /// Syzygy tables are available for up to 6 pieces.
 pub const MAX_PIECES: usize = 6;
 
+/// List of up to 6 pieces.
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
-/// Error initializing or probing a table.
+/// Causes for a probe to fail:
 ///
+/// * Position has castling rights or too many pieces
+/// * Missing table
+/// * I/O error
 /// * Unexpected magic header bytes
 /// * Corrupted table
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -127,12 +131,12 @@ pub struct SyzygyError {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub(crate) enum ErrorKind {
-    Magic,
-    CorruptedTable,
-    Read,
-    MissingTable,
     Castling,
     TooManyPieces,
+    MissingTable,
+    Read,
+    Magic,
+    CorruptedTable,
 }
 
 impl SyzygyError {
@@ -142,12 +146,12 @@ impl SyzygyError {
 
     fn desc(&self) -> &str {
         match self.kind {
-            ErrorKind::Magic => "invalid magic bytes",
-            ErrorKind::CorruptedTable => "corrupted table",
-            ErrorKind::Read => "i/o error when reading a table",
-            ErrorKind::MissingTable => "required table not found",
             ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
             ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 6 pieces",
+            ErrorKind::MissingTable => "required table not found",
+            ErrorKind::Read => "i/o error when reading a table",
+            ErrorKind::Magic => "invalid magic bytes",
+            ErrorKind::CorruptedTable => "corrupted table",
         }
     }
 }
@@ -179,4 +183,7 @@ impl From<io::Error> for SyzygyError {
     }
 }
 
+/// A [`Result`] type for Syzygy tablebase probes.
+///
+/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
