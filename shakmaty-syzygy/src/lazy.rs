@@ -25,6 +25,8 @@ pub struct Lazy<T> {
     value: UnsafeCell<Option<T>>,
 }
 
+unsafe impl<T: Sync> Sync for Lazy<T> { }
+
 impl<T> Lazy<T> {
     pub fn new() -> Lazy<T> {
         Lazy {

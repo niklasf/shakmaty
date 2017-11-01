@@ -379,3 +379,18 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use shakmaty::Chess;
+
+    fn test_send_sync() {
+        fn assert_send<T: Send>(_: T) { }
+        fn assert_sync<T: Sync>(_: T) { }
+
+        assert_send(Tablebases::<Chess>::new());
+        assert_sync(Tablebases::<Chess>::new());
+    }
+}
