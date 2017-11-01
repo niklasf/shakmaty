@@ -79,6 +79,7 @@ enum ProbeState {
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
     wdl: FnvHashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,
+    dtz: FnvHashMap<Material, (PathBuf, Lazy<Table<DtzTag, S>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
@@ -90,7 +91,8 @@ impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
 impl<S: Position + Clone + Syzygy> Tablebases<S> {
     pub fn new() -> Tablebases<S> {
         Tablebases {
-            wdl: FnvHashMap::default()
+            wdl: FnvHashMap::default(),
+            dtz: FnvHashMap::default(),
         }
     }
 
@@ -194,12 +196,13 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         path.set_extension(S::WDL_SUFFIX);
         if path.is_file() {
-            self.add_wdl_table(&path, &material);
+            self.wdl.insert(material.clone(), (path.clone(), Lazy::new()));
         }
-    }
 
-    fn add_wdl_table(&mut self, path: &Path, material: &Material) {
-        self.wdl.insert(material.clone(), (path.to_path_buf(), Lazy::new()));
+        path.set_extension(S::DTZ_SUFFIX);
+        if path.is_file() {
+            self.dtz.insert(material, (path, Lazy::new()));
+        }
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
