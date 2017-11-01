@@ -51,3 +51,10 @@ impl Neg for Wdl {
         }
     }
 }
+
+impl From<Wdl> for i8 {
+    #[inline]
+    fn from(wdl: Wdl) -> i8 {
+        wdl as i8
+    }
+}
