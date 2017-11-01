@@ -502,8 +502,6 @@ impl PairsData {
         let flags = Flag::from_bits_truncate(raf.read_u8(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
-            ptr += 1;
-
             return Ok((PairsData {
                 flags,
                 min_symlen: raf.read_u8(ptr + 1)?,
@@ -520,7 +518,7 @@ impl PairsData {
                 sparse_index: 0,
                 sparse_index_size: 0,
                 symlen: Vec::new(),
-            }, ptr + 1));
+            }, ptr + 2));
         }
 
         let tb_size = groups.factors[groups.lens.len()];
@@ -910,8 +908,9 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         let (side, idx) = self.encode(pos)?;
+        let decompressed = self.decompress_pairs(side, idx)?;
 
-        Ok(match self.decompress_pairs(side, idx)? {
+        Ok(match decompressed {
             0 => Wdl::Loss,
             1 => Wdl::BlessedLoss,
             2 => Wdl::Draw,
