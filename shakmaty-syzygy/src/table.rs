@@ -498,13 +498,20 @@ fn read_symlen(raf: &RandomAccessFile, btree: usize, symlen: &mut Vec<u8>, visit
 }
 
 impl PairsData {
-    pub fn parse(raf: &RandomAccessFile, mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
+    pub fn parse<S: Syzygy, T: IsWdl>(raf: &RandomAccessFile, mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
         let flags = Flag::from_bits_truncate(raf.read_u8(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
+            let single_value = if T::IS_WDL {
+                raf.read_u8(ptr + 1)?
+            } else {
+                // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
+                if S::CAPTURES_COMPULSORY { 1 } else { 0 }
+            };
+
             return Ok((PairsData {
                 flags,
-                min_symlen: raf.read_u8(ptr + 1)?,
+                min_symlen: single_value,
                 groups,
                 base: Vec::new(),
                 block_lengths: 0,
@@ -682,7 +689,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
             for side in [Color::White, Color::Black].iter().take(num_sides) {
                 let group = groups[f][side.fold(0, 1)].clone();
-                let (pairs, next_ptr) = PairsData::parse(&raf, ptr, group)?;
+                let (pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
 
                 if !T::IS_WDL {
                     panic!("TODO: Antichess");
