@@ -103,7 +103,8 @@ enum ErrorKind {
     CorruptedTable,
     Read,
     MissingTable,
-    Position,
+    Castling,
+    TooManyPieces,
 }
 
 impl SyzygyError {
@@ -113,7 +114,8 @@ impl SyzygyError {
             ErrorKind::CorruptedTable => "corrupted table",
             ErrorKind::Read => "i/o error when reading a table",
             ErrorKind::MissingTable => "required table not found",
-            ErrorKind::Position => "position not contained in tables",
+            ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
+            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 6 pieces",
         }
     }
 }
@@ -1083,8 +1085,11 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        if pos.castling_rights().any() || pos.board().occupied().count() > 6 {
-            return Err(SyzygyError { kind: ErrorKind::Position });
+        if pos.board().occupied().count() > 6 {
+            return Err(SyzygyError { kind: ErrorKind::TooManyPieces });
+        }
+        if pos.castling_rights().any() {
+            return Err(SyzygyError { kind: ErrorKind::Castling });
         }
 
         // Probe.
