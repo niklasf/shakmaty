@@ -28,6 +28,7 @@ const ROLES: [Role; 6] = [
     Role::Pawn,
 ];
 
+/// The material configuration of one side.
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
@@ -105,6 +106,7 @@ impl FromIterator<Role> for MaterialSide {
     }
 }
 
+/// The material configuration of both sides.
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     pub white: MaterialSide,

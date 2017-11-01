@@ -75,6 +75,7 @@ enum ProbeState {
     Threat,
 }
 
+/// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
     wdl: FnvHashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,

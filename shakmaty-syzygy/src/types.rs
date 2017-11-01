@@ -63,7 +63,7 @@ impl Syzygy for Chess {
     const CAPTURES_COMPULSORY: bool = false;
 }
 
-/// A 5-valued evaluation of a position in the context of the 50-move drawing
+/// 5-valued evaluation of a position in the context of the 50-move drawing
 /// rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
@@ -117,7 +117,9 @@ pub const MAX_PIECES: usize = 6;
 /// List of up to 6 pieces.
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
-/// Causes for a probe to fail:
+/// Error when probing a table.
+///
+/// Possible causes:
 ///
 /// * Position has castling rights or too many pieces
 /// * Missing table
