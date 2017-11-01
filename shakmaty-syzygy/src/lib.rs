@@ -1036,6 +1036,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         // Now look at all legal en passant captures.
         let mut v1 = Wdl::Loss;
+        let mut ep_found = false;
         let mut ep_only = true;
 
         let mut moves = MoveList::new();
@@ -1049,10 +1050,13 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 let v0 = -v0_plus;
 
                 v1 = max(v0, v1);
+                ep_found = true;
             } else {
                 ep_only = false;
             }
         }
+
+        assert!(ep_found);
 
         if v1 >= v {
             v = v1;
