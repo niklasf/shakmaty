@@ -526,7 +526,7 @@ impl PairsData {
 
         // Initialize base.
         let mut base = vec![0u64; h];
-        for i in (0..=h - 2).rev() {
+        for i in (0..h - 1).rev() {
             let ptr = lowest_sym + i * 2;
 
             base[i] = base[i + 1]
