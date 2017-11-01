@@ -196,6 +196,18 @@ const MULT_TWIST: [u64; 64] = [
     14, 60, 52, 44, 43, 51, 59, 13,
 ];
 
+/// Maps the b1-h1-h7 triangle to `0..=27`.
+const LOWER: [u64; 64] = [
+    28,  0,  1,  2,  3,  4,  5,  6,
+     0, 29,  7,  8,  9, 10, 11, 12,
+     1,  7, 30, 13, 14, 15, 16, 17,
+     2,  8, 13, 31, 18, 19, 20, 21,
+     3,  9, 14, 18, 32, 22, 23, 24,
+     4, 10, 15, 19, 22, 33, 25, 26,
+     5, 11, 16, 20, 23, 25, 34, 27,
+     6, 12, 17, 21, 24, 26, 27, 35,
+];
+
 const INV_TRIANGLE: [usize; 10] = [1, 2, 3, 10, 11, 19, 0, 9, 18, 27];
 
 struct Consts {
@@ -858,6 +870,11 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 TRIANGLE[usize::from(squares[0])] * 63 * 62 +
                 (u64::from(squares[1]) - adjust1) * 62 +
                 (u64::from(squares[2]) - adjust2)
+            } else if offdiag(squares[1]) {
+                6 * 63 * 62 +
+                squares[0].rank() as u64 * 28 * 62 +
+                LOWER[usize::from(squares[1])] * 62 +
+                u64::from(squares[2]) - adjust2
             } else {
                 panic!("TODO: enc 0 not fully implemented");
             }
