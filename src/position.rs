@@ -170,6 +170,22 @@ pub trait Position: Setup {
         });
     }
 
+    /// Generates en passant moves.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `moves` is too full. This can not happen if an empty
+    /// [`MoveList`] is passed.
+    ///
+    /// [`MoveList`]: type.MoveList.html
+    fn en_passant_moves(&self, moves: &mut MoveList) {
+        self.legal_moves(moves);
+        moves.retain(|m| match *m {
+            Move::EnPassant { .. } => true,
+            _ => false,
+        });
+    }
+
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
         let mut moves = MoveList::new();
@@ -335,7 +351,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|&s| is_relevant_ep(self, s)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -395,6 +411,14 @@ impl Position for Chess {
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
         gen_castling_moves(self, king, side, moves);
+    }
+
+    fn en_passant_moves(&self, moves: &mut MoveList) {
+        if gen_en_passant(self.board(), self.turn(), self.ep_square, moves) {
+            let king = self.board().king_of(self.turn()).expect("king in standard chess");
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+        }
     }
 
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
@@ -823,16 +847,10 @@ unsafe fn push_promotions(moves: &mut MoveList, from: Square, to: Square, captur
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
 }
 
-fn is_relevant_ep<P: Position>(pos: &P, ep_square: Square) -> bool {
+fn has_relevant_ep<P: Position>(pos: &P) -> bool {
     let mut moves = MoveList::new();
-    gen_en_passant(pos.board(), pos.turn(), Some(ep_square), &mut moves) && {
-        moves.clear();
-        pos.legal_moves(&mut moves);
-        moves.iter().any(|m| match *m {
-            Move::EnPassant { to, .. } => to == ep_square,
-            _ => false
-        })
-    }
+    pos.en_passant_moves(&mut moves);
+    !moves.is_empty()
 }
 
 fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) -> bool {

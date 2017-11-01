@@ -54,6 +54,7 @@ Changelog
 
 * Upcoming
   - Add `Move::role()`.
+  - Add `Position::en_passant_moves()`.
 * 0.3.0
   - Switch to `#[repr(i8)]` for `Square`. Implement all lossless integer
     conversions `From<Square>`.
