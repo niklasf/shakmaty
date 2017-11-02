@@ -21,7 +21,7 @@ use fnv::FnvHashMap;
 
 use shakmaty::{Role, Position, MoveList};
 
-use types::{Syzygy, Wdl, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
+use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
 use lazy::Lazy;
 use table::{WdlTag, DtzTag, Table};
@@ -378,6 +378,17 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             Err(SyzygyError::new(ErrorKind::MissingTable))
         }
     }
+
+    pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
+        if pos.board().occupied().count() > MAX_PIECES {
+            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
+        }
+        if pos.castling_rights().any() {
+            return Err(SyzygyError::new(ErrorKind::Castling));
+        }
+
+        panic!("TODO: implement probe_dtz")
+    }
 }
 
 #[cfg(test)]
@@ -386,6 +397,7 @@ mod tests {
 
     use shakmaty::Chess;
 
+    #[test]
     fn test_send_sync() {
         fn assert_send<T: Send>(_: T) { }
         fn assert_sync<T: Sync>(_: T) { }
