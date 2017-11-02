@@ -125,6 +125,7 @@ impl From<Wdl> for i8 {
 /// | 0 | Draw | |
 /// | `100 < n` | Cursed win | Win, but draw under the 50-move rule. A zeroing move can be forced in `n` or `n - 100` plies (if a later phase is responsible for the curse). |
 /// | `1 <= n <= 100` | Win | Unconditional win (assuming the 50-move counter is zero). Zeroing move can be forced in `n` plies. |
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Dtz(pub i16);
 
 impl From<Dtz> for i16 {
@@ -143,6 +144,15 @@ impl From<Dtz> for Wdl {
             n if 100 < n => Wdl::CursedWin,
             _ => Wdl::Win,
         }
+    }
+}
+
+impl Neg for Dtz {
+    type Output = Dtz;
+
+    #[inline]
+    fn neg(self) -> Dtz {
+        Dtz(-self.0)
     }
 }
 
