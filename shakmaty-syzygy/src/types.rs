@@ -111,6 +111,41 @@ impl From<Wdl> for i8 {
     }
 }
 
+/// Distance to zeroing.
+///
+/// Can be off by one: `Dtz(-n)` can mean a loss in `n + 1` plies and `Dtz(n)`
+/// can mean a win in `n + 1` plies. This is guaranteed not to happen for
+/// positions exactly on the edge of the 50-move rule, so that this never
+/// impacts results of practical play.
+///
+/// | DTZ | WDL | |
+/// | --- | --- | --- |
+/// | `-100 <= n <= -1` | Loss | Unconditional loss (assuming the 50-move counter is zero). Zeroing move can be forced in `-n` plies. |
+/// | `n < -100` | Blessed loss | Loss, but draw under the 50-move rule. A zeroing move can be forced in `-n` plies or `-n - 100` plies (if a later phase is responsible for the blessing). |
+/// | 0 | Draw | |
+/// | `100 < n` | Cursed win | Win, but draw under the 50-move rule. A zeroing move can be forced in `n` or `n - 100` plies (if a later phase is responsible for the curse). |
+/// | `1 <= n <= 100` | Win | Unconditional win (assuming the 50-move counter is zero). Zeroing move can be forced in `n` plies. |
+pub struct Dtz(pub i16);
+
+impl From<Dtz> for i16 {
+    #[inline]
+    fn from(dtz: Dtz) -> i16 {
+        dtz.0
+    }
+}
+
+impl From<Dtz> for Wdl {
+    fn from(dtz: Dtz) -> Wdl {
+        match dtz.0 {
+            n if -100 <= n && n <= -1 => Wdl::Loss,
+            n if n < -100 => Wdl::BlessedLoss,
+            0 => Wdl::Draw,
+            n if 100 < n => Wdl::CursedWin,
+            _ => Wdl::Win,
+        }
+    }
+}
+
 /// Syzygy tables are available for up to 6 pieces.
 pub const MAX_PIECES: usize = 6;
 
