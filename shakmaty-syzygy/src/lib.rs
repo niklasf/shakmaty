@@ -35,11 +35,11 @@ extern crate num_integer;
 extern crate shakmaty;
 extern crate positioned_io;
 extern crate fnv;
+extern crate double_checked_cell;
 
 mod material;
 mod types;
 mod table;
-mod lazy;
 mod tablebases;
 
 pub use types::{Syzygy, Wdl, Dtz, SyzygyError};

@@ -18,12 +18,12 @@ use std::cmp::max;
 use std::path::{Path, PathBuf};
 
 use fnv::FnvHashMap;
+use double_checked_cell::DoubleCheckedCell;
 
 use shakmaty::{Role, Position, MoveList};
 
 use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
-use lazy::Lazy;
 use table::{WdlTag, DtzTag, Table};
 
 fn rotate_role(role: Role) -> Role {
@@ -78,8 +78,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
-    wdl: FnvHashMap<Material, (PathBuf, Lazy<Table<WdlTag, S>>)>,
-    dtz: FnvHashMap<Material, (PathBuf, Lazy<Table<DtzTag, S>>)>,
+    wdl: FnvHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S>>)>,
+    dtz: FnvHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
@@ -196,12 +196,12 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         path.set_extension(S::TBW_EXTENSION);
         if path.is_file() {
-            self.wdl.insert(material.clone(), (path.clone(), Lazy::new()));
+            self.wdl.insert(material.clone(), (path.clone(), DoubleCheckedCell::new()));
         }
 
         path.set_extension(S::TBZ_EXTENSION);
         if path.is_file() {
-            self.dtz.insert(material, (path, Lazy::new()));
+            self.dtz.insert(material, (path, DoubleCheckedCell::new()));
         }
     }
 
@@ -372,7 +372,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         // Probe table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
-            let table = table.get_or_init(|| Table::open(path, &key))?;
+            let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_wdl_table(pos)
         } else {
             Err(SyzygyError::new(ErrorKind::MissingTable))
