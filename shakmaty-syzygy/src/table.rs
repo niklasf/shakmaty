@@ -840,9 +840,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             used.extend(lead_pawns);
             squares.extend(lead_pawns.map(|sq| if flip { sq.flip_vertical() } else { sq }));
 
-            // TODO: Putting the maximum first would be sufficient.
             squares.sort_unstable_by_key(|sq| CONSTS.map_pawns[usize::from(*sq)]);
-            squares.reverse();
 
             if squares[0].file() >= 4 {
                 squares[0].flip_horizontal().file() as usize
@@ -852,6 +850,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         } else {
             0
         };
+
+        let lead_pawns_count = squares.len();
 
         if !T::IS_WDL {
             panic!("check_dtz_stm")
@@ -875,7 +875,13 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         }
 
         let mut idx = if self.material.has_pawns() {
-            panic!("implement pawns")
+            let mut idx = CONSTS.lead_pawn_idx[lead_pawns_count][usize::from(squares[0])];
+
+            for i in 1..lead_pawns_count {
+                idx += binomial(CONSTS.map_pawns[usize::from(squares[i])], i as u64);
+            }
+
+            idx
         } else {
             if squares[0].rank() >= 4 {
                 for square in &mut squares {
@@ -935,7 +941,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         idx *= side.groups.factors[0];
 
-        let mut remaining_pawns = false;
+        let mut remaining_pawns = self.material.white.has_pawns() && self.material.black.has_pawns();
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
         for lens in side.groups.lens.iter().cloned().skip(1) {
