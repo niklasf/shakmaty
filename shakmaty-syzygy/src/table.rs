@@ -829,7 +829,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let symmetric_btm = material.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != material;
         let flip = symmetric_btm || black_stronger;
-        let stm = pos.turn() ^ flip;
+        let bside = pos.turn().is_white() ^ flip;
 
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
         let mut used = Bitboard(0);
@@ -860,7 +860,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             panic!("check_dtz_stm")
         }
 
-        let side = &self.files[file].sides[stm.fold(0, self.files[file].sides.len() - 1)];
+        let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
 
         for piece in side.groups.pieces.iter().skip(squares.len()) {
             let color = piece.color ^ flip;
@@ -970,7 +970,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         let (side, idx) = self.encode(pos)?;
-        println!("side: {:?}", side);
+        //println!("side: {:?}", side);
         println!("idx: {}", idx);
         let decompressed = self.decompress_pairs(side, idx)?;
         println!("decompressed: {}", decompressed);
