@@ -210,6 +210,7 @@ lazy_static! {
 struct Consts {
     mult_idx: [[u64; 10]; 5],
     mult_factor: [u64; 5],
+    map_pawns: [u64; 64],
     lead_pawn_idx: [[u64; 64]; 5],
     lead_pawns_size: [[u64; 4]; 5],
 }
@@ -254,7 +255,7 @@ impl Consts {
             }
         }
 
-        Consts { mult_idx, mult_factor, lead_pawn_idx, lead_pawns_size }
+        Consts { mult_idx, mult_factor, map_pawns, lead_pawn_idx, lead_pawns_size }
     }
 }
 
@@ -830,24 +831,42 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
         let mut used = Bitboard(0);
 
-        if self.material.has_pawns() {
+        let file = if self.material.has_pawns() {
             let reference_pawn = self.files[0].sides[0].groups.pieces[0];
             assert_eq!(reference_pawn.role, Role::Pawn);
             let color = reference_pawn.color ^ flip;
 
             let lead_pawns = pos.board().pawns() & pos.board().by_color(color);
+            used.extend(lead_pawns);
             squares.extend(lead_pawns.map(|sq| if flip { sq.flip_vertical() } else { sq }));
-            assert!(!key.has_pawns());
+
+            // TODO: Putting the maximum first would be sufficient.
+            squares.sort_unstable_by_key(|sq| CONSTS.map_pawns[usize::from(*sq)]);
+            squares.reverse();
+
+            if squares[0].file() >= 4 {
+                squares[0].flip_horizontal().file() as usize
+            } else {
+                squares[0].file() as usize
+            }
+        } else {
+            0
+        };
+
+        if !T::IS_WDL {
+            panic!("check_dtz_stm")
         }
 
-        let side = &self.files[0].sides[stm.fold(0, self.files[0].sides.len() - 1)];
+        let side = &self.files[file].sides[stm.fold(0, self.files[0].sides.len() - 1)];
 
-        for piece in &side.groups.pieces {
+        for piece in side.groups.pieces.iter().skip(squares.len()) {
             let color = Color::from_white(piece.color.is_white() ^ (symmetric_btm || black_stronger));
             let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
             squares.push(square);
             used.add(square);
         }
+
+        assert!(squares.len() >= 2);
 
         if squares[0].file() >= 4 {
             for square in &mut squares {
@@ -855,60 +874,63 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        assert!(!key.has_pawns());
-
-        if squares[0].rank() >= 4 {
-            for square in &mut squares {
-                *square = square.flip_vertical();
-            }
-        }
-
-        for i in 0..side.groups.lens[0] {
-            if squares[i].file() == squares[i].rank() {
-                continue;
-            }
-
-            if squares[i].rank() > squares[i].file() {
-                for square in &mut squares[i..] {
-                    *square = square.flip_diagonal();
+        let mut idx = if self.material.has_pawns() {
+            panic!("implement pawns")
+        } else {
+            if squares[0].rank() >= 4 {
+                for square in &mut squares {
+                    *square = square.flip_vertical();
                 }
             }
 
-            break;
-        }
+            for i in 0..side.groups.lens[0] {
+                if squares[i].file() == squares[i].rank() {
+                    continue;
+                }
 
-        let mut idx = if self.num_unique_pieces > 2 {
-            let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
-            let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } + if squares[2] > squares[1] { 1 } else { 0 };
+                if squares[i].rank() > squares[i].file() {
+                    for square in &mut squares[i..] {
+                        *square = square.flip_diagonal();
+                    }
+                }
 
-            if offdiag(squares[0]) {
-                TRIANGLE[usize::from(squares[0])] * 63 * 62 +
-                (u64::from(squares[1]) - adjust1) * 62 +
-                (u64::from(squares[2]) - adjust2)
-            } else if offdiag(squares[1]) {
-                6 * 63 * 62 +
-                squares[0].rank() as u64 * 28 * 62 +
-                LOWER[usize::from(squares[1])] * 62 +
-                u64::from(squares[2]) - adjust2
-            } else if offdiag(squares[2]) {
-                6 * 63 * 62 + 4 * 28 * 62 +
-                squares[0].rank() as u64 * 7 * 28 +
-                (squares[1].rank() as u64 - adjust1) * 28 +
-                LOWER[usize::from(squares[2])]
-            } else {
-                6 * 63 * 62 + 4 * 28 * 62 + 4 * 7 * 28 +
-                squares[0].rank() as u64 * 7 * 6 +
-                (squares[1].rank() as u64 - adjust1) * 6 +
-                (squares[2].rank() as u64 - adjust2)
+                break;
             }
-        } else if self.num_unique_pieces == 2 {
-            if S::CONNECTED_KINGS {
-                panic!("connected kings not implemented")
+
+            if self.num_unique_pieces > 2 {
+                let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
+                let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } +
+                              if squares[2] > squares[1] { 1 } else { 0 };
+
+                if offdiag(squares[0]) {
+                    TRIANGLE[usize::from(squares[0])] * 63 * 62 +
+                    (u64::from(squares[1]) - adjust1) * 62 +
+                    (u64::from(squares[2]) - adjust2)
+                } else if offdiag(squares[1]) {
+                    6 * 63 * 62 +
+                    squares[0].rank() as u64 * 28 * 62 +
+                    LOWER[usize::from(squares[1])] * 62 +
+                    u64::from(squares[2]) - adjust2
+                } else if offdiag(squares[2]) {
+                    6 * 63 * 62 + 4 * 28 * 62 +
+                    squares[0].rank() as u64 * 7 * 28 +
+                    (squares[1].rank() as u64 - adjust1) * 28 +
+                    LOWER[usize::from(squares[2])]
+                } else {
+                    6 * 63 * 62 + 4 * 28 * 62 + 4 * 7 * 28 +
+                    squares[0].rank() as u64 * 7 * 6 +
+                    (squares[1].rank() as u64 - adjust1) * 6 +
+                    (squares[2].rank() as u64 - adjust2)
+                }
+            } else if self.num_unique_pieces == 2 {
+                if S::CONNECTED_KINGS {
+                    panic!("connected kings not implemented")
+                } else {
+                    KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
+                }
             } else {
-                KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
+                panic!("TODO: minlikeman not implemented")
             }
-        } else {
-            panic!("TODO: minlikeman not implemented")
         };
 
         idx *= side.groups.factors[0];
