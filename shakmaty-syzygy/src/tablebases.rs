@@ -359,6 +359,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
+        println!("probe_wdl_table {}", ::shakmaty::fen::epd(pos, &::shakmaty::fen::FenOpts::default()));
+
         // Test for KvK.
         if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
             return Ok(Wdl::Draw);

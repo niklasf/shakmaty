@@ -744,6 +744,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
         if d.flags.contains(Flag::SINGLE_VALUE) {
+            println!("single value: {}", d.min_symlen);
             return Ok(d.min_symlen);
         }
 
@@ -822,16 +823,18 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     fn encode(&self, pos: &S) -> SyzygyResult<(&PairsData, u64)> {
         let key = Material::from_board(pos.board());
+        let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
+        assert!(key == material || key == material.flip());
 
-        let symmetric_btm = self.material.is_symmetric() && pos.turn().is_black();
-        let black_stronger = key != Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
+        let symmetric_btm = material.is_symmetric() && pos.turn().is_black();
+        let black_stronger = key != material;
         let flip = symmetric_btm || black_stronger;
         let stm = pos.turn() ^ flip;
 
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
         let mut used = Bitboard(0);
 
-        let file = if self.material.has_pawns() {
+        let file = if material.has_pawns() {
             let reference_pawn = self.files[0].sides[0].groups.pieces[0];
             assert_eq!(reference_pawn.role, Role::Pawn);
             let color = reference_pawn.color ^ flip;
@@ -857,10 +860,10 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             panic!("check_dtz_stm")
         }
 
-        let side = &self.files[file].sides[stm.fold(0, self.files[0].sides.len() - 1)];
+        let side = &self.files[file].sides[stm.fold(0, self.files[file].sides.len() - 1)];
 
         for piece in side.groups.pieces.iter().skip(squares.len()) {
-            let color = Color::from_white(piece.color.is_white() ^ (symmetric_btm || black_stronger));
+            let color = piece.color ^ flip;
             let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
             squares.push(square);
             used.add(square);
@@ -874,7 +877,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        let mut idx = if self.material.has_pawns() {
+        let mut idx = if material.has_pawns() {
             let mut idx = CONSTS.lead_pawn_idx[lead_pawns_count][usize::from(squares[0])];
 
             for i in 1..lead_pawns_count {
@@ -941,7 +944,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         idx *= side.groups.factors[0];
 
-        let mut remaining_pawns = self.material.white.has_pawns() && self.material.black.has_pawns();
+        let mut remaining_pawns = material.white.has_pawns() && material.black.has_pawns();
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
         for lens in side.groups.lens.iter().cloned().skip(1) {
@@ -967,6 +970,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         let (side, idx) = self.encode(pos)?;
+        println!("side: {:?}", side);
         println!("idx: {}", idx);
         let decompressed = self.decompress_pairs(side, idx)?;
         println!("decompressed: {}", decompressed);
