@@ -492,6 +492,11 @@ impl Iterator for CarryRippler {
             None
         }
     }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, 1usize.checked_shl(self.bb.count_ones()))
+    }
 }
 
 #[cfg(nightly)]
