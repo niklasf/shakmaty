@@ -313,7 +313,7 @@ impl RandomAccessFile {
 }
 
 fn byte_to_piece(p: u8) -> Option<Piece> {
-    let color = Color::from_white(p & 8 != 0);
+    let color = Color::from_white(p & 8 == 0);
     Some(match p & !8 {
         1 => color.pawn(),
         2 => color.knight(),
@@ -829,7 +829,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let symmetric_btm = material.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != material;
         let flip = symmetric_btm || black_stronger;
-        let bside = pos.turn().is_white() ^ flip;
+        let bside = pos.turn().is_black() ^ flip;
 
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
         let mut used = Bitboard(0);
