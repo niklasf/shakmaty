@@ -28,7 +28,7 @@ use byteorder::{ByteOrder, LittleEndian, BigEndian};
 use itertools::Itertools;
 use positioned_io::ReadAt;
 
-use shakmaty::{Square, Color, Piece, Bitboard, Position};
+use shakmaty::{Square, Color, Role, Piece, Bitboard, Position};
 
 use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
@@ -312,7 +312,7 @@ impl RandomAccessFile {
 }
 
 fn byte_to_piece(p: u8) -> Option<Piece> {
-    let color = Color::from_bool(p & 8 != 0);
+    let color = Color::from_white(p & 8 != 0);
     Some(match p & !8 {
         1 => color.pawn(),
         2 => color.knight(),
@@ -824,17 +824,26 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let symmetric_btm = self.material.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
-        let stm = Color::from_bool((symmetric_btm || black_stronger) ^ pos.turn().is_black());
+        let flip = symmetric_btm || black_stronger;
+        let stm = pos.turn() ^ flip;
 
-        assert!(!key.has_pawns());
+        let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
+        let mut used = Bitboard(0);
+
+        if self.material.has_pawns() {
+            let reference_pawn = self.files[0].sides[0].groups.pieces[0];
+            assert_eq!(reference_pawn.role, Role::Pawn);
+            let color = reference_pawn.color ^ flip;
+
+            let lead_pawns = pos.board().pawns() & pos.board().by_color(color);
+            squares.extend(lead_pawns.map(|sq| if flip { sq.flip_vertical() } else { sq }));
+            assert!(!key.has_pawns());
+        }
 
         let side = &self.files[0].sides[stm.fold(0, self.files[0].sides.len() - 1)];
 
-        let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
-
-        let mut used = Bitboard(0);
         for piece in &side.groups.pieces {
-            let color = Color::from_bool(piece.color.is_white() ^ (symmetric_btm || black_stronger));
+            let color = Color::from_white(piece.color.is_white() ^ (symmetric_btm || black_stronger));
             let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
             squares.push(square);
             used.add(square);
