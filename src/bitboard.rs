@@ -441,6 +441,9 @@ impl ExactSizeIterator for Bitboard {
     }
 }
 
+#[cfg(nightly)]
+impl ::std::iter::FusedIterator for Bitboard { }
+
 impl DoubleEndedIterator for Bitboard {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
@@ -490,6 +493,9 @@ impl Iterator for CarryRippler {
         }
     }
 }
+
+#[cfg(nightly)]
+impl ::std::iter::FusedIterator for CarryRippler { }
 
 #[cfg(test)]
 mod tests {

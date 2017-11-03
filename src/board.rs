@@ -356,6 +356,9 @@ impl ExactSizeIterator for Pieces {
     }
 }
 
+#[cfg(nightly)]
+impl ::std::iter::FusedIterator for Pieces { }
+
 #[cfg(test)]
 mod tests {
     use super::*;
