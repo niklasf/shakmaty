@@ -82,6 +82,15 @@ impl ops::Not for Color {
     }
 }
 
+impl ops::BitXor<bool> for Color {
+    type Output = Color;
+
+    #[inline]
+    fn bitxor(self, flip: bool) -> Color {
+        Color::from_white(self.is_white() ^ flip)
+    }
+}
+
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Role {
