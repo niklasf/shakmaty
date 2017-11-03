@@ -40,7 +40,7 @@ impl Color {
     }
 
     #[inline]
-    pub fn from_bool(white: bool) -> Color {
+    pub fn from_white(white: bool) -> Color {
         if white { Color::White } else { Color::Black }
     }
 
@@ -142,7 +142,7 @@ impl Piece {
 
     pub fn from_char(ch: char) -> Option<Piece> {
         Role::from_char(ch).map(|role| {
-            role.of(Color::from_bool(32 & ch as u8 == 0))
+            role.of(Color::from_white(32 & ch as u8 == 0))
         })
     }
 }

@@ -53,8 +53,10 @@ Changelog
 ---------
 
 * Upcoming
+  - Rename `Color::from_bool()` to `Color::from_white()`.
   - Add `Move::role()`, `Move::is_en_passant()` and `Move::is_castle()`.
   - Add `Position::en_passant_moves()` and `Position::capture_moves()`.
+  - Implement `FusedIterator` and `TrustedLen` on `Bitboard`.
 * 0.3.0
   - Switch to `#[repr(i8)]` for `Square`. Implement all lossless integer
     conversions `From<Square>`.

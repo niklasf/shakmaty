@@ -150,7 +150,7 @@ impl Board {
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.role_at(sq).map(|role| {
-            Piece { color: Color::from_bool(self.white().contains(sq)), role }
+            Piece { color: Color::from_white(self.white().contains(sq)), role }
         })
     }
 
@@ -312,22 +312,22 @@ impl Iterator for Pieces {
 
     fn next(&mut self) -> Option<(Square, Piece)> {
         if let Some(sq) = self.pawns.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).pawn())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).pawn())));
         }
         if let Some(sq) = self.knights.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).knight())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).knight())));
         }
         if let Some(sq) = self.bishops.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).bishop())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).bishop())));
         }
         if let Some(sq) = self.rooks.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).rook())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).rook())));
         }
         if let Some(sq) = self.queens.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).queen())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).queen())));
         }
         if let Some(sq) = self.kings.next() {
-            return Some((sq, (Color::from_bool(self.white.contains(sq)).king())));
+            return Some((sq, (Color::from_white(self.white.contains(sq)).king())));
         }
         None
     }
