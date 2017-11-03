@@ -45,6 +45,11 @@ impl Color {
     }
 
     #[inline]
+    pub fn from_black(black: bool) -> Color {
+        if black { Color::Black } else { Color::White }
+    }
+
+    #[inline]
     pub fn fold<T>(self, white: T, black: T) -> T {
         match self {
             Color::White => white,

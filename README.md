@@ -53,7 +53,8 @@ Changelog
 ---------
 
 * Upcoming
-  - Rename `Color::from_bool()` to `Color::from_white()`.
+  - Rename `Color::from_bool()` to `Color::from_white()`,
+    add `Color::from_black()`.
   - Add `Move::role()`, `Move::is_en_passant()` and `Move::is_castle()`.
   - Add `Position::en_passant_moves()` and `Position::capture_moves()`.
   - Implement `BitXor<bool>` for `Color`.
