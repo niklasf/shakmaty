@@ -865,7 +865,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         for piece in side.groups.pieces.iter().skip(squares.len()) {
             let color = piece.color ^ flip;
             let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
-            squares.push(square);
+            squares.push(if flip { square.flip_vertical() } else { square });
             used.add(square);
         }
 
