@@ -52,7 +52,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.4.0
   - Rename `Color::from_bool()` to `Color::from_white()`,
     add `Color::from_black()`.
   - Add `Move::role()`, `Move::is_en_passant()` and `Move::is_castle()`.
