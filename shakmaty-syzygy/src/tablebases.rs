@@ -66,6 +66,7 @@ impl Iterator for RoleRange {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {
     /// Probe successful.
     Normal,
@@ -398,6 +399,41 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
 
         panic!("TODO: implement probe_dtz")
+    }
+
+    fn probe_dtz_no_ep(&self, pos: &S) -> SyzygyResult<Dtz> {
+        let (wdl, state) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, true)?;
+
+        if wdl == Wdl::Draw {
+            return Ok(Dtz(0));
+        }
+
+        if state == ProbeState::ZeroingBestMove || pos.us() == pos.our(Role::Pawn) {
+            return Ok(Dtz::before_zeroing(wdl));
+        }
+
+        if wdl > Wdl::Draw {
+            // The position is a win or a cursed win by a threat move.
+            if state == ProbeState::Threat {
+                return Ok(Dtz(if wdl == Wdl::Win { 2 } else { 101 }));
+            }
+
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            moves.retain(|m| m.role() == Role::Pawn && !m.capture().is_some());
+            for m in moves {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+
+                let v = -self.probe_wdl(pos)?;
+
+                if v == wdl {
+                    return Ok(Dtz(if v == Wdl::Win { 1} else { 101 }));
+                }
+            }
+        }
+
+        panic!("probe_dtz_table")
     }
 }
 

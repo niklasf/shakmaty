@@ -135,6 +135,18 @@ impl From<Dtz> for i16 {
     }
 }
 
+impl Dtz {
+    pub fn before_zeroing(wdl: Wdl) -> Dtz {
+        match wdl {
+            Wdl::Loss => Dtz(-1),
+            Wdl::BlessedLoss => Dtz(-101),
+            Wdl::Draw => Dtz(0),
+            Wdl::CursedWin => Dtz(101),
+            Wdl::Win => Dtz(1),
+        }
+    }
+}
+
 impl From<Dtz> for Wdl {
     fn from(dtz: Dtz) -> Wdl {
         match dtz.0 {
