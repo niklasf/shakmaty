@@ -257,7 +257,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         if S::CAPTURES_COMPULSORY {
             if let Some(outcome) = pos.variant_outcome() {
-                return Ok((Wdl::from_outcome(outcome, pos.turn()), ProbeState::ZeroingBestMove));
+                return Ok((Wdl::from_outcome(&outcome, pos.turn()), ProbeState::ZeroingBestMove));
             }
 
             return self.probe_compulsory_captures(pos, alpha, beta, threats);
@@ -368,7 +368,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
         // Variant game end.
         if let Some(outcome) = pos.variant_outcome() {
-            return Ok(Wdl::from_outcome(outcome, pos.turn()));
+            return Ok(Wdl::from_outcome(&outcome, pos.turn()));
         }
 
         // Probe table.

@@ -81,8 +81,8 @@ pub enum Wdl {
 }
 
 impl Wdl {
-    pub(crate) fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
-        match outcome {
+    pub(crate) fn from_outcome(outcome: &Outcome, pov: Color) -> Wdl {
+        match *outcome {
             Outcome::Draw => Wdl::Draw,
             Outcome::Decisive { winner } if winner == pov => Wdl::Win,
             _ => Wdl::Loss,
