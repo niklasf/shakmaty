@@ -97,88 +97,96 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) {
+        if S::ONE_KING {
+            self.add_directory_one_king(path.as_ref())
+        } else {
+            self.add_directory_many_kings(path.as_ref())
+        }
+    }
+
+    fn add_directory_one_king(&mut self, base: &Path) {
         use self::Role::*;
 
-        let base = path.as_ref();
+        for a in RoleRange::excl(Pawn, King) {
+            self.add_both(base, &[King, a], &[King]);
 
-        if S::ONE_KING {
-            for a in RoleRange::excl(Pawn, King) {
-                self.add_both(base, &[King, a], &[King]);
+            for b in RoleRange::incl(Pawn, a) {
+                self.add_both(base, &[King, a, b], &[King]);
+                self.add_both(base, &[King, a], &[King, b]);
 
-                for b in RoleRange::incl(Pawn, a) {
-                    self.add_both(base, &[King, a, b], &[King]);
-                    self.add_both(base, &[King, a], &[King, b]);
+                for c in RoleRange::excl(Pawn, King) {
+                    self.add_both(base, &[King, a, b], &[King, c]);
+                }
 
-                    for c in RoleRange::excl(Pawn, King) {
-                        self.add_both(base, &[King, a, b], &[King, c]);
+                for c in RoleRange::incl(Pawn, b) {
+                    self.add_both(base, &[King, a, b, c], &[King]);
+
+                    for d in RoleRange::incl(Pawn, c) {
+                        self.add_both(base, &[King, a, b, c, d], &[King]);
                     }
 
-                    for c in RoleRange::incl(Pawn, b) {
-                        self.add_both(base, &[King, a, b, c], &[King]);
-
-                        for d in RoleRange::incl(Pawn, c) {
-                            self.add_both(base, &[King, a, b, c, d], &[King]);
-                        }
-
-                        for d in RoleRange::excl(Pawn, King) {
-                            self.add_both(base, &[King, a, b, c], &[King, d]);
-                        }
+                    for d in RoleRange::excl(Pawn, King) {
+                        self.add_both(base, &[King, a, b, c], &[King, d]);
                     }
+                }
 
-                    for c in RoleRange::incl(Pawn, a) {
-                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.add_both(base, &[King, a, b], &[King, c, d]);
-                        }
+                for c in RoleRange::incl(Pawn, a) {
+                    for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                        self.add_both(base, &[King, a, b], &[King, c, d]);
                     }
                 }
             }
-        } else {
-            for a in RoleRange::incl(Pawn, King) {
-                for b in RoleRange::incl(Pawn, a) {
-                    self.add_both(base, &[a], &[b]);
+        }
+    }
 
-                    for c in RoleRange::incl(Pawn, King) {
-                        self.add_both(base, &[a, b], &[c]);
+    fn add_directory_many_kings(&mut self, base: &Path) {
+        use self::Role::*;
+
+        for a in RoleRange::incl(Pawn, King) {
+            for b in RoleRange::incl(Pawn, a) {
+                self.add_both(base, &[a], &[b]);
+
+                for c in RoleRange::incl(Pawn, King) {
+                    self.add_both(base, &[a, b], &[c]);
+                }
+
+                for c in RoleRange::incl(Pawn, b) {
+                    for d in RoleRange::incl(Pawn, King) {
+                        self.add_both(base, &[a, b, c], &[d]);
+
+                        for e in RoleRange::incl(Pawn, d) {
+                            self.add_both(base, &[a, b, c], &[d, e]);
+                        }
                     }
 
-                    for c in RoleRange::incl(Pawn, b) {
-                        for d in RoleRange::incl(Pawn, King) {
-                            self.add_both(base, &[a, b, c], &[d]);
+                    for d in RoleRange::incl(Pawn, c) {
+                        for e in RoleRange::incl(Pawn, King) {
+                            self.add_both(base, &[a, b, c, d], &[e]);
 
-                            for e in RoleRange::incl(Pawn, d) {
-                                self.add_both(base, &[a, b, c], &[d, e]);
+                            for f in RoleRange::incl(Pawn, e) {
+                                self.add_both(base, &[a, b, c, d], &[e, f]);
                             }
                         }
 
-                        for d in RoleRange::incl(Pawn, c) {
-                            for e in RoleRange::incl(Pawn, King) {
-                                self.add_both(base, &[a, b, c, d], &[e]);
-
-                                for f in RoleRange::incl(Pawn, e) {
-                                    self.add_both(base, &[a, b, c, d], &[e, f]);
-                                }
-                            }
-
-                            for e in RoleRange::incl(Pawn, d) {
-                                for f in RoleRange::incl(Pawn, King) {
-                                    self.add_both(base, &[a, b, c, d, e], &[f]);
-                                }
-                            }
-                        }
-
-                        for d in RoleRange::incl(Pawn, a) {
-                            for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
-                                for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
-                                    self.add_both(base, &[a, b, c], &[d, e, f]);
-                                }
+                        for e in RoleRange::incl(Pawn, d) {
+                            for f in RoleRange::incl(Pawn, King) {
+                                self.add_both(base, &[a, b, c, d, e], &[f]);
                             }
                         }
                     }
 
-                    for c in RoleRange::incl(Pawn, a) {
-                        for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                            self.add_both(base, &[a, b], &[c, d]);
+                    for d in RoleRange::incl(Pawn, a) {
+                        for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
+                            for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
+                                self.add_both(base, &[a, b, c], &[d, e, f]);
+                            }
                         }
+                    }
+                }
+
+                for c in RoleRange::incl(Pawn, a) {
+                    for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
+                        self.add_both(base, &[a, b], &[c, d]);
                     }
                 }
             }
