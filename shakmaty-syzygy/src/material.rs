@@ -150,22 +150,11 @@ impl Material {
         self.white == self.black
     }
 
-    pub fn by_color(&self, color: Color) -> &MaterialSide {
-        match color {
-            Color::Black => &self.black,
-            Color::White => &self.white,
-        }
-    }
-
     pub fn by_color_mut(&mut self, color: Color) -> &mut MaterialSide {
         match color {
             Color::Black => &mut self.black,
             Color::White => &mut self.white,
         }
-    }
-
-    pub fn by_piece(&self, piece: Piece) -> u8 {
-        self.by_color(piece.color).by_role(piece.role)
     }
 
     pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
