@@ -22,6 +22,7 @@ use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup::{Setup, Castling, CastlingSide, SwapTurn};
 use movelist::{MoveList, ArrayVecExt};
 
+#[cfg(not(nightly))]
 use option_filter::OptionFilterExt;
 
 use std::fmt;

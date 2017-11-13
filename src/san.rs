@@ -96,9 +96,11 @@ use position::{Position, Outcome};
 use movelist::MoveList;
 
 use std::fmt;
-use option_filter::OptionFilterExt;
 use std::str::FromStr;
 use std::error::Error;
+
+#[cfg(not(nightly))]
+use option_filter::OptionFilterExt;
 
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Eq, PartialEq)]

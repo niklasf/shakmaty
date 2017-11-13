@@ -20,6 +20,7 @@ use attacks;
 use types::{Color, Role, Pockets, RemainingChecks};
 use board::Board;
 
+#[cfg(not(nightly))]
 use option_filter::OptionFilterExt;
 
 /// A not necessarily legal position.

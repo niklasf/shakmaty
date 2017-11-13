@@ -78,6 +78,7 @@
 #![cfg_attr(nightly, feature(exact_size_is_empty))]
 #![cfg_attr(nightly, feature(fused))]
 #![cfg_attr(nightly, feature(trusted_len))]
+#![cfg_attr(nightly, feature(option_filter))]
 
 #[cfg(all(test, nightly))]
 extern crate test;
