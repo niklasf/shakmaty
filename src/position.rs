@@ -21,8 +21,6 @@ use square::Square;
 use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
 use setup::{Setup, Castling, CastlingSide, SwapTurn};
 use movelist::{MoveList, ArrayVecExt};
-
-#[cfg(not(nightly))]
 use option_filter::OptionFilterExt;
 
 use std::fmt;
@@ -365,7 +363,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }

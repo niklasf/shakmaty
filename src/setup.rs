@@ -20,7 +20,6 @@ use attacks;
 use types::{Color, Role, Pockets, RemainingChecks};
 use board::Board;
 
-#[cfg(not(nightly))]
 use option_filter::OptionFilterExt;
 
 /// A not necessarily legal position.
@@ -136,7 +135,7 @@ impl Castling {
                 let side = rooks & setup.board().by_color(*color) &
                            Bitboard::relative_rank(*color, 0);
 
-                if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
+                if let Some(a_side) = OptionFilterExt::filter(side.first(), |rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::QueenSide as usize;
@@ -145,7 +144,7 @@ impl Castling {
                                         .with(rto).with(kto).without(king).without(a_side);
                 }
 
-                if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
+                if let Some(h_side) = OptionFilterExt::filter(side.last(), |rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::KingSide as usize;
@@ -164,10 +163,10 @@ impl Castling {
     }
 
     pub fn discard_rook(&mut self, square: Square) {
-        self.rook[0] = self.rook[0].filter(|sq| *sq != square);
-        self.rook[1] = self.rook[1].filter(|sq| *sq != square);
-        self.rook[2] = self.rook[2].filter(|sq| *sq != square);
-        self.rook[3] = self.rook[3].filter(|sq| *sq != square);
+        self.rook[0] = OptionFilterExt::filter(self.rook[0], |sq| *sq != square);
+        self.rook[1] = OptionFilterExt::filter(self.rook[1], |sq| *sq != square);
+        self.rook[2] = OptionFilterExt::filter(self.rook[2], |sq| *sq != square);
+        self.rook[3] = OptionFilterExt::filter(self.rook[3], |sq| *sq != square);
     }
 
     pub fn discard_side(&mut self, color: Color) {

@@ -99,9 +99,6 @@ use std::fmt;
 use std::str::FromStr;
 use std::error::Error;
 
-#[cfg(not(nightly))]
-use option_filter::OptionFilterExt;
-
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Eq, PartialEq)]
 pub struct InvalidSan {
@@ -435,7 +432,7 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
         Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
             San::Normal {
                 role: Role::Pawn,
-                file: Some(from.file()).filter(|_| capture.is_some()),
+                file: if capture.is_some() { Some(from.file()) } else { None },
                 rank: None,
                 capture: capture.is_some(),
                 to,
@@ -460,8 +457,8 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
 
             San::Normal {
                 role,
-                file: Some(from.file()).filter(|_| file),
-                rank: Some(from.rank()).filter(|_| rank),
+                file: if file { Some(from.file()) } else { None },
+                rank: if rank { Some(from.rank()) } else { None },
                 capture: capture.is_some(),
                 to,
                 promotion
