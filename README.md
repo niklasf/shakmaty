@@ -52,9 +52,12 @@ Documentation
 Changelog
 ---------
 
+* 0.4.2
+  - Fix build error on beta due to the new nightly `option_filter` feature.
+  - Fix unterminated code block in documentation.
 * 0.4.1
   - Fix build error due to the new nightly
-    [option_filter](https://github.com/rust-lang/rust/issues/45860) feature.
+    [`option_filter`](https://github.com/rust-lang/rust/issues/45860) feature.
 * 0.4.0
   - Rename `Color::from_bool()` to `Color::from_white()`,
     add `Color::from_black()`.
