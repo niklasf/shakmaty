@@ -150,6 +150,7 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// // . 1 . . . . . .
 /// // . 1 . . . . . .
 /// // . 0 . . . . . .
+/// ```
 ///
 /// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
