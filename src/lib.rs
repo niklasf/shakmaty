@@ -100,7 +100,7 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
-pub use square::Square;
+pub use square::{Square, InvalidSquareName};
 pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::{Board, Pieces};
