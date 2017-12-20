@@ -117,6 +117,8 @@ pub trait Position: Setup {
     ///
     /// Returns [`PositionError`] if swapping turns is not legal (usually due
     /// to a check that has to be averted).
+    ///
+    /// [`PositionError`]: enum.PositionError.html
     fn swap_turn(self) -> Result<Self, PositionError> where Self: Sized {
         Self::from_setup(&SwapTurn(self))
     }
