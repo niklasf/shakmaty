@@ -35,7 +35,7 @@ use uci::Uci;
 /// assert_eq!(perft(&pos, 2), 400);
 /// assert_eq!(perft(&pos, 3), 8902);
 /// ```
-pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
+pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
     if depth < 1 {
         1
     } else {
@@ -43,7 +43,7 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
         pos.legal_moves(&mut moves);
 
         if depth == 1 {
-            moves.len()
+            moves.len() as u64
         } else {
             moves.drain(..).map(|m| {
                 let mut child = pos.clone();
@@ -56,7 +56,7 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
 
 /// Like `perft()`, but also prints the perft of each child for debugging.
 #[allow(unused)]
-pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> usize {
+pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
     if depth < 1 {
         1
     } else {
