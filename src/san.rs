@@ -476,9 +476,6 @@ pub fn san<P: Position>(pos: &P, m: &Move) -> San {
 mod tests {
     use super::*;
 
-    #[cfg(nightly)]
-    use test::Bencher;
-
     #[test]
     fn test_read_write() {
         for san in &["a1", "a8", "h1", "h8", "e4", "b6", "e4=Q", "f1=N#",
@@ -490,20 +487,5 @@ mod tests {
             let result = san.parse::<SanPlus>().expect("valid san").to_string();
             assert_eq!(*san, result, "read {} write {}", san, result);
         }
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_parse_san_move_complicated(b: &mut Bencher) {
-        b.iter(|| {
-            assert_eq!(San::from_bytes(b"bxc1=R+"), Ok(San::Normal {
-                role: Role::Pawn,
-                file: Some(1),
-                rank: None,
-                capture: true,
-                to: Square::C1,
-                promotion: Some(Role::Rook),
-            }));
-        });
     }
 }

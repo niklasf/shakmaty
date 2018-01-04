@@ -74,14 +74,10 @@
 
 #![warn(missing_debug_implementations)]
 
-#![cfg_attr(all(test, nightly), feature(test))]
 #![cfg_attr(nightly, feature(exact_size_is_empty))]
 #![cfg_attr(nightly, feature(fused))]
 #![cfg_attr(nightly, feature(trusted_len))]
 #![cfg_attr(nightly, feature(option_filter))]
-
-#[cfg(all(test, nightly))]
-extern crate test;
 
 extern crate arrayvec;
 #[macro_use]

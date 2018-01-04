@@ -926,9 +926,6 @@ mod tests {
     use super::*;
     use fen::Fen;
 
-    #[cfg(nightly)]
-    use test::Bencher;
-
     struct _AssertObjectSafe(Box<Position>);
 
     #[test]
@@ -942,62 +939,6 @@ mod tests {
         let mut moves = MoveList::new();
         pos.legal_moves(&mut moves);
         assert_eq!(moves.len(), 218);
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_generate_moves(b: &mut Bencher) {
-        let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
-        let pos: Chess = fen.parse::<Fen>()
-            .expect("valid fen")
-            .position()
-            .expect("legal position");
-
-        b.iter(|| {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            assert_eq!(moves.len(), 39);
-        });
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_play_unchecked(b: &mut Bencher) {
-        let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
-        let pos: Chess = fen.parse::<Fen>()
-            .expect("valid fen")
-            .position()
-            .expect("legal position");
-
-        let m = Move::Normal {
-            role: Role::Bishop,
-            from: Square::F8,
-            capture: None,
-            to: Square::E7,
-            promotion: None,
-        };
-
-        b.iter(|| {
-            let mut pos = pos.clone();
-            pos.play_unchecked(&m);
-            assert_eq!(pos.turn(), White);
-        });
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_san_candidates(b: &mut Bencher) {
-        let fen = "r2q1rk1/pb1nbppp/5n2/1p2p3/3NP3/P1NB4/1P2QPPP/R1BR2K1 w - -";
-        let pos: Chess = fen.parse::<Fen>()
-            .expect("valid fen")
-            .position()
-            .expect("legal position");
-
-        b.iter(|| {
-            let mut moves = MoveList::new();
-            pos.san_candidates(Role::Knight, Square::B5, &mut moves);
-            assert_eq!(moves.len(), 2);
-        });
     }
 
     #[test]

@@ -10,6 +10,10 @@ categories = ["games", "parsing"]
 keywords = ["chess"]
 build = "src/build.rs"
 
+[[bench]]
+name = "benches"
+harness = false
+
 [dependencies]
 bitflags = "1.0"
 option-filter = "1.0"
@@ -21,6 +25,9 @@ features = ["use_union"]
 
 [build-dependencies]
 version_check = "0.1"
+
+[dev-dependencies]
+bencher = "0.1"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty", branch = "master" }

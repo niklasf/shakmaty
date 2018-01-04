@@ -78,27 +78,10 @@ mod tests {
     use super::*;
     use position::Chess;
 
-    #[cfg(nightly)]
-    use test::Bencher;
-
     #[test]
     fn test_perft() {
         let pos = Chess::default();
         assert_eq!(perft(&pos, 0), 1);
         assert_eq!(perft(&pos, 1), 20);
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_shallow_perft(b: &mut Bencher) {
-        let pos = Chess::default();
-        b.iter(|| assert_eq!(perft(&pos, 4), 197281));
-    }
-
-    #[cfg(nightly)]
-    #[bench]
-    fn bench_deep_perft(b: &mut Bencher) {
-        let pos = Chess::default();
-        b.iter(|| assert_eq!(perft(&pos, 5), 4865609));
     }
 }
