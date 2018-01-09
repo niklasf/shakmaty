@@ -9,12 +9,12 @@ use shakmaty::fen::Fen;
 
 fn bench_shallow_perft(b: &mut Bencher) {
     let pos = Chess::default();
-    b.iter(|| assert_eq!(perft(&pos, black_box(4)), 197281));
+    b.iter(|| assert_eq!(perft(&pos, black_box(4)), 197_281));
 }
 
 fn bench_deep_perft(b: &mut Bencher) {
     let pos = Chess::default();
-    b.iter(|| assert_eq!(perft(&pos, black_box(5)), 4865609));
+    b.iter(|| assert_eq!(perft(&pos, black_box(5)), 4_865_609));
 }
 
 fn bench_parse_san_move_complicated(b: &mut Bencher) {
