@@ -52,6 +52,10 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - Use `u64` instead of `usize` for `perft()`.
+  - Export error type `InvalidSquareName`.
+  - Support running benchmarks on stable.
 * 0.4.2
   - Fix build error on beta due to the new nightly `option_filter` feature.
   - Fix unterminated code block in documentation.
