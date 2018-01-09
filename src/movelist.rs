@@ -2,7 +2,7 @@ use types::Move;
 
 use arrayvec::{Array, ArrayVec};
 
-/// A stack allocated container for legal moves.
+/// A container for legal moves that can be stored inline on the stack.
 pub type MoveList = ArrayVec<[Move; 512]>;
 
 pub trait ArrayVecExt {
