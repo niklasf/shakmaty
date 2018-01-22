@@ -213,6 +213,14 @@ impl Move {
         }
     }
 
+    /// Checks if the move is a capture.
+    pub fn is_capture(&self) -> bool {
+        match *self {
+            Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } => true,
+            _ => false,
+        }
+    }
+
     /// Checks if the move is en passant.
     pub fn is_en_passant(&self) -> bool {
         match *self {
