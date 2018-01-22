@@ -539,7 +539,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     fn skip_token(&mut self, mut pos: usize) -> usize {
         while pos < self.pgn.len() {
             match self.pgn[pos] {
-                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' => break,
+                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' | b'.' => break,
                 _ => pos += 1,
             }
         }
@@ -631,7 +631,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
                         self.visitor.nag(nag);
                     }
                 },
-                b' ' | b'\t' | b'\r' | b'P' => {
+                b' ' | b'\t' | b'\r' | b'P' | b'.' => {
                     pos += 1;
                 },
                 _ => {
