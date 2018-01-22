@@ -58,6 +58,17 @@ pub enum CastlingSide {
 }
 
 impl CastlingSide {
+    pub fn is_queen_side(&self) -> bool {
+        match *self {
+            CastlingSide::KingSide => false,
+            CastlingSide::QueenSide => true,
+        }
+    }
+
+    pub fn is_king_side(&self) -> bool {
+        !self.is_queen_side()
+    }
+
     pub fn king_to(&self, color: Color) -> Square {
         match *self {
             CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
