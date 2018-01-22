@@ -323,6 +323,85 @@ impl San {
             }
         })
     }
+
+    /// Test if the `San` can match the `Move` (in any position).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// #
+    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// use shakmaty::{Square, Role, Move};
+    /// use shakmaty::san::San;
+    ///
+    /// let m = Move::Normal {
+    ///     role: Role::Knight,
+    ///     from: Square::G1,
+    ///     to: Square::F3,
+    ///     capture: None,
+    ///     promotion: None,
+    /// };
+    ///
+    /// let nf3 = San::from_bytes(b"Nf3")?;
+    /// assert!(nf3.matches(&m));
+    ///
+    /// let ng1f3 = San::from_bytes(b"Ng1f3")?;
+    /// assert!(ng1f3.matches(&m));
+    ///
+    /// // capture does not match
+    /// let nxf3 = San::from_bytes(b"Nxf3")?;
+    /// assert!(!nxf3.matches(&m));
+    ///
+    /// // other file does not match
+    /// let nef3 = San::from_bytes(b"Nef3")?;
+    /// assert!(!nef3.matches(&m));
+    /// #
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() {
+    /// #     try_main().unwrap();
+    /// # }
+    /// ```
+    pub fn matches(&self, m: &Move) -> bool {
+        match *self {
+            San::Normal { role, file, rank, capture, to, promotion } => {
+                match *m {
+                    Move::Normal { role: r, from, capture: c, to: t, promotion: p } =>
+                        role == r &&
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture == c.is_some() &&
+                        to == t &&
+                        promotion == p,
+                    Move::EnPassant { from, to: t } =>
+                        role == Role::Pawn &&
+                        file.map_or(true, |f| f == from.file()) &&
+                        rank.map_or(true, |r| r == from.rank()) &&
+                        capture &&
+                        to == t &&
+                        promotion.is_none(),
+                    _ => false,
+                }
+            },
+            San::Castle(side) => {
+                match *m {
+                    Move::Castle { king, rook } =>
+                        side.is_king_side() == (king < rook),
+                    _ => false,
+                }
+            },
+            San::Put { role, to } => {
+                match *m {
+                    Move::Put { role: r, to: t } =>
+                        r == role && to == t,
+                    _ => false,
+                }
+            },
+            San::Null => false
+        }
+    }
 }
 
 
