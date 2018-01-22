@@ -405,3 +405,17 @@ impl fmt::Display for RemainingChecks {
         write!(f, "{}+{}", self.white, self.black)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_role_order() {
+        assert!(Role::Pawn < Role::Knight);
+        assert!(Role::Knight < Role::Bishop);
+        assert!(Role::Bishop < Role::Rook);
+        assert!(Role::Rook < Role::Queen);
+        assert!(Role::Queen < Role::King);
+    }
+}
