@@ -90,8 +90,7 @@
 //! ```
 
 use square::Square;
-use types::{Move, Role};
-use setup::CastlingSide;
+use types::{Move, Role, CastlingSide};
 use position::{Position, Outcome};
 use movelist::MoveList;
 
@@ -385,13 +384,7 @@ impl San {
                     _ => false,
                 }
             },
-            San::Castle(side) => {
-                match *m {
-                    Move::Castle { king, rook } =>
-                        side.is_king_side() == (king < rook),
-                    _ => false,
-                }
-            },
+            San::Castle(side) => m.castling_side().map_or(false, |s| side == s),
             San::Put { role, to } => {
                 match *m {
                     Move::Put { role: r, to: t } =>

@@ -18,8 +18,8 @@ use attacks;
 use board::Board;
 use bitboard::Bitboard;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks};
-use setup::{Setup, Castling, CastlingSide, SwapTurn};
+use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, CastlingSide};
+use setup::{Setup, Castling, SwapTurn};
 use movelist::{MoveList, ArrayVecExt};
 use option_filter::OptionFilterExt;
 

@@ -17,7 +17,7 @@
 use square::Square;
 use bitboard::Bitboard;
 use attacks;
-use types::{Color, Role, Pockets, RemainingChecks};
+use types::{Color, Role, Pockets, RemainingChecks, CastlingSide};
 use board::Board;
 
 use option_filter::OptionFilterExt;
@@ -47,40 +47,6 @@ pub trait Setup {
 
     fn their(&self, role: Role) -> Bitboard {
         self.them() & self.board().by_role(role)
-    }
-}
-
-/// `KingSide` (O-O) or `QueenSide` (O-O-O).
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum CastlingSide {
-    KingSide = 0,
-    QueenSide = 1,
-}
-
-impl CastlingSide {
-    pub fn is_queen_side(&self) -> bool {
-        match *self {
-            CastlingSide::KingSide => false,
-            CastlingSide::QueenSide => true,
-        }
-    }
-
-    pub fn is_king_side(&self) -> bool {
-        !self.is_queen_side()
-    }
-
-    pub fn king_to(&self, color: Color) -> Square {
-        match *self {
-            CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
-            CastlingSide::QueenSide => color.fold(Square::C1, Square::C8),
-        }
-    }
-
-    pub fn rook_to(&self, color: Color) -> Square {
-        match *self {
-            CastlingSide::KingSide => color.fold(Square::F1, Square::F8),
-            CastlingSide::QueenSide => color.fold(Square::D1, Square::D8),
-        }
     }
 }
 

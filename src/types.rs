@@ -229,6 +229,15 @@ impl Move {
         }
     }
 
+    /// Gets the castling side.
+    pub fn castling_side(&self) -> Option<CastlingSide> {
+        match *self {
+            Move::Castle { king, rook } if king < rook => Some(CastlingSide::KingSide),
+            Move::Castle { .. } => Some(CastlingSide::QueenSide),
+            _ => None,
+        }
+    }
+
     /// Checks if the move is a castling move.
     pub fn is_castle(&self) -> bool {
         match *self {
@@ -242,6 +251,14 @@ impl Move {
         match *self {
             Move::Normal { promotion, .. } => promotion,
             _ => None,
+        }
+    }
+
+    /// Checks if the move is a promotion.
+    pub fn is_promotion(&self) -> bool {
+        match *self {
+            Move::Normal { promotion: Some(_), .. } => true,
+            _ => false,
         }
     }
 }
@@ -403,6 +420,40 @@ impl RemainingChecks {
 impl fmt::Display for RemainingChecks {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}+{}", self.white, self.black)
+    }
+}
+
+/// `KingSide` (O-O) or `QueenSide` (O-O-O).
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum CastlingSide {
+    KingSide = 0,
+    QueenSide = 1,
+}
+
+impl CastlingSide {
+    pub fn is_queen_side(&self) -> bool {
+        match *self {
+            CastlingSide::KingSide => false,
+            CastlingSide::QueenSide => true,
+        }
+    }
+
+    pub fn is_king_side(&self) -> bool {
+        !self.is_queen_side()
+    }
+
+    pub fn king_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
+            CastlingSide::QueenSide => color.fold(Square::C1, Square::C8),
+        }
+    }
+
+    pub fn rook_to(&self, color: Color) -> Square {
+        match *self {
+            CastlingSide::KingSide => color.fold(Square::F1, Square::F8),
+            CastlingSide::QueenSide => color.fold(Square::D1, Square::D8),
+        }
     }
 }
 
