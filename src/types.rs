@@ -97,7 +97,7 @@ impl ops::BitXor<bool> for Color {
 }
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum Role {
     Pawn = 0,
     Knight = 1,
