@@ -52,7 +52,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.5.0
   - Use `u64` instead of `usize` for `perft()`.
   - Export error type `InvalidSquareName`.
   - New methods: `CastlingSide.is_{queen|king}_side()`, `San.matches()`, `Move.is_capture()`, `Move.is_promotion()`, `Move.castling_side()`, `Position.is_check()`.
