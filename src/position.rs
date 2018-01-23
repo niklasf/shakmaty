@@ -243,6 +243,11 @@ pub trait Position: Setup {
     /// castling would uncover a rank attack.
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
 
+    /// Tests if the king is in check.
+    fn is_check(&self) -> bool {
+        self.checkers().any()
+    }
+
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first()
