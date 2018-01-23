@@ -55,6 +55,8 @@ Changelog
 * Upcoming
   - Use `u64` instead of `usize` for `perft()`.
   - Export error type `InvalidSquareName`.
+  - New methods: `CastlingSide.is_{queen|king}_side()`, `San.matches()`, `Move.is_capture()`, `Move.is_promotion()`, `Move.castling_side()`, `Position.is_check()`.
+  - Derive `Ord` and `PartialOrd` for `Role`.
   - Support running benchmarks on stable.
 * 0.4.2
   - Fix build error on beta due to the new nightly `option_filter` feature.
