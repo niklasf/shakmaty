@@ -202,6 +202,9 @@ impl Bitboard {
         }
     }
 
+    /// An empty bitboard.
+    pub const EMPTY: Bitboard = Bitboard(0);
+
     /// A bitboard containing all squares.
     pub const ALL: Bitboard = Bitboard(!0u64);
 
