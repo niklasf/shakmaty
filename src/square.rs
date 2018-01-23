@@ -58,7 +58,7 @@ pub enum Square {
 }
 
 impl Square {
-    /// Create a `Square` from in integer index.
+    /// Creates a `Square` from an integer index.
     ///
     /// # Panics
     ///
