@@ -52,6 +52,8 @@ Documentation
 Changelog
 ---------
 
+* 0.5.1
+  - Fix `Uci::to_move()` for en passant moves. Thanks zxqfl.
 * 0.5.0
   - Use `u64` instead of `usize` for `perft()`.
   - Export error type `InvalidSquareName`.
