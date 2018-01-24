@@ -247,6 +247,10 @@ impl Uci {
                     } else {
                         Move::Castle { king: from, rook: pos.turn().fold(Square::A1, Square::A8) }
                     }
+                } else if role == Role::Pawn &&
+                          from.file() != to.file() &&
+                          pos.board().role_at(to).is_none() {
+                    Move::EnPassant { from, to }
                 } else {
                     Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
                 }
