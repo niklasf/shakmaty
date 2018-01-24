@@ -249,7 +249,7 @@ impl Uci {
                     }
                 } else if role == Role::Pawn &&
                           from.file() != to.file() &&
-                          pos.board().role_at(to).is_none() {
+                          !pos.board().occupied().contains(to) {
                     Move::EnPassant { from, to }
                 } else {
                     Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
