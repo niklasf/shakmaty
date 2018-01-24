@@ -262,3 +262,30 @@ impl Uci {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use position::Chess;
+
+    #[test]
+    pub fn test_uci_to_en_passant() {
+        let e2e4: Uci = "e2e4".parse().expect("valid uci");
+        let g8f6: Uci = "g8f6".parse().expect("valid uci");
+        let e4e5: Uci = "e4e5".parse().expect("valid uci");
+        let d7d5: Uci = "d7d5".parse().expect("valid uci");
+        let e5d6: Uci = "e5d6".parse().expect("valid uci");
+
+        let mut pos = Chess::default();
+        let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
+        pos.play_unchecked(&e4);
+        let nc6 = "b8c6".parse::<Uci>().expect("Nc6").to_move(&pos).expect("legal");
+        pos.play_unchecked(&nc6);
+        let e5 = "e4e5".parse::<Uci>().expect("e5").to_move(&pos).expect("legal");
+        pos.play_unchecked(&e5);
+        let d5 = "d7d5".parse::<Uci>().expect("d5").to_move(&pos).expect("legal");
+        pos.play_unchecked(&d5);
+        let exd5 = "e5d6".parse::<Uci>().expect("exd6").to_move(&pos).expect("legal en passant");
+        assert!(exd5.is_en_passant());
+    }
+}
