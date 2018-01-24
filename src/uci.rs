@@ -274,12 +274,6 @@ mod tests {
 
     #[test]
     pub fn test_uci_to_en_passant() {
-        let e2e4: Uci = "e2e4".parse().expect("valid uci");
-        let g8f6: Uci = "g8f6".parse().expect("valid uci");
-        let e4e5: Uci = "e4e5".parse().expect("valid uci");
-        let d7d5: Uci = "d7d5".parse().expect("valid uci");
-        let e5d6: Uci = "e5d6".parse().expect("valid uci");
-
         let mut pos = Chess::default();
         let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
         pos.play_unchecked(&e4);
