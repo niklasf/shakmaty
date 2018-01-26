@@ -16,7 +16,7 @@
 
 use position::Position;
 use movelist::MoveList;
-use uci::Uci;
+use uci::uci;
 
 /// Counts legal move paths of a given length.
 ///
@@ -66,7 +66,7 @@ pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
         moves.iter().map(|m| {
             let child = pos.clone().play(m).expect("legal move");
             let nodes = perft(&child, depth - 1);
-            let uci: Uci = m.into();
+            let uci = uci(pos, m);
             println!("{} {} {}: {}", uci, m, depth - 1, nodes);
             nodes
         }).sum()
