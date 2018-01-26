@@ -239,6 +239,11 @@ pub trait Position: Setup {
         self.board().attacks_to(square, attacker, occupied)
     }
 
+    /// Tests if there are or were castling rights that are only possible in
+    /// Chess960, i.e. with the king not on the e-file or one of the rooks
+    /// not on the a-file or h-file.
+    fn is_chess960(&self) -> bool;
+
     /// Tests the rare case where moving the rook to the other side during
     /// castling would uncover a rank attack.
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
@@ -401,7 +406,12 @@ impl Position for Chess {
         (validate(&pos) | errors).into_result(pos)
     }
 
+    fn is_chess960(&self) -> bool {
+        self.castling.is_chess960()
+    }
+
     fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.castling.is_chess960() &&
         castling_uncovers_rank_attack(self, rook, king_to)
     }
 

@@ -68,6 +68,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
 
 #[derive(Clone, Debug)]
 pub struct Castling {
+    chess960: bool,
     rook: [Option<Square>; 4],
     path: [Bitboard; 4],
 }
@@ -75,6 +76,7 @@ pub struct Castling {
 impl Castling {
     pub fn empty() -> Castling {
         Castling {
+            chess960: false,
             rook: [None; 4],
             path: [Bitboard(0); 4],
         }
@@ -82,6 +84,7 @@ impl Castling {
 
     pub fn default() -> Castling {
         Castling {
+            chess960: false,
             rook: [
                 Some(Square::H8), // black short
                 Some(Square::A8), // black long
@@ -116,6 +119,7 @@ impl Castling {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::QueenSide as usize;
+                    castling.chess960 |= king.file() != 4 || a_side.file() != 0;
                     castling.rook[idx] = Some(a_side);
                     castling.path[idx] = attacks::between(king, a_side)
                                         .with(rto).with(kto).without(king).without(a_side);
@@ -125,6 +129,7 @@ impl Castling {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
                     let idx = *color as usize * 2 + CastlingSide::KingSide as usize;
+                    castling.chess960 |= king.file() != 4 || h_side.file() != 7;
                     castling.rook[idx] = Some(h_side);
                     castling.path[idx] = attacks::between(king, h_side)
                                         .with(rto).with(kto).without(king).without(h_side);
@@ -171,6 +176,10 @@ impl Castling {
         mask.extend(self.rook[2]);
         mask.extend(self.rook[3]);
         mask
+    }
+
+    pub fn is_chess960(&self) -> bool {
+        self.chess960
     }
 }
 
