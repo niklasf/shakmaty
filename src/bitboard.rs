@@ -168,6 +168,11 @@ impl Bitboard {
     }
 
     #[inline]
+    pub fn without_all(self, bb: Bitboard) -> Bitboard {
+        self & !bb
+    }
+
+    #[inline]
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
