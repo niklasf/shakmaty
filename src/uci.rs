@@ -161,7 +161,7 @@ impl fmt::Display for Uci {
             Uci::Normal { from, to, promotion: Some(promotion) } =>
                 write!(f, "{}{}{}", from, to, promotion.char()),
             Uci::Put { to, role } =>
-                write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to),
+                write!(f, "{}@{}", role.upper_char(), to),
             Uci::Null =>
                 write!(f, "0000")
         }

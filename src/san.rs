@@ -411,7 +411,7 @@ impl fmt::Display for San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", (32 ^ role.char() as u8) as char)?;
+                    write!(f, "{}", role.upper_char())?;
                 }
                 if let Some(file) = file {
                     write!(f, "{}", (b'a' + file as u8) as char)?;
@@ -424,14 +424,14 @@ impl fmt::Display for San {
                 }
                 write!(f, "{}", to)?;
                 if let Some(promotion) = promotion {
-                    write!(f, "={}", (32 ^ promotion.char() as u8) as char)?;
+                    write!(f, "={}", promotion.upper_char())?;
                 }
                 Ok(())
             },
             San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
             San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
             San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
-            San::Put { role, to } => write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to),
+            San::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
             San::Null => write!(f, "--"),
         }
     }

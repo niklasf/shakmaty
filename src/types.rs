@@ -135,6 +135,17 @@ impl Role {
             Role::King => 'k',
         }
     }
+
+    pub fn upper_char(self) -> char {
+        match self {
+            Role::Pawn => 'P',
+            Role::Knight => 'N',
+            Role::Bishop => 'B',
+            Role::Rook => 'R',
+            Role::Queen => 'Q',
+            Role::King => 'K',
+        }
+    }
 }
 
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
@@ -151,7 +162,7 @@ pub struct Piece {
 
 impl Piece {
     pub fn char(&self) -> char {
-        self.color.fold((32 ^ self.role.char() as u8) as char, self.role.char())
+        self.color.fold(self.role.upper_char(), self.role.char())
     }
 
     pub fn from_char(ch: char) -> Option<Piece> {
@@ -268,13 +279,13 @@ impl fmt::Display for Move {
         match *self {
             Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", (32 ^ role.char() as u8) as char)?;
+                    write!(f, "{}", role.upper_char())?;
                 }
 
                 write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to)?;
 
                 if let Some(p) = promotion {
-                    write!(f, "={}", (32 ^ p.char() as u8) as char)?;
+                    write!(f, "={}", p.upper_char())?;
                 }
 
                 Ok(())
@@ -290,7 +301,10 @@ impl fmt::Display for Move {
                 }
             },
             Move::Put { role, to } => {
-                write!(f, "{}@{}", (32 ^ role.char() as u8) as char, to)
+                if role != Role::Pawn {
+                    write!(f, "{}", role.upper_char())?;
+                }
+                write!(f, "@{}", to)
             },
         }
     }
