@@ -105,6 +105,9 @@ impl Board {
     /// Bishops, rooks and queens.
     #[inline]
     pub fn sliders(&self) -> Bitboard { self.bishops() ^ self.rooks() ^ self.queens() }
+    /// Pawns, knights and kings.
+    #[inline]
+    pub fn steppers(&self) -> Bitboard { self.pawns() ^ self.knights() ^ self.kings() }
 
     #[inline]
     pub fn rooks_and_queens(&self) -> Bitboard { self.rooks() ^ self.queens() }
