@@ -403,7 +403,7 @@ impl fmt::Display for Pockets {
     }
 }
 
-/// The number of checks the respective side needs to give in order to in
+/// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-Check).
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct RemainingChecks {
