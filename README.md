@@ -52,6 +52,11 @@ Documentation
 Changelog
 ---------
 
+* 0.6.0
+  - Split `impl From<Move> for Uci` into `uci()` and `chess960_uci()`.
+  - Fix display of pawn drops.
+  - Move generating methods clear the move buffer (and therefor no longer panic on too full buffers).
+  - Added `Position.is_chess960()`, `Bitboard.without_all()`, `Role.upper_char()`, `Board.stepper()`.
 * 0.5.1
   - Fix `Uci::to_move()` for en passant moves. Thanks zxqfl.
 * 0.5.0
