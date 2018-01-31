@@ -131,37 +131,16 @@ pub trait Position: Setup {
     }
 
     /// Collects all legal moves in an existing buffer.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `moves` is too full. This can not happen if an empty
-    /// [`MoveList`] is passed.
-    ///
-    /// [`MoveList`]: type.MoveList.html
     fn legal_moves(&self, moves: &mut MoveList);
 
     /// Generates a subset of legal moves: All piece moves and drops of type
     /// `role` to the square `to`, excluding castling moves.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `moves` is too full. This can not happen if an empty
-    /// [`MoveList`] is passed.
-    ///
-    /// [`MoveList`]: type.MoveList.html
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.legal_moves(moves);
         filter_san_candidates(role, to, moves);
     }
 
-    /// Generates castling moves.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `moves` is too full. This can not happen if an empty
-    /// [`MoveList`] is passed.
-    ///
-    /// [`MoveList`]: type.MoveList.html
+    /// Generates legal castling moves.
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
         self.legal_moves(moves);
         moves.retain(|m| match *m {
@@ -172,13 +151,6 @@ pub trait Position: Setup {
     }
 
     /// Generates en passant moves.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `moves` is too full. This can not happen if an empty
-    /// [`MoveList`] is passed.
-    ///
-    /// [`MoveList`]: type.MoveList.html
     fn en_passant_moves(&self, moves: &mut MoveList) {
         self.legal_moves(moves);
         moves.retain(|m| match *m {
@@ -188,16 +160,9 @@ pub trait Position: Setup {
     }
 
     /// Generates capture moves.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `moves` is too full. This can not happen if an empty
-    /// [`MoveList`] is passed.
-    ///
-    /// [`MoveList`]: type.MoveList.html
     fn capture_moves(&self, moves: &mut MoveList) {
         self.legal_moves(moves);
-        moves.retain(|m| m.capture().is_some());
+        moves.retain(|m| m.is_capture());
     }
 
     /// Tests a move for legality.
@@ -416,6 +381,8 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
 
         let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
@@ -438,11 +405,14 @@ impl Position for Chess {
     }
 
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+        moves.clear();
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
         gen_castling_moves(self, king, side, moves);
     }
 
     fn en_passant_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
         if gen_en_passant(self.board(), self.turn(), self.ep_square, moves) {
             let king = self.board().king_of(self.turn()).expect("king in standard chess");
             let blockers = slider_blockers(self.board(), self.them(), king);
@@ -451,6 +421,8 @@ impl Position for Chess {
     }
 
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        moves.clear();
+
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
         let checkers = self.checkers();
 
