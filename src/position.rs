@@ -951,4 +951,18 @@ mod tests {
 
         assert_eq!(moves.len(), 1);
     }
+
+    #[test]
+    fn test_promotion() {
+        let fen = "3r3K/6PP/8/8/8/2k5/8/8 w - - 0 1";
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        assert!(moves.iter().all(|m| m.role() == Role::Pawn));
+        assert!(moves.iter().all(|m| m.is_promotion()));
+    }
 }
