@@ -367,13 +367,13 @@ impl San {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 match *m {
-                    Move::Normal { role: r, from, capture: c, to: t, promotion: p } =>
+                    Move::Normal { role: r, from, capture: c, to: t, promotion: pr } =>
                         role == r &&
                         file.map_or(true, |f| f == from.file()) &&
                         rank.map_or(true, |r| r == from.rank()) &&
                         capture == c.is_some() &&
                         to == t &&
-                        promotion == p,
+                        promotion == pr,
                     Move::EnPassant { from, to: t } =>
                         role == Role::Pawn &&
                         file.map_or(true, |f| f == from.file()) &&
