@@ -139,9 +139,7 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
-    // This is safe because properly constructed squares are in bounds.
-    let idx = usize::from(a) * 64 + usize::from(b);
-    unsafe { Bitboard(*BB_RAYS.get_unchecked(idx)) }
+    Bitboard(BB_RAYS[usize::from(a)][usize::from(b)])
 }
 
 /// The squares between the two squares (bounds not included), or an empty
@@ -165,9 +163,7 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
-    // This is safe because properly constructed squares are in bounds.
-    let idx = usize::from(a) * 64 + usize::from(b);
-    unsafe { Bitboard(*BB_BETWEEN.get_unchecked(idx)) }
+    Bitboard(BB_BETWEEN[usize::from(a)][usize::from(b)])
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.

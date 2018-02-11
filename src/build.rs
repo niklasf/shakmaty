@@ -79,6 +79,19 @@ fn dump_slice<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, slice: 
     write!(w, "];\n")
 }
 
+fn dump_table<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
+    write!(w, "#[cfg_attr(feature = \"cargo-clippy\", allow(unreadable_literal))]")?;
+    write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
+    for row in table.iter() {
+        write!(w, "[")?;
+        for column in row.iter() {
+            write!(w, "0x{:x}, ", column)?;
+        }
+        write!(w, "], ")?;
+    }
+    write!(w, "];\n")
+}
+
 fn main() {
     // detect support for nightly features
     if let Some(true) = version_check::supports_features() {
@@ -99,8 +112,8 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     let mut white_pawn_attacks = [Bitboard(0); 64];
     let mut black_pawn_attacks = [Bitboard(0); 64];
 
-    let mut bb_rays = [Bitboard(0); 4096];
-    let mut bb_between = [Bitboard(0); 4096];
+    let mut bb_rays = [[Bitboard(0); 64]; 64];
+    let mut bb_between = [[Bitboard(0); 64]; 64];
 
     for sq in Bitboard::ALL {
         knight_attacks[usize::from(sq)] = step_attacks(sq, &KNIGHT_DELTAS);
@@ -111,20 +124,18 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 
     for a in Bitboard::ALL {
         for b in Bitboard::ALL {
-            let idx = usize::from(a) * 64 + usize::from(b);
-
             if sliding_bishop_attacks(a, Bitboard(0)).contains(b) {
-                bb_rays[idx] =
+                bb_rays[usize::from(a)][usize::from(b)] =
                     (sliding_bishop_attacks(a, Bitboard(0)) &
                      sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
-                bb_between[idx] =
+                bb_between[usize::from(a)][usize::from(b)] =
                     sliding_bishop_attacks(a, Bitboard::from_square(b)) &
                     sliding_bishop_attacks(b, Bitboard::from_square(a));
             } else if sliding_rook_attacks(a, Bitboard(0)).contains(b) {
-                bb_rays[idx] =
+                bb_rays[usize::from(a)][usize::from(b)] =
                     (sliding_rook_attacks(a, Bitboard(0)) &
                      sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
-                bb_between[idx] =
+                bb_between[usize::from(a)][usize::from(b)] =
                     sliding_rook_attacks(a, Bitboard::from_square(b)) &
                     sliding_rook_attacks(b, Bitboard::from_square(a));
             }
@@ -138,8 +149,8 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 
     write!(f, "\n")?;
 
-    dump_slice(f, "BB_RAYS", "u64", &bb_rays)?;
-    dump_slice(f, "BB_BETWEEN", "u64", &bb_between)?;
+    dump_table(f, "BB_RAYS", "u64", &bb_rays)?;
+    dump_table(f, "BB_BETWEEN", "u64", &bb_between)?;
 
     write!(f, "\n")?;
 
