@@ -69,8 +69,7 @@ pub fn king_attacks(sq: Square) -> Bitboard {
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    // This is safe because properly constructed squares are in bounds.
-    let m = unsafe { magics::ROOK_MAGICS.get_unchecked(usize::from(sq)) };
+    let m = &magics::ROOK_MAGICS[usize::from(sq)];
 
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
@@ -81,15 +80,13 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// Gets the set of potential blocking squares for a rook on `sq`.
 #[inline]
 pub fn rook_mask(sq: Square) -> Bitboard {
-    let m = unsafe { magics::ROOK_MAGICS.get_unchecked(usize::from(sq)) };
-    Bitboard(m.mask)
+    Bitboard(magics::ROOK_MAGICS[usize::from(sq)].mask)
 }
 
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    // This is safe because properly constructed squares are in bounds.
-    let m = unsafe { magics::BISHOP_MAGICS.get_unchecked(usize::from(sq)) };
+    let m = &magics::BISHOP_MAGICS[usize::from(sq)];
 
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
@@ -100,8 +97,7 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// Gets the set of potential blocking squares for a bishop on `sq`.
 #[inline]
 pub fn bishop_mask(sq: Square) -> Bitboard {
-    let m = unsafe { magics::BISHOP_MAGICS.get_unchecked(usize::from(sq)) };
-    Bitboard(m.mask)
+    Bitboard(magics::BISHOP_MAGICS[usize::from(sq)].mask)
 }
 
 /// Looks up attacks for a queen on `sq` with `occupied` squares.
