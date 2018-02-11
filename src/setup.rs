@@ -69,16 +69,16 @@ impl<S: Setup> Setup for SwapTurn<S> {
 #[derive(Clone, Debug)]
 pub struct Castling {
     chess960: bool,
-    rook: [Option<Square>; 4],
-    path: [Bitboard; 4],
+    rook: [[Option<Square>; 2]; 2],
+    path: [[Bitboard; 2]; 2],
 }
 
 impl Castling {
     pub fn empty() -> Castling {
         Castling {
             chess960: false,
-            rook: [None; 4],
-            path: [Bitboard(0); 4],
+            rook: [[None; 2]; 2],
+            path: [[Bitboard(0); 2]; 2],
         }
     }
 
@@ -86,16 +86,12 @@ impl Castling {
         Castling {
             chess960: false,
             rook: [
-                Some(Square::H8), // black short
-                Some(Square::A8), // black long
-                Some(Square::H1), // white short
-                Some(Square::A1), // white long
+                [Some(Square::H8), Some(Square::A8)], // black
+                [Some(Square::H1), Some(Square::A1)], // white
             ],
             path: [
-                Bitboard(0x6000_0000_0000_0000), // black short
-                Bitboard(0x0e00_0000_0000_0000), // black long
-                Bitboard(0x0000_0000_0000_0060), // white short
-                Bitboard(0x0000_0000_0000_000e), // white long
+                [Bitboard(0x6000_0000_0000_0000), Bitboard(0x0e00_0000_0000_0000)],
+                [Bitboard(0x0000_0000_0000_0060), Bitboard(0x0000_0000_0000_000e)],
             ]
         }
     }
@@ -118,21 +114,19 @@ impl Castling {
                 if let Some(a_side) = OptionFilterExt::filter(side.first(), |rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
-                    let idx = *color as usize * 2 + CastlingSide::QueenSide as usize;
                     castling.chess960 |= king.file() != 4 || a_side.file() != 0;
-                    castling.rook[idx] = Some(a_side);
-                    castling.path[idx] = attacks::between(king, a_side)
-                                        .with(rto).with(kto).without(king).without(a_side);
+                    castling.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
+                    castling.path[*color as usize][CastlingSide::QueenSide as usize] =
+                        attacks::between(king, a_side).with(rto).with(kto).without(king).without(a_side);
                 }
 
                 if let Some(h_side) = OptionFilterExt::filter(side.last(), |rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
-                    let idx = *color as usize * 2 + CastlingSide::KingSide as usize;
                     castling.chess960 |= king.file() != 4 || h_side.file() != 7;
-                    castling.rook[idx] = Some(h_side);
-                    castling.path[idx] = attacks::between(king, h_side)
-                                        .with(rto).with(kto).without(king).without(h_side);
+                    castling.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
+                    castling.path[*color as usize][CastlingSide::KingSide as usize] =
+                        attacks::between(king, h_side).with(rto).with(kto).without(king).without(h_side);
                 }
             }
         }
@@ -145,36 +139,32 @@ impl Castling {
     }
 
     pub fn discard_rook(&mut self, square: Square) {
-        self.rook[0] = OptionFilterExt::filter(self.rook[0], |sq| *sq != square);
-        self.rook[1] = OptionFilterExt::filter(self.rook[1], |sq| *sq != square);
-        self.rook[2] = OptionFilterExt::filter(self.rook[2], |sq| *sq != square);
-        self.rook[3] = OptionFilterExt::filter(self.rook[3], |sq| *sq != square);
+        self.rook[0][0] = OptionFilterExt::filter(self.rook[0][0], |sq| *sq != square);
+        self.rook[0][1] = OptionFilterExt::filter(self.rook[0][1], |sq| *sq != square);
+        self.rook[1][0] = OptionFilterExt::filter(self.rook[1][0], |sq| *sq != square);
+        self.rook[1][1] = OptionFilterExt::filter(self.rook[1][1], |sq| *sq != square);
     }
 
     pub fn discard_side(&mut self, color: Color) {
-        let idx = color as usize * 2;
-        unsafe {
-            *self.rook.get_unchecked_mut(idx) = None;
-            *self.rook.get_unchecked_mut(idx + 1) = None;
-        }
+        self.rook[color as usize] = [None, None];
     }
 
     #[inline]
     pub fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
-        unsafe { *self.rook.get_unchecked(2 * color as usize + side as usize) }
+        self.rook[color as usize][side as usize]
     }
 
     #[inline]
     pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
-        unsafe { *self.path.get_unchecked(2 * color as usize + side as usize) }
+        self.path[color as usize][side as usize]
     }
 
     pub fn castling_rights(&self) -> Bitboard {
         let mut mask = Bitboard(0);
-        mask.extend(self.rook[0]);
-        mask.extend(self.rook[1]);
-        mask.extend(self.rook[2]);
-        mask.extend(self.rook[3]);
+        mask.extend(self.rook[0][0]);
+        mask.extend(self.rook[0][1]);
+        mask.extend(self.rook[1][0]);
+        mask.extend(self.rook[1][1]);
         mask
     }
 
