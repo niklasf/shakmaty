@@ -52,6 +52,9 @@ Documentation
 Changelog
 ---------
 
+* 0.6.1
+  - Expose `attacks::bishop_mask` and `attacks::rook_mask`.
+  - Eliminate almost all unchecked indexing.
 * 0.6.0
   - Split `impl From<Move> for Uci` into `uci()` and `chess960_uci()`.
   - Fix display of pawn drops.
