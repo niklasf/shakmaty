@@ -377,6 +377,14 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
         }
     }
 
+    /// Skip the next game without calling methods of the visitor.
+    pub fn skip_game(&mut self) {
+        let pos = self.scan_headers();
+        let pos = self.skip_movetext(pos);
+        let (_, tail) = split_after_pgn_space(self.pgn, pos);
+        self.pgn = tail;
+    }
+
     /// Reads all games.
     pub fn read_all(mut self) {
         while let Some(_) = self.read_game() { }
