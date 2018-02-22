@@ -450,10 +450,10 @@ impl ExactSizeIterator for Bitboard {
 }
 
 #[cfg(nightly)]
-unsafe impl ::std::iter::TrustedLen for Bitboard { }
+unsafe impl ::std::iter::TrustedLen for Bitboard {}
 
 #[cfg(nightly)]
-impl ::std::iter::FusedIterator for Bitboard { }
+impl ::std::iter::FusedIterator for Bitboard {}
 
 impl DoubleEndedIterator for Bitboard {
     #[inline]
@@ -511,7 +511,7 @@ impl Iterator for CarryRippler {
 }
 
 #[cfg(nightly)]
-impl ::std::iter::FusedIterator for CarryRippler { }
+impl ::std::iter::FusedIterator for CarryRippler {}
 
 #[cfg(test)]
 mod tests {

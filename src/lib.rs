@@ -82,8 +82,8 @@
 extern crate arrayvec;
 #[macro_use]
 extern crate bitflags;
-extern crate option_filter;
 extern crate btoi;
+extern crate option_filter;
 
 mod square;
 mod types;
@@ -100,11 +100,11 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
-pub use square::{Square, InvalidSquareName};
-pub use types::{Color, Role, Piece, Move, Pocket, Pockets, RemainingChecks, CastlingSide};
+pub use square::{InvalidSquareName, Square};
+pub use types::{CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::{Board, Pieces};
 pub use setup::Setup;
 pub use movelist::MoveList;
-pub use position::{IllegalMove, Outcome, Position, PositionError, Chess};
+pub use position::{Chess, IllegalMove, Outcome, Position, PositionError};
 pub use perft::perft;

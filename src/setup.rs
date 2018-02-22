@@ -17,7 +17,7 @@
 use square::Square;
 use bitboard::Bitboard;
 use attacks;
-use types::{Color, Role, Pockets, RemainingChecks, CastlingSide};
+use types::{CastlingSide, Color, Pockets, RemainingChecks, Role};
 use board::Board;
 
 use option_filter::OptionFilterExt;

@@ -101,8 +101,8 @@ use std::str::FromStr;
 use std::error::Error;
 
 use square::Square;
-use types::{Role, Move};
-use position::{Position, IllegalMove};
+use types::{Move, Role};
+use position::{IllegalMove, Position};
 
 /// Error when parsing an invalid UCI.
 pub struct InvalidUci {
@@ -181,17 +181,17 @@ pub fn uci<P: Position>(pos: &P, m: &Move) -> Uci {
                 Uci::Normal {
                     from: king,
                     to: pos.turn().fold(Square::G1, Square::G8),
-                    promotion: None
+                    promotion: None,
                 }
             } else {
                 Uci::Normal {
                     from: king,
                     to: pos.turn().fold(Square::C1, Square::C8),
-                    promotion: None
+                    promotion: None,
                 }
             }
-        },
-        _ => chess960_uci(m)
+        }
+        _ => chess960_uci(m),
     }
 }
 

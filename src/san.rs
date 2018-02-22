@@ -90,8 +90,8 @@
 //! ```
 
 use square::Square;
-use types::{Move, Role, CastlingSide};
-use position::{Position, Outcome};
+use types::{CastlingSide, Move, Role};
+use position::{Outcome, Position};
 use movelist::MoveList;
 
 use std::fmt;
@@ -156,7 +156,6 @@ impl Error for SanError {
     }
 }
 
-
 /// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum San {
@@ -211,12 +210,12 @@ impl San {
         } else if san.len() == 3 && san[0] == b'@' {
             Ok(San::Put {
                 role: Role::Pawn,
-                to: Square::from_bytes(&san[1..]).map_err(|_| ())?
+                to: Square::from_bytes(&san[1..]).map_err(|_| ())?,
             })
         } else if san.len() == 4 && san[1] == b'@' {
             Ok(San::Put {
                 role: Role::from_char(san[0] as char).ok_or(())?,
-                to: Square::from_bytes(&san[2..]).map_err(|_| ())?
+                to: Square::from_bytes(&san[2..]).map_err(|_| ())?,
             })
         } else {
             let mut chars = san.iter().cloned();
@@ -456,12 +455,10 @@ impl SanPlus {
     ///
     /// [`InvalidSan`]: struct.InvalidSan.html
     pub fn from_bytes(san: &[u8]) -> Result<SanPlus, InvalidSan> {
-        San::from_bytes(san).map(|result| {
-            SanPlus {
-                san: result,
-                checkmate: san.ends_with(b"#"),
-                check: san.ends_with(b"+"),
-            }
+        San::from_bytes(san).map(|result| SanPlus {
+            san: result,
+            checkmate: san.ends_with(b"#"),
+            check: san.ends_with(b"+"),
         })
     }
 }

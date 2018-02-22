@@ -2,8 +2,8 @@
 extern crate bencher;
 extern crate shakmaty;
 
-use bencher::{Bencher, black_box};
-use shakmaty::{Color, Square, Role, Chess, Setup, Position, Move, MoveList, perft};
+use bencher::{black_box, Bencher};
+use shakmaty::{perft, Chess, Color, Move, MoveList, Position, Role, Setup, Square};
 use shakmaty::san::San;
 use shakmaty::fen::Fen;
 

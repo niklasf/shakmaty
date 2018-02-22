@@ -18,9 +18,9 @@ use attacks;
 use board::Board;
 use bitboard::Bitboard;
 use square::Square;
-use types::{Color, White, Black, Role, Piece, Move, Pockets, RemainingChecks, CastlingSide};
-use setup::{Setup, Castling, SwapTurn};
-use movelist::{MoveList, ArrayVecExt};
+use types::{Black, CastlingSide, Color, Move, Piece, Pockets, RemainingChecks, Role, White};
+use setup::{Castling, Setup, SwapTurn};
+use movelist::{ArrayVecExt, MoveList};
 use option_filter::OptionFilterExt;
 
 use std::fmt;
@@ -220,8 +220,9 @@ pub trait Position: Setup {
 
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
-        self.our(Role::King).first()
-            .map_or(Bitboard(0), |king| self.king_attackers(king, !self.turn(), self.board().occupied()))
+        self.our(Role::King).first().map_or(Bitboard(0), |king| {
+            self.king_attackers(king, !self.turn(), self.board().occupied())
+        })
     }
 
     /// Checks if the game is over due to a special variant end condition.
@@ -704,7 +705,7 @@ trait Stepper {
                         from,
                         capture: pos.board().role_at(to),
                         to,
-                        promotion: None
+                        promotion: None,
                     });
                 }
             }
@@ -727,7 +728,7 @@ trait Slider {
                         from,
                         capture: pos.board().role_at(to),
                         to,
-                        promotion: None
+                        promotion: None,
                     });
                 }
             }
@@ -783,7 +784,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                     from,
                     capture: pos.board().role_at(to),
                     to,
-                    promotion: None
+                    promotion: None,
                 });
             }
         }
@@ -812,7 +813,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                     from,
                     capture: None,
                     to,
-                    promotion: None
+                    promotion: None,
                 });
             }
         }
@@ -834,7 +835,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                     from,
                     capture: None,
                     to,
-                    promotion: None
+                    promotion: None,
                 });
             }
         }

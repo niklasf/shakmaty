@@ -20,7 +20,7 @@ use std::iter::FromIterator;
 
 use attacks;
 use square::Square;
-use types::{Color, Role, Piece};
+use types::{Color, Piece, Role};
 use bitboard::Bitboard;
 
 /// [`Piece`] positions on a board.
@@ -48,7 +48,7 @@ use bitboard::Bitboard;
 pub struct Board {
     occupied: Bitboard,
     occupied_co: [Bitboard; 2], // indexed by Color
-    pieces: [Bitboard; 6], // indexed by Role
+    pieces: [Bitboard; 6],      // indexed by Role
     promoted: Bitboard,
 }
 
@@ -152,8 +152,9 @@ impl Board {
 
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
-        self.role_at(sq).map(|role| {
-            Piece { color: Color::from_white(self.white().contains(sq)), role }
+        self.role_at(sq).map(|role| Piece {
+            color: Color::from_white(self.white().contains(sq)),
+            role,
         })
     }
 
@@ -220,8 +221,9 @@ impl Board {
     }
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
-        self.piece_at(sq)
-            .map_or(Bitboard(0), |piece| attacks::attacks(sq, piece, self.occupied))
+        self.piece_at(sq).map_or(Bitboard(0), |piece| {
+            attacks::attacks(sq, piece, self.occupied)
+        })
     }
 
     pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
@@ -347,25 +349,25 @@ impl Iterator for Pieces {
 
 impl ExactSizeIterator for Pieces {
     fn len(&self) -> usize {
-        self.pawns.len() + self.knights.len() + self.bishops.len() + self.rooks.len() +
-        self.queens.len() + self.kings.len()
+        self.pawns.len() + self.knights.len() + self.bishops.len() + self.rooks.len()
+            + self.queens.len() + self.kings.len()
     }
 
     #[cfg(nightly)]
     fn is_empty(&self) -> bool {
-        self.white.is_empty() && self.pawns.is_empty() && self.knights.is_empty() &&
-        self.bishops.is_empty() && self.rooks.is_empty() && self.queens.is_empty() &&
-        self.kings.is_empty()
+        self.white.is_empty() && self.pawns.is_empty() && self.knights.is_empty()
+            && self.bishops.is_empty() && self.rooks.is_empty() && self.queens.is_empty()
+            && self.kings.is_empty()
     }
 }
 
 #[cfg(nightly)]
-impl ::std::iter::FusedIterator for Pieces { }
+impl ::std::iter::FusedIterator for Pieces {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use types::{White, Black};
+    use types::{Black, White};
 
     #[test]
     fn test_piece_at() {

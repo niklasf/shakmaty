@@ -79,7 +79,7 @@ use std::error::Error;
 use btoi;
 
 use square::Square;
-use types::{Color, Black, White, Piece, Pockets, RemainingChecks};
+use types::{Black, Color, Piece, Pockets, RemainingChecks, White};
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;

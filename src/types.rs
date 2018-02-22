@@ -21,7 +21,7 @@ use std::ops;
 use square::Square;
 
 pub use self::Color::{Black, White};
-pub use self::Role::{Pawn, Knight, Bishop, Rook, Queen, King};
+pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
 /// `White` or `Black`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
