@@ -74,6 +74,7 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
+    debug_assert!(idx < 88772);
     Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
 }
 
@@ -91,6 +92,7 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     // This is safe because a sufficient size for the attack tables was
     // hand-selected.
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
+    debug_assert!(idx < 88772);
     Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
 }
 
