@@ -366,14 +366,15 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
 
         // Skip trailing whitespace.
         let (head, tail) = split_after_pgn_space(self.pgn, pos);
+
+        let result = self.visitor.end_game(head);
         self.pgn = tail;
 
         // Check for any content.
         if head.iter().all(|c| is_space(*c)) {
-            self.visitor.end_game(head);
             None
         } else {
-            Some(self.visitor.end_game(head))
+            Some(result)
         }
     }
 
@@ -388,6 +389,11 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Reads all games.
     pub fn read_all(mut self) {
         while let Some(_) = self.read_game() { }
+    }
+
+    /// Returns a slice containing the not yet fully parsed games.
+    pub fn remaining_pgn(&self) -> &'pgn [u8] {
+        self.pgn
     }
 
     fn scan_headers(&mut self) -> usize {
