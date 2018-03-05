@@ -169,7 +169,7 @@ pub use shakmaty::{Color, CastlingSide, Outcome, Role, Square};
 
 use btoi::btou;
 
-/// Tell the reader to skip over a game.
+/// Tell the reader to skip over a game or variation.
 #[derive(Clone, Eq, PartialEq, Debug)]
 #[must_use]
 pub struct Skip(pub bool);
@@ -329,7 +329,7 @@ fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
 /// Reads a PGN.
 pub struct Reader<'a, 'pgn, V: Visitor<'pgn>> where V: 'a {
     visitor: &'a mut V,
-    pgn: &'pgn[u8],
+    pgn: &'pgn [u8],
 }
 
 impl<'a, 'pgn, V: Visitor<'pgn>> fmt::Debug for Reader<'a, 'pgn, V> {
@@ -342,7 +342,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Creates a new reader with a custom [`Visitor`].
     ///
     /// [`Visitor`]: trait.Visitor.html
-    pub fn new(visitor: &'a mut V, pgn: &'pgn[u8]) -> Reader<'a, 'pgn, V> {
+    pub fn new(visitor: &'a mut V, pgn: &'pgn [u8]) -> Reader<'a, 'pgn, V> {
         // Skip BOM.
         let pos = if pgn.starts_with(b"\xef\xbb\xbf") { 3 } else { 0 };
 
