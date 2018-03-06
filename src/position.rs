@@ -363,7 +363,7 @@ impl Position for Chess {
         let pos = Chess {
             board: setup.board().clone(),
             turn: setup.turn(),
-            castling: castling,
+            castling,
             ep_square: setup.ep_square(),
             halfmove_clock: setup.halfmove_clock(),
             fullmoves: setup.fullmoves(),
