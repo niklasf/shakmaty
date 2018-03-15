@@ -21,15 +21,8 @@ use std::error::Error;
 use std::ops::Sub;
 
 /// Error when parsing an invalid square name.
-pub struct InvalidSquareName {
-    _priv: (),
-}
-
-impl fmt::Debug for InvalidSquareName {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("InvalidSquareName").finish()
-    }
-}
+#[derive(Debug, Eq, PartialEq)]
+pub struct InvalidSquareName;
 
 impl fmt::Display for InvalidSquareName {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -40,6 +33,12 @@ impl fmt::Display for InvalidSquareName {
 impl Error for InvalidSquareName {
     fn description(&self) -> &str {
         "invalid square name"
+    }
+}
+
+impl From<()> for InvalidSquareName {
+    fn from(_: ()) -> InvalidSquareName {
+        InvalidSquareName
     }
 }
 
@@ -144,7 +143,7 @@ impl Square {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
             Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, (s[1] - b'1') as i8) })
         } else {
-            Err(InvalidSquareName { _priv: () })
+            Err(InvalidSquareName)
         }
     }
 

@@ -99,16 +99,8 @@ use std::str::FromStr;
 use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
-#[derive(Eq, PartialEq)]
-pub struct InvalidSan {
-    _priv: (),
-}
-
-impl fmt::Debug for InvalidSan {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("InvalidSan").finish()
-    }
-}
+#[derive(Debug, Eq, PartialEq)]
+pub struct InvalidSan;
 
 impl fmt::Display for InvalidSan {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -124,7 +116,7 @@ impl Error for InvalidSan {
 
 impl From<()> for InvalidSan {
     fn from(_: ()) -> InvalidSan {
-        InvalidSan { _priv: () }
+        InvalidSan
     }
 }
 
@@ -266,7 +258,7 @@ impl San {
             let promotion = match next {
                 Some(b'=') =>
                     Some(chars.next().and_then(|r| Role::from_char(r as char)).ok_or(())?),
-                Some(_) => return Err(InvalidSan { _priv: () }),
+                Some(_) => return Err(InvalidSan),
                 None => None,
             };
 

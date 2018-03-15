@@ -105,15 +105,8 @@ use types::{Move, Role};
 use position::{IllegalMove, Position};
 
 /// Error when parsing an invalid UCI.
-pub struct InvalidUci {
-    _priv: (),
-}
-
-impl fmt::Debug for InvalidUci {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("InvalidUci").finish()
-    }
-}
+#[derive(Debug, Eq, PartialEq)]
+pub struct InvalidUci;
 
 impl fmt::Display for InvalidUci {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -129,7 +122,7 @@ impl Error for InvalidUci {
 
 impl From<()> for InvalidUci {
     fn from(_: ()) -> InvalidUci {
-        InvalidUci { _priv: () }
+        InvalidUci
     }
 }
 
@@ -221,7 +214,7 @@ impl Uci {
     /// [`InvalidUci`]: struct.InvalidUci.html
     pub fn from_bytes(uci: &[u8]) -> Result<Uci, InvalidUci> {
         if uci.len() != 4 && uci.len() != 5 {
-            return Err(InvalidUci { _priv: () });
+            return Err(InvalidUci);
         }
 
         if uci == b"0000" {
