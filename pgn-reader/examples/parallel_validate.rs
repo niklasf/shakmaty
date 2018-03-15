@@ -131,7 +131,7 @@ fn main() {
         let (send, recv) = chan::sync(128);
 
         std::thread::spawn(move || {
-            for game in Reader::new(&mut validator, &pgn[..]).into_iter() {
+            for game in Reader::new(&mut validator, &pgn[..]) {
                 send.send(game);
             }
         });
