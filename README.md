@@ -52,6 +52,10 @@ Documentation
 Changelog
 ---------
 
+* 0.6.2
+  - Make unit error types (`InvalidSquareName`, `InvalidUci`, `InvalidSan`)
+    completely public.
+  - Documentation, coding style and debugging tweaks.
 * 0.6.1
   - Expose `attacks::bishop_mask` and `attacks::rook_mask`.
   - Eliminate almost all unchecked indexing.
