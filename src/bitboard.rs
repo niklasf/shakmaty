@@ -311,7 +311,8 @@ impl From<Bitboard> for u64 {
 }
 
 impl<T> ops::BitAnd<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     type Output = Bitboard;
 
@@ -323,7 +324,8 @@ impl<T> ops::BitAnd<T> for Bitboard
 }
 
 impl<T> ops::BitAndAssign<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitand_assign(&mut self, rhs: T) {
@@ -333,7 +335,8 @@ impl<T> ops::BitAndAssign<T> for Bitboard
 }
 
 impl<T> ops::BitOr<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     type Output = Bitboard;
 
@@ -345,7 +348,8 @@ impl<T> ops::BitOr<T> for Bitboard
 }
 
 impl<T> ops::BitOrAssign<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitor_assign(&mut self, rhs: T) {
@@ -355,7 +359,8 @@ impl<T> ops::BitOrAssign<T> for Bitboard
 }
 
 impl<T> ops::BitXor<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     type Output = Bitboard;
 
@@ -367,7 +372,8 @@ impl<T> ops::BitXor<T> for Bitboard
 }
 
 impl<T> ops::BitXorAssign<T> for Bitboard
-    where T: Into<Bitboard>
+where
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitxor_assign(&mut self, rhs: T) {
@@ -387,7 +393,8 @@ impl ops::Not for Bitboard {
 
 impl FromIterator<Square> for Bitboard {
     fn from_iter<T>(iter: T) -> Self
-        where T: IntoIterator<Item = Square>
+    where
+        T: IntoIterator<Item = Square>,
     {
         let mut result = Bitboard(0);
         result.extend(iter);

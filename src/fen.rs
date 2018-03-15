@@ -333,7 +333,8 @@ impl Fen {
 
         let (board_part, pockets) = if board_part.ends_with(b"]") {
             let split_point = board_part
-                .iter().position(|ch| *ch == b'[')
+                .iter()
+                .position(|ch| *ch == b'[')
                 .ok_or(FenError::InvalidBoard)?;
             let mut pockets = Pockets::default();
             for &ch in &board_part[(split_point + 1)..(board_part.len() - 1)] {
@@ -365,9 +366,9 @@ impl Fen {
                     let flag = match ch | 32 {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
-                        file @ b'a' ... b'h' => {
+                        file @ b'a'...b'h' => {
                             (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
-                        },
+                        }
                         _ => return Err(FenError::InvalidCastling),
                     };
 
@@ -380,9 +381,8 @@ impl Fen {
             Some(b"-") | None => (),
             Some(ep_part) => {
                 result.ep_square =
-                    Some(Square::from_bytes(ep_part)
-                            .map_err(|_| FenError::InvalidEpSquare)?);
-            },
+                    Some(Square::from_bytes(ep_part).map_err(|_| FenError::InvalidEpSquare)?);
+            }
         }
 
         let halfmoves_part = if let Some(checks_part) = parts.next() {
@@ -438,8 +438,7 @@ fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> Str
     for color in &[White, Black] {
         let king = board.king_of(*color);
 
-        let candidates = board.by_piece(color.rook()) &
-                         Bitboard::relative_rank(*color, 0);
+        let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
 
         for rook in (candidates & castling_rights).rev() {
             if !opts.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {

@@ -109,7 +109,9 @@ pub trait Position: Setup {
     /// Returns [`PositionError`] if the setup is not legal.
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError> where Self: Sized;
+    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>
+    where
+        Self: Sized;
 
     /// Swap turns. This is sometimes called "playing a null move".
     ///
@@ -119,7 +121,10 @@ pub trait Position: Setup {
     /// to a check that has to be averted).
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn swap_turn(self) -> Result<Self, PositionError> where Self: Sized {
+    fn swap_turn(self) -> Result<Self, PositionError>
+    where
+        Self: Sized,
+    {
         Self::from_setup(&SwapTurn(self))
     }
 
@@ -292,7 +297,8 @@ pub trait Position: Setup {
     ///
     /// [`IllegalMove`]: struct.IllegalMove.html
     fn play(mut self, m: &Move) -> Result<Self, IllegalMove>
-        where Self: Sized
+    where
+        Self: Sized,
     {
         if self.is_legal(m) {
             self.play_unchecked(m);
@@ -547,15 +553,15 @@ fn do_move(board: &mut Board,
             board.set_piece_at(king_to, color.king(), false);
 
             castling.discard_side(color);
-        },
+        }
         Move::EnPassant { from, to } => {
             board.discard_piece_at(to.combine(from)); // captured pawn
             board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
             *halfmove_clock = 0;
-        },
+        }
         Move::Put { role, to } => {
             board.set_piece_at(to, Piece { color, role }, false);
-        },
+        }
     }
 
     if color.is_black() {
@@ -581,11 +587,13 @@ fn validate<P: Position>(pos: &P) -> PositionError {
         if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
             errors |= PositionError::INVALID_EP_SQUARE;
         } else {
-            let fifth_rank_sq = ep_square.offset(pos.turn().fold(-8, 8))
-                                         .expect("ep square is on sixth rank");
+            let fifth_rank_sq = ep_square
+                .offset(pos.turn().fold(-8, 8))
+                .expect("ep square is on sixth rank");
 
-            let seventh_rank_sq  = ep_square.offset(pos.turn().fold(8, -8))
-                                            .expect("ep square is on sixth rank");
+            let seventh_rank_sq = ep_square
+                .offset(pos.turn().fold(8, -8))
+                .expect("ep square is on sixth rank");
 
             // The last move must have been a double pawn push. Check for the
             // presence of that pawn.

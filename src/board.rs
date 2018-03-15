@@ -284,7 +284,8 @@ impl Extend<(Square, Piece)> for Board {
 
 impl FromIterator<(Square, Piece)> for Board {
     fn from_iter<T>(iter: T) -> Self
-        where T: IntoIterator<Item = (Square, Piece)>
+    where
+        T: IntoIterator<Item = (Square, Piece)>,
     {
         let mut board = Board::empty();
         board.extend(iter);
