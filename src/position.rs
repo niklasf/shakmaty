@@ -97,6 +97,12 @@ impl Error for IllegalMove {
     }
 }
 
+impl From<()> for IllegalMove {
+    fn from(_: ()) -> IllegalMove {
+        IllegalMove
+    }
+}
+
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
 /// implementation.
 ///
@@ -304,7 +310,7 @@ pub trait Position: Setup {
             self.play_unchecked(m);
             Ok(self)
         } else {
-            Err(IllegalMove {})
+            Err(IllegalMove)
         }
     }
 
