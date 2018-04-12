@@ -30,7 +30,7 @@ use positioned_io::ReadAt;
 
 use shakmaty::{Square, Color, Role, Piece, Bitboard, Position};
 
-use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, SyzygyResult};
+use types::{Syzygy, Wdl, Dtz, Pieces, MAX_PIECES, SyzygyError, SyzygyResult};
 use material::Material;
 
 pub trait IsWdl {
@@ -969,6 +969,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     }
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
+        assert!(T::IS_WDL);
+
         let (side, idx) = self.encode(pos)?;
         //println!("side: {:?}", side);
         println!("idx: {}", idx);
@@ -983,6 +985,28 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             4 => Wdl::Win,
             _ => return Err(SyzygyError::CorruptedTable),
         })
+    }
+
+    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Dtz> {
+        assert!(!T::IS_WDL);
+
+        let (side, idx) = self.encode(pos)?;
+        let res = self.decompress_pairs(side, idx)?;
+
+        let res = if side.flags.contains(Flag::MAPPED) {
+            panic!("TODO: implement mapped");
+        } else {
+            i16::from(res)
+        };
+
+        let stores_moves = match wdl {
+            Wdl::Win => !side.flags.contains(Flag::WIN_PLIES),
+            Wdl::Loss => !side.flags.contains(Flag::LOSS_PLIES),
+            Wdl::CursedWin | Wdl::BlessedLoss => true,
+            Wdl::Draw => false,
+        };
+
+        Ok(Dtz(if stores_moves { res * 2 } else { res } + 1))
     }
 }
 
