@@ -203,6 +203,9 @@ const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,  Z0,  Z0,  Z0,  Z0, 461,
 ]];
 
+/// a5, a6, a7, b5, b6, c5.
+const TEST45: Bitboard = Bitboard(0x1030700000000);
+
 lazy_static! {
     static ref CONSTS: Consts = Consts::new();
 }
@@ -987,6 +990,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             } else if self.num_unique_pieces == 2 {
                 if S::CONNECTED_KINGS {
                     let adjust = if squares[1] > squares[0] { 1 } else { 0 };
+
                     if offdiag(squares[0]) {
                         TRIANGLE[usize::from(squares[0])] * 63 +
                         (u64::from(squares[1]) - adjust)
@@ -1002,6 +1006,39 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 } else {
                     KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
                 }
+            } else if self.min_like_man == 2 {
+                if TRIANGLE[usize::from(squares[0])] > TRIANGLE[usize::from(squares[1])] {
+                    squares.swap(0, 1);
+                }
+
+                if squares[0].file() >= 4 {
+                    for square in &mut squares {
+                        *square = square.flip_horizontal();
+                    }
+                }
+
+                if squares[0].rank() >= 4 {
+                    for square in &mut squares {
+                        *square = square.flip_vertical();
+                    }
+                }
+
+                if squares[0].rank() > squares[0].file() ||
+                   (!offdiag(squares[0]) && squares[1].rank() > squares[1].file()) {
+                    for square in &mut squares {
+                        *square = square.flip_diagonal();
+                    }
+                }
+
+                if TEST45.contains(squares[1]) && TRIANGLE[usize::from(squares[0])] == TRIANGLE[usize::from(squares[1])] {
+                    squares.swap(0, 1);
+
+                    for square in &mut squares {
+                        *square = square.flip_vertical().flip_diagonal();
+                    }
+                }
+
+                PP_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
             } else {
                 panic!("TODO: minlikeman not implemented")
             }
