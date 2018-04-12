@@ -1132,7 +1132,44 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
                 PP_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
             } else {
-                panic!("TODO: minlikeman not implemented")
+                for i in 1..side.groups.lens[0] {
+                    if TRIANGLE[usize::from(squares[0])] > TRIANGLE[usize::from(squares[i])] {
+                        squares.swap(0, i);
+                    }
+                }
+
+                if squares[0].file() >= 4 {
+                    for square in &mut squares {
+                        *square = square.flip_horizontal();
+                    }
+                }
+
+                if squares[0].rank() >= 4 {
+                    for square in &mut squares {
+                        *square = square.flip_vertical();
+                    }
+                }
+
+                if squares[0].rank() > squares[0].file() {
+                    for square in &mut squares {
+                        *square = square.flip_diagonal();
+                    }
+                }
+
+                for i in 1..side.groups.lens[0] {
+                    for j in (i + 1)..side.groups.lens[0] {
+                        if MULT_TWIST[usize::from(squares[i])] > MULT_TWIST[usize::from(squares[j])] {
+                            squares.swap(i, j);
+                        }
+                    }
+                }
+
+                let mut idx = CONSTS.mult_idx[side.groups.lens[0] - 1][TRIANGLE[usize::from(squares[0])] as usize];
+                for i in 1..side.groups.lens[0] {
+                    idx += binomial(MULT_TWIST[usize::from(squares[i])], i as u64);
+                }
+
+                idx
             }
         };
 
