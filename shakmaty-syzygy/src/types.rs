@@ -238,7 +238,7 @@ pub const MAX_PIECES: usize = 7;
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
 /// Error when probing a table.
-#[derive(Debug, Clone, PartialEq, Eq, Fail)]
+#[derive(Debug, Fail)]
 pub enum SyzygyError {
     /// Position has castling rights.
     #[fail(display = "syzygy tables do not contain positions with castling rights")]
@@ -252,8 +252,10 @@ pub enum SyzygyError {
         material: Material,
     },
     /// I/O error.
-    #[fail(display = "i/o error when reading a table")]
-    Read,
+    #[fail(display = "i/o error when reading a table: {}", error)]
+    Read {
+        error: io::Error,
+    },
     /// Unexpected magic header bytes.
     #[fail(display = "invalid magic bytes")]
     Magic,
@@ -272,7 +274,7 @@ impl From<io::Error> for SyzygyError {
     fn from(error: io::Error) -> SyzygyError {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable,
-            _ => SyzygyError::Read,
+            _ => SyzygyError::Read { error },
         }
     }
 }

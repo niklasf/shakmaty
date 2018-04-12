@@ -396,10 +396,10 @@ impl RandomAccessFile {
 
      fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
          let mut buf = [0; 4];
-         if let Err(err) = self.file.read_exact_at(0, &mut buf) {
-             match err.kind() {
+         if let Err(error) = self.file.read_exact_at(0, &mut buf) {
+             match error.kind() {
                  io::ErrorKind::UnexpectedEof => Ok(false),
-                 _ => Err(SyzygyError::Read),
+                 _ => Err(SyzygyError::Read { error }),
             }
          } else {
             Ok(&buf == magic)
