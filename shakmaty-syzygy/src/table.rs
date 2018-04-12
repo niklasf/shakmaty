@@ -689,10 +689,12 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
             for side in [Color::White, Color::Black].iter().take(num_sides) {
                 let group = groups[f][side.fold(0, 1)].clone();
-                let (pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
+                let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
 
-                if !T::IS_WDL {
-                    panic!("TODO: Antichess");
+                if !T::IS_WDL && S::CAPTURES_COMPULSORY {
+                    if pairs.flags.contains(Flag::SINGLE_VALUE) {
+                        pairs.min_symlen = 1;
+                    }
                 }
 
                 sides.push(pairs);
