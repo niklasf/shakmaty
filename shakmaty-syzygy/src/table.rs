@@ -986,7 +986,19 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 }
             } else if self.num_unique_pieces == 2 {
                 if S::CONNECTED_KINGS {
-                    panic!("connected kings not implemented")
+                    let adjust = if squares[1] > squares[0] { 1 } else { 0 };
+                    if offdiag(squares[0]) {
+                        TRIANGLE[usize::from(squares[0])] * 63 +
+                        (u64::from(squares[1]) - adjust)
+                    } else if offdiag(squares[1]) {
+                        6 * 63 +
+                        squares[0].rank() as u64 * 28 +
+                        LOWER[usize::from(squares[1])]
+                    } else {
+                        6 * 63 + 4 * 28 +
+                        squares[0].rank() as u64 * 7 +
+                        (squares[1].rank() as u64 - adjust)
+                    }
                 } else {
                     KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
                 }
