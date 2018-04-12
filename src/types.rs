@@ -240,6 +240,14 @@ impl Move {
         }
     }
 
+    /// Checks if the move zeros the half-move clock.
+    pub fn is_zeroing(&self) -> bool {
+        match *self {
+            Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } => true,
+            _ => false,
+        }
+    }
+
     /// Gets the castling side.
     pub fn castling_side(&self) -> Option<CastlingSide> {
         match *self {
