@@ -23,11 +23,18 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
             .get(1).expect("wdl field")
             .parse().expect("valid wdl");
 
+        let expected_dtz: i16 = record
+            .get(2).expect("dtz field")
+            .parse().expect("valid dtz");
+
         let pos: S = fen.position().expect("legal");
 
-        println!("{} | expected wdl: {}", fen, expected_wdl);
-        let wdl = tables.probe_wdl(&pos).expect("probe");
+        println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
+        let wdl = tables.probe_wdl(&pos).expect("probe wdl");
         assert_eq!(i8::from(wdl), expected_wdl);
+
+        let dtz = tables.probe_dtz(&pos).expect("probe dtz");
+        assert_eq!(i16::from(dtz), expected_dtz);
     }
 }
 
