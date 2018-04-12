@@ -25,7 +25,7 @@
 //! # extern crate failure;
 //! # extern crate shakmaty;
 //! # extern crate shakmaty_syzygy;
-//!
+//! #
 //! # use failure::Error;
 //! use shakmaty::Chess;
 //! use shakmaty::fen::Fen;
