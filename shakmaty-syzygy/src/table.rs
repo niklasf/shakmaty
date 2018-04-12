@@ -1053,7 +1053,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             Wdl::Draw => false,
         };
 
-        Ok(Some(Dtz(if stores_moves { res * 2 } else { res } + 1)))
+        Ok(Some(Dtz(if stores_moves { res * 2 } else { res })))
     }
 }
 
