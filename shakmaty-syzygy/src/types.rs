@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::ops::{Neg, Add, Sub};
+use std::ops::{Neg, Add, AddAssign, Sub, SubAssign};
 use std::option::NoneError;
 use std::io;
 
@@ -85,7 +85,7 @@ pub enum Wdl {
 }
 
 impl Wdl {
-    pub(crate) fn from_outcome(outcome: &Outcome, pov: Color) -> Wdl {
+    pub fn from_outcome(outcome: &Outcome, pov: Color) -> Wdl {
         match *outcome {
             Outcome::Draw => Wdl::Draw,
             Outcome::Decisive { winner } if winner == pov => Wdl::Win,
@@ -108,12 +108,18 @@ impl Neg for Wdl {
     }
 }
 
-impl From<Wdl> for i8 {
-    #[inline]
-    fn from(wdl: Wdl) -> i8 {
-        wdl as i8
+macro_rules! from_wdl_impl {
+    ($($t:ty)+) => {
+        $(impl From<Wdl> for $t {
+            #[inline]
+            fn from(wdl: Wdl) -> $t {
+                wdl as $t
+            }
+        })+
     }
 }
+
+from_wdl_impl! { i8 i16 i32 i64 isize }
 
 /// Distance to zeroing.
 ///
@@ -132,13 +138,6 @@ impl From<Wdl> for i8 {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Dtz(pub i16);
 
-impl From<Dtz> for i16 {
-    #[inline]
-    fn from(dtz: Dtz) -> i16 {
-        dtz.0
-    }
-}
-
 impl Dtz {
     pub fn before_zeroing(wdl: Wdl) -> Dtz {
         match wdl {
@@ -150,6 +149,32 @@ impl Dtz {
         }
     }
 }
+
+macro_rules! from_dtz_impl {
+    ($($t:ty)+) => {
+        $(impl From<Dtz> for $t {
+            #[inline]
+            fn from(wdl: Dtz) -> $t {
+                wdl.0 as $t
+            }
+        })+
+    }
+}
+
+from_dtz_impl! { i16 i32 i64 isize }
+
+macro_rules! dtz_from_impl {
+    ($($t:ty)+) => {
+        $(impl From<$t> for Dtz {
+            #[inline]
+            fn from(dtz: $t) -> Dtz {
+                Dtz(i16::from(dtz))
+            }
+        })+
+    }
+}
+
+dtz_from_impl! { u8 i8 i16 }
 
 impl From<Dtz> for Wdl {
     fn from(dtz: Dtz) -> Wdl {
@@ -181,12 +206,26 @@ impl Add for Dtz {
     }
 }
 
+impl AddAssign for Dtz {
+    #[inline]
+    fn add_assign(&mut self, other: Dtz) {
+        self.0 += other.0;
+    }
+}
+
 impl Sub for Dtz {
     type Output = Dtz;
 
     #[inline]
     fn sub(self, other: Dtz) -> Dtz {
         Dtz(self.0 - other.0)
+    }
+}
+
+impl SubAssign for Dtz {
+    #[inline]
+    fn sub_assign(&mut self, other: Dtz) {
+        self.0 -= other.0;
     }
 }
 
