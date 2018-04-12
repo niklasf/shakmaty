@@ -284,7 +284,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
 
         // Probe.
-        let v = self.probe_dtz_no_ep(pos)?;
+        let mut v = self.probe_dtz_no_ep(pos)?;
 
         if S::CAPTURES_COMPULSORY {
             return Ok(v);
@@ -297,7 +297,44 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             return Ok(v);
         }
 
-        panic!("TODO: implement probe_dtz")
+        // Check all en passant moves.
+        let mut wdl = Wdl::Loss;
+
+        for m in ep_moves {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+            let (v0, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+            wdl = max(v0, wdl);
+        }
+
+        let v1 = Dtz::before_zeroing(wdl);
+        if v < Dtz(-100) {
+            if v1 >= Dtz(0) {
+                v = v1;
+            }
+        } else if (v < Dtz(0)) {
+            if v1 >= Dtz(0) || v1 < Dtz(-100) {
+                v = v1;
+            }
+        } else if v > Dtz(100) {
+            if v1 > Dtz(0) {
+                v = v1;
+            }
+        } else if v > Dtz(0) {
+            if v1 == Dtz(1) {
+                v = v1;
+            }
+        } else if v1 >= Dtz(0) {
+            v = v1;
+        } else {
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            if moves.iter().all(|m| m.is_en_passant()) {
+                v = v1;
+            }
+        }
+
+        Ok(v)
     }
 
     fn probe_dtz_no_ep(&self, pos: &S) -> SyzygyResult<Dtz> {
