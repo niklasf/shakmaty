@@ -17,7 +17,7 @@
 use std::io;
 use std::fs;
 use std::str::FromStr;
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::path::{Path, PathBuf};
 
 use fnv::FnvHashMap;
@@ -317,7 +317,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
-            moves.retain(|m| m.role() == Role::Pawn && m.capture().is_none());
+            moves.retain(|m| m.role() == Role::Pawn && !m.is_capture());
             for m in moves {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
@@ -325,7 +325,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 let v = -self.probe_wdl(pos)?;
 
                 if v == wdl {
-                    return Ok(Dtz(if v == Wdl::Win { 1} else { 101 }));
+                    return Ok(Dtz(if v == Wdl::Win { 1 } else { 101 }));
                 }
             }
         }
@@ -334,7 +334,49 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             return Ok(Dtz::before_zeroing(wdl) + if wdl > Wdl::Draw { dtz } else { -dtz });
         }
 
-        panic!("probe_dtz_table")
+        Ok(if wdl > Wdl::Draw {
+            let mut best = Dtz(i16::max_value());
+
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            moves.retain(|m| m.role() != Role::Pawn && !m.is_capture());
+            for m in moves {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+
+                let v = -self.probe_dtz(&after)?;
+
+                if v > Dtz(0) {
+                    best = min(v + Dtz(1), best);
+                }
+            }
+
+            best
+        } else {
+            let mut best = Dtz(-1);
+
+            let mut moves = MoveList::new();
+            pos.legal_moves(&mut moves);
+            for m in moves {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+
+                let v = if m.is_zeroing() {
+                    if wdl == Wdl::Loss {
+                        Dtz(-1)
+                    } else {
+                        let (v, _) = self.probe_ab(&after, Wdl::CursedWin, Wdl::Win, true)?;
+                        Dtz(if v == Wdl::Win { 0 } else { -101 })
+                    }
+                } else {
+                    -self.probe_dtz(&after)? - Dtz(1)
+                };
+
+                best = min(v, best);
+            }
+
+            best
+        })
     }
 
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {

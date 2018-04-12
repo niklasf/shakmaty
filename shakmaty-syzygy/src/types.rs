@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::ops::{Neg, Add};
+use std::ops::{Neg, Add, Sub};
 use std::option::NoneError;
 use std::io;
 
@@ -178,6 +178,15 @@ impl Add for Dtz {
     #[inline]
     fn add(self, other: Dtz) -> Dtz {
         Dtz(self.0 + other.0)
+    }
+}
+
+impl Sub for Dtz {
+    type Output = Dtz;
+
+    #[inline]
+    fn sub(self, other: Dtz) -> Dtz {
+        Dtz(self.0 - other.0)
     }
 }
 
