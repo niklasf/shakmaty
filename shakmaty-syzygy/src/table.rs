@@ -296,7 +296,7 @@ const PP_IDX: [[u64; 64]; 10] = [[
 ]];
 
 /// a5, a6, a7, b5, b6, c5.
-const TEST45: Bitboard = Bitboard(0x1030700000000);
+const TEST45: Bitboard = Bitboard(0x1_0307_0000_0000);
 
 lazy_static! {
     static ref CONSTS: Consts = Consts::new();
@@ -820,10 +820,8 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 let group = groups[f][side.fold(0, 1)].clone();
                 let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
 
-                if !T::IS_WDL && S::CAPTURES_COMPULSORY {
-                    if pairs.flags.contains(Flag::SINGLE_VALUE) {
-                        pairs.min_symlen = 1;
-                    }
+                if !T::IS_WDL && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
+                    pairs.min_symlen = 1;
                 }
 
                 sides.push(pairs);

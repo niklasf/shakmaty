@@ -155,7 +155,7 @@ macro_rules! from_dtz_impl {
         $(impl From<Dtz> for $t {
             #[inline]
             fn from(wdl: Dtz) -> $t {
-                wdl.0 as $t
+                wdl.0.into()
             }
         })+
     }
