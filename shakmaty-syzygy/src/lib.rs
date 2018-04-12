@@ -15,6 +15,43 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 //! Probe Syzygy tablebases.
+//!
+//! Syzygy tables allow optimal play under the 50-move rule. Tables are
+//! available for positions with up to 6 (and experimentally 7) pieces.
+//!
+//! # Example
+//!
+//! ```
+//! # extern crate failure;
+//! # extern crate shakmaty;
+//! # extern crate shakmaty_syzygy;
+//!
+//! # use failure::Error;
+//! use shakmaty::Chess;
+//! use shakmaty::fen::Fen;
+//! use shakmaty_syzygy::{Tablebases, Wdl, Dtz, Syzygy};
+//!
+//! # fn try_main() -> Result<(), Error> {
+//! let mut tables = Tablebases::new();
+//! tables.add_directory("/opt/syzygy/regular/syzygy")?;
+//!
+//! let pos: Chess = "8/8/8/8/1p2P3/4P3/1k6/3K4 w - - 0 1"
+//!     .parse::<Fen>()?
+//!     .position()?;
+//!
+//! let wdl = tables.probe_wdl(&pos)?;
+//! assert_eq!(wdl, Wdl::CursedWin);
+//!
+//! let dtz = tables.probe_dtz(&pos)?;
+//! assert_eq!(dtz, Dtz(101));
+//!
+//! #     Ok(())
+//! # }
+//! #
+//! # fn main() {
+//! #     try_main().expect("success");
+//! # }
+//! ```
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.1.0")]
 
