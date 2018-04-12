@@ -53,6 +53,7 @@ impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
 }
 
 impl<S: Position + Clone + Syzygy> Tablebases<S> {
+    /// Create an empty collection of tables.
     pub fn new() -> Tablebases<S> {
         Tablebases {
             wdl: FnvHashMap::default(),
@@ -60,6 +61,18 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
+    /// Scan a directory for relevant tables.
+    ///
+    /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
+    /// actually opened. This happens lazily when probing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error result when:
+    ///
+    /// * The `path` does not exist.
+    /// * `path` is not a directory.
+    /// * The process lacks permissions to list the directory.
     pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         for entry in fs::read_dir(path)? {
             let entry = entry?;
@@ -97,6 +110,18 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         Ok(())
     }
 
+    /// Probe tables for the [`Wdl`](enum.Wdl.html) value of a position.
+    ///
+    /// # Errors
+    ///
+    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// conditions.
+    ///
+    /// # Panics
+    ///
+    /// Corrupted tables may or may not cause panics, especially due to
+    /// integer overflow in debug mode. Ideally a future version will not
+    /// panic in such cases.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
@@ -273,6 +298,18 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
+    /// Probe tables for the [`Dtz`](struct.Dtz.html) value of a position.
+    ///
+    /// # Errors
+    ///
+    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// conditions.
+    ///
+    /// # Panics
+    ///
+    /// Corrupted tables may or may not cause panics, especially due to
+    /// integer overflow in debug mode. Ideally a future version will not
+    /// panic in such cases.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         println!("probe_dtz {}", ::shakmaty::fen::fen(pos, &::shakmaty::fen::FenOpts::default()));
 
