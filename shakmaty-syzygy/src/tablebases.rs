@@ -238,7 +238,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
-            let (v_plus, _) = self.probe_compulsory_captures(pos, -beta, -alpha, false)?;
+            let (v_plus, _) = self.probe_compulsory_captures(&after, -beta, -alpha, false)?;
             let v = -v_plus;
 
             alpha = max(v, alpha);
@@ -251,7 +251,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
-        println!("probe_wdl_table {}", ::shakmaty::fen::epd(pos, &::shakmaty::fen::FenOpts::default()));
+        println!("probe_wdl_table {}", ::shakmaty::fen::fen(pos, &::shakmaty::fen::FenOpts::default()));
 
         // Test for KvK.
         if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
@@ -274,6 +274,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
+        println!("probe_dtz {}", ::shakmaty::fen::fen(pos, &::shakmaty::fen::FenOpts::default()));
+
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces)
         }
@@ -301,6 +303,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     fn probe_dtz_no_ep(&self, pos: &S) -> SyzygyResult<Dtz> {
         let (wdl, state) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, true)?;
 
+        println!("probe_dtz_no_ep {:?} {:?}", wdl, state);
+
         if wdl == Wdl::Draw {
             return Ok(Dtz(0));
         }
@@ -322,7 +326,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
 
-                let v = -self.probe_wdl(pos)?;
+                let v = -self.probe_wdl(&after)?;
 
                 if v == wdl {
                     return Ok(Dtz(if v == Wdl::Win { 1 } else { 101 }));
@@ -331,7 +335,10 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
 
         if let Some(dtz) = self.probe_dtz_table(pos, wdl)? {
+            println!("{:?}, success", dtz);
             return Ok(Dtz::before_zeroing(wdl) + if wdl > Wdl::Draw { dtz } else { -dtz });
+        } else {
+            println!("change stm");
         }
 
         Ok(if wdl > Wdl::Draw {
@@ -339,7 +346,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
-            moves.retain(|m| m.role() != Role::Pawn && !m.is_capture());
+            moves.retain(|m| !m.is_zeroing());
             for m in moves {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
@@ -371,6 +378,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 } else {
                     -self.probe_dtz(&after)? - Dtz(1)
                 };
+
+                println!("{} {:?}", m, v);
 
                 best = min(v, best);
             }

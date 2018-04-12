@@ -30,8 +30,8 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
         let pos: S = fen.position().expect("legal");
 
         println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
-        let wdl = tables.probe_wdl(&pos).expect("probe wdl");
-        assert_eq!(i8::from(wdl), expected_wdl);
+        /* let wdl = tables.probe_wdl(&pos).expect("probe wdl");
+        assert_eq!(i8::from(wdl), expected_wdl); */
 
         let dtz = tables.probe_dtz(&pos).expect("probe dtz");
         assert_eq!(i16::from(dtz), expected_dtz);
