@@ -881,7 +881,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             num_unique_pieces: material.unique_pieces(),
             min_like_man: material.min_like_man(),
             files,
-            material: material,
+            material,
         })
     }
 

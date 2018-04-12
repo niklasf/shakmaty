@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//! Probe Syzygy tablebases.
+//! Probe Syzygy endgame tablebases.
 //!
 //! Syzygy tables allow optimal play under the 50-move rule. Tables are
 //! available for positions with up to 6 (and experimentally 7) pieces.
@@ -61,7 +61,6 @@
 
 #![cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
 #![cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
-
 
 extern crate arrayvec;
 #[macro_use]
