@@ -30,7 +30,7 @@ use positioned_io::ReadAt;
 
 use shakmaty::{Square, Color, Role, Piece, Bitboard, Position};
 
-use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
+use types::{Syzygy, Wdl, Pieces, MAX_PIECES, SyzygyError, SyzygyResult};
 use material::Material;
 
 pub trait IsWdl {
@@ -304,7 +304,7 @@ impl RandomAccessFile {
          if let Err(err) = self.file.read_exact_at(0, &mut buf) {
              match err.kind() {
                  io::ErrorKind::UnexpectedEof => Ok(false),
-                 _ => Err(SyzygyError::new(ErrorKind::Read)),
+                 _ => Err(SyzygyError::Read),
             }
          } else {
             Ok(&buf == magic)
@@ -382,7 +382,7 @@ struct GroupData {
 impl GroupData {
     pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> SyzygyResult<GroupData> {
         if pieces.len() < 2 {
-            return Err(SyzygyError::new(ErrorKind::CorruptedTable));
+            return Err(SyzygyError::CorruptedTable);
         }
 
         let material = Material::from_iter(pieces.clone());
@@ -552,7 +552,7 @@ impl PairsData {
                 .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?))? / 2;
 
             if base[i] * 2 < base[i + 1] {
-                return Err(SyzygyError::new(ErrorKind::CorruptedTable));
+                return Err(SyzygyError::CorruptedTable);
             }
         }
 
@@ -634,7 +634,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         };
 
         if !raf.starts_with_magic(magic)? && (material.has_pawns() || !raf.starts_with_magic(pawnless_magic)?) {
-            return Err(SyzygyError::new(ErrorKind::Magic));
+            return Err(SyzygyError::Magic);
         }
 
         // Read layout flags.
@@ -644,7 +644,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         // Check consistency of layout and material key.
         if has_pawns != material.has_pawns() || split == material.is_symmetric() {
-            return Err(SyzygyError::new(ErrorKind::CorruptedTable));
+            return Err(SyzygyError::CorruptedTable);
         }
 
         // Read group data.
@@ -669,7 +669,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 if key != material && key.flip() != material {
-                    return Err(SyzygyError::new(ErrorKind::CorruptedTable));
+                    return Err(SyzygyError::CorruptedTable);
                 }
 
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
@@ -981,7 +981,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             2 => Wdl::Draw,
             3 => Wdl::CursedWin,
             4 => Wdl::Win,
-            _ => return Err(SyzygyError::new(ErrorKind::CorruptedTable)),
+            _ => return Err(SyzygyError::CorruptedTable),
         })
     }
 }

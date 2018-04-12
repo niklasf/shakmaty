@@ -16,9 +16,7 @@
 
 use std::ops::Neg;
 use std::option::NoneError;
-use std::error::Error;
 use std::io;
-use std::fmt;
 
 use arrayvec::ArrayVec;
 
@@ -189,61 +187,33 @@ pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 /// * I/O error
 /// * Unexpected magic header bytes
 /// * Corrupted table
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SyzygyError {
-    kind: ErrorKind,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub(crate) enum ErrorKind {
+#[derive(Debug, Clone, PartialEq, Eq, Fail)]
+pub enum SyzygyError {
+    #[fail(display = "syzygy tables do not contain positions with castling rights")]
     Castling,
+    #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
     TooManyPieces,
+    #[fail(display = "required table not found")]
     MissingTable,
+    #[fail(display = "i/o error when reading a table")]
     Read,
+    #[fail(display = "invalid magic bytes")]
     Magic,
+    #[fail(display = "corrupted table")]
     CorruptedTable,
-}
-
-impl SyzygyError {
-    pub(crate) fn new(kind: ErrorKind) -> SyzygyError {
-        SyzygyError { kind }
-    }
-
-    fn desc(&self) -> &str {
-        match self.kind {
-            ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
-            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 7 pieces",
-            ErrorKind::MissingTable => "required table not found",
-            ErrorKind::Read => "i/o error when reading a table",
-            ErrorKind::Magic => "invalid magic bytes",
-            ErrorKind::CorruptedTable => "corrupted table",
-        }
-    }
-}
-
-impl fmt::Display for SyzygyError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.desc().fmt(f)
-    }
-}
-
-impl Error for SyzygyError {
-    fn description(&self) -> &str {
-        self.desc()
-    }
 }
 
 impl From<NoneError> for SyzygyError {
     fn from(_: NoneError) -> SyzygyError {
-        SyzygyError { kind: ErrorKind::CorruptedTable }
+        SyzygyError::CorruptedTable
     }
 }
 
 impl From<io::Error> for SyzygyError {
     fn from(error: io::Error) -> SyzygyError {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => SyzygyError { kind: ErrorKind::CorruptedTable },
-            _ => SyzygyError { kind: ErrorKind::Read },
+            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable,
+            _ => SyzygyError::Read,
         }
     }
 }

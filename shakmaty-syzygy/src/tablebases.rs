@@ -25,7 +25,7 @@ use double_checked_cell::DoubleCheckedCell;
 
 use shakmaty::{Role, Position, MoveList};
 
-use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
+use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, SyzygyResult};
 use material::Material;
 use table::{WdlTag, DtzTag, Table};
 
@@ -99,10 +99,10 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
         if pos.board().occupied().count() > MAX_PIECES {
-            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
+            return Err(SyzygyError::TooManyPieces);
         }
         if pos.castling_rights().any() {
-            return Err(SyzygyError::new(ErrorKind::Castling));
+            return Err(SyzygyError::Castling);
         }
 
         // Probe.
@@ -269,16 +269,16 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_wdl_table(pos)
         } else {
-            Err(SyzygyError::new(ErrorKind::MissingTable))
+            Err(SyzygyError::MissingTable)
         }
     }
 
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         if pos.board().occupied().count() > MAX_PIECES {
-            return Err(SyzygyError::new(ErrorKind::TooManyPieces));
+            return Err(SyzygyError::TooManyPieces)
         }
         if pos.castling_rights().any() {
-            return Err(SyzygyError::new(ErrorKind::Castling));
+            return Err(SyzygyError::Castling)
         }
 
         panic!("TODO: implement probe_dtz")

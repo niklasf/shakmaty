@@ -27,6 +27,8 @@ extern crate arrayvec;
 extern crate bitflags;
 extern crate bit_vec;
 extern crate byteorder;
+#[macro_use]
+extern crate failure;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
