@@ -303,7 +303,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
-            moves.retain(|m| m.role() == Role::Pawn && !m.capture().is_some());
+            moves.retain(|m| m.role() == Role::Pawn && m.capture().is_none());
             for m in moves {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
