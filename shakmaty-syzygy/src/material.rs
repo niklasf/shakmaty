@@ -17,6 +17,7 @@
 use std::fmt;
 use std::str::FromStr;
 use std::iter::FromIterator;
+use std::cmp::{PartialOrd, Ord, Ordering};
 
 use shakmaty::{Color, Role, Piece, Board};
 
@@ -107,6 +108,24 @@ impl FromIterator<Role> for MaterialSide {
     }
 }
 
+impl Ord for MaterialSide {
+    fn cmp(&self, other: &MaterialSide) -> Ordering {
+        self.count().cmp(&other.count())
+            .then(self.kings.cmp(&other.kings))
+            .then(self.queens.cmp(&other.queens))
+            .then(self.rooks.cmp(&other.rooks))
+            .then(self.bishops.cmp(&other.bishops))
+            .then(self.knights.cmp(&other.knights))
+            .then(self.pawns.cmp(&other.pawns))
+    }
+}
+
+impl PartialOrd for MaterialSide {
+    fn partial_cmp(&self, other: &MaterialSide) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
 /// Error when parsing a material key.
 #[derive(Debug, Clone, PartialEq, Eq, Fail)]
 #[fail(display = "invalid material key")]
@@ -168,6 +187,14 @@ impl Material {
         Material {
             white: self.black.clone(),
             black: self.white.clone(),
+        }
+    }
+
+    pub fn normalize(&self) -> Material {
+        if self.white > self.black {
+            self.clone()
+        } else {
+            self.flip()
         }
     }
 

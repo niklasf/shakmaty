@@ -22,6 +22,8 @@ use arrayvec::ArrayVec;
 
 use shakmaty::{Color, Piece, Outcome, Chess};
 
+use material::Material;
+
 /// A chess variant with Syzygy support.
 pub trait Syzygy {
     /// Extension of WDL table files, e.g. `rtbw`.
@@ -245,8 +247,10 @@ pub enum SyzygyError {
     #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
     TooManyPieces,
     /// Missing table.
-    #[fail(display = "required table not found")]
-    MissingTable,
+    #[fail(display = "required table not found: {}", material)]
+    MissingTable {
+        material: Material,
+    },
     /// I/O error.
     #[fail(display = "i/o error when reading a table")]
     Read,

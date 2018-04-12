@@ -269,7 +269,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_wdl_table(pos)
         } else {
-            Err(SyzygyError::MissingTable)
+            Err(SyzygyError::MissingTable { material: key.normalize() })
         }
     }
 
@@ -431,7 +431,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_dtz_table(pos, wdl)
         } else {
-            Err(SyzygyError::MissingTable)
+            Err(SyzygyError::MissingTable { material: key.normalize() })
         }
     }
 }
