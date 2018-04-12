@@ -107,20 +107,23 @@ impl FromIterator<Role> for MaterialSide {
     }
 }
 
-pub struct InvalidMaterial;
+/// Error when parsing a material key.
+#[derive(Debug, Clone, PartialEq, Eq, Fail)]
+#[fail(display = "invalid material key")]
+pub struct ParseMaterialError;
 
 impl FromStr for MaterialSide {
-    type Err = InvalidMaterial;
+    type Err = ParseMaterialError;
 
-    fn from_str(s: &str) -> Result<MaterialSide, InvalidMaterial> {
+    fn from_str(s: &str) -> Result<MaterialSide, ParseMaterialError> {
         if s.len() > 64 {
-            return Err(InvalidMaterial);
+            return Err(ParseMaterialError);
         }
 
         let mut result = MaterialSide::new();
 
         for ch in s.chars() {
-            let role = Role::from_char(ch).ok_or(InvalidMaterial)?;
+            let role = Role::from_char(ch).ok_or(ParseMaterialError)?;
             *result.by_role_mut(role) += 1;
         }
 
@@ -228,9 +231,9 @@ impl FromIterator<Piece> for Material {
 }
 
 impl FromStr for Material {
-    type Err = InvalidMaterial;
+    type Err = ParseMaterialError;
 
-    fn from_str(s: &str) -> Result<Material, InvalidMaterial> {
+    fn from_str(s: &str) -> Result<Material, ParseMaterialError> {
         let mut parts = s.splitn(2, 'v');
 
         Ok(Material {

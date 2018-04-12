@@ -236,26 +236,24 @@ pub const MAX_PIECES: usize = 7;
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
 /// Error when probing a table.
-///
-/// Possible causes:
-///
-/// * Position has castling rights or too many pieces
-/// * Missing table
-/// * I/O error
-/// * Unexpected magic header bytes
-/// * Corrupted table
 #[derive(Debug, Clone, PartialEq, Eq, Fail)]
 pub enum SyzygyError {
+    /// Position has castling rights.
     #[fail(display = "syzygy tables do not contain positions with castling rights")]
     Castling,
+    /// Position has too many pieces.
     #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
     TooManyPieces,
+    /// Missing table.
     #[fail(display = "required table not found")]
     MissingTable,
+    /// I/O error.
     #[fail(display = "i/o error when reading a table")]
     Read,
+    /// Unexpected magic header bytes.
     #[fail(display = "invalid magic bytes")]
     Magic,
+    /// Corrupted table.
     #[fail(display = "corrupted table")]
     CorruptedTable,
 }
