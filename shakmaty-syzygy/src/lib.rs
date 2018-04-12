@@ -21,7 +21,6 @@
 #![warn(missing_debug_implementations)]
 
 #![feature(try_trait)]
-#![feature(inclusive_range_syntax)]
 
 extern crate arrayvec;
 #[macro_use]
