@@ -75,7 +75,7 @@ impl MaterialSide {
         ROLES.iter().map(|&r| self.by_role(r)).filter(|&c| c == 1).sum()
     }
 
-    pub(crate) fn has_pawns(&self) -> bool {
+    pub fn has_pawns(&self) -> bool {
         self.pawns > 0
     }
 }
@@ -201,7 +201,7 @@ impl Material {
             .min().unwrap_or(0)
     }
 
-    pub(crate) fn has_pawns(&self) -> bool {
+    pub fn has_pawns(&self) -> bool {
         self.white.has_pawns() || self.black.has_pawns()
     }
 }
