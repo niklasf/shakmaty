@@ -52,6 +52,8 @@ Documentation
 Changelog
 ---------
 
+* 0.6.3
+  - New method `Move.is_zeroing()`.
 * 0.6.2
   - Make unit error types (`InvalidSquareName`, `InvalidUci`, `InvalidSan`)
     completely public.
