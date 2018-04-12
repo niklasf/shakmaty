@@ -473,6 +473,27 @@ struct PairsData {
 
     /// Start of compressed data.
     data: u64,
+
+    /// DTZ mapping.
+    dtz_map: Option<DtzMap>,
+}
+
+/// Information about DTZ mapping.
+#[derive(Debug)]
+struct DtzMap {
+    /// Offset of the DTZ map.
+    ptr: u64,
+    /// Indexes into the DTZ map.
+    idx: [u16; 4],
+}
+
+impl DtzMap {
+    fn new(ptr: u64) -> DtzMap {
+        DtzMap {
+            ptr,
+            idx: [0; 4],
+        }
+    }
 }
 
 /// Build the symlen table.
@@ -526,6 +547,7 @@ impl PairsData {
                 sparse_index: 0,
                 sparse_index_size: 0,
                 symlen: Vec::new(),
+                dtz_map: None,
             }, ptr + 2));
         }
 
@@ -594,6 +616,8 @@ impl PairsData {
             block_length_size,
 
             data: 0, // to be initialized later
+
+            dtz_map: None, // to be initialized later
         }, ptr))
     }
 }
@@ -705,7 +729,22 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         }
 
         if !T::IS_WDL {
-            panic!("TODO: set dtz map");
+            let map = ptr;
+
+            for f in 0..num_files {
+                if files[f].sides[0].flags.contains(Flag::MAPPED) {
+                    let mut dtz_map = DtzMap::new(map);
+
+                    for i in 0..4 {
+                        dtz_map.idx[i] = (ptr - map + 1) as u16;
+                        ptr += u64::from(raf.read_u8(ptr)?) + 1;
+                    }
+
+                    files[f].sides[0].dtz_map = Some(dtz_map);
+                }
+            }
+
+            ptr += ptr & 1;
         }
 
         for f in 0..num_files {
