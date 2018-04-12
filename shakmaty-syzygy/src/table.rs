@@ -269,33 +269,33 @@ impl RandomAccessFile {
          File::open(path).map(|file| RandomAccessFile { file })
      }
 
-     fn read_u8(&self, ptr: usize) -> SyzygyResult<u8> {
+     fn read_u8(&self, ptr: u64) -> SyzygyResult<u8> {
          let mut buf = [0; 1];
-         self.file.read_exact_at(ptr as u64, &mut buf)?;
+         self.file.read_exact_at(ptr, &mut buf)?;
          Ok(buf[0])
      }
 
-     fn read_u16_le(&self, ptr: usize) -> SyzygyResult<u16> {
+     fn read_u16_le(&self, ptr: u64) -> SyzygyResult<u16> {
          let mut buf = [0; 2];
-         self.file.read_exact_at(ptr as u64, &mut buf)?;
+         self.file.read_exact_at(ptr, &mut buf)?;
          Ok(LittleEndian::read_u16(&buf))
      }
 
-     fn read_u32_le(&self, ptr: usize) -> SyzygyResult<u32> {
+     fn read_u32_le(&self, ptr: u64) -> SyzygyResult<u32> {
          let mut buf = [0; 4];
-         self.file.read_exact_at(ptr as u64, &mut buf)?;
+         self.file.read_exact_at(ptr, &mut buf)?;
          Ok(LittleEndian::read_u32(&buf))
      }
 
-     fn read_u32_be(&self, ptr: usize) -> SyzygyResult<u32> {
+     fn read_u32_be(&self, ptr: u64) -> SyzygyResult<u32> {
          let mut buf = [0; 4];
-         self.file.read_exact_at(ptr as u64, &mut buf)?;
+         self.file.read_exact_at(ptr, &mut buf)?;
          Ok(BigEndian::read_u32(&buf))
      }
 
-     fn read_u64_be(&self, ptr: usize) -> SyzygyResult<u64> {
+     fn read_u64_be(&self, ptr: u64) -> SyzygyResult<u64> {
          let mut buf = [0; 8];
-         self.file.read_exact_at(ptr as u64, &mut buf)?;
+         self.file.read_exact_at(ptr, &mut buf)?;
          Ok(BigEndian::read_u64(&buf))
      }
 
@@ -331,11 +331,11 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(raf: &RandomAccessFile, ptr: usize, count: u8, side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: u8, side: Color) -> SyzygyResult<Pieces> {
     let mut pieces = Pieces::new();
 
-    for i in 0..min(usize::from(count), MAX_PIECES) {
-        let p = raf.read_u8(ptr + i)?;
+    for i in 0..min(count, MAX_PIECES as u8) {
+        let p = raf.read_u8(ptr + u64::from(i))?;
         pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
     }
 
@@ -444,44 +444,44 @@ struct PairsData {
     groups: GroupData,
 
     /// Block size in bytes.
-    block_size: usize,
+    block_size: u64,
     /// About every span values there is a sparse index entry.
-    span: usize,
+    span: u64,
     /// Number of blocks in the table.
     blocks_num: u32,
 
     /// Offset of the symbol table.
-    btree: usize,
+    btree: u64,
     /// Minimum length in bits of the Huffman symbols.
     min_symlen: u8,
     /// Offset of the lowest symbols for each length.
-    lowest_sym: usize,
+    lowest_sym: u64,
     /// 64-bit padded lowest symbols for each length.
     base: Vec<u64>,
     /// Number of values represented by a given Huffman symbol.
     symlen: Vec<u8>,
 
     /// Offset of the sparse index.
-    sparse_index: usize,
+    sparse_index: u64,
     /// Size of the sparse index.
-    sparse_index_size: usize,
+    sparse_index_size: u64,
 
     /// Offset of the block length table.
-    block_lengths: usize,
+    block_lengths: u64,
     /// Size of the block length table, padded to be bigger than `blocks_num`.
     block_length_size: u32,
 
     /// Start of compressed data.
-    data: usize,
+    data: u64,
 }
 
 /// Build the symlen table.
-fn read_symlen(raf: &RandomAccessFile, btree: usize, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
+fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
     if visited.get(sym as usize)? {
         return Ok(());
     }
 
-    let ptr = btree + 3 * sym as usize;
+    let ptr = btree + 3 * u64::from(sym);
     let left = ((u16::from(raf.read_u8(ptr + 1)?) & 0xf) << 8) | u16::from(raf.read_u8(ptr)?);
     let right = (u16::from(raf.read_u8(ptr + 2)?) << 4) | (u16::from(raf.read_u8(ptr + 1)?) >> 4);
 
@@ -498,7 +498,7 @@ fn read_symlen(raf: &RandomAccessFile, btree: usize, symlen: &mut Vec<u8>, visit
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: IsWdl>(raf: &RandomAccessFile, mut ptr: usize, groups: GroupData) -> SyzygyResult<(PairsData, usize)> {
+    pub fn parse<S: Syzygy, T: IsWdl>(raf: &RandomAccessFile, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
         let flags = Flag::from_bits_truncate(raf.read_u8(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
@@ -532,7 +532,7 @@ impl PairsData {
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = 1 << raf.read_u8(ptr + 1)?;
         let span = 1 << raf.read_u8(ptr + 2)?;
-        let sparse_index_size = ((tb_size + span as u64 - 1) / span as u64) as usize;
+        let sparse_index_size = (tb_size + span - 1) / span;
         let padding = raf.read_u8(ptr + 3)?;
         let blocks_num = raf.read_u32_le(ptr + 4)?;
         let block_length_size = blocks_num + u32::from(padding);
@@ -545,7 +545,7 @@ impl PairsData {
         // Initialize base.
         let mut base = vec![0u64; h];
         for i in (0..h - 1).rev() {
-            let ptr = lowest_sym + i * 2;
+            let ptr = lowest_sym + i as u64 * 2;
 
             base[i] = base[i + 1]
                 .checked_add(u64::from(raf.read_u16_le(ptr)?))?
@@ -561,7 +561,7 @@ impl PairsData {
         }
 
         // Initialize symlen.
-        ptr += 10 + h * 2;
+        ptr += 10 + h as u64 * 2;
         let sym = raf.read_u16_le(ptr)?;
         ptr += 2;
         let btree = ptr;
@@ -570,7 +570,7 @@ impl PairsData {
         for s in 0..sym {
            read_symlen(raf, btree, &mut symlen, &mut visited, s)?;
         }
-        ptr += symlen.len() * 3 + (symlen.len() & 1);
+        ptr += symlen.len() as u64 * 3 + (symlen.len() as u64 & 1);
 
         // Result.
         Ok((PairsData {
@@ -676,7 +676,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 sides.push(group);
             }
 
-            ptr += material.count() as usize;
+            ptr += u64::from(material.count());
 
             groups.push(sides);
         }
@@ -717,7 +717,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         for f in 0..num_files {
             for s in 0..num_sides {
                 files[f].sides[s].block_lengths = ptr;
-                ptr += files[f].sides[s].block_length_size as usize * 2;
+                ptr += u64::from(files[f].sides[s].block_length_size) * 2;
             }
         }
 
@@ -725,7 +725,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             for s in 0..num_sides {
                 ptr = (ptr + 0x3f) & !0x3f; // Check 64 byte alignment
                 files[f].sides[s].data = ptr;
-                ptr += files[f].sides[s].blocks_num as usize * files[f].sides[s].block_size;
+                ptr += u64::from(files[f].sides[s].blocks_num) * files[f].sides[s].block_size;
             }
         }
 
@@ -748,9 +748,9 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             return Ok(d.min_symlen);
         }
 
-        let k = (idx / d.span as u64) as usize;
+        let k = idx / d.span;
 
-        let mut block = self.raf.read_u32_le(d.sparse_index + 6 * k)? as usize;
+        let mut block = u64::from(self.raf.read_u32_le(d.sparse_index + 6 * k)?);
         let mut offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * k + 4)?);
 
         let diff = idx as i64 % d.span as i64 - d.span as i64 / 2;
@@ -784,7 +784,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
 
             sym = ((buf - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
-            sym += self.raf.read_u16_le(d.lowest_sym + 2 * len)?;
+            sym += self.raf.read_u16_le(d.lowest_sym + 2 * len as u64)?;
 
             if offset < i64::from(*d.symlen.get(sym as usize)?) + 1 {
                 break;
@@ -807,7 +807,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         println!("btree: {}", d.btree);
 
         while *d.symlen.get(sym as usize)? != 0 {
-            let w = d.btree + 3 * sym as usize;
+            let w = d.btree + 3 * u64::from(sym);
             let left = ((u16::from(self.raf.read_u8(w + 1)?) & 0xf) << 8) | u16::from(self.raf.read_u8(w)?);
 
             if offset < i64::from(*d.symlen.get(left as usize)?) + 1 {
@@ -818,7 +818,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        Ok(self.raf.read_u8(d.btree + 3 * sym as usize)?)
+        Ok(self.raf.read_u8(d.btree + 3 * u64::from(sym))?)
     }
 
     fn encode(&self, pos: &S) -> SyzygyResult<(&PairsData, u64)> {
