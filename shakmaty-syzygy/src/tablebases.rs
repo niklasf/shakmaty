@@ -312,7 +312,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             if v1 >= Dtz(0) {
                 v = v1;
             }
-        } else if (v < Dtz(0)) {
+        } else if v < Dtz(0) {
             if v1 >= Dtz(0) || v1 < Dtz(-100) {
                 v = v1;
             }
