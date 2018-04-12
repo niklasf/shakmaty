@@ -50,7 +50,7 @@ mod table;
 mod tablebases;
 
 pub use types::{Syzygy, Wdl, Dtz, SyzygyError};
-pub use material::{MaterialSide, Material};
+pub use material::{MaterialSide, Material, ParseMaterialError};
 pub use tablebases::Tablebases;
 
 use std::mem;
