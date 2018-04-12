@@ -44,6 +44,8 @@ Features
 
 * Bitboards and compact fixed shift magic attack tables.
 
+* Probe Syzygy tablebases with [shakmaty-syzygy](https://crates.io/crates/shakmaty-syzygy).
+
 Documentation
 -------------
 
