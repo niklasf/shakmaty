@@ -999,11 +999,9 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
 
-        if !T::IS_WDL {
-            if side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
-                // Check other side.
-                return Ok(None);
-            }
+        if !T::IS_WDL && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
+            // Check other side.
+            return Ok(None);
         }
 
         let lead_pawns_count = squares.len();

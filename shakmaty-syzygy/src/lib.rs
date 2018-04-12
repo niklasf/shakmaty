@@ -18,9 +18,13 @@
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.1.0")]
 
+#![feature(try_trait)]
+
 #![warn(missing_debug_implementations)]
 
-#![feature(try_trait)]
+#[cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
+#[cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
+
 
 extern crate arrayvec;
 #[macro_use]
