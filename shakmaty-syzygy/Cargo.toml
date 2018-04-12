@@ -3,7 +3,6 @@ name = "shakmaty-syzygy"
 version = "0.1.0" # remember to update html_root_url
 description = "Probe Syzygy tablebases"
 documentation = "https://docs.rs/shakmaty-syzygy"
-homepage = "https://github.com/niklasf/shakmaty-syzygy"
 repository = "https://github.com/niklasf/shakmaty-syzygy"
 readme = "README.md"
 license = "GPL-3.0+"
