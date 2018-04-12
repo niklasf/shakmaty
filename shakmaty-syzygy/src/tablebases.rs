@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::io;
+use std::fs;
+use std::str::FromStr;
 use std::cmp::max;
 use std::path::{Path, PathBuf};
 
@@ -25,46 +28,6 @@ use shakmaty::{Role, Position, MoveList};
 use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, ErrorKind, SyzygyResult};
 use material::Material;
 use table::{WdlTag, DtzTag, Table};
-
-fn rotate_role(role: Role) -> Role {
-    match role {
-        Role::Pawn => Role::Knight,
-        Role::Knight => Role::Bishop,
-        Role::Bishop => Role::Rook,
-        Role::Rook => Role::Queen,
-        Role::Queen => Role::King,
-        Role::King => Role::Pawn,
-    }
-}
-
-struct RoleRange {
-    from: Role,
-    to: Role,
-}
-
-impl RoleRange {
-    fn excl(from: Role, to: Role) -> RoleRange {
-        RoleRange { from, to }
-    }
-
-    fn incl(from: Role, to: Role) -> RoleRange {
-        RoleRange { from, to: rotate_role(to) }
-    }
-}
-
-impl Iterator for RoleRange {
-    type Item = Role;
-
-    fn next(&mut self) -> Option<Role> {
-        if self.from != self.to {
-            let from = self.from;
-            self.from = rotate_role(from);
-            Some(from)
-        } else {
-            None
-        }
-    }
-}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {
@@ -97,121 +60,41 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) {
-        if S::ONE_KING {
-            self.add_directory_one_king(path.as_ref())
-        } else {
-            self.add_directory_many_kings(path.as_ref())
-        }
-    }
+    pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let path = entry.path();
 
-    fn add_directory_one_king(&mut self, base: &Path) {
-        use self::Role::*;
+            if path.is_dir() {
+                continue;
+            }
 
-        for a in RoleRange::excl(Pawn, King) {
-            self.add_both(base, &[King, a], &[King]);
+            let (stem, ext) = match (path.file_stem().and_then(|s| s.to_str()), path.extension()) {
+                (Some(stem), Some(ext)) => (stem, ext),
+                _ => continue,
+            };
 
-            for b in RoleRange::incl(Pawn, a) {
-                self.add_both(base, &[King, a, b], &[King]);
-                self.add_both(base, &[King, a], &[King, b]);
+            let material = match Material::from_str(stem) {
+                Ok(material) => material,
+                _ => continue,
+            };
 
-                for c in RoleRange::excl(Pawn, King) {
-                    self.add_both(base, &[King, a, b], &[King, c]);
-                }
+            if usize::from(material.count()) > MAX_PIECES {
+                continue;
+            }
 
-                for c in RoleRange::incl(Pawn, b) {
-                    self.add_both(base, &[King, a, b, c], &[King]);
+            if material.white.count() < 1 || material.black.count() < 1 {
+                continue;
+            }
 
-                    for d in RoleRange::incl(Pawn, c) {
-                        self.add_both(base, &[King, a, b, c, d], &[King]);
-                    }
-
-                    for d in RoleRange::excl(Pawn, King) {
-                        self.add_both(base, &[King, a, b, c], &[King, d]);
-                    }
-                }
-
-                for c in RoleRange::incl(Pawn, a) {
-                    for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                        self.add_both(base, &[King, a, b], &[King, c, d]);
-                    }
-                }
+            if ext == S::TBW_EXTENSION || (!material.has_pawns() && ext == S::PAWNLESS_TBW_EXTENSION) {
+                self.wdl.insert(material, (path.clone(), DoubleCheckedCell::new()));
+            } else if ext == S::TBZ_EXTENSION || (!material.has_pawns() && ext == S::PAWNLESS_TBZ_EXTENSION) {
+                self.dtz.insert(material, (path.clone(), DoubleCheckedCell::new()));
             }
         }
-    }
 
-    fn add_directory_many_kings(&mut self, base: &Path) {
-        use self::Role::*;
-
-        for a in RoleRange::incl(Pawn, King) {
-            for b in RoleRange::incl(Pawn, a) {
-                self.add_both(base, &[a], &[b]);
-
-                for c in RoleRange::incl(Pawn, King) {
-                    self.add_both(base, &[a, b], &[c]);
-                }
-
-                for c in RoleRange::incl(Pawn, b) {
-                    for d in RoleRange::incl(Pawn, King) {
-                        self.add_both(base, &[a, b, c], &[d]);
-
-                        for e in RoleRange::incl(Pawn, d) {
-                            self.add_both(base, &[a, b, c], &[d, e]);
-                        }
-                    }
-
-                    for d in RoleRange::incl(Pawn, c) {
-                        for e in RoleRange::incl(Pawn, King) {
-                            self.add_both(base, &[a, b, c, d], &[e]);
-
-                            for f in RoleRange::incl(Pawn, e) {
-                                self.add_both(base, &[a, b, c, d], &[e, f]);
-                            }
-                        }
-
-                        for e in RoleRange::incl(Pawn, d) {
-                            for f in RoleRange::incl(Pawn, King) {
-                                self.add_both(base, &[a, b, c, d, e], &[f]);
-                            }
-                        }
-                    }
-
-                    for d in RoleRange::incl(Pawn, a) {
-                        for e in RoleRange::incl(Pawn, if a == d { b } else { d }) {
-                            for f in RoleRange::incl(Pawn, if a == d && b == e { c } else { e }) {
-                                self.add_both(base, &[a, b, c], &[d, e, f]);
-                            }
-                        }
-                    }
-                }
-
-                for c in RoleRange::incl(Pawn, a) {
-                    for d in RoleRange::incl(Pawn, if a == c { b } else { c }) {
-                        self.add_both(base, &[a, b], &[c, d]);
-                    }
-                }
-            }
-        }
-    }
-
-    fn add_both(&mut self, base: &Path, white: &[Role], black: &[Role]) {
-        let material = Material {
-            white: white.iter().cloned().collect(),
-            black: black.iter().cloned().collect(),
-        };
-
-        let mut path = PathBuf::from(base);
-        path.push(material.to_string());
-
-        path.set_extension(S::TBW_EXTENSION);
-        if path.is_file() {
-            self.wdl.insert(material.clone(), (path.clone(), DoubleCheckedCell::new()));
-        }
-
-        path.set_extension(S::TBZ_EXTENSION);
-        if path.is_file() {
-            self.dtz.insert(material, (path, DoubleCheckedCell::new()));
-        }
+        Ok(())
     }
 
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {

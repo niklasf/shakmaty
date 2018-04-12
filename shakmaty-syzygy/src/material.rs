@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::fmt;
+use std::str::FromStr;
 use std::iter::FromIterator;
 
 use shakmaty::{Color, Role, Piece, Board};
@@ -103,6 +104,27 @@ impl FromIterator<Role> for MaterialSide {
         let mut result = MaterialSide::new();
         result.extend(iter);
         result
+    }
+}
+
+pub struct InvalidMaterial;
+
+impl FromStr for MaterialSide {
+    type Err = InvalidMaterial;
+
+    fn from_str(s: &str) -> Result<MaterialSide, InvalidMaterial> {
+        if s.len() > 64 {
+            return Err(InvalidMaterial);
+        }
+
+        let mut result = MaterialSide::new();
+
+        for ch in s.chars() {
+            let role = Role::from_char(ch).ok_or(InvalidMaterial)?;
+            *result.by_role_mut(role) += 1;
+        }
+
+        Ok(result)
     }
 }
 
@@ -202,5 +224,24 @@ impl FromIterator<Piece> for Material {
         let mut result = Material::new();
         result.extend(iter);
         result
+    }
+}
+
+impl FromStr for Material {
+    type Err = InvalidMaterial;
+
+    fn from_str(s: &str) -> Result<Material, InvalidMaterial> {
+        let mut parts = s.splitn(2, 'v');
+
+        Ok(Material {
+            white: match parts.next() {
+                Some(w) => MaterialSide::from_str(w)?,
+                None => MaterialSide::new(),
+            },
+            black: match parts.next() {
+                Some(b) => MaterialSide::from_str(b)?,
+                None => MaterialSide::new(),
+            }
+        })
     }
 }

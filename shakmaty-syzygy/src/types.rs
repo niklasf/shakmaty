@@ -30,6 +30,10 @@ pub trait Syzygy {
     const TBW_EXTENSION: &'static str;
     /// Extension of DTZ table files, e.g. `rtbz`.
     const TBZ_EXTENSION: &'static str;
+    /// Alternative extension of WDL table files.
+    const PAWNLESS_TBW_EXTENSION: &'static str;
+    /// Alternative extension of DTZ table files.
+    const PAWNLESS_TBZ_EXTENSION: &'static str;
 
     /// Magic initial bytes of a WDL table.
     const WDL_MAGIC: [u8; 4];
@@ -52,6 +56,8 @@ pub trait Syzygy {
 impl Syzygy for Chess {
     const TBW_EXTENSION: &'static str = "rtbw";
     const TBZ_EXTENSION: &'static str = "rtbz";
+    const PAWNLESS_TBW_EXTENSION: &'static str = "rtbw";
+    const PAWNLESS_TBZ_EXTENSION: &'static str = "rtbz";
 
     const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
     const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
