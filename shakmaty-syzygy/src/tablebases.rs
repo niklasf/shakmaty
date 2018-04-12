@@ -330,7 +330,21 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             }
         }
 
+        if let Some(dtz) = self.probe_dtz_table(pos, wdl)? {
+            return Ok(Dtz::before_zeroing(wdl) + if wdl > Wdl::Draw { dtz } else { -dtz });
+        }
+
         panic!("probe_dtz_table")
+    }
+
+    fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
+        let key = Material::from_board(pos.board());
+        if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flip())) {
+            let table = table.get_or_try_init(|| Table::open(path, &key))?;
+            table.probe_dtz_table(pos, wdl)
+        } else {
+            Err(SyzygyError::MissingTable)
+        }
     }
 }
 
