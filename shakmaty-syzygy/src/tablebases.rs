@@ -281,6 +281,20 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             return Err(SyzygyError::Castling)
         }
 
+        // Probe.
+        let v = self.probe_dtz_no_ep(pos)?;
+
+        if S::CAPTURES_COMPULSORY {
+            return Ok(v);
+        }
+
+        // If en passant is not possible we are done.
+        let mut ep_moves = MoveList::new();
+        pos.en_passant_moves(&mut ep_moves);
+        if ep_moves.is_empty() {
+            return Ok(v);
+        }
+
         panic!("TODO: implement probe_dtz")
     }
 
