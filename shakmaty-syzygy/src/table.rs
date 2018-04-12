@@ -620,7 +620,6 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
     files: ArrayVec<[FileData; 4]>,
 }
 
-
 impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
         let raf = RandomAccessFile::open(path)?;
@@ -821,7 +820,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         Ok(self.raf.read_u8(d.btree + 3 * u64::from(sym))?)
     }
 
-    fn encode(&self, pos: &S) -> SyzygyResult<(&PairsData, u64)> {
+    fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
         let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
         assert!(key == material || key == material.flip());
@@ -854,13 +853,16 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             0
         };
 
-        let lead_pawns_count = squares.len();
+        let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
 
         if !T::IS_WDL {
-            panic!("check_dtz_stm")
+            if side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
+                // Check other side.
+                return Ok(None);
+            }
         }
 
-        let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
+        let lead_pawns_count = squares.len();
 
         for piece in side.groups.pieces.iter().skip(squares.len()) {
             let color = piece.color ^ flip;
@@ -965,13 +967,13 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             next += 1;
         }
 
-        Ok((side, idx))
+        Ok(Some((side, idx)))
     }
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         assert!(T::IS_WDL);
 
-        let (side, idx) = self.encode(pos)?;
+        let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
         //println!("side: {:?}", side);
         println!("idx: {}", idx);
         let decompressed = self.decompress_pairs(side, idx)?;
@@ -987,10 +989,14 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Dtz> {
+    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         assert!(!T::IS_WDL);
 
-        let (side, idx) = self.encode(pos)?;
+        let (side, idx) = match self.encode(pos)? {
+            Some(found) => found,
+            None => return Ok(None), // check other side
+        };
+
         let res = self.decompress_pairs(side, idx)?;
 
         let res = if side.flags.contains(Flag::MAPPED) {
@@ -1006,7 +1012,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             Wdl::Draw => false,
         };
 
-        Ok(Dtz(if stores_moves { res * 2 } else { res } + 1))
+        Ok(Some(Dtz(if stores_moves { res * 2 } else { res } + 1)))
     }
 }
 
