@@ -494,6 +494,16 @@ impl DtzMap {
             idx: [0; 4],
         }
     }
+
+    fn ptr(&self, wdl: Wdl) -> u64 {
+        self.ptr + u64::from(self.idx[match wdl {
+            Wdl::Loss => 1,
+            Wdl::BlessedLoss => 3,
+            Wdl::Draw => 0,
+            Wdl::CursedWin => 2,
+            Wdl::Win => 0,
+        }])
+    }
 }
 
 /// Build the symlen table.
@@ -1040,11 +1050,11 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let res = self.decompress_pairs(side, idx)?;
 
-        let res = if side.flags.contains(Flag::MAPPED) {
-            panic!("TODO: implement mapped");
+        let res = i16::from(if let Some(map) = &side.dtz_map {
+            self.raf.read_u8(map.ptr(wdl) + u64::from(res))?
         } else {
-            i16::from(res)
-        };
+            res
+        });
 
         let stores_moves = match wdl {
             Wdl::Win => !side.flags.contains(Flag::WIN_PLIES),
