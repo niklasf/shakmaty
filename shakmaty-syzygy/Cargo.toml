@@ -24,6 +24,7 @@ lazy_static = "1.0"
 fnv = "1.0"
 double-checked-cell = "1.0"
 failure = "0.1"
+static_assertions = "0.2"
 
 [dev-dependencies]
 csv = "1.0.0-beta.5"

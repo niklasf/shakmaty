@@ -37,6 +37,8 @@ extern crate shakmaty;
 extern crate positioned_io;
 extern crate fnv;
 extern crate double_checked_cell;
+#[macro_use]
+extern crate static_assertions;
 
 mod material;
 mod types;
@@ -45,3 +47,7 @@ mod tablebases;
 
 pub use types::{Syzygy, Wdl, Dtz, SyzygyError};
 pub use tablebases::Tablebases;
+
+use std::mem;
+
+const_assert!(pointer_size; mem::size_of::<usize>() >= 4);
