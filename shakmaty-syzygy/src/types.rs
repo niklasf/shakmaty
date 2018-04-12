@@ -168,10 +168,10 @@ impl Neg for Dtz {
     }
 }
 
-/// Syzygy tables are available for up to 6 pieces.
-pub const MAX_PIECES: usize = 6;
+/// Syzygy tables are available for up to 7 pieces.
+pub const MAX_PIECES: usize = 7;
 
-/// List of up to 6 pieces.
+/// List of up to 7 pieces.
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
 
 /// Error when probing a table.
@@ -206,7 +206,7 @@ impl SyzygyError {
     fn desc(&self) -> &str {
         match self.kind {
             ErrorKind::Castling => "syzygy tables do not contain positions with castling rights",
-            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 6 pieces",
+            ErrorKind::TooManyPieces => "syzygy tables only contain positions with up to 7 pieces",
             ErrorKind::MissingTable => "required table not found",
             ErrorKind::Read => "i/o error when reading a table",
             ErrorKind::Magic => "invalid magic bytes",
