@@ -1,2 +1,8 @@
 http://terra.lichess.ovh/tables/atomic/3-4-5/KPvK.atbw
 http://terra.lichess.ovh/tables/atomic/3-4-5/KPvK.atbz
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBvK.atbw
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBvK.atbz
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBBvK.atbw
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBBvK.atbz
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBBBvK.atbw
+http://terra.lichess.ovh/tables/atomic/3-4-5/KBBBvK.atbz
