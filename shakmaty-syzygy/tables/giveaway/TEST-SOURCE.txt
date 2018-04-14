@@ -1,4 +1,4 @@
-http://terra.lichess.ovh/tables/anti/2-3-4-5-pawnless/KvR.stbw
-http://terra.lichess.ovh/tables/anti/2-3-4-5-pawnless/KvR.stbz
-http://terra.lichess.ovh/tables/anti/2-3-4-5-giveaway/KvP.gtbw
-http://terra.lichess.ovh/tables/anti/2-3-4-5-giveaway/KvP.gtbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-giveaway/KvP.gtbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-giveaway/KvP.gtbz
