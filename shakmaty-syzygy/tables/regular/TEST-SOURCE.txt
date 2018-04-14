@@ -78,3 +78,5 @@ http://terra.lichess.ovh/tables/standard/3-4-5/KQRNvK.rtbw
 http://terra.lichess.ovh/tables/standard/3-4-5/KQRNvK.rtbz
 http://terra.lichess.ovh/tables/standard/6-wdl/KQRNvKQ.rtbw
 http://terra.lichess.ovh/tables/standard/6-dtz/KQRNvKQ.rtbz
+http://terra.lichess.ovh/tables/standard/3-4-5/KPPvKR.rtbw
+http://terra.lichess.ovh/tables/standard/3-4-5/KPPvKR.rtbz
