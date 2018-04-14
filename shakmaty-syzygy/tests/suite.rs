@@ -43,7 +43,6 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
 }
 
 #[test]
-#[ignore]
 fn test_regular() {
     test_csv::<Chess>("tests/regular.csv");
 }
