@@ -38,6 +38,8 @@ Documentation
 Changelog
 ---------
 
+* 0.1.4
+  - Fix ordering of lead pawns.
 * 0.1.3
   - Add support for Atomic chess and Giveaway.
 * 0.1.2
