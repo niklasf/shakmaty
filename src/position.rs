@@ -405,8 +405,8 @@ impl Position for Chess {
             let target = !self.us();
             gen_non_king(self, target, moves);
             gen_safe_king(self, king, target, moves);
-            gen_castling_moves(self, king, CastlingSide::KingSide, moves);
-            gen_castling_moves(self, king, CastlingSide::QueenSide, moves);
+            gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
+            gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
         } else {
             evasions(self, king, checkers, moves);
         }
@@ -420,7 +420,7 @@ impl Position for Chess {
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
         moves.clear();
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
-        gen_castling_moves(self, king, side, moves);
+        gen_castling_moves(self, &self.castling, king, side, moves);
     }
 
     fn en_passant_moves(&self, moves: &mut MoveList) {
@@ -511,6 +511,175 @@ impl Position for Chess {
 
     fn is_variant_end(&self) -> bool { false }
     fn variant_outcome(&self) -> Option<Outcome> { None }
+}
+
+// An Atomic Chess position.
+#[derive(Clone, Debug)]
+pub struct Atomic {
+    board: Board,
+    turn: Color,
+    castling: Castling,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Atomic {
+    fn default() -> Atomic {
+        Atomic {
+            board: Board::default(),
+            turn: White,
+            castling: Castling::default(),
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Atomic {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Atomic {
+    fn from_setup<S: Setup>(setup: &S) -> Result<Atomic, PositionError> {
+        let (castling, errors) = match Castling::from_setup(setup) {
+            Ok(castling) => (castling, PositionError::empty()),
+            Err(castling) => (castling, PositionError::BAD_CASTLING_RIGHTS),
+        };
+
+        let pos = Atomic {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling,
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        let mut errors = validate(&pos) | errors;
+
+        if pos.board().kings().any() {
+            errors.remove(PositionError::MISSING_KING);
+        }
+
+        errors.into_result(pos)
+    }
+
+    fn is_chess960(&self) -> bool {
+        self.castling.is_chess960()
+    }
+
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+
+        match *m {
+            Move::Normal { capture: Some(_), to, .. } | Move::EnPassant { to, .. } => {
+                self.board.remove_piece_at(to);
+
+                let explosion_radius = attacks::king_attacks(to) &
+                                       self.board().occupied() &
+                                       !self.board.pawns();
+
+                for explosion in explosion_radius {
+                    self.board.remove_piece_at(explosion);
+                    self.castling.discard_rook(explosion);
+                }
+            },
+            _ => ()
+        }
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
+        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        gen_non_king(self, !self.us(), moves);
+        KingTag::gen_moves(self, !self.board().occupied(), moves);
+        self.board().king_of(self.turn()).map(|king| {
+            gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
+            gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
+        });
+
+        // Atomic move generation could be implemented more efficiently.
+        // For simplicity we filter all pseudo legal moves.
+        moves.swap_retain(|m| {
+            let mut after = self.clone();
+            after.play_unchecked(m);
+            if let Some(our_king) = after.board().king_of(self.turn()) {
+                (after.board.kings() & after.board().by_color(!self.turn())).is_empty() ||
+                after.king_attackers(our_king, !self.turn(), after.board.occupied()).is_empty()
+            } else {
+                false
+            }
+        });
+    }
+
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
+        if (attacks::king_attacks(square) & self.board().kings() & self.board().by_color(attacker)).any() {
+            Bitboard(0)
+        } else {
+            self.board().attacks_to(square, attacker, occupied)
+        }
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        (attacks::king_attacks(king_to) & self.board().kings() & self.them()).is_empty() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.variant_outcome().is_some()
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        if self.is_variant_end() {
+            return false;
+        }
+
+        if self.board().pawns().any() || self.board().queens().any() {
+            return false;
+        }
+
+        if (self.board().knights() | self.board().bishops() | self.board().rooks()).count() == 1 {
+            return true;
+        }
+
+        // Only knights.
+        if self.board().occupied() == self.board().kings() | self.board().knights() {
+            return self.board().knights().count() <= 2;
+        }
+
+        // Only bishops.
+        if self.board().occupied() == self.board().kings() | self.board().bishops() {
+            if (self.board().bishops() & self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
+                return (self.board().bishops() & self.board().black() & Bitboard::LIGHT_SQUARES).is_empty();
+            }
+            if (self.board().bishops() & self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
+                return (self.board().bishops() & self.board().black() & Bitboard::DARK_SQUARES).is_empty();
+            }
+        }
+
+        false
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        for color in &[White, Black] {
+            if (self.board().by_color(*color) & self.board().kings()).is_empty() {
+                return Some(Outcome::Decisive { winner: !*color });
+            }
+        }
+        None
+    }
 }
 
 fn do_move(board: &mut Board,
@@ -619,7 +788,9 @@ fn validate<P: Position>(pos: &P) -> PositionError {
         }
     }
 
-    if pos.board().kings().count() > 2 {
+    if (pos.board().kings() & pos.board().white()).more_than_one() ||
+       (pos.board().kings() & pos.board().black()).more_than_one()
+    {
         errors |= PositionError::TOO_MANY_KINGS;
     }
 
@@ -674,9 +845,9 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves(pos: &Chess, king: Square, side: CastlingSide, moves: &mut MoveList) {
-    if let Some(rook) = pos.castling.rook(pos.turn(), side) {
-        let path = pos.castling.path(pos.turn(), side);
+fn gen_castling_moves<P: Position>(pos: &P, castling: &Castling, king: Square, side: CastlingSide, moves: &mut MoveList) {
+    if let Some(rook) = castling.rook(pos.turn(), side) {
+        let path = castling.path(pos.turn(), side);
         if (path & pos.board().occupied()).any() {
             return;
         }
@@ -754,11 +925,19 @@ enum KnightTag { }
 enum BishopTag { }
 enum RookTag { }
 enum QueenTag { }
+enum KingTag { }
 
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard {
         attacks::knight_attacks(from)
+    }
+}
+
+impl Stepper for KingTag {
+    const ROLE: Role = Role::King;
+    fn attacks(from: Square) -> Bitboard {
+        attacks::king_attacks(from)
     }
 }
 

@@ -108,3 +108,9 @@ pub use setup::Setup;
 pub use movelist::MoveList;
 pub use position::{Chess, IllegalMove, Outcome, Position, PositionError};
 pub use perft::perft;
+
+pub mod variants {
+    //! Chess variants.
+    pub use Chess;
+    pub use position::Atomic;
+}
