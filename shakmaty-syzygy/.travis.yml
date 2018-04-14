@@ -1,0 +1,12 @@
+language: rust
+sudo: false
+
+rust:
+ - nightly
+
+cache:
+  directories:
+   - tables
+
+before_install:
+ - ./download-test-assets.sh

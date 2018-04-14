@@ -887,7 +887,6 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
         if d.flags.contains(Flag::SINGLE_VALUE) {
-            println!("single value: {}", d.min_symlen);
             return Ok(d.min_symlen);
         }
 
@@ -910,8 +909,6 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         }
 
         let mut ptr = d.data + block * d.block_size;
-
-        println!("initial ptr: {}", ptr);
 
         let mut buf = self.raf.read_u64_be(ptr)?;
         ptr += 8;
@@ -945,9 +942,6 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 ptr += 4;
             }
         }
-
-        println!("sym: {}", sym);
-        println!("btree: {}", d.btree);
 
         while *d.symlen.get(sym as usize)? != 0 {
             let w = d.btree + 3 * u64::from(sym);
@@ -1199,10 +1193,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         assert!(T::IS_WDL);
 
         let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
-        //println!("side: {:?}", side);
-        println!("idx: {}", idx);
         let decompressed = self.decompress_pairs(side, idx)?;
-        println!("decompressed: {}", decompressed);
 
         Ok(match decompressed {
             0 => Wdl::Loss,

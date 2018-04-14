@@ -20,7 +20,8 @@ use std::io;
 
 use arrayvec::ArrayVec;
 
-use shakmaty::{Color, Piece, Outcome, Chess};
+use shakmaty::{Color, Piece, Outcome};
+use shakmaty::variants::{Chess, Atomic};
 
 use material::Material;
 
@@ -66,6 +67,22 @@ impl Syzygy for Chess {
 
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
+    const CAPTURES_COMPULSORY: bool = false;
+}
+
+impl Syzygy for Atomic {
+    const TBW_EXTENSION: &'static str = "atbw";
+    const TBZ_EXTENSION: &'static str = "atbz";
+    const PAWNLESS_TBW_EXTENSION: &'static str = "atbw";
+    const PAWNLESS_TBZ_EXTENSION: &'static str = "atbz";
+
+    const WDL_MAGIC: [u8; 4] = [0x55, 0x8d, 0xa4, 0x49];
+    const DTZ_MAGIC: [u8; 4] = [0x91, 0xa9, 0x5e, 0xeb];
+    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x55, 0x8d, 0xa4, 0x49];
+    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0x91, 0xa9, 0x5e, 0xeb];
+
+    const ONE_KING: bool = true;
+    const CONNECTED_KINGS: bool = true;
     const CAPTURES_COMPULSORY: bool = false;
 }
 
@@ -123,7 +140,59 @@ macro_rules! from_wdl_impl {
 
 from_wdl_impl! { i8 i16 i32 i64 isize }
 
-/// Distance to zeroing.
+#[cfg(feature="serde-1")]
+impl ::serde::Serialize for Wdl {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_i8(i8::from(*self))
+    }
+}
+
+#[cfg(feature="serde-1")]
+impl<'de> ::serde::Deserialize<'de> for Wdl {
+    fn deserialize<D>(deserializer: D) -> Result<Wdl, D::Error>
+    where
+        D: ::serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for Visitor {
+            type Value = Wdl;
+
+            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                formatter.write_str("wdl value (-2, -1, 0, 1, 2)")
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Wdl, E>
+            where
+                E: ::serde::de::Error,
+            {
+                if -2 <= value && value <= 2 {
+                    Ok(unsafe { ::std::mem::transmute(value as i8) })
+                } else {
+                    Err(E::custom(format!("wdl out of range: {}", value)))
+                }
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Wdl, E>
+            where
+                E: ::serde::de::Error,
+            {
+                if value <= 2 {
+                    Ok(unsafe { ::std::mem::transmute(value as i8) })
+                } else {
+                    Err(E::custom(format!("wdl out of range: {}", value)))
+                }
+            }
+        }
+
+        deserializer.deserialize_i8(Visitor)
+    }
+}
+
+/// Distance to zeroing of the half-move clock.
 ///
 /// Can be off by one: `Dtz(-n)` can mean a loss in `n + 1` plies and `Dtz(n)`
 /// can mean a win in `n + 1` plies. This is guaranteed not to happen for
@@ -149,6 +218,10 @@ impl Dtz {
             Wdl::CursedWin => Dtz(101),
             Wdl::Win => Dtz(1),
         }
+    }
+
+    pub fn add_plies(&self, plies: i16) -> Dtz {
+        Dtz(self.0.signum() * (self.0.abs() + plies))
     }
 }
 
@@ -228,6 +301,58 @@ impl SubAssign for Dtz {
     #[inline]
     fn sub_assign(&mut self, other: Dtz) {
         self.0 -= other.0;
+    }
+}
+
+#[cfg(feature="serde-1")]
+impl ::serde::Serialize for Dtz {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ::serde::Serializer,
+    {
+        serializer.serialize_i16(i16::from(*self))
+    }
+}
+
+#[cfg(feature="serde-1")]
+impl<'de> ::serde::Deserialize<'de> for Dtz {
+    fn deserialize<D>(deserializer: D) -> Result<Dtz, D::Error>
+    where
+        D: ::serde::Deserializer<'de>,
+    {
+        struct Visitor;
+
+        impl<'de> ::serde::de::Visitor<'de> for Visitor {
+            type Value = Dtz;
+
+            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                formatter.write_str("dtz value (i16)")
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Dtz, E>
+            where
+                E: ::serde::de::Error,
+            {
+                if i64::from(i16::min_value()) <= value && value <= i64::from(i16::max_value()) {
+                    Ok(Dtz(value as i16))
+                } else {
+                    Err(E::custom(format!("dtz out of range: {}", value)))
+                }
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Dtz, E>
+            where
+                E: ::serde::de::Error,
+            {
+                if value <= i16::max_value() as u64 {
+                    Ok(Dtz(value as i16))
+                } else {
+                    Err(E::custom(format!("dtz out of range: {}", value)))
+                }
+            }
+        }
+
+        deserializer.deserialize_i16(Visitor)
     }
 }
 

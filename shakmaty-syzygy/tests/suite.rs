@@ -2,13 +2,14 @@ extern crate shakmaty;
 extern crate shakmaty_syzygy;
 extern crate csv;
 
-use shakmaty::{Position, Chess};
+use shakmaty::Position;
+use shakmaty::variants::{Chess, Atomic};
 use shakmaty_syzygy::{Tablebases, Syzygy};
 use shakmaty::fen::Fen;
 
 fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
     let mut tables = Tablebases::new();
-    tables.add_directory("/opt/syzygy/regular/syzygy").expect("read directory");
+    tables.add_directory("tables/regular").expect("read directory");
 
     let mut reader = csv::Reader::from_path(path).expect("reader");
 
@@ -42,4 +43,9 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
 #[test]
 fn test_regular() {
     test_csv::<Chess>("tests/regular.csv");
+}
+
+#[test]
+fn test_atomic() {
+    test_csv::<Atomic>("tests/atomic.csv");
 }
