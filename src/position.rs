@@ -542,7 +542,7 @@ impl Setup for Atomic {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
+    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -679,6 +679,132 @@ impl Position for Atomic {
             }
         }
         None
+    }
+}
+
+// A Giveaway position.
+#[derive(Clone, Debug)]
+pub struct Giveaway {
+    board: Board,
+    turn: Color,
+    castling: Castling,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Giveaway {
+    fn default() -> Giveaway {
+        Giveaway {
+            board: Board::default(),
+            turn: White,
+            castling: Castling::default(),
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Giveaway {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castling.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Giveaway {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castling,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Giveaway, PositionError> {
+        let (castling, errors) = match Castling::from_setup(setup) {
+            Ok(castling) => (castling, PositionError::empty()),
+            Err(castling) => (castling, PositionError::BAD_CASTLING_RIGHTS),
+        };
+
+        let pos = Giveaway {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castling,
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        let errors = (validate(&pos) | errors)
+            - PositionError::MISSING_KING
+            - PositionError::TOO_MANY_KINGS
+            - PositionError::OPPOSITE_CHECK;
+
+        errors.into_result(pos)
+    }
+
+    fn is_chess960(&self) -> bool {
+        self.castling.is_chess960()
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        let them = self.them();
+        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        gen_non_king(self, them, moves);
+        KingTag::gen_moves(self, them, moves);
+
+        if moves.is_empty() {
+            gen_non_king(self, !self.board().occupied(), moves);
+            KingTag::gen_moves(self, !self.board().occupied(), moves);
+            self.board().king_of(self.turn()).map(|king| {
+                gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
+                gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
+            });
+        }
+    }
+
+    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
+        false
+    }
+
+    fn king_attackers(&self, _square: Square, _attacker: Color, _occupied: Bitboard) -> Bitboard {
+        Bitboard(0)
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.board().white().is_empty() || self.board().black().is_empty()
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        if self.board().knights().any() || self.board().rooks_and_queens().any() || self.board().kings().any() {
+            return false;
+        }
+
+        if self.board().pawns().any() {
+            // Could detect blocked pawns.
+            return false;
+        }
+
+        // Detect bishops and pawns of each side on distinct color complexes.
+        if (self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
+            (self.board().black() & Bitboard::LIGHT_SQUARES).is_empty()
+        } else if (self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
+            (self.board().black() & Bitboard::DARK_SQUARES).is_empty()
+        } else {
+            false
+        }
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.us().is_empty() || self.is_stalemate() {
+            Some(Outcome::Decisive { winner: self.turn() })
+        } else {
+            None
+        }
     }
 }
 

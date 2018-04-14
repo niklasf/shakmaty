@@ -18,7 +18,7 @@ extern crate shakmaty;
 
 use shakmaty::Position;
 use shakmaty::Chess;
-use shakmaty::variants::{Atomic};
+use shakmaty::variants::{Atomic, Giveaway};
 use shakmaty::fen::Fen;
 use shakmaty::perft;
 
@@ -75,4 +75,9 @@ fn test_tricky() {
 #[test]
 fn test_atomic() {
     test_perft_file::<Atomic>("tests/atomic.perft", 1_000_000);
+}
+
+#[test]
+fn test_giveaway() {
+    test_perft_file::<Giveaway>("tests/giveaway.perft", 1_000_000);
 }

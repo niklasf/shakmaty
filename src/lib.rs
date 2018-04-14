@@ -113,4 +113,5 @@ pub mod variants {
     //! Chess variants.
     pub use Chess;
     pub use position::Atomic;
+    pub use position::Giveaway;
 }
