@@ -54,6 +54,8 @@ Documentation
 Changelog
 ---------
 
+* 0.6.4
+  - Reintroduce `Giveaway` and `Atomic` chess variants.
 * 0.6.3
   - New method `Move.is_zeroing()`.
 * 0.6.2
