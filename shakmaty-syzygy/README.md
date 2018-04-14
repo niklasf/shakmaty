@@ -38,6 +38,8 @@ Documentation
 Changelog
 ---------
 
+* 0.1.3
+  - Add support for Atomic chess and Giveaway.
 * 0.1.2
   - Cosmetic tweak to DTZ in case of mate in 1.
 * 0.1.1
