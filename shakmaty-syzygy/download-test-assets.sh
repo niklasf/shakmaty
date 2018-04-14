@@ -7,3 +7,7 @@ cd ../..
 cd tables/atomic
 wget -nc -i TEST-SOURCE.txt
 cd ../..
+
+cd tables/giveaway
+wget -nc -i TEST-SOURCE.txt
+cd ../..

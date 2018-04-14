@@ -21,7 +21,7 @@ use std::io;
 use arrayvec::ArrayVec;
 
 use shakmaty::{Color, Piece, Outcome};
-use shakmaty::variants::{Chess, Atomic};
+use shakmaty::variants::{Chess, Atomic, Giveaway};
 
 use material::Material;
 
@@ -84,6 +84,22 @@ impl Syzygy for Atomic {
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = true;
     const CAPTURES_COMPULSORY: bool = false;
+}
+
+impl Syzygy for Giveaway {
+    const TBW_EXTENSION: &'static str = "gtbw";
+    const TBZ_EXTENSION: &'static str = "gtbz";
+    const PAWNLESS_TBW_EXTENSION: &'static str = "stbw";
+    const PAWNLESS_TBZ_EXTENSION: &'static str = "stbz";
+
+    const WDL_MAGIC: [u8; 4] = [0xbc, 0x55, 0xbc, 0x21];
+    const DTZ_MAGIC: [u8; 4] = [0xd6, 0xf5, 0x1b, 0x50];
+    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x7b, 0xf6, 0x93, 0x15];
+    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xe4, 0xcf, 0xe7, 0x23];
+
+    const ONE_KING: bool = false;
+    const CONNECTED_KINGS: bool = true;
+    const CAPTURES_COMPULSORY: bool = true;
 }
 
 /// 5-valued evaluation of a position in the context of the 50-move drawing
