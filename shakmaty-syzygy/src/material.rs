@@ -31,7 +31,7 @@ const ROLES: [Role; 6] = [
 ];
 
 /// The material configuration of one side.
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
+#[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
     queens: u8,
@@ -87,6 +87,16 @@ impl fmt::Display for MaterialSide {
             write!(f, "{}", role.char().to_uppercase().to_string().repeat(self.by_role(role) as usize))?;
         }
         Ok(())
+    }
+}
+
+impl fmt::Debug for MaterialSide {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if self.count() > 0 {
+            write!(f, "{}", self)
+        } else {
+            f.write_str("-")
+        }
     }
 }
 
@@ -151,7 +161,7 @@ impl FromStr for MaterialSide {
 }
 
 /// The material configuration of both sides.
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash)]
+#[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     pub white: MaterialSide,
     pub black: MaterialSide,
@@ -236,6 +246,12 @@ impl Material {
 impl fmt::Display for Material {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}v{}", self.white, self.black)
+    }
+}
+
+impl fmt::Debug for Material {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}v{:?}", self.white, self.black)
     }
 }
 
