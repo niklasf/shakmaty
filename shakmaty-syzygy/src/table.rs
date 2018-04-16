@@ -407,6 +407,7 @@ impl RandomAccessFile {
      }
 }
 
+/// Header byte to piece.
 fn byte_to_piece(p: u8) -> Option<Piece> {
     let color = Color::from_white(p & 8 == 0);
     Some(match p & !8 {
@@ -532,6 +533,34 @@ impl GroupData {
     }
 }
 
+/// Information about DTZ mapping.
+#[derive(Debug)]
+struct DtzMap {
+    /// Offset of the DTZ map.
+    ptr: u64,
+    /// Indexes into the DTZ map.
+    idx: [u16; 4],
+}
+
+impl DtzMap {
+    fn new(ptr: u64) -> DtzMap {
+        DtzMap {
+            ptr,
+            idx: [0; 4],
+        }
+    }
+
+    fn ptr(&self, wdl: Wdl) -> u64 {
+        self.ptr + u64::from(self.idx[match wdl {
+            Wdl::Loss => 1,
+            Wdl::BlessedLoss => 3,
+            Wdl::Draw => 0,
+            Wdl::CursedWin => 2,
+            Wdl::Win => 0,
+        }])
+    }
+}
+
 /// Description of encoding and compression.
 #[derive(Debug)]
 struct PairsData {
@@ -573,56 +602,6 @@ struct PairsData {
 
     /// DTZ mapping.
     dtz_map: Option<DtzMap>,
-}
-
-/// Information about DTZ mapping.
-#[derive(Debug)]
-struct DtzMap {
-    /// Offset of the DTZ map.
-    ptr: u64,
-    /// Indexes into the DTZ map.
-    idx: [u16; 4],
-}
-
-impl DtzMap {
-    fn new(ptr: u64) -> DtzMap {
-        DtzMap {
-            ptr,
-            idx: [0; 4],
-        }
-    }
-
-    fn ptr(&self, wdl: Wdl) -> u64 {
-        self.ptr + u64::from(self.idx[match wdl {
-            Wdl::Loss => 1,
-            Wdl::BlessedLoss => 3,
-            Wdl::Draw => 0,
-            Wdl::CursedWin => 2,
-            Wdl::Win => 0,
-        }])
-    }
-}
-
-/// Build the symlen table.
-fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
-    if visited.get(sym as usize)? {
-        return Ok(());
-    }
-
-    let ptr = btree + 3 * u64::from(sym);
-    let left = ((u16::from(raf.read_u8(ptr + 1)?) & 0xf) << 8) | u16::from(raf.read_u8(ptr)?);
-    let right = (u16::from(raf.read_u8(ptr + 2)?) << 4) | (u16::from(raf.read_u8(ptr + 1)?) >> 4);
-
-    if right == 0xfff {
-        symlen[sym as usize] = 0;
-    } else {
-        read_symlen(raf, btree, symlen, visited, left)?;
-        read_symlen(raf, btree, symlen, visited, right)?;
-        symlen[sym as usize] = symlen[left as usize] + symlen[right as usize] + 1;
-    }
-
-    visited.set(sym as usize, true);
-    Ok(())
 }
 
 impl PairsData {
@@ -727,6 +706,28 @@ impl PairsData {
             dtz_map: None, // to be initialized later
         }, ptr))
     }
+}
+
+/// Build the symlen table.
+fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
+    if visited.get(sym as usize)? {
+        return Ok(());
+    }
+
+    let ptr = btree + 3 * u64::from(sym);
+    let left = ((u16::from(raf.read_u8(ptr + 1)?) & 0xf) << 8) | u16::from(raf.read_u8(ptr)?);
+    let right = (u16::from(raf.read_u8(ptr + 2)?) << 4) | (u16::from(raf.read_u8(ptr + 1)?) >> 4);
+
+    if right == 0xfff {
+        symlen[sym as usize] = 0;
+    } else {
+        read_symlen(raf, btree, symlen, visited, left)?;
+        read_symlen(raf, btree, symlen, visited, right)?;
+        symlen[sym as usize] = symlen[left as usize] + symlen[right as usize] + 1;
+    }
+
+    visited.set(sym as usize, true);
+    Ok(())
 }
 
 /// Descripton of encoding and compression for both sides of a table.
