@@ -394,6 +394,14 @@ impl RandomAccessFile {
          Ok(BigEndian::read_u64(&buf))
      }
 
+     fn read_lr(&self, ptr: u64) -> SyzygyResult<(u16, u16)> {
+         let mut buf = [0; 3];
+         self.file.read_exact_at(ptr, &mut buf)?;
+         let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
+         let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
+         Ok((left, right))
+     }
+
      fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
          let mut buf = [0; 4];
          if let Err(error) = self.file.read_exact_at(0, &mut buf) {
@@ -715,8 +723,7 @@ fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited
     }
 
     let ptr = btree + 3 * u64::from(sym);
-    let left = ((u16::from(raf.read_u8(ptr + 1)?) & 0xf) << 8) | u16::from(raf.read_u8(ptr)?);
-    let right = (u16::from(raf.read_u8(ptr + 2)?) << 4) | (u16::from(raf.read_u8(ptr + 1)?) >> 4);
+    let (left, right) = raf.read_lr(ptr)?;
 
     if right == 0xfff {
         symlen[sym as usize] = 0;
@@ -947,14 +954,13 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         }
 
         while *d.symlen.get(sym as usize)? != 0 {
-            let w = d.btree + 3 * u64::from(sym);
-            let left = ((u16::from(self.raf.read_u8(w + 1)?) & 0xf) << 8) | u16::from(self.raf.read_u8(w)?);
+            let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
 
             if offset < i64::from(*d.symlen.get(left as usize)?) + 1 {
-                sym = left as u16;
+                sym = left;
             } else {
                 offset -= i64::from(*d.symlen.get(left as usize)?) + 1;
-                sym = (u16::from(self.raf.read_u8(w + 2)?) << 4) | (u16::from(self.raf.read_u8(w + 1)?) >> 4);
+                sym = right;
             }
         }
 
