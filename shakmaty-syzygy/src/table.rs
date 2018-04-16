@@ -489,7 +489,7 @@ impl GroupData {
 
         // Compute a factor for each group.
         let pp = material.white.has_pawns() && material.black.has_pawns();
-        let mut factors = ArrayVec::from([0, 0, 0, 0, 0, 0, 0, 0]);
+        let mut factors = ArrayVec::from([0; MAX_PIECES + 1]);
         factors.truncate(lens.len() + 1);
         let mut free_squares = 64 - lens[0] - if pp { lens[1] } else { 0 };
         let mut next = if pp { 2 } else { 1 };
