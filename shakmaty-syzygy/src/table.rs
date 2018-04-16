@@ -19,7 +19,7 @@ use std::path::Path;
 use std::fs::File;
 use std::iter::FromIterator;
 use std::io;
-use std::cmp::{min, Reverse};
+use std::cmp::Reverse;
 
 use num_integer::binomial;
 use arrayvec::ArrayVec;
@@ -427,11 +427,13 @@ fn offdiag(sq: Square) -> bool {
 
 /// Parse a piece list.
 fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: u8, side: Color) -> SyzygyResult<Pieces> {
-    let mut pieces = Pieces::new();
+    let mut buffer = [0; MAX_PIECES];
+    let bytes = &mut buffer[..usize::from(count)];
+    raf.file.read_exact_at(ptr, bytes)?;
 
-    for i in 0..min(count, MAX_PIECES as u8) {
-        let p = raf.read_u8(ptr + u64::from(i))?;
-        pieces.push(byte_to_piece(side.fold(p & 0xf, p >> 4))?);
+    let mut pieces = Pieces::new();
+    for p in bytes {
+        pieces.push(byte_to_piece(side.fold(*p & 0xf, *p >> 4))?);
     }
 
     Ok(pieces)
