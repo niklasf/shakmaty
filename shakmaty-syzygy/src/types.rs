@@ -127,6 +127,16 @@ impl Wdl {
             _ => Wdl::Loss,
         }
     }
+
+    pub fn from_dtz_before_zeroing(dtz: Dtz) -> Wdl {
+        match dtz.0 {
+            n if -100 <= n && n <= -1 => Wdl::Loss,
+            n if n < -100 => Wdl::BlessedLoss,
+            0 => Wdl::Draw,
+            n if 100 <= n => Wdl::CursedWin,
+            _ => Wdl::Win
+        }
+    }
 }
 
 impl Neg for Wdl {
@@ -266,18 +276,6 @@ macro_rules! dtz_from_impl {
 }
 
 dtz_from_impl! { u8 i8 i16 }
-
-impl From<Dtz> for Wdl {
-    fn from(dtz: Dtz) -> Wdl {
-        match dtz.0 {
-            n if -100 <= n && n <= -1 => Wdl::Loss,
-            n if n < -100 => Wdl::BlessedLoss,
-            0 => Wdl::Draw,
-            n if 100 < n => Wdl::CursedWin,
-            _ => Wdl::Win,
-        }
-    }
-}
 
 impl Neg for Dtz {
     type Output = Dtz;
