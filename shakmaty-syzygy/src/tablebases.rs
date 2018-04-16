@@ -199,6 +199,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             }
         }
 
+        // Probe table.
         let v = self.probe_wdl_table(pos)?;
 
         if alpha >= v {
