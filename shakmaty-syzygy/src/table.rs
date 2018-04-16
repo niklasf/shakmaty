@@ -1176,7 +1176,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         for lens in side.groups.lens.iter().cloned().skip(1) {
             let (prev_squares, group_squares) = squares.split_at_mut(group_sq);
             let group_squares = &mut group_squares[..lens];
-            group_squares.sort();
+            group_squares.sort_unstable();
 
             let mut n = 0;
 
