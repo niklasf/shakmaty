@@ -752,13 +752,23 @@ impl Position for Giveaway {
         self.castling.is_chess960()
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
+    fn en_passant_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+        gen_en_passant(self.board(), self.turn, self.ep_square, moves);
+    }
+
+    fn capture_moves(&self, moves: &mut MoveList) {
+        self.en_passant_moves(moves);
         let them = self.them();
-        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
         gen_non_king(self, them, moves);
         KingTag::gen_moves(self, them, moves);
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        self.capture_moves(moves);
 
         if moves.is_empty() {
+            // No compulsory captures. Generate everything else.
             gen_non_king(self, !self.board().occupied(), moves);
             KingTag::gen_moves(self, !self.board().occupied(), moves);
             self.board().king_of(self.turn()).map(|king| {
