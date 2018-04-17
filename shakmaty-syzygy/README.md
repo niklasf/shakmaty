@@ -38,6 +38,9 @@ Documentation
 Changelog
 ---------
 
+* 0.2.0
+  - Replace `Wdl::from(dtz)` with `Wdl::from_dtz_after_zeroing(dtz)`.
+  - Fix WDL of lone king in atomic chess.
 * 0.1.4
   - Fix ordering of lead pawns.
 * 0.1.3

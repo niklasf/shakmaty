@@ -128,7 +128,7 @@ impl Wdl {
         }
     }
 
-    pub fn from_dtz_before_zeroing(dtz: Dtz) -> Wdl {
+    pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
         match dtz.0 {
             n if -100 <= n && n <= -1 => Wdl::Loss,
             n if n < -100 => Wdl::BlessedLoss,
