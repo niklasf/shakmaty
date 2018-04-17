@@ -277,14 +277,14 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
-        // Test for KvK.
-        if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
-            return Ok(Wdl::Draw);
-        }
-
         // Variant game end.
         if let Some(outcome) = pos.variant_outcome() {
             return Ok(Wdl::from_outcome(&outcome, pos.turn()));
+        }
+
+        // Test for KvK.
+        if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
+            return Ok(Wdl::Draw);
         }
 
         // Probe table.
