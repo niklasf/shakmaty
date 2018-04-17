@@ -54,6 +54,9 @@ Documentation
 Changelog
 ---------
 
+* 0.6.5
+  - Validate color of missing king in atomic chess.
+  - Clear move buffers before generating variant moves.
 * 0.6.4
   - Reintroduce `Giveaway` and `Atomic` chess variants.
 * 0.6.3
