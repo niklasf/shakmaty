@@ -19,7 +19,6 @@ use std::path::Path;
 use std::fs::File;
 use std::iter::FromIterator;
 use std::io;
-use std::cmp::Reverse;
 
 use num_integer::binomial;
 use arrayvec::ArrayVec;
@@ -989,9 +988,12 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             used.extend(lead_pawns);
             squares.extend(lead_pawns.map(|sq| if flip { sq.flip_vertical() } else { sq }));
 
-            // Putting the maximum into squares[0] would be sufficient.
-            squares.sort_unstable_by_key(|sq| Reverse(CONSTS.map_pawns[usize::from(*sq)]));
-
+            // Ensure squares[0] is the maximum with regard to map_pawns.
+            for i in 1..squares.len() {
+                if CONSTS.map_pawns[usize::from(squares[0])] < CONSTS.map_pawns[usize::from(squares[i])] {
+                    squares.swap(0, i);
+                }
+            }
             if squares[0].file() >= 4 {
                 squares[0].flip_horizontal().file() as usize
             } else {
