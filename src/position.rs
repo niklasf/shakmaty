@@ -566,7 +566,8 @@ impl Position for Atomic {
 
         let mut errors = validate(&pos) | errors;
 
-        if pos.board().kings().any() {
+        if (pos.them() & pos.board().kings()).any() {
+            // Our king just exploded. Game over, but valid position.
             errors.remove(PositionError::MISSING_KING);
         }
 
