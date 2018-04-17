@@ -21,10 +21,10 @@ itertools = "0.7"
 bit-vec = "0.4"
 positioned-io = "0.2"
 lazy_static = "1.0"
-fnv = "1.0"
 double-checked-cell = "1.0"
 failure = "0.1"
 static_assertions = "0.2"
+fxhash = "0.2"
 
 [dependencies.serde]
 version = "1.0"

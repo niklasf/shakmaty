@@ -69,7 +69,7 @@ extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 extern crate double_checked_cell;
-extern crate fnv;
+extern crate fxhash;
 extern crate num_integer;
 extern crate positioned_io;
 extern crate shakmaty;

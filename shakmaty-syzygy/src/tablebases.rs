@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use double_checked_cell::DoubleCheckedCell;
-use fnv::FnvHashMap;
+use fxhash::FxHashMap;
 
 use shakmaty::{MoveList, Position, Role};
 
@@ -42,8 +42,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebases<S: Position + Clone + Syzygy> {
-    wdl: FnvHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S>>)>,
-    dtz: FnvHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S>>)>,
+    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S>>)>,
+    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
@@ -56,8 +56,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebases<S> {
         Tablebases {
-            wdl: FnvHashMap::default(),
-            dtz: FnvHashMap::default(),
+            wdl: FxHashMap::default(),
+            dtz: FxHashMap::default(),
         }
     }
 
