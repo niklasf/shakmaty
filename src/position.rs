@@ -513,7 +513,7 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
-// An Atomic Chess position.
+/// An Atomic Chess position.
 #[derive(Clone, Debug)]
 pub struct Atomic {
     board: Board,
@@ -683,7 +683,8 @@ impl Position for Atomic {
     }
 }
 
-// A Giveaway position.
+/// A Giveaway position. Giveaway is also (somewhat ambiguously) known as
+/// Antichess.
 #[derive(Clone, Debug)]
 pub struct Giveaway {
     board: Board,
