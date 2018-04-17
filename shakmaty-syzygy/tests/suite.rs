@@ -1,11 +1,11 @@
+extern crate csv;
 extern crate shakmaty;
 extern crate shakmaty_syzygy;
-extern crate csv;
 
-use shakmaty::Position;
-use shakmaty::variants::{Chess, Atomic, Giveaway};
-use shakmaty_syzygy::{Tablebases, Syzygy};
 use shakmaty::fen::Fen;
+use shakmaty::variants::{Atomic, Chess, Giveaway};
+use shakmaty::Position;
+use shakmaty_syzygy::{Syzygy, Tablebases};
 
 fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
     let mut tables = Tablebases::new();

@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::ops::{Neg, Add, AddAssign, Sub, SubAssign};
 use std::io;
+use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 use arrayvec::ArrayVec;
 
-use shakmaty::{Color, Piece, Outcome};
-use shakmaty::variants::{Chess, Atomic, Giveaway};
+use shakmaty::variants::{Atomic, Chess, Giveaway};
+use shakmaty::{Color, Outcome, Piece};
 
 use material::Material;
 
@@ -133,7 +133,7 @@ impl Wdl {
             n if n < -100 => Wdl::BlessedLoss,
             0 => Wdl::Draw,
             n if 100 <= n => Wdl::CursedWin,
-            _ => Wdl::Win
+            _ => Wdl::Win,
         }
     }
 }
@@ -165,7 +165,7 @@ macro_rules! from_wdl_impl {
 
 from_wdl_impl! { i8 i16 i32 i64 }
 
-#[cfg(feature="serde-1")]
+#[cfg(feature = "serde-1")]
 impl ::serde::Serialize for Wdl {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -175,7 +175,7 @@ impl ::serde::Serialize for Wdl {
     }
 }
 
-#[cfg(feature="serde-1")]
+#[cfg(feature = "serde-1")]
 impl<'de> ::serde::Deserialize<'de> for Wdl {
     fn deserialize<D>(deserializer: D) -> Result<Wdl, D::Error>
     where
@@ -317,7 +317,7 @@ impl SubAssign for Dtz {
     }
 }
 
-#[cfg(feature="serde-1")]
+#[cfg(feature = "serde-1")]
 impl ::serde::Serialize for Dtz {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -327,7 +327,7 @@ impl ::serde::Serialize for Dtz {
     }
 }
 
-#[cfg(feature="serde-1")]
+#[cfg(feature = "serde-1")]
 impl<'de> ::serde::Deserialize<'de> for Dtz {
     fn deserialize<D>(deserializer: D) -> Result<Dtz, D::Error>
     where
@@ -386,14 +386,10 @@ pub enum SyzygyError {
     TooManyPieces,
     /// Missing table.
     #[fail(display = "required table not found: {}", material)]
-    MissingTable {
-        material: Material,
-    },
+    MissingTable { material: Material },
     /// I/O error.
     #[fail(display = "i/o error when reading a table: {}", error)]
-    Read {
-        error: io::Error,
-    },
+    Read { error: io::Error },
     /// Unexpected magic header bytes.
     #[fail(display = "invalid magic bytes")]
     Magic,

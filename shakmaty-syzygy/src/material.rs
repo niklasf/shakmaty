@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
-use std::str::FromStr;
 use std::iter::FromIterator;
-use std::cmp::{PartialOrd, Ord, Ordering};
+use std::str::FromStr;
 
-use shakmaty::{Color, Role, Piece, Board};
+use shakmaty::{Board, Color, Piece, Role};
 
 const ROLES: [Role; 6] = [
     Role::King,
@@ -110,7 +110,8 @@ impl Extend<Role> for MaterialSide {
 
 impl FromIterator<Role> for MaterialSide {
     fn from_iter<T>(iter: T) -> Self
-        where T: IntoIterator<Item = Role>
+    where
+        T: IntoIterator<Item = Role>,
     {
         let mut result = MaterialSide::new();
         result.extend(iter);
@@ -189,7 +190,7 @@ impl Material {
                 rooks: (board.rooks() & board.black()).len() as u8,
                 queens: (board.queens() & board.black()).len() as u8,
                 kings: (board.kings() & board.black()).len() as u8,
-            }
+            },
         }
     }
 
@@ -265,7 +266,8 @@ impl Extend<Piece> for Material {
 
 impl FromIterator<Piece> for Material {
     fn from_iter<T>(iter: T) -> Self
-        where T: IntoIterator<Item = Piece>
+    where
+        T: IntoIterator<Item = Piece>,
     {
         let mut result = Material::new();
         result.extend(iter);
@@ -287,7 +289,7 @@ impl FromStr for Material {
             black: match parts.next() {
                 Some(b) => MaterialSide::from_str(b)?,
                 None => MaterialSide::new(),
-            }
+            },
         })
     }
 }

@@ -54,11 +54,9 @@
 //! ```
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.2.0")]
-
 #![warn(missing_debug_implementations)]
-
-#![cfg_attr(feature="cargo-clippy", allow(needless_range_loop))]
-#![cfg_attr(feature="cargo-clippy", allow(cyclomatic_complexity))]
+#![cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
+#![cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
 
 extern crate arrayvec;
 #[macro_use]
@@ -70,23 +68,23 @@ extern crate failure;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
-extern crate num_integer;
-extern crate shakmaty;
-extern crate positioned_io;
-extern crate fnv;
 extern crate double_checked_cell;
+extern crate fnv;
+extern crate num_integer;
+extern crate positioned_io;
+extern crate shakmaty;
 #[macro_use]
 extern crate static_assertions;
-#[cfg(feature="serde-1")]
+#[cfg(feature = "serde-1")]
 extern crate serde;
 
 mod material;
-mod types;
 mod table;
 mod tablebases;
+mod types;
 
-pub use types::{Syzygy, Wdl, Dtz, SyzygyError};
 pub use tablebases::Tablebases;
+pub use types::{Dtz, Syzygy, SyzygyError, Wdl};
 
 use std::mem;
 

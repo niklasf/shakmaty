@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::fs::File;
+use std::io;
+use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::path::Path;
-use std::fs::File;
-use std::iter::FromIterator;
-use std::io;
 
-use num_integer::binomial;
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
-use byteorder::{ByteOrder, LittleEndian, BigEndian};
+use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use itertools::Itertools;
+use num_integer::binomial;
 use positioned_io::ReadAt;
 
-use shakmaty::{Square, Color, Role, Piece, Bitboard, Position};
+use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 
-use types::{Syzygy, Wdl, Dtz, Pieces, MAX_PIECES, SyzygyError, SyzygyResult};
-use SyzygyError::CorruptedTable;
 use material::Material;
+use types::{Dtz, Pieces, Syzygy, SyzygyError, SyzygyResult, Wdl, MAX_PIECES};
+use SyzygyError::CorruptedTable;
 
 pub trait IsWdl {
     const IS_WDL: bool;
@@ -330,7 +330,7 @@ impl Consts {
         let mut lead_pawn_idx = [[0; 64]; 5];
         let mut lead_pawns_size = [[0; 4]; 5];
 
-        for lead_pawns_cnt in 1..4+1 {
+        for lead_pawns_cnt in 1..4 + 1 {
             for file in 0..4 {
                 let mut idx = 0;
 
@@ -350,7 +350,13 @@ impl Consts {
             }
         }
 
-        Consts { mult_idx, mult_factor, map_pawns, lead_pawn_idx, lead_pawns_size }
+        Consts {
+            mult_idx,
+            mult_factor,
+            map_pawns,
+            lead_pawn_idx,
+            lead_pawns_size,
+        }
     }
 }
 
@@ -360,59 +366,59 @@ struct RandomAccessFile {
 }
 
 impl RandomAccessFile {
-     fn open<P: AsRef<Path>>(path: P) -> io::Result<RandomAccessFile> {
-         File::open(path).map(|file| RandomAccessFile { file })
-     }
+    fn open<P: AsRef<Path>>(path: P) -> io::Result<RandomAccessFile> {
+        File::open(path).map(|file| RandomAccessFile { file })
+    }
 
-     fn read_u8(&self, ptr: u64) -> SyzygyResult<u8> {
-         let mut buf = [0; 1];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         Ok(buf[0])
-     }
+    fn read_u8(&self, ptr: u64) -> SyzygyResult<u8> {
+        let mut buf = [0; 1];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        Ok(buf[0])
+    }
 
-     fn read_u16_le(&self, ptr: u64) -> SyzygyResult<u16> {
-         let mut buf = [0; 2];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         Ok(LittleEndian::read_u16(&buf))
-     }
+    fn read_u16_le(&self, ptr: u64) -> SyzygyResult<u16> {
+        let mut buf = [0; 2];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        Ok(LittleEndian::read_u16(&buf))
+    }
 
-     fn read_u32_le(&self, ptr: u64) -> SyzygyResult<u32> {
-         let mut buf = [0; 4];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         Ok(LittleEndian::read_u32(&buf))
-     }
+    fn read_u32_le(&self, ptr: u64) -> SyzygyResult<u32> {
+        let mut buf = [0; 4];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        Ok(LittleEndian::read_u32(&buf))
+    }
 
-     fn read_u32_be(&self, ptr: u64) -> SyzygyResult<u32> {
-         let mut buf = [0; 4];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         Ok(BigEndian::read_u32(&buf))
-     }
+    fn read_u32_be(&self, ptr: u64) -> SyzygyResult<u32> {
+        let mut buf = [0; 4];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        Ok(BigEndian::read_u32(&buf))
+    }
 
-     fn read_u64_be(&self, ptr: u64) -> SyzygyResult<u64> {
-         let mut buf = [0; 8];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         Ok(BigEndian::read_u64(&buf))
-     }
+    fn read_u64_be(&self, ptr: u64) -> SyzygyResult<u64> {
+        let mut buf = [0; 8];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        Ok(BigEndian::read_u64(&buf))
+    }
 
-     fn read_lr(&self, ptr: u64) -> SyzygyResult<(u16, u16)> {
-         let mut buf = [0; 3];
-         self.file.read_exact_at(ptr, &mut buf)?;
-         let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
-         let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
-         Ok((left, right))
-     }
+    fn read_lr(&self, ptr: u64) -> SyzygyResult<(u16, u16)> {
+        let mut buf = [0; 3];
+        self.file.read_exact_at(ptr, &mut buf)?;
+        let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
+        let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
+        Ok((left, right))
+    }
 
-     fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
-         let mut buf = [0; 4];
-         if let Err(error) = self.file.read_exact_at(0, &mut buf) {
-             match error.kind() {
-                 io::ErrorKind::UnexpectedEof => Ok(false),
-                 _ => Err(SyzygyError::Read { error }),
+    fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
+        let mut buf = [0; 4];
+        if let Err(error) = self.file.read_exact_at(0, &mut buf) {
+            match error.kind() {
+                io::ErrorKind::UnexpectedEof => Ok(false),
+                _ => Err(SyzygyError::Read { error }),
             }
-         } else {
+        } else {
             Ok(&buf == magic)
         }
-     }
+    }
 }
 
 /// Header byte to piece.
@@ -537,7 +543,11 @@ impl GroupData {
 
         factors[lens.len()] = idx;
 
-        Ok(GroupData { pieces, lens, factors })
+        Ok(GroupData {
+            pieces,
+            lens,
+            factors,
+        })
     }
 }
 
@@ -552,10 +562,7 @@ struct DtzMap {
 
 impl DtzMap {
     fn new(ptr: u64) -> DtzMap {
-        DtzMap {
-            ptr,
-            idx: [0; 4],
-        }
+        DtzMap { ptr, idx: [0; 4] }
     }
 
     fn ptr(&self, wdl: Wdl) -> u64 {
@@ -1246,4 +1253,3 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         Ok(Some(Dtz(if stores_moves { res * 2 } else { res })))
     }
 }
-

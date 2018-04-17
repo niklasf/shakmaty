@@ -14,20 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::io;
-use std::fs;
-use std::str::FromStr;
 use std::cmp::{max, min};
+use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
-use fnv::FnvHashMap;
 use double_checked_cell::DoubleCheckedCell;
+use fnv::FnvHashMap;
 
-use shakmaty::{Role, Position, MoveList};
+use shakmaty::{MoveList, Position, Role};
 
-use types::{Syzygy, Wdl, Dtz, MAX_PIECES, SyzygyError, SyzygyResult};
 use material::Material;
-use table::{WdlTag, DtzTag, Table};
+use table::{DtzTag, Table, WdlTag};
+use types::{Dtz, Syzygy, SyzygyError, SyzygyResult, Wdl, MAX_PIECES};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {
@@ -311,10 +311,10 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     /// panic in such cases.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         if pos.board().occupied().count() > MAX_PIECES {
-            return Err(SyzygyError::TooManyPieces)
+            return Err(SyzygyError::TooManyPieces);
         }
         if pos.castling_rights().any() {
-            return Err(SyzygyError::Castling)
+            return Err(SyzygyError::Castling);
         }
 
         // Probe.
