@@ -30,6 +30,7 @@ use positioned_io::ReadAt;
 use shakmaty::{Square, Color, Role, Piece, Bitboard, Position};
 
 use types::{Syzygy, Wdl, Dtz, Pieces, MAX_PIECES, SyzygyError, SyzygyResult};
+use SyzygyError::CorruptedTable;
 use material::Material;
 
 pub trait IsWdl {
@@ -329,7 +330,7 @@ impl Consts {
         let mut lead_pawn_idx = [[0; 64]; 5];
         let mut lead_pawns_size = [[0; 4]; 5];
 
-        for lead_pawns_cnt in 1..=4 {
+        for lead_pawns_cnt in 1..4+1 {
             for file in 0..4 {
                 let mut idx = 0;
 
@@ -441,7 +442,7 @@ fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: u8, side: Color) -> Syz
 
     let mut pieces = Pieces::new();
     for p in bytes {
-        pieces.push(byte_to_piece(side.fold(*p & 0xf, *p >> 4))?);
+        pieces.push(byte_to_piece(side.fold(*p & 0xf, *p >> 4)).ok_or(CorruptedTable)?);
     }
 
     Ok(pieces)
@@ -487,7 +488,7 @@ struct GroupData {
 impl GroupData {
     pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> SyzygyResult<GroupData> {
         if pieces.len() < 2 {
-            return Err(SyzygyError::CorruptedTable);
+            return Err(CorruptedTable);
         }
 
         let material = Material::from_iter(pieces.clone());
@@ -663,11 +664,11 @@ impl PairsData {
             let ptr = lowest_sym + i as u64 * 2;
 
             base[i] = base[i + 1]
-                .checked_add(u64::from(raf.read_u16_le(ptr)?))?
-                .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?))? / 2;
+                .checked_add(u64::from(raf.read_u16_le(ptr)?)).ok_or(CorruptedTable)?
+                .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?)).ok_or(CorruptedTable)? / 2;
 
             if base[i] * 2 < base[i + 1] {
-                return Err(SyzygyError::CorruptedTable);
+                return Err(CorruptedTable);
             }
         }
 
@@ -717,7 +718,7 @@ impl PairsData {
 
 /// Build the symlen table.
 fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
-    if visited.get(sym as usize)? {
+    if visited.get(sym as usize).ok_or(CorruptedTable)? {
         return Ok(());
     }
 
@@ -781,7 +782,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         // Check consistency of layout and material key.
         if has_pawns != material.has_pawns() || split == material.is_symmetric() {
-            return Err(SyzygyError::CorruptedTable);
+            return Err(CorruptedTable);
         }
 
         // Read group data.
@@ -806,7 +807,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 if key != material && key.flip() != material {
-                    return Err(SyzygyError::CorruptedTable);
+                    return Err(CorruptedTable);
                 }
 
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
@@ -935,11 +936,11 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             sym = ((buf - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
             sym += self.raf.read_u16_le(d.lowest_sym + 2 * len as u64)?;
 
-            if offset < i64::from(*d.symlen.get(sym as usize)?) + 1 {
+            if offset < i64::from(*d.symlen.get(sym as usize).ok_or(CorruptedTable)?) + 1 {
                 break;
             }
 
-            offset -= i64::from(*d.symlen.get(sym as usize)?) + 1;
+            offset -= i64::from(*d.symlen.get(sym as usize).ok_or(CorruptedTable)?) + 1;
             len += usize::from(d.min_symlen);
             buf <<= len;
             buf_size -= len;
@@ -952,13 +953,13 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        while *d.symlen.get(sym as usize)? != 0 {
+        while *d.symlen.get(sym as usize).ok_or(CorruptedTable)? != 0 {
             let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
 
-            if offset < i64::from(*d.symlen.get(left as usize)?) + 1 {
+            if offset < i64::from(*d.symlen.get(left as usize).ok_or(CorruptedTable)?) + 1 {
                 sym = left;
             } else {
-                offset -= i64::from(*d.symlen.get(left as usize)?) + 1;
+                offset -= i64::from(*d.symlen.get(left as usize).ok_or(CorruptedTable)?) + 1;
                 sym = right;
             }
         }
@@ -1215,7 +1216,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             2 => Wdl::Draw,
             3 => Wdl::CursedWin,
             4 => Wdl::Win,
-            _ => return Err(SyzygyError::CorruptedTable),
+            _ => return Err(CorruptedTable),
         })
     }
 
@@ -1229,7 +1230,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let res = self.decompress_pairs(side, idx)?;
 
-        let res = i16::from(if let Some(map) = &side.dtz_map {
+        let res = i16::from(if let Some(ref map) = side.dtz_map {
             self.raf.read_u8(map.ptr(wdl) + u64::from(res))?
         } else {
             res

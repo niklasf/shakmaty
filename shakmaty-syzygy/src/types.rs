@@ -15,7 +15,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::ops::{Neg, Add, AddAssign, Sub, SubAssign};
-use std::option::NoneError;
 use std::io;
 
 use arrayvec::ArrayVec;
@@ -164,7 +163,7 @@ macro_rules! from_wdl_impl {
     }
 }
 
-from_wdl_impl! { i8 i16 i32 i64 isize }
+from_wdl_impl! { i8 i16 i32 i64 }
 
 #[cfg(feature="serde-1")]
 impl ::serde::Serialize for Wdl {
@@ -262,7 +261,7 @@ macro_rules! from_dtz_impl {
     }
 }
 
-from_dtz_impl! { i16 i32 i64 isize }
+from_dtz_impl! { i16 i32 i64 }
 
 macro_rules! dtz_from_impl {
     ($($t:ty)+) => {
@@ -401,12 +400,6 @@ pub enum SyzygyError {
     /// Corrupted table.
     #[fail(display = "corrupted table")]
     CorruptedTable,
-}
-
-impl From<NoneError> for SyzygyError {
-    fn from(_: NoneError) -> SyzygyError {
-        SyzygyError::CorruptedTable
-    }
 }
 
 impl From<io::Error> for SyzygyError {

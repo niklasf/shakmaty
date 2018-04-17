@@ -40,7 +40,9 @@ Changelog
 
 * 0.2.0
   - Replace `Wdl::from(dtz)` with `Wdl::from_dtz_after_zeroing(dtz)`.
+  - Remove `isize` conversions of `Dtz` and `Wdl`.
   - Fix WDL of lone king in atomic chess.
+  - Support stable rust.
 * 0.1.4
   - Fix ordering of lead pawns.
 * 0.1.3

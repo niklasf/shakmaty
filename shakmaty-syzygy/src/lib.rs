@@ -55,8 +55,6 @@
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.1.4")]
 
-#![feature(try_trait)]
-
 #![warn(missing_debug_implementations)]
 
 #![cfg_attr(feature="cargo-clippy", allow(needless_range_loop))]
