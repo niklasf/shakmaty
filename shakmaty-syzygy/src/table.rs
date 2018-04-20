@@ -441,9 +441,9 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: u8, side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: usize, side: Color) -> SyzygyResult<Pieces> {
     let mut buffer = [0; MAX_PIECES];
-    let bytes = &mut buffer[..usize::from(count)];
+    let bytes = &mut buffer[..count];
     raf.file.read_exact_at(ptr, bytes)?;
 
     let mut pieces = Pieces::new();
@@ -760,7 +760,6 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
 
     material: Material,
 
-    num_pieces: u8,
     num_unique_pieces: u8,
     min_like_man: u8,
     files: ArrayVec<[FileData; 4]>,
@@ -821,7 +820,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 sides.push(group);
             }
 
-            ptr += u64::from(material.count());
+            ptr += material.count() as u64;
 
             groups.push(sides);
         }
@@ -894,7 +893,6 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             is_wdl: PhantomData,
             syzygy: PhantomData,
             raf,
-            num_pieces: material.count(),
             num_unique_pieces: material.unique_pieces(),
             min_like_man: material.min_like_man(),
             files,

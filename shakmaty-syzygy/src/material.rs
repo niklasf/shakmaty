@@ -68,8 +68,13 @@ impl MaterialSide {
         }
     }
 
-    pub fn count(&self) -> u8 {
-        self.pawns + self.knights + self.bishops + self.rooks + self.queens + self.kings
+    pub fn count(&self) -> usize {
+        usize::from(self.pawns) +
+        usize::from(self.knights) +
+        usize::from(self.bishops) +
+        usize::from(self.rooks) +
+        usize::from(self.queens) +
+        usize::from(self.kings)
     }
 
     pub(crate) fn unique_roles(&self) -> u8 {
@@ -224,7 +229,7 @@ impl Material {
         self.by_color_mut(piece.color).by_role_mut(piece.role)
     }
 
-    pub fn count(&self) -> u8 {
+    pub fn count(&self) -> usize {
         self.white.count() + self.black.count()
     }
 
