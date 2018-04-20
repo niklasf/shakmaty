@@ -32,22 +32,28 @@ use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 use material::Material;
 use types::{Dtz, Pieces, Syzygy, SyzygyError, SyzygyResult, Wdl, MAX_PIECES};
 
-pub trait IsWdl {
-    const IS_WDL: bool;
+#[derive(Debug, PartialEq, Eq)]
+pub enum Metric {
+    Wdl,
+    Dtz,
+}
+
+pub trait TableTag {
+    const METRIC: Metric;
 }
 
 #[derive(Debug)]
 pub enum WdlTag { }
 
-impl IsWdl for WdlTag {
-    const IS_WDL: bool = true;
+impl TableTag for WdlTag {
+    const METRIC: Metric = Metric::Wdl;
 }
 
 #[derive(Debug)]
 pub enum DtzTag { }
 
-impl IsWdl for DtzTag {
-    const IS_WDL: bool = false;
+impl TableTag for DtzTag {
+    const METRIC: Metric = Metric::Dtz;
 }
 
 bitflags! {
@@ -617,11 +623,11 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: IsWdl>(raf: &RandomAccessFile, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
+    pub fn parse<S: Syzygy, T: TableTag>(raf: &RandomAccessFile, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
         let flags = Flag::from_bits_truncate(raf.read_u8(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
-            let single_value = if T::IS_WDL {
+            let single_value = if T::METRIC == Metric::Wdl {
                 raf.read_u8(ptr + 1)?
             } else if S::CAPTURES_COMPULSORY {
                 1 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
@@ -753,7 +759,7 @@ struct FileData {
 
 /// A Syzygy table.
 #[derive(Debug)]
-pub struct Table<T: IsWdl, P: Position + Syzygy> {
+pub struct Table<T: TableTag, P: Position + Syzygy> {
     is_wdl: PhantomData<T>,
     syzygy: PhantomData<P>,
 
@@ -766,16 +772,15 @@ pub struct Table<T: IsWdl, P: Position + Syzygy> {
     files: ArrayVec<[FileData; 4]>,
 }
 
-impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
+impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
         let raf = RandomAccessFile::open(path)?;
         let material = material.clone();
 
         // Check magic.
-        let (magic, pawnless_magic) = if T::IS_WDL {
-            (&S::WDL_MAGIC, &S::PAWNLESS_WDL_MAGIC)
-        } else {
-            (&S::DTZ_MAGIC, &S::PAWNLESS_DTZ_MAGIC)
+        let (magic, pawnless_magic) = match T::METRIC {
+            Metric::Wdl => (&S::WDL_MAGIC, &S::PAWNLESS_WDL_MAGIC),
+            Metric::Dtz => (&S::DTZ_MAGIC, &S::PAWNLESS_DTZ_MAGIC),
         };
 
         if !raf.starts_with_magic(magic)? && (material.has_pawns() || !raf.starts_with_magic(pawnless_magic)?) {
@@ -794,7 +799,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         // Read group data.
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let num_files = if has_pawns { 4 } else { 1 };
-        let num_sides = if T::IS_WDL && !material.is_symmetric() { 2 } else { 1 };
+        let num_sides = if T::METRIC == Metric::Wdl && !material.is_symmetric() { 2 } else { 1 };
 
         let mut groups: ArrayVec<[ArrayVec<[GroupData; 2]>; 4]> = ArrayVec::new();
         let mut ptr = 5;
@@ -834,7 +839,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
                 let group = groups[f][side.fold(0, 1)].clone();
                 let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
 
-                if !T::IS_WDL && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
+                if T::METRIC == Metric::Dtz && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
                     pairs.min_symlen = 1;
                 }
 
@@ -845,7 +850,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             files.push(FileData { sides });
         }
 
-        if !T::IS_WDL {
+        if T::METRIC == Metric::Dtz {
             let map = ptr;
 
             for f in 0..num_files {
@@ -1009,7 +1014,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
 
         let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
 
-        if !T::IS_WDL && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
+        if T::METRIC == Metric::Dtz && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
             // Check other side.
             return Ok(None);
         }
@@ -1208,7 +1213,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     }
 
     pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
-        assert!(T::IS_WDL);
+        assert_eq!(T::METRIC, Metric::Wdl);
 
         let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
         let decompressed = self.decompress_pairs(side, idx)?;
@@ -1224,7 +1229,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
     }
 
     pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
-        assert!(!T::IS_WDL);
+        assert_eq!(T::METRIC, Metric::Dtz);
 
         let (side, idx) = match self.encode(pos)? {
             Some(found) => found,
