@@ -116,12 +116,6 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     ///
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
-    ///
-    /// # Panics
-    ///
-    /// Corrupted tables may or may not cause panics, especially due to
-    /// integer overflow in debug mode. Ideally a future version will not
-    /// panic in such cases.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
@@ -303,12 +297,6 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     ///
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
-    ///
-    /// # Panics
-    ///
-    /// Corrupted tables may or may not cause panics, especially due to
-    /// integer overflow in debug mode. Ideally a future version will not
-    /// panic in such cases.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
