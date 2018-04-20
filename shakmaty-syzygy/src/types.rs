@@ -394,15 +394,41 @@ pub enum SyzygyError {
     #[fail(display = "invalid magic bytes")]
     Magic,
     /// Corrupted table.
-    #[fail(display = "corrupted table")]
-    CorruptedTable,
+    #[fail(display = "corrupted table (detected in {} l. {})", file, line)]
+    CorruptedTable { file: &'static str, line: u32 },
 }
 
 impl From<io::Error> for SyzygyError {
     fn from(error: io::Error) -> SyzygyError {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable,
+            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable { file: file!(), line: line!() },
             _ => SyzygyError::Read { error },
+        }
+    }
+}
+
+macro_rules! throw {
+    () => {
+        return Err(SyzygyError::CorruptedTable {
+            file: file!(),
+            line: line!(),
+        })
+    }
+}
+
+macro_rules! u {
+    ($e:expr) => {
+        match $e {
+            Some(ok) => ok,
+            None => throw!(),
+        }
+    }
+}
+
+macro_rules! ensure {
+    ($cond:expr) => {
+        if !$cond {
+            throw!();
         }
     }
 }

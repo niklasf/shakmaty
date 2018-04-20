@@ -428,7 +428,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 }
             }
 
-            best.ok_or(SyzygyError::CorruptedTable)
+            Ok(u!(best))
         } else {
             let mut best = Dtz(-1);
 

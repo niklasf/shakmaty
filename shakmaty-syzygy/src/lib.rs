@@ -63,7 +63,7 @@ extern crate arrayvec;
 extern crate bitflags;
 extern crate bit_vec;
 extern crate byteorder;
-#[macro_use]
+#[macro_use(Fail)]
 extern crate failure;
 extern crate itertools;
 #[macro_use]
@@ -78,10 +78,11 @@ extern crate static_assertions;
 #[cfg(feature = "serde-1")]
 extern crate serde;
 
+#[macro_use]
+mod types;
 mod material;
 mod table;
 mod tablebases;
-mod types;
 
 pub use tablebases::Tablebases;
 pub use types::{Dtz, Syzygy, SyzygyError, Wdl};
