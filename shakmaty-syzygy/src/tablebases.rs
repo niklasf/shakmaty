@@ -403,12 +403,12 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
             }
         }
 
-        if let Some(dtz) = self.probe_dtz_table(pos, wdl)? {
-            return Ok(Dtz::before_zeroing(wdl) + if wdl > Wdl::Draw { dtz } else { -dtz });
+        if let Some(Dtz(dtz)) = self.probe_dtz_table(pos, wdl)? {
+            return Ok(Dtz::before_zeroing(wdl).add_plies(dtz))
         }
 
-        Ok(if wdl > Wdl::Draw {
-            let mut best = Dtz(i16::max_value());
+        if wdl > Wdl::Draw {
+            let mut best = None;
 
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
@@ -419,16 +419,16 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
                 let v = -self.probe_dtz(&after)?;
 
-                if v > Dtz(0) && v + Dtz(1) < best {
-                    best = if v == Dtz(1) && after.is_checkmate() {
+                if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
+                    best = Some(if v == Dtz(1) && after.is_checkmate() {
                         Dtz(1)
                     } else {
                         v + Dtz(1)
-                    };
+                    });
                 }
             }
 
-            best
+            best.ok_or(SyzygyError::CorruptedTable)
         } else {
             let mut best = Dtz(-1);
 
@@ -452,8 +452,8 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 best = min(v, best);
             }
 
-            best
-        })
+            Ok(best)
+        }
     }
 
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
