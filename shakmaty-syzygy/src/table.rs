@@ -670,9 +670,9 @@ impl PairsData {
         for i in (0..h - 1).rev() {
             let ptr = lowest_sym + i as u64 * 2;
 
-            base[i] = base[i + 1]
-                .checked_add(u64::from(raf.read_u16_le(ptr)?)).ok_or(CorruptedTable)?
-                .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?)).ok_or(CorruptedTable)? / 2;
+            base[i] = (base[i + 1]
+                       + u64::from(raf.read_u16_le(ptr)?)
+                       - u64::from(raf.read_u16_le(ptr + 2)?)) / 2;
 
             if base[i] * 2 < base[i + 1] {
                 return Err(CorruptedTable);
