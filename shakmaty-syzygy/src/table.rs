@@ -649,17 +649,23 @@ impl PairsData {
             }, ptr + 2));
         }
 
+        // Read header.
+        let mut header = [0; 10];
+        raf.file.read_exact_at(ptr, &mut header)?;
+
         let tb_size = groups.factors[groups.lens.len()];
-        let block_size = 1 << raf.read_u8(ptr + 1)?;
-        let span = 1 << raf.read_u8(ptr + 2)?;
+        let block_size = u!(1u32.checked_shl(u32::from(header[1])));
+        let span = u!(1u32.checked_shl(u32::from(header[2])));
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
-        let padding = raf.read_u8(ptr + 3)?;
-        let blocks_num = raf.read_u32_le(ptr + 4)?;
+        let padding = header[3];
+        let blocks_num = LittleEndian::read_u32(&header[4..]);
         let block_length_size = blocks_num + u32::from(padding);
 
-        let max_symlen = raf.read_u8(ptr + 8)?;
-        let min_symlen = raf.read_u8(ptr + 9)?;
+        let max_symlen = header[8];
+        let min_symlen = header[9];
+        ensure!(max_symlen >= min_symlen);
         let h = usize::from(max_symlen - min_symlen + 1);
+
         let lowest_sym = ptr + 10;
 
         // Initialize base.
@@ -926,7 +932,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         loop {
             let mut len = 0;
 
-            while buf < d.base[len] {
+            while buf < *u!(d.base.get(len)) {
                 len += 1;
             }
 
