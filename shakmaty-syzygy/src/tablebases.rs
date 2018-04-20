@@ -92,7 +92,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
                 _ => continue,
             };
 
-            if usize::from(material.count()) > MAX_PIECES {
+            if material.count() > MAX_PIECES {
                 continue;
             }
 

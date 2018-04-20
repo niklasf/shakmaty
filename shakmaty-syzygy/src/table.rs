@@ -908,7 +908,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         let mut block = u64::from(self.raf.read_u32_le(d.sparse_index + 6 * k)?);
         let mut offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * k + 4)?);
 
-        let diff = idx as i64 % d.span as i64 - d.span as i64 / 2;
+        let diff = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         offset += diff;
 
         while offset < 0 {
