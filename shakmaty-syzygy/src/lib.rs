@@ -88,4 +88,4 @@ pub use types::{Dtz, Syzygy, SyzygyError, Wdl};
 
 use std::mem;
 
-const_assert!(pointer_size; mem::size_of::<usize>() >= 4);
+const_assert!(pointer_size; mem::size_of::<usize>() >= 2);
