@@ -585,9 +585,9 @@ struct PairsData {
     groups: GroupData,
 
     /// Block size in bytes.
-    block_size: u64,
+    block_size: u32,
     /// About every span values there is a sparse index entry.
-    span: u64,
+    span: u32,
     /// Number of blocks in the table.
     blocks_num: u32,
 
@@ -605,7 +605,7 @@ struct PairsData {
     /// Offset of the sparse index.
     sparse_index: u64,
     /// Size of the sparse index.
-    sparse_index_size: u64,
+    sparse_index_size: u32,
 
     /// Offset of the block length table.
     block_lengths: u64,
@@ -655,7 +655,7 @@ impl PairsData {
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = 1 << raf.read_u8(ptr + 1)?;
         let span = 1 << raf.read_u8(ptr + 2)?;
-        let sparse_index_size = (tb_size + span - 1) / span;
+        let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = raf.read_u8(ptr + 3)?;
         let blocks_num = raf.read_u32_le(ptr + 4)?;
         let block_length_size = blocks_num + u32::from(padding);
@@ -869,7 +869,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
         for f in 0..num_files {
             for s in 0..num_sides {
                 files[f].sides[s].sparse_index = ptr;
-                ptr += files[f].sides[s].sparse_index_size * 6;
+                ptr += u64::from(files[f].sides[s].sparse_index_size) * 6;
             }
         }
 
@@ -884,7 +884,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             for s in 0..num_sides {
                 ptr = (ptr + 0x3f) & !0x3f; // Check 64 byte alignment
                 files[f].sides[s].data = ptr;
-                ptr += u64::from(files[f].sides[s].blocks_num) * files[f].sides[s].block_size;
+                ptr += u64::from(files[f].sides[s].blocks_num) * u64::from(files[f].sides[s].block_size);
             }
         }
 
@@ -905,7 +905,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             return Ok(d.min_symlen);
         }
 
-        let k = idx / d.span;
+        let k = idx / u64::from(d.span);
 
         let mut block = u64::from(self.raf.read_u32_le(d.sparse_index + 6 * k)?);
         let mut offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * k + 4)?);
@@ -923,7 +923,7 @@ impl<T: IsWdl, S: Position + Syzygy> Table<T, S> {
             block += 1;
         }
 
-        let mut ptr = d.data + block * d.block_size;
+        let mut ptr = d.data + block * u64::from(d.block_size);
 
         let mut buf = self.raf.read_u64_be(ptr)?;
         ptr += 8;
