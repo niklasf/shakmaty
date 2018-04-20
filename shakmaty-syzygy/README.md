@@ -38,6 +38,9 @@ Documentation
 Changelog
 ---------
 
+* 0.2.1
+  - Should not panic on corrupted tables (even in debug mode).
+  - Switch from fnv to fxhash.
 * 0.2.0
   - Replace `Wdl::from(dtz)` with `Wdl::from_dtz_after_zeroing(dtz)`.
   - Remove `isize` conversions of `Dtz` and `Wdl`.
