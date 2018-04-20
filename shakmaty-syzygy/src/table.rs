@@ -673,15 +673,15 @@ impl PairsData {
         for i in (0..h - 1).rev() {
             let ptr = lowest_sym + i as u64 * 2;
 
-            base[i] = (base[i + 1]
-                       + u64::from(raf.read_u16_le(ptr)?)
-                       - u64::from(raf.read_u16_le(ptr + 2)?)) / 2;
+            base[i] = u!(u!(base[i + 1]
+                .checked_add(u64::from(raf.read_u16_le(ptr)?)))
+                .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?))) / 2;
 
             ensure!(base[i] * 2 >= base[i + 1]);
         }
 
         for i in 0..h {
-            base[i] <<= 64 - (min_symlen + i as u8);
+            base[i] = u!(base[i].checked_shl(64 - (u32::from(min_symlen) + i as u32)));
         }
 
         // Initialize symlen.
