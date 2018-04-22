@@ -1,4 +1,12 @@
-https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbw
-https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvB.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvB.stbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvK.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvK.stbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvN.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvN.stbz
 https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-giveaway/KvP.gtbw
 https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-giveaway/KvP.gtbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvQ.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvQ.stbz
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbw
+https://tablebase.lichess.ovh/tables/antichess/2-3-4-5-pawnless/KvR.stbz

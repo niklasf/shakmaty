@@ -11,7 +11,7 @@ cache:
    - tables
 
 before_install:
- - ./download-test-assets.sh
+ - ./download-test-tables.sh
 
 before_cache:
  - rm -f tables/**/*.txt
