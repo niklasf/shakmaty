@@ -78,5 +78,13 @@ https://tablebase.lichess.ovh/tables/standard/3-4-5/KQRNvK.rtbw
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KQRNvK.rtbz
 https://tablebase.lichess.ovh/tables/standard/6-wdl/KQRNvKQ.rtbw
 https://tablebase.lichess.ovh/tables/standard/6-dtz/KQRNvKQ.rtbz
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKN.rtbw
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKN.rtbz
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKB.rtbw
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKB.rtbz
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKR.rtbw
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKR.rtbz
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKQ.rtbw
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKQ.rtbz
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKP.rtbw
+https://tablebase.lichess.ovh/tables/standard/3-4-5/KPPvKP.rtbz
