@@ -174,5 +174,9 @@ https://tablebase.lichess.ovh/tables/standard/3-4-5/KRPvKR.rtbw
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KRPvKR.rtbz
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KRRvKR.rtbw
 https://tablebase.lichess.ovh/tables/standard/3-4-5/KRRvKR.rtbz
+https://tablebase.lichess.ovh/tables/standard/6-wdl/KQQQQvK.rtbw
+https://tablebase.lichess.ovh/tables/standard/6-dtz/KQQQQvK.rtbz
 https://tablebase.lichess.ovh/tables/standard/6-wdl/KQRNvKQ.rtbw
 https://tablebase.lichess.ovh/tables/standard/6-dtz/KQRNvKQ.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/KQQQQQvK.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/KQQQQQvK.rtbz

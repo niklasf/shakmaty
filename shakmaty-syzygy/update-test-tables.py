@@ -33,9 +33,12 @@ def update_dependencies(variant, suite, target):
                 if len(table) <= 6:
                     print("{}/3-4-5/{}.rtbw".format(base, table), file=out)
                     print("{}/3-4-5/{}.rtbz".format(base, table), file=out)
-                else:
+                elif len(table) <= 7:
                     print("{}/6-wdl/{}.rtbw".format(base, table), file=out)
                     print("{}/6-dtz/{}.rtbz".format(base, table), file=out)
+                else:
+                    print("{}/7/{}.rtbw".format(base, table), file=out)
+                    print("{}/7/{}.rtbz".format(base, table), file=out)
             elif variant == "atomic":
                 if len(table) <= 6:
                     print("{}/3-4-5/{}.atbw".format(base, table), file=out)
