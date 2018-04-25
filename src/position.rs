@@ -759,9 +759,10 @@ impl Position for Giveaway {
     }
 
     fn capture_moves(&self, moves: &mut MoveList) {
-        self.en_passant_moves(moves);
         let them = self.them();
         gen_non_king(self, them, moves);
+        add_king_promotions(moves);
+        self.en_passant_moves(moves);
         KingTag::gen_moves(self, them, moves);
     }
 
@@ -771,6 +772,7 @@ impl Position for Giveaway {
         if moves.is_empty() {
             // No compulsory captures. Generate everything else.
             gen_non_king(self, !self.board().occupied(), moves);
+            add_king_promotions(moves);
             KingTag::gen_moves(self, !self.board().occupied(), moves);
             self.board().king_of(self.turn()).map(|king| {
                 gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
@@ -1178,6 +1180,24 @@ unsafe fn push_promotions(moves: &mut MoveList, from: Square, to: Square, captur
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
     moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
+}
+
+fn add_king_promotions(moves: &mut MoveList) {
+    let mut king_promotions = MoveList::new();
+
+    for m in &moves[..] {
+        if let Move::Normal { role, from, capture, to, promotion: Some(Role::Queen) } = *m {
+            king_promotions.push(Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion: Some(Role::King),
+            });
+        }
+    }
+
+    moves.extend(king_promotions);
 }
 
 fn has_relevant_ep<P: Position>(pos: &P) -> bool {
