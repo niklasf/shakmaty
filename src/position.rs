@@ -759,15 +759,15 @@ impl Position for Giveaway {
     }
 
     fn capture_moves(&self, moves: &mut MoveList) {
+        self.en_passant_moves(moves); // clears move list
         let them = self.them();
         gen_non_king(self, them, moves);
         add_king_promotions(moves);
-        self.en_passant_moves(moves);
         KingTag::gen_moves(self, them, moves);
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
-        self.capture_moves(moves);
+        self.capture_moves(moves); // clears move list
 
         if moves.is_empty() {
             // No compulsory captures. Generate everything else.
