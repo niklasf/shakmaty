@@ -39,8 +39,8 @@ Features
 
 * Read and write FENs, SANs and UCIs.
 
-* Supports Standard chess and Chess960. Provides vocabulary to implement
-  other variants.
+* Supports Standard chess, Chess960, Giveaway and Atomic. Provides vocabulary
+  to implement other variants.
 
 * Bitboards and compact fixed shift magic attack tables.
 
