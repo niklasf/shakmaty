@@ -54,6 +54,8 @@ Documentation
 Changelog
 ---------
 
+* 0.6.6
+  - Fix missing king promotions in Giveaway.
 * 0.6.5
   - Validate color of missing king in atomic chess.
   - Clear move buffers before generating variant moves.
