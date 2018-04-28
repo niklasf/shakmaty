@@ -69,6 +69,7 @@ bitflags! {
         const MAPPED = 2;
         const WIN_PLIES = 4;
         const LOSS_PLIES = 8;
+        const WIDE_DTZ = 16;
         const SINGLE_VALUE = 128;
     }
 }
@@ -568,8 +569,18 @@ impl DtzMap {
         DtzMap { ptr, idx: [0; 4] }
     }
 
-    fn ptr(&self, wdl: Wdl) -> u64 {
-        self.ptr + u64::from(self.idx[match wdl {
+    fn u8_ptr(&self, wdl: Wdl, res: u16) -> u64 {
+        self.ptr + u64::from(res) + u64::from(self.idx[match wdl {
+            Wdl::Loss => 1,
+            Wdl::BlessedLoss => 3,
+            Wdl::Draw => 0,
+            Wdl::CursedWin => 2,
+            Wdl::Win => 0,
+        }])
+    }
+
+    fn u16_ptr(&self, wdl: Wdl, res: u16) -> u64 {
+        self.ptr + 2 * u64::from(res) + 2 * u64::from(self.idx[match wdl {
             Wdl::Loss => 1,
             Wdl::BlessedLoss => 3,
             Wdl::Draw => 0,
@@ -857,9 +868,16 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 if files[f].sides[0].flags.contains(Flag::MAPPED) {
                     let mut dtz_map = DtzMap::new(map);
 
-                    for i in 0..4 {
-                        dtz_map.idx[i] = (ptr - map + 1) as u16;
-                        ptr += u64::from(raf.read_u8(ptr)?) + 1;
+                    if files[f].sides[0].flags.contains(Flag::WIDE_DTZ) {
+                        for i in 0..4 {
+                            dtz_map.idx[i] = ((ptr - map + 2) / 2) as u16;
+                            ptr += u64::from(raf.read_u16_le(ptr)?) * 2 + 2;
+                        }
+                    } else {
+                        for i in 0..4 {
+                            dtz_map.idx[i] = (ptr - map + 1) as u16;
+                            ptr += u64::from(raf.read_u8(ptr)?) + 1;
+                        }
                     }
 
                     files[f].sides[0].dtz_map = Some(dtz_map);
@@ -974,7 +992,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         let w = d.btree + 3 * u64::from(sym);
-        self.raf.read_u8(w).map(u16::from)
+        match T::METRIC {
+            Metric::Wdl => self.raf.read_u8(w).map(u16::from),
+            Metric::Dtz => self.raf.read_u16_le(w).map(|res| res & 0xfff),
+        }
     }
 
     fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
@@ -1241,7 +1262,11 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let res = self.decompress_pairs(side, idx)?;
 
         let res = i32::from(if let Some(ref map) = side.dtz_map {
-            u16::from(self.raf.read_u8(map.ptr(wdl) + u64::from(res))?)
+            if side.flags.contains(Flag::WIDE_DTZ) {
+                self.raf.read_u16_le(map.u16_ptr(wdl, res))?
+            } else {
+                u16::from(self.raf.read_u8(map.u8_ptr(wdl, res))?)
+            }
         } else {
             res
         });
