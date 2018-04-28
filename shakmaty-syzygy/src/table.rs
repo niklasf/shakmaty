@@ -887,7 +887,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             for s in 0..num_sides {
                 ptr = (ptr + 0x3f) & !0x3f; // Check 64 byte alignment
                 files[f].sides[s].data = ptr;
-                ptr += u64::from(files[f].sides[s].blocks_num) * u64::from(files[f].sides[s].block_size);
+                ptr = u!(ptr.checked_add(u64::from(files[f].sides[s].blocks_num) * u64::from(files[f].sides[s].block_size)));
             }
         }
 
