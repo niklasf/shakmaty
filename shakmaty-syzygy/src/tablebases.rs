@@ -30,6 +30,7 @@ use material::Material;
 use table::{DtzTag, Table, WdlTag};
 use types::{Dtz, Syzygy, Wdl, MAX_PIECES};
 
+/// Additional probe information from the brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {
     /// Probe successful.
@@ -62,7 +63,7 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
         }
     }
 
-    /// Scan a directory for relevant tables.
+    /// Add all relevant tables from a directory.
     ///
     /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
     /// actually opened. This happens lazily when probing.

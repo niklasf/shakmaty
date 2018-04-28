@@ -55,6 +55,7 @@ impl From<io::Error> for SyzygyError {
     }
 }
 
+/// Return a `CorruptedTable` error.
 macro_rules! throw {
     () => {
         return Err(SyzygyError::CorruptedTable {
@@ -64,6 +65,7 @@ macro_rules! throw {
     }
 }
 
+/// Unwrap an `Option` or return a `CorruptedTable` error.
 macro_rules! u {
     ($e:expr) => {
         match $e {
@@ -73,6 +75,7 @@ macro_rules! u {
     }
 }
 
+/// Ensure that a condition holds. Otherwise return a `CorruptedTable` error.
 macro_rules! ensure {
     ($cond:expr) => {
         if !$cond {

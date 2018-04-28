@@ -116,6 +116,7 @@ pub enum Wdl {
 }
 
 impl Wdl {
+    /// Converts `outcome` to a `Wdl` from the given point of view.
     pub fn from_outcome(outcome: &Outcome, pov: Color) -> Wdl {
         match *outcome {
             Outcome::Draw => Wdl::Draw,
@@ -124,6 +125,12 @@ impl Wdl {
         }
     }
 
+    /// Converts `dtz` to a `Wdl`.
+    ///
+    /// Typically the result would be ambiguous for absolute DTZ values 100.
+    /// This conversion assumes that such values were given immediately after
+    /// a capture or pawn move, in which case the outcome is an unconditional
+    /// win or loss.
     pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
         match dtz.0 {
             n if -100 <= n && n <= -1 => Wdl::Loss,
@@ -235,6 +242,7 @@ impl<'de> ::serde::Deserialize<'de> for Wdl {
 pub struct Dtz(pub i32);
 
 impl Dtz {
+    /// Converts `wdl` to a DTZ, given that the best move is zeroing.
     pub fn before_zeroing(wdl: Wdl) -> Dtz {
         match wdl {
             Wdl::Loss => Dtz(-1),
@@ -245,6 +253,7 @@ impl Dtz {
         }
     }
 
+    /// Increases the absolute value by `plies`.
     pub fn add_plies(&self, plies: i32) -> Dtz {
         Dtz(self.0.signum() * (self.0.abs() + plies))
     }
