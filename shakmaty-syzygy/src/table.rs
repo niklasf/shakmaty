@@ -908,25 +908,26 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             return Ok(d.min_symlen);
         }
 
-        let k = idx / u64::from(d.span);
+        let main_idx = idx / u64::from(d.span);
+        ensure!(main_idx <= u64::from(u32::max_value()));
 
-        let mut block = u64::from(self.raf.read_u32_le(d.sparse_index + 6 * k)?);
-        let mut offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * k + 4)?);
+        let mut block = self.raf.read_u32_le(d.sparse_index + 6 * main_idx)?;
+        let offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * main_idx + 4)?);
 
-        let diff = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
-        offset += diff;
+        let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
+        lit_idx += offset;
 
-        while offset < 0 {
-            block -= 1;
-            offset += i64::from(self.raf.read_u16_le(d.block_lengths + block * 2)?) + 1;
+        while lit_idx < 0 {
+            block = u!(block.checked_sub(1));
+            lit_idx += i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
         }
 
-        while offset > i64::from(self.raf.read_u16_le(d.block_lengths + block * 2)?) {
-            offset -= i64::from(self.raf.read_u16_le(d.block_lengths + block * 2)?) + 1;
-            block += 1;
+        while lit_idx > i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) {
+            lit_idx -= i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
+            block = u!(block.checked_add(1));
         }
 
-        let mut ptr = d.data + block * u64::from(d.block_size);
+        let mut ptr = u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size)));
 
         let mut buf = self.raf.read_u64_be(ptr)?;
         ptr += 8;
@@ -944,11 +945,11 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             sym = ((buf - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
             sym += self.raf.read_u16_le(d.lowest_sym + 2 * len as u64)?;
 
-            if offset < i64::from(*u!(d.symlen.get(sym as usize))) + 1 {
+            if lit_idx < i64::from(*u!(d.symlen.get(sym as usize))) + 1 {
                 break;
             }
 
-            offset -= i64::from(*u!(d.symlen.get(sym as usize))) + 1;
+            lit_idx -= i64::from(*u!(d.symlen.get(sym as usize))) + 1;
             len += usize::from(d.min_symlen);
             buf <<= len;
             buf_size -= len;
@@ -964,10 +965,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         while *u!(d.symlen.get(sym as usize)) != 0 {
             let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
 
-            if offset < i64::from(*u!(d.symlen.get(left as usize))) + 1 {
+            if lit_idx < i64::from(*u!(d.symlen.get(left as usize))) + 1 {
                 sym = left;
             } else {
-                offset -= i64::from(*u!(d.symlen.get(left as usize))) + 1;
+                lit_idx -= i64::from(*u!(d.symlen.get(left as usize))) + 1;
                 sym = right;
             }
         }
