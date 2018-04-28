@@ -113,6 +113,9 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
 
     /// Probe tables for the [`Wdl`](enum.Wdl.html) value of a position.
     ///
+    /// This indicates if the position is winning, lost or drawn with
+    /// or without the 50-move rule.
+    ///
     /// # Errors
     ///
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
@@ -293,6 +296,9 @@ impl<S: Position + Clone + Syzygy> Tablebases<S> {
     }
 
     /// Probe tables for the [`Dtz`](struct.Dtz.html) value of a position.
+    ///
+    /// Min-maxing the DTZ of the available moves guarantees achieving the
+    /// optimal outcome under the 50-move rule.
     ///
     /// # Errors
     ///

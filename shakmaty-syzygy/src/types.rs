@@ -216,10 +216,13 @@ impl<'de> ::serde::Deserialize<'de> for Wdl {
 
 /// Distance to zeroing of the half-move clock.
 ///
+/// Zeroing the half-move clock while keeping the game theoretical result in
+/// hand guarantees making progress.
+///
 /// Can be off by one: `Dtz(-n)` can mean a loss in `n + 1` plies and `Dtz(n)`
 /// can mean a win in `n + 1` plies. This is guaranteed not to happen for
-/// positions exactly on the edge of the 50-move rule, so that this never
-/// impacts results of practical play.
+/// positions exactly on the edge of the 50-move rule, so that (with some care)
+/// this never impacts results of practical play.
 ///
 /// | DTZ | WDL | |
 /// | --- | --- | --- |
