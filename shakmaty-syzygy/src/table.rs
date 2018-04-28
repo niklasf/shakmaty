@@ -29,8 +29,9 @@ use positioned_io::ReadAt;
 
 use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 
+use errors::{SyzygyError, SyzygyResult};
 use material::Material;
-use types::{Dtz, Pieces, Syzygy, SyzygyError, SyzygyResult, Wdl, MAX_PIECES};
+use types::{Dtz, Pieces, Syzygy, Wdl, MAX_PIECES};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Metric {

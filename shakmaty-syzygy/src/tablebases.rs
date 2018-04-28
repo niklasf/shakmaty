@@ -25,9 +25,10 @@ use fxhash::FxHashMap;
 
 use shakmaty::{MoveList, Position, Role};
 
+use errors::{SyzygyError, SyzygyResult};
 use material::Material;
 use table::{DtzTag, Table, WdlTag};
-use types::{Dtz, Syzygy, SyzygyError, SyzygyResult, Wdl, MAX_PIECES};
+use types::{Dtz, Syzygy, Wdl, MAX_PIECES};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {

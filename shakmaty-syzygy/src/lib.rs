@@ -79,13 +79,15 @@ extern crate static_assertions;
 extern crate serde;
 
 #[macro_use]
-mod types;
+mod errors;
 mod material;
 mod table;
 mod tablebases;
+mod types;
 
+pub use errors::SyzygyError;
 pub use tablebases::Tablebases;
-pub use types::{Dtz, Syzygy, SyzygyError, Wdl};
+pub use types::{Dtz, Syzygy, Wdl};
 
 use std::mem;
 
