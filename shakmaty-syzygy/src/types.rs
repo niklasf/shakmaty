@@ -274,7 +274,7 @@ macro_rules! dtz_from_impl {
     }
 }
 
-dtz_from_impl! { u8 i8 i16 i32 }
+dtz_from_impl! { u8 i8 u16 i16 i32 }
 
 impl Neg for Dtz {
     type Output = Dtz;
