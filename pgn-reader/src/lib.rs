@@ -300,13 +300,6 @@ pub trait Visitor<'pgn> {
     fn end_game(&mut self, game: &'pgn [u8]) -> Self::Result;
 }
 
-fn is_space(b: u8) -> bool {
-    match b {
-        b' ' | b'\t' | b'\n' | b'\r' => true,
-        _ => false
-    }
-}
-
 fn split_after_pgn_space(pgn: &[u8], mut pos: usize) -> (&[u8], &[u8]) {
     while pos < pgn.len() {
         match pgn[pos] {
@@ -354,6 +347,10 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Read the next game, returning the result from the visitor, or `None`
     /// if there was no further game.
     pub fn read_game(&mut self) -> Option<V::Result> {
+        if self.pgn.is_empty() {
+            return None;
+        }
+
         // Scan game.
         self.visitor.begin_game();
         self.visitor.begin_headers();
@@ -369,13 +366,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
 
         let result = self.visitor.end_game(head);
         self.pgn = tail;
-
-        // Check for any content.
-        if head.iter().all(|c| is_space(*c)) {
-            None
-        } else {
-            Some(result)
-        }
+        Some(result)
     }
 
     /// Skip the next game without calling methods of the visitor.
@@ -699,4 +690,36 @@ mod tests {
     use super::*;
 
     struct _AssertObjectSafe<'pgn, R>(Box<Visitor<'pgn, Result=R>>);
+
+    struct GameCounter {
+        count: usize,
+    }
+
+    impl Default for GameCounter {
+        fn default() -> GameCounter {
+            GameCounter { count: 0 }
+        }
+    }
+
+    impl<'pgn> Visitor<'pgn> for GameCounter {
+        type Result = ();
+
+        fn end_game(&mut self, _pgn: &'pgn [u8]) {
+            self.count += 1;
+        }
+    }
+
+    #[test]
+    fn test_empty_game() {
+        let mut counter = GameCounter::default();
+        Reader::new(&mut counter, b"  ").read_all();
+        assert_eq!(counter.count, 0);
+    }
+
+    #[test]
+    fn test_trailing_space() {
+        let mut counter = GameCounter::default();
+        Reader::new(&mut counter, b"1. e4 1-0\n\n\n\n\n  \n").read_all();
+        assert_eq!(counter.count, 1);
+    }
 }
