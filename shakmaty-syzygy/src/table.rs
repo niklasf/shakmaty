@@ -903,9 +903,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         })
     }
 
-    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u8> {
+    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u16> {
         if d.flags.contains(Flag::SINGLE_VALUE) {
-            return Ok(d.min_symlen);
+            return Ok(u16::from(d.min_symlen));
         }
 
         let main_idx = idx / u64::from(d.span);
@@ -973,7 +973,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        Ok(self.raf.read_u8(d.btree + 3 * u64::from(sym))?)
+        let w = d.btree + 3 * u64::from(sym);
+        self.raf.read_u8(w).map(u16::from)
     }
 
     fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
@@ -1239,8 +1240,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let res = self.decompress_pairs(side, idx)?;
 
-        let res = i16::from(if let Some(ref map) = side.dtz_map {
-            self.raf.read_u8(map.ptr(wdl) + u64::from(res))?
+        let res = i32::from(if let Some(ref map) = side.dtz_map {
+            u16::from(self.raf.read_u8(map.ptr(wdl) + u64::from(res))?)
         } else {
             res
         });

@@ -232,7 +232,7 @@ impl<'de> ::serde::Deserialize<'de> for Wdl {
 /// | `100 < n` | Cursed win | Win, but draw under the 50-move rule. A zeroing move can be forced in `n` or `n - 100` plies (if a later phase is responsible for the curse). |
 /// | `1 <= n <= 100` | Win | Unconditional win (assuming the 50-move counter is zero). Zeroing move can be forced in `n` plies. |
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
-pub struct Dtz(pub i16);
+pub struct Dtz(pub i32);
 
 impl Dtz {
     pub fn before_zeroing(wdl: Wdl) -> Dtz {
@@ -245,7 +245,7 @@ impl Dtz {
         }
     }
 
-    pub fn add_plies(&self, plies: i16) -> Dtz {
+    pub fn add_plies(&self, plies: i32) -> Dtz {
         Dtz(self.0.signum() * (self.0.abs() + plies))
     }
 }
@@ -261,20 +261,20 @@ macro_rules! from_dtz_impl {
     }
 }
 
-from_dtz_impl! { i16 i32 i64 }
+from_dtz_impl! { i32 i64 }
 
 macro_rules! dtz_from_impl {
     ($($t:ty)+) => {
         $(impl From<$t> for Dtz {
             #[inline]
             fn from(dtz: $t) -> Dtz {
-                Dtz(i16::from(dtz))
+                Dtz(i32::from(dtz))
             }
         })+
     }
 }
 
-dtz_from_impl! { u8 i8 i16 }
+dtz_from_impl! { u8 i8 i16 i32 }
 
 impl Neg for Dtz {
     type Output = Dtz;
@@ -323,7 +323,7 @@ impl ::serde::Serialize for Dtz {
     where
         S: ::serde::Serializer,
     {
-        serializer.serialize_i16(i16::from(*self))
+        serializer.serialize_i32(i32::from(*self))
     }
 }
 
@@ -339,15 +339,15 @@ impl<'de> ::serde::Deserialize<'de> for Dtz {
             type Value = Dtz;
 
             fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                formatter.write_str("dtz value (i16)")
+                formatter.write_str("dtz value (i32)")
             }
 
             fn visit_i64<E>(self, value: i64) -> Result<Dtz, E>
             where
                 E: ::serde::de::Error,
             {
-                if i64::from(i16::min_value()) <= value && value <= i64::from(i16::max_value()) {
-                    Ok(Dtz(value as i16))
+                if i64::from(i32::min_value()) <= value && value <= i64::from(i32::max_value()) {
+                    Ok(Dtz(value as i32))
                 } else {
                     Err(E::custom(format!("dtz out of range: {}", value)))
                 }
@@ -357,15 +357,15 @@ impl<'de> ::serde::Deserialize<'de> for Dtz {
             where
                 E: ::serde::de::Error,
             {
-                if value <= i16::max_value() as u64 {
-                    Ok(Dtz(value as i16))
+                if value <= i32::max_value() as u64 {
+                    Ok(Dtz(value as i32))
                 } else {
                     Err(E::custom(format!("dtz out of range: {}", value)))
                 }
             }
         }
 
-        deserializer.deserialize_i16(Visitor)
+        deserializer.deserialize_i32(Visitor)
     }
 }
 

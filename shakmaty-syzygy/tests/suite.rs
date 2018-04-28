@@ -26,7 +26,7 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
             .get(1).expect("wdl field")
             .parse().expect("valid wdl");
 
-        let expected_dtz: i16 = record
+        let expected_dtz: i32 = record
             .get(2).expect("dtz field")
             .parse().expect("valid dtz");
 
@@ -38,7 +38,7 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
         assert_eq!(i8::from(wdl), expected_wdl);
 
         let dtz = tables.probe_dtz(&pos).expect("probe dtz");
-        assert_eq!(i16::from(dtz), expected_dtz);
+        assert_eq!(i32::from(dtz), expected_dtz);
     }
 }
 
