@@ -700,7 +700,7 @@ impl Default for Giveaway {
         Giveaway {
             board: Board::default(),
             turn: White,
-            castling: Castling::default(),
+            castling: Castling::empty(),
             ep_square: None,
             halfmove_clock: 0,
             fullmoves: 1,
