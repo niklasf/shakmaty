@@ -38,6 +38,10 @@ Documentation
 Changelog
 ---------
 
+* 0.2.2
+  - Implement support for wide DTZ values. These are required for some long
+    7 piece endgames.
+  - Fix panic on corrupted table.
 * 0.2.1
   - Should not panic on corrupted tables (even in debug mode).
   - Switch from fnv to fxhash.
