@@ -44,7 +44,7 @@
 //!
 //! let dtz = tables.probe_dtz(&pos)?;
 //! assert_eq!(dtz, Dtz(-59));
-//!
+//! #
 //! #     Ok(())
 //! # }
 //! #
