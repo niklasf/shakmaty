@@ -806,15 +806,21 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let raf = RandomAccessFile::open(path)?;
         let material = material.clone();
 
-        // TODO: Check magic.
-        /* let (magic, pawnless_magic) = match T::METRIC {
-            Metric::Wdl => (&S::WDL_MAGIC, &S::PAWNLESS_WDL_MAGIC),
-            Metric::Dtz => (&S::DTZ_MAGIC, &S::PAWNLESS_DTZ_MAGIC),
+        // Check magic.
+        let (magic, pawnless_magic) = match T::METRIC {
+            Metric::Wdl => (&S::TBW.magic, S::PAWNLESS_TBW.map(|t| t.magic)),
+            Metric::Dtz => (&S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
-        if !raf.starts_with_magic(magic)? && (material.has_pawns() || !raf.starts_with_magic(pawnless_magic)?) {
+        let magic_ok = match pawnless_magic {
+            _ if raf.starts_with_magic(magic)? => true,
+            Some(pawnless_magic) => raf.starts_with_magic(&pawnless_magic)?,
+            None => false,
+        };
+
+        if !magic_ok {
             return Err(SyzygyError::Magic);
-        } */
+        }
 
         // Read layout flags.
         let layout = Layout::from_bits_truncate(raf.read_u8(4)?);
