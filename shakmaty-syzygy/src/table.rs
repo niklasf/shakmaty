@@ -800,6 +800,8 @@ pub struct Table<T: TableTag, P: Position + Syzygy> {
 }
 
 impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
+    /// Open a table, parse the header, the headers of the subtables and
+    /// prepare meta data required for decompression.
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
         let raf = RandomAccessFile::open(path)?;
         let material = material.clone();
@@ -937,11 +939,15 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         })
     }
 
+    /// Retrieves the value stored for `idx` by decompressing Huffman coded
+    /// symbols stored in the corresponding block of the table.
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u16> {
+        // Special case: The table stores only a single value.
         if d.flags.contains(Flag::SINGLE_VALUE) {
             return Ok(u16::from(d.min_symlen));
         }
 
+        // Use the sparse index to jump very close to the correct block.
         let main_idx = idx / u64::from(d.span);
         ensure!(main_idx <= u64::from(u32::max_value()));
 
@@ -951,16 +957,17 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         lit_idx += offset;
 
+        // Now move forwards/backwards to find the correct block.
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
             lit_idx += i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
         }
-
         while lit_idx > i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) {
             lit_idx -= i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
             block = u!(block.checked_add(1));
         }
 
+        // Find sym, the Huffman symbol that encodes the value for idx.
         let mut ptr = u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size)));
 
         let mut buf = self.raf.read_u64_be(ptr)?;
@@ -996,6 +1003,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
         }
 
+        // Decompress Huffman symbol.
         while *u!(d.symlen.get(sym as usize)) != 0 {
             let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
 
@@ -1014,6 +1022,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
     }
 
+    /// Given a position, determine the unique (modulo symmetries) index into
+    /// the corresponding subtable.
     fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
         let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
@@ -1027,6 +1037,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
         let mut used = Bitboard(0);
 
+        // For pawns there are subtables for each file (a, b, c, d) the
+        // leading pawn can be placed on.
         let file = if material.has_pawns() {
             let reference_pawn = self.files[0].sides[0].groups.pieces[0];
             assert_eq!(reference_pawn.role, Role::Pawn);
@@ -1051,13 +1063,19 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             0
         };
 
+        // WDL tables have subtables for each side to move.
         let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
 
+        // DTZ tables store only one side to move. It is possible that we have
+        // to check the other side (by doing a brief alpha-beta search).
         if T::METRIC == Metric::Dtz && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
-            // Check other side.
             return Ok(None);
         }
 
+        // The subtable has been determined.
+        //
+        // So far squares has been initialized with the leading pawns.
+        // Also add the other pieces.
         let lead_pawns_count = squares.len();
 
         for piece in side.groups.pieces.iter().skip(squares.len()) {
@@ -1069,6 +1087,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         assert!(squares.len() >= 2);
 
+        // Now we can compue the index according to the piece positions.
         if squares[0].file() >= 4 {
             for square in &mut squares {
                 *square = square.flip_horizontal();
@@ -1227,6 +1246,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         idx *= side.groups.factors[0];
 
+        // Encode remaining pawns.
         let mut remaining_pawns = material.white.has_pawns() && material.black.has_pawns();
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
