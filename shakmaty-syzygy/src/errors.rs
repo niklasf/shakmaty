@@ -26,10 +26,12 @@ pub type SyzygyResult<T> = Result<T, SyzygyError>;
 /// Error when probing a table.
 #[derive(Debug, Fail)]
 pub enum SyzygyError {
-    /// Position has castling rights.
+    /// Position has castling rights, but Syzygy tables do not contain
+    /// positions with castling rights.
     #[fail(display = "syzygy tables do not contain positions with castling rights")]
     Castling,
-    /// Position has too many pieces.
+    /// Position has too many pieces. Syzygy tables only support up to
+    /// 7 pieces.
     #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
     TooManyPieces,
     /// Missing table.
@@ -38,8 +40,8 @@ pub enum SyzygyError {
     /// I/O error.
     #[fail(display = "i/o error when reading a table: {}", error)]
     Read { error: io::Error },
-    /// Unexpected magic header bytes.
-    #[fail(display = "invalid magic bytes")]
+    /// Table file has unexpected magic header bytes.
+    #[fail(display = "table file has invalid magic bytes")]
     Magic,
     /// Corrupted table.
     #[fail(display = "corrupted table (detected in {} l. {})", file, line)]
