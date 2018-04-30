@@ -30,34 +30,34 @@ use material::Material;
 use table::{DtzTag, Table, WdlTag};
 use types::{Dtz, Syzygy, Wdl, MAX_PIECES};
 
-/// Additional probe information from the brief alpha-beta search.
+/// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum ProbeState {
-    /// Probe successful.
+    /// Normal probe.
     Normal,
     /// Best move is zeroing.
     ZeroingBestMove,
-    /// Threatening to force a capture.
+    /// Threatening to force a capture (in antichess variants).
     Threat,
 }
 
 /// A collection of tables.
 #[derive(Debug)]
-pub struct Tablebases<S: Position + Clone + Syzygy> {
+pub struct Tablebase<S: Position + Clone + Syzygy> {
     wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S>>)>,
     dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S>>)>,
 }
 
-impl<S: Position + Clone + Syzygy> Default for Tablebases<S> {
-    fn default() -> Tablebases<S> {
-        Tablebases::new()
+impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
+    fn default() -> Tablebase<S> {
+        Tablebase::new()
     }
 }
 
-impl<S: Position + Clone + Syzygy> Tablebases<S> {
+impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
-    pub fn new() -> Tablebases<S> {
-        Tablebases {
+    pub fn new() -> Tablebase<S> {
+        Tablebase {
             wdl: FxHashMap::default(),
             dtz: FxHashMap::default(),
         }
@@ -474,7 +474,7 @@ mod tests {
         fn assert_send<T: Send>(_: T) { }
         fn assert_sync<T: Sync>(_: T) { }
 
-        assert_send(Tablebases::<Chess>::new());
-        assert_sync(Tablebases::<Chess>::new());
+        assert_send(Tablebase::<Chess>::new());
+        assert_sync(Tablebase::<Chess>::new());
     }
 }

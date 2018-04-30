@@ -29,10 +29,10 @@
 //! # use failure::Error;
 //! use shakmaty::Chess;
 //! use shakmaty::fen::Fen;
-//! use shakmaty_syzygy::{Tablebases, Wdl, Dtz, Syzygy};
+//! use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
 //!
 //! # fn try_main() -> Result<(), Error> {
-//! let mut tables = Tablebases::new();
+//! let mut tables = Tablebase::new();
 //! tables.add_directory("tables/regular")?;
 //!
 //! let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
@@ -82,11 +82,11 @@ extern crate serde;
 mod errors;
 mod material;
 mod table;
-mod tablebases;
+mod tablebase;
 mod types;
 
 pub use errors::SyzygyError;
-pub use tablebases::Tablebases;
+pub use tablebase::Tablebase;
 pub use types::{Dtz, Syzygy, Wdl};
 
 use std::mem;
