@@ -294,11 +294,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         // Probe table.
         let key = Material::from_board(pos.board());
-        if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flip())) {
+        if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
             let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_wdl_table(pos)
         } else {
-            Err(SyzygyError::MissingTable { material: key.normalize() })
+            Err(SyzygyError::MissingTable { material: key.normalized() })
         }
     }
 
@@ -460,11 +460,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(pos.board());
-        if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flip())) {
+        if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
             let table = table.get_or_try_init(|| Table::open(path, &key))?;
             table.probe_dtz_table(pos, wdl)
         } else {
-            Err(SyzygyError::MissingTable { material: key.normalize() })
+            Err(SyzygyError::MissingTable { material: key.normalized() })
         }
     }
 }

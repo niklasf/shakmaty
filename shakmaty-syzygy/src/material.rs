@@ -18,6 +18,7 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
 use std::iter::FromIterator;
 use std::str::FromStr;
+use std::mem;
 
 use shakmaty::{Board, Color, Piece, Role};
 
@@ -199,19 +200,26 @@ impl Material {
         }
     }
 
-    pub fn flip(&self) -> Material {
-        Material {
-            white: self.black.clone(),
-            black: self.white.clone(),
+    pub fn flip(&mut self) {
+        mem::swap(&mut self.white, &mut self.black);
+    }
+
+    pub fn flipped(&self) -> Material {
+        let mut material = self.clone();
+        material.flip();
+        material
+    }
+
+    pub fn normalize(&mut self) {
+        if self.white < self.black {
+            self.flip();
         }
     }
 
-    pub fn normalize(&self) -> Material {
-        if self.white > self.black {
-            self.clone()
-        } else {
-            self.flip()
-        }
+    pub fn normalized(&self) -> Material {
+        let mut material = self.clone();
+        material.normalize();
+        material
     }
 
     pub fn is_symmetric(&self) -> bool {

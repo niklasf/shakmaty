@@ -829,7 +829,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             for side in [Color::White, Color::Black].iter().take(num_sides) {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
-                ensure!(key == material || key.flip() == material);
+                ensure!(key == material || key.flipped() == material);
 
                 let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
                 sides.push(group);
@@ -1002,7 +1002,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
         let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
-        assert!(key == material || key == material.flip());
+        assert!(key == material || key == material.flipped());
 
         let symmetric_btm = material.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != material;
