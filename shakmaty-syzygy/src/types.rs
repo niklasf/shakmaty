@@ -243,6 +243,14 @@ pub struct Dtz(pub i32);
 
 impl Dtz {
     /// Converts `wdl` to a DTZ, given that the best move is zeroing.
+    ///
+    /// | WDL | DTZ |
+    /// | --- | --- |
+    /// | Loss | -1 |
+    /// | Blessed loss | -101 |
+    /// | Draw | 0 |
+    /// | Cursed win | 101 |
+    /// | Win | 1 |
     pub fn before_zeroing(wdl: Wdl) -> Dtz {
         match wdl {
             Wdl::Loss => Dtz(-1),
