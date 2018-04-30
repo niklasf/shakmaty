@@ -58,19 +58,32 @@ impl TableTag for DtzTag {
 }
 
 bitflags! {
+    /// Table layout flags.
     struct Layout: u8 {
+        /// Two sided table for non-symmetrical material configuration.
         const SPLIT = 1;
+        /// Table with pawns. Has subtables for each leading pawn file.
         const HAS_PAWNS = 2;
     }
 }
 
 bitflags! {
+    /// Subtable format flags.
     struct Flag: u8 {
+        /// DTZ table stores black to move.
         const STM = 1;
+        /// Use `DtzMap`.
         const MAPPED = 2;
+        /// DTZ table has winning positions on the edge of the 50-move rule and
+        /// therefore stores exact plies rather than just full moves.
         const WIN_PLIES = 4;
+        /// DTZ table has losing positions on the edge of the 50-move rule and
+        /// therefore stores exact plies rather than just full moves.
         const LOSS_PLIES = 8;
+        /// DTZ table contains very long endgames, so that values require 16
+        /// bits rather than just 8.
         const WIDE_DTZ = 16;
+        /// Table stores only a single value.
         const SINGLE_VALUE = 128;
     }
 }
@@ -211,6 +224,7 @@ const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,  Z0,  Z0,  Z0,  Z0, 461,
 ]];
 
+/// Encoding of a pair of identical pieces.
 const PP_IDX: [[u64; 64]; 10] = [[
       0,  Z0,   1,   2,   3,   4,   5,   6,
       7,   8,   9,  10,  11,  12,  13,  14,
@@ -303,7 +317,7 @@ const PP_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,  Z0,  Z0,  Z0,  Z0,  Z0
 ]];
 
-/// a5, a6, a7, b5, b6, c5.
+/// The a7-a5-c5 triangle.
 const TEST45: Bitboard = Bitboard(0x1_0307_0000_0000);
 
 lazy_static! {
