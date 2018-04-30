@@ -114,8 +114,9 @@ const MULT_TWIST: [u64; 64] = [
     14, 60, 52, 44, 43, 51, 59, 13,
 ];
 
-/// Unused.
-const Z0: u64 = 0;
+/// Unused entry. Initialized to `-1`, so that most uses will cause noticable
+/// overflow in debug mode.
+const Z0: u64 = u64::max_value();
 
 /// Encoding of all 461 configurations of two not-connected kings.
 const KK_IDX: [[u64; 64]; 10] = [[
