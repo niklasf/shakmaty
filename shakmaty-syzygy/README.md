@@ -38,6 +38,9 @@ Documentation
 Changelog
 ---------
 
+* 0.3.0
+  - Rename `Tablebases` to `Tablebase`.
+  - Group file extension and magic as `TableType` in `Syzygy` trait.
 * 0.2.2
   - Implement support for wide DTZ values. These are required for some long
     7 piece endgames.
