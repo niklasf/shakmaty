@@ -37,7 +37,8 @@ enum ProbeState {
     Normal,
     /// Best move is zeroing.
     ZeroingBestMove,
-    /// Threatening to force a capture (in antichess variants).
+    /// Threatening to force a capture (in antichess variants, where captures
+    /// are compulsory).
     Threat,
 }
 
@@ -209,12 +210,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        // Explore compulsory captures in antichess variants.
         if pos.them().count() > 1 {
-            let (v, captures_found) = self.probe_captures(pos, alpha, beta)?;
-            if captures_found {
+            if let Some(v) = self.probe_captures(pos, alpha, beta)? {
                 return Ok((v, ProbeState::ZeroingBestMove));
             }
         } else {
+            // The opponent only has one piece left. If we need to capture it
+            // this immediately ends the game.
             let mut captures = MoveList::new();
             pos.capture_moves(&mut captures);
             if !captures.is_empty() {
@@ -224,6 +227,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         let mut threats_found = false;
 
+        // For 6 piece endgames (or if indicated by the threats flag) also
+        // explore threat moves that will force a capture on following move.
         if threats || pos.board().occupied().count() >= 6 {
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
@@ -232,14 +237,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                     let mut after = pos.clone();
                     after.play_unchecked(&threat);
 
-                    let (v_plus, captures_found) = self.probe_captures(&after, -beta, -alpha)?;
-                    let v = -v_plus;
-
-                    if captures_found && v > alpha {
-                        threats_found = true;
-                        alpha = v;
-                        if alpha >= beta {
-                            return Ok((v, ProbeState::Threat));
+                    if let Some(v_plus) = self.probe_captures(&after, -beta, -alpha)? {
+                        let v = -v_plus;
+                        if v > alpha {
+                            threats_found = true;
+                            alpha = v;
+                            if alpha >= beta {
+                                return Ok((v, ProbeState::Threat));
+                            }
                         }
                     }
                 }
@@ -254,12 +259,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    fn probe_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<(Wdl, bool)> {
+    fn probe_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<Option<Wdl>> {
+        // Explore capture moves in antichess variants. If captures exists they
+        // are also the only moves, because captures are compulsory.
         let mut captures = MoveList::new();
         pos.capture_moves(&mut captures);
-        let captures_found = !captures.is_empty();
 
-        for m in captures {
+        for m in captures.iter() {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
@@ -272,7 +278,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             }
         }
 
-        Ok((alpha, captures_found))
+        Ok(if captures.is_empty() { None } else { Some(alpha) })
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
