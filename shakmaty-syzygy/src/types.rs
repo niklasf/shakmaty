@@ -21,25 +21,26 @@ use arrayvec::ArrayVec;
 use shakmaty::variants::{Atomic, Chess, Giveaway};
 use shakmaty::{Color, Outcome, Piece};
 
+/// File extension and magic header bytes of Syzygy tables.
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct TableType {
+    /// File extension, e.g. `rtbw`.
+    pub ext: &'static str,
+    /// Magic header bytes.
+    pub magic: [u8; 4],
+}
+
 /// A chess variant with Syzygy support.
 pub trait Syzygy {
-    /// Extension of WDL table files, e.g. `rtbw`.
-    const TBW_EXTENSION: &'static str;
-    /// Extension of DTZ table files, e.g. `rtbz`.
-    const TBZ_EXTENSION: &'static str;
-    /// Alternative extension of WDL table files.
-    const PAWNLESS_TBW_EXTENSION: &'static str;
-    /// Alternative extension of DTZ table files.
-    const PAWNLESS_TBZ_EXTENSION: &'static str;
+    /// WDL table type.
+    const TBW: TableType;
+    /// DTZ table type.
+    const TBZ: TableType;
 
-    /// Magic initial bytes of a WDL table.
-    const WDL_MAGIC: [u8; 4];
-    /// Magic initial bytes of a DTZ table.
-    const DTZ_MAGIC: [u8; 4];
-    /// Alternative WDL magic.
-    const PAWNLESS_WDL_MAGIC: [u8; 4];
-    /// Alternative DTZ magic.
-    const PAWNLESS_DTZ_MAGIC: [u8; 4];
+    /// Alternative WDL table type for pawnless endgames.
+    const PAWNLESS_TBW: Option<TableType> = None;
+    /// Alternative DTZ table type for pawnless endgames.
+    const PAWNLESS_TBZ: Option<TableType> = None;
 
     /// Whether both players will have exactly one king unless the game
     /// is over.
@@ -51,15 +52,8 @@ pub trait Syzygy {
 }
 
 impl Syzygy for Chess {
-    const TBW_EXTENSION: &'static str = "rtbw";
-    const TBZ_EXTENSION: &'static str = "rtbz";
-    const PAWNLESS_TBW_EXTENSION: &'static str = "rtbw";
-    const PAWNLESS_TBZ_EXTENSION: &'static str = "rtbz";
-
-    const WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
-    const DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
-    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x71, 0xe8, 0x23, 0x5d];
-    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xd7, 0x66, 0x0c, 0xa5];
+    const TBW: TableType = TableType { ext: "rtbw", magic: [0x71, 0xe8, 0x23, 0x5d] };
+    const TBZ: TableType = TableType { ext: "rtbz", magic: [0xd7, 0x66, 0x0c, 0xa5] };
 
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
@@ -67,15 +61,8 @@ impl Syzygy for Chess {
 }
 
 impl Syzygy for Atomic {
-    const TBW_EXTENSION: &'static str = "atbw";
-    const TBZ_EXTENSION: &'static str = "atbz";
-    const PAWNLESS_TBW_EXTENSION: &'static str = "atbw";
-    const PAWNLESS_TBZ_EXTENSION: &'static str = "atbz";
-
-    const WDL_MAGIC: [u8; 4] = [0x55, 0x8d, 0xa4, 0x49];
-    const DTZ_MAGIC: [u8; 4] = [0x91, 0xa9, 0x5e, 0xeb];
-    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x55, 0x8d, 0xa4, 0x49];
-    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0x91, 0xa9, 0x5e, 0xeb];
+    const TBW: TableType = TableType { ext: "atbw", magic: [0x55, 0x8d, 0xa4, 0x49] };
+    const TBZ: TableType = TableType { ext: "atbz", magic: [0x91, 0xa9, 0x5e, 0xeb] };
 
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = true;
@@ -83,15 +70,11 @@ impl Syzygy for Atomic {
 }
 
 impl Syzygy for Giveaway {
-    const TBW_EXTENSION: &'static str = "gtbw";
-    const TBZ_EXTENSION: &'static str = "gtbz";
-    const PAWNLESS_TBW_EXTENSION: &'static str = "stbw";
-    const PAWNLESS_TBZ_EXTENSION: &'static str = "stbz";
+    const TBW: TableType = TableType { ext: "gtbw", magic: [0xbc, 0x55, 0xbc, 0x21] };
+    const TBZ: TableType = TableType { ext: "gtbz", magic: [0xd6, 0xf5, 0x1b, 0x50] };
 
-    const WDL_MAGIC: [u8; 4] = [0xbc, 0x55, 0xbc, 0x21];
-    const DTZ_MAGIC: [u8; 4] = [0xd6, 0xf5, 0x1b, 0x50];
-    const PAWNLESS_WDL_MAGIC: [u8; 4] = [0x7b, 0xf6, 0x93, 0x15];
-    const PAWNLESS_DTZ_MAGIC: [u8; 4] = [0xe4, 0xcf, 0xe7, 0x23];
+    const PAWNLESS_TBW: Option<TableType> = Some(TableType { ext: "stbw", magic: [0x7b, 0xf6, 0x93, 0x15] });
+    const PAWNLESS_TBZ: Option<TableType> = Some(TableType { ext: "stbz", magic: [0xe4, 0xcf, 0xe7, 0x23] });
 
     const ONE_KING: bool = false;
     const CONNECTED_KINGS: bool = true;

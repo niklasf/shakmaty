@@ -103,9 +103,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 continue;
             }
 
-            if ext == S::TBW_EXTENSION || (!material.has_pawns() && ext == S::PAWNLESS_TBW_EXTENSION) {
+            if ext == S::TBW.ext || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext)) {
                 self.wdl.insert(material, (path.clone(), DoubleCheckedCell::new()));
-            } else if ext == S::TBZ_EXTENSION || (!material.has_pawns() && ext == S::PAWNLESS_TBZ_EXTENSION) {
+            } else if ext == S::TBZ.ext || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext)) {
                 self.dtz.insert(material, (path.clone(), DoubleCheckedCell::new()));
             }
         }

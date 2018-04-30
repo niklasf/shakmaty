@@ -87,7 +87,7 @@ mod types;
 
 pub use errors::SyzygyError;
 pub use tablebase::Tablebase;
-pub use types::{Dtz, Syzygy, Wdl};
+pub use types::{Dtz, Syzygy, TableType, Wdl};
 
 use std::mem;
 
