@@ -54,6 +54,8 @@ Documentation
 Changelog
 ---------
 
+* 0.6.7
+  - Giveaway starting position should have no castling rights.
 * 0.6.6
   - Fix missing king promotions in Giveaway.
 * 0.6.5
