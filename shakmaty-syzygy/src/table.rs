@@ -814,7 +814,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let magic_ok = match pawnless_magic {
             _ if raf.starts_with_magic(magic)? => true,
-            Some(pawnless_magic) => raf.starts_with_magic(&pawnless_magic)?,
+            Some(pawnless_magic) => !material.has_pawns() && raf.starts_with_magic(&pawnless_magic)?,
             None => false,
         };
 
