@@ -167,7 +167,7 @@ macro_rules! from_wdl_impl {
     }
 }
 
-from_wdl_impl! { i8 i16 i32 i64 }
+from_wdl_impl! { i8 i16 i32 i64 isize }
 
 #[cfg(feature = "serde-1")]
 impl ::serde::Serialize for Wdl {
@@ -381,5 +381,5 @@ impl<'de> ::serde::Deserialize<'de> for Dtz {
 /// Syzygy tables are available for up to 7 pieces.
 pub const MAX_PIECES: usize = 7;
 
-/// List of up to 7 pieces.
+/// List of up to `MAX_PIECES` pieces.
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
