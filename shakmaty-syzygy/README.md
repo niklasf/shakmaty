@@ -38,6 +38,8 @@ Documentation
 Changelog
 ---------
 
+* 0.3.1
+  - Work around compiler bug in release mode.
 * 0.3.0
   - Rename `Tablebases` to `Tablebase`.
   - Group file extension and magic as `TableType` in `Syzygy` trait.
