@@ -1667,4 +1667,15 @@ mod tests {
         assert!(moves.iter().all(|m| m.role() == Role::Pawn));
         assert!(moves.iter().all(|m| m.is_promotion()));
     }
+
+    #[test]
+    fn test_insufficient_material() {
+        let fen = "8/3k4/8/8/2N5/8/3K4/8 b - - 0 1";
+        let pos: Chess = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+
+        assert!(pos.is_insufficient_material());
+    }
 }
