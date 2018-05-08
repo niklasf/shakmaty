@@ -94,6 +94,25 @@ impl Board {
         }
     }
 
+    pub fn horde() -> Board {
+        Board {
+            occupied: Bitboard(0xffff_0066_ffff_ffff),
+            occupied_co: [
+                Bitboard(0xffff_0000_0000_0000), // black
+                Bitboard(0x0000_0066_ffff_ffff), // white
+            ],
+            pieces: [
+                Bitboard(0x00ff_0066_ffff_ffff), // pawns
+                Bitboard(0x4200_0000_0000_0000), // knights
+                Bitboard(0x2400_0000_0000_0000), // bishops
+                Bitboard(0x8100_0000_0000_0000), // rooks
+                Bitboard(0x0800_0000_0000_0000), // queens
+                Bitboard(0x1000_0000_0000_0000), // kings
+            ],
+            promoted: Bitboard(0),
+        }
+    }
+
     #[inline]
     pub fn occupied(&self) -> Bitboard { self.occupied }
 
