@@ -56,6 +56,7 @@ bitflags! {
         const BAD_CASTLING_RIGHTS = 16;
         const INVALID_EP_SQUARE = 32;
         const OPPOSITE_CHECK = 64;
+        const VARIANT = 128;
     }
 }
 
@@ -674,9 +675,9 @@ impl Position for Atomic {
     }
 
     fn variant_outcome(&self) -> Option<Outcome> {
-        for color in &[White, Black] {
-            if (self.board().by_color(*color) & self.board().kings()).is_empty() {
-                return Some(Outcome::Decisive { winner: !*color });
+        for &color in &[White, Black] {
+            if (self.board().by_color(color) & self.board().kings()).is_empty() {
+                return Some(Outcome::Decisive { winner: !color });
             }
         }
         None
@@ -897,12 +898,114 @@ impl Position for KingOfTheHill {
     }
 
     fn variant_outcome(&self) -> Option<Outcome> {
-        for color in &[White, Black] {
-            if (self.board().by_color(*color) & self.board().kings() & Bitboard::CENTER).any() {
-                return Some(Outcome::Decisive { winner: *color });
+        for &color in &[White, Black] {
+            if (self.board().by_color(color) & self.board().kings() & Bitboard::CENTER).any() {
+                return Some(Outcome::Decisive { winner: color });
             }
         }
         None
+    }
+}
+
+/// A Three-Check position.
+#[derive(Clone, Debug, Default)]
+pub struct ThreeCheck {
+    chess: Chess,
+    remaining_checks: RemainingChecks,
+}
+
+impl Setup for ThreeCheck {
+    fn board(&self) -> &Board { self.chess.board() }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.chess.turn() }
+    fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
+    fn halfmove_clock(&self) -> u32 { self.chess.halfmove_clock() }
+    fn fullmoves(&self) -> u32 { self.chess.fullmoves }
+}
+
+impl Position for ThreeCheck {
+    fn play_unchecked(&mut self, m: &Move) {
+        let turn = self.chess.turn();
+        self.chess.play_unchecked(m);
+        if self.is_check() {
+            self.remaining_checks.decrement(turn);
+        }
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<ThreeCheck, PositionError> {
+        let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
+        let errors = if remaining_checks.white == 0 && remaining_checks.black == 0 {
+            PositionError::VARIANT
+        } else {
+            PositionError::empty()
+        };
+
+        match Chess::from_setup(setup) {
+            Ok(chess) => errors.into_result(ThreeCheck { chess, remaining_checks }),
+            Err(err) => Err(errors | err)
+        }
+    }
+
+    fn is_chess960(&self) -> bool {
+        self.chess.is_chess960()
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.chess.castling_uncovers_rank_attack(rook, king_to)
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        if self.is_variant_end() {
+            moves.clear();
+        } else {
+            self.chess.legal_moves(moves);
+        }
+    }
+
+    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+        if self.is_variant_end() {
+            moves.clear();
+        } else {
+            self.chess.castling_moves(side, moves);
+        }
+    }
+
+    fn en_passant_moves(&self, moves: &mut MoveList) {
+        if self.is_variant_end() {
+            moves.clear();
+        } else {
+            self.chess.en_passant_moves(moves);
+        }
+    }
+
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        if self.is_variant_end() {
+            moves.clear();
+        } else {
+            self.chess.san_candidates(role, to, moves);
+        }
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        self.board().occupied() == self.board().kings()
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.remaining_checks.white == 0 || self.remaining_checks.black == 0
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.remaining_checks.white == 0 && self.remaining_checks.black == 0 {
+            Some(Outcome::Draw)
+        } else if self.remaining_checks.white == 0 {
+            Some(Outcome::Decisive { winner: White })
+        } else if self.remaining_checks.black == 0 {
+            Some(Outcome::Decisive { winner: Black })
+        } else {
+            None
+        }
     }
 }
 
