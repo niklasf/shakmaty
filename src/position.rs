@@ -1393,7 +1393,7 @@ impl Position for Horde {
             errors |= PositionError::PAWNS_ON_BACKRANK;
         }
 
-        if pos.board().kings().is_empty() {
+        if (pos.board().kings() & !pos.board().promoted()).is_empty() {
             errors |= PositionError::MISSING_KING;
         }
 
