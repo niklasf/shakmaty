@@ -82,6 +82,11 @@ impl Castling {
         }
     }
 
+    pub fn has_color(&self, color: Color) -> bool {
+        let side = self.rook[color as usize];
+        side[0].is_some() || side[1].is_some()
+    }
+
     pub fn default() -> Castling {
         Castling {
             chess960: false,
