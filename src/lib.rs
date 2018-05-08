@@ -117,4 +117,5 @@ pub mod variants {
     pub use position::KingOfTheHill;
     pub use position::ThreeCheck;
     pub use position::Crazyhouse;
+    pub use position::RacingKings;
 }

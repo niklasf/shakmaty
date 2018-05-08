@@ -78,6 +78,22 @@ impl Board {
         }
     }
 
+    pub fn racing_kings() -> Board {
+        Board {
+            occupied: Bitboard(0xffff),
+            occupied_co: [Bitboard(0x0f0f), Bitboard(0xf0f0)],
+            pieces: [
+                Bitboard(0), // pawns
+                Bitboard(0x1818), // knights
+                Bitboard(0x2424), // bishops
+                Bitboard(0x4242), // rooks
+                Bitboard(0x0081), // queens
+                Bitboard(0x8100), // kings
+            ],
+            promoted: Bitboard(0),
+        }
+    }
+
     #[inline]
     pub fn occupied(&self) -> Bitboard { self.occupied }
 

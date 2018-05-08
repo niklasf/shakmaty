@@ -1173,6 +1173,156 @@ impl Position for Crazyhouse {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
+/// A Racing Kings position.
+#[derive(Clone, Debug)]
+pub struct RacingKings {
+    board: Board,
+    turn: Color,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for RacingKings {
+    fn default() -> RacingKings {
+        RacingKings {
+            board: Board::racing_kings(),
+            turn: White,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for RacingKings {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { Bitboard(0) }
+    fn ep_square(&self) -> Option<Square> { None }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for RacingKings {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
+                &mut None, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<RacingKings, PositionError> {
+        let mut errors = PositionError::empty();
+
+        if setup.castling_rights().any() {
+            errors |= PositionError::BAD_CASTLING_RIGHTS;
+        }
+
+        let board = setup.board().clone();
+        if board.pawns().any() {
+            errors |= PositionError::VARIANT;
+        }
+        if setup.ep_square().is_some() {
+            errors |= PositionError::INVALID_EP_SQUARE;
+        }
+
+        let pos = RacingKings {
+            board,
+            turn: setup.turn(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        if pos.is_check() {
+            errors |= PositionError::VARIANT;
+        }
+
+        if pos.turn().is_black() &&
+           (pos.board().white() & pos.board().kings() & Bitboard::rank(7)).any() &&
+           (pos.board().black() & pos.board().kings() & Bitboard::rank(7)).any()
+        {
+            errors |= PositionError::VARIANT;
+        }
+
+        (validate(&pos) | errors).into_result(pos)
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
+        if self.is_variant_end() {
+            return;
+        }
+
+        // Generate all legal moves (no castling, no ep).
+        let target = !self.us();
+        gen_non_king(self, target, moves);
+        let king = self.board().king_of(self.turn()).expect("king in racingkings");
+        gen_safe_king(self, king, target, moves);
+
+        let blockers = slider_blockers(self.board(), self.them(), king);
+        if blockers.any() {
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+        }
+
+        // Do not allow giving check. This could be implemented more
+        // efficiently.
+        moves.swap_retain(|m| {
+            let mut after = self.clone();
+            after.play_unchecked(m);
+            !after.is_check()
+        });
+    }
+
+    fn castles(&self) -> &Castles {
+        &Castles::EMPTY
+    }
+
+    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
+        false
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        false
+    }
+
+    fn is_variant_end(&self) -> bool {
+        let in_goal = self.board().kings() & Bitboard::rank(7);
+        if in_goal.is_empty() {
+            return false;
+        }
+
+        if self.turn().is_white() || (in_goal & self.board().black()).any() {
+            return true;
+        }
+
+        // White has reached the backrank. Check if black can catch up.
+        let black_king = self.board().king_of(Black).expect("king in racingkings");
+        for target in attacks::king_attacks(black_king) & Bitboard::rank(7) {
+            if self.king_attackers(target, White, self.board().occupied()).is_empty() {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.is_variant_end() {
+            let in_goal = self.board().kings() & Bitboard::rank(7);
+            if (in_goal & self.board().white()).any() && (in_goal & self.board().black()).any() {
+                Some(Outcome::Draw)
+            } else if (in_goal & self.board().white()).any() {
+                Some(Outcome::Decisive { winner: White })
+            } else {
+                Some(Outcome::Decisive { winner: Black })
+            }
+        } else {
+            None
+        }
+    }
+}
+
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castles: &mut Castles,
