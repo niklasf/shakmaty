@@ -664,7 +664,9 @@ impl Position for Atomic {
 
         // Only knights.
         if self.board().occupied() == self.board().kings() | self.board().knights() {
-            return self.board().knights().count() <= 2;
+            return self.board().knights().count() <= 2 &&
+                ((self.board().knights() & self.board().white()).is_empty() ||
+                 (self.board().knights() & self.board().black()).is_empty());
         }
 
         // Only bishops.
