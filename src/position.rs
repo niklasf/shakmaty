@@ -497,7 +497,7 @@ impl Position for Chess {
             return false;
         }
 
-        if self.board().occupied().count() < 3 {
+        if self.board().occupied().count() <= 3 {
             return true; // single knight or bishop
         }
 
@@ -618,7 +618,7 @@ impl Position for Atomic {
             gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
         }
 
-        // TODO: Atomic move generation could be implemented more efficiently.
+        // Atomic move generation could be implemented more efficiently.
         // For simplicity we filter all pseudo legal moves.
         moves.swap_retain(|m| {
             let mut after = self.clone();
@@ -1156,9 +1156,15 @@ impl Position for Crazyhouse {
     }
 
     fn is_insufficient_material(&self) -> bool {
-        // TODO: Detect insufficient material. We intentially do not validate
-        // that there are exactly 32 pieces.
-        false
+        self.board().occupied().count() + self.pockets.count() <= 3 &&
+        self.board().pawns().is_empty() &&
+        self.board().rooks_and_queens().is_empty() &&
+        self.pockets.white.pawns == 0 &&
+        self.pockets.black.pawns == 0 &&
+        self.pockets.white.rooks == 0 &&
+        self.pockets.black.rooks == 0 &&
+        self.pockets.white.queens == 0 &&
+        self.pockets.black.queens == 0
     }
 
     fn is_variant_end(&self) -> bool { false }
