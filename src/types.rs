@@ -352,13 +352,13 @@ impl Pocket {
         }
     }
 
-    pub fn count(&self) -> u8 {
-        self.pawns
+    pub fn count(&self) -> usize {
+        usize::from(self.pawns
             .saturating_add(self.knights)
             .saturating_add(self.bishops)
             .saturating_add(self.rooks)
             .saturating_add(self.queens)
-            .saturating_add(self.kings)
+            .saturating_add(self.kings))
     }
 }
 
@@ -394,7 +394,7 @@ impl Pockets {
         *self.by_piece_mut(piece) = self.by_piece(piece).saturating_sub(1);
     }
 
-    pub fn count(&self) -> u8 {
+    pub fn count(&self) -> usize {
         self.black.count().saturating_add(self.white.count())
     }
 }

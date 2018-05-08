@@ -1088,7 +1088,7 @@ impl Position for Crazyhouse {
     fn from_setup<S: Setup>(setup: &S) -> Result<Crazyhouse, PositionError> {
         Chess::from_setup(setup).and_then(|chess| {
             let pockets = setup.pockets().cloned().unwrap_or_default();
-            if pockets.count().saturating_add(chess.board().occupied().count() as u8) > 64 {
+            if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
                 Err(PositionError::VARIANT)
             } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
                 Err(PositionError::TOO_MANY_KINGS)
