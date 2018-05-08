@@ -67,28 +67,15 @@ impl<S: Setup> Setup for SwapTurn<S> {
 }
 
 #[derive(Clone, Debug)]
-pub struct Castling {
+pub struct Castles {
     chess960: bool,
     rook: [[Option<Square>; 2]; 2],
     path: [[Bitboard; 2]; 2],
 }
 
-impl Castling {
-    pub fn empty() -> Castling {
-        Castling {
-            chess960: false,
-            rook: [[None; 2]; 2],
-            path: [[Bitboard(0); 2]; 2],
-        }
-    }
-
-    pub fn has_color(&self, color: Color) -> bool {
-        let side = self.rook[color as usize];
-        side[0].is_some() || side[1].is_some()
-    }
-
-    pub fn default() -> Castling {
-        Castling {
+impl Default for Castles {
+    fn default() -> Castles {
+        Castles {
             chess960: false,
             rook: [
                 [Some(Square::H8), Some(Square::A8)], // black
@@ -100,9 +87,24 @@ impl Castling {
             ]
         }
     }
+}
 
-    pub fn from_setup(setup: &Setup) -> Result<Castling, Castling> {
-        let mut castling = Castling::empty();
+impl Castles {
+    pub fn empty() -> Castles {
+        Castles {
+            chess960: false,
+            rook: [[None; 2]; 2],
+            path: [[Bitboard(0); 2]; 2],
+        }
+    }
+
+    pub fn has_color(&self, color: Color) -> bool {
+        let side = self.rook[color as usize];
+        side[0].is_some() || side[1].is_some()
+    }
+
+    pub fn from_setup(setup: &Setup) -> Result<Castles, Castles> {
+        let mut castles = Castles::empty();
 
         let castling_rights = setup.castling_rights();
         let rooks = castling_rights & setup.board().rooks();
@@ -119,27 +121,27 @@ impl Castling {
                 if let Some(a_side) = OptionFilterExt::filter(side.first(), |rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
-                    castling.chess960 |= king.file() != 4 || a_side.file() != 0;
-                    castling.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
-                    castling.path[*color as usize][CastlingSide::QueenSide as usize] =
+                    castles.chess960 |= king.file() != 4 || a_side.file() != 0;
+                    castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
+                    castles.path[*color as usize][CastlingSide::QueenSide as usize] =
                         attacks::between(king, a_side).with(rto).with(kto).without(king).without(a_side);
                 }
 
                 if let Some(h_side) = OptionFilterExt::filter(side.last(), |rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
-                    castling.chess960 |= king.file() != 4 || h_side.file() != 7;
-                    castling.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
-                    castling.path[*color as usize][CastlingSide::KingSide as usize] =
+                    castles.chess960 |= king.file() != 4 || h_side.file() != 7;
+                    castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
+                    castles.path[*color as usize][CastlingSide::KingSide as usize] =
                         attacks::between(king, h_side).with(rto).with(kto).without(king).without(h_side);
                 }
             }
         }
 
-        if castling.castling_rights() == castling_rights {
-            Ok(castling)
+        if castles.castling_rights() == castling_rights {
+            Ok(castles)
         } else {
-            Err(castling)
+            Err(castles)
         }
     }
 
