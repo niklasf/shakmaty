@@ -207,7 +207,7 @@ pub trait Position: Setup {
             Move::Normal { role, from, to, .. } =>
                 self.castling_rights().contains(from) ||
                 self.castling_rights().contains(to) ||
-                (role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any())
+                (role == Role::King && self.castles().has_color(self.turn()))
         }
     }
 
