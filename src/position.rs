@@ -207,7 +207,7 @@ pub trait Position: Setup {
             Move::Normal { role, from, to, .. } =>
                 self.castling_rights().contains(from) ||
                 self.castling_rights().contains(to) ||
-                (role == Role::King && self.castles().has_color(self.turn()))
+                (role == Role::King && self.castles().has_side(self.turn()))
         }
     }
 
@@ -1152,7 +1152,7 @@ impl Position for Crazyhouse {
             Move::Normal { role, from, to, .. } =>
                 self.castling_rights().contains(from) ||
                 self.castling_rights().contains(to) ||
-                (role == Role::King && self.chess.castles.has_color(self.turn())),
+                (role == Role::King && self.chess.castles.has_side(self.turn())),
             _ => false,
         }
     }

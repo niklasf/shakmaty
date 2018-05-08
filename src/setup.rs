@@ -137,7 +137,18 @@ impl Castles {
         }
     }
 
-    pub fn has_color(&self, color: Color) -> bool {
+    pub fn any(&self) -> bool {
+        self.rook[0][0].is_some() ||
+        self.rook[0][1].is_some() ||
+        self.rook[1][0].is_some() ||
+        self.rook[1][1].is_some()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        !self.any()
+    }
+
+    pub fn has_side(&self, color: Color) -> bool {
         let side = self.rook[color as usize];
         side[0].is_some() || side[1].is_some()
     }
