@@ -1678,4 +1678,15 @@ mod tests {
 
         assert!(pos.is_insufficient_material());
     }
+
+    #[test]
+    fn test_atomic_insufficient_material() {
+        let fen = "8/1k6/8/2n5/8/3NK3/8/8 b - - 0 1";
+        let pos: Atomic = fen.parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+
+        assert!(!pos.is_insufficient_material());
+    }
 }
