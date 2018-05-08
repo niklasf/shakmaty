@@ -1323,6 +1323,146 @@ impl Position for RacingKings {
     }
 }
 
+/// A Horde position.
+#[derive(Clone, Debug)]
+pub struct Horde {
+    board: Board,
+    turn: Color,
+    castles: Castles,
+    ep_square: Option<Square>,
+    halfmove_clock: u32,
+    fullmoves: u32,
+}
+
+impl Default for Horde {
+    fn default() -> Horde {
+        let mut castles = Castles::default();
+        castles.discard_side(White);
+
+        Horde {
+            board: Board::horde(),
+            turn: White,
+            castles,
+            ep_square: None,
+            halfmove_clock: 0,
+            fullmoves: 1,
+        }
+    }
+}
+
+impl Setup for Horde {
+    fn board(&self) -> &Board { &self.board }
+    fn pockets(&self) -> Option<&Pockets> { None }
+    fn turn(&self) -> Color { self.turn }
+    fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn fullmoves(&self) -> u32 { self.fullmoves }
+}
+
+impl Position for Horde {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
+                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.fullmoves, m);
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Horde, PositionError> {
+        let (castles, errors) = match Castles::from_setup(setup) {
+            Ok(castles) => (castles, PositionError::empty()),
+            Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
+        };
+
+        let pos = Horde {
+            board: setup.board().clone(),
+            turn: setup.turn(),
+            castles,
+            ep_square: setup.ep_square(),
+            halfmove_clock: setup.halfmove_clock(),
+            fullmoves: setup.fullmoves(),
+        };
+
+        let mut errors = errors | validate(&pos)
+            - PositionError::PAWNS_ON_BACKRANK
+            - PositionError::MISSING_KING;
+
+        if (pos.board().pawns() & pos.board().white() & Bitboard::rank(7)).any() ||
+           (pos.board().pawns() & pos.board().black() & Bitboard::rank(0)).any()
+        {
+            errors |= PositionError::PAWNS_ON_BACKRANK;
+        }
+
+        if pos.board().kings().is_empty() {
+            errors |= PositionError::MISSING_KING;
+        }
+
+        if (pos.board().kings() & pos.board().white()).any() &&
+           (pos.board().kings() & pos.board().black()).any()
+        {
+            errors |= PositionError::VARIANT;
+        }
+
+        errors.into_result(pos)
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
+        let king = self.board().king_of(self.turn());
+        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+
+        let checkers = self.checkers();
+        if checkers.is_empty() {
+            let target = !self.us();
+            gen_non_king(self, target, moves);
+            if let Some(king) = king {
+                gen_safe_king(self, king, target, moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
+            }
+        } else {
+            evasions(self, king.expect("king in check"), checkers, moves);
+        }
+
+        if let Some(king) = king {
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            if blockers.any() || has_ep {
+                moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            }
+        }
+    }
+
+    fn castles(&self) -> &Castles {
+        &self.castles
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.castles.is_chess960() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
+    }
+
+    fn is_variant_end(&self) -> bool {
+        self.board().white().is_empty() || self.board().black().is_empty()
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        false
+    }
+
+    fn variant_outcome(&self) -> Option<Outcome> {
+        if self.board().occupied().is_empty() {
+            Some(Outcome::Draw)
+        } else if self.board().white().is_empty() {
+            Some(Outcome::Decisive { winner: Black })
+        } else if self.board().black().is_empty() {
+            Some(Outcome::Decisive { winner: White })
+        } else {
+            None
+        }
+    }
+}
+
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castles: &mut Castles,
