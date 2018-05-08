@@ -114,4 +114,5 @@ pub mod variants {
     pub use Chess;
     pub use position::Atomic;
     pub use position::Giveaway;
+    pub use position::KingOfTheHill;
 }

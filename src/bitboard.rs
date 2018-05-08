@@ -224,6 +224,9 @@ impl Bitboard {
 
     /// The backranks.
     pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
+
+    /// The four center squares.
+    pub const CENTER: Bitboard = Bitboard(0x0000_0018_1800_0000);
 }
 
 /// Square masks.
