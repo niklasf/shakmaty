@@ -38,6 +38,9 @@ Documentation
 Changelog
 ---------
 
+* 0.4.0
+  - Update to shakmaty 0.7, which has bugfixes with regard to insufficient
+    material.
 * 0.3.1
   - Work around compiler bug in release mode.
 * 0.3.0
