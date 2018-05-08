@@ -126,7 +126,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
         }
-        if pos.castling_rights().any() {
+        if pos.castles().any() {
             return Err(SyzygyError::Castling);
         }
 
@@ -315,7 +315,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if pos.board().occupied().count() > MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
         }
-        if pos.castling_rights().any() {
+        if pos.castles().any() {
             return Err(SyzygyError::Castling);
         }
 
