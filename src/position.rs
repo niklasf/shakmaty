@@ -336,6 +336,14 @@ pub struct Chess {
     fullmoves: u32,
 }
 
+impl Chess {
+    fn gives_check(&self, m: &Move) -> bool {
+        let mut pos = self.clone();
+        pos.play_unchecked(m);
+        pos.is_check()
+    }
+}
+
 impl Default for Chess {
     fn default() -> Chess {
         Chess {
@@ -992,6 +1000,10 @@ impl Position for ThreeCheck {
         self.board().occupied() == self.board().kings()
     }
 
+    fn is_irreversible(&self, m: &Move) -> bool {
+        self.chess.is_irreversible(m) || self.chess.gives_check(m)
+    }
+
     fn is_variant_end(&self) -> bool {
         self.remaining_checks.white == 0 || self.remaining_checks.black == 0
     }
@@ -1131,6 +1143,17 @@ impl Position for Crazyhouse {
             if role != Role::Pawn || !Bitboard::BACKRANKS.contains(to) {
                 moves.push(Move::Put { role, to });
             }
+        }
+    }
+
+    fn is_irreversible(&self, m: &Move) -> bool {
+        match *m {
+            Move::Castle { .. } => true,
+            Move::Normal { role, from, to, .. } =>
+                self.castling_rights().contains(from) ||
+                self.castling_rights().contains(to) ||
+                (role == Role::King && (self.castling_rights() & Bitboard::relative_rank(self.turn(), 0)).any()),
+            _ => false,
         }
     }
 
