@@ -66,6 +66,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     fn fullmoves(&self) -> u32 { self.0.fullmoves() }
 }
 
+/// Castling paths and unmoved rooks.
 #[derive(Clone, Debug)]
 pub struct Castles {
     chess960: bool,
@@ -96,11 +97,6 @@ impl Castles {
             rook: [[None; 2]; 2],
             path: [[Bitboard(0); 2]; 2],
         }
-    }
-
-    pub fn has_color(&self, color: Color) -> bool {
-        let side = self.rook[color as usize];
-        side[0].is_some() || side[1].is_some()
     }
 
     pub fn from_setup(setup: &Setup) -> Result<Castles, Castles> {
@@ -143,6 +139,11 @@ impl Castles {
         } else {
             Err(castles)
         }
+    }
+
+    pub fn has_color(&self, color: Color) -> bool {
+        let side = self.rook[color as usize];
+        side[0].is_some() || side[1].is_some()
     }
 
     pub fn discard_rook(&mut self, square: Square) {

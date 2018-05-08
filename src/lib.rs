@@ -104,7 +104,7 @@ pub use square::{InvalidSquareName, Square};
 pub use types::{CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role};
 pub use bitboard::{Bitboard, CarryRippler};
 pub use board::{Board, Pieces};
-pub use setup::Setup;
+pub use setup::{Castles, Setup};
 pub use movelist::MoveList;
 pub use position::{Chess, IllegalMove, Outcome, Position, PositionError};
 pub use perft::perft;

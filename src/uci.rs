@@ -169,7 +169,7 @@ impl fmt::Display for Uci {
 /// Otherwise see [`chess960_uci()`](fn.chess960_uci.html).
 pub fn uci<P: Position>(pos: &P, m: &Move) -> Uci {
     match *m {
-        Move::Castle { king, rook } if !pos.is_chess960() => {
+        Move::Castle { king, rook } if !pos.castles().is_chess960() => {
             if king < rook {
                 Uci::Normal {
                     from: king,
