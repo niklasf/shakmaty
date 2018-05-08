@@ -1100,15 +1100,18 @@ impl Position for Crazyhouse {
         self.chess.legal_moves(moves);
 
         let pocket = self.our_pocket();
+        let targets = self.legal_put_squares();
 
-        for to in self.legal_put_squares() {
+        for to in targets {
             for &role in &[Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
                 if pocket.by_role(role) > 0 {
                     moves.push(Move::Put { role, to });
                 }
             }
+        }
 
-            if 0 < to.rank() && to.rank() < 7 && pocket.pawns > 0 {
+        if pocket.pawns > 0 {
+            for to in targets & !Bitboard::BACKRANKS {
                 moves.push(Move::Put { role: Role::Pawn, to });
             }
         }
@@ -1125,7 +1128,9 @@ impl Position for Crazyhouse {
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.chess.san_candidates(role, to, moves);
         if self.our_pocket().by_role(role) > 0 && self.legal_put_squares().contains(to) {
-            moves.push(Move::Put { role, to });
+            if role != Role::Pawn || !Bitboard::BACKRANKS.contains(to) {
+                moves.push(Move::Put { role, to });
+            }
         }
     }
 
