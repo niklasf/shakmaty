@@ -287,7 +287,7 @@ pub trait Position: Setup {
         self.variant_outcome().or_else(|| {
             if self.is_checkmate() {
                 Some(Outcome::Decisive { winner: !self.turn() })
-            } else if self.is_stalemate() || self.is_insufficient_material() {
+            } else if self.is_insufficient_material() || self.is_stalemate() {
                 Some(Outcome::Draw)
             } else {
                 None
