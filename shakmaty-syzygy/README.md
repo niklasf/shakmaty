@@ -38,6 +38,8 @@ Documentation
 Changelog
 ---------
 
+* 0.4.1
+  - Fix debug assertion for `Dtz(0).add_plies()`.
 * 0.4.0
   - Update to shakmaty 0.7, which has bugfixes with regard to insufficient
     material.

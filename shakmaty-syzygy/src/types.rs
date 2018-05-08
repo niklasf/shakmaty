@@ -246,9 +246,9 @@ impl Dtz {
 
     /// Increases the absolute value by `plies`.
     pub fn add_plies(&self, plies: i32) -> Dtz {
-        let new_plies = self.0.abs() + plies;
-        debug_assert!(new_plies > 0);
-        Dtz(self.0.signum() * new_plies)
+        let new_dtz = self.0.signum() * (self.0.abs() + plies);
+        debug_assert!(self.0.signum() == new_dtz.signum());
+        Dtz(new_dtz)
     }
 }
 
