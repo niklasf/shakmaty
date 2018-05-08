@@ -115,4 +115,6 @@ pub mod variants {
     pub use position::Atomic;
     pub use position::Giveaway;
     pub use position::KingOfTheHill;
+    pub use position::ThreeCheck;
+    pub use position::Crazyhouse;
 }

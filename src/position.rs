@@ -18,7 +18,7 @@ use attacks;
 use board::Board;
 use bitboard::Bitboard;
 use square::Square;
-use types::{Black, CastlingSide, Color, Move, Piece, Pockets, RemainingChecks, Role, White};
+use types::{Black, CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role, White};
 use setup::{Castling, Setup, SwapTurn};
 use movelist::{ArrayVecExt, MoveList};
 use option_filter::OptionFilterExt;
@@ -1007,6 +1007,136 @@ impl Position for ThreeCheck {
             None
         }
     }
+}
+
+/// A Crazyhouse position.
+#[derive(Clone, Debug, Default)]
+pub struct Crazyhouse {
+    chess: Chess,
+    pockets: Pockets,
+}
+
+impl Crazyhouse {
+    fn our_pocket(&self) -> &Pocket {
+        self.pockets.by_color(self.turn())
+    }
+
+    fn our_pocket_mut(&mut self) -> &mut Pocket {
+        let turn = self.turn();
+        self.pockets.by_color_mut(turn)
+    }
+
+    fn legal_put_squares(&self) -> Bitboard {
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            !self.board().occupied()
+        } else if let Some(checker) = checkers.single_square() {
+            let king = self.board().king_of(self.turn()).expect("king in crazyhouse");
+            attacks::between(checker, king)
+        } else {
+            Bitboard(0)
+        }
+    }
+}
+
+impl Setup for Crazyhouse {
+    fn board(&self) -> &Board { self.chess.board() }
+    fn pockets(&self) -> Option<&Pockets> { Some(&self.pockets) }
+    fn turn(&self) -> Color { self.chess.turn() }
+    fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn halfmove_clock(&self) -> u32 { self.chess.halfmove_clock() }
+    fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
+}
+
+impl Position for Crazyhouse {
+    fn play_unchecked(&mut self, m: &Move) {
+        match *m {
+            Move::Normal { capture: Some(capture), to, .. } => {
+                let capture = if self.board().promoted().contains(to) {
+                    Role::Pawn
+                } else {
+                    capture
+                };
+
+                *self.our_pocket_mut().by_role_mut(capture) += 1;
+            }
+            Move::EnPassant { .. } => {
+                self.our_pocket_mut().pawns += 1;
+            }
+            Move::Put { role, .. } => {
+                *self.our_pocket_mut().by_role_mut(role) -= 1;
+            }
+            _ => {}
+        }
+
+        self.chess.play_unchecked(m);
+    }
+
+    fn from_setup<S: Setup>(setup: &S) -> Result<Crazyhouse, PositionError> {
+        Chess::from_setup(setup).and_then(|chess| {
+            let pockets = setup.pockets().cloned().unwrap_or_default();
+            if pockets.count().saturating_add(chess.board().occupied().count() as u8) > 64 {
+                Err(PositionError::VARIANT)
+            } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
+                Err(PositionError::TOO_MANY_KINGS)
+            } else {
+                Ok(Crazyhouse { chess, pockets })
+            }
+        })
+    }
+
+    fn is_chess960(&self) -> bool {
+        self.chess.is_chess960()
+    }
+
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.chess.castling_uncovers_rank_attack(rook, king_to)
+    }
+
+    fn legal_moves(&self, moves: &mut MoveList) {
+        self.chess.legal_moves(moves);
+
+        let pocket = self.our_pocket();
+
+        for to in self.legal_put_squares() {
+            for &role in &[Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
+                if pocket.by_role(role) > 0 {
+                    moves.push(Move::Put { role, to });
+                }
+            }
+
+            if 0 < to.rank() && to.rank() < 7 && pocket.pawns > 0 {
+                moves.push(Move::Put { role: Role::Pawn, to });
+            }
+        }
+    }
+
+    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+        self.chess.castling_moves(side, moves);
+    }
+
+    fn en_passant_moves(&self, moves: &mut MoveList) {
+        self.chess.en_passant_moves(moves);
+    }
+
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+        self.chess.san_candidates(role, to, moves);
+        if self.our_pocket().by_role(role) > 0 && self.legal_put_squares().contains(to) {
+            moves.push(Move::Put { role, to });
+        }
+    }
+
+    fn is_insufficient_material(&self) -> bool {
+        // TODO: Detect insufficient material (which can not happen in
+        // Crazyhouse, normally).
+        false
+    }
+
+    fn is_variant_end(&self) -> bool { false }
+    fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
 fn do_move(board: &mut Board,
