@@ -1383,7 +1383,7 @@ impl Position for Horde {
             fullmoves: setup.fullmoves(),
         };
 
-        let mut errors = errors | validate(&pos)
+        let mut errors = (errors | validate(&pos))
             - PositionError::PAWNS_ON_BACKRANK
             - PositionError::MISSING_KING;
 
