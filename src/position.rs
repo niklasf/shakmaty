@@ -606,10 +606,10 @@ impl Position for Atomic {
         gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
         gen_non_king(self, !self.us(), moves);
         KingTag::gen_moves(self, !self.board().occupied(), moves);
-        self.board().king_of(self.turn()).map(|king| {
+        if let Some(king) = self.board().king_of(self.turn()) {
             gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
             gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
-        });
+        }
 
         // Atomic move generation could be implemented more efficiently.
         // For simplicity we filter all pseudo legal moves.
@@ -774,10 +774,10 @@ impl Position for Giveaway {
             gen_non_king(self, !self.board().occupied(), moves);
             add_king_promotions(moves);
             KingTag::gen_moves(self, !self.board().occupied(), moves);
-            self.board().king_of(self.turn()).map(|king| {
+            if let Some(king) = self.board().king_of(self.turn()) {
                 gen_castling_moves(self, &self.castling, king, CastlingSide::KingSide, moves);
                 gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
-            });
+            }
         }
     }
 
@@ -871,7 +871,8 @@ fn do_move(board: &mut Board,
         }
         Move::EnPassant { from, to } => {
             board.discard_piece_at(to.combine(from)); // captured pawn
-            board.remove_piece_at(from).map(|piece| board.set_piece_at(to, piece, false));
+            board.discard_piece_at(from);
+            board.set_piece_at(to, color.pawn(), false);
             *halfmove_clock = 0;
         }
         Move::Put { role, to } => {
