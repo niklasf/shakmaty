@@ -612,7 +612,7 @@ impl Position for Atomic {
             gen_castling_moves(self, &self.castling, king, CastlingSide::QueenSide, moves);
         }
 
-        // Atomic move generation could be implemented more efficiently.
+        // TODO: Atomic move generation could be implemented more efficiently.
         // For simplicity we filter all pseudo legal moves.
         moves.swap_retain(|m| {
             let mut after = self.clone();
@@ -1130,8 +1130,8 @@ impl Position for Crazyhouse {
     }
 
     fn is_insufficient_material(&self) -> bool {
-        // TODO: Detect insufficient material (which can not happen in
-        // Crazyhouse, normally).
+        // TODO: Detect insufficient material. We intentially do not validate
+        // that there are exactly 32 pieces.
         false
     }
 
