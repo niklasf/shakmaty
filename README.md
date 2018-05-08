@@ -54,6 +54,15 @@ Documentation
 Changelog
 ---------
 
+* 0.7.0
+  - Reintroduce the remaining Lichess variants: `Crazyhouse`, `KingOfTheHill`,
+    `ThreeCheck`, `Horde`, `RacingKings`.
+  - Expose `Position.castles()` and replace `Position.is_chess960()` with
+    `Position.castles().is_chess960()`.
+  - Fix insufficient material: KNvK was not given as drawn due to a typo.
+  - Fix insufficient material in `Atomic`: Two knights of different colors
+    are not safe.
+  - Let `Pockets.count()` and `Pocket.count()` return `usize`.
 * 0.6.7
   - Giveaway starting position should have no castling rights.
 * 0.6.6
