@@ -1139,10 +1139,11 @@ impl Position for Crazyhouse {
 
     fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
         self.chess.san_candidates(role, to, moves);
-        if self.our_pocket().by_role(role) > 0 && self.legal_put_squares().contains(to) {
-            if role != Role::Pawn || !Bitboard::BACKRANKS.contains(to) {
-                moves.push(Move::Put { role, to });
-            }
+
+        if self.our_pocket().by_role(role) > 0 && self.legal_put_squares().contains(to) &&
+           (role != Role::Pawn || !Bitboard::BACKRANKS.contains(to))
+        {
+            moves.push(Move::Put { role, to });
         }
     }
 
