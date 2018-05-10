@@ -14,9 +14,9 @@ Example
 ```rust
 use shakmaty::Chess;
 use shakmaty::fen::Fen;
-use shakmaty_syzygy::{Tablebases, Wdl, Dtz, Syzygy};
+use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
 
-let mut tables = Tablebases::new();
+let mut tables = Tablebase::new();
 tables.add_directory("tables/regular")?;
 
 let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
