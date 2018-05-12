@@ -56,6 +56,8 @@ Documentation
 Changelog
 ---------
 
+* 0.7.1
+  - Minimum Rust version 1.26.0 (fused iterators, u128 conversions).
 * 0.7.0
   - Reintroduce the remaining Lichess variants: `Crazyhouse`, `KingOfTheHill`,
     `ThreeCheck`, `Horde`, `RacingKings`.
