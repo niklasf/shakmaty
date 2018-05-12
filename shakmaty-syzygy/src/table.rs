@@ -722,7 +722,7 @@ impl PairsData {
         let sym = raf.read_u16_le(ptr)?;
         ptr += 2;
         let btree = ptr;
-        let mut symlen = vec![0; sym as usize];
+        let mut symlen = vec![0; usize::from(sym)];
         let mut visited = BitVec::from_elem(symlen.len(), false);
         for s in 0..sym {
            read_symlen(raf, btree, &mut symlen, &mut visited, s)?;
@@ -759,7 +759,7 @@ impl PairsData {
 
 /// Build the symlen table.
 fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
-    if u!(visited.get(sym as usize)) {
+    if u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
 
@@ -767,14 +767,14 @@ fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited
     let (left, right) = raf.read_lr(ptr)?;
 
     if right == 0xfff {
-        symlen[sym as usize] = 0;
+        symlen[usize::from(sym)] = 0;
     } else {
         read_symlen(raf, btree, symlen, visited, left)?;
         read_symlen(raf, btree, symlen, visited, right)?;
-        symlen[sym as usize] = symlen[left as usize] + symlen[right as usize] + 1;
+        symlen[usize::from(sym)] = symlen[usize::from(left)] + symlen[usize::from(right)] + 1;
     }
 
-    visited.set(sym as usize, true);
+    visited.set(usize::from(sym), true);
     Ok(())
 }
 
@@ -989,14 +989,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 len += 1;
             }
 
-            sym = ((buf - d.base[len]) >> (64 - len - d.min_symlen as usize)) as u16;
+            sym = ((buf - d.base[len]) >> (64 - len - usize::from(d.min_symlen))) as u16;
             sym += self.raf.read_u16_le(d.lowest_sym + 2 * len as u64)?;
 
-            if lit_idx < i64::from(*u!(d.symlen.get(sym as usize))) + 1 {
+            if lit_idx < i64::from(*u!(d.symlen.get(usize::from(sym)))) + 1 {
                 break;
             }
 
-            lit_idx -= i64::from(*u!(d.symlen.get(sym as usize))) + 1;
+            lit_idx -= i64::from(*u!(d.symlen.get(usize::from(sym)))) + 1;
             len += usize::from(d.min_symlen);
             buf <<= len;
             buf_size -= len;
@@ -1010,13 +1010,13 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Decompress Huffman symbol.
-        while *u!(d.symlen.get(sym as usize)) != 0 {
+        while *u!(d.symlen.get(usize::from(sym))) != 0 {
             let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
 
-            if lit_idx < i64::from(*u!(d.symlen.get(left as usize))) + 1 {
+            if lit_idx < i64::from(*u!(d.symlen.get(usize::from(left)))) + 1 {
                 sym = left;
             } else {
-                lit_idx -= i64::from(*u!(d.symlen.get(left as usize))) + 1;
+                lit_idx -= i64::from(*u!(d.symlen.get(usize::from(left)))) + 1;
                 sym = right;
             }
         }

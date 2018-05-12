@@ -73,8 +73,6 @@ extern crate fxhash;
 extern crate num_integer;
 extern crate positioned_io;
 extern crate shakmaty;
-#[macro_use]
-extern crate static_assertions;
 #[cfg(feature = "serde-1")]
 extern crate serde;
 
@@ -88,7 +86,3 @@ mod types;
 pub use errors::SyzygyError;
 pub use tablebase::Tablebase;
 pub use types::{Dtz, Syzygy, TableType, Wdl};
-
-use std::mem;
-
-const_assert!(pointer_size; mem::size_of::<usize>() >= 2);

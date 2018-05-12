@@ -90,7 +90,7 @@ impl MaterialSide {
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for &role in &ROLES {
-            write!(f, "{}", role.char().to_uppercase().to_string().repeat(self.by_role(role) as usize))?;
+            write!(f, "{}", role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
         }
         Ok(())
     }
