@@ -30,7 +30,7 @@ optional = true
 default-features = false
 
 [dev-dependencies]
-csv = "1.0.0-beta.5"
+csv = "1.0"
 
 [features]
 default = []
