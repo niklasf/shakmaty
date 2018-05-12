@@ -150,7 +150,7 @@ macro_rules! from_wdl_impl {
     }
 }
 
-from_wdl_impl! { i8 i16 i32 i64 isize }
+from_wdl_impl! { i8 i16 i32 i64 i128 isize }
 
 #[cfg(feature = "serde-1")]
 impl ::serde::Serialize for Wdl {
@@ -263,7 +263,7 @@ macro_rules! from_dtz_impl {
     }
 }
 
-from_dtz_impl! { i32 i64 }
+from_dtz_impl! { i32 i64 i128 }
 
 macro_rules! dtz_from_impl {
     ($($t:ty)+) => {
