@@ -39,6 +39,11 @@ Documentation
 Changelog
 ---------
 
+* 0.4.2
+  - Fix DTZ in en passant positions.
+  - Minimum Rust version 1.26.0.
+  - Use guaranteed lossless versions from `u16` to `usize`.
+  - Provide i128 conversions for `Wdl` and `Dtz`.
 * 0.4.1
   - Fix debug assertion for `Dtz(0).add_plies()`.
 * 0.4.0
