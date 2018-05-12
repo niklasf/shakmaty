@@ -339,7 +339,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         for m in ep_moves {
             let mut after = pos.clone();
             after.play_unchecked(&m);
-            let (v0, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+
+            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
+            let v0 = -v0_plus;
+
             wdl = max(v0, wdl);
         }
 
