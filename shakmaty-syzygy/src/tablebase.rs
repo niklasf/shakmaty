@@ -390,9 +390,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if wdl > Wdl::Draw {
             // The position is a win or a cursed win by a threat move.
             if state == ProbeState::Threat {
-                return Ok(Dtz(if wdl == Wdl::Win { 2 } else { 101 }));
+                return Ok(Dtz::before_zeroing(wdl).add_plies(1));
             }
 
+            // Find a winning capture or pawn move.
             let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
             moves.retain(|m| m.role() == Role::Pawn && !m.is_capture());
@@ -403,7 +404,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 let v = -self.probe_wdl(&after)?;
 
                 if v == wdl {
-                    return Ok(Dtz(if v == Wdl::Win { 1 } else { 101 }));
+                    return Ok(Dtz::before_zeroing(v));
                 }
             }
         }
