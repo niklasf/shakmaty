@@ -387,17 +387,18 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Ok(Dtz::before_zeroing(wdl));
         }
 
-        if wdl > Wdl::Draw {
+        if state == ProbeState::Threat && wdl > Wdl::Draw {
             // The position is a win or a cursed win by a threat move.
-            if state == ProbeState::Threat {
-                return Ok(Dtz::before_zeroing(wdl).add_plies(1));
-            }
+            return Ok(Dtz::before_zeroing(wdl).add_plies(1));
+        }
 
-            // Find a winning capture or pawn move.
-            let mut moves = MoveList::new();
+        let mut moves = MoveList::new();
+
+        if wdl > Wdl::Draw {
             pos.legal_moves(&mut moves);
-            moves.retain(|m| m.role() == Role::Pawn && !m.is_capture());
-            for m in moves {
+
+            // Find a winning non-capturing pawn move.
+            for m in moves.iter().filter(|m| m.role() == Role::Pawn && !m.is_capture()) {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
 
@@ -416,10 +417,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if wdl > Wdl::Draw {
             let mut best = None;
 
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            moves.retain(|m| !m.is_zeroing());
-            for m in moves {
+            for m in moves.iter().filter(|m| !m.is_zeroing()) {
                 let mut after = pos.clone();
                 after.play_unchecked(&m);
 
@@ -436,7 +434,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         } else {
             let mut best = Dtz(-1);
 
-            let mut moves = MoveList::new();
             pos.legal_moves(&mut moves);
             for m in moves {
                 let mut after = pos.clone();
