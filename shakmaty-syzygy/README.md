@@ -39,6 +39,11 @@ Documentation
 Changelog
 ---------
 
+* 0.4.3
+  - Fix DTZ off-by-one in some positions when there is mate in 1.
+  - Fix DTZ off-by-one in antichess endgames, when there is a threat to force
+    a capture leading to a blessed loss.
+  - Add `Tablebase::best_move()`.
 * 0.4.2
   - Fix DTZ in en passant positions.
   - Minimum Rust version 1.26.0.

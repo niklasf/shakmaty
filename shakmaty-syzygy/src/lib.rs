@@ -53,7 +53,7 @@
 //! # }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.4.2")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.4.3")]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(feature = "cargo-clippy", allow(needless_range_loop))]
 #![cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
