@@ -14,16 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{max, min};
+use std::cmp::{max, min, Reverse};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
+use itertools;
 use fxhash::FxHashMap;
 
-use shakmaty::{MoveList, Position, Role};
+use shakmaty::{Move, MoveList, Position, Role};
 
 use errors::{SyzygyError, SyzygyResult};
 use material::Material;
@@ -466,13 +468,70 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             Err(SyzygyError::MissingTable { material: key.normalized() })
         }
     }
+
+    /// Select a DTZ-optimal move.
+    ///
+    /// # Errors
+    ///
+    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// conditions.
+    pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
+        struct WithWdl {
+            m: Move,
+            wdl: Wdl,
+        }
+
+        struct WithDtz {
+            m: Move,
+            immediate_loss: bool,
+            zeroing: bool,
+            dtz: Dtz,
+        }
+
+        // Determine WDL for each move.
+        let mut legals = MoveList::new();
+        pos.legal_moves(&mut legals);
+
+        let with_wdl = legals.into_iter().map(|m| {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+
+            Ok(WithWdl {
+                m,
+                wdl: self.probe_wdl(&after)?,
+            })
+        }).collect::<SyzygyResult<ArrayVec<[_; 256]>>>()?;
+
+        // Find best WDL.
+        let best_wdl = with_wdl.iter().map(|a| a.wdl).min().unwrap_or(Wdl::Loss);
+
+        // Determine DTZ-optimal move among the moves with best WDL.
+        itertools::process_results(with_wdl.into_iter().filter(|a| a.wdl == best_wdl).map(|a| {
+            let mut after = pos.clone();
+            after.play_unchecked(&a.m);
+
+            let dtz = self.probe_dtz(&after)?;
+
+            Ok(WithDtz {
+                immediate_loss: dtz == Dtz(-1) && after.is_game_over(),
+                zeroing: a.m.is_zeroing(),
+                m: a.m,
+                dtz,
+            })
+        }), |iter| iter.min_by_key(|m| (
+            Reverse(m.immediate_loss),
+            m.zeroing ^ (m.dtz < Dtz(0)),
+            Reverse(m.dtz),
+        )).map(|m| (m.m, m.dtz)))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use shakmaty::Chess;
+    use shakmaty::{Chess, Square};
+    use shakmaty::fen::Fen;
 
     #[test]
     fn test_send_sync() {
@@ -481,5 +540,49 @@ mod tests {
 
         assert_send(Tablebase::<Chess>::new());
         assert_sync(Tablebase::<Chess>::new());
+    }
+
+    #[test]
+    fn test_mating_best_move() {
+        let mut tables = Tablebase::new();
+        tables.add_directory("tables/regular").expect("read directory");
+
+        let pos: Chess = "5BrN/8/8/8/8/2k5/8/2K5 b - -"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
+
+        let best = tables.best_move(&pos).expect("probe").expect("has moves");
+
+        assert_eq!(best, (Move::Normal {
+            role: Role::Rook,
+            from: Square::G8,
+            capture: None,
+            to: Square::G1,
+            promotion: None,
+        }, Dtz(-1)));
+    }
+
+    #[test]
+    fn test_black_escapes_via_underpromotion() {
+        let mut tables = Tablebase::new();
+        tables.add_directory("tables/regular").expect("read directory");
+
+        let pos: Chess = "8/6B1/8/8/B7/8/K1pk4/8 b - - 0 1"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
+
+        let best = tables.best_move(&pos).expect("probe").expect("has moves");
+
+        assert_eq!(best, (Move::Normal {
+            role: Role::Pawn,
+            from: Square::C2,
+            to: Square::C1,
+            capture: None,
+            promotion: Some(Role::Knight),
+        }, Dtz(109)));
     }
 }
