@@ -513,7 +513,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             let dtz = self.probe_dtz(&after)?;
 
             Ok(WithDtz {
-                immediate_loss: dtz == Dtz(-1) && after.is_game_over(),
+                immediate_loss: dtz == Dtz(-1) && (after.is_checkmate() || after.variant_outcome().is_some()),
                 zeroing: a.m.is_zeroing(),
                 m: a.m,
                 dtz,
