@@ -425,12 +425,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
                 let v = -self.probe_dtz(&after)?;
 
-                if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
-                    best = Some(if v == Dtz(1) && after.is_checkmate() {
-                        Dtz(1)
-                    } else {
-                        v + Dtz(1)
-                    });
+                if v == Dtz(1) && after.is_checkmate() {
+                    best = Some(Dtz(1));
+                } else if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
+                    best = Some(v + Dtz(1));
                 }
             }
 
