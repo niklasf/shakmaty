@@ -840,8 +840,6 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let mut ptr = 5;
 
         for file in 0..num_files {
-            let mut sides = ArrayVec::new();
-
             let order = [
                 [raf.read_u8(ptr)? & 0xf, if pp { raf.read_u8(ptr + 1)? & 0xf } else { 0xf }],
                 [raf.read_u8(ptr)? >> 4, if pp { raf.read_u8(ptr + 1)? >> 4 } else { 0xf }],
@@ -849,14 +847,13 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
             ptr += 1 + if pp { 1 } else { 0 };
 
-            for side in [Color::White, Color::Black].iter().take(num_sides) {
+            let sides = [Color::White, Color::Black].iter().take(num_sides).map(|side| {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 ensure!(key == material || key.flipped() == material);
 
-                let group = GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)?;
-                sides.push(group);
-            }
+                GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)
+            }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
 
             ptr += material.count() as u64;
 
