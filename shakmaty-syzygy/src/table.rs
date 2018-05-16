@@ -1099,8 +1099,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
             squares[1..lead_pawns_count].sort_unstable_by_key(|sq| CONSTS.map_pawns[usize::from(*sq)]);
 
-            for i in 1..lead_pawns_count {
-                idx += binomial(CONSTS.map_pawns[usize::from(squares[i])], i as u64);
+            for (i, &square) in squares.iter().enumerate().take(lead_pawns_count).skip(1) {
+                idx += binomial(CONSTS.map_pawns[usize::from(square)], i as u64);
             }
 
             idx
@@ -1257,9 +1257,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
             let mut n = 0;
 
-            for i in 0..lens {
-                let adjust = prev_squares[..group_sq].iter().filter(|sq| group_squares[i] > **sq).count() as u64;
-                n += binomial(u64::from(group_squares[i]) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
+            for (i, &group_square) in group_squares.iter().enumerate().take(lens) {
+                let adjust = prev_squares[..group_sq].iter().filter(|sq| group_square > **sq).count() as u64;
+                n += binomial(u64::from(group_square) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
             }
 
             remaining_pawns = false;
