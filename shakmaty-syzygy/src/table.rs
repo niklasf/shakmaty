@@ -860,7 +860,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         ptr += ptr & 1;
 
-        // Reads pairs data.
+        // Setup pairs.
         let mut files = files.into_iter().map(|file| {
             let sides = file.into_iter().map(|side| {
                 let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, side)?;
@@ -877,6 +877,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             Ok(FileData { sides })
         }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
 
+        // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
             let map = ptr;
 
@@ -903,6 +904,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             ptr += ptr & 1;
         }
 
+        // Setup sparse index.
         for file in files.iter_mut() {
             for side in file.sides.iter_mut() {
                 side.sparse_index = ptr;
