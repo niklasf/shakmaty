@@ -886,11 +886,11 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         if T::METRIC == Metric::Dtz {
             let map = ptr;
 
-            for f in 0..num_files {
-                if files[f].sides[0].flags.contains(Flag::MAPPED) {
+            for file in files.iter_mut() {
+                if file.sides[0].flags.contains(Flag::MAPPED) {
                     let mut dtz_map = DtzMap::new(map);
 
-                    if files[f].sides[0].flags.contains(Flag::WIDE_DTZ) {
+                    if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for i in 0..4 {
                             dtz_map.idx[i] = ((ptr - map + 2) / 2) as u16;
                             ptr += u64::from(raf.read_u16_le(ptr)?) * 2 + 2;
@@ -902,32 +902,32 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                         }
                     }
 
-                    files[f].sides[0].dtz_map = Some(dtz_map);
+                    file.sides[0].dtz_map = Some(dtz_map);
                 }
             }
 
             ptr += ptr & 1;
         }
 
-        for f in 0..num_files {
-            for s in 0..num_sides {
-                files[f].sides[s].sparse_index = ptr;
-                ptr += u64::from(files[f].sides[s].sparse_index_size) * 6;
+        for file in files.iter_mut() {
+            for side in file.sides.iter_mut() {
+                side.sparse_index = ptr;
+                ptr += u64::from(side.sparse_index_size) * 6;
             }
         }
 
-        for f in 0..num_files {
-            for s in 0..num_sides {
-                files[f].sides[s].block_lengths = ptr;
-                ptr += u64::from(files[f].sides[s].block_length_size) * 2;
+        for file in files.iter_mut() {
+            for side in file.sides.iter_mut() {
+                side.block_lengths = ptr;
+                ptr += u64::from(side.block_length_size) * 2;
             }
         }
 
-        for f in 0..num_files {
-            for s in 0..num_sides {
-                ptr = (ptr + 0x3f) & !0x3f; // Check 64 byte alignment
-                files[f].sides[s].data = ptr;
-                ptr = u!(ptr.checked_add(u64::from(files[f].sides[s].blocks_num) * u64::from(files[f].sides[s].block_size)));
+        for file in files.iter_mut() {
+            for side in file.sides.iter_mut() {
+                ptr = (ptr + 0x3f) & !0x3f; // 64 byte alignment
+                side.data = ptr;
+                ptr = u!(ptr.checked_add(u64::from(side.blocks_num) * u64::from(side.block_size)));
             }
         }
 
