@@ -33,6 +33,15 @@ pub enum Outcome {
     Draw,
 }
 
+impl Outcome {
+    pub fn winner(&self) -> Option<Color> {
+        match *self {
+            Outcome::Decisive { winner } => Some(winner),
+            Outcome::Draw => None,
+        }
+    }
+}
+
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", match *self {
