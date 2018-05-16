@@ -863,15 +863,13 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             groups.push(sides);
         }
 
+        let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
         ptr += ptr & 1;
 
-        let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
-
-        for f in 0..num_files {
+        for file_group in groups {
             let mut sides = ArrayVec::new();
 
-            for side in [Color::White, Color::Black].iter().take(num_sides) {
-                let group = groups[f][side.fold(0, 1)].clone();
+            for group in file_group {
                 let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
 
                 if T::METRIC == Metric::Dtz && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
