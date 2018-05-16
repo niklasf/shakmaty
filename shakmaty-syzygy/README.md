@@ -39,6 +39,9 @@ Documentation
 Changelog
 ---------
 
+* 0.4.4
+  - Remove work around from 0.3.1.
+  - Minor internal optimizations and cleanups.
 * 0.4.3
   - Fix DTZ off-by-one in some positions when there is mate in 1.
   - Fix DTZ off-by-one in antichess endgames, when there is a threat to force

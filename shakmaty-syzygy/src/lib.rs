@@ -53,7 +53,7 @@
 //! # }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.4.3")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.4.4")]
 #![warn(missing_debug_implementations)]
 
 extern crate arrayvec;
