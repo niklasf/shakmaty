@@ -838,7 +838,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let mut ptr = 5;
 
-        let groups = (0..num_files).map(|file| {
+        let files = (0..num_files).map(|file| {
             let order = [
                 [raf.read_u8(ptr)? & 0xf, if pp { raf.read_u8(ptr + 1)? & 0xf } else { 0xf }],
                 [raf.read_u8(ptr)? >> 4, if pp { raf.read_u8(ptr + 1)? >> 4 } else { 0xf }],
@@ -850,33 +850,32 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 ensure!(key == material || key.flipped() == material);
-
                 GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)
             }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
 
             ptr += material.count() as u64;
+
             Ok(sides)
         }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
 
-        let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
         ptr += ptr & 1;
 
-        for file_group in groups {
-            let mut sides = ArrayVec::new();
-
-            for group in file_group {
-                let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, group)?;
+        // Reads pairs data.
+        let mut files = files.into_iter().map(|file| {
+            let sides = file.into_iter().map(|side| {
+                let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, side)?;
 
                 if T::METRIC == Metric::Dtz && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
                     pairs.min_symlen = 1;
                 }
 
-                sides.push(pairs);
                 ptr = next_ptr;
-            }
 
-            files.push(FileData { sides });
-        }
+                Ok(pairs)
+            }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
+
+            Ok(FileData { sides })
+        }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
 
         if T::METRIC == Metric::Dtz {
             let map = ptr;
