@@ -713,8 +713,8 @@ impl PairsData {
             ensure!(base[i] * 2 >= base[i + 1]);
         }
 
-        for i in 0..h {
-            base[i] = u!(base[i].checked_shl(64 - (u32::from(min_symlen) + i as u32)));
+        for (i, base) in base.iter_mut().enumerate() {
+            *base = u!(base.checked_shl(64 - (u32::from(min_symlen) + i as u32)));
         }
 
         // Initialize symlen.
