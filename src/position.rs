@@ -164,20 +164,13 @@ pub trait Position: Setup {
     /// Generates legal castling moves.
     fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
         self.legal_moves(moves);
-        moves.retain(|m| match *m {
-            Move::Castle { rook, king } =>
-                (rook.file() > king.file()) == (side == CastlingSide::KingSide),
-            _ => false
-        });
+        moves.retain(|m| m.castling_side().map_or(false, |s| side == s));
     }
 
     /// Generates en passant moves.
     fn en_passant_moves(&self, moves: &mut MoveList) {
         self.legal_moves(moves);
-        moves.retain(|m| match *m {
-            Move::EnPassant { .. } => true,
-            _ => false,
-        });
+        moves.retain(|m| m.is_en_passant());
     }
 
     /// Generates capture moves.
