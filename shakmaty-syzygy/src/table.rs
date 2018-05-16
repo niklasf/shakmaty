@@ -808,8 +808,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         // Check magic.
         let (magic, pawnless_magic) = match T::METRIC {
-            Metric::Wdl => (S::TBW.magic.clone(), S::PAWNLESS_TBW.clone().map(|t| t.magic)),
-            Metric::Dtz => (S::TBZ.magic.clone(), S::PAWNLESS_TBZ.clone().map(|t| t.magic)),
+            Metric::Wdl => (S::TBW.magic, S::PAWNLESS_TBW.map(|t| t.magic)),
+            Metric::Dtz => (S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
         let magic_ok = match pawnless_magic {
