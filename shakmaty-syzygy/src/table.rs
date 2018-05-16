@@ -836,10 +836,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let num_files = if has_pawns { 4 } else { 1 };
         let num_sides = if T::METRIC == Metric::Wdl && !material.is_symmetric() { 2 } else { 1 };
 
-        let mut groups: ArrayVec<[ArrayVec<[GroupData; 2]>; 4]> = ArrayVec::new();
         let mut ptr = 5;
 
-        for file in 0..num_files {
+        let groups = (0..num_files).map(|file| {
             let order = [
                 [raf.read_u8(ptr)? & 0xf, if pp { raf.read_u8(ptr + 1)? & 0xf } else { 0xf }],
                 [raf.read_u8(ptr)? >> 4, if pp { raf.read_u8(ptr + 1)? >> 4 } else { 0xf }],
@@ -856,9 +855,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
 
             ptr += material.count() as u64;
-
-            groups.push(sides);
-        }
+            Ok(sides)
+        }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
 
         let mut files: ArrayVec<[FileData; 4]> = ArrayVec::new();
         ptr += ptr & 1;
