@@ -178,5 +178,5 @@ https://tablebase.lichess.ovh/tables/standard/6-wdl/KQQQQvK.rtbw
 https://tablebase.lichess.ovh/tables/standard/6-dtz/KQQQQvK.rtbz
 https://tablebase.lichess.ovh/tables/standard/6-wdl/KQRNvKQ.rtbw
 https://tablebase.lichess.ovh/tables/standard/6-dtz/KQRNvKQ.rtbz
-https://tablebase.lichess.ovh/tables/standard/7/KQQQQQvK.rtbw
-https://tablebase.lichess.ovh/tables/standard/7/KQQQQQvK.rtbz
+https://tablebase.lichess.ovh/tables/standard/7/6v1_pawnless/KQQQQQvK.rtbw
+https://tablebase.lichess.ovh/tables/standard/7/6v1_pawnless/KQQQQQvK.rtbz
