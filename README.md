@@ -56,7 +56,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.7.2
   - Add `Outcome.winner()`.
 * 0.7.1
   - Minimum Rust version 1.26.0 (fused iterators, u128 conversions).
