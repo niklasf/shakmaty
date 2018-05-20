@@ -62,7 +62,7 @@ bitflags! {
     struct Layout: u8 {
         /// Two sided table for non-symmetrical material configuration.
         const SPLIT = 1;
-        /// Table with pawns. Has subtables for each leading pawn file.
+        /// Table with pawns. Has subtables for each leading pawn file (a-d).
         const HAS_PAWNS = 2;
     }
 }
