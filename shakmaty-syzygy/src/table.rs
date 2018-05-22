@@ -25,7 +25,7 @@ use bit_vec::BitVec;
 use byteorder::{BigEndian, ByteOrder, LittleEndian};
 use itertools::Itertools;
 use num_integer::binomial;
-use positioned_io::ReadAt;
+use positioned_io::{ReadAt, ReadBytesExt};
 
 use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 
@@ -393,12 +393,6 @@ impl RandomAccessFile {
         File::open(path).map(|file| RandomAccessFile { file })
     }
 
-    fn read_u8(&self, ptr: u64) -> SyzygyResult<u8> {
-        let mut buf = [0; 1];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        Ok(buf[0])
-    }
-
     fn read_u16_le(&self, ptr: u64) -> SyzygyResult<u16> {
         let mut buf = [0; 2];
         self.file.read_exact_at(ptr, &mut buf)?;
@@ -654,11 +648,11 @@ struct PairsData {
 
 impl PairsData {
     pub fn parse<S: Syzygy, T: TableTag>(raf: &RandomAccessFile, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
-        let flags = Flag::from_bits_truncate(raf.read_u8(ptr)?);
+        let flags = Flag::from_bits_truncate(raf.file.read_u8_at(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::METRIC == Metric::Wdl {
-                raf.read_u8(ptr + 1)?
+                raf.file.read_u8_at(ptr + 1)?
             } else if S::CAPTURES_COMPULSORY {
                 1 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
             } else {
@@ -823,7 +817,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Read layout flags.
-        let layout = Layout::from_bits_truncate(raf.read_u8(4)?);
+        let layout = Layout::from_bits_truncate(raf.file.read_u8_at(4)?);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
@@ -840,8 +834,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let files = (0..num_files).map(|file| {
             let order = [
-                [raf.read_u8(ptr)? & 0xf, if pp { raf.read_u8(ptr + 1)? & 0xf } else { 0xf }],
-                [raf.read_u8(ptr)? >> 4, if pp { raf.read_u8(ptr + 1)? >> 4 } else { 0xf }],
+                [raf.file.read_u8_at(ptr)? & 0xf, if pp { raf.file.read_u8_at(ptr + 1)? & 0xf } else { 0xf }],
+                [raf.file.read_u8_at(ptr)? >> 4, if pp { raf.file.read_u8_at(ptr + 1)? >> 4 } else { 0xf }],
             ];
 
             ptr += 1 + if pp { 1 } else { 0 };
@@ -893,7 +887,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     } else {
                         for i in 0..4 {
                             dtz_map.idx[i] = (ptr - map + 1) as u16;
-                            ptr += u64::from(raf.read_u8(ptr)?) + 1;
+                            ptr += u64::from(raf.file.read_u8_at(ptr)?) + 1;
                         }
                     }
 
@@ -1017,7 +1011,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let w = d.btree + 3 * u64::from(sym);
         match T::METRIC {
-            Metric::Wdl => self.raf.read_u8(w).map(u16::from),
+            Metric::Wdl => Ok(u16::from(self.raf.file.read_u8_at(w)?)),
             Metric::Dtz => self.raf.read_u16_le(w).map(|res| res & 0xfff),
         }
     }
@@ -1301,7 +1295,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             if side.flags.contains(Flag::WIDE_DTZ) {
                 self.raf.read_u16_le(map.u16_ptr(wdl, res))?
             } else {
-                u16::from(self.raf.read_u8(map.u8_ptr(wdl, res))?)
+                u16::from(self.raf.file.read_u8_at(map.u8_ptr(wdl, res))?)
             }
         } else {
             res
