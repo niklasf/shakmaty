@@ -327,6 +327,7 @@ lazy_static! {
 struct Consts {
     mult_idx: [[u64; 10]; 5],
     mult_factor: [u64; 5],
+
     map_pawns: [u64; 64],
     lead_pawn_idx: [[u64; 64]; 5],
     lead_pawns_size: [[u64; 4]; 5],
@@ -443,8 +444,8 @@ impl RandomAccessFile {
     }
 }
 
-/// Header byte to piece.
-fn byte_to_piece(p: u8) -> Option<Piece> {
+/// Header nibble to piece.
+fn nibble_to_piece(p: u8) -> Option<Piece> {
     let color = Color::from_white(p & 8 == 0);
     Some(match p & !8 {
         1 => color.pawn(),
@@ -470,7 +471,7 @@ fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: usize, side: Color) -> 
 
     let mut pieces = Pieces::new();
     for p in bytes {
-        pieces.push(u!(byte_to_piece(side.fold(*p & 0xf, *p >> 4))));
+        pieces.push(u!(nibble_to_piece(side.fold(*p & 0xf, *p >> 4))));
     }
 
     Ok(pieces)
