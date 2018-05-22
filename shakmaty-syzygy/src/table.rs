@@ -22,7 +22,7 @@ use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
-use byteorder::{BigEndian, ByteOrder, LittleEndian};
+use byteorder::{ByteOrder, BigEndian as BE, LittleEndian as LE};
 use itertools::Itertools;
 use num_integer::binomial;
 use positioned_io::{ReadAt, ReadBytesExt};
@@ -383,45 +383,10 @@ impl Consts {
     }
 }
 
-#[derive(Debug)]
-struct RandomAccessFile {
-    file: File,
-}
-
-impl RandomAccessFile {
-    fn open<P: AsRef<Path>>(path: P) -> io::Result<RandomAccessFile> {
-        File::open(path).map(|file| RandomAccessFile { file })
-    }
-
-    fn read_u16_le(&self, ptr: u64) -> SyzygyResult<u16> {
-        let mut buf = [0; 2];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        Ok(LittleEndian::read_u16(&buf))
-    }
-
-    fn read_u32_le(&self, ptr: u64) -> SyzygyResult<u32> {
-        let mut buf = [0; 4];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        Ok(LittleEndian::read_u32(&buf))
-    }
-
-    fn read_u32_be(&self, ptr: u64) -> SyzygyResult<u32> {
-        let mut buf = [0; 4];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        Ok(BigEndian::read_u32(&buf))
-    }
-
-    fn read_u64_be(&self, ptr: u64) -> SyzygyResult<u64> {
-        let mut buf = [0; 8];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        Ok(BigEndian::read_u64(&buf))
-    }
-}
-
 /// Read the magic header bytes from a file.
-fn read_magic<F: ReadAt>(file: &F) -> SyzygyResult<[u8; 4]> {
+fn read_magic<F: ReadAt>(raf: &F) -> SyzygyResult<[u8; 4]> {
     let mut buf = [0; 4];
-    if let Err(error) = file.read_exact_at(0, &mut buf) {
+    if let Err(error) = raf.read_exact_at(0, &mut buf) {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => Err(SyzygyError::Magic),
             _ => Err(SyzygyError::Read { error }),
@@ -432,9 +397,9 @@ fn read_magic<F: ReadAt>(file: &F) -> SyzygyResult<[u8; 4]> {
 }
 
 /// Read 3 byte Huffman tree node.
-fn read_lr<F: ReadAt>(file: &F, ptr: u64) -> io::Result<(u16, u16)> {
+fn read_lr<F: ReadAt>(raf: &F, ptr: u64) -> io::Result<(u16, u16)> {
     let mut buf = [0; 3];
-    file.read_exact_at(ptr, &mut buf)?;
+    raf.read_exact_at(ptr, &mut buf)?;
     let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
     let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
     Ok((left, right))
@@ -460,10 +425,10 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(raf: &RandomAccessFile, ptr: u64, count: usize, side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces<F: ReadAt>(raf: &F, ptr: u64, count: usize, side: Color) -> SyzygyResult<Pieces> {
     let mut buffer = [0; MAX_PIECES];
     let bytes = &mut buffer[..count];
-    raf.file.read_exact_at(ptr, bytes)?;
+    raf.read_exact_at(ptr, bytes)?;
 
     let mut pieces = Pieces::new();
     for p in bytes {
@@ -647,12 +612,12 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: TableTag>(raf: &RandomAccessFile, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
-        let flags = Flag::from_bits_truncate(raf.file.read_u8_at(ptr)?);
+    pub fn parse<S: Syzygy, T: TableTag, F: ReadAt>(raf: &F, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
+        let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::METRIC == Metric::Wdl {
-                raf.file.read_u8_at(ptr + 1)?
+                raf.read_u8_at(ptr + 1)?
             } else if S::CAPTURES_COMPULSORY {
                 1 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
             } else {
@@ -681,14 +646,14 @@ impl PairsData {
 
         // Read header.
         let mut header = [0; 10];
-        raf.file.read_exact_at(ptr, &mut header)?;
+        raf.read_exact_at(ptr, &mut header)?;
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
         let span = u!(1u32.checked_shl(u32::from(header[2])));
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = header[3];
-        let blocks_num = LittleEndian::read_u32(&header[4..]);
+        let blocks_num = LE::read_u32(&header[4..]);
         let block_length_size = blocks_num + u32::from(padding);
 
         let max_symlen = header[8];
@@ -704,8 +669,8 @@ impl PairsData {
             let ptr = lowest_sym + i as u64 * 2;
 
             base[i] = u!(u!(base[i + 1]
-                .checked_add(u64::from(raf.read_u16_le(ptr)?)))
-                .checked_sub(u64::from(raf.read_u16_le(ptr + 2)?))) / 2;
+                .checked_add(u64::from(raf.read_u16_at::<LE>(ptr)?)))
+                .checked_sub(u64::from(raf.read_u16_at::<LE>(ptr + 2)?))) / 2;
 
             ensure!(base[i] * 2 >= base[i + 1]);
         }
@@ -716,7 +681,7 @@ impl PairsData {
 
         // Initialize symlen.
         ptr += 10 + h as u64 * 2;
-        let sym = raf.read_u16_le(ptr)?;
+        let sym = raf.read_u16_at::<LE>(ptr)?;
         ptr += 2;
         let btree = ptr;
         let mut symlen = vec![0; usize::from(sym)];
@@ -755,13 +720,13 @@ impl PairsData {
 }
 
 /// Build the symlen table.
-fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
+fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
     if u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
 
     let ptr = btree + 3 * u64::from(sym);
-    let (left, right) = read_lr(&raf.file, ptr)?;
+    let (left, right) = read_lr(&raf, ptr)?;
 
     if right == 0xfff {
         symlen[usize::from(sym)] = 0;
@@ -787,7 +752,7 @@ pub struct Table<T: TableTag, P: Position + Syzygy> {
     is_wdl: PhantomData<T>,
     syzygy: PhantomData<P>,
 
-    raf: RandomAccessFile,
+    raf: File,
 
     material: Material,
 
@@ -800,24 +765,24 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
-        let raf = RandomAccessFile::open(path)?;
+        let raf = File::open(path)?;
         let material = material.clone();
 
         // Check magic.
-        let (magic, pawnless_magic) = match T::METRIC {
+        /* let (magic, pawnless_magic) = match T::METRIC {
             Metric::Wdl => (S::TBW.magic, S::PAWNLESS_TBW.map(|t| t.magic)),
             Metric::Dtz => (S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
-        let magic_header = read_magic(&raf.file)?;
+        let magic_header = read_magic(&raf)?;
         if magic != magic_header &&
-           (!material.has_pawns() || pawnless_magic.map_or(false, |m| m == magic))
+           (!material.has_pawns() || pawnless_magic.map_or(true, |m| m != magic))
         {
             return Err(SyzygyError::Magic);
-        }
+        } */
 
         // Read layout flags.
-        let layout = Layout::from_bits_truncate(raf.file.read_u8_at(4)?);
+        let layout = Layout::from_bits_truncate(raf.read_u8_at(4)?);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
@@ -834,8 +799,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let files = (0..num_files).map(|file| {
             let order = [
-                [raf.file.read_u8_at(ptr)? & 0xf, if pp { raf.file.read_u8_at(ptr + 1)? & 0xf } else { 0xf }],
-                [raf.file.read_u8_at(ptr)? >> 4, if pp { raf.file.read_u8_at(ptr + 1)? >> 4 } else { 0xf }],
+                [raf.read_u8_at(ptr)? & 0xf, if pp { raf.read_u8_at(ptr + 1)? & 0xf } else { 0xf }],
+                [raf.read_u8_at(ptr)? >> 4, if pp { raf.read_u8_at(ptr + 1)? >> 4 } else { 0xf }],
             ];
 
             ptr += 1 + if pp { 1 } else { 0 };
@@ -857,7 +822,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         // Setup pairs.
         let mut files = files.into_iter().map(|file| {
             let sides = file.into_iter().map(|side| {
-                let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&raf, ptr, side)?;
+                let (mut pairs, next_ptr) = PairsData::parse::<S, T, _>(&raf, ptr, side)?;
 
                 if T::METRIC == Metric::Dtz && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
                     pairs.min_symlen = 1;
@@ -882,12 +847,12 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for i in 0..4 {
                             dtz_map.idx[i] = ((ptr - map + 2) / 2) as u16;
-                            ptr += u64::from(raf.read_u16_le(ptr)?) * 2 + 2;
+                            ptr += u64::from(raf.read_u16_at::<LE>(ptr)?) * 2 + 2;
                         }
                     } else {
                         for i in 0..4 {
                             dtz_map.idx[i] = (ptr - map + 1) as u16;
-                            ptr += u64::from(raf.file.read_u8_at(ptr)?) + 1;
+                            ptr += u64::from(raf.read_u8_at(ptr)?) + 1;
                         }
                     }
 
@@ -945,8 +910,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let main_idx = idx / u64::from(d.span);
         ensure!(main_idx <= u64::from(u32::max_value()));
 
-        let mut block = self.raf.read_u32_le(d.sparse_index + 6 * main_idx)?;
-        let offset = i64::from(self.raf.read_u16_le(d.sparse_index + 6 * main_idx + 4)?);
+        let mut block = self.raf.read_u32_at::<LE>(d.sparse_index + 6 * main_idx)?;
+        let offset = i64::from(self.raf.read_u16_at::<LE>(d.sparse_index + 6 * main_idx + 4)?);
 
         let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         lit_idx += offset;
@@ -954,17 +919,17 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         // Now move forwards/backwards to find the correct block.
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
-            lit_idx += i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
+            lit_idx += i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
         }
-        while lit_idx > i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) {
-            lit_idx -= i64::from(self.raf.read_u16_le(d.block_lengths + u64::from(block) * 2)?) + 1;
+        while lit_idx > i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) {
+            lit_idx -= i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
             block = u!(block.checked_add(1));
         }
 
         // Find sym, the Huffman symbol that encodes the value for idx.
         let mut ptr = u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size)));
 
-        let mut buf = self.raf.read_u64_be(ptr)?;
+        let mut buf = self.raf.read_u64_at::<BE>(ptr)?;
         ptr += 8;
         let mut buf_size = 64;
 
@@ -978,7 +943,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
 
             sym = ((buf - d.base[len]) >> (64 - len - usize::from(d.min_symlen))) as u16;
-            sym += self.raf.read_u16_le(d.lowest_sym + 2 * len as u64)?;
+            sym += self.raf.read_u16_at::<LE>(d.lowest_sym + 2 * len as u64)?;
 
             if lit_idx < i64::from(*u!(d.symlen.get(usize::from(sym)))) + 1 {
                 break;
@@ -992,14 +957,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             // Refill the buffer.
             if buf_size <= 32 {
                 buf_size += 32;
-                buf |= u64::from(self.raf.read_u32_be(ptr)?) << (64 - buf_size);
+                buf |= u64::from(self.raf.read_u32_at::<BE>(ptr)?) << (64 - buf_size);
                 ptr += 4;
             }
         }
 
         // Decompress Huffman symbol.
         while *u!(d.symlen.get(usize::from(sym))) != 0 {
-            let (left, right) = read_lr(&self.raf.file, d.btree + 3 * u64::from(sym))?;
+            let (left, right) = read_lr(&self.raf, d.btree + 3 * u64::from(sym))?;
 
             if lit_idx < i64::from(*u!(d.symlen.get(usize::from(left)))) + 1 {
                 sym = left;
@@ -1011,8 +976,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let w = d.btree + 3 * u64::from(sym);
         match T::METRIC {
-            Metric::Wdl => Ok(u16::from(self.raf.file.read_u8_at(w)?)),
-            Metric::Dtz => self.raf.read_u16_le(w).map(|res| res & 0xfff),
+            Metric::Wdl => Ok(u16::from(self.raf.read_u8_at(w)?)),
+            Metric::Dtz => Ok(self.raf.read_u16_at::<LE>(w)? & 0xfff),
         }
     }
 
@@ -1293,9 +1258,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let res = i32::from(if let Some(ref map) = side.dtz_map {
             if side.flags.contains(Flag::WIDE_DTZ) {
-                self.raf.read_u16_le(map.u16_ptr(wdl, res))?
+                self.raf.read_u16_at::<LE>(map.u16_ptr(wdl, res))?
             } else {
-                u16::from(self.raf.file.read_u8_at(map.u8_ptr(wdl, res))?)
+                u16::from(self.raf.read_u8_at(map.u8_ptr(wdl, res))?)
             }
         } else {
             res
