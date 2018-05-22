@@ -422,14 +422,6 @@ impl RandomAccessFile {
         self.file.read_exact_at(ptr, &mut buf)?;
         Ok(BigEndian::read_u64(&buf))
     }
-
-    fn read_lr(&self, ptr: u64) -> SyzygyResult<(u16, u16)> {
-        let mut buf = [0; 3];
-        self.file.read_exact_at(ptr, &mut buf)?;
-        let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
-        let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
-        Ok((left, right))
-    }
 }
 
 /// Read the magic header bytes from a file.
@@ -443,6 +435,15 @@ fn read_magic<F: ReadAt>(file: &F) -> SyzygyResult<[u8; 4]> {
     } else {
         Ok(buf)
     }
+}
+
+/// Read 3 byte Huffman tree node.
+fn read_lr<F: ReadAt>(file: &F, ptr: u64) -> io::Result<(u16, u16)> {
+    let mut buf = [0; 3];
+    file.read_exact_at(ptr, &mut buf)?;
+    let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
+    let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
+    Ok((left, right))
 }
 
 /// Header nibble to piece.
@@ -766,7 +767,7 @@ fn read_symlen(raf: &RandomAccessFile, btree: u64, symlen: &mut Vec<u8>, visited
     }
 
     let ptr = btree + 3 * u64::from(sym);
-    let (left, right) = raf.read_lr(ptr)?;
+    let (left, right) = read_lr(&raf.file, ptr)?;
 
     if right == 0xfff {
         symlen[usize::from(sym)] = 0;
@@ -1004,7 +1005,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         // Decompress Huffman symbol.
         while *u!(d.symlen.get(usize::from(sym))) != 0 {
-            let (left, right) = self.raf.read_lr(d.btree + 3 * u64::from(sym))?;
+            let (left, right) = read_lr(&self.raf.file, d.btree + 3 * u64::from(sym))?;
 
             if lit_idx < i64::from(*u!(d.symlen.get(usize::from(left)))) + 1 {
                 sym = left;
