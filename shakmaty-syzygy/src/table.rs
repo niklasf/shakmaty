@@ -996,7 +996,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         // For pawns there are subtables for each file (a, b, c, d) the
         // leading pawn can be placed on.
-        let file = if material.has_pawns() {
+        let file = &self.files[if material.has_pawns() {
             let reference_pawn = self.files[0].sides[0].groups.pieces[0];
             assert_eq!(reference_pawn.role, Role::Pawn);
             let color = reference_pawn.color ^ flip;
@@ -1018,10 +1018,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
         } else {
             0
-        };
+        }];
 
         // WDL tables have subtables for each side to move.
-        let side = &self.files[file].sides[if bside { self.files[file].sides.len() - 1 } else { 0 }];
+        let side = &file.sides[if bside { file.sides.len() - 1 } else { 0 }];
 
         // DTZ tables store only one side to move. It is possible that we have
         // to check the other side (by doing a brief alpha-beta search).
