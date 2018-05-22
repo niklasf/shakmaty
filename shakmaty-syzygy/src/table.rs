@@ -430,17 +430,18 @@ impl RandomAccessFile {
         let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
         Ok((left, right))
     }
+}
 
-    fn starts_with_magic(&self, magic: &[u8; 4]) -> SyzygyResult<bool> {
-        let mut buf = [0; 4];
-        if let Err(error) = self.file.read_exact_at(0, &mut buf) {
-            match error.kind() {
-                io::ErrorKind::UnexpectedEof => Ok(false),
-                _ => Err(SyzygyError::Read { error }),
-            }
-        } else {
-            Ok(&buf == magic)
+/// Read the magic header bytes from a file.
+fn read_magic<F: ReadAt>(file: &F) -> SyzygyResult<[u8; 4]> {
+    let mut buf = [0; 4];
+    if let Err(error) = file.read_exact_at(0, &mut buf) {
+        match error.kind() {
+            io::ErrorKind::UnexpectedEof => Err(SyzygyError::Magic),
+            _ => Err(SyzygyError::Read { error }),
         }
+    } else {
+        Ok(buf)
     }
 }
 
@@ -813,13 +814,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             Metric::Dtz => (S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
-        let magic_ok = match pawnless_magic {
-            _ if raf.starts_with_magic(&magic)? => true,
-            Some(ref pawnless_magic) => !material.has_pawns() && raf.starts_with_magic(pawnless_magic)?,
-            None => false,
-        };
-
-        if !magic_ok {
+        let magic_header = read_magic(&raf.file)?;
+        if magic != magic_header &&
+           (!material.has_pawns() || pawnless_magic.map_or(false, |m| m == magic))
+        {
             return Err(SyzygyError::Magic);
         }
 
