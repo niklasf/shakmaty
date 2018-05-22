@@ -22,10 +22,10 @@ use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
-use byteorder::{ByteOrder, BigEndian as BE, LittleEndian as LE};
+use byteorder::{ByteOrder, BigEndian as BE, LittleEndian as LE, ReadBytesExt};
 use itertools::Itertools;
 use num_integer::binomial;
-use positioned_io::{ReadAt, ReadBytesExt};
+use positioned_io::{Cursor, ReadAt, ReadBytesExt as ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 
@@ -927,10 +927,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Find sym, the Huffman symbol that encodes the value for idx.
-        let mut ptr = u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size)));
+        let mut cursor = Cursor::new_pos(&self.raf, u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size))));
 
-        let mut buf = self.raf.read_u64_at::<BE>(ptr)?;
-        ptr += 8;
+        let mut buf = cursor.read_u64::<BE>()?;
         let mut buf_size = 64;
 
         let mut sym;
@@ -957,8 +956,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             // Refill the buffer.
             if buf_size <= 32 {
                 buf_size += 32;
-                buf |= u64::from(self.raf.read_u32_at::<BE>(ptr)?) << (64 - buf_size);
-                ptr += 4;
+                buf |= u64::from(cursor.read_u32::<BE>()?) << (64 - buf_size);
             }
         }
 
