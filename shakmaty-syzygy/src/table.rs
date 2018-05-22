@@ -383,8 +383,8 @@ impl Consts {
     }
 }
 
-/// Read the magic header bytes from a file.
-fn read_magic<F: ReadAt>(raf: &F) -> SyzygyResult<[u8; 4]> {
+/// Read the magic header bytes that identify a tablebase file.
+fn read_magic_header<F: ReadAt>(raf: &F) -> SyzygyResult<[u8; 4]> {
     let mut buf = [0; 4];
     if let Err(error) = raf.read_exact_at(0, &mut buf) {
         match error.kind() {
@@ -769,17 +769,17 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         let material = material.clone();
 
         // Check magic.
-        /* let (magic, pawnless_magic) = match T::METRIC {
+        let (magic, pawnless_magic) = match T::METRIC {
             Metric::Wdl => (S::TBW.magic, S::PAWNLESS_TBW.map(|t| t.magic)),
             Metric::Dtz => (S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
-        let magic_header = read_magic(&raf)?;
+        let magic_header = read_magic_header(&raf)?;
         if magic != magic_header &&
-           (!material.has_pawns() || pawnless_magic.map_or(true, |m| m != magic))
+           (material.has_pawns() || !pawnless_magic.map_or(false, |m| m == magic_header))
         {
             return Err(SyzygyError::Magic);
-        } */
+        }
 
         // Read layout flags.
         let layout = Layout::from_bits_truncate(raf.read_u8_at(4)?);
