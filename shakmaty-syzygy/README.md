@@ -39,6 +39,8 @@ Documentation
 Changelog
 ---------
 
+* 0.4.5
+  - Make better use of `positioned-io` (cursor, remove `RandomAccessFile`).
 * 0.4.4
   - Remove work around from 0.3.1.
   - Minor internal optimizations and cleanups.
