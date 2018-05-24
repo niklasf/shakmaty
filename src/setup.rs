@@ -69,15 +69,17 @@ impl<S: Setup> Setup for SwapTurn<S> {
 /// Castling paths and unmoved rooks.
 #[derive(Clone, Debug)]
 pub struct Castles {
-    chess960: bool,
+    mask: Bitboard,
     rook: [[Option<Square>; 2]; 2],
     path: [[Bitboard; 2]; 2],
+    chess960: bool,
 }
 
 impl Default for Castles {
     fn default() -> Castles {
         Castles {
             chess960: false,
+            mask: Bitboard::CORNERS,
             rook: [
                 [Some(Square::H8), Some(Square::A8)], // black
                 [Some(Square::H1), Some(Square::A1)], // white
@@ -130,6 +132,11 @@ impl Castles {
             }
         }
 
+        castles.mask.extend(castles.rook[0][0]);
+        castles.mask.extend(castles.rook[0][1]);
+        castles.mask.extend(castles.rook[1][0]);
+        castles.mask.extend(castles.rook[1][1]);
+
         if castles.castling_rights() == castling_rights {
             Ok(castles)
         } else {
@@ -138,14 +145,11 @@ impl Castles {
     }
 
     pub fn any(&self) -> bool {
-        self.rook[0][0].is_some() ||
-        self.rook[0][1].is_some() ||
-        self.rook[1][0].is_some() ||
-        self.rook[1][1].is_some()
+        self.mask.any()
     }
 
     pub fn is_empty(&self) -> bool {
-        !self.any()
+        self.mask.is_empty()
     }
 
     pub fn has_side(&self, color: Color) -> bool {
@@ -154,13 +158,16 @@ impl Castles {
     }
 
     pub fn discard_rook(&mut self, square: Square) {
-        self.rook[0][0] = OptionFilterExt::filter(self.rook[0][0], |sq| *sq != square);
-        self.rook[0][1] = OptionFilterExt::filter(self.rook[0][1], |sq| *sq != square);
-        self.rook[1][0] = OptionFilterExt::filter(self.rook[1][0], |sq| *sq != square);
-        self.rook[1][1] = OptionFilterExt::filter(self.rook[1][1], |sq| *sq != square);
+        if self.mask.remove(square) {
+            self.rook[0][0] = OptionFilterExt::filter(self.rook[0][0], |sq| *sq != square);
+            self.rook[0][1] = OptionFilterExt::filter(self.rook[0][1], |sq| *sq != square);
+            self.rook[1][0] = OptionFilterExt::filter(self.rook[1][0], |sq| *sq != square);
+            self.rook[1][1] = OptionFilterExt::filter(self.rook[1][1], |sq| *sq != square);
+        }
     }
 
     pub fn discard_side(&mut self, color: Color) {
+        self.mask.discard_all(Bitboard::relative_rank(color, 0));
         self.rook[color as usize] = [None, None];
     }
 
@@ -174,13 +181,9 @@ impl Castles {
         self.path[color as usize][side as usize]
     }
 
+    #[inline]
     pub fn castling_rights(&self) -> Bitboard {
-        let mut mask = Bitboard(0);
-        mask.extend(self.rook[0][0]);
-        mask.extend(self.rook[0][1]);
-        mask.extend(self.rook[1][0]);
-        mask.extend(self.rook[1][1]);
-        mask
+        self.mask
     }
 
     pub fn is_chess960(&self) -> bool {
@@ -189,6 +192,7 @@ impl Castles {
 
     pub(crate) const EMPTY: Castles = Castles {
         chess960: false,
+        mask: Bitboard(0),
         rook: [[None; 2]; 2],
         path: [[Bitboard(0); 2]; 2],
     };
