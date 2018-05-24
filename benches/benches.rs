@@ -3,7 +3,7 @@ extern crate bencher;
 extern crate shakmaty;
 
 use bencher::{black_box, Bencher};
-use shakmaty::{perft, Chess, Color, Move, MoveList, Position, Role, Setup, Square};
+use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square};
 use shakmaty::san::San;
 use shakmaty::fen::Fen;
 
@@ -18,16 +18,7 @@ fn bench_deep_perft(b: &mut Bencher) {
 }
 
 fn bench_parse_san_move_complicated(b: &mut Bencher) {
-    b.iter(|| {
-        assert_eq!(San::from_bytes(black_box(b"bxc1=R+")), Ok(San::Normal {
-            role: Role::Pawn,
-            file: Some(1),
-            rank: None,
-            capture: true,
-            to: Square::C1,
-            promotion: Some(Role::Rook),
-        }));
-    });
+    b.iter(|| San::from_bytes(black_box(b"bxc1=R+")));
 }
 
 fn bench_generate_moves(b: &mut Bencher) {
@@ -62,7 +53,7 @@ fn bench_play_unchecked(b: &mut Bencher) {
     b.iter(|| {
         let mut pos = black_box(pos.clone());
         pos.play_unchecked(&m);
-        assert_eq!(pos.turn(), Color::White);
+        pos
     });
 }
 
