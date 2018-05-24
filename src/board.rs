@@ -259,6 +259,7 @@ impl Board {
         })
     }
 
+    #[inline]
     pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.by_color(attacker) & (
             (attacks::rook_attacks(sq, occupied) & self.rooks_and_queens()) |
