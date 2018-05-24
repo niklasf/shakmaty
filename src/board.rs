@@ -46,18 +46,17 @@ use bitboard::Bitboard;
 /// [`Piece`]: struct.Piece.html
 #[derive(Clone, Eq, PartialEq)]
 pub struct Board {
-    occupied: Bitboard,
     occupied_co: [Bitboard; 2], // indexed by Color
-    pieces: [Bitboard; 6],      // indexed by Role
+    occupied: [Bitboard; 7], // all and pieces indexed by Role
     promoted: Bitboard,
 }
 
 impl Board {
     pub fn new() -> Board {
         Board {
-            occupied: Bitboard(0xffff_0000_0000_ffff),
             occupied_co: [Bitboard(0xffff_0000_0000_0000), Bitboard(0xffff)],
-            pieces: [
+            occupied: [
+                Bitboard(0xffff_0000_0000_ffff),
                 Bitboard(0x00ff_0000_0000_ff00), // pawns
                 Bitboard(0x4200_0000_0000_0042), // knights
                 Bitboard(0x2400_0000_0000_0024), // bishops
@@ -71,19 +70,18 @@ impl Board {
 
     pub fn empty() -> Board {
         Board {
-            occupied: Bitboard(0),
             occupied_co: [Bitboard(0), Bitboard(0)],
-            pieces: [Bitboard(0); 6],
+            occupied: [Bitboard(0); 7],
             promoted: Bitboard(0),
         }
     }
 
     pub fn racing_kings() -> Board {
         Board {
-            occupied: Bitboard(0xffff),
             occupied_co: [Bitboard(0x0f0f), Bitboard(0xf0f0)],
-            pieces: [
-                Bitboard(0), // pawns
+            occupied: [
+                Bitboard(0xffff),
+                Bitboard(0x0000), // pawns
                 Bitboard(0x1818), // knights
                 Bitboard(0x2424), // bishops
                 Bitboard(0x4242), // rooks
@@ -96,12 +94,12 @@ impl Board {
 
     pub fn horde() -> Board {
         Board {
-            occupied: Bitboard(0xffff_0066_ffff_ffff),
             occupied_co: [
                 Bitboard(0xffff_0000_0000_0000), // black
                 Bitboard(0x0000_0066_ffff_ffff), // white
             ],
-            pieces: [
+            occupied: [
+                Bitboard(0xffff_0066_ffff_ffff),
                 Bitboard(0x00ff_0066_ffff_ffff), // pawns
                 Bitboard(0x4200_0000_0000_0000), // knights
                 Bitboard(0x2400_0000_0000_0000), // bishops
@@ -114,20 +112,20 @@ impl Board {
     }
 
     #[inline]
-    pub fn occupied(&self) -> Bitboard { self.occupied }
+    pub fn occupied(&self) -> Bitboard { self.occupied[0] }
 
     #[inline]
-    pub fn pawns(&self)   -> Bitboard { self.pieces[Role::Pawn as usize] }
+    pub fn pawns(&self)   -> Bitboard { self.occupied[Role::Pawn as usize] }
     #[inline]
-    pub fn knights(&self) -> Bitboard { self.pieces[Role::Knight as usize] }
+    pub fn knights(&self) -> Bitboard { self.occupied[Role::Knight as usize] }
     #[inline]
-    pub fn bishops(&self) -> Bitboard { self.pieces[Role::Bishop as usize] }
+    pub fn bishops(&self) -> Bitboard { self.occupied[Role::Bishop as usize] }
     #[inline]
-    pub fn rooks(&self)   -> Bitboard { self.pieces[Role::Rook as usize] }
+    pub fn rooks(&self)   -> Bitboard { self.occupied[Role::Rook as usize] }
     #[inline]
-    pub fn queens(&self)  -> Bitboard { self.pieces[Role::Queen as usize] }
+    pub fn queens(&self)  -> Bitboard { self.occupied[Role::Queen as usize] }
     #[inline]
-    pub fn kings(&self)   -> Bitboard { self.pieces[Role::King as usize] }
+    pub fn kings(&self)   -> Bitboard { self.occupied[Role::King as usize] }
 
     #[inline]
     pub fn white(&self) -> Bitboard { self.occupied_co[Color::White as usize] }
@@ -168,7 +166,7 @@ impl Board {
 
     #[inline]
     pub fn role_at(&self, sq: Square) -> Option<Role> {
-        if !self.occupied.contains(sq) {
+        if !self.occupied[0].contains(sq) {
             None // catch early
         } else if self.pawns().contains(sq) {
             Some(Role::Pawn)
@@ -197,7 +195,7 @@ impl Board {
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         let piece = self.piece_at(sq);
         if let Some(p) = piece {
-            self.occupied.flip(sq);
+            self.occupied[0].flip(sq);
             self.by_color_mut(p.color).flip(sq);
             self.by_role_mut(p.role).flip(sq);
             self.promoted.discard(sq);
@@ -207,22 +205,22 @@ impl Board {
 
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
-        self.occupied.discard(sq);
         self.occupied_co[0].discard(sq);
         self.occupied_co[1].discard(sq);
-        self.pieces[0].discard(sq);
-        self.pieces[1].discard(sq);
-        self.pieces[2].discard(sq);
-        self.pieces[3].discard(sq);
-        self.pieces[4].discard(sq);
-        self.pieces[5].discard(sq);
+        self.occupied[0].discard(sq);
+        self.occupied[1].discard(sq);
+        self.occupied[2].discard(sq);
+        self.occupied[3].discard(sq);
+        self.occupied[4].discard(sq);
+        self.occupied[5].discard(sq);
+        self.occupied[6].discard(sq);
         self.promoted.discard(sq);
     }
 
     #[inline]
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
         self.discard_piece_at(sq);
-        self.occupied.flip(sq);
+        self.occupied[0].flip(sq);
         self.by_color_mut(color).flip(sq);
         self.by_role_mut(role).flip(sq);
         if promoted {
@@ -242,12 +240,12 @@ impl Board {
 
     #[inline]
     pub fn by_role(&self, role: Role) -> Bitboard {
-        self.pieces[role as usize]
+        self.occupied[role as usize]
     }
 
     #[inline]
     fn by_role_mut(&mut self, role: Role) -> &mut Bitboard {
-        &mut self.pieces[role as usize]
+        &mut self.occupied[role as usize]
     }
 
     #[inline]
@@ -257,7 +255,7 @@ impl Board {
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
         self.piece_at(sq).map_or(Bitboard(0), |piece| {
-            attacks::attacks(sq, piece, self.occupied)
+            attacks::attacks(sq, piece, self.occupied[0])
         })
     }
 
