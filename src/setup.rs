@@ -153,8 +153,7 @@ impl Castles {
     }
 
     pub fn has_side(&self, color: Color) -> bool {
-        let side = self.rook[color as usize];
-        side[0].is_some() || side[1].is_some()
+        (self.mask & Bitboard::relative_rank(color, 0)).any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {
