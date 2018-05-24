@@ -1475,14 +1475,9 @@ fn do_move(board: &mut Board,
            m: &Move) {
     let color = *turn;
     ep_square.take();
-    *halfmove_clock = halfmove_clock.saturating_add(1);
 
     match *m {
         Move::Normal { role, from, capture, to, promotion } => {
-            if role == Role::Pawn || capture.is_some() {
-                *halfmove_clock = 0;
-            }
-
             if role == Role::Pawn && (from - to == 16 || from - to == -16) {
                 *ep_square = from.offset(color.fold(8, -8));
             }
@@ -1517,12 +1512,17 @@ fn do_move(board: &mut Board,
             board.discard_piece_at(to.combine(from)); // captured pawn
             board.discard_piece_at(from);
             board.set_piece_at(to, color.pawn(), false);
-            *halfmove_clock = 0;
         }
         Move::Put { role, to } => {
             board.set_piece_at(to, Piece { color, role }, false);
         }
     }
+
+    *halfmove_clock = if m.is_zeroing() {
+        0
+    } else {
+        halfmove_clock.saturating_add(1)
+    };
 
     if color.is_black() {
         *fullmoves = fullmoves.saturating_add(1);
