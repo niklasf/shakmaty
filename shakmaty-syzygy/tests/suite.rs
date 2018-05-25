@@ -34,11 +34,15 @@ fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
 
         println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
 
-        let wdl = tables.probe_wdl(&pos).expect("probe wdl");
-        assert_eq!(i8::from(wdl), expected_wdl);
+        match tables.probe_wdl(&pos) {
+            Ok(wdl) => assert_eq!(i8::from(wdl), expected_wdl),
+            Err(err) => panic!("probe wdl: {}", err),
+        }
 
-        let dtz = tables.probe_dtz(&pos).expect("probe dtz");
-        assert_eq!(i32::from(dtz), expected_dtz);
+        match tables.probe_dtz(&pos) {
+            Ok(dtz) => assert_eq!(i32::from(dtz), expected_dtz),
+            Err(err) => panic!("probe dtz: {}", err),
+        }
     }
 }
 
