@@ -733,7 +733,10 @@ fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &m
 
         read_symlen(raf, btree, symlen, visited, left, depth)?;
         read_symlen(raf, btree, symlen, visited, right, depth)?;
-        symlen[usize::from(sym)] = symlen[usize::from(left)] + symlen[usize::from(right)] + 1;
+
+        symlen[usize::from(sym)] = u!(u!(symlen[usize::from(left)]
+            .checked_add(symlen[usize::from(right)]))
+            .checked_add(1))
     }
 
     visited.set(usize::from(sym), true);
