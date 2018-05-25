@@ -11,14 +11,13 @@ use std::io::Write;
 
 use shakmaty::Chess;
 use shakmaty::fen::Fen;
-use shakmaty_syzygy::{Tablebase, Syzygy};
+use shakmaty_syzygy::Tablebase;
 
 fuzz_target!(|data: &[u8]| {
     let dir = tempfile::tempdir().expect("tempdir");
     let table_path = dir.path().join("KQvK.rtbw");
 
     let mut table_file = File::create(table_path).expect("create file");
-    //table_file.write_all(&Chess::TBW.magic).expect("write magic");
     table_file.write_all(data).expect("write");
 
     let mut tablebase = Tablebase::new();
