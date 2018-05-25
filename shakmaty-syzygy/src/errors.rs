@@ -48,8 +48,10 @@ pub enum SyzygyError {
         error: io::Error
     },
     /// Table file has unexpected magic header bytes.
-    #[fail(display = "table file has invalid magic bytes")]
-    Magic,
+    #[fail(display = "table file has invalid magic bytes: {:x?}", magic)]
+    Magic {
+        magic: [u8; 4],
+    },
     /// Corrupted table.
     #[fail(display = "corrupted table")]
     CorruptedTable(Backtrace),

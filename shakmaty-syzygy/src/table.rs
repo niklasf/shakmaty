@@ -388,7 +388,7 @@ fn read_magic_header<F: ReadAt>(raf: &F) -> SyzygyResult<[u8; 4]> {
     let mut buf = [0; 4];
     if let Err(error) = raf.read_exact_at(0, &mut buf) {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => Err(SyzygyError::Magic),
+            io::ErrorKind::UnexpectedEof => Err(SyzygyError::Magic { magic: buf }),
             _ => Err(SyzygyError::Read { error }),
         }
     } else {
@@ -778,7 +778,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         if magic != magic_header &&
            (material.has_pawns() || !pawnless_magic.map_or(false, |m| m == magic_header))
         {
-            return Err(SyzygyError::Magic);
+            return Err(SyzygyError::Magic { magic: magic_header });
         }
 
         // Read layout flags.
