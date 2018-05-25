@@ -652,6 +652,8 @@ impl PairsData {
 
         let max_symlen = header[8];
         let min_symlen = header[9];
+        ensure!(max_symlen <= 16);
+        ensure!(min_symlen <= 16);
         ensure!(max_symlen >= min_symlen);
         let h = usize::from(max_symlen - min_symlen + 1);
 
