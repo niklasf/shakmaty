@@ -24,7 +24,7 @@ fuzz_target!(|data: &[u8]| {
     let mut tablebase = Tablebase::new();
     tablebase.add_directory(dir.path()).expect("add directory");
 
-    let pos: Chess = "4k3/8/8/8/8/8/8/3QK3 w - - 0 1"
+    let pos: Chess = "8/2K5/8/8/8/8/3p4/1k2N3 b - - 0 1"
         .parse::<Fen>()
         .expect("valid fen")
         .position()

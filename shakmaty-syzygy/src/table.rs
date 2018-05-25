@@ -819,6 +819,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         ptr += ptr & 1;
 
+        // Ensure material is consistent with first file.
+        for file in files.iter() {
+            for side in file.iter() {
+                let key = Material::from_iter(side.pieces.clone());
+                ensure!(key == Material::from_iter(files[0][0].pieces.clone()));
+            }
+        }
+
         // Setup pairs.
         let mut files = files.into_iter().map(|file| {
             let sides = file.into_iter().map(|side| {
