@@ -58,8 +58,8 @@ impl Bitboard {
     ///
     /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn rank(rank: i8) -> Bitboard {
-        // Note that a negative rank can not wrap around back into range.
+    pub fn rank(rank: i32) -> Bitboard {
+        assert!(0 <= rank);
         Bitboard(RANKS[rank as usize])
     }
 
@@ -69,8 +69,8 @@ impl Bitboard {
     ///
     /// Panics if `file` is not in the range `0..=7`.
     #[inline]
-    pub fn file(file: i8) -> Bitboard {
-        // Note that a negative file can not wrap around back into range.
+    pub fn file(file: i32) -> Bitboard {
+        assert!(0 <= file);
         Bitboard(FILES[file as usize])
     }
 
@@ -80,7 +80,7 @@ impl Bitboard {
     ///
     /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
+    pub fn relative_rank(color: Color, rank: i32) -> Bitboard {
         Bitboard::rank(color.fold(rank, 7 - rank))
     }
 
@@ -179,7 +179,7 @@ impl Bitboard {
         } else {
             // This is safe, because a non-zero u64 can have at most
             // 63 trailing zeros.
-            Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as i8) })
+            Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as i32) })
         }
     }
 
@@ -441,7 +441,7 @@ impl Iterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) })
+            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i32) })
         }
     }
 }
@@ -473,7 +473,7 @@ impl DoubleEndedIterator for Bitboard {
         } else {
             // This is safe because a non-zero u64 has between 0 and
             // 63 (included) leading zeros.
-            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
+            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i32) };
             *self ^= Bitboard::from_square(sq);
             Some(sq)
         }
