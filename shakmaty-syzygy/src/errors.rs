@@ -16,6 +16,8 @@
 
 use std::io;
 
+use failure::Backtrace;
+
 use material::Material;
 
 /// A [`Result`] type for Syzygy tablebase probes.
@@ -49,17 +51,14 @@ pub enum SyzygyError {
     #[fail(display = "table file has invalid magic bytes")]
     Magic,
     /// Corrupted table.
-    #[fail(display = "corrupted table (detected in {} l. {})", file, line)]
-    CorruptedTable {
-        file: &'static str,
-        line: u32
-    },
+    #[fail(display = "corrupted table")]
+    CorruptedTable(Backtrace),
 }
 
 impl From<io::Error> for SyzygyError {
     fn from(error: io::Error) -> SyzygyError {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable { file: file!(), line: line!() },
+            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable(Backtrace::new()),
             _ => SyzygyError::Read { error },
         }
     }
@@ -68,10 +67,7 @@ impl From<io::Error> for SyzygyError {
 /// Return a `CorruptedTable` error.
 macro_rules! throw {
     () => {
-        return Err(SyzygyError::CorruptedTable {
-            file: file!(),
-            line: line!(),
-        })
+        return Err(SyzygyError::CorruptedTable(::failure::Backtrace::new()))
     }
 }
 
