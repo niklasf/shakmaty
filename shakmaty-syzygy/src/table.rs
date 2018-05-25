@@ -651,9 +651,10 @@ impl PairsData {
         let block_length_size = u!(blocks_num.checked_add(u32::from(padding)));
 
         let max_symlen = header[8];
+        ensure!(max_symlen <= 32);
         let min_symlen = header[9];
-        ensure!(max_symlen <= 16);
-        ensure!(min_symlen <= 16);
+        ensure!(min_symlen <= 32);
+
         ensure!(max_symlen >= min_symlen);
         let h = usize::from(max_symlen - min_symlen + 1);
 
