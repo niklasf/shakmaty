@@ -29,15 +29,9 @@ use positioned_io::{Cursor, ReadAt, ReadBytesExt as ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
 
-use errors::{SyzygyError, SyzygyResult};
+use errors::{ProbeError, ProbeResult};
 use material::Material;
-use types::{Dtz, Pieces, Syzygy, Wdl, MAX_PIECES};
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Metric {
-    Wdl,
-    Dtz,
-}
+use types::{Dtz, Pieces, Syzygy, Wdl, Metric, MAX_PIECES};
 
 pub trait TableTag {
     const METRIC: Metric;
@@ -384,12 +378,12 @@ impl Consts {
 }
 
 /// Read the magic header bytes that identify a tablebase file.
-fn read_magic_header<F: ReadAt>(raf: &F) -> SyzygyResult<[u8; 4]> {
+fn read_magic_header<F: ReadAt>(raf: &F) -> ProbeResult<[u8; 4]> {
     let mut buf = [0; 4];
     if let Err(error) = raf.read_exact_at(0, &mut buf) {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => Err(SyzygyError::Magic { magic: buf }),
-            _ => Err(SyzygyError::Read { error }),
+            io::ErrorKind::UnexpectedEof => Err(ProbeError::Magic { magic: buf }),
+            _ => Err(ProbeError::Read { error }),
         }
     } else {
         Ok(buf)
@@ -425,7 +419,7 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces<F: ReadAt>(raf: &F, ptr: u64, count: usize, side: Color) -> SyzygyResult<Pieces> {
+fn parse_pieces<F: ReadAt>(raf: &F, ptr: u64, count: usize, side: Color) -> ProbeResult<Pieces> {
     let mut buffer = [0; MAX_PIECES];
     let bytes = &mut buffer[..count];
     raf.read_exact_at(ptr, bytes)?;
@@ -476,7 +470,7 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> SyzygyResult<GroupData> {
+    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> ProbeResult<GroupData> {
         ensure!(pieces.len() >= 2);
 
         let material = Material::from_iter(pieces.clone());
@@ -612,7 +606,7 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: TableTag, F: ReadAt>(raf: &F, mut ptr: u64, groups: GroupData) -> SyzygyResult<(PairsData, u64)> {
+    pub fn parse<S: Syzygy, T: TableTag, F: ReadAt>(raf: &F, mut ptr: u64, groups: GroupData) -> ProbeResult<(PairsData, u64)> {
         let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
@@ -720,7 +714,7 @@ impl PairsData {
 }
 
 /// Build the symlen table.
-fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> SyzygyResult<()> {
+fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> ProbeResult<()> {
     if u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
@@ -764,7 +758,7 @@ pub struct Table<T: TableTag, P: Position + Syzygy> {
 impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> SyzygyResult<Table<T, S>> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<Table<T, S>> {
         let raf = File::open(path)?;
         let material = material.clone();
 
@@ -778,7 +772,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         if magic != magic_header &&
            (material.has_pawns() || !pawnless_magic.map_or(false, |m| m == magic_header))
         {
-            return Err(SyzygyError::Magic { magic: magic_header });
+            return Err(ProbeError::Magic { magic: magic_header });
         }
 
         // Read layout flags.
@@ -810,12 +804,12 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 let key = Material::from_iter(pieces.clone());
                 ensure!(key == material || key.flipped() == material);
                 GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)
-            }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
+            }).collect::<ProbeResult<ArrayVec<[_; 2]>>>()?;
 
             ptr += material.count() as u64;
 
             Ok(sides)
-        }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
+        }).collect::<ProbeResult<ArrayVec<[_; 4]>>>()?;
 
         ptr += ptr & 1;
 
@@ -831,10 +825,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 ptr = next_ptr;
 
                 Ok(pairs)
-            }).collect::<SyzygyResult<ArrayVec<[_; 2]>>>()?;
+            }).collect::<ProbeResult<ArrayVec<[_; 2]>>>()?;
 
             Ok(FileData { sides })
-        }).collect::<SyzygyResult<ArrayVec<[_; 4]>>>()?;
+        }).collect::<ProbeResult<ArrayVec<[_; 4]>>>()?;
 
         // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
@@ -900,7 +894,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
     /// Retrieves the value stored for `idx` by decompressing Huffman coded
     /// symbols stored in the corresponding block of the table.
-    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> SyzygyResult<u16> {
+    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> ProbeResult<u16> {
         // Special case: The table stores only a single value.
         if d.flags.contains(Flag::SINGLE_VALUE) {
             return Ok(u16::from(d.min_symlen));
@@ -981,7 +975,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
     /// Given a position, determine the unique (modulo symmetries) index into
     /// the corresponding subtable.
-    fn encode(&self, pos: &S) -> SyzygyResult<Option<(&PairsData, u64)>> {
+    fn encode(&self, pos: &S) -> ProbeResult<Option<(&PairsData, u64)>> {
         let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
         assert!(key == material || key == material.flipped());
@@ -1228,7 +1222,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         Ok(Some((side, idx)))
     }
 
-    pub fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
+    pub fn probe_wdl_table(&self, pos: &S) -> ProbeResult<Wdl> {
         assert_eq!(T::METRIC, Metric::Wdl);
 
         let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
@@ -1244,7 +1238,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
+    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> ProbeResult<Option<Dtz>> {
         assert_eq!(T::METRIC, Metric::Dtz);
 
         let (side, idx) = match self.encode(pos)? {

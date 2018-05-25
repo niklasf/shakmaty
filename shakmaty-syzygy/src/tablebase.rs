@@ -27,10 +27,10 @@ use fxhash::FxHashMap;
 
 use shakmaty::{Move, MoveList, Position, Role};
 
-use errors::{SyzygyError, SyzygyResult};
+use errors::{SyzygyError, SyzygyResult, ProbeError, ProbeResultExt};
 use material::Material;
 use table::{DtzTag, Table, WdlTag};
-use types::{Dtz, Syzygy, Wdl, MAX_PIECES};
+use types::{Dtz, Syzygy, Wdl, Metric, MAX_PIECES};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -297,10 +297,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Probe table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(path, &key))?;
-            table.probe_wdl_table(pos)
+            let table = table.get_or_try_init(|| Table::open(path, &key)).ctx(Metric::Wdl, &key)?;
+            table.probe_wdl_table(pos).ctx(Metric::Wdl, &key)
         } else {
-            Err(SyzygyError::MissingTable { material: key.normalized() })
+            Err(SyzygyError::MissingTable {
+                metric: Metric::Wdl,
+                material: key.normalized(),
+            })
         }
     }
 
@@ -432,7 +435,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 }
             }
 
-            Ok(u!(best))
+            best.ok_or_else(|| SyzygyError::ProbeFailed {
+                metric: Metric::Dtz,
+                material: Material::from_board(pos.board()),
+                error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
+            })
         } else {
             let mut best = Dtz(-1);
 
@@ -462,10 +469,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(path, &key))?;
-            table.probe_dtz_table(pos, wdl)
+            let table = table.get_or_try_init(|| Table::open(path, &key)).ctx(Metric::Dtz, &key)?;
+            table.probe_dtz_table(pos, wdl).ctx(Metric::Dtz, &key)
         } else {
-            Err(SyzygyError::MissingTable { material: key.normalized() })
+            Err(SyzygyError::MissingTable {
+                metric: Metric::Dtz,
+                material: key.normalized(),
+            })
         }
     }
 

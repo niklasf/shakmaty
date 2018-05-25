@@ -19,13 +19,13 @@ use std::io;
 use failure::Backtrace;
 
 use material::Material;
+use types::Metric;
 
-/// A [`Result`] type for Syzygy tablebase probes.
-///
-/// [`Result`]: https://doc.rust-lang.org/std/result/enum.Result.html
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
 
-/// Error when probing a table.
+pub type ProbeResult<T> = Result<T, ProbeError>;
+
+/// Error when probing tablebase.
 #[derive(Debug, Fail)]
 pub enum SyzygyError {
     /// Position has castling rights, but Syzygy tables do not contain
@@ -37,18 +37,32 @@ pub enum SyzygyError {
     #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
     TooManyPieces,
     /// Missing table.
-    #[fail(display = "required table not found: {}", material)]
+    #[fail(display = "required {} table not found: {}", metric, material)]
     MissingTable {
+        metric: Metric,
         material: Material
     },
+    /// Probe failed.
+    #[fail(display = "failed to probe {} table {}: {}", metric, material, error)]
+    ProbeFailed {
+        metric: Metric,
+        material: Material,
+        #[cause]
+        error: ProbeError,
+    },
+}
+
+/// Error when probing a table.
+#[derive(Debug, Fail)]
+pub enum ProbeError {
     /// I/O error.
-    #[fail(display = "i/o error when reading a table: {}", error)]
+    #[fail(display = "i/o error reading table file: {}", error)]
     Read {
         #[cause]
         error: io::Error
     },
     /// Table file has unexpected magic header bytes.
-    #[fail(display = "table file has invalid magic bytes: {:x?}", magic)]
+    #[fail(display = "invalid magic header bytes: {:x?}", magic)]
     Magic {
         magic: [u8; 4],
     },
@@ -57,11 +71,25 @@ pub enum SyzygyError {
     CorruptedTable(Backtrace),
 }
 
-impl From<io::Error> for SyzygyError {
-    fn from(error: io::Error) -> SyzygyError {
+pub trait ProbeResultExt<T> {
+    fn ctx(self, metric: Metric, material: &Material) -> SyzygyResult<T>;
+}
+
+impl<T> ProbeResultExt<T> for ProbeResult<T> {
+    fn ctx(self, metric: Metric, material: &Material) -> SyzygyResult<T> {
+        self.map_err(|error| SyzygyError::ProbeFailed {
+            metric,
+            material: material.clone(),
+            error,
+        })
+    }
+}
+
+impl From<io::Error> for ProbeError {
+    fn from(error: io::Error) -> ProbeError {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => SyzygyError::CorruptedTable(Backtrace::new()),
-            _ => SyzygyError::Read { error },
+            io::ErrorKind::UnexpectedEof => ProbeError::CorruptedTable(Backtrace::new()),
+            _ => ProbeError::Read { error },
         }
     }
 }
@@ -69,7 +97,7 @@ impl From<io::Error> for SyzygyError {
 /// Return a `CorruptedTable` error.
 macro_rules! throw {
     () => {
-        return Err(SyzygyError::CorruptedTable(::failure::Backtrace::new()))
+        return Err(::errors::ProbeError::CorruptedTable(::failure::Backtrace::new()))
     }
 }
 

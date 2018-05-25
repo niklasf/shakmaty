@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::fmt;
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 use arrayvec::ArrayVec;
@@ -376,3 +377,19 @@ pub const MAX_PIECES: usize = 7;
 
 /// List of up to `MAX_PIECES` pieces.
 pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
+
+/// Metric stored in a table.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Metric {
+    Wdl,
+    Dtz,
+}
+
+impl fmt::Display for Metric {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Metric::Wdl => f.write_str("wdl"),
+            Metric::Dtz => f.write_str("dtz"),
+        }
+    }
+}
