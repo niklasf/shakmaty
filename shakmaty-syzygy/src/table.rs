@@ -648,7 +648,7 @@ impl PairsData {
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = header[3];
         let blocks_num = LE::read_u32(&header[4..]);
-        let block_length_size = blocks_num + u32::from(padding);
+        let block_length_size = u!(blocks_num.checked_add(u32::from(padding)));
 
         let max_symlen = header[8];
         let min_symlen = header[9];
