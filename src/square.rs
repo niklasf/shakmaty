@@ -274,7 +274,7 @@ macro_rules! from_square_impl {
     }
 }
 
-from_square_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_square_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
 impl Sub for Square {
     type Output = i8;
