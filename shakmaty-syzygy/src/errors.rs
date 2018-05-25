@@ -36,16 +36,24 @@ pub enum SyzygyError {
     TooManyPieces,
     /// Missing table.
     #[fail(display = "required table not found: {}", material)]
-    MissingTable { material: Material },
+    MissingTable {
+        material: Material
+    },
     /// I/O error.
     #[fail(display = "i/o error when reading a table: {}", error)]
-    Read { error: io::Error },
+    Read {
+        #[cause]
+        error: io::Error
+    },
     /// Table file has unexpected magic header bytes.
     #[fail(display = "table file has invalid magic bytes")]
     Magic,
     /// Corrupted table.
     #[fail(display = "corrupted table (detected in {} l. {})", file, line)]
-    CorruptedTable { file: &'static str, line: u32 },
+    CorruptedTable {
+        file: &'static str,
+        line: u32
+    },
 }
 
 impl From<io::Error> for SyzygyError {
