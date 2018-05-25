@@ -681,7 +681,7 @@ impl PairsData {
         let mut symlen = vec![0; usize::from(sym)];
         let mut visited = BitVec::from_elem(symlen.len(), false);
         for s in 0..sym {
-           read_symlen(raf, btree, &mut symlen, &mut visited, s)?;
+           read_symlen(raf, btree, &mut symlen, &mut visited, s, 16)?;
         }
         ptr += symlen.len() as u64 * 3 + (symlen.len() as u64 & 1);
 
@@ -714,7 +714,7 @@ impl PairsData {
 }
 
 /// Build the symlen table.
-fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16) -> ProbeResult<()> {
+fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16, depth: u8) -> ProbeResult<()> {
     if u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
@@ -725,8 +725,11 @@ fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &m
     if right == 0xfff {
         symlen[usize::from(sym)] = 0;
     } else {
-        read_symlen(raf, btree, symlen, visited, left)?;
-        read_symlen(raf, btree, symlen, visited, right)?;
+        // Guard against stack overflow.
+        let depth = u!(depth.checked_sub(1));
+
+        read_symlen(raf, btree, symlen, visited, left, depth)?;
+        read_symlen(raf, btree, symlen, visited, right, depth)?;
         symlen[usize::from(sym)] = symlen[usize::from(left)] + symlen[usize::from(right)] + 1;
     }
 
