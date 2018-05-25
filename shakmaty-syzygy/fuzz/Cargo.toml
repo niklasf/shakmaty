@@ -1,0 +1,17 @@
+[package]
+name = "shakmaty-syzygy-fuzz"
+version = "0.0.0"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+tempfile = "3.0"
+shakmaty = "0.7"
+shakmaty-syzygy = { path = ".." }
+libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
+
+[[bin]]
+name = "open"
+path = "fuzz_targets/open.rs"
