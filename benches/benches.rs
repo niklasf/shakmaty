@@ -71,12 +71,41 @@ fn bench_san_candidates(b: &mut Bencher) {
     });
 }
 
+fn bench_play_sans(b: &mut Bencher) {
+    let pgn = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5",
+        "Na5", "Bb5+", "c6", "dxc6", "bxc6", "Ba4", "Ba6", "d3", "Bc5", "O-O",
+        "O-O", "Nc3", "Qc7", "Nge4", "Be7", "Nxf6+", "Bxf6", "Ne4", "Be7",
+        "Re1", "Rad8", "f3", "c5", "Be3", "c4", "Qc1", "cxd3", "cxd3", "Qb8",
+        "Nf2", "Bxd3", "Nxd3", "Rxd3", "Qc2", "Rxe3", "Rxe3", "Qb6", "Re1",
+        "Bc5", "Qe4", "f5", "Qxe5", "f4", "Qd5+", "Kh8", "Kh1", "Bxe3", "b3",
+        "Qd8", "Rd1", "Qxd5", "Rxd5", "Nb7", "b4", "Rd8", "Rxd8+", "Nxd8",
+        "Bd7", "Kg8", "a4", "Kf8", "g4", "Ke7", "Bf5", "h6", "h4", "Nf7", "h5",
+        "Nd6", "Bd3", "Ke6", "Kg2", "Kd5", "Kh3", "Nf7", "b5", "Bb6", "Kg2",
+        "Kc5", "Kf1", "Ne5", "Be2", "Kb4", "Bd1", "Nc4", "Ke2", "Ne3", "g5",
+        "hxg5", "Kd2", "Nxd1", "Kxd1", "Kxa4", "Kd2", "Kxb5", "Kd3", "a5",
+        "Ke4", "a4", "Kf5", "a3", "h6", "gxh6"];
+
+    b.iter(|| {
+        let mut pos = black_box(Chess::default());
+        for san in pgn.iter() {
+            let m = san.parse::<San>()
+                .expect("valid san")
+                .to_move(&pos)
+                .expect("legal move");
+
+            pos.play_unchecked(&m);
+        }
+        pos
+    });
+}
+
 benchmark_group!(benches,
     bench_shallow_perft,
     bench_deep_perft,
     bench_parse_san_move_complicated,
     bench_generate_moves,
     bench_play_unchecked,
-    bench_san_candidates);
+    bench_san_candidates,
+    bench_play_sans);
 
 benchmark_main!(benches);
