@@ -182,8 +182,8 @@ impl Board {
     fn from_board_fen(board_fen: &[u8]) -> Result<Board, FenError> {
         let mut board = Board::empty();
 
-        let mut rank = 7;
-        let mut file = 0;
+        let mut rank = 7i8;
+        let mut file = 0i8;
         let mut promoted = false;
 
         for &ch in board_fen {
@@ -194,7 +194,7 @@ impl Board {
                 promoted = true;
                 continue;
             } else if b'1' <= ch && ch <= b'8' {
-                file += i32::from(ch - b'0');
+                file += (ch - b'0') as i8;
                 if file > 8 {
                     return Err(FenError::InvalidBoard);
                 }
@@ -367,7 +367,7 @@ impl Fen {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
                         file @ b'a'...b'h' => {
-                            (candidates & Bitboard::file(i32::from(file as u8 - b'a'))).first()
+                            (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
                         }
                         _ => return Err(FenError::InvalidCastling),
                     };
