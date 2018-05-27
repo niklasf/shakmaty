@@ -87,7 +87,7 @@ fn bench_play_sans(b: &mut Bencher) {
 
     b.iter(|| {
         let mut pos = black_box(Chess::default());
-        for san in pgn.iter() {
+        for san in black_box(pgn).iter() {
             let m = san.parse::<San>()
                 .expect("valid san")
                 .to_move(&pos)
