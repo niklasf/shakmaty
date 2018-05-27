@@ -19,7 +19,7 @@ use board::Board;
 use bitboard::Bitboard;
 use square::Square;
 use types::{Black, CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role, White};
-use setup::{Castles, Setup, SwapTurn};
+use setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use movelist::{ArrayVecExt, MoveList};
 use option_filter::OptionFilterExt;
 
@@ -1278,7 +1278,7 @@ impl Position for RacingKings {
     }
 
     fn castles(&self) -> &Castles {
-        &Castles::EMPTY
+        &EMPTY_CASTLES
     }
 
     fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {

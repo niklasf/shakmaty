@@ -94,7 +94,7 @@ impl Default for Castles {
 
 impl Castles {
     pub fn empty() -> Castles {
-        Castles::EMPTY.clone()
+        EMPTY_CASTLES.clone()
     }
 
     pub fn from_setup(setup: &Setup) -> Result<Castles, Castles> {
@@ -188,14 +188,14 @@ impl Castles {
     pub fn is_chess960(&self) -> bool {
         self.chess960
     }
-
-    pub(crate) const EMPTY: Castles = Castles {
-        chess960: false,
-        mask: Bitboard(0),
-        rook: [[None; 2]; 2],
-        path: [[Bitboard(0); 2]; 2],
-    };
 }
+
+pub static EMPTY_CASTLES: Castles = Castles {
+    chess960: false,
+    mask: Bitboard(0),
+    rook: [[None; 2]; 2],
+    path: [[Bitboard(0); 2]; 2],
+};
 
 #[cfg(test)]
 mod tests {
