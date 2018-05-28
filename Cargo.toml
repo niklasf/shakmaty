@@ -27,7 +27,7 @@ features = ["use_union"]
 version_check = "0.1"
 
 [dev-dependencies]
-bencher = "0.1"
+criterion = "0.2"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty", branch = "master" }
