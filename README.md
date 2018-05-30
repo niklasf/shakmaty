@@ -57,12 +57,12 @@ Benchmarks
 ----------
 
 Simple [perft](https://chessprogramming.wikispaces.com/Perft) of the initial
-position. No hashtables.
+position. No hashtables. i7-6850K CPU @ 3.60GHz.
 
 perft | 4 | 5
 --- | --- | ---
 shakmaty | 1.4 ms | 33.8 ms
-[https://crates.io/crates/chess](jordanbray/chess) | 1.3 ms | 28.7 ms
+[jordanbray/chess](https://crates.io/crates/chess) | 1.3 ms | 28.7 ms
 Stockfish 8 (x86-64-bmi2) | 4 ms | 33 ms
 
 It should be noted that Stockfish is not optimized for perft speed and also
