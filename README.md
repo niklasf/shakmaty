@@ -56,6 +56,11 @@ Documentation
 Changelog
 ---------
 
+* 0.8.0
+  - Revert fused iterators and u128. Minimum Rust version back to 1.23.0.
+  - Changed `Role` discriminants. Now starting with `Pawn = 1`.
+  - Performance improvements (~12% faster perft).
+  - Switch benchmarks to `criterion.rs`.
 * 0.7.2
   - Add `Outcome.winner()`.
 * 0.7.1
