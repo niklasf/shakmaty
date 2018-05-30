@@ -53,6 +53,22 @@ Documentation
 
 [Read the documentation](https://docs.rs/shakmaty)
 
+Benchmarks
+----------
+
+Simple [perft](https://chessprogramming.wikispaces.com/Perft) of the initial
+position. No hashtables.
+
+perft | 4 | 5
+--- | --- | ---
+shakmaty | 1.4 ms | 33.8 ms
+[https://crates.io/crates/chess](jordanbray/chess) | 1.3 ms | 28.7 ms
+Stockfish 8 (x86-64-bmi2) | 4 ms | 33 ms
+
+It should be noted that Stockfish is not optimized for perft speed and also
+maintains additional data structures for evaluation. Newer versions of
+Stockfish put even less emphasis on this.
+
 Changelog
 ---------
 
