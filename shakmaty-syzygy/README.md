@@ -39,6 +39,19 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - More contextual information for errors (table, backtrace,
+    invalid magic header bytes).
+  - Update to shakmaty 0.8.
+  - Remove i128 conversions. Minimum Rust version is ??? again.
+  - Provide a target for `cargo fuzz`. Fix several panics caused by
+    initializing and probing corrupted tables:
+    - Panic when reference pawn is missing.
+    - Panic when subtable material is not consistent with first file.
+    - Integer overflow when reading `symlen`.
+    - Integer overflow when `min_symlen` or `max_symlen` are out of bounds.
+    - Integer overflow when computing `block_length_size`.
+    - Stack overflow when recursively reading `symlen`.
 * 0.4.5
   - Make better use of `positioned-io` (cursor, remove `RandomAccessFile`).
 * 0.4.4
