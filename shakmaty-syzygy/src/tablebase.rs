@@ -30,7 +30,7 @@ use shakmaty::{Move, MoveList, Position, Role};
 
 use errors::{SyzygyError, SyzygyResult, ProbeError, ProbeResultExt};
 use material::Material;
-use table::{DtzTag, Table, WdlTag};
+use table::{DtzTable, WdlTable};
 use types::{Dtz, Syzygy, Wdl, Metric, MAX_PIECES};
 
 /// Additional probe information from a brief alpha-beta search.
@@ -48,8 +48,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S, File>>)>,
-    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S, File>>)>,
+    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, File>>)>,
+    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, File>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -298,7 +298,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Probe table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(File::open(path)?, &key)).ctx(Metric::Wdl, &key)?;
+            let table = table.get_or_try_init(|| WdlTable::open(path, &key)).ctx(Metric::Wdl, &key)?;
             table.probe_wdl_table(pos).ctx(Metric::Wdl, &key)
         } else {
             Err(SyzygyError::MissingTable {
@@ -470,7 +470,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(File::open(path)?, &key)).ctx(Metric::Dtz, &key)?;
+            let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
             table.probe_dtz_table(pos, wdl).ctx(Metric::Dtz, &key)
         } else {
             Err(SyzygyError::MissingTable {

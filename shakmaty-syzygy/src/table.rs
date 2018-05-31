@@ -16,6 +16,8 @@
 
 use std::io;
 use std::iter::FromIterator;
+use std::fs::File;
+use std::path::Path;
 use std::marker::PhantomData;
 
 use arrayvec::ArrayVec;
@@ -31,19 +33,19 @@ use errors::{ProbeError, ProbeResult};
 use material::Material;
 use types::{Dtz, Pieces, Syzygy, Wdl, Metric, MAX_PIECES};
 
-pub trait TableTag {
+trait TableTag {
     const METRIC: Metric;
 }
 
 #[derive(Debug)]
-pub enum WdlTag { }
+enum WdlTag { }
 
 impl TableTag for WdlTag {
     const METRIC: Metric = Metric::Wdl;
 }
 
 #[derive(Debug)]
-pub enum DtzTag { }
+enum DtzTag { }
 
 impl TableTag for DtzTag {
     const METRIC: Metric = Metric::Dtz;
@@ -749,7 +751,7 @@ struct FileData {
 
 /// A Syzygy table.
 #[derive(Debug)]
-pub struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
+struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
     is_wdl: PhantomData<T>,
     syzygy: PhantomData<P>,
 
@@ -765,7 +767,7 @@ pub struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
 impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
-    pub fn open(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
+    pub fn new(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
         let material = material.clone();
 
         // Check magic.
@@ -1280,5 +1282,51 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         };
 
         Ok(Some(Dtz(if stores_moves { res * 2 } else { res })))
+    }
+}
+
+/// A WDL Table.
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct WdlTable<S: Position + Syzygy, F: ReadAt> {
+    table: Table<WdlTag, S, F>,
+}
+
+impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
+    pub fn new(raf: F, material: &Material) -> ProbeResult<WdlTable<S, F>> {
+        Table::new(raf, material).map(|table| WdlTable { table })
+    }
+
+    pub fn probe_wdl_table(&self, pos: &S) -> ProbeResult<Wdl> {
+        self.table.probe_wdl_table(pos)
+    }
+}
+
+impl<S: Position + Syzygy> WdlTable<S, File> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, File>> {
+        WdlTable::new(File::open(path)?, material)
+    }
+}
+
+/// A DTZ Table.
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct DtzTable<S: Position + Syzygy, F: ReadAt> {
+    table: Table<DtzTag, S, F>,
+}
+
+impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
+    pub fn new(raf: F, material: &Material) -> ProbeResult<DtzTable<S, F>> {
+        Table::new(raf, material).map(|table| DtzTable { table })
+    }
+
+    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> ProbeResult<Option<Dtz>> {
+        self.table.probe_dtz_table(pos, wdl)
+    }
+}
+
+impl<S: Position + Syzygy> DtzTable<S, File> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, File>> {
+        DtzTable::new(File::open(path)?, material)
     }
 }

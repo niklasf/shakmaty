@@ -32,6 +32,7 @@ const ROLES: [Role; 6] = [
 ];
 
 /// The material configuration of one side.
+#[doc(hidden)]
 #[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct MaterialSide {
     kings: u8,
@@ -168,6 +169,7 @@ impl FromStr for MaterialSide {
 }
 
 /// The material configuration of both sides.
+#[doc(hidden)]
 #[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     pub white: MaterialSide,

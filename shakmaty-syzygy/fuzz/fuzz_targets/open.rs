@@ -7,7 +7,7 @@ extern crate shakmaty_syzygy;
 
 use shakmaty::{Chess, Setup};
 use shakmaty::fen::Fen;
-use shakmaty_syzygy::private::{Table, Material, WdlTag};
+use shakmaty_syzygy::{WdlTable, Material};
 
 fuzz_target!(|data: &[u8]| {
     let pos: Chess = "8/2K5/8/8/8/8/3p4/1k2N3 b - - 0 1"
@@ -16,7 +16,7 @@ fuzz_target!(|data: &[u8]| {
         .position()
         .expect("valid position");
 
-    if let Ok(table) = Table::<WdlTag, _, _>::open(data, &Material::from_board(pos.board())) {
+    if let Ok(table) = WdlTable::new(data, &Material::from_board(pos.board())) {
         let _ = table.probe_wdl_table(&pos);
     }
 });
