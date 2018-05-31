@@ -12,5 +12,5 @@ shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
 
 [[bin]]
-name = "open"
-path = "fuzz_targets/open.rs"
+name = "pawnful"
+path = "fuzz_targets/pawnful.rs"
