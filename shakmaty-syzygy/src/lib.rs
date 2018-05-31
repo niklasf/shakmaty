@@ -57,12 +57,6 @@
 //!
 //! See [`SyzygyError`](enum.SyzygyError.html) for possible error
 //! conditions.
-//!
-//! **Warning:** With the current state of the implementation it is not
-//! advisable to probe untrusted tables.
-//! While doing so is not unsafe, we cannot confidently exclude that
-//! specifically crafted tables can cause panics, stack overflows or consume
-//! large amounts of memory.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.4.5")]
 #![warn(missing_debug_implementations)]
