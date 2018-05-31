@@ -767,8 +767,16 @@ struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
 impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the `material` configuration is not supported by Syzygy
+    /// tablebases (more than 7 pieces or side without pieces).
     pub fn new(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
         let material = material.clone();
+        assert!(material.count() <= MAX_PIECES);
+        assert!(material.white.count() >= 1);
+        assert!(material.black.count() >= 1);
 
         // Check magic.
         let (magic, pawnless_magic) = match T::METRIC {
