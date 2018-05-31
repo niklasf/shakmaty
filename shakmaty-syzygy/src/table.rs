@@ -821,6 +821,9 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         ptr += ptr & 1;
 
+        // Ensure reference pawn goes first.
+        ensure!((files[0][0].pieces[0].role == Role::Pawn) == has_pawns);
+
         // Ensure material is consistent with first file.
         for file in files.iter() {
             for side in file.iter() {
