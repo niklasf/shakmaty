@@ -7,7 +7,6 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-tempfile = "3.0"
 shakmaty = "0.7"
 shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }

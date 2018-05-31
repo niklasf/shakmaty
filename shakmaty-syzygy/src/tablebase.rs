@@ -16,6 +16,7 @@
 
 use std::cmp::{max, min, Reverse};
 use std::fs;
+use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -47,8 +48,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S>>)>,
-    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S>>)>,
+    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<WdlTag, S, File>>)>,
+    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<Table<DtzTag, S, File>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -297,7 +298,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Probe table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(path, &key)).ctx(Metric::Wdl, &key)?;
+            let table = table.get_or_try_init(|| Table::open(File::open(path)?, &key)).ctx(Metric::Wdl, &key)?;
             table.probe_wdl_table(pos).ctx(Metric::Wdl, &key)
         } else {
             Err(SyzygyError::MissingTable {
@@ -469,7 +470,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| Table::open(path, &key)).ctx(Metric::Dtz, &key)?;
+            let table = table.get_or_try_init(|| Table::open(File::open(path)?, &key)).ctx(Metric::Dtz, &key)?;
             table.probe_dtz_table(pos, wdl).ctx(Metric::Dtz, &key)
         } else {
             Err(SyzygyError::MissingTable {

@@ -4,30 +4,19 @@
 extern crate libfuzzer_sys;
 extern crate shakmaty;
 extern crate shakmaty_syzygy;
-extern crate tempfile;
 
-use std::fs::File;
-use std::io::Write;
-
-use shakmaty::Chess;
+use shakmaty::{Chess, Setup};
 use shakmaty::fen::Fen;
-use shakmaty_syzygy::Tablebase;
+use shakmaty_syzygy::private::{Table, Material, WdlTag};
 
 fuzz_target!(|data: &[u8]| {
-    let dir = tempfile::tempdir().expect("tempdir");
-    let table_path = dir.path().join("KQvK.rtbw");
-
-    let mut table_file = File::create(table_path).expect("create file");
-    table_file.write_all(data).expect("write");
-
-    let mut tablebase = Tablebase::new();
-    tablebase.add_directory(dir.path()).expect("add directory");
-
     let pos: Chess = "8/2K5/8/8/8/8/3p4/1k2N3 b - - 0 1"
         .parse::<Fen>()
         .expect("valid fen")
         .position()
         .expect("valid position");
 
-    let _ = tablebase.probe_wdl(&pos);
+    if let Ok(table) = Table::<WdlTag, _, _>::open(data, &Material::from_board(pos.board())) {
+        let _ = table.probe_wdl_table(&pos);
+    }
 });

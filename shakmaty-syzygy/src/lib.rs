@@ -95,3 +95,9 @@ mod types;
 pub use errors::SyzygyError;
 pub use tablebase::Tablebase;
 pub use types::{Dtz, Syzygy, TableType, Wdl};
+
+#[cfg(fuzzing)]
+pub mod private {
+    pub use table::{Table, WdlTag};
+    pub use material::Material;
+}

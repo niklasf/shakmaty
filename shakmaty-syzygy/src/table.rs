@@ -14,11 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fs::File;
 use std::io;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
-use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
@@ -751,11 +749,11 @@ struct FileData {
 
 /// A Syzygy table.
 #[derive(Debug)]
-pub struct Table<T: TableTag, P: Position + Syzygy> {
+pub struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
     is_wdl: PhantomData<T>,
     syzygy: PhantomData<P>,
 
-    raf: File,
+    raf: F,
 
     material: Material,
 
@@ -764,11 +762,10 @@ pub struct Table<T: TableTag, P: Position + Syzygy> {
     files: ArrayVec<[FileData; 4]>,
 }
 
-impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
+impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<Table<T, S>> {
-        let raf = File::open(path)?;
+    pub fn open(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
         let material = material.clone();
 
         // Check magic.
