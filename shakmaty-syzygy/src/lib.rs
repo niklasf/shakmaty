@@ -96,5 +96,7 @@ pub use errors::SyzygyError;
 pub use tablebase::Tablebase;
 pub use types::{Dtz, Syzygy, TableType, Wdl};
 
+// Hidden API.
+pub use errors::ProbeError;
 pub use material::{Material, MaterialSide};
 pub use table::{WdlTable, DtzTable};
