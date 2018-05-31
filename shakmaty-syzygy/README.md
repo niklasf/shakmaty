@@ -43,7 +43,6 @@ Changelog
   - More contextual information for errors (table, backtrace,
     invalid magic header bytes).
   - Update to shakmaty 0.8.
-  - Remove i128 conversions. Minimum Rust version is ??? again.
   - Provide a target for `cargo fuzz`. Fix several panics caused by
     initializing and probing corrupted tables:
     - Panic when reference pawn is missing.
