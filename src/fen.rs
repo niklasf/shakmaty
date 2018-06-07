@@ -114,17 +114,20 @@ impl FenOpts {
         self
     }
 
-    /// See [`board_fen()`](fn.board_fen.html).
+    /// Create a board FEN such as
+    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
     pub fn board_fen(&self, board: &Board) -> String {
         board_fen(board, self)
     }
 
-    /// See [`epd()`](fn.epd.html).
+    /// Create an EPD such as
+    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
     pub fn epd(&self, setup: &Setup) -> String {
         epd(setup, self)
     }
 
-    /// See [`fen()`](fn.fen.html)
+    /// Create a FEN such as
+    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
     pub fn fen(&self, setup: &Setup) -> String {
         fen(setup, self)
     }
