@@ -148,6 +148,19 @@ impl Role {
     }
 }
 
+macro_rules! from_role_impl {
+    ($($t:ty)+) => {
+        $(impl From<Role> for $t {
+            #[inline]
+            fn from(role: Role) -> $t {
+                role as $t
+            }
+        })+
+    }
+}
+
+from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
 /// A piece with [`Color`] and [`Role`].
