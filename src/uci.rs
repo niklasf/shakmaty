@@ -73,8 +73,6 @@
 //! ```
 //! # use shakmaty::{Square, Move, Role, Chess, Position};
 //! # use shakmaty::uci::Uci;
-//! use shakmaty::uci;
-//! use std::convert::From;
 //!
 //! let pos = Chess::default();
 //!
@@ -86,10 +84,10 @@
 //!     promotion: None,
 //! };
 //!
-//! let uci = uci::uci(&pos, &m);
+//! let uci = Uci::from_move(&pos, &m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = uci::chess960_uci(&m);
+//! let uci = Uci::from_chess960(&m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //! ```
 //!
@@ -166,42 +164,19 @@ impl fmt::Display for Uci {
 /// If `pos` does not and did not have castling rights that are only possible
 /// in [Chess960](../trait.Position.html#tymethod.is_chess960), castling moves
 /// are represented as `e1g1`, `e1c1`, `e8g8` and `e8c8`.
-/// Otherwise see [`chess960_uci()`](fn.chess960_uci.html).
+/// Alternatively, see
+/// [`Uci::from_chess960()`](enum.Uci.html#method.from_chess960).
+#[deprecated(since="0.8.1", note="use `Uci::from_move()` instead")]
 pub fn uci<P: Position>(pos: &P, m: &Move) -> Uci {
-    match *m {
-        Move::Castle { king, rook } if !pos.castles().is_chess960() => {
-            if king < rook {
-                Uci::Normal {
-                    from: king,
-                    to: pos.turn().fold(Square::G1, Square::G8),
-                    promotion: None,
-                }
-            } else {
-                Uci::Normal {
-                    from: king,
-                    to: pos.turn().fold(Square::C1, Square::C8),
-                    promotion: None,
-                }
-            }
-        }
-        _ => chess960_uci(m),
-    }
+    Uci::from_move(pos, m)
 }
 
 /// Converts a move to UCI notation. Castling moves are represented as a move
 /// of the king to the corresponding rook square, independently of the
 /// position.
+#[deprecated(since="0.8.1", note="use `Uci::from_chess960()` instead")]
 pub fn chess960_uci(m: &Move) -> Uci {
-    match *m {
-        Move::Normal { from, to, promotion, .. } =>
-            Uci::Normal { from, to, promotion },
-        Move::EnPassant { from, to, .. } =>
-            Uci::Normal { from, to, promotion: None },
-        Move::Castle { king, rook } =>
-            Uci::Normal { from: king, to: rook, promotion: None },  // Chess960-style
-        Move::Put { role, to } =>
-            Uci::Put { role, to },
-    }
+    Uci::from_chess960(m)
 }
 
 impl Uci {
@@ -236,6 +211,46 @@ impl Uci {
             } else {
                 Ok(Uci::Normal { from, to, promotion: None })
             }
+        }
+    }
+
+    /// Converts a move to UCI notation.
+    ///
+    /// If `pos` does not and did not have castling rights that are only
+    /// possible in [Chess960](../trait.Position.html#tymethod.is_chess960),
+    /// castling moves are represented as `e1g1`, `e1c1`, `e8g8` and `e8c8`.
+    /// Alternatively, see
+    /// [`Uci::from_chess960()`](enum.Uci.html#method.from_chess960).
+    pub fn from_move<P: Position>(pos: &P, m: &Move) -> Uci {
+        match *m {
+            Move::Castle { king, rook } if !pos.castles().is_chess960() => {
+                Uci::Normal {
+                    from: king,
+                    to: if king < rook {
+                        pos.turn().fold(Square::G1, Square::G8)
+                    } else {
+                        pos.turn().fold(Square::C1, Square::C8)
+                    },
+                    promotion: None,
+                }
+            }
+            _ => Uci::from_chess960(m)
+        }
+    }
+
+    /// Converts a move to UCI notation. Castling moves are represented as
+    /// a move of the king to the corresponding rook square, independently of
+    /// the position.
+    pub fn from_chess960(m: &Move) -> Uci {
+        match *m {
+            Move::Normal { from, to, promotion, .. } =>
+                Uci::Normal { from, to, promotion },
+            Move::EnPassant { from, to, .. } =>
+                Uci::Normal { from, to, promotion: None },
+            Move::Castle { king, rook } =>
+                Uci::Normal { from: king, to: rook, promotion: None }, // Chess960-style
+            Move::Put { role, to } =>
+                Uci::Put { role, to },
         }
     }
 
