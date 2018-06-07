@@ -72,14 +72,12 @@
 //! # use std::error::Error;
 //! #
 //! # fn try_main() -> Result<(), Box<Error>> {
-//! use shakmaty::san;
 //! # use shakmaty::{Chess, Position, Role};
 //! # use shakmaty::san::San;
 //! # let pos = Chess::default();
 //! # let san: San = "Nf3".parse()?;
 //! # let m = san.to_move(&pos)?;
-//!
-//! assert_eq!(san::san(&pos, &m).to_string(), "Nf3");
+//! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
 //! #
 //! #     Ok(())
 //! # }
@@ -263,6 +261,52 @@ impl San {
             };
 
             Ok(San::Normal { role, file, rank, capture, to, promotion })
+        }
+    }
+
+    /// Converts a move to Standard Algebraic Notation.
+    pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
+        match *m {
+            Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
+                San::Normal {
+                    role: Role::Pawn,
+                    file: if capture.is_some() { Some(from.file()) } else { None },
+                    rank: None,
+                    capture: capture.is_some(),
+                    to,
+                    promotion,
+                },
+            Move::Normal { role, from, capture, to, promotion } => {
+                let mut legals = MoveList::new();
+                pos.san_candidates(role, to, &mut legals);
+
+                // Disambiguate.
+                let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
+                    Move::Normal { from: candidate, .. } =>
+                        if from == candidate {
+                            (rank, file)
+                        } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
+                            (rank, true)
+                        } else {
+                            (true, file)
+                        },
+                    _ => (rank, file)
+                });
+
+                San::Normal {
+                    role,
+                    file: if file { Some(from.file()) } else { None },
+                    rank: if rank { Some(from.rank()) } else { None },
+                    capture: capture.is_some(),
+                    to,
+                    promotion
+                }
+            },
+            Move::EnPassant { from, to, .. } => San::Normal {
+                role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
+            Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
+            Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
+            Move::Put { role, to } => San::Put { role, to },
         }
     }
 
@@ -476,6 +520,18 @@ impl SanPlus {
             check: san.ends_with(b"+"),
         })
     }
+
+    /// Converts a move to Standard Algebraic Notation including possible
+    /// check and checkmate suffixes.
+    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
+        let san = San::from_move(&pos, m);
+        pos.play_unchecked(m);
+        let checkmate = match pos.outcome() {
+            Some(Outcome::Decisive { .. }) => true,
+            _ => false,
+        };
+        SanPlus { san, checkmate, check: !checkmate && pos.checkers().any() }
+    }
 }
 
 impl FromStr for SanPlus {
@@ -500,60 +556,15 @@ impl fmt::Display for SanPlus {
 
 /// Converts a move to Standard Algebraic Notation including possible
 /// check and checkmate suffixes.
-pub fn san_plus<P: Position>(mut pos: P, m: &Move) -> SanPlus {
-    let san = san(&pos, m);
-    pos.play_unchecked(m);
-    let checkmate = match pos.outcome() {
-        Some(Outcome::Decisive { .. }) => true,
-        _ => false,
-    };
-    SanPlus { san, checkmate, check: !checkmate && pos.checkers().any() }
+#[deprecated(since="0.8.1", note="use `SanPlus::from_move()` instead")]
+pub fn san_plus<P: Position>(pos: P, m: &Move) -> SanPlus {
+    SanPlus::from_move(pos, m)
 }
 
 /// Converts a move to Standard Algebraic Notation.
+#[deprecated(since="0.8.1", note="use `San::from_move()` instead")]
 pub fn san<P: Position>(pos: &P, m: &Move) -> San {
-    match *m {
-        Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
-            San::Normal {
-                role: Role::Pawn,
-                file: if capture.is_some() { Some(from.file()) } else { None },
-                rank: None,
-                capture: capture.is_some(),
-                to,
-                promotion,
-            },
-        Move::Normal { role, from, capture, to, promotion } => {
-            let mut legals = MoveList::new();
-            pos.san_candidates(role, to, &mut legals);
-
-            // Disambiguate.
-            let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
-                Move::Normal { from: candidate, .. } =>
-                    if from == candidate {
-                        (rank, file)
-                    } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
-                        (rank, true)
-                    } else {
-                        (true, file)
-                    },
-                _ => (rank, file)
-            });
-
-            San::Normal {
-                role,
-                file: if file { Some(from.file()) } else { None },
-                rank: if rank { Some(from.rank()) } else { None },
-                capture: capture.is_some(),
-                to,
-                promotion
-            }
-        },
-        Move::EnPassant { from, to, .. } => San::Normal {
-            role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
-        Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
-        Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
-        Move::Put { role, to } => San::Put { role, to },
-    }
+    San::from_move(pos, m)
 }
 
 #[cfg(test)]
