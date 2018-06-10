@@ -72,6 +72,10 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.8.1
+  - Make `Role` discriminants public.
+  - Put `San`, `SanPlus` and `Uci` constructors on `San`, `SanPlus` and `Uci`
+    respectively.
 * 0.8.0
   - Revert fused iterators and u128. Minimum Rust version back to 1.23.0.
   - Changed `Role` discriminants. Now starting with `Pawn = 1`.
