@@ -39,7 +39,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.5.0
   - More contextual information for errors (table, backtrace,
     invalid magic header bytes).
   - Update to shakmaty 0.8.
