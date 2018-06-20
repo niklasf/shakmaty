@@ -470,7 +470,7 @@ struct GroupData {
 }
 
 impl GroupData {
-    pub fn new<S: Syzygy>(pieces: Pieces, order: &[u8; 2], file: usize) -> ProbeResult<GroupData> {
+    pub fn new<S: Syzygy>(pieces: Pieces, order: [u8; 2], file: usize) -> ProbeResult<GroupData> {
         ensure!(pieces.len() >= 2);
 
         let material = Material::from_iter(pieces.clone());
@@ -819,7 +819,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                 let key = Material::from_iter(pieces.clone());
                 ensure!(key == material || key.flipped() == material);
-                GroupData::new::<S>(pieces, &order[side.fold(0, 1)], file)
+                GroupData::new::<S>(pieces, order[side.fold(0, 1)], file)
             }).collect::<ProbeResult<ArrayVec<[_; 2]>>>()?;
 
             ptr += material.count() as u64;
