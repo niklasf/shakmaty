@@ -174,7 +174,7 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn char(&self) -> char {
+    pub fn char(self) -> char {
         self.color.fold(self.role.upper_char(), self.role.char())
     }
 
@@ -466,26 +466,26 @@ pub enum CastlingSide {
 }
 
 impl CastlingSide {
-    pub fn is_queen_side(&self) -> bool {
-        match *self {
+    pub fn is_queen_side(self) -> bool {
+        match self {
             CastlingSide::KingSide => false,
             CastlingSide::QueenSide => true,
         }
     }
 
-    pub fn is_king_side(&self) -> bool {
+    pub fn is_king_side(self) -> bool {
         !self.is_queen_side()
     }
 
-    pub fn king_to(&self, color: Color) -> Square {
-        match *self {
+    pub fn king_to(self, color: Color) -> Square {
+        match self {
             CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
             CastlingSide::QueenSide => color.fold(Square::C1, Square::C8),
         }
     }
 
-    pub fn rook_to(&self, color: Color) -> Square {
-        match *self {
+    pub fn rook_to(self, color: Color) -> Square {
+        match self {
             CastlingSide::KingSide => color.fold(Square::F1, Square::F8),
             CastlingSide::QueenSide => color.fold(Square::D1, Square::D8),
         }
