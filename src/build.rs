@@ -92,7 +92,7 @@ fn dump_table<W: Write, T: LowerHex>(w: &mut W, name: &str, tname: &str, table: 
     write!(w, "];\n")
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     // detect support for nightly features
     if let Some(true) = version_check::supports_features() {
         println!("cargo:rustc-cfg=nightly");
@@ -102,8 +102,8 @@ fn main() {
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
     let dest_path = Path::new(&out_dir).join("attacks.rs");
     let mut f = File::create(&dest_path).expect("created attacks.rs");
-    generate_basics(&mut f).unwrap();
-    generate_sliding_attacks(&mut f).unwrap();
+    generate_basics(&mut f)?;
+    generate_sliding_attacks(&mut f)
 }
 
 fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
