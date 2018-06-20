@@ -20,8 +20,6 @@ use attacks;
 use types::{CastlingSide, Color, Pockets, RemainingChecks, Role};
 use board::Board;
 
-use option_filter::OptionFilterExt;
-
 /// A not necessarily legal position.
 pub trait Setup {
     fn board(&self) -> &Board;
@@ -112,7 +110,7 @@ impl Castles {
                 let side = rooks & setup.board().by_color(*color) &
                            Bitboard::relative_rank(*color, 0);
 
-                if let Some(a_side) = OptionFilterExt::filter(side.first(), |rook| rook.file() < king.file()) {
+                if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
                     castles.chess960 |= king.file() != 4 || a_side.file() != 0;
@@ -121,7 +119,7 @@ impl Castles {
                         attacks::between(king, a_side).with(rto).with(kto).without(king).without(a_side);
                 }
 
-                if let Some(h_side) = OptionFilterExt::filter(side.last(), |rook| king.file() < rook.file()) {
+                if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
                     castles.chess960 |= king.file() != 4 || h_side.file() != 7;
@@ -158,10 +156,10 @@ impl Castles {
 
     pub fn discard_rook(&mut self, square: Square) {
         if self.mask.remove(square) {
-            self.rook[0][0] = OptionFilterExt::filter(self.rook[0][0], |sq| *sq != square);
-            self.rook[0][1] = OptionFilterExt::filter(self.rook[0][1], |sq| *sq != square);
-            self.rook[1][0] = OptionFilterExt::filter(self.rook[1][0], |sq| *sq != square);
-            self.rook[1][1] = OptionFilterExt::filter(self.rook[1][1], |sq| *sq != square);
+            self.rook[0][0] = self.rook[0][0].filter(|sq| *sq != square);
+            self.rook[0][1] = self.rook[0][1].filter(|sq| *sq != square);
+            self.rook[1][0] = self.rook[1][0].filter(|sq| *sq != square);
+            self.rook[1][1] = self.rook[1][1].filter(|sq| *sq != square);
         }
     }
 

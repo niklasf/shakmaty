@@ -21,7 +21,6 @@ use square::Square;
 use types::{Black, CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role, White};
 use setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use movelist::{ArrayVecExt, MoveList};
-use option_filter::OptionFilterExt;
 
 use std::fmt;
 use std::error::Error;
@@ -362,7 +361,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -551,7 +550,7 @@ impl Setup for Atomic {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -724,7 +723,7 @@ impl Setup for Giveaway {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
@@ -1358,7 +1357,7 @@ impl Setup for Horde {
     fn pockets(&self) -> Option<&Pockets> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { OptionFilterExt::filter(self.ep_square, |_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
     fn fullmoves(&self) -> u32 { self.fullmoves }
