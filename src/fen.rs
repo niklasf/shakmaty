@@ -122,13 +122,13 @@ impl FenOpts {
 
     /// Create an EPD such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-    pub fn epd(&self, setup: &Setup) -> String {
+    pub fn epd(&self, setup: &dyn Setup) -> String {
         epd(setup, self)
     }
 
     /// Create a FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-    pub fn fen(&self, setup: &Setup) -> String {
+    pub fn fen(&self, setup: &dyn Setup) -> String {
         fen(setup, self)
     }
 }
@@ -496,7 +496,7 @@ pub fn board_fen(board: &Board, opts: &FenOpts) -> String {
 }
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-pub fn epd(setup: &Setup, opts: &FenOpts) -> String {
+pub fn epd(setup: &dyn Setup, opts: &FenOpts) -> String {
     let pockets = setup.pockets()
                        .map_or("".to_owned(), |p| format!("[{}]", p));
 
@@ -513,7 +513,7 @@ pub fn epd(setup: &Setup, opts: &FenOpts) -> String {
 }
 
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-pub fn fen(setup: &Setup, opts: &FenOpts) -> String {
+pub fn fen(setup: &dyn Setup, opts: &FenOpts) -> String {
     format!("{} {} {}", epd(setup, opts), setup.halfmove_clock(), setup.fullmoves())
 }
 

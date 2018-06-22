@@ -95,7 +95,7 @@ impl Castles {
         EMPTY_CASTLES.clone()
     }
 
-    pub fn from_setup(setup: &Setup) -> Result<Castles, Castles> {
+    pub fn from_setup(setup: &dyn Setup) -> Result<Castles, Castles> {
         let mut castles = Castles::empty();
 
         let castling_rights = setup.castling_rights();

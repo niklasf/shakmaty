@@ -73,6 +73,7 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.8.1")]
 
 #![warn(missing_debug_implementations)]
+#![warn(bare_trait_objects)]
 
 #![cfg_attr(nightly, feature(exact_size_is_empty))]
 #![cfg_attr(nightly, feature(fused))]
