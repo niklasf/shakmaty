@@ -1911,7 +1911,7 @@ mod tests {
     use super::*;
     use fen::Fen;
 
-    struct _AssertObjectSafe(Box<Position>);
+    struct _AssertObjectSafe(Box<dyn Position>);
 
     #[test]
     fn test_most_known_legals() {

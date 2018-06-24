@@ -199,5 +199,5 @@ pub static EMPTY_CASTLES: Castles = Castles {
 mod tests {
     use super::*;
 
-    struct _AssertObjectSafe(Box<Setup>);
+    struct _AssertObjectSafe(Box<dyn Setup>);
 }
