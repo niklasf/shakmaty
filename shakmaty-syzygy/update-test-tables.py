@@ -15,7 +15,7 @@ def update_dependencies(variant, suite, target):
         epd, wdl, dtz = line.split(",")
         board, _ = chess.variant.find_variant(variant).from_epd(epd)
 
-        table = chess.syzygy.calc_key(board)
+        table = chess.syzygy.normalize_tablename(chess.syzygy.calc_key(board))
         w, b = table.split("v", 1)
         if w and b:
             dtz_tables.add(table)
