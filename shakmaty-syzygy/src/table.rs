@@ -444,8 +444,10 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
         0
     } else if material.unique_pieces() >= 3 {
         3
-    } else {
+    } else if material.unique_pieces() == 2 {
         2
+    } else {
+        usize::from(material.min_like_man())
     };
 
     if first_len > 0 {
@@ -1065,7 +1067,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         assert!(squares.len() >= 2);
 
-        // Now we can compue the index according to the piece positions.
+        // Now we can compute the index according to the piece positions.
         if squares[0].file() >= 4 {
             for square in &mut squares {
                 *square = square.flip_horizontal();
