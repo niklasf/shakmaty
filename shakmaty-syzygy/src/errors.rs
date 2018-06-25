@@ -33,8 +33,8 @@ pub enum SyzygyError {
     #[fail(display = "syzygy tables do not contain positions with castling rights")]
     Castling,
     /// Position has too many pieces. Syzygy tables only support up to
-    /// 7 pieces.
-    #[fail(display = "syzygy tables only contain positions with up to 7 pieces")]
+    /// 6 or 7 pieces.
+    #[fail(display = "too many pieces")]
     TooManyPieces,
     /// Missing table.
     #[fail(display = "required {} table not found: {}", metric, material)]
