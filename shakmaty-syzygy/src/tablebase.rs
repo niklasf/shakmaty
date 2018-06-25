@@ -592,4 +592,19 @@ mod tests {
             promotion: Some(Role::Knight),
         }, Dtz(109)))));
     }
+
+    #[test]
+    #[ignore]
+    fn test_too_many_pieces() {
+        let mut tables = Tablebase::new();
+        tables.add_directory("tables/regular").expect("read directory");
+
+        let pos: Chess = "3k4/5P2/8/8/4K3/2P3P1/PP6/8 w - - 0 1"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("legal position");
+
+        assert_matches!(tables.probe_dtz(&pos), Ok(Dtz(1)));
+    }
 }

@@ -323,8 +323,8 @@ struct Consts {
     mult_factor: [u64; 5],
 
     map_pawns: [u64; 64],
-    lead_pawn_idx: [[u64; 64]; 5],
-    lead_pawns_size: [[u64; 4]; 5],
+    lead_pawn_idx: [[u64; 64]; 6],
+    lead_pawns_size: [[u64; 4]; 6],
 }
 
 impl Consts {
@@ -344,10 +344,10 @@ impl Consts {
         let mut available_squares = 48;
 
         let mut map_pawns = [0; 64];
-        let mut lead_pawn_idx = [[0; 64]; 5];
-        let mut lead_pawns_size = [[0; 4]; 5];
+        let mut lead_pawn_idx = [[0; 64]; 6];
+        let mut lead_pawns_size = [[0; 4]; 6];
 
-        for lead_pawns_cnt in 1..4 + 1 {
+        for lead_pawns_cnt in 1..5 + 1 {
             for file in 0..4 {
                 let mut idx = 0;
 
