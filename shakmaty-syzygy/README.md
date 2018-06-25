@@ -39,6 +39,12 @@ Documentation
 Changelog
 ---------
 
+* 0.5.1
+  - Fix out of bounds panic when probing KPPPPPvK.
+  - Fix error when first group in giveaway should have had more than two
+    identical pieces.
+  - Only 6 pieces supported in antichess variants. Return
+    `SyzygyError::TooManyPieces` instead of potential panic.
 * 0.5.0
   - More contextual information for errors (table, backtrace,
     invalid magic header bytes).
