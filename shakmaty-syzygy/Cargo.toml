@@ -31,6 +31,7 @@ default-features = false
 
 [dev-dependencies]
 csv = "1.0"
+matches = "0.1"
 
 [features]
 default = []

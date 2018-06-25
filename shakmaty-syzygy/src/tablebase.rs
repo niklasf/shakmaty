@@ -564,15 +564,13 @@ mod tests {
             .position()
             .expect("legal position");
 
-        let best = tables.best_move(&pos).expect("probe").expect("has moves");
-
-        assert_eq!(best, (Move::Normal {
+        assert_matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
             role: Role::Rook,
             from: Square::G8,
             capture: None,
             to: Square::G1,
             promotion: None,
-        }, Dtz(-1)));
+        }, Dtz(-1)))));
     }
 
     #[test]
@@ -586,14 +584,12 @@ mod tests {
             .position()
             .expect("legal position");
 
-        let best = tables.best_move(&pos).expect("probe").expect("has moves");
-
-        assert_eq!(best, (Move::Normal {
+        assert_matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
             role: Role::Pawn,
             from: Square::C2,
             to: Square::C1,
             capture: None,
             promotion: Some(Role::Knight),
-        }, Dtz(109)));
+        }, Dtz(109)))));
     }
 }

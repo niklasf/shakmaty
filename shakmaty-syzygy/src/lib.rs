@@ -79,6 +79,10 @@ extern crate shakmaty;
 #[cfg(feature = "serde-1")]
 extern crate serde;
 
+#[cfg(test)]
+#[macro_use]
+extern crate matches;
+
 #[macro_use]
 mod errors;
 mod material;
