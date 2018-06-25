@@ -72,6 +72,10 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* Upcoming
+  - Take small copy types by value: `Piece::char()`, `CastlingSide::*`.
+  - Minimum rust version 1.27.0 (i128 conversions again, fused iterators again,
+    `Option::filter()`, `dyn Trait`).
 * 0.8.1
   - Make `Role` discriminants public.
   - Put `San`, `SanPlus` and `Uci` constructors on `San`, `SanPlus` and `Uci`
