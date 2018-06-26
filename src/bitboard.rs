@@ -464,10 +464,9 @@ impl ::std::iter::FusedIterator for Bitboard {}
 impl DoubleEndedIterator for Bitboard {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
-        self.last().map(|sq| {
-            *self ^= Bitboard::from_square(sq);
-            sq
-        })
+        let sq = Bitboard::last(*self);
+        *self ^= Bitboard::from_iter(sq);
+        sq
     }
 }
 
