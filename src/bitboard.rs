@@ -464,15 +464,10 @@ impl ::std::iter::FusedIterator for Bitboard {}
 impl DoubleEndedIterator for Bitboard {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
-        if Bitboard::is_empty(*self) {
-            None
-        } else {
-            // This is safe because a non-zero u64 has between 0 and
-            // 63 (included) leading zeros.
-            let sq = unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) };
+        self.last().map(|sq| {
             *self ^= Bitboard::from_square(sq);
-            Some(sq)
-        }
+            sq
+        })
     }
 }
 
