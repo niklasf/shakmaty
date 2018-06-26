@@ -459,9 +459,6 @@ impl ExactSizeIterator for Bitboard {
     }
 }
 
-#[cfg(nightly)]
-unsafe impl ::std::iter::TrustedLen for Bitboard {}
-
 impl ::std::iter::FusedIterator for Bitboard {}
 
 impl DoubleEndedIterator for Bitboard {
