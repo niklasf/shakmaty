@@ -3,7 +3,7 @@ extern crate criterion;
 extern crate shakmaty;
 
 use criterion::{black_box, Criterion};
-use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square};
+use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square, Bitboard};
 use shakmaty::san::San;
 use shakmaty::fen::Fen;
 
@@ -106,12 +106,23 @@ fn bench_play_sans(c: &mut Criterion) {
     });
 }
 
+fn bench_bitboard_reverse_iter(c: &mut Criterion) {
+    c.bench_function("bitboard_reverse_iter", |b| {
+        b.iter(|| {
+            for sq in Bitboard(black_box(0xfaed_16db_af12_d8a1)) {
+                black_box(sq);
+            }
+        });
+    });
+}
+
 criterion_group!(benches,
     bench_shallow_perft,
     bench_parse_san_move_complicated,
     bench_generate_moves,
     bench_play_unchecked,
     bench_san_candidates,
-    bench_play_sans);
+    bench_play_sans,
+    bench_bitboard_reverse_iter);
 
 criterion_main!(benches);
