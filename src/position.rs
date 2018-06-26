@@ -463,18 +463,14 @@ impl Position for Chess {
                     _ => {}
                 }
 
-                assert!(moves.len() + 8 < moves.capacity());
-
                 for from in piece_from & self.our(role) {
-                    unsafe {
-                        moves.push_unchecked(Move::Normal {
-                            role,
-                            from,
-                            capture: self.board().role_at(to),
-                            to,
-                            promotion: None,
-                        });
-                    };
+                    moves.push(Move::Normal {
+                        role,
+                        from,
+                        capture: self.board().role_at(to),
+                        to,
+                        promotion: None,
+                    });
                 }
             }
         } else {
@@ -1596,19 +1592,15 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 }
 
 fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
-    assert!(moves.len() + 8 < moves.capacity());
-
     for to in attacks::king_attacks(king) & target {
         if pos.board().attacks_to(to, !pos.turn(), pos.board().occupied()).is_empty() {
-            unsafe {
-                moves.push_unchecked(Move::Normal {
-                    role: Role::King,
-                    from: king,
-                    capture: pos.board().role_at(to),
-                    to,
-                    promotion: None,
-                });
-            }
+            moves.push(Move::Normal {
+                role: Role::King,
+                from: king,
+                capture: pos.board().role_at(to),
+                to,
+                promotion: None,
+            });
         }
     }
 }
@@ -1664,19 +1656,15 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 8 < moves.capacity());
-
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from) & target {
-                unsafe {
-                    moves.push_unchecked(Move::Normal {
-                        role: Self::ROLE,
-                        from,
-                        capture: pos.board().role_at(to),
-                        to,
-                        promotion: None,
-                    });
-                }
+                moves.push(Move::Normal {
+                    role: Self::ROLE,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                });
             }
         }
     }
@@ -1687,19 +1675,15 @@ trait Slider {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        assert!(moves.len() + 28 < moves.capacity());
-
         for from in pos.our(Self::ROLE) {
             for to in Self::attacks(from, pos.board().occupied()) & target {
-                unsafe {
-                    moves.push_unchecked(Move::Normal {
-                        role: Self::ROLE,
-                        from,
-                        capture: pos.board().role_at(to),
-                        to,
-                        promotion: None,
-                    });
-                }
+                moves.push(Move::Normal {
+                    role: Self::ROLE,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                });
             }
         }
     }
@@ -1747,31 +1731,23 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    // Due to push_unchecked the safety of this function depends on this
-    // assertion.
-    assert!(moves.len() + 108 < moves.capacity());
-
     let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
 
     for from in pos.our(Role::Pawn) & !seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            unsafe {
-                moves.push_unchecked(Move::Normal {
-                    role: Role::Pawn,
-                    from,
-                    capture: pos.board().role_at(to),
-                    to,
-                    promotion: None,
-                });
-            }
+            moves.push(Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture: pos.board().role_at(to),
+                to,
+                promotion: None,
+            });
         }
     }
 
     for from in seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            unsafe {
-                push_promotions(moves, from, to, pos.board().role_at(to));
-            }
+            push_promotions(moves, from, to, pos.board().role_at(to));
         }
     }
 
@@ -1784,46 +1760,40 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            unsafe {
-                moves.push_unchecked(Move::Normal {
-                    role: Role::Pawn,
-                    from,
-                    capture: None,
-                    to,
-                    promotion: None,
-                });
-            }
+            moves.push(Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture: None,
+                to,
+                promotion: None,
+            });
         }
     }
 
     for to in single_moves & target & Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
-            unsafe {
-                push_promotions(moves, from, to, None);
-            }
+            push_promotions(moves, from, to, None);
         }
     }
 
     for to in double_moves & target {
         if let Some(from) = to.offset(pos.turn().fold(-16, 16)) {
-            unsafe {
-                moves.push_unchecked(Move::Normal {
-                    role: Role::Pawn,
-                    from,
-                    capture: None,
-                    to,
-                    promotion: None,
-                });
-            }
+            moves.push(Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture: None,
+                to,
+                promotion: None,
+            });
         }
     }
 }
 
-unsafe fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
-    moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
-    moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
-    moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
-    moves.push_unchecked(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
+fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Queen) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Rook) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Bishop) });
+    moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
 }
 
 fn add_king_promotions(moves: &mut MoveList) {
