@@ -120,7 +120,7 @@ impl Wdl {
             n if -100 <= n && n <= -1 => Wdl::Loss,
             n if n < -100 => Wdl::BlessedLoss,
             0 => Wdl::Draw,
-            n if 100 <= n => Wdl::CursedWin,
+            n if 100 < n => Wdl::CursedWin,
             _ => Wdl::Win,
         }
     }
