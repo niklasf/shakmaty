@@ -19,6 +19,20 @@ use types::Move;
 use arrayvec::{Array, ArrayVec};
 
 /// A container for moves that can be stored inline on the stack.
+///
+/// The capacity is limited, but there is enough space to contain the legal
+/// moves of any chess position, including any of the supported chess variants.
+///
+/// # Example
+///
+/// ```
+/// use shakmaty::{Chess, Position, MoveList};
+///
+/// let pos = Chess::default();
+/// let legals = MoveList::new();
+/// pos.legal_moves(&mut legals);
+/// assert_eq!(legals.len(), 20);
+/// ```
 pub type MoveList = ArrayVec<[Move; 512]>;
 
 pub trait ArrayVecExt {
