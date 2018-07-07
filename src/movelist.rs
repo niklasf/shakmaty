@@ -29,7 +29,7 @@ use arrayvec::{Array, ArrayVec};
 /// use shakmaty::{Chess, Position, MoveList};
 ///
 /// let pos = Chess::default();
-/// let legals = MoveList::new();
+/// let mut legals = MoveList::new();
 /// pos.legal_moves(&mut legals);
 /// assert_eq!(legals.len(), 20);
 /// ```
