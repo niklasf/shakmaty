@@ -127,12 +127,15 @@ impl From<()> for InvalidUci {
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Uci {
+    /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {
         from: Square,
         to: Square,
         promotion: Option<Role>,
     },
+    /// A piece drop, e.g. `Q@f7`.
     Put { role: Role, to: Square },
+    /// A null move (`0000`).
     Null,
 }
 
@@ -165,6 +168,31 @@ impl Uci {
     /// # Errors
     ///
     /// Returns [`InvalidUci`] if `uci` is not syntactically valid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use std::error::Error;
+    /// #
+    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// use shakmaty::uci::Uci;
+    /// use shakmaty::Square;
+    ///
+    /// let uci = Uci::from_bytes(b"e4e5")?;
+    ///
+    /// assert_eq!(uci, Uci {
+    ///     from: Square::E4,
+    ///     to: Square::E5,
+    ///     promotion: None,
+    /// });
+    /// #
+    /// #     Ok(())
+    /// # }
+    /// #
+    /// # fn main() {
+    /// #     try_main().unwrap();
+    /// # }
+    /// ```
     ///
     /// [`InvalidUci`]: struct.InvalidUci.html
     pub fn from_bytes(uci: &[u8]) -> Result<Uci, InvalidUci> {
