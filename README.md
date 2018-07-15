@@ -72,10 +72,14 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
-* Upcoming
+* 0.9.0
   - Remove `uci`, `chess960_uci`, `san` and `san_plus` that were deprecated
     in 0.8.1.
+  - Renamed `*::from_bytes()` to `*::from_ascii()`.
   - Take small copy types by value: `Piece::char()`, `CastlingSide::*`.
+  - Added `Castles::has(color, side)`.
+  - `fen::{board_fen, epd, fen}` are now shortcuts for formatting with
+    default options.
   - Minimum rust version 1.27.0 (i128 conversions again, fused iterators again,
     `Option::filter()`, `dyn Trait`).
   - Eliminate many uses of unsafe, including `TrustedLen` impls, at minor cost.
