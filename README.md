@@ -73,9 +73,12 @@ Changelog
 ---------
 
 * Upcoming
+  - Remove `uci`, `chess960_uci`, `san` and `san_plus` that were deprecated
+    in 0.8.1.
   - Take small copy types by value: `Piece::char()`, `CastlingSide::*`.
   - Minimum rust version 1.27.0 (i128 conversions again, fused iterators again,
     `Option::filter()`, `dyn Trait`).
+  - Eliminate many uses of unsafe, including `TrustedLen` impls, at minor cost.
 * 0.8.1
   - Make `Role` discriminants public.
   - Put `San`, `SanPlus` and `Uci` constructors on `San`, `SanPlus` and `Uci`

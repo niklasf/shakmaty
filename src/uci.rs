@@ -159,26 +159,6 @@ impl fmt::Display for Uci {
     }
 }
 
-/// Converts a move to UCI notation.
-///
-/// If `pos` does not and did not have castling rights that are only possible
-/// in [Chess960](../trait.Position.html#tymethod.is_chess960), castling moves
-/// are represented as `e1g1`, `e1c1`, `e8g8` and `e8c8`.
-/// Alternatively, see
-/// [`Uci::from_chess960()`](enum.Uci.html#method.from_chess960).
-#[deprecated(since="0.8.1", note="use `Uci::from_move()` instead")]
-pub fn uci<P: Position>(pos: &P, m: &Move) -> Uci {
-    Uci::from_move(pos, m)
-}
-
-/// Converts a move to UCI notation. Castling moves are represented as a move
-/// of the king to the corresponding rook square, independently of the
-/// position.
-#[deprecated(since="0.8.1", note="use `Uci::from_chess960()` instead")]
-pub fn chess960_uci(m: &Move) -> Uci {
-    Uci::from_chess960(m)
-}
-
 impl Uci {
     /// Parses a move in UCI notation.
     ///

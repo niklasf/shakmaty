@@ -554,19 +554,6 @@ impl fmt::Display for SanPlus {
     }
 }
 
-/// Converts a move to Standard Algebraic Notation including possible
-/// check and checkmate suffixes.
-#[deprecated(since="0.8.1", note="use `SanPlus::from_move()` instead")]
-pub fn san_plus<P: Position>(pos: P, m: &Move) -> SanPlus {
-    SanPlus::from_move(pos, m)
-}
-
-/// Converts a move to Standard Algebraic Notation.
-#[deprecated(since="0.8.1", note="use `San::from_move()` instead")]
-pub fn san<P: Position>(pos: &P, m: &Move) -> San {
-    San::from_move(pos, m)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
