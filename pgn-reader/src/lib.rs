@@ -112,7 +112,7 @@
 //!     fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
-//!             let pos = Fen::from_bytes(value).ok()
+//!             let pos = Fen::from_ascii(value).ok()
 //!                 .and_then(|f| f.position().ok());
 //!
 //!             if let Some(pos) = pos {
@@ -642,7 +642,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
                 _ => {
                     let end = self.skip_token(pos + 1);
                     if self.pgn[pos] > b'9' {
-                        if let Ok(san) = San::from_bytes(&self.pgn[pos..end]) {
+                        if let Ok(san) = San::from_ascii(&self.pgn[pos..end]) {
                             self.visitor.san(san);
                         }
                     }

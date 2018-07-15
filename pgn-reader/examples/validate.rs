@@ -41,7 +41,7 @@ impl<'pgn> Visitor<'pgn> for Validator {
     fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
-            let fen = match Fen::from_bytes(value) {
+            let fen = match Fen::from_ascii(value) {
                 Ok(fen) => fen,
                 Err(err) => {
                     eprintln!("invalid fen header in game {}: {} ({:?})", self.games, err, value);
