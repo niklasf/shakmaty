@@ -32,7 +32,7 @@
 //! assert_eq!(uci, Uci::Normal {
 //!     from: Square::G1,
 //!     to: Square::F3,
-//!     promotion: None
+//!     promotion: None,
 //! });
 //! #
 //! #     Ok(())
@@ -73,7 +73,7 @@
 //! ```
 //! # use shakmaty::{Square, Move, Role, Chess, Position};
 //! # use shakmaty::uci::Uci;
-//!
+//! #
 //! let pos = Chess::default();
 //!
 //! let m = Move::Normal {
@@ -180,7 +180,7 @@ impl Uci {
     ///
     /// let uci = Uci::from_ascii(b"e4e5")?;
     ///
-    /// assert_eq!(uci, Uci {
+    /// assert_eq!(uci, Uci::Normal {
     ///     from: Square::E4,
     ///     to: Square::E5,
     ///     promotion: None,
