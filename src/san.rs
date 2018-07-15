@@ -121,7 +121,9 @@ impl From<()> for InvalidSan {
 /// `IllegalSan` or `AmbiguousSan`.
 #[derive(Debug)]
 pub enum SanError {
+    /// Standard algebraic notation does not match a legal move.
     IllegalSan,
+    /// Standard algebraic notation matches multiple legal moves.
     AmbiguousSan,
 }
 
