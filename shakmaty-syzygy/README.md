@@ -39,6 +39,8 @@ Documentation
 Changelog
 ---------
 
+* 0.6.0
+  - Update shakmaty to 0.9.0. Minimum Rust version is now 1.27.0.
 * 0.5.2
   - Fix `Wdl::from_dtz_after_zeroing(Dtz(100))`.
 * 0.5.1
