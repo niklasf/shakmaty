@@ -23,12 +23,11 @@
 //!
 //! ```
 //! use shakmaty::fen;
-//! use shakmaty::fen::FenOpts;
 //! use shakmaty::Chess;
 //!
 //! let pos = Chess::default();
 //!
-//! assert_eq!(fen::epd(&pos, &FenOpts::default()),
+//! assert_eq!(fen::epd(&pos),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 //!
@@ -117,19 +116,86 @@ impl FenOpts {
     /// Create a board FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
     pub fn board_fen(&self, board: &Board) -> String {
-        board_fen(board, self)
+        let mut fen = String::with_capacity(15);
+
+        for rank in (0..8).rev() {
+            let mut empty = 0;
+
+            for file in 0..8 {
+                let square = Square::from_coords(file, rank).unwrap();
+
+                empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
+                    if empty > 0 {
+                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                    }
+                    fen.push(piece.char());
+                    if self.promoted && board.promoted().contains(square) {
+                        fen.push('~');
+                    }
+                    0
+                });
+
+                if file == 7 && empty > 0 {
+                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                }
+
+                if file == 7 && rank > 0 {
+                    fen.push('/')
+                }
+            }
+        }
+
+        fen
+    }
+
+    fn castling_fen(&self, board: &Board, castling_rights: Bitboard) -> String {
+        let mut fen = String::with_capacity(4);
+
+        for color in &[White, Black] {
+            let king = board.king_of(*color);
+
+            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
+
+            for rook in (candidates & castling_rights).rev() {
+                if !self.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                    fen.push(color.fold('Q', 'q'));
+                } else if !self.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                    fen.push(color.fold('K', 'k'));
+                } else {
+                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+                }
+            }
+        }
+
+        if fen.is_empty() {
+            fen.push('-');
+        }
+
+        fen
     }
 
     /// Create an EPD such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
     pub fn epd(&self, setup: &dyn Setup) -> String {
-        epd(setup, self)
+        let pockets = setup.pockets()
+                           .map_or("".to_owned(), |p| format!("[{}]", p));
+
+        let checks = setup.remaining_checks()
+                          .map_or("".to_owned(), |r| format!(" {}", r));
+
+        format!("{}{} {} {} {}{}",
+                self.board_fen(setup.board()),
+                pockets,
+                setup.turn().char(),
+                self.castling_fen(setup.board(), setup.castling_rights()),
+                setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                checks)
     }
 
     /// Create a FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
     pub fn fen(&self, setup: &dyn Setup) -> String {
-        fen(setup, self)
+        format!("{} {} {}", self.epd(setup), setup.halfmove_clock(), setup.fullmoves())
     }
 }
 
@@ -237,7 +303,7 @@ impl FromStr for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", board_fen(self, FenOpts::new().promoted(true)))
+        write!(f, "{}", FenOpts::new().promoted(true).board_fen(self))
     }
 }
 
@@ -431,90 +497,23 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", fen(self, FenOpts::new().promoted(true)))
+        write!(f, "{}", FenOpts::new().promoted(true).fen(self))
     }
-}
-
-fn castling_fen(board: &Board, castling_rights: Bitboard, opts: &FenOpts) -> String {
-    let mut fen = String::with_capacity(4);
-
-    for color in &[White, Black] {
-        let king = board.king_of(*color);
-
-        let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
-
-        for rook in (candidates & castling_rights).rev() {
-            if !opts.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
-                fen.push(color.fold('Q', 'q'));
-            } else if !opts.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
-                fen.push(color.fold('K', 'k'));
-            } else {
-                fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
-            }
-        }
-    }
-
-    if fen.is_empty() {
-        fen.push('-');
-    }
-
-    fen
 }
 
 /// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
-pub fn board_fen(board: &Board, opts: &FenOpts) -> String {
-    let mut fen = String::with_capacity(15);
-
-    for rank in (0..8).rev() {
-        let mut empty = 0;
-
-        for file in 0..8 {
-            let square = Square::from_coords(file, rank).unwrap();
-
-            empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
-                if empty > 0 {
-                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                }
-                fen.push(piece.char());
-                if opts.promoted && board.promoted().contains(square) {
-                    fen.push('~');
-                }
-                0
-            });
-
-            if file == 7 && empty > 0 {
-                fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-            }
-
-            if file == 7 && rank > 0 {
-                fen.push('/')
-            }
-        }
-    }
-
-    fen
+pub fn board_fen(board: &Board) -> String {
+    FenOpts::default().board_fen(board)
 }
 
 /// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-pub fn epd(setup: &dyn Setup, opts: &FenOpts) -> String {
-    let pockets = setup.pockets()
-                       .map_or("".to_owned(), |p| format!("[{}]", p));
-
-    let checks = setup.remaining_checks()
-                      .map_or("".to_owned(), |r| format!(" {}", r));
-
-    format!("{}{} {} {} {}{}",
-            board_fen(setup.board(), opts),
-            pockets,
-            setup.turn().char(),
-            castling_fen(setup.board(), setup.castling_rights(), opts),
-            setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-            checks)
+pub fn epd(setup: &dyn Setup) -> String {
+    FenOpts::default().epd(setup)
 }
 
 /// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-pub fn fen(setup: &dyn Setup, opts: &FenOpts) -> String {
-    format!("{} {} {}", epd(setup, opts), setup.halfmove_clock(), setup.fullmoves())
+pub fn fen(setup: &dyn Setup) -> String {
+    FenOpts::default().fen(setup)
 }
 
 #[cfg(test)]
@@ -526,12 +525,11 @@ mod tests {
     fn test_legal_ep_square() {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
-        assert_eq!(epd(&fen, &FenOpts::default()), original_epd);
+        assert_eq!(epd(&fen), original_epd);
 
         // The en passant square is not actually legal.
         let pos: Chess = fen.position().expect("legal position");
-        assert_eq!(epd(&pos, &FenOpts::default()),
-                   "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+        assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
     #[test]
@@ -548,7 +546,7 @@ mod tests {
     #[test]
     fn test_shredder_fen() {
         let pos = Chess::default();
-        assert_eq!(fen(&pos, FenOpts::default().shredder(true)),
+        assert_eq!(FenOpts::default().shredder(true).fen(&pos),
                    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
     }
 
