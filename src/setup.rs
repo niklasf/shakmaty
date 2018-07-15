@@ -177,6 +177,27 @@ impl Castles {
         self.rook[color as usize][side as usize]
     }
 
+    /// Gets the squares that need to be empty so that castling is possible
+    /// on the given side.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Castles, CastlingSide, Bitboard, Color, Square};
+    ///
+    /// let castles = Castles::default();
+    /// let path = castles.path(Color::White, CastlingSide::QueenSide);
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 0 1 1 1 0 . . .
+    ///
+    /// assert_eq!(path, Bitboard::from(Square::B1) | Bitboard::from(Square::C1) | Bitboard::from(Square::D1));
+    /// ```
     #[inline]
     pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
         self.path[color as usize][side as usize]
