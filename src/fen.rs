@@ -501,17 +501,28 @@ impl fmt::Display for Fen {
     }
 }
 
-/// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
+/// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`
+/// with default [`FenOpts`].
+///
+/// [`FenOpts`]: struct.FenOpts.html
 pub fn board_fen(board: &Board) -> String {
     FenOpts::default().board_fen(board)
 }
 
-/// Create an EPD such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
+/// Create an EPD such as
+/// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -` with default
+/// [`FenOpts`].
+///
+/// [`FenOpts`]: struct.FenOpts.html
 pub fn epd(setup: &dyn Setup) -> String {
     FenOpts::default().epd(setup)
 }
 
-/// Create a FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
+/// Create a FEN such as
+/// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1` with default
+/// [`FenOpts`].
+///
+/// [`FenOpts`]: struct.FenOpts.html
 pub fn fen(setup: &dyn Setup) -> String {
     FenOpts::default().fen(setup)
 }
