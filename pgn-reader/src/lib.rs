@@ -186,8 +186,8 @@ impl Nag {
     /// ```
     /// use pgn_reader::Nag;
     ///
-    /// assert_eq!(Nag::from_bytes(b"??"), Ok(Nag(4)));
-    /// assert_eq!(Nag::from_bytes(b"$24"), Ok(Nag(24)));
+    /// assert_eq!(Nag::from_ascii(b"??"), Ok(Nag(4)));
+    /// assert_eq!(Nag::from_ascii(b"$24"), Ok(Nag(24)));
     /// ```
     ///
     /// # Errors
@@ -197,7 +197,7 @@ impl Nag {
     ///
     ///
     /// [`InvalidNag`]: struct.InvalidNag.html
-    pub fn from_bytes(s: &[u8]) -> Result<Nag, InvalidNag> {
+    pub fn from_ascii(s: &[u8]) -> Result<Nag, InvalidNag> {
         if s == b"?!" {
             Ok(Nag(6))
         } else if s == b"?" {
@@ -258,7 +258,7 @@ impl FromStr for Nag {
     type Err = InvalidNag;
 
     fn from_str(s: &str) -> Result<Nag, InvalidNag> {
-        Nag::from_bytes(s.as_bytes())
+        Nag::from_ascii(s.as_bytes())
     }
 }
 
@@ -632,7 +632,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
                 b'!' | b'?' | b'$' => {
                     let start = pos;
                     pos = self.skip_token(pos + 1);
-                    if let Ok(nag) = Nag::from_bytes(&self.pgn[start..pos]) {
+                    if let Ok(nag) = Nag::from_ascii(&self.pgn[start..pos]) {
                         self.visitor.nag(nag);
                     }
                 },
