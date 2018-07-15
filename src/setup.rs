@@ -150,6 +150,10 @@ impl Castles {
         self.mask.is_empty()
     }
 
+    pub fn has(&self, color: Color, side: CastlingSide) -> bool {
+        self.rook(color, side).is_some()
+    }
+
     pub fn has_side(&self, color: Color) -> bool {
         (self.mask & Bitboard::relative_rank(color, 0)).any()
     }
