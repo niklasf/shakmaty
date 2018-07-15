@@ -143,7 +143,7 @@ impl FromStr for Uci {
     type Err = InvalidUci;
 
     fn from_str(uci: &str) -> Result<Uci, InvalidUci> {
-        Uci::from_bytes(uci.as_bytes())
+        Uci::from_ascii(uci.as_bytes())
     }
 }
 
@@ -178,7 +178,7 @@ impl Uci {
     /// use shakmaty::uci::Uci;
     /// use shakmaty::Square;
     ///
-    /// let uci = Uci::from_bytes(b"e4e5")?;
+    /// let uci = Uci::from_ascii(b"e4e5")?;
     ///
     /// assert_eq!(uci, Uci {
     ///     from: Square::E4,
@@ -195,7 +195,7 @@ impl Uci {
     /// ```
     ///
     /// [`InvalidUci`]: struct.InvalidUci.html
-    pub fn from_bytes(uci: &[u8]) -> Result<Uci, InvalidUci> {
+    pub fn from_ascii(uci: &[u8]) -> Result<Uci, InvalidUci> {
         if uci.len() != 4 && uci.len() != 5 {
             return Err(InvalidUci);
         }
@@ -204,12 +204,12 @@ impl Uci {
             return Ok(Uci::Null);
         }
 
-        let to = Square::from_bytes(&uci[2..4]).map_err(|_| ())?;
+        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ())?;
 
         if uci[1] == b'@' {
             Ok(Uci::Put { role: Role::from_char(uci[0] as char).ok_or(())?, to })
         } else {
-            let from = Square::from_bytes(&uci[0..2]).map_err(|_| ())?;
+            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ())?;
             if uci.len() == 5 {
                 Ok(Uci::Normal {
                     from,

@@ -16,7 +16,7 @@ fn bench_shallow_perft(c: &mut Criterion) {
 
 fn bench_parse_san_move_complicated(c: &mut Criterion) {
     c.bench_function("parse_san_move_complicated", |b| {
-        b.iter(|| San::from_bytes(black_box(b"bxc1=R+")));
+        b.iter(|| San::from_ascii(black_box(b"bxc1=R+")));
     });
 }
 

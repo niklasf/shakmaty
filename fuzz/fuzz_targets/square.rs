@@ -7,5 +7,5 @@ extern crate shakmaty;
 use shakmaty::Square;
 
 fuzz_target!(|data: &[u8]| {
-    let _ = Square::from_bytes(data);
+    let _ = Square::from_ascii(data);
 });

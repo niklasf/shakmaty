@@ -316,7 +316,7 @@ impl Fen {
     /// # fn try_main() -> Result<(), Box<Error>> {
     /// use shakmaty::fen::Fen;
     ///
-    /// let fen = Fen::from_bytes(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
+    /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
     /// assert_eq!(fen, Fen::default());
     /// #
     /// #     Ok(())
@@ -328,7 +328,7 @@ impl Fen {
     /// ```
     ///
     /// [`FenError`]: enum.FenError.html
-    pub fn from_bytes(fen: &[u8]) -> Result<Fen, FenError> {
+    pub fn from_ascii(fen: &[u8]) -> Result<Fen, FenError> {
         let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();
 
@@ -384,7 +384,7 @@ impl Fen {
             Some(b"-") | None => (),
             Some(ep_part) => {
                 result.ep_square =
-                    Some(Square::from_bytes(ep_part).map_err(|_| FenError::InvalidEpSquare)?);
+                    Some(Square::from_ascii(ep_part).map_err(|_| FenError::InvalidEpSquare)?);
             }
         }
 
@@ -425,7 +425,7 @@ impl FromStr for Fen {
     type Err = FenError;
 
     fn from_str(fen: &str) -> Result<Fen, FenError> {
-        Fen::from_bytes(fen.as_bytes())
+        Fen::from_ascii(fen.as_bytes())
     }
 }
 

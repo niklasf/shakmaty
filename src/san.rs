@@ -186,7 +186,7 @@ impl San {
     /// Returns [`InvalidSan`] if `san` is not syntactically valid.
     ///
     /// [`InvalidSan`]: struct.InvalidSan.html
-    pub fn from_bytes(mut san: &[u8]) -> Result<San, InvalidSan> {
+    pub fn from_ascii(mut san: &[u8]) -> Result<San, InvalidSan> {
         if san.ends_with(b"#") || san.ends_with(b"+") {
             san = &san[0..(san.len() - 1)];
         }
@@ -200,12 +200,12 @@ impl San {
         } else if san.len() == 3 && san[0] == b'@' {
             Ok(San::Put {
                 role: Role::Pawn,
-                to: Square::from_bytes(&san[1..]).map_err(|_| ())?,
+                to: Square::from_ascii(&san[1..]).map_err(|_| ())?,
             })
         } else if san.len() == 4 && san[1] == b'@' {
             Ok(San::Put {
                 role: Role::from_char(san[0] as char).ok_or(())?,
-                to: Square::from_bytes(&san[2..]).map_err(|_| ())?,
+                to: Square::from_ascii(&san[2..]).map_err(|_| ())?,
             })
         } else {
             let mut chars = san.iter().cloned();
@@ -400,18 +400,18 @@ impl San {
     ///     promotion: None,
     /// };
     ///
-    /// let nf3 = San::from_bytes(b"Nf3")?;
+    /// let nf3 = San::from_ascii(b"Nf3")?;
     /// assert!(nf3.matches(&m));
     ///
-    /// let ng1f3 = San::from_bytes(b"Ng1f3")?;
+    /// let ng1f3 = San::from_ascii(b"Ng1f3")?;
     /// assert!(ng1f3.matches(&m));
     ///
     /// // capture does not match
-    /// let nxf3 = San::from_bytes(b"Nxf3")?;
+    /// let nxf3 = San::from_ascii(b"Nxf3")?;
     /// assert!(!nxf3.matches(&m));
     ///
     /// // other file does not match
-    /// let nef3 = San::from_bytes(b"Nef3")?;
+    /// let nef3 = San::from_ascii(b"Nef3")?;
     /// assert!(!nef3.matches(&m));
     /// #
     /// #     Ok(())
@@ -460,7 +460,7 @@ impl FromStr for San {
     type Err = InvalidSan;
 
     fn from_str(san: &str) -> Result<San, InvalidSan> {
-        San::from_bytes(san.as_bytes())
+        San::from_ascii(san.as_bytes())
     }
 }
 
@@ -513,8 +513,8 @@ impl SanPlus {
     /// Returns [`InvalidSan`] if `san` is not syntactically valid.
     ///
     /// [`InvalidSan`]: struct.InvalidSan.html
-    pub fn from_bytes(san: &[u8]) -> Result<SanPlus, InvalidSan> {
-        San::from_bytes(san).map(|result| SanPlus {
+    pub fn from_ascii(san: &[u8]) -> Result<SanPlus, InvalidSan> {
+        San::from_ascii(san).map(|result| SanPlus {
             san: result,
             checkmate: san.ends_with(b"#"),
             check: san.ends_with(b"+"),
@@ -538,7 +538,7 @@ impl FromStr for SanPlus {
     type Err = InvalidSan;
 
     fn from_str(san: &str) -> Result<SanPlus, InvalidSan> {
-        SanPlus::from_bytes(san.as_bytes())
+        SanPlus::from_ascii(san.as_bytes())
     }
 }
 

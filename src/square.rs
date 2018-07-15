@@ -126,7 +126,7 @@ impl Square {
     /// # fn try_main() -> Result<(), Box<Error>> {
     /// use shakmaty::Square;
     ///
-    /// let sq = Square::from_bytes(b"a5")?;
+    /// let sq = Square::from_ascii(b"a5")?;
     /// assert_eq!(sq, Square::A5);
     /// #
     /// #     Ok(())
@@ -139,7 +139,7 @@ impl Square {
     ///
     /// [`InvalidSquareName`]: struct.InvalidSquareName.html
     #[inline]
-    pub fn from_bytes(s: &[u8]) -> Result<Square, InvalidSquareName> {
+    pub fn from_ascii(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
             Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, (s[1] - b'1') as i8) })
         } else {
@@ -289,7 +289,7 @@ impl str::FromStr for Square {
     type Err = InvalidSquareName;
 
     fn from_str(s: &str) -> Result<Square, InvalidSquareName> {
-        Square::from_bytes(s.as_bytes())
+        Square::from_ascii(s.as_bytes())
     }
 }
 
