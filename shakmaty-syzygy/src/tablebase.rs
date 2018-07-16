@@ -601,7 +601,7 @@ mod tests {
 
     #[test]
     #[ignore]
-    fn test_too_many_pieces() {
+    fn test_many_pawns() {
         let mut tables = Tablebase::new();
         tables.add_directory("tables/regular").expect("read directory");
 
