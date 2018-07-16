@@ -5,7 +5,7 @@ import chess.variant
 import chess.syzygy
 
 
-def update_dependencies(variant, suite, target):
+def deps(variant, suite, target, extra_endgames=[]):
     dtz_tables = set()
 
     for i, line in enumerate(open(suite)):
@@ -19,6 +19,8 @@ def update_dependencies(variant, suite, target):
         w, b = table.split("v", 1)
         if w and b:
             dtz_tables.add(table)
+
+    dtz_tables.update(chess.syzygy.all_dependencies(extra_endgames))
 
     one_king = variant != "antichess"
     wdl_tables = list(chess.syzygy.all_dependencies(dtz_tables, one_king))
@@ -69,6 +71,6 @@ def update_dependencies(variant, suite, target):
 
 
 if __name__ == "__main__":
-    update_dependencies("standard", "tests/regular.csv", "tables/regular/TEST-SOURCE.txt")
-    update_dependencies("atomic", "tests/atomic.csv", "tables/atomic/TEST-SOURCE.txt")
-    update_dependencies("antichess", "tests/giveaway.csv", "tables/giveaway/TEST-SOURCE.txt")
+    deps("standard", "tests/regular.csv", "tables/regular/TEST-SOURCE.txt", ["KBNvKR", "KBBvKP"])
+    deps("atomic", "tests/atomic.csv", "tables/atomic/TEST-SOURCE.txt")
+    deps("antichess", "tests/giveaway.csv", "tables/giveaway/TEST-SOURCE.txt")
