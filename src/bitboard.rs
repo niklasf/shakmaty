@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+//! Sets of squares.
+
 use std::ops;
 use std::fmt;
 use std::fmt::Write;
@@ -22,7 +24,7 @@ use std::iter::FromIterator;
 use square::Square;
 use types::Color;
 
-/// A set of [squares](square/struct.Square.html) represented by a 64 bit
+/// A set of [squares](../enum.Square.html) represented by a 64 bit
 /// integer mask.
 ///
 /// # Examples
@@ -452,6 +454,9 @@ impl IntoIterator for Bitboard {
     }
 }
 
+/// Iterator over the squares of a [`Bitboard`].
+///
+/// [`Bitboard`]: struct.Bitboard.html
 #[derive(Debug, Clone)]
 pub struct IntoIter(Bitboard);
 
