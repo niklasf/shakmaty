@@ -1972,25 +1972,46 @@ mod tests {
         assert!(moves.iter().all(|m| m.is_promotion()));
     }
 
-    #[test]
-    fn test_insufficient_material() {
-        let fen = "8/3k4/8/8/2N5/8/3K4/8 b - - 0 1";
-        let pos: Chess = fen.parse::<Fen>()
+    fn assert_insufficient_material<P: Position>(fen: &str, white: bool, black: bool) {
+        let pos: P = fen.parse::<Fen>()
             .expect("valid fen")
             .position()
             .expect("valid position");
 
-        assert!(pos.is_insufficient_material());
+        assert_eq!(pos.has_insufficient_material(White), white);
+        assert_eq!(pos.has_insufficient_material(Black), black);
     }
 
     #[test]
-    fn test_atomic_insufficient_material() {
-        let fen = "8/1k6/8/2n5/8/3NK3/8/8 b - - 0 1";
-        let pos: Atomic = fen.parse::<Fen>()
-            .expect("valid fen")
-            .position()
-            .expect("valid position");
+    fn test_insufficient_material() {
+        assert_insufficient_material::<Chess>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", true, true);
+        assert_insufficient_material::<Chess>("8/3k4/8/8/2N5/8/3K4/8 b - - 0 1", true, true);
+        assert_insufficient_material::<Chess>("8/4rk2/8/8/8/8/3K4/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Chess>("8/4qk2/8/8/8/8/3K4/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Chess>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
 
-        assert!(!pos.is_insufficient_material());
+        assert_insufficient_material::<Atomic>("8/3k4/8/8/2N5/8/3K4/8 b - - 0 1", true, true);
+        assert_insufficient_material::<Atomic>("8/4rk2/8/8/8/8/3K4/8 w - - 0 1", true, true);
+        assert_insufficient_material::<Atomic>("8/4qk2/8/8/8/8/3K4/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Atomic>("8/1k6/8/2n5/8/3NK3/8/8 b - - 0 1", false, false);
+        assert_insufficient_material::<Atomic>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", true, true);
+        assert_insufficient_material::<Atomic>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+
+        assert_insufficient_material::<Giveaway>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Giveaway>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Giveaway>("8/8/8/6b1/8/3B4/4B3/5B2 w - - 0 1", true, true);
+        //assert_insufficient_material::<Giveaway>("8/8/5b2/8/8/3B4/3B4/8 w - - 0 1", true, false);
+
+        assert_insufficient_material::<KingOfTheHill>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", false, false);
+
+        assert_insufficient_material::<RacingKings>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", false, false);
+
+        assert_insufficient_material::<ThreeCheck>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", true, true);
+        assert_insufficient_material::<ThreeCheck>("8/5k2/8/8/8/8/3K2N1/8 w - - 0 1", false, true);
+
+        assert_insufficient_material::<Crazyhouse>("8/5k2/8/8/8/8/3K2N1/8 w - - 0 1", true, true);
+        assert_insufficient_material::<Crazyhouse>("8/5k2/8/8/8/5B2/3KB3/8 w - - 0 1", false, false);
+
+        //assert_insufficient_material::<Horde>("8/5k2/8/8/8/4NN2/8/8 w - - 0 1", true, false);
     }
 }
