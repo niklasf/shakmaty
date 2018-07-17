@@ -689,7 +689,7 @@ impl Position for Atomic {
         // As long as the opponent king is not alone there is always a chance
         // their own piece explodes next to it.
         if (self.board.by_color(!color) & !self.board.kings()).any() {
-            // Unless there are only bishops that can't explode each other.
+            // Unless there are only bishops that cannot explode each other.
             if self.board().occupied() == self.board().kings() | self.board().bishops() {
                 if (self.board().bishops() & self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
                     return (self.board().bishops() & self.board().black() & Bitboard::LIGHT_SQUARES).is_empty();
@@ -835,17 +835,15 @@ impl Position for Giveaway {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
-    fn has_insufficient_material(&self, _color: Color) -> bool {
-        // In a position with only bishops, check if they can capture each
-        // other.
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        // In a position with only bishops, check if all our bishops can be
+        // captured.
         if self.board.occupied() == self.board.bishops() {
-            if (self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
-                (self.board().black() & Bitboard::LIGHT_SQUARES).is_empty()
-            } else if (self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
-                (self.board().black() & Bitboard::DARK_SQUARES).is_empty()
-            } else {
-                false
-            }
+            let we_some_on_light = (self.board.by_color(color) & Bitboard::LIGHT_SQUARES).any();
+            let we_some_on_dark = (self.board.by_color(color) & Bitboard::DARK_SQUARES).any();
+            let they_all_on_dark = (self.board.by_color(!color) & Bitboard::LIGHT_SQUARES).is_empty();
+            let they_all_on_light = (self.board.by_color(!color) & Bitboard::DARK_SQUARES).is_empty();
+            (we_some_on_light && they_all_on_dark) || (we_some_on_dark && they_all_on_light)
         } else {
             false
         }
@@ -1190,6 +1188,9 @@ impl Position for Crazyhouse {
     }
 
     fn has_insufficient_material(&self, _color: Color) -> bool {
+        // In practise no material can leave the game, but this is simple
+        // to implement anyway. Bishops can be captured and put onto a
+        // different color complex.
         self.board().occupied().count() + self.pockets.count() <= 3 &&
         self.board().pawns().is_empty() &&
         self.board().rooks_and_queens().is_empty() &&
@@ -2000,7 +2001,7 @@ mod tests {
         assert_insufficient_material::<Giveaway>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Giveaway>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Giveaway>("8/8/8/6b1/8/3B4/4B3/5B2 w - - 0 1", true, true);
-        //assert_insufficient_material::<Giveaway>("8/8/5b2/8/8/3B4/3B4/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Giveaway>("8/8/5b2/8/8/3B4/3B4/8 w - - 0 1", true, false);
 
         assert_insufficient_material::<KingOfTheHill>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", false, false);
 
