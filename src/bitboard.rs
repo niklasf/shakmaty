@@ -173,6 +173,13 @@ impl Bitboard {
     }
 
     #[inline]
+    pub fn pop_front(&mut self) -> Option<Square> {
+        let square = self.first();
+        self.0 &= self.0.wrapping_sub(1);
+        square
+    }
+
+    #[inline]
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
@@ -181,6 +188,13 @@ impl Bitboard {
             // 63 trailing zeros.
             Some(unsafe { Square::from_index_unchecked(self.0.trailing_zeros() as i8) })
         }
+    }
+
+    #[inline]
+    pub fn pop_back(&mut self) -> Option<Square> {
+        let square = self.last();
+        *self ^= Bitboard::from_iter(square);
+        square
     }
 
     #[inline]
@@ -438,7 +452,7 @@ impl IntoIterator for Bitboard {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Clone)]
 pub struct IntoIter(Bitboard);
 
 impl Iterator for IntoIter {
@@ -446,9 +460,7 @@ impl Iterator for IntoIter {
 
     #[inline]
     fn next(&mut self) -> Option<Square> {
-        let square = self.0.first();
-        (self.0).0 &= (self.0).0.wrapping_sub(1);
-        square
+        self.0.pop_front()
     }
 
     #[inline]
@@ -486,9 +498,7 @@ impl ::std::iter::FusedIterator for IntoIter {}
 impl DoubleEndedIterator for IntoIter {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
-        let sq = self.0.last();
-        self.0 ^= Bitboard::from_iter(sq);
-        sq
+        self.0.pop_back()
     }
 }
 

@@ -19,7 +19,6 @@ use std::fmt::Write;
 use std::iter::FromIterator;
 
 use attacks;
-use bitboard;
 use bitboard::Bitboard;
 use square::Square;
 use types::{Color, Piece, Role};
@@ -272,12 +271,12 @@ impl Board {
 
     pub fn pieces(&self) -> Pieces {
         Pieces {
-            pawns: self.pawns().into_iter(),
-            knights: self.knights().into_iter(),
-            bishops: self.bishops().into_iter(),
-            rooks: self.rooks().into_iter(),
-            queens: self.queens().into_iter(),
-            kings: self.kings().into_iter(),
+            pawns: self.pawns(),
+            knights: self.knights(),
+            bishops: self.bishops(),
+            rooks: self.rooks(),
+            queens: self.queens(),
+            kings: self.kings(),
             white: self.white(),
         }
     }
@@ -333,12 +332,12 @@ impl FromIterator<(Square, Piece)> for Board {
 /// [`Board`]: struct.Board.html
 #[derive(Clone)]
 pub struct Pieces {
-    pawns: bitboard::IntoIter,
-    knights: bitboard::IntoIter,
-    bishops: bitboard::IntoIter,
-    rooks: bitboard::IntoIter,
-    queens: bitboard::IntoIter,
-    kings: bitboard::IntoIter,
+    pawns: Bitboard,
+    knights: Bitboard,
+    bishops: Bitboard,
+    rooks: Bitboard,
+    queens: Bitboard,
+    kings: Bitboard,
     white: Bitboard,
 }
 
@@ -352,30 +351,49 @@ impl Iterator for Pieces {
     type Item = (Square, Piece);
 
     fn next(&mut self) -> Option<(Square, Piece)> {
-        if let Some(sq) = self.pawns.next() {
+        if let Some(sq) = self.pawns.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).pawn())));
         }
-        if let Some(sq) = self.knights.next() {
+        if let Some(sq) = self.knights.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).knight())));
         }
-        if let Some(sq) = self.bishops.next() {
+        if let Some(sq) = self.bishops.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).bishop())));
         }
-        if let Some(sq) = self.rooks.next() {
+        if let Some(sq) = self.rooks.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).rook())));
         }
-        if let Some(sq) = self.queens.next() {
+        if let Some(sq) = self.queens.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).queen())));
         }
-        if let Some(sq) = self.kings.next() {
+        if let Some(sq) = self.kings.pop_front() {
             return Some((sq, (Color::from_white(self.white.contains(sq)).king())));
         }
         None
     }
 
     fn count(self) -> usize {
-        self.pawns.count() + self.knights.count() + self.bishops.count() + self.rooks.count()
-            + self.queens.count() + self.kings.count()
+        self.len()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.len();
+        (len, Some(len))
+    }
+}
+
+impl ExactSizeIterator for Pieces {
+    fn len(&self) -> usize {
+        self.pawns.count() + self.knights.count() + self.bishops.count()
+            + self.rooks.count() + self.queens.count() + self.kings.count()
+    }
+
+    #[cfg(nightly)]
+    fn is_empty(&self) -> bool {
+        self.white.is_empty() && self.pawns.is_empty()
+            && self.knights.is_empty() && self.bishops.is_empty()
+            && self.rooks.is_empty() && self.queens.is_empty()
+            && self.kings.is_empty()
     }
 }
 
