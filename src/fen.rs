@@ -156,7 +156,7 @@ impl FenOpts {
 
             let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
 
-            for rook in (candidates & castling_rights).rev() {
+            for rook in (candidates & castling_rights).into_iter().rev() {
                 if !self.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                     fen.push(color.fold('Q', 'q'));
                 } else if !self.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {

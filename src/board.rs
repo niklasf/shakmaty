@@ -21,7 +21,7 @@ use std::iter::FromIterator;
 use attacks;
 use square::Square;
 use types::{Color, Piece, Role};
-use bitboard::Bitboard;
+use bitboard::{Bitboard, BitboardIterator};
 
 /// [`Piece`] positions on a board.
 ///
@@ -271,12 +271,12 @@ impl Board {
 
     pub fn pieces(&self) -> Pieces {
         Pieces {
-            pawns: self.pawns(),
-            knights: self.knights(),
-            bishops: self.bishops(),
-            rooks: self.rooks(),
-            queens: self.queens(),
-            kings: self.kings(),
+            pawns: self.pawns().into_iter(),
+            knights: self.knights().into_iter(),
+            bishops: self.bishops().into_iter(),
+            rooks: self.rooks().into_iter(),
+            queens: self.queens().into_iter(),
+            kings: self.kings().into_iter(),
             white: self.white(),
         }
     }
@@ -332,12 +332,12 @@ impl FromIterator<(Square, Piece)> for Board {
 /// [`Board`]: struct.Board.html
 #[derive(Clone)]
 pub struct Pieces {
-    pawns: Bitboard,
-    knights: Bitboard,
-    bishops: Bitboard,
-    rooks: Bitboard,
-    queens: Bitboard,
-    kings: Bitboard,
+    pawns: BitboardIterator,
+    knights: BitboardIterator,
+    bishops: BitboardIterator,
+    rooks: BitboardIterator,
+    queens: BitboardIterator,
+    kings: BitboardIterator,
     white: Bitboard,
 }
 
@@ -373,26 +373,8 @@ impl Iterator for Pieces {
     }
 
     fn count(self) -> usize {
-        self.len()
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.len();
-        (len, Some(len))
-    }
-}
-
-impl ExactSizeIterator for Pieces {
-    fn len(&self) -> usize {
-        self.pawns.len() + self.knights.len() + self.bishops.len() + self.rooks.len()
-            + self.queens.len() + self.kings.len()
-    }
-
-    #[cfg(nightly)]
-    fn is_empty(&self) -> bool {
-        self.white.is_empty() && self.pawns.is_empty() && self.knights.is_empty()
-            && self.bishops.is_empty() && self.rooks.is_empty() && self.queens.is_empty()
-            && self.kings.is_empty()
+        self.pawns.count() + self.knights.count() + self.bishops.count() + self.rooks.count()
+            + self.queens.count() + self.kings.count()
     }
 }
 

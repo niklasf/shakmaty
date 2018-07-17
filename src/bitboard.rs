@@ -184,6 +184,22 @@ impl Bitboard {
     }
 
     #[inline]
+    pub fn last(self) -> Option<Square> {
+        if self.is_empty() {
+            None
+        } else {
+            // This is safe because a non-zero u64 has between 0 and
+            // 63 (included) leading zeros.
+            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) })
+        }
+    }
+
+    #[inline]
+    pub fn count(self) -> usize {
+        self.0.count_ones() as usize
+    }
+
+    #[inline]
     pub fn more_than_one(self) -> bool {
         self.0 & self.0.wrapping_sub(1) != 0
     }
@@ -413,59 +429,65 @@ impl Extend<Square> for Bitboard {
     }
 }
 
-impl Iterator for Bitboard {
+impl IntoIterator for Bitboard {
+    type Item = Square;
+    type IntoIter = BitboardIterator;
+
+    fn into_iter(self) -> BitboardIterator {
+        BitboardIterator(self)
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct BitboardIterator(Bitboard);
+
+impl Iterator for BitboardIterator {
     type Item = Square;
 
     #[inline]
     fn next(&mut self) -> Option<Square> {
-        let square = self.first();
-        self.0 &= self.0.wrapping_sub(1);
+        let square = self.0.first();
+        (self.0).0 &= (self.0).0.wrapping_sub(1);
         square
     }
 
     #[inline]
     fn count(self) -> usize {
-        self.len()
+        self.0.count()
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.len();
+        let len = self.0.count();
         (len, Some(len))
     }
 
     #[inline]
     fn last(self) -> Option<Square> {
-        if self.is_empty() {
-            None
-        } else {
-            // This is safe because a non-zero u64 has between 0 and
-            // 63 (included) leading zeros.
-            Some(unsafe { Square::from_index_unchecked(63 ^ self.0.leading_zeros() as i8) })
-        }
+        self.0.last()
     }
 }
 
-impl ExactSizeIterator for Bitboard {
+impl ExactSizeIterator for BitboardIterator {
     #[inline]
     fn len(&self) -> usize {
-        self.0.count_ones() as usize
+        self.0.count()
     }
 
     #[cfg(nightly)]
     #[inline]
     fn is_empty(&self) -> bool {
-        self.0 == 0
+        self.0.is_empty()
     }
 }
 
-impl ::std::iter::FusedIterator for Bitboard {}
+impl ::std::iter::FusedIterator for BitboardIterator {}
 
-impl DoubleEndedIterator for Bitboard {
+impl DoubleEndedIterator for BitboardIterator {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
-        let sq = Bitboard::last(*self);
-        *self ^= Bitboard::from_iter(sq);
+        let sq = self.0.last();
+        self.0 ^= Bitboard::from_iter(sq);
         sq
     }
 }

@@ -109,7 +109,7 @@ fn bench_play_sans(c: &mut Criterion) {
 fn bench_bitboard_reverse_iter(c: &mut Criterion) {
     c.bench_function("bitboard_reverse_iter", |b| {
         b.iter(|| {
-            for sq in Bitboard(black_box(0xfaed_16db_af12_d8a1)).rev() {
+            for sq in Bitboard(black_box(0xfaed_16db_af12_d8a1)).into_iter().rev() {
                 black_box(sq);
             }
         });
