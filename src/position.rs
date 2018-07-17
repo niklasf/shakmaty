@@ -277,7 +277,7 @@ pub trait Position: Setup {
     /// Returns `false` if there is any series of legal moves that allows
     /// `color` to win the game.
     ///
-    /// The converse is not nescessarily true: The position might be locked up
+    /// The converse is not necessarily true: The position might be locked up
     /// such that `color` can never win the game (even if `!color` cooperates),
     /// or insufficient material might only become apparent after a forced
     /// sequence of moves.
@@ -836,6 +836,8 @@ impl Position for Giveaway {
     }
 
     fn has_insufficient_material(&self, _color: Color) -> bool {
+        // In a position with only bishops, check if they can capture each
+        // other.
         if self.board.occupied() == self.board.bishops() {
             if (self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
                 (self.board().black() & Bitboard::LIGHT_SQUARES).is_empty()
@@ -925,6 +927,7 @@ impl Position for KingOfTheHill {
     }
 
     fn has_insufficient_material(&self, _color: Color) -> bool {
+        // Even a lone king can walk onto the hill.
         false
     }
 
@@ -1024,6 +1027,7 @@ impl Position for ThreeCheck {
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
+        // Any remaining piece can give check.
         (self.board().by_color(color) & !self.board().kings()).is_empty()
     }
 
@@ -1311,6 +1315,7 @@ impl Position for RacingKings {
     }
 
     fn has_insufficient_material(&self, _color: Color) -> bool {
+        // Even a lone king can win the race.
         false
     }
 
