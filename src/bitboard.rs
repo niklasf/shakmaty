@@ -510,7 +510,7 @@ impl DoubleEndedIterator for IntoIter {
 /// Iterator over the subsets of a [`Bitboard`].
 ///
 /// [`Bitboard`]: struct.Bitboard.html
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CarryRippler {
     bb: u64,
     subset: u64,
