@@ -274,8 +274,8 @@ pub trait Position: Setup {
 
     /// Tests if a side has insufficient winning material.
     ///
-    /// Returns `false` if there is any series of legal move that allow `color`
-    /// to win the game.
+    /// Returns `false` if there is any series of legal moves that allows
+    /// `color` to win the game.
     ///
     /// The converse is not nescessarily true: The position might be locked up
     /// such that `color` can never win the game (even if `!color` cooperates),
@@ -675,35 +675,41 @@ impl Position for Atomic {
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
-        // TODO: Atomic. Make color dependent.
-
-        if self.is_variant_end() {
+        // Remaining material does not matter if the opponents king is already
+        // exploded.
+        if (self.board.by_color(!color) & self.board.kings()).is_empty() {
             return false;
         }
 
-        if self.board().pawns().any() || self.board().queens().any() {
+        // Bare king can not mate.
+        if (self.board.by_color(color) & !self.board.kings()).is_empty() {
+            return true;
+        }
+
+        // As long as the opponent king is not alone there is always a chance
+        // their own piece explodes next to it.
+        if (self.board.by_color(!color) & !self.board.kings()).any() {
+            // Unless there are only bishops that can't explode each other.
+            if self.board().occupied() == self.board().kings() | self.board().bishops() {
+                if (self.board().bishops() & self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
+                    return (self.board().bishops() & self.board().black() & Bitboard::LIGHT_SQUARES).is_empty();
+                }
+                if (self.board().bishops() & self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
+                    return (self.board().bishops() & self.board().black() & Bitboard::DARK_SQUARES).is_empty();
+                }
+            }
+
             return false;
         }
 
+        // Single knight, bishop or rook can not mate against bare king.
         if (self.board().knights() | self.board().bishops() | self.board().rooks()).count() == 1 {
             return true;
         }
 
-        // Only knights.
+        // Two knights can not mate against bare king.
         if self.board().occupied() == self.board().kings() | self.board().knights() {
-            return self.board().knights().count() <= 2 &&
-                ((self.board().knights() & self.board().white()).is_empty() ||
-                 (self.board().knights() & self.board().black()).is_empty());
-        }
-
-        // Only bishops.
-        if self.board().occupied() == self.board().kings() | self.board().bishops() {
-            if (self.board().bishops() & self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
-                return (self.board().bishops() & self.board().black() & Bitboard::LIGHT_SQUARES).is_empty();
-            }
-            if (self.board().bishops() & self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
-                return (self.board().bishops() & self.board().black() & Bitboard::DARK_SQUARES).is_empty();
-            }
+            return self.board().knights().count() <= 2;
         }
 
         false
@@ -829,22 +835,15 @@ impl Position for Giveaway {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
-    fn has_insufficient_material(&self, color: Color) -> bool {
-        // TODO. Giveaway. Make color dependent.
-        if self.board().knights().any() || self.board().rooks_and_queens().any() || self.board().kings().any() {
-            return false;
-        }
-
-        if self.board().pawns().any() {
-            // Could detect blocked pawns.
-            return false;
-        }
-
-        // Detect bishops and pawns of each side on distinct color complexes.
-        if (self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
-            (self.board().black() & Bitboard::LIGHT_SQUARES).is_empty()
-        } else if (self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
-            (self.board().black() & Bitboard::DARK_SQUARES).is_empty()
+    fn has_insufficient_material(&self, _color: Color) -> bool {
+        if self.board.occupied() == self.board.bishops() {
+            if (self.board().white() & Bitboard::DARK_SQUARES).is_empty() {
+                (self.board().black() & Bitboard::LIGHT_SQUARES).is_empty()
+            } else if (self.board().white() & Bitboard::LIGHT_SQUARES).is_empty() {
+                (self.board().black() & Bitboard::DARK_SQUARES).is_empty()
+            } else {
+                false
+            }
         } else {
             false
         }
@@ -925,7 +924,7 @@ impl Position for KingOfTheHill {
         }
     }
 
-    fn has_insufficient_material(&self, color: Color) -> bool {
+    fn has_insufficient_material(&self, _color: Color) -> bool {
         false
     }
 
@@ -1186,9 +1185,7 @@ impl Position for Crazyhouse {
         }
     }
 
-    fn has_insufficient_material(&self, color: Color) -> bool {
-        // TODO: Make color dependent.
-
+    fn has_insufficient_material(&self, _color: Color) -> bool {
         self.board().occupied().count() + self.pockets.count() <= 3 &&
         self.board().pawns().is_empty() &&
         self.board().rooks_and_queens().is_empty() &&
@@ -1313,11 +1310,7 @@ impl Position for RacingKings {
         false
     }
 
-    fn is_insufficient_material(&self) -> bool {
-        false
-    }
-
-    fn has_insufficient_material(&self, color: Color) -> bool {
+    fn has_insufficient_material(&self, _color: Color) -> bool {
         false
     }
 
