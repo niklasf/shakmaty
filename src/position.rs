@@ -1481,12 +1481,14 @@ impl Position for Horde {
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
+        // The side with the king can always win by capturing the horde.
         if (self.board.by_color(color) & self.board.kings()).any() {
-            false
-        } else {
-            // TODO: Implement
-            false
+            return false;
         }
+
+        // TODO: Detect when the horde can not mate. Note that it does not have
+        // a king.
+        false
     }
 
     fn variant_outcome(&self) -> Option<Outcome> {
