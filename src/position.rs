@@ -266,8 +266,29 @@ pub trait Position: Setup {
         }
     }
 
-    /// Tests for insufficient winning material.
-    fn is_insufficient_material(&self) -> bool;
+    /// Tests if both sides
+    /// [have insufficient winning material](#tymethod.has_insufficient_material).
+    fn is_insufficient_material(&self) -> bool {
+        self.has_insufficient_material(White) && self.has_insufficient_material(Black)
+    }
+
+    /// Tests if a side has insufficient winning material.
+    ///
+    /// Returns `false` if there is any series of legal move that allow `color`
+    /// to win the game.
+    ///
+    /// The converse is not nescessarily true: The position might be locked up
+    /// such that `color` can never win the game (even if `!color` cooperates),
+    /// or insufficient material might only become apparent after a forced
+    /// sequence of moves.
+    ///
+    /// The current implementation can be summarized as follows: Looking
+    /// only at the material configuration, taking into account if bishops
+    /// are positioned on dark or light squares, but not concrete piece
+    /// positions, is there a position with the same material configuration
+    /// where `color` can win with a series of legal moves. If not, then
+    /// `color` has insufficient winning material.
+    fn has_insufficient_material(&self, color: Color) -> bool;
 
     /// Tests if the game is over due to [checkmate](#method.is_checkmate),
     /// [stalemate](#method.is_stalemate),
@@ -489,28 +510,35 @@ impl Position for Chess {
         }
     }
 
-    fn is_insufficient_material(&self) -> bool {
-        if self.board().pawns().any() || self.board().rooks_and_queens().any() {
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        // Pawns, rooks and queens are never insufficient material.
+        if (self.board.by_color(color) & (self.board.pawns() | self.board.rooks_and_queens())).any() {
             return false;
         }
 
-        if self.board().occupied().count() <= 3 {
-            return true; // single knight or bishop
+        // Knights are only insufficient material if:
+        // (1) We do not have any other pieces, including more than one knight.
+        // (2) The opponent does not have pawns, knights, bishops or rooks.
+        //     These would allow self mate.
+        if (self.board.by_color(color) & self.board.knights()).any() {
+            return self.board.by_color(color).count() <= 2 &&
+                (self.board.by_color(!color) & !self.board.kings() & !self.board().queens()).is_empty();
         }
 
-        if self.board().knights().any() {
-            return false; // more than a single knight
+        // Bishops are only insufficient material if:
+        // (1) We do not have any other pieces, including bishops on the
+        //     opposite color.
+        // (2) The opponent does not have bishops on the opposite color,
+        //      pawns or knights. These would allow self mate.
+        if (self.board.by_color(color) & self.board.bishops()).any() {
+            let same_color =
+                (self.board().bishops() & Bitboard::DARK_SQUARES).is_empty() ||
+                (self.board().bishops() & Bitboard::LIGHT_SQUARES).is_empty();
+            return same_color &&
+                (self.board.by_color(!color) & !self.board.kings() & !self.board().rooks_and_queens()).is_empty()
         }
 
-        // all bishops on the same color
-        if (self.board().bishops() & Bitboard::DARK_SQUARES).is_empty() {
-            return true;
-        }
-        if (self.board().bishops() & Bitboard::LIGHT_SQUARES).is_empty() {
-            return true;
-        }
-
-        false
+        true
     }
 
     fn is_variant_end(&self) -> bool { false }
@@ -646,7 +674,9 @@ impl Position for Atomic {
         self.variant_outcome().is_some()
     }
 
-    fn is_insufficient_material(&self) -> bool {
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        // TODO: Atomic. Make color dependent.
+
         if self.is_variant_end() {
             return false;
         }
@@ -799,7 +829,8 @@ impl Position for Giveaway {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
-    fn is_insufficient_material(&self) -> bool {
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        // TODO. Giveaway. Make color dependent.
         if self.board().knights().any() || self.board().rooks_and_queens().any() || self.board().kings().any() {
             return false;
         }
@@ -894,7 +925,7 @@ impl Position for KingOfTheHill {
         }
     }
 
-    fn is_insufficient_material(&self) -> bool {
+    fn has_insufficient_material(&self, color: Color) -> bool {
         false
     }
 
@@ -993,8 +1024,8 @@ impl Position for ThreeCheck {
         }
     }
 
-    fn is_insufficient_material(&self) -> bool {
-        self.board().occupied() == self.board().kings()
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        (self.board().by_color(color) & !self.board().kings()).is_empty()
     }
 
     fn is_irreversible(&self, m: &Move) -> bool {
@@ -1155,7 +1186,9 @@ impl Position for Crazyhouse {
         }
     }
 
-    fn is_insufficient_material(&self) -> bool {
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        // TODO: Make color dependent.
+
         self.board().occupied().count() + self.pockets.count() <= 3 &&
         self.board().pawns().is_empty() &&
         self.board().rooks_and_queens().is_empty() &&
@@ -1281,6 +1314,10 @@ impl Position for RacingKings {
     }
 
     fn is_insufficient_material(&self) -> bool {
+        false
+    }
+
+    fn has_insufficient_material(&self, color: Color) -> bool {
         false
     }
 
@@ -1444,8 +1481,13 @@ impl Position for Horde {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
 
-    fn is_insufficient_material(&self) -> bool {
-        false
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        if (self.board.by_color(color) & self.board.kings()).any() {
+            false
+        } else {
+            // TODO: Implement
+            false
+        }
     }
 
     fn variant_outcome(&self) -> Option<Outcome> {
