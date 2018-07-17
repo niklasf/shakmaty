@@ -431,17 +431,17 @@ impl Extend<Square> for Bitboard {
 
 impl IntoIterator for Bitboard {
     type Item = Square;
-    type IntoIter = BitboardIterator;
+    type IntoIter = IntoIter;
 
-    fn into_iter(self) -> BitboardIterator {
-        BitboardIterator(self)
+    fn into_iter(self) -> IntoIter {
+        IntoIter(self)
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct BitboardIterator(Bitboard);
+pub struct IntoIter(Bitboard);
 
-impl Iterator for BitboardIterator {
+impl Iterator for IntoIter {
     type Item = Square;
 
     #[inline]
@@ -468,7 +468,7 @@ impl Iterator for BitboardIterator {
     }
 }
 
-impl ExactSizeIterator for BitboardIterator {
+impl ExactSizeIterator for IntoIter {
     #[inline]
     fn len(&self) -> usize {
         self.0.count()
@@ -481,9 +481,9 @@ impl ExactSizeIterator for BitboardIterator {
     }
 }
 
-impl ::std::iter::FusedIterator for BitboardIterator {}
+impl ::std::iter::FusedIterator for IntoIter {}
 
-impl DoubleEndedIterator for BitboardIterator {
+impl DoubleEndedIterator for IntoIter {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
         let sq = self.0.last();

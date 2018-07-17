@@ -84,7 +84,6 @@ extern crate btoi;
 
 mod square;
 mod types;
-mod bitboard;
 mod board;
 mod position;
 mod setup;
@@ -93,13 +92,14 @@ mod magics;
 mod perft;
 
 pub mod attacks;
+pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
 
 pub use square::{InvalidSquareName, Square};
 pub use types::{CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role};
-pub use bitboard::{Bitboard, CarryRippler};
+pub use bitboard::Bitboard;
 pub use board::{Board, Pieces};
 pub use setup::{Castles, Setup};
 pub use movelist::MoveList;

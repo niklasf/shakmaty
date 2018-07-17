@@ -19,9 +19,10 @@ use std::fmt::Write;
 use std::iter::FromIterator;
 
 use attacks;
+use bitboard;
+use bitboard::Bitboard;
 use square::Square;
 use types::{Color, Piece, Role};
-use bitboard::{Bitboard, BitboardIterator};
 
 /// [`Piece`] positions on a board.
 ///
@@ -332,12 +333,12 @@ impl FromIterator<(Square, Piece)> for Board {
 /// [`Board`]: struct.Board.html
 #[derive(Clone)]
 pub struct Pieces {
-    pawns: BitboardIterator,
-    knights: BitboardIterator,
-    bishops: BitboardIterator,
-    rooks: BitboardIterator,
-    queens: BitboardIterator,
-    kings: BitboardIterator,
+    pawns: bitboard::IntoIter,
+    knights: bitboard::IntoIter,
+    bishops: bitboard::IntoIter,
+    rooks: bitboard::IntoIter,
+    queens: bitboard::IntoIter,
+    kings: bitboard::IntoIter,
     white: Bitboard,
 }
 
