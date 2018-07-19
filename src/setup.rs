@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use square::Square;
+use square::{File, Rank, Square};
 use bitboard::Bitboard;
 use attacks;
 use types::{CastlingSide, Color, Pockets, RemainingChecks, Role};
@@ -103,17 +103,17 @@ impl Castles {
 
         for color in &[Color::Black, Color::White] {
             if let Some(king) = setup.board().king_of(*color) {
-                if king.file() == 0 || king.file() == 7 || king.rank() != color.fold(0, 7) {
+                if king.file() == File::A || king.file() == File::H || king.rank() != color.fold(Rank::First, Rank::Eighth) {
                     continue;
                 }
 
                 let side = rooks & setup.board().by_color(*color) &
-                           Bitboard::relative_rank(*color, 0);
+                           Bitboard::relative_rank(*color, Rank::First);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
-                    castles.chess960 |= king.file() != 4 || a_side.file() != 0;
+                    castles.chess960 |= king.file() != File::E || a_side.file() != File::A;
                     castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
                     castles.path[*color as usize][CastlingSide::QueenSide as usize] =
                         attacks::between(king, a_side).with(rto).with(kto).without(king).without(a_side);
@@ -122,7 +122,7 @@ impl Castles {
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
-                    castles.chess960 |= king.file() != 4 || h_side.file() != 7;
+                    castles.chess960 |= king.file() != File::E || h_side.file() != File::H;
                     castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
                     castles.path[*color as usize][CastlingSide::KingSide as usize] =
                         attacks::between(king, h_side).with(rto).with(kto).without(king).without(h_side);
@@ -155,7 +155,7 @@ impl Castles {
     }
 
     pub fn has_side(&self, color: Color) -> bool {
-        (self.mask & Bitboard::relative_rank(color, 0)).any()
+        (self.mask & Bitboard::relative_rank(color, Rank::First)).any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {
@@ -168,7 +168,7 @@ impl Castles {
     }
 
     pub fn discard_side(&mut self, color: Color) {
-        self.mask.discard_all(Bitboard::relative_rank(color, 0));
+        self.mask.discard_all(Bitboard::relative_rank(color, Rank::First));
         self.rook[color as usize] = [None, None];
     }
 

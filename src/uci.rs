@@ -98,7 +98,7 @@ use std::fmt;
 use std::str::FromStr;
 use std::error::Error;
 
-use square::Square;
+use square::{Rank, Square};
 use types::{Move, Role};
 use position::{IllegalMove, Position};
 
@@ -284,7 +284,7 @@ impl Uci {
                     Move::Castle { king: from, rook: to }
                 } else if role == Role::King &&
                           from == pos.turn().fold(Square::E1, Square::E8) &&
-                          to.rank() == pos.turn().fold(0, 7) &&
+                          to.rank() == pos.turn().fold(Rank::First, Rank::Eighth) &&
                           from.distance(to) == 2 {
                     if from.file() < to.file() {
                         Move::Castle { king: from, rook: pos.turn().fold(Square::H1, Square::H8) }

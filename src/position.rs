@@ -17,7 +17,7 @@
 use attacks;
 use board::Board;
 use bitboard::Bitboard;
-use square::Square;
+use square::{Rank, Square};
 use types::{Black, CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role, White};
 use setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use movelist::{ArrayVecExt, MoveList};
@@ -1271,8 +1271,8 @@ impl Position for RacingKings {
         }
 
         if pos.turn().is_black() &&
-           (pos.board().white() & pos.board().kings() & Bitboard::rank(7)).any() &&
-           (pos.board().black() & pos.board().kings() & Bitboard::rank(7)).any()
+           (pos.board().white() & pos.board().kings() & Rank::Eighth).any() &&
+           (pos.board().black() & pos.board().kings() & Rank::Eighth).any()
         {
             errors |= PositionError::VARIANT;
         }
@@ -1321,7 +1321,7 @@ impl Position for RacingKings {
     }
 
     fn is_variant_end(&self) -> bool {
-        let in_goal = self.board().kings() & Bitboard::rank(7);
+        let in_goal = self.board().kings() & Rank::Eighth;
         if in_goal.is_empty() {
             return false;
         }
@@ -1332,7 +1332,7 @@ impl Position for RacingKings {
 
         // White has reached the backrank. Check if black can catch up.
         let black_king = self.board().king_of(Black).expect("king in racingkings");
-        for target in attacks::king_attacks(black_king) & Bitboard::rank(7) {
+        for target in attacks::king_attacks(black_king) & Rank::Eighth {
             if self.king_attackers(target, White, self.board().occupied()).is_empty() {
                 return false;
             }
@@ -1343,7 +1343,7 @@ impl Position for RacingKings {
 
     fn variant_outcome(&self) -> Option<Outcome> {
         if self.is_variant_end() {
-            let in_goal = self.board().kings() & Bitboard::rank(7);
+            let in_goal = self.board().kings() & Rank::Eighth;
             if (in_goal & self.board().white()).any() && (in_goal & self.board().black()).any() {
                 Some(Outcome::Draw)
             } else if (in_goal & self.board().white()).any() {
@@ -1421,8 +1421,8 @@ impl Position for Horde {
             - PositionError::PAWNS_ON_BACKRANK
             - PositionError::MISSING_KING;
 
-        if (pos.board().pawns() & pos.board().white() & Bitboard::rank(7)).any() ||
-           (pos.board().pawns() & pos.board().black() & Bitboard::rank(0)).any()
+        if (pos.board().pawns() & pos.board().white() & Rank::Eighth).any() ||
+           (pos.board().pawns() & pos.board().black() & Rank::First).any()
         {
             errors |= PositionError::PAWNS_ON_BACKRANK;
         }
@@ -1576,13 +1576,13 @@ fn validate<P: Position>(pos: &P) -> PositionError {
         errors |= PositionError::EMPTY_BOARD;
     }
 
-    if (pos.board().pawns() & (Bitboard::rank(0) | Bitboard::rank(7))).any() {
+    if (pos.board().pawns() & Bitboard::BACKRANKS).any() {
         errors |= PositionError::PAWNS_ON_BACKRANK;
     }
 
     // validate en passant square
     if let Some(ep_square) = pos.ep_square() {
-        if !Bitboard::relative_rank(pos.turn(), 5).contains(ep_square) {
+        if !Bitboard::relative_rank(pos.turn(), Rank::Sixth).contains(ep_square) {
             errors |= PositionError::INVALID_EP_SQUARE;
         } else {
             let fifth_rank_sq = ep_square
@@ -1774,7 +1774,7 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), 6);
+    let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), Rank::Seventh);
 
     for from in pos.our(Role::Pawn) & !seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
@@ -1798,7 +1798,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                        !pos.board().occupied();
 
     let double_moves = single_moves.relative_shift(pos.turn(), 8) &
-                       Bitboard::relative_rank(pos.turn(), 3) &
+                       Bitboard::relative_rank(pos.turn(), Rank::Fourth) &
                        !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {

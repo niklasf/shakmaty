@@ -97,7 +97,7 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
-pub use square::{InvalidSquareName, Square};
+pub use square::{InvalidSquareName, File, Rank, Square};
 pub use types::{CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role};
 pub use bitboard::Bitboard;
 pub use board::{Board, Pieces};

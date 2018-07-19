@@ -19,10 +19,10 @@
 //! # Examples
 //!
 //! ```
-//! # use shakmaty::{Square, Bitboard};
+//! # use shakmaty::{Rank, Square, Bitboard};
 //! use shakmaty::attacks;
 //!
-//! let occupied = Bitboard::rank(5); // blocking pieces
+//! let occupied = Bitboard::from(Rank::Sixth); // blocking pieces
 //! let attacks = attacks::bishop_attacks(Square::C2, occupied);
 //! // . . . . . . . .
 //! // . . . . . . . .

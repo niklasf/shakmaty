@@ -20,6 +20,180 @@ use std::str;
 use std::error::Error;
 use std::ops::Sub;
 
+/// A file of the chessboard.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(i8)]
+pub enum File {
+    A = 0, B, C, D, E, F, G, H
+}
+
+impl File {
+    #[inline]
+    pub fn new(index: i8) -> File {
+        assert!(0 <= index && index < 8);
+        unsafe { File::from_index_unchecked(index) }
+    }
+
+    #[inline]
+    pub fn from_char(ch: char) -> Option<File> {
+        if 'a' <= ch && ch <= 'h' {
+            Some(File::new((ch as u8 - b'a') as i8))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn from_index(index: i8) -> Option<File> {
+        if 0 <= index && index < 8 {
+            Some(File::new(index))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub unsafe fn from_index_unchecked(index: i8) -> File {
+        debug_assert!(0 <= index && index < 8);
+        ::std::mem::transmute(index)
+    }
+
+    #[inline]
+    pub fn char(self) -> char {
+        (b'a' + u8::from(self)) as char
+    }
+
+    #[inline]
+    pub fn rotate(self) -> Rank {
+        Rank::new(i8::from(self))
+    }
+
+    #[inline]
+    pub fn offset(self, delta: i8) -> Option<Rank> {
+        i8::from(self).checked_add(delta).and_then(Rank::from_index)
+    }
+
+    #[inline]
+    pub fn flip_horizontal(self) -> File {
+        File::new(7 - i8::from(self))
+    }
+}
+
+impl Sub for File {
+    type Output = i8;
+
+    #[inline]
+    fn sub(self, other: File) -> i8 {
+        i8::from(self) - i8::from(other)
+    }
+}
+
+impl fmt::Display for File {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.char())
+    }
+}
+
+macro_rules! from_file_impl {
+    ($($t:ty)+) => {
+        $(impl From<File> for $t {
+            #[inline]
+            fn from(file: File) -> $t {
+                file as $t
+            }
+        })+
+    }
+}
+
+from_file_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+/// A rank of the chessboard.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(i8)]
+pub enum Rank {
+    First = 0, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth
+}
+
+impl Rank {
+    #[inline]
+    pub fn new(index: i8) -> Rank {
+        assert!(0 <= index && index < 8);
+        unsafe { Rank::from_index_unchecked(index) }
+    }
+
+    #[inline]
+    pub fn from_char(ch: char) -> Option<Rank> {
+        if '1' <= ch && ch <= '8' {
+            Some(Rank::new((ch as u8 - b'1') as i8))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn from_index(index: i8) -> Option<Rank> {
+        if 0 <= index && index < 8 {
+            Some(Rank::new(index))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub unsafe fn from_index_unchecked(index: i8) -> Rank {
+        debug_assert!(0 <= index && index < 8);
+        ::std::mem::transmute(index)
+    }
+
+    #[inline]
+    pub fn char(self) -> char {
+        (b'1' + u8::from(self)) as char
+    }
+
+    #[inline]
+    pub fn rotate(self) -> File {
+        File::new(i8::from(self))
+    }
+
+    #[inline]
+    pub fn offset(self, delta: i8) -> Option<File> {
+        i8::from(self).checked_add(delta).and_then(File::from_index)
+    }
+
+    #[inline]
+    pub fn flip_vertical(self) -> Rank {
+        Rank::new(7 - i8::from(self))
+    }
+}
+
+impl Sub for Rank {
+    type Output = i8;
+
+    #[inline]
+    fn sub(self, other: Rank) -> i8 {
+        i8::from(self) - i8::from(other)
+    }
+}
+
+impl fmt::Display for Rank {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.char())
+    }
+}
+
+macro_rules! from_rank_impl {
+    ($($t:ty)+) => {
+        $(impl From<Rank> for $t {
+            #[inline]
+            fn from(rank: Rank) -> $t {
+                rank as $t
+            }
+        })+
+    }
+}
+
+from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
 /// Error when parsing an invalid square name.
 #[derive(Debug, Eq, PartialEq)]
 pub struct InvalidSquareName;
@@ -72,7 +246,7 @@ impl Square {
     #[inline]
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
-            Some(unsafe { Square::from_index_unchecked(index) })
+            Some(Square::new(index))
         } else {
             None
         }
@@ -91,24 +265,8 @@ impl Square {
 
     /// Tries to create a square from zero-based file and rank indexes.
     #[inline]
-    pub fn from_coords(file: i8, rank: i8) -> Option<Square> {
-        if 0 <= file && file < 8 && 0 <= rank && rank < 8 {
-            Some(unsafe { Square::from_coords_unchecked(file, rank) })
-        } else {
-            None
-        }
-    }
-
-    /// Creates a `Square` from zero-based file and rank indexes.
-    ///
-    /// # Unsafety
-    ///
-    /// It is the callers responsibility to ensure that file and rank are in
-    /// the range `0..=7`.
-    #[inline]
-    pub unsafe fn from_coords_unchecked(file: i8, rank: i8) -> Square {
-        debug_assert!(0 <= file && file < 8 && 0 <= rank && rank < 8);
-        Square::from_index_unchecked(file | (rank << 3))
+    pub fn from_coords(file: File, rank: Rank) -> Square {
+        unsafe { Square::from_index_unchecked(i8::from(file) | (i8::from(rank) << 3)) }
     }
 
     /// Parses a square name.
@@ -141,30 +299,22 @@ impl Square {
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, InvalidSquareName> {
         if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
-            Ok(unsafe { Square::from_coords_unchecked((s[0] - b'a') as i8, (s[1] - b'1') as i8) })
+            let file = File::new((s[0] - b'a') as i8);
+            let rank = Rank::new((s[1] - b'1') as i8);
+            Ok(Square::from_coords(file, rank))
         } else {
             Err(InvalidSquareName)
         }
     }
 
     #[inline]
-    pub fn file(self) -> i8 {
-        (self as i8) & 7
+    pub fn file(self) -> File {
+        File::new((self as i8) & 7)
     }
 
     #[inline]
-    pub fn file_char(self) -> char {
-        (b'a' + self.file() as u8) as char
-    }
-
-    #[inline]
-    pub fn rank(self) -> i8 {
-        (self as i8) >> 3
-    }
-
-    #[inline]
-    pub fn rank_char(self) -> char {
-        (b'1' + self.rank() as u8) as char
+    pub fn rank(self) -> Rank {
+        Rank::new((self as i8) >> 3)
     }
 
     #[inline]
@@ -207,7 +357,7 @@ impl Square {
     /// assert_eq!(Square::A3.flip_diagonal(), Square::C1);
     /// ```
     pub fn flip_diagonal(self) -> Square {
-        unsafe { Square::from_coords_unchecked(self.rank(), self.file()) }
+        Square::from_coords(self.rank().rotate(), self.file().rotate())
     }
 
     /// Tests is the square is a light square.
@@ -220,7 +370,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_light(self) -> bool {
-        (self.rank() + self.file()) % 2 == 1
+        (i8::from(self.rank()) + i8::from(self.file())) % 2 == 1
     }
 
     /// Tests is the square is a dark square.
@@ -233,7 +383,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_dark(self) -> bool {
-        (self.rank() + self.file()) % 2 == 0
+        (i8::from(self.rank()) + i8::from(self.file())) % 2 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
@@ -259,7 +409,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn combine(self, rank: Square) -> Square {
-        unsafe { Square::from_coords_unchecked(self.file(), rank.rank()) }
+        Square::from_coords(self.file(), rank.rank())
     }
 }
 
@@ -295,7 +445,7 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.file_char(), self.rank_char())
+        write!(f, "{}{}", self.file().char(), self.rank().char())
     }
 }
 
@@ -313,9 +463,9 @@ mod tests {
     fn test_square() {
         for file in 0..8 {
             for rank in 0..8 {
-                let square = Square::from_coords(file, rank).unwrap();
-                assert_eq!(square.file(), file);
-                assert_eq!(square.rank(), rank);
+                let square = Square::from_coords(File::new(file), Rank::new(rank));
+                assert_eq!(square.file(), File::new(file));
+                assert_eq!(square.rank(), Rank::new(rank));
             }
         }
     }

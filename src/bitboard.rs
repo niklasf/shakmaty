@@ -21,7 +21,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
 
-use square::Square;
+use square::{File, Rank, Square};
 use types::Color;
 
 /// A set of [squares](../enum.Square.html) represented by a 64 bit
@@ -30,8 +30,8 @@ use types::Color;
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Square, Bitboard};
-/// let mask = Bitboard::rank(2).with(Square::E5);
+/// # use shakmaty::{Rank, Square, Bitboard};
+/// let mask = Bitboard::from(Rank::Third).with(Square::E5);
 /// // . . . . . . . .
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -55,35 +55,21 @@ impl Bitboard {
     }
 
     /// Returns the bitboard containing all squares of the given rank.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn rank(rank: i8) -> Bitboard {
-        // Note that a negative rank can not wrap around back into range.
-        Bitboard(RANKS[rank as usize])
+    pub fn rank(rank: Rank) -> Bitboard {
+        Bitboard(RANKS[usize::from(rank)])
     }
 
     /// Returns the bitboard containing all squares of the given file.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `file` is not in the range `0..=7`.
     #[inline]
-    pub fn file(file: i8) -> Bitboard {
-        // Note that a negative file can not wrap around back into range.
-        Bitboard(FILES[file as usize])
+    pub fn file(file: File) -> Bitboard {
+        Bitboard(FILES[usize::from(file)])
     }
 
     /// Like `rank()`, but from the point of view of `color`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `rank` is not in the range `0..=7`.
     #[inline]
-    pub fn relative_rank(color: Color, rank: i8) -> Bitboard {
-        Bitboard::rank(color.fold(rank, 7 - rank))
+    pub fn relative_rank(color: Color, rank: Rank) -> Bitboard {
+        Bitboard::rank(color.fold(rank, rank.flip_vertical()))
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -290,7 +276,7 @@ impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                let sq = Square::from_coords(file, rank).unwrap();
+                let sq = Square::from_coords(File::new(file), Rank::new(rank));
                 f.write_char(if self.contains(sq) { '1' } else { '.' })?;
                 f.write_char(if file < 7 { ' ' } else { '\n' })?;
             }
@@ -328,6 +314,20 @@ impl From<Square> for Bitboard {
     #[inline]
     fn from(sq: Square) -> Bitboard {
         Bitboard::from_square(sq)
+    }
+}
+
+impl From<Rank> for Bitboard {
+    #[inline]
+    fn from(rank: Rank) -> Bitboard {
+        Bitboard::rank(rank)
+    }
+}
+
+impl From<File> for Bitboard {
+    #[inline]
+    fn from(file: File) -> Bitboard {
+        Bitboard::file(file)
     }
 }
 
@@ -585,7 +585,7 @@ mod tests {
 
     #[test]
     fn test_rank() {
-        assert_eq!(Bitboard::rank(3), Bitboard(0xff000000));
+        assert_eq!(Bitboard::rank(Rank::Fourth), Bitboard(0xff000000));
     }
 
     #[test]

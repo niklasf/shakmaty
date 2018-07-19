@@ -87,7 +87,7 @@
 //! # }
 //! ```
 
-use square::Square;
+use square::{File, Rank, Square};
 use types::{CastlingSide, Move, Role};
 use position::{Outcome, Position};
 use movelist::MoveList;
@@ -153,8 +153,8 @@ impl Error for SanError {
 pub enum San {
     Normal {
         role: Role,
-        file: Option<i8>,
-        rank: Option<i8>,
+        file: Option<File>,
+        rank: Option<Rank>,
         capture: bool,
         to: Square,
         promotion: Option<Role>,
@@ -162,22 +162,6 @@ pub enum San {
     Castle(CastlingSide),
     Put { role: Role, to: Square },
     Null,
-}
-
-fn rank_from_char(ch: u8) -> Option<i8> {
-    if b'1' <= ch && ch <= b'8' {
-        Some((ch - b'1') as i8)
-    } else {
-        None
-    }
-}
-
-fn file_from_char(ch: u8) -> Option<i8> {
-    if b'a' <= ch && ch <= b'h' {
-        Some((ch - b'a') as i8)
-    } else {
-        None
-    }
 }
 
 impl San {
@@ -221,14 +205,14 @@ impl San {
                 }
             };
 
-            let (file, next) = if b'a' <= next && next <= b'h' {
-                (Some((next - b'a') as i8), chars.next().ok_or(())?)
+            let (file, next) = if let Some(file) = File::from_char(next as char) {
+                (Some(file), chars.next().ok_or(())?)
             } else {
                 (None, next)
             };
 
-            let (rank, next) = if b'1' <= next && next <= b'8' {
-                (Some((next - b'1') as i8), chars.next())
+            let (rank, next) = if let Some(rank) = Rank::from_char(next as char) {
+                (Some(rank), chars.next())
             } else {
                 (None, Some(next))
             };
@@ -237,21 +221,21 @@ impl San {
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == b'x' {
-                    let to_file = chars.next().and_then(file_from_char).ok_or(())?;
-                    let to_rank = chars.next().and_then(rank_from_char).ok_or(())?;
-                    let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
+                    let to_file = chars.next().and_then(|ch| File::from_char(ch as char)).ok_or(())?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(ch as char)).ok_or(())?;
+                    let square = Square::from_coords(to_file, to_rank);
                     (true, file, rank, square, chars.next())
                 } else if next == b'=' {
-                    let square = unsafe { Square::from_coords_unchecked(file.ok_or(())?, rank.ok_or(())?) };
+                    let square = Square::from_coords(file.ok_or(())?, rank.ok_or(())?);
                     (false, None, None, square, Some(b'='))
                 } else {
-                    let to_file = file_from_char(next).ok_or(())?;
-                    let to_rank = chars.next().and_then(rank_from_char).ok_or(())?;
-                    let square = unsafe { Square::from_coords_unchecked(to_file, to_rank) };
+                    let to_file = File::from_char(next as char).ok_or(())?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(ch as char)).ok_or(())?;
+                    let square = Square::from_coords(to_file, to_rank);
                     (false, file, rank, square, chars.next())
                 }
             } else {
-                let square = unsafe { Square::from_coords_unchecked(file.ok_or(())?, rank.ok_or(())?) };
+                let square = Square::from_coords(file.ok_or(())?, rank.ok_or(())?);
                 (false, None, None, square, None)
             };
 

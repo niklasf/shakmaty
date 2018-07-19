@@ -77,7 +77,7 @@ use std::error::Error;
 
 use btoi;
 
-use square::Square;
+use square::{File, Rank, Square};
 use types::{Black, Color, Piece, Pockets, RemainingChecks, White};
 use bitboard::Bitboard;
 use board::Board;
@@ -122,7 +122,7 @@ impl FenOpts {
             let mut empty = 0;
 
             for file in 0..8 {
-                let square = Square::from_coords(file, rank).unwrap();
+                let square = Square::from_coords(File::new(file), Rank::new(rank));
 
                 empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
                     if empty > 0 {
@@ -154,7 +154,7 @@ impl FenOpts {
         for color in &[White, Black] {
             let king = board.king_of(*color);
 
-            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, 0);
+            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, Rank::First);
 
             for rook in (candidates & castling_rights).into_iter().rev() {
                 if !self.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
@@ -268,12 +268,13 @@ impl Board {
                     return Err(FenError::InvalidBoard);
                 }
             } else if let Some(piece) = Piece::from_char(ch as char) {
-                match Square::from_coords(file, rank) {
-                    Some(sq) => {
+                match (File::from_index(file), Rank::from_index(rank)) {
+                    (Some(f), Some(r)) => {
+                        let sq = Square::from_coords(f, r);
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
                     }
-                    None => return Err(FenError::InvalidBoard),
+                    _ => return Err(FenError::InvalidBoard),
                 }
                 file += 1;
             } else {
@@ -429,14 +430,14 @@ impl Fen {
                 for &ch in castling_part {
                     let color = Color::from_white(ch < b'a'); // uppercase
 
-                    let candidates = Bitboard::relative_rank(color, 0) &
+                    let candidates = Bitboard::relative_rank(color, Rank::First) &
                                      result.board.by_piece(color.rook());
 
                     let flag = match ch | 32 {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
                         file @ b'a'...b'h' => {
-                            (candidates & Bitboard::file((file as u8 - b'a') as i8)).first()
+                            (candidates & File::new((file as u8 - b'a') as i8)).first()
                         }
                         _ => return Err(FenError::InvalidCastling),
                     };

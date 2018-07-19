@@ -20,7 +20,7 @@ use std::iter::FromIterator;
 
 use attacks;
 use bitboard::Bitboard;
-use square::Square;
+use square::{File, Rank, Square};
 use types::{Color, Piece, Role};
 
 /// [`Piece`] positions on a board.
@@ -292,8 +292,8 @@ impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for rank in (0..8).rev() {
             for file in 0..8 {
-                f.write_char(self.piece_at(Square::from_coords(file, rank).unwrap())
-                                 .map_or('.', |piece| piece.char()))?;
+                let square = Square::from_coords(File::new(file), Rank::new(rank));
+                f.write_char(self.piece_at(square).map_or('.', |piece| piece.char()))?;
 
                 if file < 7 {
                     f.write_char(' ')?;
