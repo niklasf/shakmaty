@@ -264,7 +264,7 @@ impl Square {
         unsafe { Square::from_index_unchecked(index) }
     }
 
-    /// Tries to create a `Square` from an integer index in the range `0..=63`.
+    /// Tries to get a `Square` from an integer index in the range `0..=63`.
     #[inline]
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
@@ -285,7 +285,7 @@ impl Square {
         ::std::mem::transmute(index)
     }
 
-    /// Tries to create a square from zero-based file and rank indexes.
+    /// Tries to get a square from file and rank.
     #[inline]
     pub fn from_coords(file: File, rank: Rank) -> Square {
         unsafe { Square::from_index_unchecked(i8::from(file) | (i8::from(rank) << 3)) }
@@ -320,10 +320,11 @@ impl Square {
     /// [`InvalidSquareName`]: struct.InvalidSquareName.html
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, InvalidSquareName> {
-        if s.len() == 2 && b'a' <= s[0] && s[0] <= b'h' && b'1' <= s[1] && s[1] <= b'8' {
-            let file = File::new((s[0] - b'a') as i8);
-            let rank = Rank::new((s[1] - b'1') as i8);
-            Ok(Square::from_coords(file, rank))
+        if s.len() == 2 {
+            match (File::from_char(char::from(s[0])), Rank::from_char(char::from(s[1]))) {
+                (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
+                _ => Err(InvalidSquareName),
+            }
         } else {
             Err(InvalidSquareName)
         }
