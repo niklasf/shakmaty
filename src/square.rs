@@ -28,6 +28,11 @@ pub enum File {
 }
 
 impl File {
+    /// Gets a `File` from an integer index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not in the range `0..=7`.
     #[inline]
     pub fn new(index: i8) -> File {
         assert!(0 <= index && index < 8);
@@ -52,6 +57,12 @@ impl File {
         }
     }
 
+    /// Gets a `File` from an integer index.
+    ///
+    /// # Unsafety
+    ///
+    /// It is the callers responsibility to ensure the index is in the range
+    /// `0..=7`.
     #[inline]
     pub unsafe fn from_index_unchecked(index: i8) -> File {
         debug_assert!(0 <= index && index < 8);
@@ -115,6 +126,11 @@ pub enum Rank {
 }
 
 impl Rank {
+    /// Gets a `Rank` from an integer index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is not in the range `0..=7`.
     #[inline]
     pub fn new(index: i8) -> Rank {
         assert!(0 <= index && index < 8);
@@ -139,6 +155,12 @@ impl Rank {
         }
     }
 
+    /// Gets a `Rank` from an integer index.
+    ///
+    /// # Unsafety
+    ///
+    /// It is the callers responsibility to ensure the index is in the range
+    /// `0..=7`.
     #[inline]
     pub unsafe fn from_index_unchecked(index: i8) -> Rank {
         debug_assert!(0 <= index && index < 8);
@@ -156,7 +178,7 @@ impl Rank {
     }
 
     #[inline]
-    pub fn offset(self, delta: i8) -> Option<File> {
+    pub fn offset(self, delta: i8) -> Option<Rank> {
         i8::from(self).checked_add(delta).and_then(File::from_index)
     }
 
@@ -231,7 +253,7 @@ pub enum Square {
 }
 
 impl Square {
-    /// Creates a `Square` from an integer index.
+    /// Gets a `Square` from an integer index.
     ///
     /// # Panics
     ///
@@ -252,7 +274,7 @@ impl Square {
         }
     }
 
-    /// Creates a `Square` from an integer index.
+    /// Gets a `Square` from an integer index.
     ///
     /// # Unsafety
     ///
