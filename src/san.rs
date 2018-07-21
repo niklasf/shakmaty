@@ -190,7 +190,7 @@ impl San {
             })
         } else if san.len() == 4 && san[1] == b'@' {
             Ok(San::Put {
-                role: Role::from_char(san[0] as char).ok_or(())?,
+                role: Role::from_char(char::from(san[0])).ok_or(())?,
                 to: Square::from_ascii(&san[2..]).map_err(|_| ())?,
             })
         } else {
@@ -201,17 +201,17 @@ impl San {
                 if ch >= b'a' {
                     (Role::Pawn, ch)
                 } else {
-                    (Role::from_char(ch as char).ok_or(())?, chars.next().ok_or(())?)
+                    (Role::from_char(char::from(ch)).ok_or(())?, chars.next().ok_or(())?)
                 }
             };
 
-            let (file, next) = if let Some(file) = File::from_char(next as char) {
+            let (file, next) = if let Some(file) = File::from_char(char::from(next)) {
                 (Some(file), chars.next().ok_or(())?)
             } else {
                 (None, next)
             };
 
-            let (rank, next) = if let Some(rank) = Rank::from_char(next as char) {
+            let (rank, next) = if let Some(rank) = Rank::from_char(char::from(next)) {
                 (Some(rank), chars.next())
             } else {
                 (None, Some(next))
@@ -221,16 +221,16 @@ impl San {
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == b'x' {
-                    let to_file = chars.next().and_then(|ch| File::from_char(ch as char)).ok_or(())?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(ch as char)).ok_or(())?;
+                    let to_file = chars.next().and_then(|ch| File::from_char(char::from(ch))).ok_or(())?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(())?;
                     let square = Square::from_coords(to_file, to_rank);
                     (true, file, rank, square, chars.next())
                 } else if next == b'=' {
                     let square = Square::from_coords(file.ok_or(())?, rank.ok_or(())?);
                     (false, None, None, square, Some(b'='))
                 } else {
-                    let to_file = File::from_char(next as char).ok_or(())?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(ch as char)).ok_or(())?;
+                    let to_file = File::from_char(char::from(next)).ok_or(())?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(())?;
                     let square = Square::from_coords(to_file, to_rank);
                     (false, file, rank, square, chars.next())
                 }
@@ -241,7 +241,7 @@ impl San {
 
             let promotion = match next {
                 Some(b'=') =>
-                    Some(chars.next().and_then(|r| Role::from_char(r as char)).ok_or(())?),
+                    Some(chars.next().and_then(|r| Role::from_char(char::from(r))).ok_or(())?),
                 Some(_) => return Err(InvalidSan),
                 None => None,
             };
@@ -458,10 +458,10 @@ impl fmt::Display for San {
                     write!(f, "{}", role.upper_char())?;
                 }
                 if let Some(file) = file {
-                    write!(f, "{}", (b'a' + file as u8) as char)?;
+                    write!(f, "{}", file.char())?;
                 }
                 if let Some(rank) = rank {
-                    write!(f, "{}", (b'1' + rank as u8) as char)?;
+                    write!(f, "{}", rank.char())?;
                 }
                 if capture {
                     write!(f, "x")?;
