@@ -179,7 +179,7 @@ impl Rank {
 
     #[inline]
     pub fn offset(self, delta: i8) -> Option<Rank> {
-        i8::from(self).checked_add(delta).and_then(File::from_index)
+        i8::from(self).checked_add(delta).and_then(Rank::from_index)
     }
 
     #[inline]
@@ -454,6 +454,13 @@ impl Sub for Square {
     #[inline]
     fn sub(self, other: Square) -> i8 {
         self as i8 - other as i8
+    }
+}
+
+impl From<(File, Rank)> for Square {
+    #[inline]
+    fn from((file, rank): (File, Rank)) -> Square {
+        Square::from_coords(file, rank)
     }
 }
 
