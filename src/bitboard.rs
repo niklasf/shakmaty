@@ -449,6 +449,7 @@ impl IntoIterator for Bitboard {
     type Item = Square;
     type IntoIter = IntoIter;
 
+    #[inline]
     fn into_iter(self) -> IntoIter {
         IntoIter(self)
     }
