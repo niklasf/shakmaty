@@ -13,10 +13,11 @@ Features
 * Generate legal moves:
 
   ```rust
-  use shakmaty::{Chess, Position};
+  use shakmaty::{Chess, MoveList, Position};
 
   let pos = Chess::default();
-  let legals = pos.legals();
+  let mut legals = MoveList::new();
+  pos.legal_moves(&mut legals);
   assert_eq!(legals.len(), 20);
   ```
 
