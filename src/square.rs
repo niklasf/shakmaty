@@ -332,17 +332,17 @@ impl Square {
 
     #[inline]
     pub fn file(self) -> File {
-        File::new((self as i8) & 7)
+        File::new(i8::from(self) & 7)
     }
 
     #[inline]
     pub fn rank(self) -> Rank {
-        Rank::new((self as i8) >> 3)
+        Rank::new(i8::from(self) >> 3)
     }
 
     #[inline]
     pub fn offset(self, delta: i8) -> Option<Square> {
-        (self as i8).checked_add(delta).and_then(Square::from_index)
+        i8::from(self).checked_add(delta).and_then(Square::from_index)
     }
 
     /// Flip the square horizontally.
@@ -355,7 +355,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn flip_horizontal(self) -> Square {
-        unsafe { Square::from_index_unchecked((self as i8) ^ 0x07) }
+        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0x07) }
     }
 
     /// Flip the square vertically.
@@ -368,7 +368,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn flip_vertical(self) -> Square {
-        unsafe { Square::from_index_unchecked((self as i8) ^ 0x38) }
+        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0x38) }
     }
 
     /// Flip at the a1-h8 diagonal by swapping file and rank.
@@ -454,7 +454,7 @@ impl Sub for Square {
 
     #[inline]
     fn sub(self, other: Square) -> i8 {
-        self as i8 - other as i8
+        i8::from(self) - i8::from(other)
     }
 }
 
