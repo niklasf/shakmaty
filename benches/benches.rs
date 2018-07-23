@@ -14,6 +14,13 @@ fn bench_shallow_perft(c: &mut Criterion) {
     });
 }
 
+/* fn bench_deep_perft(c: &mut Criterion) {
+    c.bench_function("deep_perft", |b| {
+        let pos = Chess::default();
+        b.iter(|| assert_eq!(perft(&pos, black_box(5)), 4_865_609));
+    });
+} */
+
 fn bench_parse_san_move_complicated(c: &mut Criterion) {
     c.bench_function("parse_san_move_complicated", |b| {
         b.iter(|| San::from_ascii(black_box(b"bxc1=R+")));
@@ -118,6 +125,7 @@ fn bench_bitboard_reverse_iter(c: &mut Criterion) {
 
 criterion_group!(benches,
     bench_shallow_perft,
+    //bench_deep_perft,
     bench_parse_san_move_complicated,
     bench_generate_moves,
     bench_play_unchecked,
