@@ -50,7 +50,6 @@ impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
     pub fn from_square(sq: Square) -> Bitboard {
-        // This is safe because valid square indexes are in bounds.
         Bitboard(SQUARES[usize::from(sq)])
     }
 

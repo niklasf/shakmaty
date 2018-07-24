@@ -16,7 +16,7 @@
 
 //! Attack and ray tables.
 //!
-//! # Examples
+//! # Example
 //!
 //! ```
 //! # use shakmaty::{Rank, Square, Bitboard};
@@ -79,6 +79,24 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 }
 
 /// Gets the set of potential blocking squares for a rook on `sq`.
+///
+/// # Example
+///
+/// ```
+/// # use shakmaty::{Square};
+/// # use shakmaty::attacks;
+/// #
+/// let mask = attacks::rook_mask(Square::E8);
+/// // 0 1 1 1 0 1 1 0
+/// // . . . . 1 . . .
+/// // . . . . 1 . . .
+/// // . . . . 1 . . .
+/// // . . . . 1 . . .
+/// // . . . . 1 . . .
+/// // . . . . 1 . . .
+/// // . . . . 0 . . .
+///
+/// assert_eq!(mask.count(), 11);
 #[inline]
 pub fn rook_mask(sq: Square) -> Bitboard {
     Bitboard(magics::ROOK_MAGICS[usize::from(sq)].mask)
@@ -97,6 +115,25 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 }
 
 /// Gets the set of potential blocking squares for a bishop on `sq`.
+///
+/// # Example
+///
+/// ```
+/// # use shakmaty::{Square};
+/// # use shakmaty::attacks;
+/// #
+/// let mask = attacks::bishop_mask(Square::D5);
+/// // 0 . . . . . 0 .
+/// // . 1 . . . 1 . .
+/// // . . 1 . 1 . . .
+/// // . . . 0 . . . .
+/// // . . 1 . 1 . . .
+/// // . 1 . . . 1 . .
+/// // 0 . . . . . 1 .
+/// // . . . . . . . 0
+///
+/// assert_eq!(mask.count(), 9);
+/// ```
 #[inline]
 pub fn bishop_mask(sq: Square) -> Bitboard {
     Bitboard(magics::BISHOP_MAGICS[usize::from(sq)].mask)
@@ -123,10 +160,12 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// The rank, file or diagonal with the two squares (or an empty [`Bitboard`]
 /// if they are not aligned).
 ///
+/// # Example
+///
 /// ```
 /// # use shakmaty::attacks;
 /// # use shakmaty::Square;
-///
+/// #
 /// let ray = attacks::ray(Square::E2, Square::G4);
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -147,10 +186,12 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// The squares between the two squares (bounds not included), or an empty
 /// [`Bitboard`] if they are not on the same rank, file or diagonal.
 ///
+/// # Example
+///
 /// ```
 /// # use shakmaty::attacks;
 /// # use shakmaty::Square;
-///
+/// #
 /// let between = attacks::between(Square::B1, Square::B7);
 /// // . . . . . . . .
 /// // . 0 . . . . . .
@@ -170,10 +211,12 @@ pub fn between(a: Square, b: Square) -> Bitboard {
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
 ///
+/// # Example
+///
 /// ```
 /// # use shakmaty::attacks;
 /// # use shakmaty::Square;
-///
+/// #
 /// assert!(attacks::aligned(Square::A1, Square::B2, Square::C3));
 /// ```
 #[inline]
