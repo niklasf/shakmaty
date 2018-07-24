@@ -143,6 +143,13 @@ pub trait Position: Setup {
         Self::from_setup(&SwapTurn(self))
     }
 
+    /// Generates legal moves.
+    fn legals(&self) -> MoveList {
+        let mut legals = MoveList::new();
+        self.legal_moves(&mut legals);
+        legals
+    }
+
     /// Collects all legal moves in an existing buffer.
     fn legal_moves(&self, moves: &mut MoveList);
 
