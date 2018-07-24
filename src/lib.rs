@@ -109,6 +109,12 @@ pub use perft::perft;
 
 pub mod variants {
     //! Chess variants.
+    //!
+    //! These are games played with normal chess pieces but special rules.
+    //! Every chess variant implements [`Setup`] and [`Position`].
+    //!
+    //! [`Setup`]: ../trait.Setup.html
+    //! [`Position`]: ../trait.Position.html
     pub use Chess;
     pub use position::Atomic;
     pub use position::Giveaway;
