@@ -44,6 +44,7 @@ use types::Color;
 /// assert_eq!(mask.first(), Some(Square::A3));
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+#[must_use]
 pub struct Bitboard(pub u64);
 
 impl Bitboard {
