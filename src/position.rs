@@ -1886,7 +1886,7 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
         let b = attacks::between(king, sniper) & board.occupied();
 
         if !b.more_than_one() {
-            blockers.add_all(b);
+            blockers.add(b);
         }
     }
 

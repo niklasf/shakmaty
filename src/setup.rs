@@ -168,7 +168,7 @@ impl Castles {
     }
 
     pub fn discard_side(&mut self, color: Color) {
-        self.mask.discard_all(Bitboard::relative_rank(color, Rank::First));
+        self.mask.discard(Bitboard::relative_rank(color, Rank::First));
         self.rook[color as usize] = [None, None];
     }
 

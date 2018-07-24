@@ -97,28 +97,18 @@ impl Bitboard {
     }
 
     #[inline]
-    pub fn add(&mut self, sq: Square) {
-        *self |= Bitboard::from_square(sq);
+    pub fn add<T: Into<Bitboard>>(&mut self, squares: T) {
+        *self |= squares;
     }
 
     #[inline]
-    pub fn add_all(&mut self, Bitboard(bb): Bitboard) {
-        self.0 |= bb;
+    pub fn flip<T: Into<Bitboard>>(&mut self, squares: T) {
+        *self ^= squares;
     }
 
     #[inline]
-    pub fn flip(&mut self, sq: Square) {
-        *self ^= Bitboard::from_square(sq)
-    }
-
-    #[inline]
-    pub fn discard(&mut self, sq: Square) {
-        *self &= !Bitboard::from_square(sq);
-    }
-
-    #[inline]
-    pub fn discard_all(&mut self, Bitboard(bb): Bitboard) {
-        self.0 &= !bb;
+    pub fn discard<T: Into<Bitboard>>(&mut self, squares: T) {
+        *self &= !squares.into();
     }
 
     #[inline]
@@ -146,18 +136,28 @@ impl Bitboard {
     }
 
     #[inline]
-    pub fn with(self, sq: Square) -> Bitboard {
-        self | Bitboard::from_square(sq)
+    pub fn with<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
+        self | squares
     }
 
     #[inline]
-    pub fn without(self, sq: Square) -> Bitboard {
-        self & !Bitboard::from_square(sq)
+    pub fn without<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
+        self & !squares.into()
     }
 
     #[inline]
-    pub fn without_all(self, bb: Bitboard) -> Bitboard {
-        self & !bb
+    pub fn is_disjoint(self, other: Bitboard) -> bool {
+        (self & other).is_empty()
+    }
+
+    #[inline]
+    pub fn is_subset(self, other: Bitboard) -> bool {
+        (self & !other).is_empty()
+    }
+
+    #[inline]
+    pub fn is_superset(self, other: Bitboard) -> bool {
+        other.is_subset(self)
     }
 
     #[inline]
