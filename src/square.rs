@@ -355,7 +355,8 @@ impl Square {
     /// ```
     #[inline]
     pub fn flip_horizontal(self) -> Square {
-        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0x07) }
+        // This is safe because all 6 bit values are in the range 0..=63.
+        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0b000_111) }
     }
 
     /// Flip the square vertically.
@@ -368,7 +369,8 @@ impl Square {
     /// ```
     #[inline]
     pub fn flip_vertical(self) -> Square {
-        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0x38) }
+        // This is safe because all 6 bit values are in the range 0..=63.
+        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0b111_000) }
     }
 
     /// Flip at the a1-h8 diagonal by swapping file and rank.
