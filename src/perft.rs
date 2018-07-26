@@ -21,8 +21,15 @@ use uci::Uci;
 /// Counts legal move paths of a given length.
 ///
 /// Paths with mate or stalemate are not counted unless it occurs in the final
-/// position. Useful for comparing, testing and debugging move generation
-/// correctness and performance.
+/// position. Computing perft numbers is useful for comparing, testing and
+/// debugging move generation correctness and performance.
+///
+/// The method used here is simply recursively enumerating the entire tree of
+/// legal moves. While this is fine for testing there is much
+/// faster specialized software.
+///
+/// Warning: Computing perft numbers can take a long time, even at moderate
+/// depths.
 ///
 /// # Examples
 ///

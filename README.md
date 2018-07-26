@@ -80,6 +80,7 @@ Changelog
     Methods `Bitboard::{first, last, count, is_empty}` remain.
   - `Bitboard::{add, flip, discard, with, without}` are now generic over
      `Into<Bitboard>`. Alternative methods `*_all` have been removed.
+  - `Bitboard::relative_shift(color, shift: u8)` now takes `u32`.
   - `shakmaty::CarryRippler` is now `shakmaty::bitboard::CarryRippler`.
   - Add new methods:
     `Bitboard::{pop_front, pop_back, is_disjoint, is_subset, is_superset}`.

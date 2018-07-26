@@ -73,7 +73,7 @@ impl Bitboard {
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
     #[inline]
-    pub fn relative_shift(self, color: Color, shift: u8) -> Bitboard {
+    pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
         match color {
             Color::White => Bitboard(self.0 << shift),
             Color::Black => Bitboard(self.0 >> shift),

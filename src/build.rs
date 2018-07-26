@@ -61,7 +61,7 @@ fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
     sliding_attacks(sq, Bitboard::ALL, deltas)
 }
 
-fn init_magics(sq: Square, magic: &Magic, shift: u8, attacks: &mut [Bitboard], deltas: &[i8]) {
+fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], deltas: &[i8]) {
     for subset in Bitboard(magic.mask).carry_rippler() {
         let attack = sliding_attacks(sq, subset, deltas);
         let idx = (magic.factor.wrapping_mul(subset.0) >> (64 - shift)) as usize + magic.offset;

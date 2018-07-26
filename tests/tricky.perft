@@ -89,3 +89,9 @@ perft 2 54
 perft 3 343
 perft 4 2810
 perft 5 19228
+
+id prison
+epd 2b5/kpPp4/1p1P4/1P6/6p1/4p1P1/4PpPK/5B2 w - -
+perft 1 1
+perft 2 1
+perft 32 1
