@@ -74,10 +74,10 @@ Changelog
 
 * Upcoming
   - Added `File`, `Rank`. These are now returned by `Square::{file, rank}`.
-    Square::from_coords(file, rank) takes the new types and is no longer
+    `Square::from_coords(file, rank)` takes the new types and is no longer
     fallible.
-  - `Bitboard` is now `IntoIterator` instead of `Iterator` itself. Methods
-    `first`, `last` and `count` remain.
+  - `Bitboard` is now `IntoIterator` instead of `Iterator` itself.
+    Methods `Bitboard::{first, last, count, is_empty}` remain.
   - `Bitboard::{add, flip, discard, with, without}` are now generic over
      `Into<Bitboard>`. Alternative methods `*_all` have been removed.
   - `shakmaty::CarryRippler` is now `shakmaty::bitboard::CarryRippler`.
