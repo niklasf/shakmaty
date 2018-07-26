@@ -146,18 +146,18 @@ impl Bitboard {
     }
 
     #[inline]
-    pub fn is_disjoint(self, other: Bitboard) -> bool {
+    pub fn is_disjoint<T: Into<Bitboard>>(self, other: T) -> bool {
         (self & other).is_empty()
     }
 
     #[inline]
-    pub fn is_subset(self, other: Bitboard) -> bool {
-        (self & !other).is_empty()
+    pub fn is_subset<T: Into<Bitboard>>(self, other: T) -> bool {
+        (self & !other.into()).is_empty()
     }
 
     #[inline]
-    pub fn is_superset(self, other: Bitboard) -> bool {
-        other.is_subset(self)
+    pub fn is_superset<T: Into<Bitboard>>(self, other: T) -> bool {
+        other.into().is_subset(self)
     }
 
     #[inline]
