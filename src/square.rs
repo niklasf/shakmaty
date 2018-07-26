@@ -491,11 +491,11 @@ mod tests {
 
     #[test]
     fn test_square() {
-        for file in 0..8 {
-            for rank in 0..8 {
-                let square = Square::from_coords(File::new(file), Rank::new(rank));
-                assert_eq!(square.file(), File::new(file));
-                assert_eq!(square.rank(), Rank::new(rank));
+        for file in (0..8).map(File::new) {
+            for rank in (0..8).map(Rank::new) {
+                let square = Square::from_coords(file, rank);
+                assert_eq!(square.file(), file);
+                assert_eq!(square.rank(), rank);
             }
         }
     }

@@ -290,17 +290,11 @@ impl Default for Board {
 
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let square = Square::from_coords(File::new(file), Rank::new(rank));
+        for rank in (0..8).map(Rank::new).rev() {
+            for file in (0..8).map(File::new) {
+                let square = Square::from_coords(file, rank);
                 f.write_char(self.piece_at(square).map_or('.', |piece| piece.char()))?;
-
-                if file < 7 {
-                    f.write_char(' ')?;
-                } else {
-                    f.write_char('\n')?;
-                }
-
+                f.write_char(if file < File::H { ' ' } else { '\n' })?;
             }
         }
 

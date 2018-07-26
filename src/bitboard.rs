@@ -274,11 +274,11 @@ static FILES: [u64; 8] = [0x101010101010101, 0x202020202020202, 0x40404040404040
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for rank in (0..8).rev() {
-            for file in 0..8 {
-                let sq = Square::from_coords(File::new(file), Rank::new(rank));
+        for rank in (0..8).map(Rank::new).rev() {
+            for file in (0..8).map(File::new) {
+                let sq = Square::from_coords(file, rank);
                 f.write_char(if self.contains(sq) { '1' } else { '.' })?;
-                f.write_char(if file < 7 { ' ' } else { '\n' })?;
+                f.write_char(if file < File::H { ' ' } else { '\n' })?;
             }
         }
 

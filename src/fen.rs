@@ -118,11 +118,11 @@ impl FenOpts {
     pub fn board_fen(&self, board: &Board) -> String {
         let mut fen = String::with_capacity(15);
 
-        for rank in (0..8).rev() {
+        for rank in (0..8).map(Rank::new).rev() {
             let mut empty = 0;
 
-            for file in 0..8 {
-                let square = Square::from_coords(File::new(file), Rank::new(rank));
+            for file in (0..8).map(File::new) {
+                let square = Square::from_coords(file, rank);
 
                 empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
                     if empty > 0 {
@@ -135,11 +135,11 @@ impl FenOpts {
                     0
                 });
 
-                if file == 7 && empty > 0 {
+                if file == File::H && empty > 0 {
                     fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
                 }
 
-                if file == 7 && rank > 0 {
+                if file == File::H && rank > Rank::First {
                     fen.push('/')
                 }
             }
