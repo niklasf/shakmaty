@@ -72,6 +72,18 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* Upcoming
+  - Added `File`, `Rank`. These are now returned by `Square::{file, rank}`.
+    Square::from_coords(file, rank) takes the new types and is no longer
+    fallible.
+  - `Bitboard` is now `IntoIterator` instead of `Iterator` itself. Methods
+    `first`, `last` and `count` remain.
+  - `Bitboard::{add, flip, discard, with, without}` are now generic over
+     `Into<Bitboard>`. Alternative methods `*_all` have been removed.
+  - `shakmaty::CarryRippler` is now `shakmaty::bitboard::CarryRippler`.
+  - Add new methods:
+    `Bitboard::{pop_front, pop_back, is_disjoint, is_subset, is_superset}`.
+  - Add `Position::has_insufficient_material(color)`.
 * 0.9.0
   - Remove `uci`, `chess960_uci`, `san` and `san_plus` that were deprecated
     in 0.8.1.
