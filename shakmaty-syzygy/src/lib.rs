@@ -58,7 +58,7 @@
 //! See [`SyzygyError`](enum.SyzygyError.html) for possible error
 //! conditions.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.6.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.7.0")]
 #![warn(missing_debug_implementations)]
 
 extern crate arrayvec;
