@@ -72,7 +72,7 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
-* Upcoming
+* 0.10.0
   - Added `File`, `Rank`. These are now returned by `Square::{file, rank}`.
     `Square::from_coords(file, rank)` takes the new types and is no longer
     fallible.
