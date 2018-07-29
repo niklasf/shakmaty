@@ -184,20 +184,20 @@ impl Material {
     pub fn from_board(board: &Board) -> Material {
         Material {
             white: MaterialSide {
-                pawns: (board.pawns() & board.white()).len() as u8,
-                knights: (board.knights() & board.white()).len() as u8,
-                bishops: (board.bishops() & board.white()).len() as u8,
-                rooks: (board.rooks() & board.white()).len() as u8,
-                queens: (board.queens() & board.white()).len() as u8,
-                kings: (board.kings() & board.white()).len() as u8,
+                pawns: (board.pawns() & board.white()).count() as u8,
+                knights: (board.knights() & board.white()).count() as u8,
+                bishops: (board.bishops() & board.white()).count() as u8,
+                rooks: (board.rooks() & board.white()).count() as u8,
+                queens: (board.queens() & board.white()).count() as u8,
+                kings: (board.kings() & board.white()).count() as u8,
             },
             black: MaterialSide {
-                pawns: (board.pawns() & board.black()).len() as u8,
-                knights: (board.knights() & board.black()).len() as u8,
-                bishops: (board.bishops() & board.black()).len() as u8,
-                rooks: (board.rooks() & board.black()).len() as u8,
-                queens: (board.queens() & board.black()).len() as u8,
-                kings: (board.kings() & board.black()).len() as u8,
+                pawns: (board.pawns() & board.black()).count() as u8,
+                knights: (board.knights() & board.black()).count() as u8,
+                bishops: (board.bishops() & board.black()).count() as u8,
+                rooks: (board.rooks() & board.black()).count() as u8,
+                queens: (board.queens() & board.black()).count() as u8,
+                kings: (board.kings() & board.black()).count() as u8,
             },
         }
     }

@@ -16,7 +16,7 @@
 
 use std::io;
 use std::iter::FromIterator;
-use std::fs::File;
+use std::fs;
 use std::path::Path;
 use std::marker::PhantomData;
 
@@ -27,7 +27,7 @@ use itertools::Itertools;
 use num_integer::binomial;
 use positioned_io::{Cursor, ReadAt, ReadBytesExt as ReadBytesAtExt};
 
-use shakmaty::{Bitboard, Color, Piece, Position, Role, Square};
+use shakmaty::{Bitboard, Color, Piece, Position, Role, Square, File, Rank};
 
 use errors::{ProbeError, ProbeResult};
 use material::Material;
@@ -348,11 +348,11 @@ impl Consts {
         let mut lead_pawns_size = [[0; 4]; 6];
 
         for lead_pawns_cnt in 1..5 + 1 {
-            for file in 0..4 {
+            for file in (0..4).map(File::new) {
                 let mut idx = 0;
 
-                for rank in 1..7 {
-                    let sq = Square::from_coords(file as i8, rank).expect("valid coords");
+                for rank in (1..7).map(Rank::new) {
+                    let sq = Square::from_coords(file, rank);
                     if lead_pawns_cnt == 1 {
                         available_squares -= 1;
                         map_pawns[usize::from(sq)] = available_squares;
@@ -363,7 +363,7 @@ impl Consts {
                     idx += binomial(map_pawns[usize::from(sq)], lead_pawns_cnt as u64 - 1);
                 }
 
-                lead_pawns_size[lead_pawns_cnt][file] = idx;
+                lead_pawns_size[lead_pawns_cnt][usize::from(file)] = idx;
             }
         }
 
@@ -415,7 +415,7 @@ fn nibble_to_piece(p: u8) -> Option<Piece> {
 
 /// Checks if a square is on the a1-h8 diagonal.
 fn offdiag(sq: Square) -> bool {
-    sq.file() != sq.rank()
+    sq.file().rotate() != sq.rank()
 }
 
 /// Parse a piece list.
@@ -1026,7 +1026,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
             let lead_pawns = pos.board().pawns() & pos.board().by_color(color);
             used.extend(lead_pawns);
-            squares.extend(lead_pawns.map(|sq| if flip { sq.flip_vertical() } else { sq }));
+            squares.extend(lead_pawns.into_iter().map(|sq| if flip { sq.flip_vertical() } else { sq }));
 
             // Ensure squares[0] is the maximum with regard to map_pawns.
             for i in 1..squares.len() {
@@ -1034,7 +1034,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     squares.swap(0, i);
                 }
             }
-            if squares[0].file() >= 4 {
+            if squares[0].file() >= File::E {
                 squares[0].flip_horizontal().file() as usize
             } else {
                 squares[0].file() as usize
@@ -1068,7 +1068,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         assert!(squares.len() >= 2);
 
         // Now we can compute the index according to the piece positions.
-        if squares[0].file() >= 4 {
+        if squares[0].file() >= File::E {
             for square in &mut squares {
                 *square = square.flip_horizontal();
             }
@@ -1085,18 +1085,18 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
             idx
         } else {
-            if squares[0].rank() >= 4 {
+            if squares[0].rank() >= Rank::Fifth {
                 for square in &mut squares {
                     *square = square.flip_vertical();
                 }
             }
 
             for i in 0..side.groups.lens[0] {
-                if squares[i].file() == squares[i].rank() {
+                if squares[i].file().rotate() == squares[i].rank() {
                     continue;
                 }
 
-                if squares[i].rank() > squares[i].file() {
+                if squares[i].rank().rotate() > squares[i].file() {
                     for square in &mut squares[i..] {
                         *square = square.flip_diagonal();
                     }
@@ -1154,20 +1154,20 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     squares.swap(0, 1);
                 }
 
-                if squares[0].file() >= 4 {
+                if squares[0].file() >= File::E {
                     for square in &mut squares {
                         *square = square.flip_horizontal();
                     }
                 }
 
-                if squares[0].rank() >= 4 {
+                if squares[0].rank() >= Rank::Fifth {
                     for square in &mut squares {
                         *square = square.flip_vertical();
                     }
                 }
 
-                if squares[0].rank() > squares[0].file() ||
-                   (!offdiag(squares[0]) && squares[1].rank() > squares[1].file()) {
+                if squares[0].rank().rotate() > squares[0].file() ||
+                   (!offdiag(squares[0]) && squares[1].rank().rotate() > squares[1].file()) {
                     for square in &mut squares {
                         *square = square.flip_diagonal();
                     }
@@ -1189,19 +1189,19 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     }
                 }
 
-                if squares[0].file() >= 4 {
+                if squares[0].file() >= File::E {
                     for square in &mut squares {
                         *square = square.flip_horizontal();
                     }
                 }
 
-                if squares[0].rank() >= 4 {
+                if squares[0].rank() >= Rank::Fifth {
                     for square in &mut squares {
                         *square = square.flip_vertical();
                     }
                 }
 
-                if squares[0].rank() > squares[0].file() {
+                if squares[0].rank().rotate() > squares[0].file() {
                     for square in &mut squares {
                         *square = square.flip_diagonal();
                     }
@@ -1315,9 +1315,9 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
     }
 }
 
-impl<S: Position + Syzygy> WdlTable<S, File> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, File>> {
-        WdlTable::new(File::open(path)?, material)
+impl<S: Position + Syzygy> WdlTable<S, fs::File> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, fs::File>> {
+        WdlTable::new(fs::File::open(path)?, material)
     }
 }
 
@@ -1338,8 +1338,8 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
     }
 }
 
-impl<S: Position + Syzygy> DtzTable<S, File> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, File>> {
-        DtzTable::new(File::open(path)?, material)
+impl<S: Position + Syzygy> DtzTable<S, fs::File> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, fs::File>> {
+        DtzTable::new(fs::File::open(path)?, material)
     }
 }
