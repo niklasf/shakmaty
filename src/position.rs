@@ -220,10 +220,6 @@ pub trait Position: Setup {
     /// Castling paths and unmoved rooks.
     fn castles(&self) -> &Castles;
 
-    /// Tests the rare case where moving the rook to the other side during
-    /// castling would uncover a rank attack.
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
-
     /// Tests if the king is in check.
     fn is_check(&self) -> bool {
         self.checkers().any()
@@ -345,6 +341,12 @@ pub trait Position: Setup {
     fn play_unchecked(&mut self, m: &Move);
 }
 
+trait CastlingUncoversRankAttack {
+    /// Tests the rare case where moving the rook to the other side during
+    /// castling would uncover a rank attack.
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
+}
+
 /// A standard Chess position.
 #[derive(Clone, Debug)]
 pub struct Chess {
@@ -415,11 +417,6 @@ impl Position for Chess {
 
     fn castles(&self) -> &Castles {
         &self.castles
-    }
-
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.castles.is_chess960() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -545,6 +542,13 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
+impl CastlingUncoversRankAttack for Chess {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.castles.is_chess960() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
+    }
+}
+
 /// An Atomic Chess position.
 #[derive(Clone, Debug)]
 pub struct Atomic {
@@ -665,11 +669,6 @@ impl Position for Atomic {
         }
     }
 
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        (attacks::king_attacks(king_to) & self.board().kings() & self.them()).is_empty() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
-
     fn is_variant_end(&self) -> bool {
         self.variant_outcome().is_some()
     }
@@ -722,6 +721,13 @@ impl Position for Atomic {
             }
         }
         None
+    }
+}
+
+impl CastlingUncoversRankAttack for Atomic {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        (attacks::king_attacks(king_to) & self.board().kings() & self.them()).is_empty() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
     }
 }
 
@@ -823,10 +829,6 @@ impl Position for Giveaway {
         }
     }
 
-    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
-        false
-    }
-
     fn king_attackers(&self, _square: Square, _attacker: Color, _occupied: Bitboard) -> Bitboard {
         Bitboard(0)
     }
@@ -858,6 +860,12 @@ impl Position for Giveaway {
     }
 }
 
+impl CastlingUncoversRankAttack for Giveaway {
+    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
+        false
+    }
+}
+
 /// A King Of The Hill position.
 #[derive(Clone, Debug, Default)]
 pub struct KingOfTheHill {
@@ -886,10 +894,6 @@ impl Position for KingOfTheHill {
 
     fn castles(&self) -> &Castles {
         self.chess.castles()
-    }
-
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -943,6 +947,12 @@ impl Position for KingOfTheHill {
     }
 }
 
+impl CastlingUncoversRankAttack for KingOfTheHill {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.chess.castling_uncovers_rank_attack(rook, king_to)
+    }
+}
+
 /// A Three-Check position.
 #[derive(Clone, Debug, Default)]
 pub struct ThreeCheck {
@@ -986,10 +996,6 @@ impl Position for ThreeCheck {
 
     fn castles(&self) -> &Castles {
         self.chess.castles()
-    }
-
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -1047,6 +1053,12 @@ impl Position for ThreeCheck {
         } else {
             None
         }
+    }
+}
+
+impl CastlingUncoversRankAttack for ThreeCheck {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.chess.castling_uncovers_rank_attack(rook, king_to)
     }
 }
 
@@ -1133,10 +1145,6 @@ impl Position for Crazyhouse {
         self.chess.castles()
     }
 
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
-    }
-
     fn legal_moves(&self, moves: &mut MoveList) {
         self.chess.legal_moves(moves);
 
@@ -1204,6 +1212,12 @@ impl Position for Crazyhouse {
 
     fn is_variant_end(&self) -> bool { false }
     fn variant_outcome(&self) -> Option<Outcome> { None }
+}
+
+impl CastlingUncoversRankAttack for Crazyhouse {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.chess.castling_uncovers_rank_attack(rook, king_to)
+    }
 }
 
 /// A Racing Kings position.
@@ -1311,10 +1325,6 @@ impl Position for RacingKings {
         &EMPTY_CASTLES
     }
 
-    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
-        false
-    }
-
     fn has_insufficient_material(&self, _color: Color) -> bool {
         // Even a lone king can win the race.
         false
@@ -1354,6 +1364,12 @@ impl Position for RacingKings {
         } else {
             None
         }
+    }
+}
+
+impl CastlingUncoversRankAttack for RacingKings {
+    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
+        false
     }
 }
 
@@ -1471,11 +1487,6 @@ impl Position for Horde {
         &self.castles
     }
 
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.castles.is_chess960() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
-
     fn is_variant_end(&self) -> bool {
         self.board().white().is_empty() || self.board().black().is_empty()
     }
@@ -1501,6 +1512,13 @@ impl Position for Horde {
         } else {
             None
         }
+    }
+}
+
+impl CastlingUncoversRankAttack for Horde {
+    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
+        self.castles.is_chess960() &&
+        castling_uncovers_rank_attack(self, rook, king_to)
     }
 }
 
@@ -1664,7 +1682,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves<P: Position>(pos: &P, castles: &Castles, king: Square, side: CastlingSide, moves: &mut MoveList) {
+fn gen_castling_moves<P: Position + CastlingUncoversRankAttack>(pos: &P, castles: &Castles, king: Square, side: CastlingSide, moves: &mut MoveList) {
     if let Some(rook) = castles.rook(pos.turn(), side) {
         let path = castles.path(pos.turn(), side);
         if (path & pos.board().occupied()).any() {
