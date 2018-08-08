@@ -133,12 +133,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(SyzygyError::Castling);
         }
 
-        // Probe.
-        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
-
         if S::CAPTURES_COMPULSORY {
+            let (v, _) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
             return Ok(v);
         }
+
+        // Probe.
+        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
 
         // If en passant is not possible we are done.
         let mut ep_moves = MoveList::new();
@@ -176,10 +177,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
         if S::CAPTURES_COMPULSORY {
-            if let Some(outcome) = pos.variant_outcome() {
-                return Ok((Wdl::from_outcome(&outcome, pos.turn()), ProbeState::ZeroingBestMove));
-            }
-
             return self.probe_compulsory_captures(pos, alpha, beta, threats);
         }
 
@@ -213,6 +210,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        if let Some(outcome) = pos.variant_outcome() {
+            return Ok((Wdl::from_outcome(&outcome, pos.turn()), ProbeState::ZeroingBestMove));
+        }
+
         // Explore compulsory captures in antichess variants.
         if pos.them().count() > 1 {
             if let Some(v) = self.probe_captures(pos, alpha, beta)? {
