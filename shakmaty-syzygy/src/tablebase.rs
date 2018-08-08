@@ -206,15 +206,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(SyzygyError::Castling);
         }
 
-        if let Some(outcome) = pos.variant_outcome() {
-            return Ok(WdlEntry {
-                tablebase: self,
-                pos,
-                wdl: Wdl::from_outcome(&outcome, pos.turn()),
-                state: ProbeState::ZeroingBestMove,
-            });
-        }
-
+        // Handle variants.
         if S::CAPTURES_COMPULSORY {
             let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
             return Ok(WdlEntry {
@@ -223,10 +215,19 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 wdl: v,
                 state,
             });
+        } else {
+            if let Some(outcome) = pos.variant_outcome() {
+                return Ok(WdlEntry {
+                    tablebase: self,
+                    pos,
+                    wdl: Wdl::from_outcome(&outcome, pos.turn()),
+                    state: ProbeState::ZeroingBestMove,
+                });
+            }
         }
 
         // Resolve captures: Find the best non-ep capture and the best
-        // en passant move.
+        // ep capture.
         let mut best_capture = Wdl::Loss;
         let mut best_ep = Wdl::Loss;
 
@@ -260,7 +261,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Now max(v, best_capture) is the WDL value of the position without
         // ep rights. Detect the case were an ep move is better, including
         // blessed losing positions.
-
         if best_ep > max(v, best_capture) {
             return Ok(WdlEntry {
                 tablebase: self,
@@ -307,6 +307,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_ab_no_ep(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<Wdl> {
+        // Use alpha-beta to recursively resolve captures. This is only called
+        // for positions without ep rights.
         assert!(pos.ep_square().is_none());
 
         let mut captures = MoveList::new();
@@ -431,6 +433,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 }
 
+/// WDL entry. Prerequisite for probing DTZ tables.
 #[derive(Debug)]
 struct WdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
     tablebase: &'a Tablebase<S>,
