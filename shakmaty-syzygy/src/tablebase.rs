@@ -142,6 +142,62 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         self.probe(pos).and_then(|entry| entry.dtz())
     }
 
+    /// Select a DTZ-optimal move.
+    ///
+    /// # Errors
+    ///
+    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// conditions.
+    pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
+        struct WithWdl {
+            m: Move,
+            wdl: Wdl,
+        }
+
+        struct WithDtz {
+            m: Move,
+            immediate_loss: bool,
+            zeroing: bool,
+            dtz: Dtz,
+        }
+
+        // Determine WDL for each move.
+        let mut legals = MoveList::new();
+        pos.legal_moves(&mut legals);
+
+        let with_wdl = legals.into_iter().map(|m| {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+
+            Ok(WithWdl {
+                m,
+                wdl: self.probe_wdl(&after)?,
+            })
+        }).collect::<SyzygyResult<ArrayVec<[_; 256]>>>()?;
+
+        // Find best WDL.
+        let best_wdl = with_wdl.iter().map(|a| a.wdl).min().unwrap_or(Wdl::Loss);
+
+        // Determine DTZ-optimal move among the moves with best WDL.
+        itertools::process_results(with_wdl.into_iter().filter(|a| a.wdl == best_wdl).map(|a| {
+            let mut after = pos.clone();
+            after.play_unchecked(&a.m);
+
+            let dtz = self.probe_dtz(&after)?;
+
+            Ok(WithDtz {
+                immediate_loss: dtz == Dtz(-1) && (after.is_checkmate() || after.variant_outcome().is_some()),
+                zeroing: a.m.is_zeroing(),
+                m: a.m,
+                dtz,
+            })
+        }), |iter| iter.min_by_key(|m| (
+            Reverse(m.immediate_loss),
+            m.zeroing ^ (m.dtz < Dtz(0)),
+            Reverse(m.dtz),
+        )).map(|m| (m.m, m.dtz)))
+    }
+
     fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {
         if pos.board().occupied().count() > S::MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
@@ -271,6 +327,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+        assert!(S::CAPTURES_COMPULSORY);
+
         if let Some(outcome) = pos.variant_outcome() {
             return Ok((Wdl::from_outcome(&outcome, pos.turn()), ProbeState::ZeroingBestMove));
         }
@@ -325,6 +383,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<Option<Wdl>> {
+        assert!(S::CAPTURES_COMPULSORY);
+
         // Explore capture moves in antichess variants. If captures exists they
         // are also the only moves, because captures are compulsory.
         let mut captures = MoveList::new();
@@ -368,62 +428,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 material: key.normalized(),
             })
         }
-    }
-
-    /// Select a DTZ-optimal move.
-    ///
-    /// # Errors
-    ///
-    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
-    /// conditions.
-    pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
-        struct WithWdl {
-            m: Move,
-            wdl: Wdl,
-        }
-
-        struct WithDtz {
-            m: Move,
-            immediate_loss: bool,
-            zeroing: bool,
-            dtz: Dtz,
-        }
-
-        // Determine WDL for each move.
-        let mut legals = MoveList::new();
-        pos.legal_moves(&mut legals);
-
-        let with_wdl = legals.into_iter().map(|m| {
-            let mut after = pos.clone();
-            after.play_unchecked(&m);
-
-            Ok(WithWdl {
-                m,
-                wdl: self.probe_wdl(&after)?,
-            })
-        }).collect::<SyzygyResult<ArrayVec<[_; 256]>>>()?;
-
-        // Find best WDL.
-        let best_wdl = with_wdl.iter().map(|a| a.wdl).min().unwrap_or(Wdl::Loss);
-
-        // Determine DTZ-optimal move among the moves with best WDL.
-        itertools::process_results(with_wdl.into_iter().filter(|a| a.wdl == best_wdl).map(|a| {
-            let mut after = pos.clone();
-            after.play_unchecked(&a.m);
-
-            let dtz = self.probe_dtz(&after)?;
-
-            Ok(WithDtz {
-                immediate_loss: dtz == Dtz(-1) && (after.is_checkmate() || after.variant_outcome().is_some()),
-                zeroing: a.m.is_zeroing(),
-                m: a.m,
-                dtz,
-            })
-        }), |iter| iter.min_by_key(|m| (
-            Reverse(m.immediate_loss),
-            m.zeroing ^ (m.dtz < Dtz(0)),
-            Reverse(m.dtz),
-        )).map(|m| (m.m, m.dtz)))
     }
 }
 
