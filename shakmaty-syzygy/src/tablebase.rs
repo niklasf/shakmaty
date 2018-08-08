@@ -59,7 +59,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
     }
 
     fn dtz(&self) -> SyzygyResult<Dtz> {
-        self.tablebase.probe_dtz(self.pos)
+        self.tablebase.tb_probe_dtz(self)
     }
 }
 
@@ -153,6 +153,15 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
         if pos.castles().any() {
             return Err(SyzygyError::Castling);
+        }
+
+        if let Some(outcome) = pos.variant_outcome() {
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: Wdl::from_outcome(&outcome, pos.turn()),
+                zeroing_best_move: true,
+            });
         }
 
         if S::CAPTURES_COMPULSORY {
@@ -264,6 +273,70 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         let v = self.probe_wdl_table(pos)?;
         Ok(max(alpha, v))
+    }
+
+    fn tb_probe_dtz(&self, wdl_entry: &WdlEntry<S>) -> SyzygyResult<Dtz> {
+        if wdl_entry.wdl == Wdl::Draw {
+            return Ok(Dtz(0))
+        }
+
+        if wdl_entry.zeroing_best_move {
+            return Ok(Dtz::before_zeroing(wdl_entry.wdl));
+        }
+
+        // If winning, check for a winning non-capturing pawn move.
+        if wdl_entry.wdl > Wdl::Draw {
+            let mut pawn_advances = MoveList::new();
+            wdl_entry.pos.legal_moves(&mut pawn_advances);
+            pawn_advances.retain(|m| !m.is_capture() && m.role() == Role::Pawn);
+
+            for m in &pawn_advances {
+                let mut after = wdl_entry.pos.clone();
+                after.play_unchecked(m);
+                let v = -self.probe_wdl(&after)?;
+                if v == wdl_entry.wdl {
+                    return Ok(Dtz::before_zeroing(wdl_entry.wdl));
+                }
+            }
+        }
+
+        // Now we know that the best move is not an ep capture. Therefore we
+        // can probe the table.
+        if let Some(Dtz(dtz)) = self.probe_dtz_table(wdl_entry.pos, wdl_entry.wdl)? {
+            return Ok(Dtz::before_zeroing(wdl_entry.wdl).add_plies(dtz));
+        }
+
+        // We have to probe the other side.
+        let mut moves = MoveList::new();
+        wdl_entry.pos.legal_moves(&mut moves);
+        moves.retain(|m| !m.is_zeroing());
+
+        let mut best = if wdl_entry.wdl > Wdl::Draw {
+            None
+        } else {
+            Some(Dtz::before_zeroing(wdl_entry.wdl))
+        };
+
+        for m in &moves {
+            let mut after = wdl_entry.pos.clone();
+            after.play_unchecked(m);
+            let v = -self.probe_dtz(&after)?;
+            if v == Dtz(1) && after.is_checkmate() {
+                best = Some(Dtz(1));
+            } else if wdl_entry.wdl > Wdl::Draw {
+                if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
+                    best = Some(v + Dtz(1));
+                }
+            } else if best.map_or(true, |best| v - Dtz(1) < best) {
+                best = Some(v - Dtz(1));
+            }
+        }
+
+        best.ok_or_else(|| SyzygyError::ProbeFailed {
+            metric: Metric::Dtz,
+            material: Material::from_board(wdl_entry.pos.board()),
+            error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
+        })
     }
 
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
@@ -410,80 +483,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
-        if pos.board().occupied().count() > MAX_PIECES {
-            return Err(SyzygyError::TooManyPieces);
-        }
-        if S::CAPTURES_COMPULSORY && pos.board().occupied().count() > 6 {
-            return Err(SyzygyError::TooManyPieces);
-        }
-        if pos.castles().any() {
-            return Err(SyzygyError::Castling);
-        }
-
-        // Probe.
-        let mut v = self.probe_dtz_no_ep(pos)?;
-
-        if S::CAPTURES_COMPULSORY {
-            return Ok(v);
-        }
-
-        // If en passant is not possible we are done.
-        let mut ep_moves = MoveList::new();
-        pos.en_passant_moves(&mut ep_moves);
-        if ep_moves.is_empty() {
-            return Ok(v);
-        }
-
-        // Check all en passant moves.
-        let mut wdl = Wdl::Loss;
-
-        for m in ep_moves {
-            let mut after = pos.clone();
-            after.play_unchecked(&m);
-
-            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
-            let v0 = -v0_plus;
-
-            wdl = max(v0, wdl);
-        }
-
-        let v1 = Dtz::before_zeroing(wdl);
-        if v < Dtz(-100) {
-            if v1 >= Dtz(0) {
-                v = v1;
-            }
-        } else if v < Dtz(0) {
-            if v1 >= Dtz(0) || v1 < Dtz(-100) {
-                v = v1;
-            }
-        } else if v > Dtz(100) {
-            if v1 > Dtz(0) {
-                v = v1;
-            }
-        } else if v > Dtz(0) {
-            if v1 == Dtz(1) {
-                v = v1;
-            }
-        } else if v1 >= Dtz(0) {
-            v = v1;
-        } else {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            if moves.iter().all(|m| m.is_en_passant()) {
-                v = v1;
-            }
-        }
-
-        Ok(v)
+        self.probe(pos).and_then(|entry| entry.dtz())
     }
 
-    fn probe_dtz_no_ep(&self, pos: &S) -> SyzygyResult<Dtz> {
-        let (wdl, state) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, true)?;
-
-        if wdl == Wdl::Draw {
-            return Ok(Dtz(0));
-        }
-
+        /*
         if state == ProbeState::ZeroingBestMove || pos.us() == pos.our(Role::Pawn) {
             return Ok(Dtz::before_zeroing(wdl));
         }
@@ -491,76 +494,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if state == ProbeState::Threat && wdl > Wdl::Draw {
             // The position is a win or a cursed win by a threat move.
             return Ok(Dtz::before_zeroing(wdl).add_plies(1));
-        }
-
-        let mut moves = MoveList::new();
-
-        if wdl > Wdl::Draw {
-            pos.legal_moves(&mut moves);
-
-            // Find a winning non-capturing pawn move.
-            for m in moves.iter().filter(|m| m.role() == Role::Pawn && !m.is_capture()) {
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
-
-                let v = -self.probe_wdl(&after)?;
-
-                if v == wdl {
-                    return Ok(Dtz::before_zeroing(v));
-                }
-            }
-        }
-
-        if let Some(Dtz(dtz)) = self.probe_dtz_table(pos, wdl)? {
-            return Ok(Dtz::before_zeroing(wdl).add_plies(dtz))
-        }
-
-        if wdl > Wdl::Draw {
-            let mut best = None;
-
-            for m in moves.iter().filter(|m| !m.is_zeroing()) {
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
-
-                let v = -self.probe_dtz(&after)?;
-
-                if v == Dtz(1) && after.is_checkmate() {
-                    best = Some(Dtz(1));
-                } else if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
-                    best = Some(v + Dtz(1));
-                }
-            }
-
-            best.ok_or_else(|| SyzygyError::ProbeFailed {
-                metric: Metric::Dtz,
-                material: Material::from_board(pos.board()),
-                error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
-            })
-        } else {
-            let mut best = Dtz(-1);
-
-            pos.legal_moves(&mut moves);
-            for m in moves {
-                let mut after = pos.clone();
-                after.play_unchecked(&m);
-
-                let v = if m.is_zeroing() {
-                    if wdl == Wdl::Loss {
-                        Dtz(-1)
-                    } else {
-                        let (v, _) = self.probe_ab(&after, Wdl::CursedWin, Wdl::Win, true)?;
-                        Dtz(if v == Wdl::Win { 0 } else { -101 })
-                    }
-                } else {
-                    -self.probe_dtz(&after)? - Dtz(1)
-                };
-
-                best = min(v, best);
-            }
-
-            Ok(best)
-        }
-    }
+        }*/
 
     fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(pos.board());
