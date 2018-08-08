@@ -45,6 +45,24 @@ enum ProbeState {
     Threat,
 }
 
+#[derive(Debug)]
+struct WdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
+    tablebase: &'a Tablebase<S>,
+    pos: &'a S,
+    wdl: Wdl,
+    zeroing_best_move: bool,
+}
+
+impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
+    fn wdl(&self) -> Wdl {
+        self.wdl
+    }
+
+    fn dtz(&self) -> SyzygyResult<Dtz> {
+        self.tablebase.probe_dtz(self.pos)
+    }
+}
+
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
@@ -126,6 +144,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
+        self.probe(pos).map(|entry| entry.wdl())
+    }
+
+    fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {
         if pos.board().occupied().count() > S::MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
         }
@@ -134,45 +156,114 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         if S::CAPTURES_COMPULSORY {
-            let (v, _) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
-            return Ok(v);
+            let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: v,
+                zeroing_best_move: state == ProbeState::ZeroingBestMove,
+            });
         }
 
-        // Probe.
-        let (mut v, _) = self.probe_ab(pos, Wdl::Loss, Wdl::Win, false)?;
+        // Resolve captures: Find the best non-ep capture and the best
+        // en passant move.
+        let mut best_capture = Wdl::Loss;
+        let mut best_ep = Wdl::Loss;
 
-        // If en passant is not possible we are done.
-        let mut ep_moves = MoveList::new();
-        pos.en_passant_moves(&mut ep_moves);
-        if ep_moves.is_empty() {
-            return Ok(v);
-        }
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
 
-        // Now look at all legal en passant captures.
-        let mut v1 = Wdl::Loss;
-        for m in ep_moves {
+        for m in &captures {
             let mut after = pos.clone();
-            after.play_unchecked(&m);
+            after.play_unchecked(m);
+            let v = -self.probe_ab_no_ep(&after, Wdl::Loss, -best_capture)?;
 
-            let (v0_plus, _) = self.probe_ab(&after, Wdl::Loss, Wdl::Win, false)?;
-            let v0 = -v0_plus;
+            if v == Wdl::Win {
+                return Ok(WdlEntry {
+                    tablebase: self,
+                    pos,
+                    wdl: v,
+                    zeroing_best_move: true
+                });
+            }
 
-            v1 = max(v0, v1);
-        }
-
-        if v1 >= v {
-            v = v1;
-        } else if v == Wdl::Draw {
-            // If there is not at least one legal non-en-passant move we are
-            // forced to play the losing en passant move.
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            if moves.iter().all(|m| m.is_en_passant()) {
-                v = v1;
+            if m.is_en_passant() {
+                best_ep = max(best_ep, v);
+            } else {
+                best_capture = max(best_capture, v);
             }
         }
 
-        Ok(v)
+        // Probe table.
+        let v = self.probe_wdl_table(pos)?;
+
+        // Now max(v, best_capture) is the WDL value of the position without
+        // ep rights. Detect the case were an ep move is better, including
+        // blessed losing positions.
+
+        if best_ep > max(v, best_capture) {
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: best_ep,
+                zeroing_best_move: true
+            });
+        }
+
+        best_capture = max(best_capture, best_ep);
+
+        // Now max(v, best_capture) is the WDL value of the position,
+        // unless the position without ep rights is stalemate (and there are
+        // ep moves).
+        if best_capture >= v {
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: best_capture,
+                zeroing_best_move: best_capture > Wdl::Draw,
+            })
+        }
+
+        // If the position would be stalemate without ep captures, then we are
+        // forced to play the best en passant move.
+        let mut moves = MoveList::new();
+        pos.legal_moves(&mut moves);
+        moves.retain(|m| !m.is_en_passant());
+        if !captures.is_empty() && moves.is_empty() && !pos.is_check() {
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: best_ep,
+                zeroing_best_move: true,
+            })
+        }
+
+        return Ok(WdlEntry {
+            tablebase: self,
+            pos,
+            wdl: v,
+            zeroing_best_move: false,
+        })
+    }
+
+    fn probe_ab_no_ep(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<Wdl> {
+        assert!(pos.ep_square().is_none());
+
+        let mut captures = MoveList::new();
+        pos.capture_moves(&mut captures);
+
+        for m in captures {
+            let mut after = pos.clone();
+            after.play_unchecked(&m);
+            let v = -self.probe_ab_no_ep(&after, -beta, -alpha)?;
+            if v >= beta {
+                return Ok(v);
+            }
+            alpha = max(alpha, v);
+        }
+
+        let v = self.probe_wdl_table(pos)?;
+        Ok(max(alpha, v))
     }
 
     fn probe_ab(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
@@ -269,7 +360,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         let mut captures = MoveList::new();
         pos.capture_moves(&mut captures);
 
-        for m in captures.iter() {
+        for m in &captures {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
