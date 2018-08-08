@@ -50,6 +50,9 @@ pub trait Syzygy {
     const CONNECTED_KINGS: bool;
     /// Whether captures are compulsory.
     const CAPTURES_COMPULSORY: bool;
+
+    /// Maximum number of supported pieces.
+    const MAX_PIECES: usize = 6;
 }
 
 impl Syzygy for Chess {
@@ -59,6 +62,8 @@ impl Syzygy for Chess {
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
     const CAPTURES_COMPULSORY: bool = false;
+
+    const MAX_PIECES: usize = 7;
 }
 
 impl Syzygy for Atomic {

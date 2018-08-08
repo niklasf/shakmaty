@@ -98,7 +98,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 _ => continue,
             };
 
-            if material.count() > MAX_PIECES {
+            if material.count() > S::MAX_PIECES {
                 continue;
             }
 
@@ -126,10 +126,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        if pos.board().occupied().count() > MAX_PIECES {
-            return Err(SyzygyError::TooManyPieces);
-        }
-        if S::CAPTURES_COMPULSORY && pos.board().occupied().count() > 6 {
+        if pos.board().occupied().count() > S::MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
         }
         if pos.castles().any() {
