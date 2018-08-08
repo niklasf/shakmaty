@@ -26,15 +26,15 @@ use std::fmt;
 use std::error::Error;
 
 /// Outcome of a game.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw,
 }
 
 impl Outcome {
-    pub fn winner(&self) -> Option<Color> {
-        match *self {
+    pub fn winner(self) -> Option<Color> {
+        match self {
             Outcome::Decisive { winner } => Some(winner),
             Outcome::Draw => None,
         }
