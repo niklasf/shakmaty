@@ -72,6 +72,9 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.11.0
+  - `Outcome` is now `Copy`.
+  - `Position::castling_uncovers_rank_attack()` is no longer public.
 * 0.10.0
   - Added `File`, `Rank`. These are now returned by `Square::{file, rank}`.
     `Square::from_coords(file, rank)` takes the new types and is no longer
