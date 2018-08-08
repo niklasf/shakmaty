@@ -149,9 +149,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
     /// conditions.
     pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
-        struct WithWdl {
+        struct WithWdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
             m: Move,
-            wdl: Wdl,
+            entry: WdlEntry<'a, S>,
         }
 
         struct WithDtz {
@@ -169,24 +169,21 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
-            Ok(WithWdl {
+            Ok(WithWdlEntry {
                 m,
-                wdl: self.probe_wdl(&after)?,
+                entry: self.probe(&after)?,
             })
         }).collect::<SyzygyResult<ArrayVec<[_; 256]>>>()?;
 
         // Find best WDL.
-        let best_wdl = with_wdl.iter().map(|a| a.wdl).min().unwrap_or(Wdl::Loss);
+        let best_wdl = with_wdl.iter().map(|a| a.entry.wdl).min().unwrap_or(Wdl::Loss);
 
         // Determine DTZ-optimal move among the moves with best WDL.
-        itertools::process_results(with_wdl.into_iter().filter(|a| a.wdl == best_wdl).map(|a| {
-            let mut after = pos.clone();
-            after.play_unchecked(&a.m);
-
-            let dtz = self.probe_dtz(&after)?;
+        itertools::process_results(with_wdl.into_iter().filter(|a| a.entry.wdl == best_wdl).map(|a| {
+            let dtz = a.entry.dtz()?;
 
             Ok(WithDtz {
-                immediate_loss: dtz == Dtz(-1) && (after.is_checkmate() || after.variant_outcome().is_some()),
+                immediate_loss: dtz == Dtz(-1) && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
                 zeroing: a.m.is_zeroing(),
                 m: a.m,
                 dtz,
@@ -198,7 +195,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         )).map(|m| (m.m, m.dtz)))
     }
 
-    fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {
+    fn probe<'a>(&'a self, pos: &S) -> SyzygyResult<WdlEntry<'a, S>> {
         if pos.board().occupied().count() > S::MAX_PIECES {
             return Err(SyzygyError::TooManyPieces);
         }
@@ -211,7 +208,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
             return Ok(WdlEntry {
                 tablebase: self,
-                pos,
+                pos: pos.clone(),
                 wdl: v,
                 state,
             });
@@ -219,7 +216,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             if let Some(outcome) = pos.variant_outcome() {
                 return Ok(WdlEntry {
                     tablebase: self,
-                    pos,
+                    pos: pos.clone(),
                     wdl: Wdl::from_outcome(&outcome, pos.turn()),
                     state: ProbeState::ZeroingBestMove,
                 });
@@ -242,7 +239,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             if v == Wdl::Win {
                 return Ok(WdlEntry {
                     tablebase: self,
-                    pos,
+                    pos: pos.clone(),
                     wdl: v,
                     state: ProbeState::ZeroingBestMove,
                 });
@@ -264,7 +261,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if best_ep > max(v, best_capture) {
             return Ok(WdlEntry {
                 tablebase: self,
-                pos,
+                pos: pos.clone(),
                 wdl: best_ep,
                 state: ProbeState::ZeroingBestMove,
             });
@@ -278,7 +275,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if best_capture >= v {
             return Ok(WdlEntry {
                 tablebase: self,
-                pos,
+                pos: pos.clone(),
                 wdl: best_capture,
                 state: if best_capture > Wdl::Draw { ProbeState::ZeroingBestMove } else { ProbeState::Normal },
             })
@@ -292,7 +289,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if !captures.is_empty() && moves.is_empty() && !pos.is_check() {
             return Ok(WdlEntry {
                 tablebase: self,
-                pos,
+                pos: pos.clone(),
                 wdl: best_ep,
                 state: ProbeState::ZeroingBestMove,
             })
@@ -300,7 +297,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         Ok(WdlEntry {
             tablebase: self,
-            pos,
+            pos: pos.clone(),
             wdl: v,
             state: ProbeState::Normal,
         })
@@ -437,7 +434,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 #[derive(Debug)]
 struct WdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
     tablebase: &'a Tablebase<S>,
-    pos: &'a S,
+    pos: S,
     wdl: Wdl,
     state: ProbeState,
 }
@@ -520,7 +517,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         let key = Material::from_board(self.pos.board());
         if let Some(&(ref path, ref table)) = self.tablebase.dtz.get(&key).or_else(|| self.tablebase.dtz.get(&key.flipped())) {
             let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
-            table.probe_dtz_table(self.pos, self.wdl).ctx(Metric::Dtz, &key)
+            table.probe_dtz_table(&self.pos, self.wdl).ctx(Metric::Dtz, &key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
