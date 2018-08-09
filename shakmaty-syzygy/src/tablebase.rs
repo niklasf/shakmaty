@@ -205,7 +205,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         // Handle variants.
         if S::CAPTURES_COMPULSORY {
-            let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, false)?;
+            // Strictly speaking we do not have to probe with threats here,
+            // but it will be required when continuing with a DTZ probe.
+            let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, true)?;
             return Ok(WdlEntry {
                 tablebase: self,
                 pos: pos.clone(),
