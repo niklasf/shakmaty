@@ -13,7 +13,7 @@ exclude = ["tables/**/*.*tb*"]
 [dependencies]
 arrayvec = "0.4"
 bitflags = "1.0"
-shakmaty = "0.10"
+shakmaty = "0.11"
 num-integer = "0.1"
 byteorder = "0.5" # downgraded for positioned-io
 itertools = "0.7"

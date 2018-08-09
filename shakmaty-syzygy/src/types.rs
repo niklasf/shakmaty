@@ -106,8 +106,8 @@ pub enum Wdl {
 
 impl Wdl {
     /// Converts `outcome` to a `Wdl` from the given point of view.
-    pub fn from_outcome(outcome: &Outcome, pov: Color) -> Wdl {
-        match *outcome {
+    pub fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
+        match outcome {
             Outcome::Draw => Wdl::Draw,
             Outcome::Decisive { winner } if winner == pov => Wdl::Win,
             _ => Wdl::Loss,

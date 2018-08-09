@@ -219,7 +219,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 return Ok(WdlEntry {
                     tablebase: self,
                     pos: pos.clone(),
-                    wdl: Wdl::from_outcome(&outcome, pos.turn()),
+                    wdl: Wdl::from_outcome(outcome, pos.turn()),
                     state: ProbeState::ZeroingBestMove,
                 });
             }
@@ -331,7 +331,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         assert!(S::CAPTURES_COMPULSORY);
 
         if let Some(outcome) = pos.variant_outcome() {
-            return Ok((Wdl::from_outcome(&outcome, pos.turn()), ProbeState::ZeroingBestMove));
+            return Ok((Wdl::from_outcome(outcome, pos.turn()), ProbeState::ZeroingBestMove));
         }
 
         // Explore compulsory captures in antichess variants.
@@ -410,7 +410,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         // Variant game end.
         if let Some(outcome) = pos.variant_outcome() {
-            return Ok(Wdl::from_outcome(&outcome, pos.turn()));
+            return Ok(Wdl::from_outcome(outcome, pos.turn()));
         }
 
         // Test for KvK.
