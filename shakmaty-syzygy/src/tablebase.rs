@@ -188,7 +188,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             })
         }), |iter| iter.min_by_key(|m| (
             Reverse(m.immediate_loss),
-            m.zeroing ^ (m.dtz < Dtz(0)),
+            m.zeroing ^ (m.dtz < Dtz(0)), // zeroing is good/bad if winning/losing
             Reverse(m.dtz),
         )).map(|m| (m.m, m.dtz)))
     }
@@ -249,10 +249,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         let mut best_capture = Wdl::Loss;
         let mut best_ep = Wdl::Loss;
 
-        let mut captures = MoveList::new();
-        pos.capture_moves(&mut captures);
+        let mut legals = MoveList::new();
+        pos.legal_moves(&mut legals);
 
-        for m in &captures {
+        for m in legals.iter().filter(|m| m.is_capture()) {
             let mut after = pos.clone();
             after.play_unchecked(m);
             let v = -self.probe_ab_no_ep(&after, Wdl::Loss, -best_capture)?;
@@ -304,10 +304,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         // If the position would be stalemate without ep captures, then we are
         // forced to play the best en passant move.
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-        moves.retain(|m| !m.is_en_passant());
-        if !captures.is_empty() && moves.is_empty() && !pos.is_check() {
+        if v == Wdl::Draw && !legals.is_empty() && legals.iter().all(|m| m.is_en_passant()) {
             return Ok(WdlEntry {
                 tablebase: self,
                 pos: pos.clone(),
