@@ -434,11 +434,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Ok(Wdl::Draw);
         }
 
-        // Probe table.
+        // Get raw WDL value from the appropriate table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
             let table = table.get_or_try_init(|| WdlTable::open(path, &key)).ctx(Metric::Wdl, &key)?;
-            table.probe_wdl_table(pos).ctx(Metric::Wdl, &key)
+            table.probe_wdl(pos).ctx(Metric::Wdl, &key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
@@ -448,10 +448,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
+        // Get raw DTZ value from the appropriate table.
         let key = Material::from_board(pos.board());
         if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
             let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
-            table.probe_dtz_table(pos, wdl).ctx(Metric::Dtz, &key)
+            table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,

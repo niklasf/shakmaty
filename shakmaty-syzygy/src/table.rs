@@ -1253,7 +1253,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         Ok(Some((side, idx)))
     }
 
-    pub fn probe_wdl_table(&self, pos: &S) -> ProbeResult<Wdl> {
+    pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
         assert_eq!(T::METRIC, Metric::Wdl);
 
         let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
@@ -1269,7 +1269,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
+    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
         assert_eq!(T::METRIC, Metric::Dtz);
 
         let (side, idx) = match self.encode(pos)? {
@@ -1306,8 +1306,8 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
         Table::new(raf, material).map(|table| WdlTable { table })
     }
 
-    pub fn probe_wdl_table(&self, pos: &S) -> ProbeResult<Wdl> {
-        self.table.probe_wdl_table(pos)
+    pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
+        self.table.probe_wdl(pos)
     }
 }
 
@@ -1329,8 +1329,8 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
         Table::new(raf, material).map(|table| DtzTable { table })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
-        self.table.probe_dtz_table(pos, wdl)
+    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
+        self.table.probe_dtz(pos, wdl)
     }
 }
 
