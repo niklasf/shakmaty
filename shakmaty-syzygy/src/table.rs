@@ -315,6 +315,7 @@ const PP_IDX: [[u64; 64]; 10] = [[
 const TEST45: Bitboard = Bitboard(0x1_0307_0000_0000);
 
 lazy_static! {
+    // Ideally these would be compile time constants.
     static ref CONSTS: Consts = Consts::new();
 }
 
@@ -531,36 +532,37 @@ impl GroupData {
 
 /// Information about DTZ mapping.
 #[derive(Debug)]
-struct DtzMap {
-    /// Offset of the DTZ map.
-    ptr: u64,
-    /// Indexes into the DTZ map.
-    idx: [u16; 4],
+enum DtzMap {
+    Normal {
+        ptr: u64,
+        idx: [u16; 4]
+    },
+    Wide {
+        ptr: u64,
+        idx: [u16; 4]
+    },
 }
 
 impl DtzMap {
-    fn new(ptr: u64) -> DtzMap {
-        DtzMap { ptr, idx: [0; 4] }
-    }
-
-    fn u8_ptr(&self, wdl: Wdl, res: u16) -> u64 {
-        self.ptr + u64::from(res) + u64::from(self.idx[match wdl {
+    fn read<F: ReadAt>(&self, raf: &F, wdl: Wdl, res: u16) -> ProbeResult<u16> {
+        let wdl = match wdl {
             Wdl::Loss => 1,
             Wdl::BlessedLoss => 3,
             Wdl::Draw => 0,
             Wdl::CursedWin => 2,
             Wdl::Win => 0,
-        }])
-    }
+        };
 
-    fn u16_ptr(&self, wdl: Wdl, res: u16) -> u64 {
-        self.ptr + 2 * u64::from(res) + 2 * u64::from(self.idx[match wdl {
-            Wdl::Loss => 1,
-            Wdl::BlessedLoss => 3,
-            Wdl::Draw => 0,
-            Wdl::CursedWin => 2,
-            Wdl::Win => 0,
-        }])
+        Ok(match *self {
+            DtzMap::Normal { ptr, idx } => {
+                let offset = ptr + u64::from(idx[wdl]) + u64::from(res);
+                u16::from(raf.read_u8_at(offset)?)
+            }
+            DtzMap::Wide { ptr, idx } => {
+                let offset = ptr + 2 * (u64::from(idx[wdl]) + u64::from(res));
+                raf.read_u16_at::<LE>(offset)?
+            }
+        })
     }
 }
 
@@ -865,21 +867,20 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
             for file in files.iter_mut() {
                 if file.sides[0].flags.contains(Flag::MAPPED) {
-                    let mut dtz_map = DtzMap::new(map);
-
+                    let mut idx = [0; 4];
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for i in 0..4 {
-                            dtz_map.idx[i] = ((ptr - map + 2) / 2) as u16;
+                            idx[i] = ((ptr - map + 2) / 2) as u16;
                             ptr += u64::from(raf.read_u16_at::<LE>(ptr)?) * 2 + 2;
                         }
+                        file.sides[0].dtz_map = Some(DtzMap::Wide { ptr: map, idx });
                     } else {
                         for i in 0..4 {
-                            dtz_map.idx[i] = (ptr - map + 1) as u16;
+                            idx[i] = (ptr - map + 1) as u16;
                             ptr += u64::from(raf.read_u8_at(ptr)?) + 1;
                         }
+                        file.sides[0].dtz_map = Some(DtzMap::Normal { ptr: map, idx });
                     }
-
-                    file.sides[0].dtz_map = Some(dtz_map);
                 }
             }
 
@@ -1277,14 +1278,9 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         let res = self.decompress_pairs(side, idx)?;
 
-        let res = i32::from(if let Some(ref map) = side.dtz_map {
-            if side.flags.contains(Flag::WIDE_DTZ) {
-                self.raf.read_u16_at::<LE>(map.u16_ptr(wdl, res))?
-            } else {
-                u16::from(self.raf.read_u8_at(map.u8_ptr(wdl, res))?)
-            }
-        } else {
-            res
+        let res = i32::from(match side.dtz_map {
+            Some(ref map) => map.read(&self.raf, wdl, res)?,
+            None => res,
         });
 
         let stores_moves = match wdl {
