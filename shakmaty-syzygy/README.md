@@ -39,10 +39,15 @@ Documentation
 Changelog
 ---------
 
+* 0.8.0
+  - Update shakmaty to 0.11.x.
+  - Add `Syzygy::MAX_PIECES`.
+  - More efficient `Tablebase::best_move()`.
+  - Internal refactorings following tablebase rewrite in Cfish.
 * 0.7.0
-  - Update shakmaty to 0.10.0.
+  - Update shakmaty to 0.10.x.
 * 0.6.0
-  - Update shakmaty to 0.9.0. Minimum Rust version is now 1.27.0.
+  - Update shakmaty to 0.9.x. Minimum Rust version is now 1.27.0.
 * 0.5.2
   - Fix `Wdl::from_dtz_after_zeroing(Dtz(100))`.
 * 0.5.1
@@ -54,7 +59,7 @@ Changelog
 * 0.5.0
   - More contextual information for errors (table, backtrace,
     invalid magic header bytes).
-  - Update to shakmaty 0.8.
+  - Update to shakmaty 0.8.x.
   - Provide a target for `cargo fuzz`. Fix several panics caused by
     initializing and probing corrupted tables:
     - Panic when reference pawn is missing.
@@ -81,7 +86,7 @@ Changelog
 * 0.4.1
   - Fix debug assertion for `Dtz(0).add_plies()`.
 * 0.4.0
-  - Update to shakmaty 0.7, which has bugfixes with regard to insufficient
+  - Update to shakmaty 0.7.x, which has bugfixes with regard to insufficient
     material.
 * 0.3.1
   - Work around compiler bug in release mode.
