@@ -530,13 +530,15 @@ impl GroupData {
     }
 }
 
-/// Information about DTZ mapping.
+/// Indexes into table of remapped DTZ values.
 #[derive(Debug)]
 enum DtzMap {
+    /// Normal 8-bit DTZ map.
     Normal {
         ptr: u64,
         idx: [u16; 4]
     },
+    /// Wide 16-bit DTZ map for very long endgames.
     Wide {
         ptr: u64,
         idx: [u16; 4]
