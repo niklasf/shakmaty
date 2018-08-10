@@ -1049,7 +1049,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         let side = &file.sides[if bside { file.sides.len() - 1 } else { 0 }];
 
         // DTZ tables store only one side to move. It is possible that we have
-        // to check the other side (by doing a brief alpha-beta search).
+        // to check the other side (by doing a 1-ply search).
         if T::METRIC == Metric::Dtz && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
             return Ok(None);
         }
@@ -1256,7 +1256,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
         assert_eq!(T::METRIC, Metric::Wdl);
 
-        let (side, idx) = self.encode(pos)?.expect("wdl is two sided");
+        let (side, idx) = self.encode(pos)?.expect("wdl tables are two sided");
         let decompressed = self.decompress_pairs(side, idx)?;
 
         Ok(match decompressed {
@@ -1280,8 +1280,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         let res = self.decompress_pairs(side, idx)?;
 
         let res = i32::from(match side.dtz_map {
-            Some(ref map) => map.read(&self.raf, wdl, res)?,
             None => res,
+            Some(ref map) => map.read(&self.raf, wdl, res)?,
         });
 
         let stores_moves = match wdl {
