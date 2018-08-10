@@ -168,7 +168,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         let with_wdl = legals.into_iter().map(|m| {
             let mut after = pos.clone();
             after.play_unchecked(&m);
-
             Ok(WithWdlEntry {
                 m,
                 entry: self.probe(&after)?,
@@ -178,10 +177,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Find best WDL.
         let best_wdl = with_wdl.iter().map(|a| a.entry.wdl).min().unwrap_or(Wdl::Loss);
 
-        // Determine DTZ-optimal move among the moves with best WDL.
+        // Select a DTZ-optimal move among the moves with best WDL.
         itertools::process_results(with_wdl.into_iter().filter(|a| a.entry.wdl == best_wdl).map(|a| {
             let dtz = a.entry.dtz()?;
-
             Ok(WithDtz {
                 immediate_loss: dtz == Dtz(-1) && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
                 zeroing: a.m.is_zeroing(),
@@ -203,10 +201,30 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(SyzygyError::Castling);
         }
 
-        // Handle variants.
+        // Determine the WDL value of this position. This is also a
+        // prerequisite for probing DTZ tables. There are two complications:
+        //
+        // (1) Resolving en passant captures.
+        //
+        // (2) When a position has a capture that achieves a particular result
+        //     (e.g. there is a winning capture), then the position itself
+        //     should have at least that value (e.g. it is winning). In this
+        //     case the table can store an arbitrary lower value, whichever is
+        //     best for compression.
+        //
+        //     If the best move is zeroing, then we need remember this to avoid
+        //     probing the DTZ tables.
+
         if S::CAPTURES_COMPULSORY {
-            // Strictly speaking we do not have to probe with threats here,
-            // but it will be required when continuing with a DTZ probe.
+            // Tables for antichess variants take advantage of the fact that
+            // captures are compulsory. Forced captures are resolved in a brief
+            // alpha-beta search. Additionally 6-piece tables need a 1-ply
+            // to find threat moves that will force a losing capture.
+            //
+            // Here we search for threat moves unconditionally. Strictly
+            // speaking this is not required when there are less than 6 pieces,
+            // but we need to know if there are threat moves when continuing
+            // with a DTZ probe.
             let (v, state) = self.probe_compulsory_captures(pos, Wdl::Loss, Wdl::Win, true)?;
             return Ok(WdlEntry {
                 tablebase: self,
@@ -215,6 +233,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 state,
             });
         } else {
+            // Handle game-end postions of chess variants.
             if let Some(outcome) = pos.variant_outcome() {
                 return Ok(WdlEntry {
                     tablebase: self,
@@ -226,7 +245,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Resolve captures: Find the best non-ep capture and the best
-        // ep capture.
+        // en passant capture.
         let mut best_capture = Wdl::Loss;
         let mut best_ep = Wdl::Loss;
 
@@ -258,8 +277,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         let v = self.probe_wdl_table(pos)?;
 
         // Now max(v, best_capture) is the WDL value of the position without
-        // ep rights. Detect the case were an ep move is better, including
-        // blessed losing positions.
+        // ep rights. Detect the case were an ep move is stricly better
+        // (including blessed losing positions).
         if best_ep > max(v, best_capture) {
             return Ok(WdlEntry {
                 tablebase: self,
