@@ -446,6 +446,19 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             })
         }
     }
+
+    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
+        let key = Material::from_board(pos.board());
+        if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
+            let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
+            table.probe_dtz_table(pos, wdl).ctx(Metric::Dtz, &key)
+        } else {
+            Err(SyzygyError::MissingTable {
+                metric: Metric::Dtz,
+                material: key.normalized(),
+            })
+        }
+    }
 }
 
 /// WDL entry. Prerequisite for probing DTZ tables.
@@ -496,7 +509,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
-        if let Some(Dtz(dtz)) = self.probe_dtz_table(wdl)? {
+        if let Some(Dtz(dtz)) = self.tablebase.probe_dtz_table(&self.pos, wdl)? {
             return Ok(Dtz::before_zeroing(wdl).add_plies(dtz));
         }
 
@@ -531,19 +544,6 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             material: Material::from_board(self.pos.board()),
             error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
         })
-    }
-
-    fn probe_dtz_table(&self, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
-        let key = Material::from_board(self.pos.board());
-        if let Some(&(ref path, ref table)) = self.tablebase.dtz.get(&key).or_else(|| self.tablebase.dtz.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
-            table.probe_dtz_table(&self.pos, wdl).ctx(Metric::Dtz, &key)
-        } else {
-            Err(SyzygyError::MissingTable {
-                metric: Metric::Dtz,
-                material: key.normalized(),
-            })
-        }
     }
 }
 
