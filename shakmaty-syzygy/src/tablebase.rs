@@ -476,7 +476,8 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             return Ok(Dtz::before_zeroing(self.wdl).add_plies(1));
         }
 
-        // If winning, check for a winning non-capturing pawn move.
+        // If winning, check for a winning pawn move. No need to look at
+        // captures again, they were already handled above.
         if self.wdl > Wdl::Draw {
             let mut pawn_advances = MoveList::new();
             self.pos.legal_moves(&mut pawn_advances);
@@ -492,13 +493,13 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             }
         }
 
-        // Now we know that the best move is not an ep capture. Therefore we
-        // can probe the table.
+        // At this point we know that the best move is not a capture. Probe the
+        // table. DTZ tables store only one side to move.
         if let Some(Dtz(dtz)) = self.probe_dtz_table()? {
             return Ok(Dtz::before_zeroing(self.wdl).add_plies(dtz));
         }
 
-        // We have to probe the other side.
+        // We have to probe the other side by doing a 1-ply search.
         let mut moves = MoveList::new();
         self.pos.legal_moves(&mut moves);
         moves.retain(|m| !m.is_zeroing());
