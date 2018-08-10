@@ -31,7 +31,7 @@ use shakmaty::{Bitboard, Color, Piece, Position, Role, Square, File, Rank};
 
 use errors::{ProbeError, ProbeResult};
 use material::Material;
-use types::{Dtz, Pieces, Syzygy, Wdl, Metric, MAX_PIECES};
+use types::{DecisiveWdl, Dtz, Pieces, Syzygy, Wdl, Metric, MAX_PIECES};
 
 trait TableTag {
     const METRIC: Metric;
@@ -546,13 +546,12 @@ enum DtzMap {
 }
 
 impl DtzMap {
-    fn read<F: ReadAt>(&self, raf: &F, wdl: Wdl, res: u16) -> ProbeResult<u16> {
+    fn read<F: ReadAt>(&self, raf: &F, wdl: DecisiveWdl, res: u16) -> ProbeResult<u16> {
         let wdl = match wdl {
-            Wdl::Loss => 1,
-            Wdl::BlessedLoss => 3,
-            Wdl::Draw => 0,
-            Wdl::CursedWin => 2,
-            Wdl::Win => 0,
+            DecisiveWdl::Loss => 1,
+            DecisiveWdl::BlessedLoss => 3,
+            DecisiveWdl::CursedWin => 2,
+            DecisiveWdl::Win => 0,
         };
 
         Ok(match *self {
@@ -1270,7 +1269,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> ProbeResult<Option<Dtz>> {
+    pub fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
         assert_eq!(T::METRIC, Metric::Dtz);
 
         let (side, idx) = match self.encode(pos)? {
@@ -1286,10 +1285,9 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         });
 
         let stores_moves = match wdl {
-            Wdl::Win => !side.flags.contains(Flag::WIN_PLIES),
-            Wdl::Loss => !side.flags.contains(Flag::LOSS_PLIES),
-            Wdl::CursedWin | Wdl::BlessedLoss => true,
-            Wdl::Draw => false,
+            DecisiveWdl::Win => !side.flags.contains(Flag::WIN_PLIES),
+            DecisiveWdl::Loss => !side.flags.contains(Flag::LOSS_PLIES),
+            DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => true,
         };
 
         Ok(Some(Dtz(if stores_moves { res * 2 } else { res })))
@@ -1331,7 +1329,7 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
         Table::new(raf, material).map(|table| DtzTable { table })
     }
 
-    pub fn probe_dtz_table(&self, pos: &S, wdl: Wdl) -> ProbeResult<Option<Dtz>> {
+    pub fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
         self.table.probe_dtz_table(pos, wdl)
     }
 }

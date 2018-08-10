@@ -129,6 +129,16 @@ impl Wdl {
             _ => Wdl::Win,
         }
     }
+
+    pub(crate) fn decisive(self) -> Option<DecisiveWdl> {
+        Some(match self {
+            Wdl::Loss => DecisiveWdl::Loss,
+            Wdl::BlessedLoss => DecisiveWdl::BlessedLoss,
+            Wdl::Draw => return None,
+            Wdl::CursedWin => DecisiveWdl::CursedWin,
+            Wdl::Win => DecisiveWdl::Win,
+        })
+    }
 }
 
 impl Neg for Wdl {
@@ -145,18 +155,29 @@ impl Neg for Wdl {
     }
 }
 
+impl From<DecisiveWdl> for Wdl {
+    fn from(wdl: DecisiveWdl) -> Wdl {
+        match wdl {
+            DecisiveWdl::Loss => Wdl::Loss,
+            DecisiveWdl::BlessedLoss => Wdl::BlessedLoss,
+            DecisiveWdl::CursedWin => Wdl::CursedWin,
+            DecisiveWdl::Win => Wdl::Win,
+        }
+    }
+}
+
 macro_rules! from_wdl_impl {
-    ($($t:ty)+) => {
-        $(impl From<Wdl> for $t {
+    ($wdl:ty, $($t:ty)+) => {
+        $(impl From<$wdl> for $t {
             #[inline]
-            fn from(wdl: Wdl) -> $t {
+            fn from(wdl: $wdl) -> $t {
                 wdl as $t
             }
         })+
     }
 }
 
-from_wdl_impl! { i8 i16 i32 i64 i128 isize }
+from_wdl_impl! { Wdl, i8 i16 i32 i64 i128 isize }
 
 #[cfg(feature = "serde-1")]
 impl ::serde::Serialize for Wdl {
@@ -210,6 +231,37 @@ impl<'de> ::serde::Deserialize<'de> for Wdl {
     }
 }
 
+/// 4-valued evaluation of a decisive (not drawn) position in the context of
+/// the 50-move rule.
+#[doc(hidden)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum DecisiveWdl {
+    /// Unconditional loss for the side to move.
+    Loss = -2,
+    /// Loss that can be saved by the 50-move rule.
+    BlessedLoss = -1,
+    /// Win that can be frustrated by the 50-move rule.
+    CursedWin = 1,
+    /// Unconditional win.
+    Win = 2,
+}
+
+impl Neg for DecisiveWdl {
+    type Output = DecisiveWdl;
+
+    fn neg(self) -> DecisiveWdl {
+        match self {
+            DecisiveWdl::Loss => DecisiveWdl::Win,
+            DecisiveWdl::BlessedLoss => DecisiveWdl::CursedWin,
+            DecisiveWdl::CursedWin => DecisiveWdl::BlessedLoss,
+            DecisiveWdl::Win => DecisiveWdl::Loss,
+        }
+    }
+}
+
+from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
+
+
 /// Distance to zeroing of the half-move clock.
 ///
 /// Zeroing the half-move clock while keeping the game theoretical result in
@@ -240,8 +292,8 @@ impl Dtz {
     /// | Draw | 0 |
     /// | Cursed win | 101 |
     /// | Win | 1 |
-    pub fn before_zeroing(wdl: Wdl) -> Dtz {
-        match wdl {
+    pub fn before_zeroing<T: Into<Wdl>>(wdl: T) -> Dtz {
+        match wdl.into() {
             Wdl::Loss => Dtz(-1),
             Wdl::BlessedLoss => Dtz(-101),
             Wdl::Draw => Dtz(0),

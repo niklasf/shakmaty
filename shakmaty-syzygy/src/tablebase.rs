@@ -31,7 +31,7 @@ use shakmaty::{Move, MoveList, Position, Role};
 use errors::{SyzygyError, SyzygyResult, ProbeError, ProbeResultExt};
 use material::Material;
 use table::{DtzTable, WdlTable};
-use types::{Dtz, Syzygy, Wdl, Metric};
+use types::{Dtz, Syzygy, DecisiveWdl, Wdl, Metric};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -463,22 +463,23 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
     }
 
     fn dtz(&self) -> SyzygyResult<Dtz> {
-        if self.wdl == Wdl::Draw {
-            return Ok(Dtz(0))
-        }
+        let wdl = match self.wdl.decisive() {
+            Some(wdl) => wdl,
+            None => return Ok(Dtz(0)),
+        };
 
         if self.state == ProbeState::ZeroingBestMove || self.pos.us() == self.pos.our(Role::Pawn) {
-            return Ok(Dtz::before_zeroing(self.wdl));
+            return Ok(Dtz::before_zeroing(wdl));
         }
 
-        if self.state == ProbeState::Threat && self.wdl > Wdl::Draw {
+        if self.state == ProbeState::Threat && wdl >= DecisiveWdl::CursedWin {
             // The position is a win or a cursed win by a threat move.
-            return Ok(Dtz::before_zeroing(self.wdl).add_plies(1));
+            return Ok(Dtz::before_zeroing(wdl).add_plies(1));
         }
 
         // If winning, check for a winning pawn move. No need to look at
         // captures again, they were already handled above.
-        if self.wdl > Wdl::Draw {
+        if wdl >= DecisiveWdl::CursedWin {
             let mut pawn_advances = MoveList::new();
             self.pos.legal_moves(&mut pawn_advances);
             pawn_advances.retain(|m| !m.is_capture() && m.role() == Role::Pawn);
@@ -487,16 +488,16 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
                 let mut after = self.pos.clone();
                 after.play_unchecked(m);
                 let v = -self.tablebase.probe_wdl(&after)?;
-                if v == self.wdl {
-                    return Ok(Dtz::before_zeroing(self.wdl));
+                if v == wdl.into() {
+                    return Ok(Dtz::before_zeroing(wdl));
                 }
             }
         }
 
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
-        if let Some(Dtz(dtz)) = self.probe_dtz_table()? {
-            return Ok(Dtz::before_zeroing(self.wdl).add_plies(dtz));
+        if let Some(Dtz(dtz)) = self.probe_dtz_table(wdl)? {
+            return Ok(Dtz::before_zeroing(wdl).add_plies(dtz));
         }
 
         // We have to probe the other side by doing a 1-ply search.
@@ -504,10 +505,10 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         self.pos.legal_moves(&mut moves);
         moves.retain(|m| !m.is_zeroing());
 
-        let mut best = if self.wdl > Wdl::Draw {
+        let mut best = if wdl >= DecisiveWdl::CursedWin {
             None
         } else {
-            Some(Dtz::before_zeroing(self.wdl))
+            Some(Dtz::before_zeroing(wdl))
         };
 
         for m in &moves {
@@ -516,7 +517,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             let v = -self.tablebase.probe_dtz(&after)?;
             if v == Dtz(1) && after.is_checkmate() {
                 best = Some(Dtz(1));
-            } else if self.wdl > Wdl::Draw {
+            } else if wdl >= DecisiveWdl::CursedWin {
                 if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
                     best = Some(v + Dtz(1));
                 }
@@ -532,11 +533,11 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         })
     }
 
-    fn probe_dtz_table(&self) -> SyzygyResult<Option<Dtz>> {
+    fn probe_dtz_table(&self, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
         let key = Material::from_board(self.pos.board());
         if let Some(&(ref path, ref table)) = self.tablebase.dtz.get(&key).or_else(|| self.tablebase.dtz.get(&key.flipped())) {
             let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
-            table.probe_dtz_table(&self.pos, self.wdl).ctx(Metric::Dtz, &key)
+            table.probe_dtz_table(&self.pos, wdl).ctx(Metric::Dtz, &key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
