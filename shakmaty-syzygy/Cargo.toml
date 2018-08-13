@@ -10,6 +10,10 @@ categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 exclude = ["tables/**/*.*tb*"]
 
+[[bench]]
+name = "benches"
+harness = false
+
 [dependencies]
 arrayvec = "0.4"
 bitflags = "1.0"
@@ -32,6 +36,7 @@ default-features = false
 [dev-dependencies]
 csv = "1.0"
 matches = "0.1"
+bencher = "0.1"
 
 [features]
 default = []
