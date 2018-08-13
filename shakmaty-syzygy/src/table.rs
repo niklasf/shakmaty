@@ -649,7 +649,6 @@ impl PairsData {
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
-        println!("block size: {}", block_size);
         let span = u!(1u32.checked_shl(u32::from(header[2])));
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = header[3];
