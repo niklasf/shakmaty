@@ -25,7 +25,7 @@ use bit_vec::BitVec;
 use byteorder::{BigEndian as BE, ByteOrder, LittleEndian as LE, ReadBytesExt};
 use itertools::Itertools;
 use num_integer::binomial;
-use positioned_io::{Cursor, ReadAt, ReadBytesExt as ReadBytesAtExt};
+use positioned_io::{ReadAt, ReadBytesExt as ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 
@@ -81,6 +81,9 @@ bitflags! {
         const SINGLE_VALUE = 128;
     }
 }
+
+/// Maximum size in bytes of a compressed block.
+const MAX_BLOCK_SIZE: usize = 1024;
 
 /// Maps squares into the a1-d1-d4 triangle.
 const TRIANGLE: [u64; 64] = [
@@ -649,6 +652,7 @@ impl PairsData {
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
+        ensure!(block_size <= MAX_BLOCK_SIZE as u32);
         let span = u!(1u32.checked_shl(u32::from(header[2])));
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = header[3];
@@ -951,9 +955,13 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             block = u!(block.checked_add(1));
         }
 
-        // Find sym, the Huffman symbol that encodes the value for idx.
-        let mut cursor = Cursor::new_pos(&self.raf, u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size))));
+        // Read block (and 4 bytes to prevent out of bounds read) into memory.
+        let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
+        let block_buffer = &mut block_buffer[..(d.block_size as usize + 4)];
+        self.raf.read_exact_at(u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size))), block_buffer)?;
+        let mut cursor = io::Cursor::new(block_buffer);
 
+        // Find sym, the Huffman symbol that encodes the value for idx.
         let mut buf = cursor.read_u64::<BE>()?;
         let mut buf_size = 64;
 
