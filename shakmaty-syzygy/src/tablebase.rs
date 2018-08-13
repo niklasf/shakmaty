@@ -23,15 +23,15 @@ use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
-use itertools;
 use fxhash::FxHashMap;
+use itertools;
 
 use shakmaty::{Move, MoveList, Position, Role};
 
-use errors::{SyzygyError, SyzygyResult, ProbeError, ProbeResultExt};
+use errors::{ProbeError, ProbeResultExt, SyzygyError, SyzygyResult};
 use material::Material;
 use table::{DtzTable, WdlTable};
-use types::{Dtz, Syzygy, DecisiveWdl, Wdl, Metric};
+use types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -559,13 +559,13 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 mod tests {
     use super::*;
 
-    use shakmaty::{Chess, Square};
     use shakmaty::fen::Fen;
+    use shakmaty::{Chess, Square};
 
     #[test]
     fn test_send_sync() {
-        fn assert_send<T: Send>(_: T) { }
-        fn assert_sync<T: Sync>(_: T) { }
+        fn assert_send<T: Send>(_: T) {}
+        fn assert_sync<T: Sync>(_: T) {}
 
         assert_send(Tablebase::<Chess>::new());
         assert_sync(Tablebase::<Chess>::new());

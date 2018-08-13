@@ -14,38 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::fs;
 use std::io;
 use std::iter::FromIterator;
-use std::fs;
-use std::path::Path;
 use std::marker::PhantomData;
+use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
-use byteorder::{ByteOrder, BigEndian as BE, LittleEndian as LE, ReadBytesExt};
+use byteorder::{BigEndian as BE, ByteOrder, LittleEndian as LE, ReadBytesExt};
 use itertools::Itertools;
 use num_integer::binomial;
 use positioned_io::{Cursor, ReadAt, ReadBytesExt as ReadBytesAtExt};
 
-use shakmaty::{Bitboard, Color, Piece, Position, Role, Square, File, Rank};
+use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 
 use errors::{ProbeError, ProbeResult};
 use material::Material;
-use types::{DecisiveWdl, Dtz, Pieces, Syzygy, Wdl, Metric, MAX_PIECES};
+use types::{DecisiveWdl, Dtz, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
 
 trait TableTag {
     const METRIC: Metric;
 }
 
 #[derive(Debug)]
-enum WdlTag { }
+enum WdlTag {}
 
 impl TableTag for WdlTag {
     const METRIC: Metric = Metric::Wdl;
 }
 
 #[derive(Debug)]
-enum DtzTag { }
+enum DtzTag {}
 
 impl TableTag for DtzTag {
     const METRIC: Metric = Metric::Dtz;
@@ -337,7 +337,7 @@ impl Consts {
             let mut s = 0;
             for j in 0..10 {
                 mult_idx[i][j] = s;
-                s += if i == 0 { 1 } else { binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64) }
+                s += if i == 0 { 1 } else { binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64) };
             }
             mult_factor[i] = s;
         }

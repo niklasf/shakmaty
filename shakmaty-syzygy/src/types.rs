@@ -261,7 +261,6 @@ impl Neg for DecisiveWdl {
 
 from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 
-
 /// Distance to zeroing of the half-move clock.
 ///
 /// Zeroing the half-move clock while keeping the game theoretical result in

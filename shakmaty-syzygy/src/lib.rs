@@ -75,9 +75,9 @@ extern crate double_checked_cell;
 extern crate fxhash;
 extern crate num_integer;
 extern crate positioned_io;
-extern crate shakmaty;
 #[cfg(feature = "serde-1")]
 extern crate serde;
+extern crate shakmaty;
 
 #[cfg(test)]
 #[macro_use]
@@ -95,7 +95,7 @@ pub use tablebase::Tablebase;
 pub use types::{Dtz, Syzygy, TableType, Wdl};
 
 // Hidden API.
-pub use types::{DecisiveWdl};
 pub use errors::ProbeError;
 pub use material::{Material, MaterialSide};
-pub use table::{WdlTable, DtzTable};
+pub use table::{DtzTable, WdlTable};
+pub use types::DecisiveWdl;

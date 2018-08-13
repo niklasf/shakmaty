@@ -17,8 +17,8 @@
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
 use std::iter::FromIterator;
-use std::str::FromStr;
 use std::mem;
+use std::str::FromStr;
 
 use shakmaty::{Board, Color, Piece, Role};
 

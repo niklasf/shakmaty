@@ -60,7 +60,7 @@ pub enum ProbeError {
     #[fail(display = "i/o error reading table file: {}", error)]
     Read {
         #[cause]
-        error: io::Error
+        error: io::Error,
     },
     /// Table file has unexpected magic header bytes.
     #[fail(display = "invalid magic header bytes: {:x?}", magic)]
@@ -109,7 +109,7 @@ macro_rules! u {
             Some(ok) => ok,
             None => throw!(),
         }
-    }
+    };
 }
 
 /// Ensure that a condition holds. Otherwise return a `CorruptedTable` error.
@@ -118,5 +118,5 @@ macro_rules! ensure {
         if !$cond {
             throw!();
         }
-    }
+    };
 }
