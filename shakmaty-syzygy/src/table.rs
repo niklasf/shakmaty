@@ -535,32 +535,32 @@ impl GroupData {
 enum DtzMap {
     /// Normal 8-bit DTZ map.
     Normal {
-        ptr: u64,
-        idx: [u16; 4]
+        map_ptr: u64,
+        by_wdl: [u16; 4]
     },
     /// Wide 16-bit DTZ map for very long endgames.
     Wide {
-        ptr: u64,
-        idx: [u16; 4]
+        map_ptr: u64,
+        by_wdl: [u16; 4]
     },
 }
 
 impl DtzMap {
     fn read<F: ReadAt>(&self, raf: &F, wdl: DecisiveWdl, res: u16) -> ProbeResult<u16> {
         let wdl = match wdl {
-            DecisiveWdl::Loss => 1,
-            DecisiveWdl::BlessedLoss => 3,
-            DecisiveWdl::CursedWin => 2,
             DecisiveWdl::Win => 0,
+            DecisiveWdl::Loss => 1,
+            DecisiveWdl::CursedWin => 2,
+            DecisiveWdl::BlessedLoss => 3,
         };
 
         Ok(match *self {
-            DtzMap::Normal { ptr, idx } => {
-                let offset = ptr + u64::from(idx[wdl]) + u64::from(res);
+            DtzMap::Normal { map_ptr, by_wdl } => {
+                let offset = map_ptr + u64::from(by_wdl[wdl]) + u64::from(res);
                 u16::from(raf.read_u8_at(offset)?)
             }
-            DtzMap::Wide { ptr, idx } => {
-                let offset = ptr + 2 * (u64::from(idx[wdl]) + u64::from(res));
+            DtzMap::Wide { map_ptr, by_wdl } => {
+                let offset = map_ptr + 2 * (u64::from(by_wdl[wdl]) + u64::from(res));
                 raf.read_u16_at::<LE>(offset)?
             }
         })
@@ -649,6 +649,7 @@ impl PairsData {
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
+        println!("block size: {}", block_size);
         let span = u!(1u32.checked_shl(u32::from(header[2])));
         let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
         let padding = header[3];
@@ -864,23 +865,23 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
-            let map = ptr;
+            let map_ptr = ptr;
 
             for file in files.iter_mut() {
                 if file.sides[0].flags.contains(Flag::MAPPED) {
-                    let mut idx = [0; 4];
+                    let mut by_wdl = [0; 4];
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for i in 0..4 {
-                            idx[i] = ((ptr - map + 2) / 2) as u16;
+                            by_wdl[i] = ((ptr - map_ptr + 2) / 2) as u16;
                             ptr += u64::from(raf.read_u16_at::<LE>(ptr)?) * 2 + 2;
                         }
-                        file.sides[0].dtz_map = Some(DtzMap::Wide { ptr: map, idx });
+                        file.sides[0].dtz_map = Some(DtzMap::Wide { map_ptr, by_wdl });
                     } else {
                         for i in 0..4 {
-                            idx[i] = (ptr - map + 1) as u16;
+                            by_wdl[i] = (ptr - map_ptr + 1) as u16;
                             ptr += u64::from(raf.read_u8_at(ptr)?) + 1;
                         }
-                        file.sides[0].dtz_map = Some(DtzMap::Normal { ptr: map, idx });
+                        file.sides[0].dtz_map = Some(DtzMap::Normal { map_ptr, by_wdl });
                     }
                 }
             }
