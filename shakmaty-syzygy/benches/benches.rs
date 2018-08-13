@@ -11,6 +11,7 @@ fn bench_add_directory(bench: &mut Bencher) {
     bench.iter(|| {
         let mut tablebase = Tablebase::<Chess>::new();
         tablebase.add_directory("tables/regular").expect("readable directory");
+        tablebase
     });
 }
 
