@@ -950,9 +950,14 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             block = u!(block.checked_sub(1));
             lit_idx += i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
         }
-        while lit_idx > i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) {
-            lit_idx -= i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
-            block = u!(block.checked_add(1));
+        loop {
+            let block_length = i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
+            if lit_idx >= block_length {
+                lit_idx -= block_length;
+                block = u!(block.checked_add(1));
+            } else {
+                break;
+            }
         }
 
         // Read block (and 4 bytes to prevent out of bounds read) into memory.
