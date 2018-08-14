@@ -874,14 +874,14 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 if file.sides[0].flags.contains(Flag::MAPPED) {
                     let mut by_wdl = [0; 4];
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
-                        for i in 0..4 {
-                            by_wdl[i] = ((ptr - map_ptr + 2) / 2) as u16;
+                        for idx in by_wdl.iter_mut() {
+                            *idx = ((ptr - map_ptr + 2) / 2) as u16;
                             ptr += u64::from(raf.read_u16_at::<LE>(ptr)?) * 2 + 2;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Wide { map_ptr, by_wdl });
                     } else {
-                        for i in 0..4 {
-                            by_wdl[i] = (ptr - map_ptr + 1) as u16;
+                        for idx in by_wdl.iter_mut() {
+                            *idx = (ptr - map_ptr + 1) as u16;
                             ptr += u64::from(raf.read_u8_at(ptr)?) + 1;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Normal { map_ptr, by_wdl });

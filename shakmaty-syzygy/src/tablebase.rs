@@ -239,16 +239,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 wdl: v,
                 state,
             });
-        } else {
+        } else if let Some(outcome) = pos.variant_outcome() {
             // Handle game-end postions of chess variants.
-            if let Some(outcome) = pos.variant_outcome() {
-                return Ok(WdlEntry {
-                    tablebase: self,
-                    pos,
-                    wdl: Wdl::from_outcome(outcome, pos.turn()),
-                    state: ProbeState::ZeroingBestMove,
-                });
-            }
+            return Ok(WdlEntry {
+                tablebase: self,
+                pos,
+                wdl: Wdl::from_outcome(outcome, pos.turn()),
+                state: ProbeState::ZeroingBestMove,
+            });
         }
 
         // Resolve captures: Find the best non-ep capture and the best
