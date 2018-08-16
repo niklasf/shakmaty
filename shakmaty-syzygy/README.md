@@ -39,6 +39,10 @@ Documentation
 Changelog
 ---------
 
+* 0.8.1
+  - Optimize reading block lengths.
+  - More internal refactorings.
+  - Add benchmark.
 * 0.8.0
   - Update shakmaty to 0.11.x.
   - Add `Syzygy::MAX_PIECES`.
