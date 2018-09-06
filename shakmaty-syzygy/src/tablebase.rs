@@ -223,10 +223,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         //     probing the DTZ tables.
 
         if S::CAPTURES_COMPULSORY {
-            // Tables for antichess variants take advantage of the fact that
+            // Tables for antichess variants take advantage of the rule that
             // captures are compulsory. Forced captures are resolved in a brief
             // alpha-beta search. Additionally 6-piece tables need a 1-ply
-            // to find threat moves that will force a losing capture.
+            // search to find threat moves that will force a losing capture.
             //
             // Here we search for threat moves unconditionally. Strictly
             // speaking this is not required when there are less than 6 pieces,
