@@ -15,8 +15,8 @@ harness = false
 
 [dependencies]
 memchr = "2.0"
-btoi = "0.3"
-shakmaty = "0.10"
+btoi = "0.4"
+shakmaty = "0.11"
 
 [dev-dependencies]
 memmap = "0.6"
