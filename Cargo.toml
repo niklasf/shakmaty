@@ -16,7 +16,7 @@ harness = false
 
 [dependencies]
 bitflags = "1.0"
-btoi = "0.3"
+btoi = "0.4"
 
 [dependencies.arrayvec]
 version = "0.4"
