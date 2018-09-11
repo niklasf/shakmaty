@@ -351,7 +351,7 @@ impl Consts {
         let mut lead_pawn_idx = [[0; 64]; 6];
         let mut lead_pawns_size = [[0; 4]; 6];
 
-        for lead_pawns_cnt in 1..5 + 1 {
+        for lead_pawns_cnt in 1..=5 {
             for file in (0..4).map(File::new) {
                 let mut idx = 0;
 
