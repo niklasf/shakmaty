@@ -22,10 +22,10 @@ use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bit_vec::BitVec;
-use byteorder::{BigEndian as BE, ByteOrder, LittleEndian as LE, ReadBytesExt};
+use byteorder::{BE, LE, ByteOrder, ReadBytesExt};
 use itertools::Itertools;
 use num_integer::binomial;
-use positioned_io::{ReadAt, ReadBytesExt as ReadBytesAtExt};
+use positioned_io::{ReadAt, ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 

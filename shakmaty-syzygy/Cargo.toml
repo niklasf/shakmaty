@@ -19,10 +19,10 @@ arrayvec = "0.4"
 bitflags = "1.0"
 shakmaty = "0.11"
 num-integer = "0.1"
-byteorder = "0.5" # downgraded for positioned-io
+byteorder = "1.2"
 itertools = "0.7"
 bit-vec = "0.5"
-positioned-io = "0.2"
+positioned-io = { path = "../positioned-io" }
 lazy_static = "1.0"
 double-checked-cell = "1.1"
 failure = "0.1"
