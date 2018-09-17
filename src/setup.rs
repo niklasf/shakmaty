@@ -116,7 +116,8 @@ impl Castles {
                     castles.chess960 |= king.file() != File::E || a_side.file() != File::A;
                     castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
                     castles.path[*color as usize][CastlingSide::QueenSide as usize] =
-                        attacks::between(king, a_side).with(rto).with(kto).without(king).without(a_side);
+                        attacks::between(a_side, rto).with(rto).without(king).without(a_side) |
+                        attacks::between(king, kto).with(kto).without(king).without(a_side);
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
@@ -125,7 +126,8 @@ impl Castles {
                     castles.chess960 |= king.file() != File::E || h_side.file() != File::H;
                     castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
                     castles.path[*color as usize][CastlingSide::KingSide as usize] =
-                        attacks::between(king, h_side).with(rto).with(kto).without(king).without(h_side);
+                        attacks::between(h_side, rto).with(rto).without(king).without(h_side) |
+                        attacks::between(king, kto).with(kto).without(king).without(h_side);
                 }
             }
         }
