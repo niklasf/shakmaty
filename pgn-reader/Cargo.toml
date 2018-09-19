@@ -14,7 +14,7 @@ name = "benches"
 harness = false
 
 [dependencies]
-memchr = "2.0"
+memchr = "2.1"
 btoi = "0.4"
 shakmaty = "0.11"
 
