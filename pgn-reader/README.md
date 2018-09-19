@@ -83,7 +83,7 @@ Documentation
 Benchmarks
 ----------
 
-Run with [lichess_db_standard_rated_2014-07.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2014-07.pgn.bz2) (1,048,440 games, 1000 MB uncompressed) on an SSD, Intel i7-5500U CPU @ 2.40GHz.
+Run with [lichess_db_standard_rated_2014-07.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2014-07.pgn.bz2) (1,048,440 games, 1048 MB uncompressed) on an SSD, Intel i7-5500U CPU @ 2.40GHz.
 
 Benchmark | Time | Throughput
 --- | --- | ---
