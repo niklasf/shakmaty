@@ -128,7 +128,7 @@ fn main() {
         pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut validator = Validator::new();
-        let (send, recv) = chan::sync(128);
+        let (send, recv) = chan::sync(256);
 
         std::thread::spawn(move || {
             for game in Reader::new(&mut validator, &pgn[..]) {

@@ -87,12 +87,12 @@ Run with [lichess_db_standard_rated_2014-07.pgn](https://database.lichess.org/st
 
 Benchmark | Time | Throughput
 --- | --- | ---
-examples/stats.rs | 4.0s | 249.4 MB/s
-examples/validate.rs | 10.2s | 98.0 MB/s
-examples/parallel_validate.rs | 4.5s | 222.2 MB/s
-examples/lichess4545.rs | 1.6s | 625.0 MB/s
+examples/stats.rs | 3.4s | 308.2 MB/s
+examples/validate.rs | 9.6s | 109.2 MB/s
+examples/parallel_validate.rs | 7.0s | 149.7 MB/s
+examples/lichess4545.rs | 0.8s | 1310.0 MB/s
 [`scoutfish make`](https://github.com/mcostalba/scoutfish) | 10.9s | 96.1 MB/s
-`grep -F "[Event " -c` | 1.1s | 909.1 MB/s
+`grep -F "[Event " -c` | 1.1s | 952.7 MB/s
 
 License
 -------
