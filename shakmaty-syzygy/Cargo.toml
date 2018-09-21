@@ -21,7 +21,6 @@ shakmaty = "0.11"
 num-integer = "0.1"
 byteorder = "1.2"
 itertools = "0.7"
-bit-vec = "0.5"
 positioned-io = { git = "https://github.com/vasi/positioned-io.git", rev = "f94f32124515f3cc372a61518610b0e727563506" }
 lazy_static = "1.0"
 double-checked-cell = "1.1"

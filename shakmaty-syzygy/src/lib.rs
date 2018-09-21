@@ -64,7 +64,6 @@
 extern crate arrayvec;
 #[macro_use]
 extern crate bitflags;
-extern crate bit_vec;
 extern crate byteorder;
 #[macro_use(Fail)]
 extern crate failure;

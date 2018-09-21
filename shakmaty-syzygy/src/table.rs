@@ -21,7 +21,6 @@ use std::marker::PhantomData;
 use std::path::Path;
 
 use arrayvec::ArrayVec;
-use bit_vec::BitVec;
 use byteorder::{BE, LE, ByteOrder, ReadBytesExt};
 use itertools::Itertools;
 use num_integer::binomial;
@@ -691,7 +690,7 @@ impl PairsData {
         ptr += 2;
         let btree = ptr;
         let mut symlen = vec![0; usize::from(sym)];
-        let mut visited = BitVec::from_elem(symlen.len(), false);
+        let mut visited = vec![false; symlen.len()];
         for s in 0..sym {
            read_symlen(raf, btree, &mut symlen, &mut visited, s, 16)?;
         }
@@ -726,8 +725,8 @@ impl PairsData {
 }
 
 /// Build the symlen table.
-fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut BitVec, sym: u16, depth: u8) -> ProbeResult<()> {
-    if u!(visited.get(usize::from(sym))) {
+fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut [bool], sym: u16, depth: u8) -> ProbeResult<()> {
+    if *u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
 
@@ -748,7 +747,7 @@ fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &m
             .checked_add(1))
     }
 
-    visited.set(usize::from(sym), true);
+    visited[usize::from(sym)] = true;
     Ok(())
 }
 
