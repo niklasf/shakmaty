@@ -340,6 +340,18 @@ impl Square {
         Rank::new(i8::from(self) >> 3)
     }
 
+    /// Calculates the offset from a square index.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::F3.offset(8), Some(Square::F4));
+    /// assert_eq!(Square::F3.offset(-1), Some(Square::E3));
+    ///
+    /// assert_eq!(Square::F3.offset(48), None);
+    /// ```
     #[inline]
     pub fn offset(self, delta: i8) -> Option<Square> {
         i8::from(self).checked_add(delta).and_then(Square::from_index)
