@@ -258,6 +258,15 @@ impl Square {
     /// # Panics
     ///
     /// Panics if the index is not in the range `0..=63`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::new(0), Square::A1);
+    /// assert_eq!(Square::new(63), Square::H8);
+    /// ```
     #[inline]
     pub fn new(index: i8) -> Square {
         assert!(0 <= index && index < 64);
@@ -265,6 +274,17 @@ impl Square {
     }
 
     /// Tries to get a `Square` from an integer index in the range `0..=63`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::from_index(0), Some(Square::A1));
+    /// assert_eq!(Square::from_index(63), Some(Square::H8));
+    ///
+    /// assert_eq!(Square::from_index(64), None);
+    /// ```
     #[inline]
     pub fn from_index(index: i8) -> Option<Square> {
         if 0 <= index && index < 64 {
@@ -286,6 +306,14 @@ impl Square {
     }
 
     /// Tries to get a square from file and rank.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Square, File, Rank};
+    ///
+    /// assert_eq!(Square::from_coords(File::A, Rank::First), Square::A1);
+    /// ```
     #[inline]
     pub fn from_coords(file: File, rank: Rank) -> Square {
         unsafe { Square::from_index_unchecked(i8::from(file) | (i8::from(rank) << 3)) }
