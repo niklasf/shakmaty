@@ -330,11 +330,31 @@ impl Square {
         }
     }
 
+    /// Gets the file.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Square, File};
+    ///
+    /// assert_eq!(Square::A1.file(), File::A);
+    /// assert_eq!(Square::B2.file(), File::B);
+    /// ```
     #[inline]
     pub fn file(self) -> File {
         File::new(i8::from(self) & 7)
     }
 
+    /// Gets the rank.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Square, Rank};
+    ///
+    /// assert_eq!(Square::A1.rank(), Rank::First);
+    /// assert_eq!(Square::B2.rank(), Rank::Second);
+    /// ```
     #[inline]
     pub fn rank(self) -> Rank {
         Rank::new(i8::from(self) >> 3)
