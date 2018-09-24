@@ -72,6 +72,8 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.11.2
+  - Fix Atomic insufficient material: KQN can mate.
 * 0.11.1
   - Fix Chess960 should not allow a-side castling over a blocking h-side rook.
 * 0.11.0
