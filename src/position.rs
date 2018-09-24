@@ -701,6 +701,11 @@ impl Position for Atomic {
             return false;
         }
 
+        // Queen or pawn (future queen) can give mate against bare king.
+        if self.board().queens().any() || self.board.pawns().any() {
+            return false;
+        }
+
         // Single knight, bishop or rook can not mate against bare king.
         if (self.board().knights() | self.board().bishops() | self.board().rooks()).count() == 1 {
             return true;
@@ -2017,6 +2022,7 @@ mod tests {
         assert_insufficient_material::<Atomic>("8/1k6/8/2n5/8/3NK3/8/8 b - - 0 1", false, false);
         assert_insufficient_material::<Atomic>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", true, true);
         assert_insufficient_material::<Atomic>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Atomic>("3Q4/5kKB/8/8/8/8/8/8 b - - 0 1", false, true);
 
         assert_insufficient_material::<Giveaway>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Giveaway>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
