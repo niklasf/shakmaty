@@ -5,7 +5,7 @@ extern crate pgn_reader;
 extern crate memmap;
 extern crate madvise;
 extern crate shakmaty;
-extern crate chan;
+extern crate crossbeam;
 
 use pgn_reader::{Visitor, Skip, Reader, San};
 
@@ -128,37 +128,33 @@ fn main() {
         pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut validator = Validator::new();
-        let (send, recv) = chan::sync(256);
+        let (send, recv) = crossbeam::channel::bounded(128);
 
-        std::thread::spawn(move || {
-            for game in Reader::new(&mut validator, &pgn[..]) {
-                send.send(game);
+        crossbeam::scope(|scope| {
+            scope.spawn(move || {
+                for game in Reader::new(&mut validator, &pgn[..]) {
+                    send.send(game);
+                }
+            });
+
+            for _ in 0..3 {
+                let recv = recv.clone();
+                let success = success.clone();
+                scope.spawn(move || {
+                    for game in recv {
+                        let index = game.index;
+                        if !game.validate() {
+                            eprintln!("illegal move in game {}", index);
+                            success.store(false, Ordering::SeqCst);
+                        }
+                    }
+                });
             }
         });
 
-        let wg = chan::WaitGroup::new();
-
-        for _ in 0..2 {
-            wg.add(1);
-            let wg = wg.clone();
-            let recv = recv.clone();
-            let success = success.clone();
-            std::thread::spawn(move || {
-                for game in recv.iter() {
-                    let index = game.index;
-                    if !game.validate() {
-                        eprintln!("illegal move in game {}", index);
-                        success.store(false, Ordering::SeqCst);
-                    }
-                }
-                wg.done();
-            });
-        }
-
-        wg.wait();
-
-        println!("{}: {}", arg, if success.load(Ordering::SeqCst) { "success" } else { "errors" });
-        complete_success &= success.load(Ordering::SeqCst);
+        let success = success.load(Ordering::SeqCst);
+        println!("{}: {}", arg, if success { "success" } else { "errors" });
+        complete_success &= success;
     }
 
     if !complete_success {

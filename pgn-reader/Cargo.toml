@@ -23,7 +23,7 @@ memmap = "0.6"
 madvise = "0.1"
 unicase = "2.0"
 bencher = "0.1"
-chan = "0.1"
+crossbeam = "0.4"
 
 [badges]
 travis-ci = { repository = "niklasf/rust-pgn-reader", branch = "master" }
