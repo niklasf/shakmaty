@@ -115,13 +115,13 @@ macro_rules! from_file_impl {
         $(impl From<File> for $t {
             #[inline]
             fn from(file: File) -> $t {
-                file as $t
+                file as i8 as $t
             }
         })+
     }
 }
 
-from_file_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_file_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// A rank of the chessboard.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -213,13 +213,13 @@ macro_rules! from_rank_impl {
         $(impl From<Rank> for $t {
             #[inline]
             fn from(rank: Rank) -> $t {
-                rank as $t
+                rank as i8 as $t
             }
         })+
     }
 }
 
-from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// Error when parsing an invalid square name.
 #[derive(Debug, Eq, PartialEq)]
