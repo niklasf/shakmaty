@@ -132,8 +132,8 @@ pub trait Position: Setup {
     ///
     /// # Errors
     ///
-    /// Returns [`PositionError`] if swapping turns is not legal (usually due
-    /// to a check that has to be averted).
+    /// Returns [`PositionError`] if swapping turns is not possible (usually
+    /// due to a check that has to be averted).
     ///
     /// [`PositionError`]: enum.PositionError.html
     fn swap_turn(self) -> Result<Self, PositionError>
@@ -337,7 +337,8 @@ pub trait Position: Setup {
     /// # Panics
     ///
     /// Illegal moves can corrupt the state of the position and may
-    /// (or may not) panic or cause panics on future calls.
+    /// (or may not) panic or cause panics on future calls. Consider using
+    /// [`Position::play()`](trait.Position.html#method.play) instead.
     fn play_unchecked(&mut self, m: &Move);
 }
 
