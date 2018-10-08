@@ -97,6 +97,16 @@ impl ops::BitXor<bool> for Color {
 }
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
+///
+/// # Examples
+///
+/// ```
+/// use shakmaty::Role;
+///
+/// // Piece types are indexed from 1 to 6.
+/// assert_eq!(u32::from(Role::Pawn), 1);
+/// assert_eq!(u32::from(Role::King), 6);
+/// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum Role {
     Pawn = 1,
@@ -108,6 +118,18 @@ pub enum Role {
 }
 
 impl Role {
+    /// Gets the piece type from its English letter.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Role;
+    ///
+    /// assert_eq!(Role::from_char('K'), Some(Role::King));
+    /// assert_eq!(Role::from_char('n'), Some(Role::Knight));
+    ///
+    /// assert_eq!(Role::from_char('X'), None);
+    /// ```
     pub fn from_char(ch: char) -> Option<Role> {
         match ch {
             'P' | 'p' => Some(Role::Pawn),
@@ -120,11 +142,29 @@ impl Role {
         }
     }
 
+    /// Gets a [`Piece`](struct.Piece.html) of the given color.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Color, Role};
+    ///
+    /// assert_eq!(Role::King.of(Color::Black), Color::Black.king());
+    /// ```
     #[inline]
     pub fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
 
+    /// Gets the English letter for the piece type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Role;
+    ///
+    /// assert_eq!(Role::Rook.char(), 'r');
+    /// ```
     pub fn char(self) -> char {
         match self {
             Role::Pawn => 'p',
@@ -136,6 +176,15 @@ impl Role {
         }
     }
 
+    /// Gets the uppercase English letter for the piece type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Role;
+    ///
+    /// assert_eq!(Role::Rook.upper_char(), 'R');
+    /// ```
     pub fn upper_char(self) -> char {
         match self {
             Role::Pawn => 'P',
