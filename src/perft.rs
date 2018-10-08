@@ -34,8 +34,7 @@ use uci::Uci;
 /// # Examples
 ///
 /// ```
-/// use shakmaty::Chess;
-/// use shakmaty::perft;
+/// use shakmaty::{Chess, perft};
 ///
 /// let pos = Chess::default();
 /// assert_eq!(perft(&pos, 1), 20);
