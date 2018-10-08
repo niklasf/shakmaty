@@ -354,7 +354,7 @@ pub struct Chess {
     turn: Color,
     castles: Castles,
     ep_square: Option<Square>,
-    halfmove_clock: u32,
+    halfmoves: u32,
     fullmoves: u32,
 }
 
@@ -373,7 +373,7 @@ impl Default for Chess {
             turn: White,
             castles: Castles::default(),
             ep_square: None,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -386,14 +386,14 @@ impl Setup for Chess {
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
 impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
@@ -408,7 +408,7 @@ impl Position for Chess {
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
-            halfmove_clock: setup.halfmove_clock(),
+            halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
@@ -556,7 +556,7 @@ pub struct Atomic {
     turn: Color,
     castles: Castles,
     ep_square: Option<Square>,
-    halfmove_clock: u32,
+    halfmoves: u32,
     fullmoves: u32,
 }
 
@@ -567,7 +567,7 @@ impl Default for Atomic {
             turn: White,
             castles: Castles::default(),
             ep_square: None,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -580,7 +580,7 @@ impl Setup for Atomic {
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
@@ -596,7 +596,7 @@ impl Position for Atomic {
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
-            halfmove_clock: setup.halfmove_clock(),
+            halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
@@ -616,7 +616,7 @@ impl Position for Atomic {
 
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
 
         match *m {
@@ -744,7 +744,7 @@ pub struct Giveaway {
     turn: Color,
     castles: Castles,
     ep_square: Option<Square>,
-    halfmove_clock: u32,
+    halfmoves: u32,
     fullmoves: u32,
 }
 
@@ -755,7 +755,7 @@ impl Default for Giveaway {
             turn: White,
             castles: Castles::empty(),
             ep_square: None,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -768,14 +768,14 @@ impl Setup for Giveaway {
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
 impl Position for Giveaway {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
@@ -790,7 +790,7 @@ impl Position for Giveaway {
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
-            halfmove_clock: setup.halfmove_clock(),
+            halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
@@ -884,7 +884,7 @@ impl Setup for KingOfTheHill {
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.chess.halfmove_clock() }
+    fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
 }
 
@@ -972,7 +972,7 @@ impl Setup for ThreeCheck {
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
-    fn halfmove_clock(&self) -> u32 { self.chess.halfmove_clock() }
+    fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> u32 { self.chess.fullmoves }
 }
 
@@ -1105,7 +1105,7 @@ impl Setup for Crazyhouse {
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.chess.halfmove_clock() }
+    fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
 }
 
@@ -1230,7 +1230,7 @@ impl CastlingUncoversRankAttack for Crazyhouse {
 pub struct RacingKings {
     board: Board,
     turn: Color,
-    halfmove_clock: u32,
+    halfmoves: u32,
     fullmoves: u32,
 }
 
@@ -1239,7 +1239,7 @@ impl Default for RacingKings {
         RacingKings {
             board: Board::racing_kings(),
             turn: White,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -1252,14 +1252,14 @@ impl Setup for RacingKings {
     fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { None }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
 impl Position for RacingKings {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
-                &mut None, &mut self.halfmove_clock,
+                &mut None, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
@@ -1281,7 +1281,7 @@ impl Position for RacingKings {
         let pos = RacingKings {
             board,
             turn: setup.turn(),
-            halfmove_clock: setup.halfmove_clock(),
+            halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
@@ -1385,7 +1385,7 @@ pub struct Horde {
     turn: Color,
     castles: Castles,
     ep_square: Option<Square>,
-    halfmove_clock: u32,
+    halfmoves: u32,
     fullmoves: u32,
 }
 
@@ -1399,7 +1399,7 @@ impl Default for Horde {
             turn: White,
             castles,
             ep_square: None,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -1412,14 +1412,14 @@ impl Setup for Horde {
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
 impl Position for Horde {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmove_clock,
+                &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
@@ -1434,7 +1434,7 @@ impl Position for Horde {
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
-            halfmove_clock: setup.halfmove_clock(),
+            halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
@@ -1531,17 +1531,17 @@ fn do_move(board: &mut Board,
            turn: &mut Color,
            castles: &mut Castles,
            ep_square: &mut Option<Square>,
-           halfmove_clock: &mut u32,
+           halfmoves: &mut u32,
            fullmoves: &mut u32,
            m: &Move) {
     let color = *turn;
     ep_square.take();
-    *halfmove_clock = halfmove_clock.saturating_add(1);
+    *halfmoves = halfmoves.saturating_add(1);
 
     match *m {
         Move::Normal { role, from, capture, to, promotion } => {
             if role == Role::Pawn || capture.is_some() {
-                *halfmove_clock = 0;
+                *halfmoves = 0;
             }
 
             if role == Role::Pawn && (from - to == 16 || from - to == -16) {
@@ -1578,7 +1578,7 @@ fn do_move(board: &mut Board,
             board.discard_piece_at(to.combine(from)); // captured pawn
             board.discard_piece_at(from);
             board.set_piece_at(to, color.pawn(), false);
-            *halfmove_clock = 0;
+            *halfmoves = 0;
         }
         Move::Put { role, to } => {
             board.set_piece_at(to, Piece { color, role }, false);

@@ -195,7 +195,7 @@ impl FenOpts {
     /// Create a FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
     pub fn fen(&self, setup: &dyn Setup) -> String {
-        format!("{} {} {}", self.epd(setup), setup.halfmove_clock(), setup.fullmoves())
+        format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
     }
 }
 
@@ -317,7 +317,7 @@ pub struct Fen {
     pub castling_rights: Bitboard,
     pub ep_square: Option<Square>,
     pub remaining_checks: Option<RemainingChecks>,
-    pub halfmove_clock: u32,
+    pub halfmoves: u32,
     pub fullmoves: u32,
 }
 
@@ -328,7 +328,7 @@ impl Setup for Fen {
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
-    fn halfmove_clock(&self) -> u32 { self.halfmove_clock }
+    fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
@@ -341,7 +341,7 @@ impl Default for Fen {
             castling_rights: Bitboard::CORNERS,
             ep_square: None,
             remaining_checks: None,
-            halfmove_clock: 0,
+            halfmoves: 0,
             fullmoves: 1,
         }
     }
@@ -471,7 +471,7 @@ impl Fen {
         };
 
         if let Some(halfmoves_part) = halfmoves_part {
-            result.halfmove_clock = btoi::btou_saturating(halfmoves_part)
+            result.halfmoves = btoi::btou_saturating(halfmoves_part)
                 .map_err(|_| FenError::InvalidHalfmoveClock)?;
         }
 
@@ -567,7 +567,7 @@ mod tests {
         let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42".parse().expect("valid fen");
         let expected = RemainingChecks { white: 1, black: 2 };
         assert_eq!(fen.remaining_checks, Some(expected));
-        assert_eq!(fen.halfmove_clock, 12);
+        assert_eq!(fen.halfmoves, 12);
         assert_eq!(fen.fullmoves, 42);
     }
 

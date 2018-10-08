@@ -28,8 +28,11 @@ pub trait Setup {
     fn castling_rights(&self) -> Bitboard;
     fn ep_square(&self) -> Option<Square>;
     fn remaining_checks(&self) -> Option<&RemainingChecks>;
-    fn halfmove_clock(&self) -> u32;
+    fn halfmoves(&self) -> u32 { #[allow(deprecated)] self.halfmove_clock() }
     fn fullmoves(&self) -> u32;
+
+    #[deprecated(since="0.11.3", note="use halfmoves() instead")]
+    fn halfmove_clock(&self) -> u32 { self.halfmoves() }
 
     fn us(&self) -> Bitboard {
         self.board().by_color(self.turn())
@@ -60,7 +63,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.0.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }
-    fn halfmove_clock(&self) -> u32 { self.0.halfmove_clock() }
+    fn halfmoves(&self) -> u32 { self.0.halfmoves() }
     fn fullmoves(&self) -> u32 { self.0.fullmoves() }
 }
 
