@@ -22,30 +22,145 @@ use board::Board;
 
 /// A not necessarily legal position.
 pub trait Setup {
+    /// Piece positions on the board.
     fn board(&self) -> &Board;
+
+    /// Pockets in chess variants like Crazyhouse.
     fn pockets(&self) -> Option<&Pockets>;
+
+    /// Side to move.
     fn turn(&self) -> Color;
+
+    /// Castling rights in terms of rook positions.
     fn castling_rights(&self) -> Bitboard;
+
+    /// En passant target square on the third or sixth rank.
     fn ep_square(&self) -> Option<Square>;
+
+    /// Remaining checks in chess variants like Three-Check.
     fn remaining_checks(&self) -> Option<&RemainingChecks>;
+
+    /// Number of half-moves since the last
+    /// [capture or pawn move](enum.Move.html#method.is_zeroing).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Chess, Setup};
+    ///
+    /// let pos = Chess::default();
+    /// assert_eq!(pos.halfmoves(), 0);
+    /// ```
     fn halfmoves(&self) -> u32 { #[allow(deprecated)] self.halfmove_clock() }
+
+    /// Current move number.
+    ///
+    /// Starts at 1 and is increased after every black move.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Chess, Setup};
+    ///
+    /// let pos = Chess::default();
+    /// assert_eq!(pos.fullmoves(), 1);
+    /// ```
     fn fullmoves(&self) -> u32;
 
     #[deprecated(since="0.11.3", note="use halfmoves() instead")]
     fn halfmove_clock(&self) -> u32 { self.halfmoves() }
 
+    /// Squares occupied by the side to move.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Chess, Setup};
+    ///
+    /// let pos = Chess::default();
+    /// let mask = pos.us();
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    ///
+    /// assert_eq!(mask.count(), 16);
     fn us(&self) -> Bitboard {
         self.board().by_color(self.turn())
     }
 
+    /// Squares occupied by a given piece type of the side to move.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Chess, Role, Setup, Square};
+    ///
+    /// let pos = Chess::default();
+    /// let mask = pos.our(Role::Queen);
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . 1 . . . .
+    ///
+    /// assert_eq!(mask, Bitboard::from_square(Square::D1));
+    /// ```
     fn our(&self, role: Role) -> Bitboard {
         self.us() & self.board().by_role(role)
     }
 
+    /// Squares occupied by the waiting player.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Chess, Setup};
+    ///
+    /// let pos = Chess::default();
+    /// let mask = pos.them();
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    ///
+    /// assert_eq!(mask.count(), 16);
+    /// ```
     fn them(&self) -> Bitboard {
         self.board().by_color(!self.turn())
     }
 
+    /// Squares occupied by a given piece type of the waiting player.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Chess, Role, Setup, Square};
+    ///
+    /// let pos = Chess::default();
+    /// let mask = pos.their(Role::Queen);
+    /// // . . . 1 . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    ///
+    /// assert_eq!(mask, Bitboard::from_square(Square::D8));
+    /// ```
     fn their(&self, role: Role) -> Bitboard {
         self.them() & self.board().by_role(role)
     }
