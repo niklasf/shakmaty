@@ -31,7 +31,24 @@ pub trait Setup {
     /// Side to move.
     fn turn(&self) -> Color;
 
-    /// Castling rights in terms of rook positions.
+    /// Castling rights in terms of corresponding rook positions.
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Chess, Setup};
+    ///
+    /// let pos = Chess::default();
+    /// let rooks = pos.castling_rights();
+    /// // 1 . . . . . . 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 . . . . . . 1
+    ///
+    /// assert_eq!(rooks, Bitboard::CORNERS);
+    /// ```
     fn castling_rights(&self) -> Bitboard;
 
     /// En passant target square on the third or sixth rank.
