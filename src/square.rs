@@ -75,6 +75,11 @@ impl File {
     }
 
     #[inline]
+    pub fn upper_char(self) -> char {
+        (b'A' + u8::from(self)) as char
+    }
+
+    #[inline]
     pub fn rotate(self) -> Rank {
         Rank::new(i8::from(self))
     }
