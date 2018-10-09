@@ -92,7 +92,7 @@ pub trait Setup {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::{Bitboard, Chess, Setup};
+    /// use shakmaty::{Bitboard, Chess, Rank, Setup};
     ///
     /// let pos = Chess::default();
     /// let mask = pos.us();
@@ -105,7 +105,7 @@ pub trait Setup {
     /// // 1 1 1 1 1 1 1 1
     /// // 1 1 1 1 1 1 1 1
     ///
-    /// assert_eq!(mask.count(), 16);
+    /// assert_eq!(mask, Bitboard::from(Rank::First) | Bitboard::from(Rank::Second));
     fn us(&self) -> Bitboard {
         self.board().by_color(self.turn())
     }
@@ -139,7 +139,7 @@ pub trait Setup {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::{Bitboard, Chess, Setup};
+    /// use shakmaty::{Bitboard, Chess, Rank, Setup};
     ///
     /// let pos = Chess::default();
     /// let mask = pos.them();
@@ -152,7 +152,7 @@ pub trait Setup {
     /// // . . . . . . . .
     /// // . . . . . . . .
     ///
-    /// assert_eq!(mask.count(), 16);
+    /// assert_eq!(mask, Bitboard::from(Rank::Seventh) | Bitboard::from(Rank::Eighth));
     /// ```
     fn them(&self) -> Bitboard {
         self.board().by_color(!self.turn())
