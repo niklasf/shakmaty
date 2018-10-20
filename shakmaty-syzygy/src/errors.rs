@@ -47,7 +47,7 @@ pub enum SyzygyError {
     ProbeFailed {
         metric: Metric,
         material: Material,
-        #[cause]
+        #[fail(cause)]
         error: ProbeError,
     },
 }
@@ -59,7 +59,7 @@ pub enum ProbeError {
     /// I/O error.
     #[fail(display = "i/o error reading table file: {}", error)]
     Read {
-        #[cause]
+        #[fail(cause)]
         error: io::Error,
     },
     /// Table file has unexpected magic header bytes.
