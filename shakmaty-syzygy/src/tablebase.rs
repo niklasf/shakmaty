@@ -23,7 +23,7 @@ use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
-use fxhash::FxHashMap;
+use hashbrown;
 use itertools;
 
 use shakmaty::{Move, MoveList, Position, Role};
@@ -48,8 +48,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, File>>)>,
-    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, File>>)>,
+    wdl: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, File>>)>,
+    dtz: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, File>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -62,8 +62,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebase<S> {
         Tablebase {
-            wdl: FxHashMap::default(),
-            dtz: FxHashMap::default(),
+            wdl: hashbrown::HashMap::default(),
+            dtz: hashbrown::HashMap::default(),
         }
     }
 

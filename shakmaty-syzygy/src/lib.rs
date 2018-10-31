@@ -71,7 +71,7 @@ extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
 extern crate double_checked_cell;
-extern crate fxhash;
+extern crate hashbrown;
 extern crate num_integer;
 extern crate positioned_io;
 #[cfg(feature = "serde-1")]

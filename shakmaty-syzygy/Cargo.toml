@@ -25,7 +25,7 @@ positioned-io = { git = "https://github.com/vasi/positioned-io.git", rev = "f94f
 lazy_static = "1.0"
 double-checked-cell = "1.1"
 failure = "0.1"
-fxhash = "0.2"
+hashbrown = "0.1"
 
 [dependencies.serde]
 version = "1.0"
