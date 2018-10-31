@@ -62,8 +62,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebase<S> {
         Tablebase {
-            wdl: hashbrown::HashMap::default(),
-            dtz: hashbrown::HashMap::default(),
+            wdl: hashbrown::HashMap::with_capacity(145),
+            dtz: hashbrown::HashMap::with_capacity(145),
         }
     }
 
