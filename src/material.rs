@@ -1,4 +1,4 @@
-// This file is part of the shakmaty-syzygy library.
+// This file is part of the shakmaty library.
 // Copyright (C) 2017-2018 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
