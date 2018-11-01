@@ -259,6 +259,33 @@ impl Material {
             },
         })
     }
+
+    pub fn from_ascii_fen(s: &[u8]) -> Result<Material, ParseMaterialError> {
+        if s.len() > 64 {
+            return Err(ParseMaterialError);
+        }
+
+        let mut material = Material::new();
+        for &ch in s {
+            *material.by_piece_mut(Piece::from_char(char::from(ch)).ok_or(ParseMaterialError)?) += 1;
+        }
+        Ok(material)
+    }
+
+    pub fn fen(&self) -> String {
+        let mut fen = String::with_capacity(self.count());
+
+        for &color in &[Color::White, Color::Black] {
+            for &role in &ROLES {
+                let piece = Piece { color, role };
+                for _ in 0..self.by_piece(piece) {
+                    fen.push(piece.char());
+                }
+            }
+        }
+
+        fen
+    }
 }
 
 impl fmt::Display for Material {

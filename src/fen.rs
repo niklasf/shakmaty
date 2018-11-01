@@ -179,7 +179,7 @@ impl FenOpts {
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
     pub fn epd(&self, setup: &dyn Setup) -> String {
         let pockets = setup.pockets()
-                           .map_or("".to_owned(), |p| format!("[{}]", p));
+                           .map_or("".to_owned(), |p| format!("[{}]", p.fen()));
 
         let checks = setup.remaining_checks()
                           .map_or("".to_owned(), |r| format!(" {}", r));
@@ -408,13 +408,7 @@ impl Fen {
                 .position(|ch| *ch == b'[')
                 .ok_or(FenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
-            if pocket_part.len() > 64 {
-                return Err(FenError::InvalidPocket)?;
-            }
-            let mut pockets = Material::default();
-            for &ch in &board_part[(split_point + 1)..(board_part.len() - 1)] {
-                *pockets.by_piece_mut(Piece::from_char(ch as char).ok_or(FenError::InvalidPocket)?) += 1;
-            }
+            let pockets = Material::from_ascii_fen(pocket_part).map_err(|_| FenError::InvalidPocket)?;
             (&board_part[..split_point], Some(pockets))
         } else {
             (board_part, None)
