@@ -100,27 +100,27 @@ use std::error::Error;
 
 use square::{Rank, Square};
 use types::{Move, Role};
-use position::{IllegalMove, Position};
+use position::{IllegalMoveError, Position};
 
 /// Error when parsing an invalid UCI.
-#[derive(Debug, Eq, PartialEq)]
-pub struct InvalidUci;
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ParseUciError;
 
-impl fmt::Display for InvalidUci {
+impl fmt::Display for ParseUciError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "invalid uci".fmt(f)
     }
 }
 
-impl Error for InvalidUci {
+impl Error for ParseUciError {
     fn description(&self) -> &str {
         "invalid uci"
     }
 }
 
-impl From<()> for InvalidUci {
-    fn from(_: ()) -> InvalidUci {
-        InvalidUci
+impl From<()> for ParseUciError {
+    fn from(_: ()) -> ParseUciError {
+        ParseUciError
     }
 }
 
@@ -140,9 +140,9 @@ pub enum Uci {
 }
 
 impl FromStr for Uci {
-    type Err = InvalidUci;
+    type Err = ParseUciError;
 
-    fn from_str(uci: &str) -> Result<Uci, InvalidUci> {
+    fn from_str(uci: &str) -> Result<Uci, ParseUciError> {
         Uci::from_ascii(uci.as_bytes())
     }
 }
@@ -167,7 +167,7 @@ impl Uci {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidUci`] if `uci` is not syntactically valid.
+    /// Returns [`ParseUciError`] if `uci` is not syntactically valid.
     ///
     /// # Examples
     ///
@@ -194,10 +194,10 @@ impl Uci {
     /// # }
     /// ```
     ///
-    /// [`InvalidUci`]: struct.InvalidUci.html
-    pub fn from_ascii(uci: &[u8]) -> Result<Uci, InvalidUci> {
+    /// [`ParseUciError`]: struct.ParseUciError.html
+    pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {
-            return Err(InvalidUci);
+            return Err(ParseUciError);
         }
 
         if uci == b"0000" {
@@ -267,17 +267,17 @@ impl Uci {
     ///
     /// # Errors
     ///
-    /// Returns [`IllegalMove`] if the move is not legal.
+    /// Returns [`IllegalMoveError`] if the move is not legal.
     ///
     /// [`Move`]: ../enum.Move.html
-    /// [`IllegalMove`]: ../struct.IllegalMove.html
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMove> {
+    /// [`IllegalMoveError`]: ../struct.IllegalMoveError.html
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMoveError> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {
-                let role = pos.board().role_at(from).ok_or(IllegalMove)?;
+                let role = pos.board().role_at(from).ok_or(IllegalMoveError)?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(IllegalMove)
+                    return Err(IllegalMoveError)
                 }
 
                 if role == Role::King && pos.castling_rights().contains(to) {
@@ -300,13 +300,13 @@ impl Uci {
                 }
             },
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(IllegalMove)
+            Uci::Null => return Err(IllegalMoveError)
         };
 
         if pos.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(IllegalMove)
+            Err(IllegalMoveError)
         }
     }
 }

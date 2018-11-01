@@ -217,24 +217,24 @@ macro_rules! from_rank_impl {
 from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// Error when parsing an invalid square name.
-#[derive(Debug, Eq, PartialEq)]
-pub struct InvalidSquareName;
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ParseSquareError;
 
-impl fmt::Display for InvalidSquareName {
+impl fmt::Display for ParseSquareError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "invalid square name".fmt(f)
     }
 }
 
-impl Error for InvalidSquareName {
+impl Error for ParseSquareError {
     fn description(&self) -> &str {
         "invalid square name"
     }
 }
 
-impl From<()> for InvalidSquareName {
-    fn from(_: ()) -> InvalidSquareName {
-        InvalidSquareName
+impl From<()> for ParseSquareError {
+    fn from(_: ()) -> ParseSquareError {
+        ParseSquareError
     }
 }
 
@@ -323,7 +323,7 @@ impl Square {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidSquareName`] if the input is not a valid square name
+    /// Returns [`ParseSquareError`] if the input is not a valid square name
     /// in lowercase ASCII characters.
     ///
     /// # Example
@@ -345,16 +345,16 @@ impl Square {
     /// # }
     /// ```
     ///
-    /// [`InvalidSquareName`]: struct.InvalidSquareName.html
+    /// [`ParseSquareError`]: struct.ParseSquareError.html
     #[inline]
-    pub fn from_ascii(s: &[u8]) -> Result<Square, InvalidSquareName> {
+    pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
             match (File::from_char(char::from(s[0])), Rank::from_char(char::from(s[1]))) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
-                _ => Err(InvalidSquareName),
+                _ => Err(ParseSquareError),
             }
         } else {
-            Err(InvalidSquareName)
+            Err(ParseSquareError)
         }
     }
 
@@ -528,9 +528,9 @@ impl From<(File, Rank)> for Square {
 }
 
 impl str::FromStr for Square {
-    type Err = InvalidSquareName;
+    type Err = ParseSquareError;
 
-    fn from_str(s: &str) -> Result<Square, InvalidSquareName> {
+    fn from_str(s: &str) -> Result<Square, ParseSquareError> {
         Square::from_ascii(s.as_bytes())
     }
 }

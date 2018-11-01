@@ -98,14 +98,14 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
-pub use square::{InvalidSquareName, File, Rank, Square};
+pub use square::{ParseSquareError, File, Rank, Square};
 pub use types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
-pub use material::{Material, MaterialSide};
+pub use material::{Material, MaterialSide, ParseMaterialError};
 pub use bitboard::Bitboard;
 pub use board::{Board, Pieces};
 pub use setup::{Castles, Setup};
 pub use movelist::MoveList;
-pub use position::{Chess, IllegalMove, Outcome, Position, PositionError};
+pub use position::{Chess, IllegalMoveError, Outcome, Position, PositionError};
 pub use perft::perft;
 
 pub mod variants {

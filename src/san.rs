@@ -97,29 +97,29 @@ use std::str::FromStr;
 use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
-#[derive(Debug, Eq, PartialEq)]
-pub struct InvalidSan;
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ParseSanError;
 
-impl fmt::Display for InvalidSan {
+impl fmt::Display for ParseSanError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "invalid san".fmt(f)
     }
 }
 
-impl Error for InvalidSan {
+impl Error for ParseSanError {
     fn description(&self) -> &str {
         "invalid san"
     }
 }
 
-impl From<()> for InvalidSan {
-    fn from(_: ()) -> InvalidSan {
-        InvalidSan
+impl From<()> for ParseSanError {
+    fn from(_: ()) -> ParseSanError {
+        ParseSanError
     }
 }
 
 /// `IllegalSan` or `AmbiguousSan`.
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SanError {
     /// Standard algebraic notation does not match a legal move.
     IllegalSan,
@@ -169,10 +169,10 @@ impl San {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidSan`] if `san` is not syntactically valid.
+    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
     ///
-    /// [`InvalidSan`]: struct.InvalidSan.html
-    pub fn from_ascii(mut san: &[u8]) -> Result<San, InvalidSan> {
+    /// [`ParseSanError`]: struct.ParseSanError.html
+    pub fn from_ascii(mut san: &[u8]) -> Result<San, ParseSanError> {
         if san.ends_with(b"#") || san.ends_with(b"+") {
             san = &san[0..(san.len() - 1)];
         }
@@ -242,7 +242,7 @@ impl San {
             let promotion = match next {
                 Some(b'=') =>
                     Some(chars.next().and_then(|r| Role::from_char(char::from(r))).ok_or(())?),
-                Some(_) => return Err(InvalidSan),
+                Some(_) => return Err(ParseSanError),
                 None => None,
             };
 
@@ -443,9 +443,9 @@ impl San {
 
 
 impl FromStr for San {
-    type Err = InvalidSan;
+    type Err = ParseSanError;
 
-    fn from_str(san: &str) -> Result<San, InvalidSan> {
+    fn from_str(san: &str) -> Result<San, ParseSanError> {
         San::from_ascii(san.as_bytes())
     }
 }
@@ -496,10 +496,10 @@ impl SanPlus {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidSan`] if `san` is not syntactically valid.
+    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
     ///
-    /// [`InvalidSan`]: struct.InvalidSan.html
-    pub fn from_ascii(san: &[u8]) -> Result<SanPlus, InvalidSan> {
+    /// [`ParseSanError`]: struct.ParseSanError.html
+    pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
         San::from_ascii(san).map(|result| SanPlus {
             san: result,
             checkmate: san.ends_with(b"#"),
@@ -521,9 +521,9 @@ impl SanPlus {
 }
 
 impl FromStr for SanPlus {
-    type Err = InvalidSan;
+    type Err = ParseSanError;
 
-    fn from_str(san: &str) -> Result<SanPlus, InvalidSan> {
+    fn from_str(san: &str) -> Result<SanPlus, ParseSanError> {
         SanPlus::from_ascii(san.as_bytes())
     }
 }

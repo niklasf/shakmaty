@@ -207,8 +207,8 @@ impl Default for FenOpts {
 }
 
 /// Errors that can occur when parsing a FEN.
-#[derive(Eq, PartialEq, Debug)]
-pub enum FenError {
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum ParseFenError {
     InvalidFen,
     InvalidBoard,
     InvalidPocket,
@@ -220,36 +220,36 @@ pub enum FenError {
     InvalidFullmoves,
 }
 
-impl FenError {
+impl ParseFenError {
     fn desc(&self) -> &str {
         match *self {
-            FenError::InvalidFen => "invalid fen",
-            FenError::InvalidBoard => "invalid board part in fen",
-            FenError::InvalidPocket => "invalid pocket in fen",
-            FenError::InvalidTurn => "invalid turn part in fen",
-            FenError::InvalidCastling => "invalid castling part in fen",
-            FenError::InvalidEpSquare => "invalid ep square in fen",
-            FenError::InvalidRemainingChecks => "invalid remaining checks in fen",
-            FenError::InvalidHalfmoveClock => "invalid halfmove clock in fen",
-            FenError::InvalidFullmoves => "invalid fullmove part in fen",
+            ParseFenError::InvalidFen => "invalid fen",
+            ParseFenError::InvalidBoard => "invalid board part in fen",
+            ParseFenError::InvalidPocket => "invalid pocket in fen",
+            ParseFenError::InvalidTurn => "invalid turn part in fen",
+            ParseFenError::InvalidCastling => "invalid castling part in fen",
+            ParseFenError::InvalidEpSquare => "invalid ep square in fen",
+            ParseFenError::InvalidRemainingChecks => "invalid remaining checks in fen",
+            ParseFenError::InvalidHalfmoveClock => "invalid halfmove clock in fen",
+            ParseFenError::InvalidFullmoves => "invalid fullmove part in fen",
         }
     }
 }
 
-impl fmt::Display for FenError {
+impl fmt::Display for ParseFenError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.desc().fmt(f)
     }
 }
 
-impl Error for FenError {
+impl Error for ParseFenError {
     fn description(&self) -> &str {
         self.desc()
     }
 }
 
 impl Board {
-    fn from_board_fen(board_fen: &[u8]) -> Result<Board, FenError> {
+    fn from_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
         let mut board = Board::empty();
 
         let mut rank = 7i8;
@@ -266,7 +266,7 @@ impl Board {
             } else if b'1' <= ch && ch <= b'8' {
                 file += (ch - b'0') as i8;
                 if file > 8 {
-                    return Err(FenError::InvalidBoard);
+                    return Err(ParseFenError::InvalidBoard);
                 }
             } else if let Some(piece) = Piece::from_char(ch as char) {
                 match (File::from_index(file), Rank::from_index(rank)) {
@@ -275,30 +275,30 @@ impl Board {
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
                     }
-                    _ => return Err(FenError::InvalidBoard),
+                    _ => return Err(ParseFenError::InvalidBoard),
                 }
                 file += 1;
             } else {
-                return Err(FenError::InvalidBoard);
+                return Err(ParseFenError::InvalidBoard);
             }
 
             if promoted {
-                return Err(FenError::InvalidBoard);
+                return Err(ParseFenError::InvalidBoard);
             }
         }
 
         if rank == 0 && file == 8 {
             Ok(board)
         } else {
-            Err(FenError::InvalidBoard)
+            Err(ParseFenError::InvalidBoard)
         }
     }
 }
 
 impl FromStr for Board {
-    type Err = FenError;
+    type Err = ParseFenError;
 
-    fn from_str(board_fen: &str) -> Result<Board, FenError> {
+    fn from_str(board_fen: &str) -> Result<Board, ParseFenError> {
         Board::from_board_fen(board_fen.as_bytes())
     }
 }
@@ -374,7 +374,7 @@ impl Fen {
     ///
     /// # Errors
     ///
-    /// Returns [`FenError`] if the input is not a valid FEN.
+    /// Returns [`ParseFenError`] if the input is not a valid FEN.
     ///
     /// # Example
     ///
@@ -395,8 +395,8 @@ impl Fen {
     /// # }
     /// ```
     ///
-    /// [`FenError`]: enum.FenError.html
-    pub fn from_ascii(fen: &[u8]) -> Result<Fen, FenError> {
+    /// [`ParseFenError`]: enum.ParseFenError.html
+    pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
         let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();
 
@@ -406,9 +406,9 @@ impl Fen {
             let split_point = board_part
                 .iter()
                 .position(|ch| *ch == b'[')
-                .ok_or(FenError::InvalidBoard)?;
+                .ok_or(ParseFenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
-            let pockets = Material::from_ascii_fen(pocket_part).map_err(|_| FenError::InvalidPocket)?;
+            let pockets = Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?;
             (&board_part[..split_point], Some(pockets))
         } else {
             (board_part, None)
@@ -420,7 +420,7 @@ impl Fen {
         result.turn = match parts.next() {
             Some(b"w") | None => White,
             Some(b"b") => Black,
-            Some(_) => return Err(FenError::InvalidTurn),
+            Some(_) => return Err(ParseFenError::InvalidTurn),
         };
 
         match parts.next() {
@@ -438,10 +438,10 @@ impl Fen {
                         file @ b'a'...b'h' => {
                             (candidates & File::new((file as u8 - b'a') as i8)).first()
                         }
-                        _ => return Err(FenError::InvalidCastling),
+                        _ => return Err(ParseFenError::InvalidCastling),
                     };
 
-                    result.castling_rights.add(flag.ok_or(FenError::InvalidCastling)?);
+                    result.castling_rights.add(flag.ok_or(ParseFenError::InvalidCastling)?);
                 }
             }
         }
@@ -450,7 +450,7 @@ impl Fen {
             Some(b"-") | None => (),
             Some(ep_part) => {
                 result.ep_square =
-                    Some(Square::from_ascii(ep_part).map_err(|_| FenError::InvalidEpSquare)?);
+                    Some(Square::from_ascii(ep_part).map_err(|_| ParseFenError::InvalidEpSquare)?);
             }
         }
 
@@ -458,8 +458,8 @@ impl Fen {
             let mut checks = checks_part.splitn(2, |ch| *ch == b'+');
             if let (Some(w), Some(b)) = (checks.next(), checks.next()) {
                 result.remaining_checks = Some(RemainingChecks {
-                    white: btoi::btou(w).map_err(|_| FenError::InvalidRemainingChecks)?,
-                    black: btoi::btou(b).map_err(|_| FenError::InvalidRemainingChecks)?,
+                    white: btoi::btou(w).map_err(|_| ParseFenError::InvalidRemainingChecks)?,
+                    black: btoi::btou(b).map_err(|_| ParseFenError::InvalidRemainingChecks)?,
                 });
                 parts.next()
             } else {
@@ -471,16 +471,16 @@ impl Fen {
 
         if let Some(halfmoves_part) = halfmoves_part {
             result.halfmoves = btoi::btou_saturating(halfmoves_part)
-                .map_err(|_| FenError::InvalidHalfmoveClock)?;
+                .map_err(|_| ParseFenError::InvalidHalfmoveClock)?;
         }
 
         if let Some(fullmoves_part) = parts.next() {
             result.fullmoves = btoi::btou_saturating(fullmoves_part)
-                .map_err(|_| FenError::InvalidFullmoves)?;
+                .map_err(|_| ParseFenError::InvalidFullmoves)?;
         }
 
         if parts.next().is_some() {
-            Err(FenError::InvalidFen)
+            Err(ParseFenError::InvalidFen)
         } else {
             Ok(result)
         }
@@ -488,9 +488,9 @@ impl Fen {
 }
 
 impl FromStr for Fen {
-    type Err = FenError;
+    type Err = ParseFenError;
 
-    fn from_str(fen: &str) -> Result<Fen, FenError> {
+    fn from_str(fen: &str) -> Result<Fen, ParseFenError> {
         Fen::from_ascii(fen.as_bytes())
     }
 }
@@ -575,6 +575,6 @@ mod tests {
         // mind the dot in the castling part
         let input = "8/8/8/8/8/8/8/8 w · - 0 1";
         let error = input.parse::<Fen>().expect_err("invalid fen");
-        assert_eq!(error, FenError::InvalidCastling);
+        assert_eq!(error, ParseFenError::InvalidCastling);
     }
 }

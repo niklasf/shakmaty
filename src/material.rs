@@ -24,7 +24,7 @@ use std::str::FromStr;
 use types::{Color, Piece, Role, ROLES};
 
 /// Error when parsing an invalid material key.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParseMaterialError;
 
 impl fmt::Display for ParseMaterialError {

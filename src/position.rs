@@ -92,24 +92,24 @@ impl PositionError {
 }
 
 /// Error in case of illegal moves.
-#[derive(Debug)]
-pub struct IllegalMove;
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct IllegalMoveError;
 
-impl fmt::Display for IllegalMove {
+impl fmt::Display for IllegalMoveError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         "illegal move".fmt(f)
     }
 }
 
-impl Error for IllegalMove {
+impl Error for IllegalMoveError {
     fn description(&self) -> &str {
         "illegal move"
     }
 }
 
-impl From<()> for IllegalMove {
-    fn from(_: ()) -> IllegalMove {
-        IllegalMove
+impl From<()> for IllegalMoveError {
+    fn from(_: ()) -> IllegalMoveError {
+        IllegalMoveError
     }
 }
 
@@ -317,10 +317,10 @@ pub trait Position: Setup {
     ///
     /// # Errors
     ///
-    /// Returns [`IllegalMove`] if the move is not legal in the position.
+    /// Returns [`IllegalMoveError`] if the move is not legal in the position.
     ///
-    /// [`IllegalMove`]: struct.IllegalMove.html
-    fn play(mut self, m: &Move) -> Result<Self, IllegalMove>
+    /// [`IllegalMoveError`]: struct.IllegalMoveError.html
+    fn play(mut self, m: &Move) -> Result<Self, IllegalMoveError>
     where
         Self: Sized,
     {
@@ -328,7 +328,7 @@ pub trait Position: Setup {
             self.play_unchecked(m);
             Ok(self)
         } else {
-            Err(IllegalMove)
+            Err(IllegalMoveError)
         }
     }
 
