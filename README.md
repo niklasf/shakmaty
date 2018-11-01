@@ -72,6 +72,13 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.12.0
+  - `Setup::halfmove_clock()` is now `Setup::halfmoves()`.
+  - New conversions: `f32::from(file)`, `f64::from(rank)`.
+  - Replaced `Pockets` and `Pocket` by more general `Material` and
+    `MaterialSide`. Note that their `Display` and `FromStr` implementations
+    differ.
+  - Unified naming of error types.
 * 0.11.2
   - Fix Atomic insufficient material: KQN can mate.
 * 0.11.1
