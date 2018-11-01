@@ -177,7 +177,6 @@ impl FromStr for MaterialSide {
 }
 
 /// The material configuration of both sides.
-#[doc(hidden)]
 #[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
     pub white: MaterialSide,
