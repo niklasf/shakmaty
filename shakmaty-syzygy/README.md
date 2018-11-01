@@ -39,6 +39,13 @@ Documentation
 Changelog
 ---------
 
+* 0.9.0
+  - Update shakmaty to `0.12`.
+  - `Tablebase::add_directory()` now returns the number of added files.
+  - Added `Tablebase::add_file()`.
+  - `ProbeError` and `Metric` are now public. Other previously hidden APIs
+    are no longer exposed.
+  - Various refactorings, performance improvements and dependency updates.
 * 0.8.1
   - Optimize reading block lengths.
   - More internal refactorings.

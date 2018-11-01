@@ -58,7 +58,7 @@
 //! See [`SyzygyError`](enum.SyzygyError.html) for possible error
 //! conditions.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.8.1")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.9.0")]
 #![warn(missing_debug_implementations)]
 
 extern crate arrayvec;
@@ -73,7 +73,7 @@ extern crate lazy_static;
 extern crate double_checked_cell;
 extern crate hashbrown;
 extern crate num_integer;
-extern crate positioned_io;
+extern crate positioned_io_preview as positioned_io;
 #[cfg(feature = "serde-1")]
 extern crate serde;
 extern crate shakmaty;

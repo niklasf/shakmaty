@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty-syzygy"
-version = "0.8.1" # remember to update html_root_url
+version = "0.9.0" # remember to update html_root_url
 description = "Probe Syzygy tablebases"
 repository = "https://github.com/niklasf/shakmaty-syzygy"
 readme = "README.md"
@@ -17,11 +17,11 @@ harness = false
 [dependencies]
 arrayvec = "0.4"
 bitflags = "1.0"
-shakmaty = { git = "https://github.com/niklasf/shakmaty.git" }
+shakmaty = "0.12"
 num-integer = "0.1"
 byteorder = "1.2"
 itertools = "0.7"
-positioned-io = { git = "https://github.com/vasi/positioned-io.git", rev = "f94f32124515f3cc372a61518610b0e727563506" }
+positioned-io-preview = "0.3"
 lazy_static = "1.0"
 double-checked-cell = "2.0"
 failure = "0.1"
