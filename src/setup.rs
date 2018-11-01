@@ -68,7 +68,7 @@ pub trait Setup {
     /// let pos = Chess::default();
     /// assert_eq!(pos.halfmoves(), 0);
     /// ```
-    fn halfmoves(&self) -> u32 { #[allow(deprecated)] self.halfmove_clock() }
+    fn halfmoves(&self) -> u32;
 
     /// Current move number.
     ///
@@ -83,9 +83,6 @@ pub trait Setup {
     /// assert_eq!(pos.fullmoves(), 1);
     /// ```
     fn fullmoves(&self) -> u32;
-
-    #[deprecated(since="0.11.3", note="use halfmoves() instead")]
-    fn halfmove_clock(&self) -> u32 { self.halfmoves() }
 
     /// Squares occupied by the side to move.
     ///
