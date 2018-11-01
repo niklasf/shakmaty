@@ -100,8 +100,25 @@ impl<R: Read> PgnReader<R> {
         Ok(())
     }
 
+    fn skip_ket(&mut self) -> io::Result<()> {
+        while self.fill_buffer()? {
+            while let Some(ch) = self.buffer.pop_front() {
+                match ch {
+                    b' ' | b'\t' | b'\r' | b']' => (),
+                    b'%' => self.skip_line()?,
+                    b'\n' => return Ok(()),
+                    _ => {
+                        self.buffer.push_front(ch);
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn read_headers<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
-        println!("read headers");
         while self.fill_buffer()? {
             if let Some(ch) = self.buffer.pop_front() {
                 match ch {
@@ -144,7 +161,9 @@ impl<R: Read> PgnReader<R> {
                         }
 
                         visitor.header(&self.buffer[..space], RawHeader(&self.buffer[value_start..right_quote]));
-                        self.skip_line()?;
+
+                        unsafe { self.buffer.move_head(right_quote as isize + 1); }
+                        self.skip_ket()?;
                     },
                     b'%' => self.skip_line()?,
                     _ => {
