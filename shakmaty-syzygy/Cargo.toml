@@ -23,7 +23,7 @@ byteorder = "1.2"
 itertools = "0.7"
 positioned-io = { git = "https://github.com/vasi/positioned-io.git", rev = "f94f32124515f3cc372a61518610b0e727563506" }
 lazy_static = "1.0"
-double-checked-cell = "1.1"
+double-checked-cell = "2.0"
 failure = "0.1"
 hashbrown = "0.1"
 
