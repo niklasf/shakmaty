@@ -268,7 +268,7 @@ impl FromStr for Nag {
 }
 
 /// A header value.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RawHeader<'a>(pub &'a[u8]);
 
 impl<'a> RawHeader<'a> {
@@ -308,6 +308,12 @@ impl<'a> RawHeader<'a> {
             Cow::Borrowed(borrowed) => String::from_utf8_lossy(borrowed),
             Cow::Owned(owned) => Cow::Owned(String::from_utf8_lossy(&owned).into_owned()),
         }
+    }
+}
+
+impl<'a> fmt::Debug for RawHeader<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.decode_utf8_lossy())
     }
 }
 
