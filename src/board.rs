@@ -22,6 +22,7 @@ use attacks;
 use bitboard::Bitboard;
 use square::{File, Rank, Square};
 use types::{Color, Piece, Role};
+use material::{Material, MaterialSide};
 
 /// [`Piece`] positions on a board.
 ///
@@ -278,6 +279,26 @@ impl Board {
             queens: self.queens(),
             kings: self.kings(),
             white: self.white(),
+        }
+    }
+
+    pub fn material_side(&self, color: Color) -> MaterialSide {
+        let side = self.by_color(color);
+
+        MaterialSide {
+            pawns: (self.pawns() & side).count() as u8,
+            knights: (self.knights() & side).count() as u8,
+            bishops: (self.bishops() & side).count() as u8,
+            rooks: (self.rooks() & side).count() as u8,
+            queens: (self.queens() & side).count() as u8,
+            kings: (self.kings() & side).count() as u8,
+        }
+    }
+
+    pub fn material(&self) -> Material {
+        Material {
+            black: self.material_side(Color::Black),
+            white: self.material_side(Color::White),
         }
     }
 }
