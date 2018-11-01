@@ -8,7 +8,7 @@ extern crate madvise;
 use std::env;
 use std::fs::File;
 
-use pgn_reader::{Reader, Visitor, San, Nag, Outcome};
+use pgn_reader::{Reader, RawHeader, Visitor, San, Nag, Outcome};
 use memmap::Mmap;
 use madvise::{AccessPattern, AdviseMemory};
 
@@ -38,7 +38,7 @@ impl<'pgn> Visitor<'pgn> for Stats {
         }
     }
 
-    fn header(&mut self, _key: &'pgn [u8], _value: &'pgn [u8]) {
+    fn header(&mut self, _key: &'pgn [u8], _value: RawHeader<'pgn>) {
         self.headers += 1;
     }
 

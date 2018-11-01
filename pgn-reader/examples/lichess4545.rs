@@ -11,7 +11,7 @@ use std::str;
 use std::fs::File;
 use std::collections::HashSet;
 
-use pgn_reader::{Reader, Visitor, Skip};
+use pgn_reader::{Reader, RawHeader, Visitor, Skip};
 use memmap::Mmap;
 use madvise::{AccessPattern, AdviseMemory};
 
@@ -91,10 +91,10 @@ impl<'a, 'pgn> Visitor<'pgn> for ParticipantFilter<'a> {
         }
     }
 
-    fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
+    fn header(&mut self, key: &'pgn [u8], value: RawHeader<'pgn>) {
         if !self.matches && (key == b"White" || key == b"Black") {
-            if let Ok(name) = str::from_utf8(value) {
-                self.matches = self.participants.contains(&unicase::Ascii::new(name));
+            if let Ok(name) = value.decode_utf8() {
+                self.matches = self.participants.contains(&unicase::Ascii::new(name.as_ref()));
             }
         }
     }

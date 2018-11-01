@@ -6,7 +6,7 @@ extern crate memmap;
 extern crate madvise;
 extern crate shakmaty;
 
-use pgn_reader::{Visitor, Skip, Reader, San};
+use pgn_reader::{Visitor, Skip, Reader, RawHeader, San};
 
 use shakmaty::{Chess, Position};
 use shakmaty::fen::Fen;
@@ -38,10 +38,10 @@ impl<'pgn> Visitor<'pgn> for Validator {
         self.success = true;
     }
 
-    fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
+    fn header(&mut self, key: &'pgn [u8], value: RawHeader<'pgn>) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
-            let fen = match Fen::from_ascii(value) {
+            let fen = match Fen::from_ascii(value.as_bytes()) {
                 Ok(fen) => fen,
                 Err(err) => {
                     eprintln!("invalid fen header in game {}: {} ({:?})", self.games, err, value);

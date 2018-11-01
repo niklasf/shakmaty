@@ -40,7 +40,7 @@
 //! ```
 //! extern crate pgn_reader;
 //!
-//! use pgn_reader::{Visitor, Skip, Reader, San};
+//! use pgn_reader::{Visitor, Skip, RawHeader, Reader, San};
 //!
 //! struct MoveCounter {
 //!     moves: usize,
@@ -91,7 +91,7 @@
 //! extern crate pgn_reader;
 //! extern crate shakmaty;
 //!
-//! use pgn_reader::{Visitor, Skip, Reader, San};
+//! use pgn_reader::{Visitor, Skip, RawHeader, Reader, San};
 //!
 //! use shakmaty::{Chess, Position};
 //! use shakmaty::fen::Fen;
@@ -109,10 +109,10 @@
 //! impl<'pgn> Visitor<'pgn> for LastPosition {
 //!     type Result = Chess;
 //!
-//!     fn header(&mut self, key: &'pgn [u8], value: &'pgn [u8]) {
+//!     fn header(&mut self, key: &'pgn [u8], value: RawHeader<'pgn>) {
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
-//!             let pos = Fen::from_ascii(value).ok()
+//!             let pos = Fen::from_ascii(value.as_bytes()).ok()
 //!                 .and_then(|f| f.position().ok());
 //!
 //!             if let Some(pos) = pos {
@@ -159,9 +159,11 @@ extern crate memchr;
 extern crate btoi;
 extern crate shakmaty;
 
+use std::borrow::Cow;
 use std::fmt;
 use std::cmp::max;
-use std::str::FromStr;
+use std::str;
+use std::str::{FromStr, Utf8Error};
 use std::error::Error;
 
 pub use shakmaty::san::San;
@@ -262,6 +264,50 @@ impl FromStr for Nag {
     }
 }
 
+/// A header value.
+#[derive(Clone, Debug)]
+pub struct RawHeader<'a>(pub &'a[u8]);
+
+impl<'a> RawHeader<'a> {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0
+    }
+
+    pub fn decode(&self) -> Cow<'a, [u8]> {
+        let mut head = 0;
+        let mut decoded: Vec<u8> = Vec::new();
+        for escape in memchr::memchr_iter(b'\\', self.0) {
+            match self.0.get(escape + 1).cloned() {
+                Some(ch) if ch == b'\\' || ch == b'"' => {
+                    decoded.extend_from_slice(&self.0[head..escape]);
+                    head = escape + 1;
+                }
+                _ => (),
+            }
+        }
+        if head == 0 {
+            Cow::Borrowed(self.0)
+        } else {
+            decoded.extend_from_slice(&self.0[head..]);
+            Cow::Owned(decoded)
+        }
+    }
+
+    pub fn decode_utf8(&self) -> Result<Cow<'a, str>, Utf8Error> {
+        Ok(match self.decode() {
+            Cow::Borrowed(borrowed) => Cow::Borrowed(str::from_utf8(borrowed)?),
+            Cow::Owned(owned) => Cow::Owned(String::from_utf8(owned).map_err(|e| e.utf8_error())?),
+        })
+    }
+
+    pub fn decode_utf8_lossy(&self) -> Cow<'a, str> {
+        match self.decode() {
+            Cow::Borrowed(borrowed) => String::from_utf8_lossy(borrowed),
+            Cow::Owned(owned) => Cow::Owned(String::from_utf8_lossy(&owned).into_owned()),
+        }
+    }
+}
+
 /// Consumes games from a reader.
 ///
 /// ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
@@ -274,7 +320,7 @@ pub trait Visitor<'pgn> {
     /// Called directly before reading game headers.
     fn begin_headers(&mut self) { }
     /// Called when parsing a game header like `[White "Deep Blue"]`.
-    fn header(&mut self, _key: &'pgn [u8], _value: &'pgn [u8]) { }
+    fn header(&mut self, _key: &'pgn [u8], _value: RawHeader<'pgn>) { }
     /// Called after reading the headers of a game. May skip quickly over the
     /// following move text directly to `end_game`.
     fn end_headers(&mut self) -> Skip { Skip(false) }
@@ -424,7 +470,7 @@ impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
                             };
 
                             self.visitor.header(&self.pgn[key_pos..key_end_pos],
-                                                &self.pgn[value_pos..value_end_pos]);
+                                                RawHeader(&self.pgn[value_pos..value_end_pos]));
                         },
                         Some(delta) => pos += delta + 1,
                         None => pos = self.pgn.len(),
@@ -721,5 +767,17 @@ mod tests {
         let mut counter = GameCounter::default();
         Reader::new(&mut counter, b"1. e4 1-0\n\n\n\n\n  \n").read_all();
         assert_eq!(counter.count, 1);
+    }
+
+    #[test]
+    fn test_raw_header() {
+        let header = RawHeader(b"Hello world");
+        assert_eq!(header.decode().as_ref(), b"Hello world");
+
+        let header = RawHeader(b"Hello \\world\\");
+        assert_eq!(header.decode().as_ref(), b"Hello \\world\\");
+
+        let header = RawHeader(b"\\Hello \\\"world\\\\");
+        assert_eq!(header.decode().as_ref(), b"\\Hello \"world\\");
     }
 }
