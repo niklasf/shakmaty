@@ -233,7 +233,6 @@ impl<'de> ::serde::Deserialize<'de> for Wdl {
 
 /// 4-valued evaluation of a decisive (not drawn) position in the context of
 /// the 50-move rule.
-#[doc(hidden)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum DecisiveWdl {
     /// Unconditional loss for the side to move.

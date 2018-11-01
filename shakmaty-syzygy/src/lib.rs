@@ -93,6 +93,7 @@ pub use errors::{ProbeError, SyzygyError};
 pub use tablebase::Tablebase;
 pub use types::{Dtz, Metric, Syzygy, TableType, Wdl};
 
-// Hidden API.
+#[cfg(fuzzing)]
 pub use table::{DtzTable, WdlTable};
+#[cfg(fuzzing)]
 pub use types::DecisiveWdl;

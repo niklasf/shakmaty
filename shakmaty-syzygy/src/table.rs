@@ -765,8 +765,6 @@ struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
 
     raf: F,
 
-    material: Material,
-
     num_unique_pieces: u8,
     min_like_man: u8,
     files: ArrayVec<[FileData; 4]>,
@@ -922,7 +920,6 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             num_unique_pieces: material.unique_pieces(),
             min_like_man: material.min_like_man(),
             files,
-            material,
         })
     }
 
@@ -1307,7 +1304,6 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 }
 
 /// A WDL Table.
-#[doc(hidden)]
 #[derive(Debug)]
 pub struct WdlTable<S: Position + Syzygy, F: ReadAt> {
     table: Table<WdlTag, S, F>,
@@ -1330,7 +1326,6 @@ impl<S: Position + Syzygy> WdlTable<S, fs::File> {
 }
 
 /// A DTZ Table.
-#[doc(hidden)]
 #[derive(Debug)]
 pub struct DtzTable<S: Position + Syzygy, F: ReadAt> {
     table: Table<DtzTag, S, F>,

@@ -115,6 +115,28 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         Ok(())
     }
 
+    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, File>> {
+        if let Some(&(ref path, ref table)) = self.wdl.get(key).or_else(|| self.wdl.get(&key.flipped())) {
+            table.get_or_try_init(|| WdlTable::open(path, key)).ctx(Metric::Wdl, key)
+        } else {
+            Err(SyzygyError::MissingTable {
+                metric: Metric::Wdl,
+                material: key.normalized(),
+            })
+        }
+    }
+
+    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, File>> {
+        if let Some(&(ref path, ref table)) = self.dtz.get(key).or_else(|| self.dtz.get(&key.flipped())) {
+            table.get_or_try_init(|| DtzTable::open(path, key)).ctx(Metric::Dtz, key)
+        } else {
+            Err(SyzygyError::MissingTable {
+                metric: Metric::Dtz,
+                material: key.normalized(),
+            })
+        }
+    }
+
     /// Probe tables for the [`Wdl`](enum.Wdl.html) value of a position.
     ///
     /// This indicates if the position is winning, lost or drawn with
@@ -440,29 +462,15 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         // Get raw WDL value from the appropriate table.
         let key = pos.board().material();
-        if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| WdlTable::open(path, &key)).ctx(Metric::Wdl, &key)?;
-            table.probe_wdl(pos).ctx(Metric::Wdl, &key)
-        } else {
-            Err(SyzygyError::MissingTable {
-                metric: Metric::Wdl,
-                material: key.normalized(),
-            })
-        }
+        self.wdl_table(&key)
+            .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &key))
     }
 
     fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
         // Get raw DTZ value from the appropriate table.
         let key = pos.board().material();
-        if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
-            let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
-            table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &key)
-        } else {
-            Err(SyzygyError::MissingTable {
-                metric: Metric::Dtz,
-                material: key.normalized(),
-            })
-        }
+        self.dtz_table(&key)
+            .and_then(|table| table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &key))
     }
 }
 
