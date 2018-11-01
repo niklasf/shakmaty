@@ -1,4 +1,5 @@
 use super::{Nag, Outcome, RawHeader, Skip, San};
+use std::cmp::min;
 use std::io;
 use std::io::Read;
 use std::ptr;
@@ -68,6 +69,7 @@ impl<R: Read> PgnReader<R> {
         if self.buffer.starts_with(b"\xef\xbb\xbf") {
             unsafe { self.buffer.move_head(3); }
         }
+
         Ok(())
     }
 
@@ -80,6 +82,7 @@ impl<R: Read> PgnReader<R> {
                 self.buffer.clear();
             }
         }
+
         Ok(())
     }
 
@@ -144,25 +147,30 @@ impl<R: Read> PgnReader<R> {
 
                         let value_start = left_quote + 1;
                         let mut right_quote = value_start;
-                        loop {
+                        let consumed = loop {
                             match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer[right_quote..]) {
-                                Some(delta) if self.buffer[right_quote + delta] == b'\\' && right_quote + delta + 1 < self.buffer.len() => {
-                                    right_quote += delta + 2;
-                                },
-                                Some(delta) => {
+                                Some(delta) if self.buffer[right_quote + delta] == b'"' => {
                                     right_quote += delta;
-                                    break;
+                                    break right_quote + 1;
                                 }
+                                Some(delta) if self.buffer[right_quote + delta] == b'\n' => {
+                                    right_quote += delta;
+                                    break right_quote;
+                                }
+                                Some(delta) => {
+                                    // Skip escaped character.
+                                    right_quote = min(right_quote + delta + 2, self.buffer.len());
+                                },
                                 None => {
                                     right_quote = self.buffer.len();
-                                    break;
+                                    break right_quote;
                                 }
                             }
-                        }
+                        };
 
                         visitor.header(&self.buffer[..space], RawHeader(&self.buffer[value_start..right_quote]));
 
-                        unsafe { self.buffer.move_head(right_quote as isize + 1); }
+                        unsafe { self.buffer.move_head(consumed as isize); }
                         self.skip_ket()?;
                     },
                     b'%' => self.skip_line()?,
@@ -173,6 +181,7 @@ impl<R: Read> PgnReader<R> {
                 }
             }
         }
+
         Ok(())
     }
 
