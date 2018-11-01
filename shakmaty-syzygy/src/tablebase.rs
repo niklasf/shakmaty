@@ -26,10 +26,9 @@ use double_checked_cell::DoubleCheckedCell;
 use hashbrown;
 use itertools;
 
-use shakmaty::{Move, MoveList, Position, Role};
+use shakmaty::{Material, Move, MoveList, Position, Role};
 
 use errors::{ProbeError, ProbeResultExt, SyzygyError, SyzygyResult};
-use material::Material;
 use table::{DtzTable, WdlTable};
 use types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
 
@@ -440,7 +439,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Get raw WDL value from the appropriate table.
-        let key = Material::from_board(pos.board());
+        let key = pos.board().material();
         if let Some(&(ref path, ref table)) = self.wdl.get(&key).or_else(|| self.wdl.get(&key.flipped())) {
             let table = table.get_or_try_init(|| WdlTable::open(path, &key)).ctx(Metric::Wdl, &key)?;
             table.probe_wdl(pos).ctx(Metric::Wdl, &key)
@@ -454,7 +453,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
         // Get raw DTZ value from the appropriate table.
-        let key = Material::from_board(pos.board());
+        let key = pos.board().material();
         if let Some(&(ref path, ref table)) = self.dtz.get(&key).or_else(|| self.dtz.get(&key.flipped())) {
             let table = table.get_or_try_init(|| DtzTable::open(path, &key)).ctx(Metric::Dtz, &key)?;
             table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &key)
@@ -547,7 +546,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
         best.ok_or_else(|| SyzygyError::ProbeFailed {
             metric: Metric::Dtz,
-            material: Material::from_board(self.pos.board()),
+            material: self.pos.board().material(),
             error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
         })
     }

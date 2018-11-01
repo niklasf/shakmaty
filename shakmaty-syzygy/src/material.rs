@@ -14,13 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{Ord, Ordering, PartialOrd};
-use std::fmt;
-use std::iter::FromIterator;
-use std::mem;
-use std::str::FromStr;
-
-use shakmaty::{Board, Color, Piece, Role};
+use shakmaty::{Material, MaterialSide, Role};
 
 const ROLES: [Role; 6] = [
     Role::King,
@@ -31,280 +25,30 @@ const ROLES: [Role; 6] = [
     Role::Pawn,
 ];
 
-/// The material configuration of one side.
-#[doc(hidden)]
-#[derive(Clone, Default, Eq, PartialEq, Hash)]
-pub struct MaterialSide {
-    kings: u8,
-    queens: u8,
-    rooks: u8,
-    bishops: u8,
-    knights: u8,
-    pawns: u8,
+pub trait MaterialSideExt {
+    fn unique_roles(&self) -> u8;
 }
 
-impl MaterialSide {
-    pub fn new() -> MaterialSide {
-        MaterialSide::default()
-    }
-
-    pub fn by_role(&self, role: Role) -> u8 {
-        match role {
-            Role::Pawn => self.pawns,
-            Role::Knight => self.knights,
-            Role::Bishop => self.bishops,
-            Role::Rook => self.rooks,
-            Role::Queen => self.queens,
-            Role::King => self.kings,
-        }
-    }
-
-    pub fn by_role_mut(&mut self, role: Role) -> &mut u8 {
-        match role {
-            Role::Pawn => &mut self.pawns,
-            Role::Knight => &mut self.knights,
-            Role::Bishop => &mut self.bishops,
-            Role::Rook => &mut self.rooks,
-            Role::Queen => &mut self.queens,
-            Role::King => &mut self.kings,
-        }
-    }
-
-    pub fn count(&self) -> usize {
-        usize::from(self.pawns) +
-        usize::from(self.knights) +
-        usize::from(self.bishops) +
-        usize::from(self.rooks) +
-        usize::from(self.queens) +
-        usize::from(self.kings)
-    }
-
-    pub(crate) fn unique_roles(&self) -> u8 {
+impl MaterialSideExt for MaterialSide {
+    fn unique_roles(&self) -> u8 {
         ROLES.iter().map(|&r| self.by_role(r)).filter(|&c| c == 1).sum()
     }
-
-    pub fn has_pawns(&self) -> bool {
-        self.pawns > 0
-    }
 }
 
-impl fmt::Display for MaterialSide {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for &role in &ROLES {
-            write!(f, "{}", role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
-        }
-        Ok(())
-    }
+pub trait MaterialExt {
+    fn unique_pieces(&self) -> u8;
+    fn min_like_man(&self) -> u8;
 }
 
-impl fmt::Debug for MaterialSide {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.count() > 0 {
-            write!(f, "{}", self)
-        } else {
-            f.write_str("-")
-        }
-    }
-}
-
-impl Extend<Role> for MaterialSide {
-    fn extend<T: IntoIterator<Item = Role>>(&mut self, iter: T) {
-        for role in iter {
-            *self.by_role_mut(role) += 1;
-        }
-    }
-}
-
-impl FromIterator<Role> for MaterialSide {
-    fn from_iter<T>(iter: T) -> Self
-    where
-        T: IntoIterator<Item = Role>,
-    {
-        let mut result = MaterialSide::new();
-        result.extend(iter);
-        result
-    }
-}
-
-impl Ord for MaterialSide {
-    fn cmp(&self, other: &MaterialSide) -> Ordering {
-        self.count().cmp(&other.count())
-            .then(self.kings.cmp(&other.kings))
-            .then(self.queens.cmp(&other.queens))
-            .then(self.rooks.cmp(&other.rooks))
-            .then(self.bishops.cmp(&other.bishops))
-            .then(self.knights.cmp(&other.knights))
-            .then(self.pawns.cmp(&other.pawns))
-    }
-}
-
-impl PartialOrd for MaterialSide {
-    fn partial_cmp(&self, other: &MaterialSide) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-/// Error when parsing a material key.
-#[derive(Debug, Clone, PartialEq, Eq, Fail)]
-#[fail(display = "invalid material key")]
-pub struct ParseMaterialError;
-
-impl FromStr for MaterialSide {
-    type Err = ParseMaterialError;
-
-    fn from_str(s: &str) -> Result<MaterialSide, ParseMaterialError> {
-        if s.len() > 64 {
-            return Err(ParseMaterialError);
-        }
-
-        let mut result = MaterialSide::new();
-
-        for ch in s.chars() {
-            let role = Role::from_char(ch).ok_or(ParseMaterialError)?;
-            *result.by_role_mut(role) += 1;
-        }
-
-        Ok(result)
-    }
-}
-
-/// The material configuration of both sides.
-#[doc(hidden)]
-#[derive(Clone, Default, Eq, PartialEq, Hash)]
-pub struct Material {
-    pub white: MaterialSide,
-    pub black: MaterialSide,
-}
-
-impl Material {
-    pub fn new() -> Material {
-        Material::default()
-    }
-
-    pub fn from_board(board: &Board) -> Material {
-        Material {
-            white: MaterialSide {
-                pawns: (board.pawns() & board.white()).count() as u8,
-                knights: (board.knights() & board.white()).count() as u8,
-                bishops: (board.bishops() & board.white()).count() as u8,
-                rooks: (board.rooks() & board.white()).count() as u8,
-                queens: (board.queens() & board.white()).count() as u8,
-                kings: (board.kings() & board.white()).count() as u8,
-            },
-            black: MaterialSide {
-                pawns: (board.pawns() & board.black()).count() as u8,
-                knights: (board.knights() & board.black()).count() as u8,
-                bishops: (board.bishops() & board.black()).count() as u8,
-                rooks: (board.rooks() & board.black()).count() as u8,
-                queens: (board.queens() & board.black()).count() as u8,
-                kings: (board.kings() & board.black()).count() as u8,
-            },
-        }
-    }
-
-    pub fn flip(&mut self) {
-        mem::swap(&mut self.white, &mut self.black);
-    }
-
-    pub fn flipped(&self) -> Material {
-        let mut material = self.clone();
-        material.flip();
-        material
-    }
-
-    pub fn normalize(&mut self) {
-        if self.white < self.black {
-            self.flip();
-        }
-    }
-
-    pub fn normalized(&self) -> Material {
-        let mut material = self.clone();
-        material.normalize();
-        material
-    }
-
-    pub fn is_symmetric(&self) -> bool {
-        self.white == self.black
-    }
-
-    pub fn by_color_mut(&mut self, color: Color) -> &mut MaterialSide {
-        match color {
-            Color::Black => &mut self.black,
-            Color::White => &mut self.white,
-        }
-    }
-
-    pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
-        self.by_color_mut(piece.color).by_role_mut(piece.role)
-    }
-
-    pub fn count(&self) -> usize {
-        self.white.count() + self.black.count()
-    }
-
-    pub(crate) fn unique_pieces(&self) -> u8 {
+impl MaterialExt for Material {
+    fn unique_pieces(&self) -> u8 {
         self.white.unique_roles() + self.black.unique_roles()
     }
 
-    pub(crate) fn min_like_man(&self) -> u8 {
+    fn min_like_man(&self) -> u8 {
         ROLES.iter().map(|&r| self.white.by_role(r))
             .chain(ROLES.iter().map(|&r| self.black.by_role(r)))
             .filter(|&c| 2 <= c)
             .min().unwrap_or(0)
-    }
-
-    pub fn has_pawns(&self) -> bool {
-        self.white.has_pawns() || self.black.has_pawns()
-    }
-}
-
-impl fmt::Display for Material {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}v{}", self.white, self.black)
-    }
-}
-
-impl fmt::Debug for Material {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}v{:?}", self.white, self.black)
-    }
-}
-
-impl Extend<Piece> for Material {
-    fn extend<T: IntoIterator<Item = Piece>>(&mut self, iter: T) {
-        for piece in iter {
-            *self.by_piece_mut(piece) += 1;
-        }
-    }
-}
-
-impl FromIterator<Piece> for Material {
-    fn from_iter<T>(iter: T) -> Self
-    where
-        T: IntoIterator<Item = Piece>,
-    {
-        let mut result = Material::new();
-        result.extend(iter);
-        result
-    }
-}
-
-impl FromStr for Material {
-    type Err = ParseMaterialError;
-
-    fn from_str(s: &str) -> Result<Material, ParseMaterialError> {
-        let mut parts = s.splitn(2, 'v');
-
-        Ok(Material {
-            white: match parts.next() {
-                Some(w) => MaterialSide::from_str(w)?,
-                None => MaterialSide::new(),
-            },
-            black: match parts.next() {
-                Some(b) => MaterialSide::from_str(b)?,
-                None => MaterialSide::new(),
-            },
-        })
     }
 }

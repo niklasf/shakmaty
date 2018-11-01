@@ -95,6 +95,5 @@ pub use types::{Dtz, Syzygy, TableType, Wdl};
 
 // Hidden API.
 pub use errors::ProbeError;
-pub use material::{Material, MaterialSide};
 pub use table::{DtzTable, WdlTable};
 pub use types::DecisiveWdl;

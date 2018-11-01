@@ -26,10 +26,10 @@ use itertools::Itertools;
 use num_integer::binomial;
 use positioned_io::{ReadAt, ReadBytesAtExt};
 
-use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
+use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
 
 use errors::{ProbeError, ProbeResult};
-use material::Material;
+use material::MaterialExt;
 use types::{DecisiveWdl, Dtz, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
 
 trait TableTag {
@@ -1019,7 +1019,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Given a position, determine the unique (modulo symmetries) index into
     /// the corresponding subtable.
     fn encode(&self, pos: &S) -> ProbeResult<Option<(&PairsData, u64)>> {
-        let key = Material::from_board(pos.board());
+        let key = pos.board().material();
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
         assert!(key == material || key == material.flipped());
 

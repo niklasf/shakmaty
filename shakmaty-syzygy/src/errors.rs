@@ -18,7 +18,7 @@ use std::io;
 
 use failure::Backtrace;
 
-use material::Material;
+use shakmaty::Material;
 use types::Metric;
 
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
