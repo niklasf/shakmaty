@@ -71,6 +71,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
     /// actually opened. This happens lazily when probing.
     ///
+    /// Returns the number of added table files.
+    ///
     /// # Errors
     ///
     /// Returns an error result when:
@@ -78,38 +80,58 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// * The `path` does not exist.
     /// * `path` is not a directory.
     /// * The process lacks permissions to list the directory.
-    pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+    pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<usize> {
+        let mut num = 0;
+
         for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.is_dir() {
-                continue;
+            if self.add_file(entry?.path()).is_ok() {
+                num += 1;
             }
+        }
 
-            let (stem, ext) = match (path.file_stem().and_then(|s| s.to_str()), path.extension()) {
-                (Some(stem), Some(ext)) => (stem, ext),
-                _ => continue,
-            };
+        Ok(num)
+    }
 
-            let material = match Material::from_str(stem) {
-                Ok(material) => material,
-                _ => continue,
-            };
+    /// Add a table file.
+    ///
+    /// The file is not actually opened. This happens lazily when probing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when no file exists at the given path or the
+    /// filename does not indicate that it is a valid table file
+    /// (e.g. `KQvKP.rtbz`).
+    pub fn add_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
+        let path = path.as_ref();
 
-            if material.count() > S::MAX_PIECES {
-                continue;
-            }
+        if !path.is_file() {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        }
 
-            if material.white.count() < 1 || material.black.count() < 1 {
-                continue;
-            }
+        let (stem, ext) = match (path.file_stem().and_then(|s| s.to_str()), path.extension()) {
+            (Some(stem), Some(ext)) => (stem, ext),
+            _ => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
+        };
 
-            if ext == S::TBW.ext || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext)) {
-                self.wdl.insert(material, (path.clone(), DoubleCheckedCell::new()));
-            } else if ext == S::TBZ.ext || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext)) {
-                self.dtz.insert(material, (path.clone(), DoubleCheckedCell::new()));
-            }
+        let material = match Material::from_str(stem) {
+            Ok(material) => material,
+            _ => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
+        };
+
+        if material.count() > S::MAX_PIECES {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        }
+
+        if material.white.count() < 1 || material.black.count() < 1 {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        }
+
+        if ext == S::TBW.ext || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext)) {
+            self.wdl.insert(material, (path.to_path_buf(), DoubleCheckedCell::new()));
+        } else if ext == S::TBZ.ext || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext)) {
+            self.dtz.insert(material, (path.to_path_buf(), DoubleCheckedCell::new()));
+        } else {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
         Ok(())
