@@ -17,7 +17,8 @@
 use square::{File, Rank, Square};
 use bitboard::Bitboard;
 use attacks;
-use types::{CastlingSide, Color, Pockets, RemainingChecks, Role};
+use types::{CastlingSide, Color, RemainingChecks, Role};
+use material::Material;
 use board::Board;
 
 /// A not necessarily legal position.
@@ -26,7 +27,7 @@ pub trait Setup {
     fn board(&self) -> &Board;
 
     /// Pockets in chess variants like Crazyhouse.
-    fn pockets(&self) -> Option<&Pockets>;
+    fn pockets(&self) -> Option<&Material>;
 
     /// Side to move.
     fn turn(&self) -> Color;
@@ -188,7 +189,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     }
 
     fn board(&self) -> &Board { self.0.board() }
-    fn pockets(&self) -> Option<&Pockets> { self.0.pockets() }
+    fn pockets(&self) -> Option<&Material> { self.0.pockets() }
     fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.0.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }

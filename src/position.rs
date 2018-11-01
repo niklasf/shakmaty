@@ -18,7 +18,8 @@ use attacks;
 use board::Board;
 use bitboard::Bitboard;
 use square::{Rank, Square};
-use types::{Black, CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role, White};
+use types::{Black, CastlingSide, Color, Move, Piece, RemainingChecks, Role, White};
+use material::{Material, MaterialSide};
 use setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use movelist::{ArrayVecExt, MoveList};
 
@@ -382,7 +383,7 @@ impl Default for Chess {
 
 impl Setup for Chess {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
@@ -576,7 +577,7 @@ impl Default for Atomic {
 
 impl Setup for Atomic {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
@@ -764,7 +765,7 @@ impl Default for Giveaway {
 
 impl Setup for Giveaway {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
@@ -880,7 +881,7 @@ pub struct KingOfTheHill {
 
 impl Setup for KingOfTheHill {
     fn board(&self) -> &Board { self.chess.board() }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
@@ -968,7 +969,7 @@ pub struct ThreeCheck {
 
 impl Setup for ThreeCheck {
     fn board(&self) -> &Board { self.chess.board() }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
@@ -1072,15 +1073,15 @@ impl CastlingUncoversRankAttack for ThreeCheck {
 #[derive(Clone, Debug, Default)]
 pub struct Crazyhouse {
     chess: Chess,
-    pockets: Pockets,
+    pockets: Material,
 }
 
 impl Crazyhouse {
-    fn our_pocket(&self) -> &Pocket {
+    fn our_pocket(&self) -> &MaterialSide {
         self.pockets.by_color(self.turn())
     }
 
-    fn our_pocket_mut(&mut self) -> &mut Pocket {
+    fn our_pocket_mut(&mut self) -> &mut MaterialSide {
         let turn = self.turn();
         self.pockets.by_color_mut(turn)
     }
@@ -1101,7 +1102,7 @@ impl Crazyhouse {
 
 impl Setup for Crazyhouse {
     fn board(&self) -> &Board { self.chess.board() }
-    fn pockets(&self) -> Option<&Pockets> { Some(&self.pockets) }
+    fn pockets(&self) -> Option<&Material> { Some(&self.pockets) }
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
@@ -1248,7 +1249,7 @@ impl Default for RacingKings {
 
 impl Setup for RacingKings {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { None }
@@ -1408,7 +1409,7 @@ impl Default for Horde {
 
 impl Setup for Horde {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { None }
+    fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }

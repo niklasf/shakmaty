@@ -78,7 +78,8 @@ use std::error::Error;
 use btoi;
 
 use square::{File, Rank, Square};
-use types::{Black, Color, Piece, Pockets, RemainingChecks, White};
+use types::{Black, Color, Piece, RemainingChecks, White};
+use material::Material;
 use bitboard::Bitboard;
 use board::Board;
 use setup::Setup;
@@ -312,7 +313,7 @@ impl fmt::Display for Board {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Fen {
     pub board: Board,
-    pub pockets: Option<Pockets>,
+    pub pockets: Option<Material>,
     pub turn: Color,
     pub castling_rights: Bitboard,
     pub ep_square: Option<Square>,
@@ -323,7 +324,7 @@ pub struct Fen {
 
 impl Setup for Fen {
     fn board(&self) -> &Board { &self.board }
-    fn pockets(&self) -> Option<&Pockets> { self.pockets.as_ref() }
+    fn pockets(&self) -> Option<&Material> { self.pockets.as_ref() }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square }
@@ -406,9 +407,13 @@ impl Fen {
                 .iter()
                 .position(|ch| *ch == b'[')
                 .ok_or(FenError::InvalidBoard)?;
-            let mut pockets = Pockets::default();
+            let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
+            if pocket_part.len() > 64 {
+                return Err(FenError::InvalidPocket)?;
+            }
+            let mut pockets = Material::default();
             for &ch in &board_part[(split_point + 1)..(board_part.len() - 1)] {
-                pockets.add(Piece::from_char(ch as char).ok_or(FenError::InvalidPocket)?);
+                *pockets.by_piece_mut(Piece::from_char(ch as char).ok_or(FenError::InvalidPocket)?) += 1;
             }
             (&board_part[..split_point], Some(pockets))
         } else {

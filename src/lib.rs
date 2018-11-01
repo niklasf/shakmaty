@@ -84,6 +84,7 @@ extern crate btoi;
 
 mod square;
 mod types;
+mod material;
 mod board;
 mod position;
 mod setup;
@@ -98,7 +99,8 @@ pub mod uci;
 pub mod san;
 
 pub use square::{InvalidSquareName, File, Rank, Square};
-pub use types::{CastlingSide, Color, Move, Piece, Pocket, Pockets, RemainingChecks, Role};
+pub use types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
+pub use material::{Material, MaterialSide};
 pub use bitboard::Bitboard;
 pub use board::{Board, Pieces};
 pub use setup::{Castles, Setup};
