@@ -17,6 +17,7 @@ harness = false
 memchr = "2.1"
 btoi = "0.4"
 shakmaty = "0.12"
+slice-deque = "0.1.14"
 
 [dev-dependencies]
 memmap = "0.7"

@@ -158,6 +158,9 @@
 extern crate memchr;
 extern crate btoi;
 extern crate shakmaty;
+extern crate slice_deque;
+
+pub mod reader;
 
 use std::borrow::Cow;
 use std::fmt;
