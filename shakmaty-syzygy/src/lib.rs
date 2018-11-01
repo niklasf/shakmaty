@@ -89,11 +89,10 @@ mod table;
 mod tablebase;
 mod types;
 
-pub use errors::SyzygyError;
+pub use errors::{ProbeError, SyzygyError};
 pub use tablebase::Tablebase;
-pub use types::{Dtz, Syzygy, TableType, Wdl};
+pub use types::{Dtz, Metric, Syzygy, TableType, Wdl};
 
 // Hidden API.
-pub use errors::ProbeError;
 pub use table::{DtzTable, WdlTable};
 pub use types::DecisiveWdl;

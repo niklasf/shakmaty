@@ -53,7 +53,6 @@ pub enum SyzygyError {
 }
 
 /// Error when probing a table.
-#[doc(hidden)]
 #[derive(Debug, Fail)]
 pub enum ProbeError {
     /// I/O error.
