@@ -2,12 +2,18 @@ extern crate pgn_reader;
 
 use std::fs::File;
 use std::env;
+use std::str;
+use pgn_reader::RawHeader;
 use pgn_reader::reader::{PgnReader, Visitor};
 
 struct MyVisitor;
 
 impl Visitor for MyVisitor {
     type Result = ();
+
+    fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+        println!("{:?}: {:?}", String::from_utf8_lossy(key), value);
+    }
 
     fn end_game(&mut self) { }
 }
