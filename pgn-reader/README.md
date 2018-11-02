@@ -1,7 +1,8 @@
 pgn-reader
 ==========
 
-A fast non-allocating reader for chess games in PGN notation, as a Rust library.
+A fast non-allocating streaming reader for chess games in PGN notation,
+as a Rust library.
 
 [![Build Status](https://travis-ci.org/niklasf/rust-pgn-reader.svg?branch=master)](https://travis-ci.org/niklasf/rust-pgn-reader)
 [![crates.io](https://img.shields.io/crates/v/pgn-reader.svg)](https://crates.io/crates/pgn-reader)
