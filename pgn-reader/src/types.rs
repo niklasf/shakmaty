@@ -113,6 +113,14 @@ impl FromStr for Nag {
 }
 
 /// A header value.
+///
+/// Provides helper methods for decoding [backslash
+/// escaped](http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c7)
+/// values.
+///
+/// > A quote inside a string is represented by the backslash immediately
+/// > followed by a quote. A backslash inside a string is represented by
+/// > two adjacent backslashes.
 #[derive(Clone, Eq, PartialEq)]
 pub struct RawHeader<'a>(pub &'a[u8]);
 
