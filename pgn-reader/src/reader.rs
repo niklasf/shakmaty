@@ -23,35 +23,7 @@ use std::ptr;
 use slice_deque::SliceDeque;
 
 use types::{Nag, Skip, RawHeader};
-
-pub trait Visitor {
-    type Result;
-
-    fn begin_game(&mut self) { }
-
-    fn begin_headers(&mut self) { }
-    fn header(&mut self, _key: &[u8], _value: RawHeader<'_>) { }
-    fn end_headers(&mut self) -> Skip { Skip(false) }
-
-    fn san(&mut self, _san: SanPlus) { }
-    fn nag(&mut self, _nag: Nag) { }
-    fn comment(&mut self, _comment: &[u8]) { }
-    fn begin_variation(&mut self) -> Skip { Skip(false) }
-    fn end_variation(&mut self) { }
-    fn outcome(&mut self, _outcome: Option<Outcome>) { }
-
-    fn end_game(&mut self) -> Self::Result;
-}
-
-struct SkipVisitor;
-
-impl Visitor for SkipVisitor {
-    type Result = ();
-
-    fn end_headers(&mut self) -> Skip { Skip(true) }
-    fn begin_variation(&mut self) -> Skip { Skip(true) }
-    fn end_game(&mut self) { }
-}
+use visitor::{Visitor, SkipVisitor};
 
 const MIN_BUFFER_SIZE: usize = 8192;
 
@@ -145,7 +117,7 @@ trait ReadPgn {
                     },
                     b'%' => {
                         self.bump();
-                        self.skip_line();
+                        self.skip_line()?;
                         return Ok(());
                     },
                     b'\n' => {
@@ -292,7 +264,7 @@ trait ReadPgn {
                         } else {
                             visitor.comment(&self.buffer()[value_start..]);
                             self.consume_all();
-                            self.skip_until(b'}');
+                            self.skip_until(b'}')?;
                             self.bump();
                             continue;
                         };
@@ -313,7 +285,7 @@ trait ReadPgn {
                         match self.peek() {
                             Some(b'%') => {
                                 self.bump();
-                                self.skip_line();
+                                self.skip_line()?;
                             },
                             Some(b'[') | Some(b'\n') => {
                                 break;
@@ -329,7 +301,7 @@ trait ReadPgn {
                     },
                     b';' => {
                         self.bump();
-                        self.skip_until(b'\n');
+                        self.skip_until(b'\n')?;
                     },
                     b'1' => {
                         self.bump();
@@ -436,18 +408,18 @@ trait ReadPgn {
                     },
                     b'{' => {
                         self.bump();
-                        self.skip_until(b'}');
+                        self.skip_until(b'}')?;
                         self.bump();
                     },
                     b';' => {
                         self.bump();
-                        self.skip_until(b'\n');
+                        self.skip_until(b'\n')?;
                     }
                     b'\n' => {
                         match self.buffer().get(1).cloned() {
                             Some(b'%') => {
                                 self.consume(2);
-                                self.skip_until(b'\n');
+                                self.skip_until(b'\n')?;
                             },
                             Some(b'[') | Some(b'\n') => {
                                 // Do not consume the first or second line break.
@@ -500,13 +472,14 @@ trait ReadPgn {
     }
 }
 
-pub struct PgnReader<R> {
+#[derive(Debug)]
+pub struct BufferedReader<R> {
     inner: R,
     buffer: SliceDeque<u8>,
 }
 
-impl<R: Read> PgnReader<R> {
-    pub fn new(inner: R) -> PgnReader<R> {
+impl<R: Read> BufferedReader<R> {
+    pub fn new(inner: R) -> BufferedReader<R> {
         let mut buffer = SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2);
 
         unsafe {
@@ -516,7 +489,7 @@ impl<R: Read> PgnReader<R> {
             ptr::write_bytes(buf.as_mut_ptr(), 0, buf.len());
         }
 
-        PgnReader {
+        BufferedReader {
             inner,
             buffer,
         }
@@ -531,13 +504,13 @@ impl<R: Read> PgnReader<R> {
     }
 }
 
-impl<R> PgnReader<R> {
+impl<R> BufferedReader<R> {
     pub fn into_inner(self) -> R {
         self.inner
     }
 }
 
-impl<R: Read> ReadPgn for PgnReader<R> {
+impl<R: Read> ReadPgn for BufferedReader<R> {
     type Err = io::Error;
 
     fn fill_buffer(&mut self) -> io::Result<bool> {
@@ -546,7 +519,7 @@ impl<R: Read> ReadPgn for PgnReader<R> {
                 let size = {
                     // This is safe because the buffer does not contain
                     // uninitialized memory: We have written each byte at
-                    // least once (e.g. with zeros in ReadPgn::new()).
+                    // least once (e.g. with zeros in BufferedReader::new()).
                     let remainder = self.buffer.tail_head_slice();
                     self.inner.read(remainder)?
                 };
@@ -578,6 +551,7 @@ impl<R: Read> ReadPgn for PgnReader<R> {
     }
 }
 
+#[derive(Debug)]
 pub struct SliceReader<'a> {
     bytes: &'a [u8],
     pos: usize,

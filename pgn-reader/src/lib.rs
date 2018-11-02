@@ -165,6 +165,7 @@ mod visitor;
 mod reader;
 
 pub use visitor::Visitor;
+pub use reader::{BufferedReader, SliceReader as Cursor};
 
 /* impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Creates a new reader with a custom [`Visitor`].
