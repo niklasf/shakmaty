@@ -465,21 +465,30 @@ trait ReadPgn {
     }
 }
 
-#[derive(Debug)]
-pub struct BufferedReader<R> {
-    inner: R,
-    buffer: SliceDeque<u8>,
-}
-
-#[derive(Debug)]
+/// Internal read ahead buffer.
+#[derive(Debug, Clone)]
 pub struct Buffer {
     inner: SliceDeque<u8>,
+}
+
+impl Buffer {
+    fn new() -> Buffer {
+        Buffer {
+            inner: SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2),
+        }
+    }
 }
 
 impl AsRef<[u8]> for Buffer {
     fn as_ref(&self) -> &[u8] {
         self.inner.as_ref()
     }
+}
+
+#[derive(Debug)]
+pub struct BufferedReader<R> {
+    inner: R,
+    buffer: Buffer,
 }
 
 impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
@@ -490,18 +499,9 @@ impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
 
 impl<R: Read> BufferedReader<R> {
     pub fn new(inner: R) -> BufferedReader<R> {
-        let mut buffer = SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2);
-
-        unsafe {
-            // Initialize the entire buffer with zeroed bytes.
-            let buf = buffer.tail_head_slice();
-            assert!(buf.len() >= MIN_BUFFER_SIZE);
-            ptr::write_bytes(buf.as_mut_ptr(), 0, buf.len());
-        }
-
         BufferedReader {
             inner,
-            buffer,
+            buffer: Buffer::new(),
         }
     }
 
@@ -526,7 +526,7 @@ impl<R: Read> BufferedReader<R> {
     }
 
     pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
-        Cursor::new(Buffer { inner: self.buffer }).chain(self.inner)
+        Cursor::new(self.buffer).chain(self.inner)
     }
 }
 
@@ -534,13 +534,16 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     type Err = io::Error;
 
     fn fill_buffer_and_peek(&mut self) -> io::Result<Option<u8>> {
-        while self.buffer.len() < MIN_BUFFER_SIZE {
+        while self.buffer.inner.len() < MIN_BUFFER_SIZE {
             unsafe {
                 let size = {
-                    // This is safe because the buffer does not contain
-                    // uninitialized memory: We have written each byte at
-                    // least once (e.g. with zeros in BufferedReader::new()).
-                    let remainder = self.buffer.tail_head_slice();
+                    // This is safe because we initialize the slice before
+                    // reading data into it.
+                    //
+                    // TODO: Use https://doc.rust-lang.org/std/io/struct.Initializer.html
+                    // once stabilized.
+                    let remainder = self.buffer.inner.tail_head_slice();
+                    ptr::write_bytes(remainder.as_mut_ptr(), 0, remainder.len());
                     self.inner.read(remainder)?
                 };
 
@@ -548,26 +551,26 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
                     break;
                 }
 
-                self.buffer.move_tail(size as isize);
+                self.buffer.inner.move_tail(size as isize);
             }
         }
 
-        Ok(self.buffer.front().cloned())
+        Ok(self.buffer.inner.front().cloned())
     }
 
     fn buffer(&self) -> &[u8] {
-        self.buffer.as_slice()
+        self.buffer.inner.as_slice()
     }
 
     fn consume(&mut self, bytes: usize) {
         // This is safe because we move the head forward (since bytes is
         // positive, even after casting to isize).
         assert!(bytes <= MIN_BUFFER_SIZE * 2);
-        unsafe { self.buffer.move_head(bytes as isize); }
+        unsafe { self.buffer.inner.move_head(bytes as isize); }
     }
 
     fn peek(&self) -> Option<u8> {
-        self.buffer.front().cloned()
+        self.buffer.inner.front().cloned()
     }
 }
 
