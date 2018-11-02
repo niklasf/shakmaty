@@ -4,16 +4,16 @@
 extern crate libfuzzer_sys;
 extern crate pgn_reader;
 
-use pgn_reader::{Reader, Visitor};
+use pgn_reader::{BufferedReader, Visitor};
 
 struct MyVisitor;
 
-impl<'pgn> Visitor<'pgn> for MyVisitor {
+impl Visitor for MyVisitor {
     type Result = ();
-    fn end_game(&mut self, _game: &'pgn [u8]) { }
+    fn end_game(&mut self) { }
 }
 
 fuzz_target!(|data: &[u8]| {
     let mut visitor = MyVisitor;
-    let _ = Reader::new(&mut visitor, data).read_all();
+    let _ = BufferedReader::new_cursor(data).read_all(&mut visitor);
 });
