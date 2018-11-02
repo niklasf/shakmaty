@@ -34,76 +34,98 @@ impl Visitor for SkipVisitor {
     fn end_game(&mut self) { }
 }
 
-#[derive(Debug)]
-pub struct PgnReader<R> {
-    inner: R,
-    buffer: SliceDeque<u8>,
-}
+const MIN_BUFFER_SIZE: usize = 8192;
 
-const BUFFER_SIZE: usize = 8192;
+trait ReadPgn {
+    type Err;
 
-impl<R: Read> PgnReader<R> {
-    pub fn new(inner: R) -> PgnReader<R> {
-        PgnReader {
-            inner,
-            buffer: SliceDeque::with_capacity(BUFFER_SIZE * 2)
-        }
+    fn fill_buffer(&mut self) -> Result<bool, Self::Err>;
+    fn buffer(&self) -> &[u8];
+    fn consume(&mut self, bytes: usize);
+
+    fn peek(&self) -> Option<u8> {
+        self.buffer().get(0).cloned()
     }
 
-    pub fn into_inner(self) -> R {
-        self.inner
+    fn bump(&mut self) -> Option<u8> {
+        let head = self.peek();
+        if head.is_some() {
+            self.consume(1);
+        }
+        head
     }
 
-    fn fill_buffer(&mut self) -> io::Result<bool> {
-        while self.buffer.len() < BUFFER_SIZE {
-            unsafe {
-                let size = {
-                    let remainder = self.buffer.tail_head_slice();
-                    ptr::write_bytes(remainder.as_mut_ptr(), 0, remainder.len()); // TODO
-                    self.inner.read(remainder)?
-                };
-
-                if size == 0 {
-                    break;
-                }
-
-                self.buffer.move_tail(size as isize);
-            }
-        }
-
-        Ok(!self.buffer.is_empty())
+    fn remaining(&self) -> usize {
+        self.buffer().len()
     }
 
-    fn skip_bom(&mut self) -> io::Result<()> {
-        self.fill_buffer()?;
-        if self.buffer.starts_with(b"\xef\xbb\xbf") {
-            unsafe { self.buffer.move_head(3); }
-        }
+    fn consume_all(&mut self) {
+        let remaining = self.remaining();
+        self.consume(remaining);
+    }
 
+    fn skip_bom(&mut self) -> Result<(), Self::Err> {
+        if self.fill_buffer()? && self.buffer().starts_with(b"\xef\xbb\xbf") {
+            self.consume(3);
+        }
         Ok(())
     }
 
-    fn skip_until(&mut self, needle: u8) -> io::Result<()> {
+    fn skip_until(&mut self, needle: u8) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
-            if let Some(pos) = memchr::memchr(needle, self.buffer.as_slice()) {
-                unsafe { self.buffer.move_head(pos as isize + 1); }
+            if let Some(pos) = memchr::memchr(needle, self.buffer()) {
+                self.consume(pos);
                 return Ok(());
             } else {
-                self.buffer.clear();
+                self.consume_all();
             }
         }
 
         Ok(())
     }
 
-    fn skip_whitespace(&mut self) -> io::Result<()> {
+    fn skip_line(&mut self) -> Result<(), Self::Err> {
+        self.skip_until(b'\n')?;
+        self.bump();
+        Ok(())
+    }
+
+    fn skip_whitespace(&mut self) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
-            while let Some(ch) = self.buffer.pop_front() {
+            while let Some(ch) = self.peek() {
                 match ch {
-                    b' ' | b'\t' | b'\r' | b'\n' => (),
-                    b'%' => self.skip_until(b'\n')?,
+                    b' ' | b'\t' | b'\r' | b'\n' => {
+                        self.bump();
+                    },
+                    b'%' => {
+                        self.bump();
+                        self.skip_line()?;
+                    },
+                    _ => return Ok(()),
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn skip_ket(&mut self) -> Result<(), Self::Err> {
+        while self.fill_buffer()? {
+            while let Some(ch) = self.peek() {
+                match ch {
+                    b' ' | b'\t' | b'\r' | b']' => {
+                        self.bump();
+                    },
+                    b'%' => {
+                        self.bump();
+                        self.skip_line();
+                        return Ok(());
+                    },
+                    b'\n' => {
+                        self.bump();
+                        return Ok(());
+                    },
                     _ => {
-                        self.buffer.push_front(ch);
                         return Ok(());
                     }
                 }
@@ -113,43 +135,27 @@ impl<R: Read> PgnReader<R> {
         Ok(())
     }
 
-    fn skip_ket(&mut self) -> io::Result<()> {
+    fn read_headers<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
-            while let Some(ch) = self.buffer.pop_front() {
-                match ch {
-                    b' ' | b'\t' | b'\r' | b']' => (),
-                    b'%' => self.skip_until(b'\n')?,
-                    b'\n' => return Ok(()),
-                    _ => {
-                        self.buffer.push_front(ch);
-                        return Ok(());
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    fn read_headers<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
-        while self.fill_buffer()? {
-            if let Some(ch) = self.buffer.pop_front() {
+            if let Some(ch) = self.peek() {
                 match ch {
                     b'[' => {
-                        let left_quote = match memchr::memchr2(b'"', b'\n', self.buffer.as_slice()) {
-                            Some(left_quote) if self.buffer[left_quote] == b'"' => left_quote,
+                        self.bump();
+
+                        let left_quote = match memchr::memchr2(b'"', b'\n', self.buffer()) {
+                            Some(left_quote) if self.buffer()[left_quote] == b'"' => left_quote,
                             Some(eol) => {
-                                visitor.header(&self.buffer[..eol], RawHeader(b""));
-                                unsafe { self.buffer.move_head(eol as isize + 1); }
+                                visitor.header(&self.buffer()[..eol], RawHeader(b""));
+                                self.consume(eol + 1);
                                 continue;
                             },
                             None => {
-                                self.skip_until(b'\n')?;
+                                self.skip_line()?;
                                 continue;
                             }
                         };
 
-                        let space = if left_quote > 0 && self.buffer[left_quote - 1] == b' ' {
+                        let space = if left_quote > 0 && self.buffer()[left_quote - 1] == b' ' {
                             left_quote - 1
                         } else {
                             left_quote
@@ -158,36 +164,32 @@ impl<R: Read> PgnReader<R> {
                         let value_start = left_quote + 1;
                         let mut right_quote = value_start;
                         let consumed = loop {
-                            match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer[right_quote..]) {
-                                Some(delta) if self.buffer[right_quote + delta] == b'"' => {
+                            match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer()[right_quote..]) {
+                                Some(delta) if self.buffer()[right_quote + delta] == b'"' => {
                                     right_quote += delta;
                                     break right_quote + 1;
                                 }
-                                Some(delta) if self.buffer[right_quote + delta] == b'\n' => {
+                                Some(delta) if self.buffer()[right_quote + delta] == b'\n' => {
                                     right_quote += delta;
                                     break right_quote;
                                 }
                                 Some(delta) => {
                                     // Skip escaped character.
-                                    right_quote = min(right_quote + delta + 2, self.buffer.len());
+                                    right_quote = min(right_quote + delta + 2, self.remaining());
                                 },
                                 None => {
-                                    right_quote = self.buffer.len();
+                                    right_quote = self.remaining();
                                     break right_quote;
                                 }
                             }
                         };
 
-                        visitor.header(&self.buffer[..space], RawHeader(&self.buffer[value_start..right_quote]));
-
-                        unsafe { self.buffer.move_head(consumed as isize); }
+                        visitor.header(&self.buffer()[..space], RawHeader(&self.buffer()[value_start..right_quote]));
+                        self.consume(consumed);
                         self.skip_ket()?;
                     },
-                    b'%' => self.skip_until(b'\n')?,
-                    _ => {
-                        self.buffer.push_front(ch);
-                        return Ok(());
-                    }
+                    b'%' => self.skip_line()?,
+                    _ => return Ok(()),
                 }
             }
         }
@@ -195,32 +197,33 @@ impl<R: Read> PgnReader<R> {
         Ok(())
     }
 
-    fn skip_movetext(&mut self) -> io::Result<()> {
+    fn skip_movetext(&mut self) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
-            if let Some(ch) = self.buffer.pop_front() {
+            if let Some(ch) = self.bump() {
                 match ch {
-                    b'{' => self.skip_until(b'}')?,
+                    b'{' => {
+                        self.skip_until(b'}')?;
+                        self.bump();
+                    },
                     b';' => {
                         self.skip_until(b'\n')?;
-                        self.buffer.push_front(b'\n');
                     },
                     b'\n' => {
-                        match self.buffer.pop_front() {
-                            Some(b'%') => {
-                                self.skip_until(b'\n');
-                                self.buffer.push_front(b'\n');
-                            },
-                            Some(b'\n') => break,
-                            Some(b'[') => {
-                                self.buffer.push_front(b'[');
-                                break;
+                        match self.peek() {
+                            Some(b'%') => self.skip_until(b'\n')?,
+                            Some(b'\n') | Some(b'[') => break,
+                            Some(b'\r') => {
+                                self.bump();
+                                if let Some(b'\n') = self.peek() {
+                                    break;
+                                }
                             }
                             _ => continue,
                         }
                     },
                     _ => {
-                        let consumed = memchr::memchr3(b'\n', b'{', b';', self.buffer.as_slice()).unwrap_or_else(|| self.buffer.len());
-                        unsafe { self.buffer.move_head(consumed as isize); }
+                        let consumed = memchr::memchr3(b'\n', b'{', b';', self.buffer()).unwrap_or_else(|| self.remaining());
+                        self.consume(consumed);
                     }
                 }
             }
@@ -229,7 +232,7 @@ impl<R: Read> PgnReader<R> {
         Ok(())
     }
 
-    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
+    fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> Result<Option<V::Result>, Self::Err> {
         self.skip_bom()?;
         self.skip_whitespace()?;
 
@@ -251,7 +254,80 @@ impl<R: Read> PgnReader<R> {
         Ok(Some(visitor.end_game()))
     }
 
-    pub fn skip_game(&mut self) -> io::Result<bool> {
+    fn skip_game(&mut self) -> Result<bool, Self::Err> {
         self.read_game(&mut SkipVisitor).map(|r| r.is_some())
+    }
+}
+
+pub struct PgnReader<R> {
+    inner: R,
+    buffer: SliceDeque<u8>,
+}
+
+impl<R: Read> PgnReader<R> {
+    pub fn new(inner: R) -> PgnReader<R> {
+        PgnReader {
+            inner,
+            buffer: SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2),
+        }
+    }
+
+    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
+        ReadPgn::read_game(self, visitor)
+    }
+
+    pub fn skip_game<V: Visitor>(&mut self) -> io::Result<bool> {
+        ReadPgn::skip_game(self)
+    }
+}
+
+impl<R> PgnReader<R> {
+    pub fn into_inner(self) -> R {
+        self.inner
+    }
+}
+
+impl<R: Read> ReadPgn for PgnReader<R> {
+    type Err = io::Error;
+
+    fn fill_buffer(&mut self) -> io::Result<bool> {
+        while self.buffer.len() < MIN_BUFFER_SIZE {
+            unsafe {
+                let size = {
+                    let remainder = self.buffer.tail_head_slice();
+                    ptr::write_bytes(remainder.as_mut_ptr(), 0, remainder.len()); // TODO
+                    self.inner.read(remainder)?
+                };
+
+                if size == 0 {
+                    break;
+                }
+
+                self.buffer.move_tail(size as isize);
+            }
+        }
+
+        Ok(!self.buffer.is_empty())
+    }
+
+    fn buffer(&self) -> &[u8] {
+        self.buffer.as_slice()
+    }
+
+    fn consume(&mut self, bytes: usize) {
+        // TODO: Safety argument.
+        unsafe { self.buffer.move_head(bytes as isize); }
+    }
+
+    fn consume_all(&mut self) {
+        self.buffer.clear();
+    }
+
+    fn bump(&mut self) -> Option<u8> {
+        self.buffer.pop_front()
+    }
+
+    fn peek(&self) -> Option<u8> {
+        self.buffer.front().cloned()
     }
 }
