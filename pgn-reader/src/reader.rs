@@ -364,7 +364,9 @@ trait ReadPgn {
                     },
                     b'(' => {
                         self.bump();
-                        // TODO
+                        if let Skip(true) = visitor.begin_variation() {
+                            self.skip_variation()?;
+                        }
                     },
                     b')' => {
                         self.bump();
@@ -389,6 +391,64 @@ trait ReadPgn {
                             }
                         }
                         self.consume(token_end);
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn skip_variation(&mut self) -> Result<(), Self::Err> {
+        let mut depth = 0usize;
+
+        while self.fill_buffer()? {
+            if let Some(ch) = self.peek() {
+                match ch {
+                    b'(' => {
+                        depth += 1;
+                        self.bump();
+                    },
+                    b')' => {
+                        if let Some(d) = depth.checked_sub(1) {
+                            self.bump();
+                            depth = d;
+                        } else {
+                            break;
+                        }
+                    },
+                    b'{' => {
+                        self.bump();
+                        self.skip_until(b'}');
+                        self.bump();
+                    },
+                    b';' => {
+                        self.bump();
+                        self.skip_until(b'\n');
+                    }
+                    b'\n' => {
+                        match self.buffer().get(1).cloned() {
+                            Some(b'%') => {
+                                self.consume(2);
+                                self.skip_until(b'\n');
+                            },
+                            Some(b'[') | Some(b'\n') => {
+                                // Do not consume the first or second line break.
+                                break;
+                            },
+                            Some(b'\r') => {
+                                // Do not consume the first or second line break.
+                                if self.buffer().get(2).cloned() == Some(b'\n') {
+                                    break;
+                                }
+                            },
+                            _ => {
+                                self.bump();
+                            }
+                        }
+                    },
+                    _ => {
+                        self.bump();
                     }
                 }
             }
