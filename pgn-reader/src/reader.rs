@@ -485,6 +485,7 @@ impl AsRef<[u8]> for Buffer {
     }
 }
 
+/// A buffered PGN reader.
 #[derive(Debug)]
 pub struct BufferedReader<R> {
     inner: R,
@@ -508,6 +509,19 @@ impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
 }
 
 impl<R: Read> BufferedReader<R> {
+    /// Create a new buffered PGN reader.
+    ///
+    /// ```
+    /// # use std::io;
+    /// # fn try_main() -> io::Result<()> {
+    /// use std::fs::File;
+    /// use pgn_reader::BufferedReader;
+    ///
+    /// let file = File::open("example.pgn")?;
+    /// let reader = BufferedReader::new(file);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn new(inner: R) -> BufferedReader<R> {
         BufferedReader {
             inner,
@@ -515,19 +529,44 @@ impl<R: Read> BufferedReader<R> {
         }
     }
 
+    /// Read a single game, if any, and returns the result produced by the
+    /// visitor.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
     pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
         ReadPgn::read_game(self, visitor)
     }
 
+    /// Skip a single game, if any.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
     pub fn skip_game<V: Visitor>(&mut self) -> io::Result<bool> {
         ReadPgn::skip_game(self)
     }
 
+    /// Read all games.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
     pub fn read_all<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let Some(_) = self.read_game(visitor)? { }
         Ok(())
     }
 
+    /// Create an iterator over all games.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
     pub fn into_iter<'a, V: Visitor>(self, visitor: &'a mut V) -> IntoIter<'a, V, R> {
         IntoIter {
             reader: self,
@@ -535,6 +574,7 @@ impl<R: Read> BufferedReader<R> {
         }
     }
 
+    /// Gets the remaining bytes in the buffer and the underlying reader.
     pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
         Cursor::new(self.buffer).chain(self.inner)
     }
