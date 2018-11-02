@@ -278,9 +278,18 @@ pub struct PgnReader<R> {
 
 impl<R: Read> PgnReader<R> {
     pub fn new(inner: R) -> PgnReader<R> {
+        let mut buffer = SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2);
+
+        unsafe {
+            // Initialize the entire buffer with zeroed bytes.
+            let buf = buffer.tail_head_slice();
+            assert!(buf.len() >= MIN_BUFFER_SIZE);
+            ptr::write_bytes(buf.as_mut_ptr(), 0, buf.len());
+        }
+
         PgnReader {
             inner,
-            buffer: SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2),
+            buffer,
         }
     }
 
@@ -307,7 +316,6 @@ impl<R: Read> ReadPgn for PgnReader<R> {
             unsafe {
                 let size = {
                     let remainder = self.buffer.tail_head_slice();
-                    ptr::write_bytes(remainder.as_mut_ptr(), 0, remainder.len()); // TODO
                     self.inner.read(remainder)?
                 };
 
