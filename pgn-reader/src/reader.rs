@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::min;
-use std::io::{self, Read, Cursor};
+use std::io::{self, Read, Chain, Cursor};
 use std::ptr;
 
 use slice_deque::SliceDeque;
@@ -471,6 +471,17 @@ pub struct BufferedReader<R> {
     buffer: SliceDeque<u8>,
 }
 
+#[derive(Debug)]
+pub struct Buffer {
+    inner: SliceDeque<u8>,
+}
+
+impl AsRef<[u8]> for Buffer {
+    fn as_ref(&self) -> &[u8] {
+        self.inner.as_ref()
+    }
+}
+
 impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
     pub fn new_cursor(inner: T) -> BufferedReader<Cursor<T>> {
         BufferedReader::new(Cursor::new(inner))
@@ -513,11 +524,9 @@ impl<R: Read> BufferedReader<R> {
             visitor,
         }
     }
-}
 
-impl<R> BufferedReader<R> {
-    pub fn into_inner(self) -> R {
-        self.inner
+    pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
+        Cursor::new(Buffer { inner: self.buffer }).chain(self.inner)
     }
 }
 

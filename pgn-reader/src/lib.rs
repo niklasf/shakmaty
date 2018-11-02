@@ -171,95 +171,9 @@ mod types;
 mod visitor;
 mod reader;
 
-pub use shakmaty::{Color, Role, Piece, CastlingSide, Outcome};
+pub use shakmaty::{Color, Role, Piece, CastlingSide, Outcome, Square, File, Rank};
 pub use shakmaty::san::{San, SanPlus};
 
 pub use types::{Skip, Nag, RawHeader};
 pub use visitor::Visitor;
 pub use reader::{BufferedReader, IntoIter};
-
-/* impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
-    /// Creates a new reader with a custom [`Visitor`].
-    ///
-    /// [`Visitor`]: trait.Visitor.html
-    pub fn new(visitor: &'a mut V, pgn: &'pgn [u8]) -> Reader<'a, 'pgn, V> {
-        // Skip BOM.
-        let pos = if pgn.starts_with(b"\xef\xbb\xbf") { 3 } else { 0 };
-
-        // Skip leading whitespace.
-        let (_, pgn) = split_after_pgn_space(pgn, pos);
-        Reader { visitor, pgn }
-    }
-
-    /// Read the next game, returning the result from the visitor, or `None`
-    /// if there was no further game.
-    pub fn read_game(&mut self) -> Option<V::Result> {
-        if self.pgn.is_empty() {
-            return None;
-        }
-
-        // Scan game.
-        self.visitor.begin_game();
-        self.visitor.begin_headers();
-        let pos = self.scan_headers();
-        let pos = if let Skip(false) = self.visitor.end_headers() {
-            self.scan_movetext(pos)
-        } else {
-            self.skip_movetext(pos)
-        };
-
-        // Skip trailing whitespace.
-        let (head, tail) = split_after_pgn_space(self.pgn, pos);
-
-        let result = self.visitor.end_game(head);
-        self.pgn = tail;
-        Some(result)
-    }
-
-    /// Skip the next game without calling methods of the visitor.
-    pub fn skip_game(&mut self) {
-        let pos = self.scan_headers();
-        let pos = self.skip_movetext(pos);
-        let (_, tail) = split_after_pgn_space(self.pgn, pos);
-        self.pgn = tail;
-    }
-
-    /// Reads all games.
-    pub fn read_all(mut self) {
-        while let Some(_) = self.read_game() { }
-    }
-
-    /// Returns a slice containing the not yet fully parsed games.
-    pub fn remaining_pgn(&self) -> &'pgn [u8] {
-        self.pgn
-    }
-
-impl<'a, 'pgn, V: Visitor<'pgn>> IntoIterator for Reader<'a, 'pgn, V> {
-    type Item = V::Result;
-    type IntoIter = Iter<'a, 'pgn, V>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        Iter { reader: self }
-    }
-}
-
-/// View a [`Reader`] as an iterator.
-///
-/// [`Reader`]: struct.Reader.html
-pub struct Iter<'a, 'pgn, V: Visitor<'pgn>> where V: 'a {
-    reader: Reader<'a, 'pgn, V>,
-}
-
-impl<'a, 'pgn, V: Visitor<'pgn>> fmt::Debug for Iter<'a, 'pgn, V> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("Iter").finish()
-    }
-}
-
-impl<'a, 'pgn, V: Visitor<'pgn>> Iterator for Iter<'a, 'pgn, V> {
-    type Item = V::Result;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.reader.read_game()
-    }
-} */
