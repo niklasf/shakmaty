@@ -246,19 +246,15 @@ trait ReadPgn {
         Ok(())
     }
 
-    fn skip_token(&mut self) -> Result<(), Self::Err> {
-        while self.fill_buffer()? {
-            if let Some(ch) = self.peek() {
-                match ch {
-                    b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' | b'.' => break,
-                    _ => {
-                        self.bump();
-                    },
-                }
+    fn find_token_end(&mut self, start: usize) -> usize {
+        let mut end = start;
+        for &ch in &self.buffer()[start..] {
+            match ch {
+                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' | b'.' => break,
+                _ => end += 1,
             }
         }
-
-        Ok(())
+        end
     }
 
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
@@ -327,10 +323,39 @@ trait ReadPgn {
                             self.consume(6);
                             visitor.outcome(Some(Outcome::Draw));
                         } else {
-                            self.skip_token()?;
+                            let token_end = self.find_token_end(0);
+                            self.consume(token_end);
                         }
+                    },
+                    b'0' => {
+                        self.bump();
+                        let token_end = self.find_token_end(0);
+                        self.consume(token_end); // TODO
+                    },
+                    b'(' => {
+                        self.bump();
+                        // TODO
+                    },
+                    b')' => {
+                        self.bump();
+                        visitor.end_variation();
+                    },
+                    b'!' | b'?' | b'$' => {
+                        let token_end = self.find_token_end(1);
+                        if let Ok(nag) = Nag::from_ascii(&self.buffer()[..token_end]) {
+                            visitor.nag(nag);
+                        }
+                        self.consume(token_end);
+                    },
+                    _ => {
+                        let token_end = self.find_token_end(1);
+                        if ch > b'9' {
+                            if let Ok(san) = SanPlus::from_ascii(&self.buffer()[..token_end]) {
+                                visitor.san(san);
+                            }
+                        }
+                        self.consume(token_end);
                     }
-                    _ => { self.bump(); },
                 }
             }
         }
@@ -350,8 +375,7 @@ trait ReadPgn {
         visitor.begin_headers();
         self.read_headers(visitor)?;
         if let Skip(false) = visitor.end_headers() {
-            // TODO: Read movetext
-            self.skip_movetext()?;
+            self.read_movetext(visitor)?;
         } else {
             self.skip_movetext()?;
         }
