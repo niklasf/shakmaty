@@ -125,10 +125,13 @@ impl FromStr for Nag {
 pub struct RawHeader<'a>(pub &'a[u8]);
 
 impl<'a> RawHeader<'a> {
+    /// Returns the raw byte representation of the header value.
     pub fn as_bytes(&self) -> &[u8] {
         self.0
     }
 
+    /// Decodes escaped quotes and backslashes into bytes. Allocates only when
+    /// the value actually contains escape sequences.
     pub fn decode(&self) -> Cow<'a, [u8]> {
         let mut head = 0;
         let mut decoded: Vec<u8> = Vec::new();
@@ -149,6 +152,12 @@ impl<'a> RawHeader<'a> {
         }
     }
 
+    /// Tries to decode the header as UTF-8. This is guaranteed to succeed on
+    /// valid PGNs.
+    ///
+    /// # Errors
+    ///
+    /// Errors if the header contains an invalid UTF-8 byte sequence.
     pub fn decode_utf8(&self) -> Result<Cow<'a, str>, Utf8Error> {
         Ok(match self.decode() {
             Cow::Borrowed(borrowed) => Cow::Borrowed(str::from_utf8(borrowed)?),
@@ -156,6 +165,8 @@ impl<'a> RawHeader<'a> {
         })
     }
 
+    /// Decodes the header as UTF-8, replacing any invalid byte sequences with
+    /// the placeholder � U+FFFD.
     pub fn decode_utf8_lossy(&self) -> Cow<'a, str> {
         match self.decode() {
             Cow::Borrowed(borrowed) => String::from_utf8_lossy(borrowed),
