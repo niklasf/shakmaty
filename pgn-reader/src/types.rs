@@ -161,3 +161,25 @@ impl<'a> fmt::Debug for RawHeader<'a> {
         write!(f, "{:?}", self.decode_utf8_lossy())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_nag() {
+        assert_eq!(Nag::from_ascii(b"$33"), Ok(Nag(33)));
+    }
+
+    #[test]
+    fn test_raw_header() {
+        let header = RawHeader(b"Hello world");
+        assert_eq!(header.decode().as_ref(), b"Hello world");
+
+        let header = RawHeader(b"Hello \\world\\");
+        assert_eq!(header.decode().as_ref(), b"Hello \\world\\");
+
+        let header = RawHeader(b"\\Hello \\\"world\\\\");
+        assert_eq!(header.decode().as_ref(), b"\\Hello \"world\\");
+    }
+}

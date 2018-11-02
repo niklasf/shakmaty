@@ -589,3 +589,48 @@ impl<'a> ReadPgn for SliceReader<'a> {
         debug_assert!(self.pos <= self.bytes.len());
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct _AssertObjectSafe<R>(Box<BufferedReader<R>>);
+
+    struct GameCounter {
+        count: usize,
+    }
+
+    impl Default for GameCounter {
+        fn default() -> GameCounter {
+            GameCounter { count: 0 }
+        }
+    }
+
+    impl Visitor for GameCounter {
+        type Result = ();
+
+        fn end_game(&mut self) {
+            self.count += 1;
+        }
+    }
+
+    #[test]
+    fn test_empty_game() -> Result<(), io::Error> {
+        let mut counter = GameCounter::default();
+        let mut reader = BufferedReader::new(io::Cursor::new(b"  "));
+        reader.read_game(&mut counter)?;
+        assert_eq!(counter.count, 0);
+        Ok(())
+    }
+
+    #[test]
+    fn test_trailing_space() -> Result<(), io::Error> {
+        let mut counter = GameCounter::default();
+        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
+        reader.read_game(&mut counter)?;
+        assert_eq!(counter.count, 1);
+        reader.read_game(&mut counter)?;
+        assert_eq!(counter.count, 1);
+        Ok(())
+    }
+}
