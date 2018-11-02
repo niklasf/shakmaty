@@ -41,6 +41,9 @@ trait ReadPgn {
     /// Consume n bytes from the buffer.
     fn consume(&mut self, n: usize);
 
+    /// Constructs a parser error.
+    fn invalid_data() -> Self::Err;
+
     fn peek(&self) -> Option<u8> {
         self.buffer().get(0).cloned()
     }
@@ -136,17 +139,17 @@ trait ReadPgn {
                 b'[' => {
                     self.bump();
 
-                    let left_quote = match memchr::memchr2(b'"', b'\n', self.buffer()) {
+                    let left_quote = match memchr::memchr3(b'"', b'\n', b']', self.buffer()) {
                         Some(left_quote) if self.buffer()[left_quote] == b'"' => left_quote,
                         Some(eol) => {
-                            visitor.header(&self.buffer()[..eol], RawHeader(b""));
                             self.consume(eol + 1);
+                            self.skip_ket()?;
                             continue;
                         },
                         None => {
                             self.consume_all();
                             self.skip_line()?;
-                            continue;
+                            return Err(Self::invalid_data());
                         }
                     };
 
@@ -173,8 +176,9 @@ trait ReadPgn {
                                 right_quote = min(right_quote + delta + 2, self.remaining());
                             },
                             None => {
-                                right_quote = self.remaining();
-                                break right_quote;
+                                self.consume_all();
+                                self.skip_line()?;
+                                return Err(Self::invalid_data());
                             }
                         }
                     };
@@ -606,6 +610,10 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
         }
 
         Ok(self.buffer.inner.front().cloned())
+    }
+
+    fn invalid_data() -> io::Error {
+        io::Error::from(io::ErrorKind::InvalidData)
     }
 
     fn buffer(&self) -> &[u8] {
