@@ -259,11 +259,10 @@ trait ReadPgn {
                     let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer()) {
                         right_brace
                     } else {
-                        visitor.comment(&self.buffer()[value_start..]);
                         self.consume_all();
                         self.skip_until(b'}')?;
                         self.bump();
-                        continue;
+                        return Err(Self::invalid_data());
                     };
 
                     let value_end = if right_brace > 0 && self.buffer()[right_brace - 1] == b' ' {
@@ -316,8 +315,8 @@ trait ReadPgn {
                 b'0' => {
                     self.bump();
                     if self.buffer().starts_with(b"-1") {
-                        visitor.outcome(Some(Outcome::Decisive { winner: Color::Black }));
                         self.consume(2);
+                        visitor.outcome(Some(Outcome::Decisive { winner: Color::Black }));
                     } else if self.buffer().starts_with(b"-0") {
                         // Castling notation with zeros.
                         self.consume(2);
