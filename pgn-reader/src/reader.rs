@@ -492,6 +492,16 @@ pub struct BufferedReader<R> {
 }
 
 impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
+    /// Create a new reader by wrapping a byte slice in a [`Cursor`].
+    ///
+    /// ```
+    /// use pgn_reader::BufferedReader;
+    ///
+    /// let pgn = b"1. e4 e5 *";
+    /// let reader = BufferedReader::new_cursor(&pgn[..]);
+    /// ```
+    ///
+    /// [`Cursor`]: https://doc.rust-lang.org/std/io/struct.Cursor.html
     pub fn new_cursor(inner: T) -> BufferedReader<Cursor<T>> {
         BufferedReader::new(Cursor::new(inner))
     }
@@ -574,7 +584,8 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     }
 }
 
-// Iterator returned by `BufferedReader::into_iter()`.
+/// Iterator returned by
+/// [`BufferedReader::into_iter()`](struct.BufferedReader.html#method.into_iter).
 #[derive(Debug)]
 #[must_use]
 pub struct IntoIter<'a, V, R> {
