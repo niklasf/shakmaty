@@ -344,14 +344,6 @@ impl<R: Read> ReadPgn for PgnReader<R> {
         unsafe { self.buffer.move_head(bytes as isize); }
     }
 
-    fn consume_all(&mut self) {
-        self.buffer.clear();
-    }
-
-    fn bump(&mut self) -> Option<u8> {
-        self.buffer.pop_front()
-    }
-
     fn peek(&self) -> Option<u8> {
         self.buffer.front().cloned()
     }
