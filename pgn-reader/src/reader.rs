@@ -347,6 +347,10 @@ trait ReadPgn {
                         }
                         self.consume(token_end);
                     },
+                    b'*' => {
+                        visitor.outcome(None);
+                        self.bump();
+                    },
                     _ => {
                         let token_end = self.find_token_end(1);
                         if ch > b'9' {
