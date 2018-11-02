@@ -164,8 +164,11 @@ mod types;
 mod visitor;
 mod reader;
 
+pub use types::{Skip, Nag, RawHeader};
 pub use visitor::Visitor;
 pub use reader::{BufferedReader, SliceReader as Cursor};
+pub use shakmaty::{Color, Role, Piece, CastlingSide, Outcome};
+pub use shakmaty::san::{San, SanPlus};
 
 /* impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Creates a new reader with a custom [`Visitor`].

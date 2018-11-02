@@ -2,15 +2,11 @@
 // Usage: cargo run --release --example stats -- [PGN]...
 
 extern crate pgn_reader;
-extern crate memmap;
-extern crate madvise;
-
 use std::env;
+use std::io;
 use std::fs::File;
 
-use pgn_reader::{Reader, RawHeader, Visitor, San, Nag, Outcome};
-use memmap::Mmap;
-use madvise::{AccessPattern, AdviseMemory};
+use pgn_reader::{BufferedReader, RawHeader, Visitor, SanPlus, Nag, Outcome};
 
 #[derive(Debug, Default)]
 struct Stats {
@@ -29,20 +25,14 @@ impl Stats {
     }
 }
 
-impl<'pgn> Visitor<'pgn> for Stats {
+impl Visitor for Stats {
     type Result = ();
 
-    fn end_game(&mut self, game: &'pgn [u8]) {
-        if !game.is_empty() {
-            self.games += 1;
-        }
-    }
-
-    fn header(&mut self, _key: &'pgn [u8], _value: RawHeader<'pgn>) {
+    fn header(&mut self, _key: &[u8], _value: RawHeader<'_>) {
         self.headers += 1;
     }
 
-    fn san(&mut self, _san: San) {
+    fn san(&mut self, _san: SanPlus) {
         self.sans += 1;
     }
 
@@ -50,7 +40,7 @@ impl<'pgn> Visitor<'pgn> for Stats {
         self.nags += 1;
     }
 
-    fn comment(&mut self, _comment: &'pgn [u8]) {
+    fn comment(&mut self, _comment: &[u8]) {
         self.comments += 1;
     }
 
@@ -58,20 +48,24 @@ impl<'pgn> Visitor<'pgn> for Stats {
         self.variations += 1;
     }
 
-    fn outcome(&mut self, _outcome: Outcome) {
+    fn outcome(&mut self, _outcome: Option<Outcome>) {
         self.outcomes += 1;
+    }
+
+    fn end_game(&mut self) {
+        self.games += 1;
     }
 }
 
-fn main() {
+fn main() -> Result<(), io::Error> {
     for arg in env::args().skip(1) {
         let file = File::open(&arg).expect("fopen");
-        let pgn = unsafe { Mmap::map(&file).expect("mmap") };
-        pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
+        let mut reader = BufferedReader::new(file);
 
         let mut stats = Stats::new();
-        Reader::new(&mut stats, &pgn[..]).read_all();
-
+        while let Some(_) = reader.read_game(&mut stats)? { }
         println!("{}: {:?}", arg, stats);
     }
+
+    Ok(())
 }
