@@ -250,4 +250,8 @@ impl<R: Read> PgnReader<R> {
         self.skip_whitespace()?;
         Ok(Some(visitor.end_game()))
     }
+
+    pub fn skip_game(&mut self) -> io::Result<bool> {
+        self.read_game(&mut SkipVisitor).map(|r| r.is_some())
+    }
 }
