@@ -1,4 +1,5 @@
-use super::{Nag, Outcome, RawHeader, Skip, San};
+use super::{Nag, Outcome, RawHeader, Skip};
+use shakmaty::san::SanPlus;
 use std::cmp::min;
 use std::io;
 use std::io::Read;
@@ -14,7 +15,7 @@ pub trait Visitor {
     fn header(&mut self, _key: &[u8], _value: RawHeader<'_>) { }
     fn end_headers(&mut self) -> Skip { Skip(false) }
 
-    fn san(&mut self, _san: San) { }
+    fn san(&mut self, _san: SanPlus) { }
     fn nag(&mut self, _nag: Nag) { }
     fn comment(&mut self, _comment: &[u8]) { }
     fn begin_variation(&mut self) -> Skip { Skip(false) }
@@ -237,6 +238,47 @@ trait ReadPgn {
                             self.consume_all();
                         }
                     }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
+        while self.fill_buffer()? {
+            if let Some(ch) = self.peek() {
+                match ch {
+                    b'{' => {
+                        self.bump();
+
+                        let value_start = if self.peek() == Some(b' ') {
+                            1
+                        } else {
+                            0
+                        };
+
+                        let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer()) {
+                            right_brace
+                        } else {
+                            visitor.comment(&self.buffer()[value_start..]);
+                            self.consume_all();
+                            self.skip_until(b'}');
+                            self.bump();
+                            continue;
+                        };
+
+                        let value_end = if right_brace > 0 && self.buffer()[right_brace - 1] == b' ' {
+                            right_brace - 1
+                        } else {
+                            right_brace
+                        };
+
+                        visitor.comment(&self.buffer()[value_start..value_end]);
+                        self.consume(right_brace);
+                        self.bump();
+                    },
+                    _ => { self.bump(); },
                 }
             }
         }
