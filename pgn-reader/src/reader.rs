@@ -39,9 +39,17 @@ const MIN_BUFFER_SIZE: usize = 8192;
 trait ReadPgn {
     type Err;
 
+    /// Fill the buffer. The buffer must then contain at least MIN_BUFFER_SIZE
+    /// bytes or all remaining bytes until the end of the source.
+    ///
+    /// Returns false is the buffer is empty.
     fn fill_buffer(&mut self) -> Result<bool, Self::Err>;
+
+    /// Returns the current buffer.
     fn buffer(&self) -> &[u8];
-    fn consume(&mut self, bytes: usize);
+
+    /// Consume n bytes from the buffer.
+    fn consume(&mut self, n: usize);
 
     fn peek(&self) -> Option<u8> {
         self.buffer().get(0).cloned()
@@ -150,6 +158,7 @@ trait ReadPgn {
                                 continue;
                             },
                             None => {
+                                self.consume_all();
                                 self.skip_line()?;
                                 continue;
                             }
@@ -222,8 +231,11 @@ trait ReadPgn {
                         }
                     },
                     _ => {
-                        let consumed = memchr::memchr3(b'\n', b'{', b';', self.buffer()).unwrap_or_else(|| self.remaining());
-                        self.consume(consumed);
+                        if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer()) {
+                            self.consume(consumed);
+                        } else {
+                            self.consume_all();
+                        }
                     }
                 }
             }
@@ -244,7 +256,7 @@ trait ReadPgn {
         visitor.begin_headers();
         self.read_headers(visitor)?;
         if let Skip(false) = visitor.end_headers() {
-            //self.skip_until(b'\n')?;
+            // TODO: Read movetext
             self.skip_movetext()?;
         } else {
             self.skip_movetext()?;
