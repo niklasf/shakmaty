@@ -16,8 +16,8 @@
 
 //! A fast non-allocating reader for chess games in PGN notation.
 //!
-//! [`Reader`] parses games and calls methods of a user provided [`Visitor`].
-//! Implementing custom visitors allows for maximum flexibility:
+//! [`BufferedReader`] parses games and calls methods of a user provided
+//! [`Visitor`]. Implementing custom visitors allows for maximum flexibility:
 //!
 //! * The reader itself does not allocate. The visitor can decide if and
 //!   how to represent games in memory.
@@ -40,7 +40,8 @@
 //! ```
 //! extern crate pgn_reader;
 //!
-//! use pgn_reader::{Visitor, Skip, RawHeader, Reader, San};
+//! use std::io;
+//! use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
 //!
 //! struct MoveCounter {
 //!     moves: usize,
@@ -52,14 +53,14 @@
 //!     }
 //! }
 //!
-//! impl<'pgn> Visitor<'pgn> for MoveCounter {
+//! impl Visitor for MoveCounter {
 //!     type Result = usize;
 //!
 //!     fn begin_game(&mut self) {
 //!         self.moves = 0;
 //!     }
 //!
-//!     fn san(&mut self, _san: San) {
+//!     fn san(&mut self, _san_plus: SanPlus) {
 //!         self.moves += 1;
 //!     }
 //!
@@ -67,21 +68,23 @@
 //!         Skip(true) // stay in the mainline
 //!     }
 //!
-//!     fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
+//!     fn end_game(&mut self) -> Self::Result {
 //!         self.moves
 //!     }
 //! }
 //!
-//! fn main() {
+//! fn main() -> io::Result<()> {
 //!     let pgn = b"1. e4 e5 2. Nf3 (2. f4)
 //!                 { game paused due to bad weather }
 //!                 2... Nf6 *";
 //!
-//!     let mut counter = MoveCounter::new();
-//!     let reader = Reader::new(&mut counter, pgn);
+//!     let mut reader = BufferedReader::new_cursor(&pgn[..]);
 //!
-//!     let moves: usize = reader.into_iter().sum();
-//!     assert_eq!(moves, 4);
+//!     let mut counter = MoveCounter::new();
+//!     let moves = reader.read_game(&mut counter)?;
+//!
+//!     assert_eq!(moves, Some(4));
+//!     Ok(())
 //! }
 //! ```
 //!
@@ -91,10 +94,12 @@
 //! extern crate pgn_reader;
 //! extern crate shakmaty;
 //!
-//! use pgn_reader::{Visitor, Skip, RawHeader, Reader, San};
+//! use std::io;
 //!
 //! use shakmaty::{Chess, Position};
 //! use shakmaty::fen::Fen;
+//!
+//! use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
 //!
 //! struct LastPosition {
 //!     pos: Chess,
@@ -106,10 +111,10 @@
 //!     }
 //! }
 //!
-//! impl<'pgn> Visitor<'pgn> for LastPosition {
+//! impl Visitor for LastPosition {
 //!     type Result = Chess;
 //!
-//!     fn header(&mut self, key: &'pgn [u8], value: RawHeader<'pgn>) {
+//!     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
@@ -125,29 +130,31 @@
 //!         Skip(true) // stay in the mainline
 //!     }
 //!
-//!     fn san(&mut self, san: San) {
-//!         if let Ok(m) = san.to_move(&self.pos) {
+//!     fn san(&mut self, san_plus: SanPlus) {
+//!         if let Ok(m) = san_plus.san.to_move(&self.pos) {
 //!             self.pos.play_unchecked(&m);
 //!         }
 //!     }
 //!
-//!     fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
+//!     fn end_game(&mut self) -> Self::Result {
 //!         ::std::mem::replace(&mut self.pos, Chess::default())
 //!     }
 //! }
 //!
-//! fn main() {
+//! fn main() -> io::Result<()> {
 //!     let pgn = b"1. f3 e5 2. g4 Qh4#";
 //!
-//!     let mut visitor = LastPosition::new();
-//!     let mut reader = Reader::new(&mut visitor, pgn);
+//!     let mut reader = BufferedReader::new_cursor(&pgn[..]);
 //!
-//!     let pos = reader.read_game();
+//!     let mut visitor = LastPosition::new();
+//!     let pos = reader.read_game(&mut visitor)?;
+//!
 //!     assert!(pos.map_or(false, |p| p.is_checkmate()));
+//!     Ok(())
 //! }
 //! ```
 //!
-//! [`Reader`]: struct.Reader.html
+//! [`BufferedReader`]: struct.BufferedReader.html
 //! [`Visitor`]: trait.Visitor.html
 //! [Shakmaty]: ../shakmaty/index.html
 
@@ -164,11 +171,12 @@ mod types;
 mod visitor;
 mod reader;
 
-pub use types::{Skip, Nag, RawHeader};
-pub use visitor::Visitor;
-pub use reader::{BufferedReader, SliceReader as Cursor};
 pub use shakmaty::{Color, Role, Piece, CastlingSide, Outcome};
 pub use shakmaty::san::{San, SanPlus};
+
+pub use types::{Skip, Nag, RawHeader};
+pub use visitor::Visitor;
+pub use reader::{BufferedReader, IntoIter};
 
 /* impl<'a, 'pgn, V: Visitor<'pgn>> Reader<'a, 'pgn, V> {
     /// Creates a new reader with a custom [`Visitor`].

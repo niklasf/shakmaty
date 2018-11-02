@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::min;
-use std::io::{self, Read};
+use std::io::{self, Read, Cursor};
 use std::ptr;
 
 use slice_deque::SliceDeque;
@@ -468,6 +468,12 @@ pub struct BufferedReader<R> {
     buffer: SliceDeque<u8>,
 }
 
+impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
+    pub fn new_cursor(inner: T) -> BufferedReader<Cursor<T>> {
+        BufferedReader::new(Cursor::new(inner))
+    }
+}
+
 impl<R: Read> BufferedReader<R> {
     pub fn new(inner: R) -> BufferedReader<R> {
         let mut buffer = SliceDeque::with_capacity(MIN_BUFFER_SIZE * 2);
@@ -491,6 +497,18 @@ impl<R: Read> BufferedReader<R> {
 
     pub fn skip_game<V: Visitor>(&mut self) -> io::Result<bool> {
         ReadPgn::skip_game(self)
+    }
+
+    pub fn read_all<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+        while let Some(_) = self.read_game(visitor)? { }
+        Ok(())
+    }
+
+    pub fn into_iter<'a, V: Visitor>(self, visitor: &'a mut V) -> IntoIter<'a, V, R> {
+        IntoIter {
+            reader: self,
+            visitor,
+        }
     }
 }
 
@@ -541,41 +559,23 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     }
 }
 
+// Iterator returned by `BufferedReader::into_iter()`.
 #[derive(Debug)]
-pub struct SliceReader<'a> {
-    bytes: &'a [u8],
-    pos: usize,
+#[must_use]
+pub struct IntoIter<'a, V, R> {
+    visitor: &'a mut V,
+    reader: BufferedReader<R>,
 }
 
-impl<'a> SliceReader<'a> {
-    pub fn new(bytes: &'a [u8]) -> SliceReader<'a> {
-        SliceReader {
-            bytes,
-            pos: 0,
+impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
+    type Item = Result<V::Result, io::Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.reader.read_game(self.visitor) {
+            Ok(Some(result)) => Some(Ok(result)),
+            Ok(None) => None,
+            Err(err) => Some(Err(err)),
         }
-    }
-
-    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> Option<V::Result> {
-        ReadPgn::read_game(self, visitor).unwrap_or_else(|_| unreachable!())
-    }
-}
-
-enum Never { }
-
-impl<'a> ReadPgn for SliceReader<'a> {
-    type Err = Never;
-
-    fn fill_buffer_and_peek(&mut self) -> Result<Option<u8>, Self::Err> {
-        Ok(self.bytes.get(self.pos).cloned())
-    }
-
-    fn buffer(&self) -> &[u8] {
-        &self.bytes[self.pos..]
-    }
-
-    fn consume(&mut self, bytes: usize) {
-        self.pos += bytes;
-        debug_assert!(self.pos <= self.bytes.len());
     }
 }
 

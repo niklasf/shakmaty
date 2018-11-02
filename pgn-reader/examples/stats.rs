@@ -63,7 +63,7 @@ fn main() -> Result<(), io::Error> {
         let mut reader = BufferedReader::new(file);
 
         let mut stats = Stats::new();
-        while let Some(_) = reader.read_game(&mut stats)? { }
+        reader.read_all(&mut stats)?;
         println!("{}: {:?}", arg, stats);
     }
 
