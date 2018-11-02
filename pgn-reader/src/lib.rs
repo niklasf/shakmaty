@@ -19,8 +19,8 @@
 //! [`BufferedReader`] parses games and calls methods of a user provided
 //! [`Visitor`]. Implementing custom visitors allows for maximum flexibility:
 //!
-//! * The reader itself does not allocate. The visitor can decide if and
-//!   how to represent games in memory.
+//! * The reader itself does not allocate (besides a single fixed-size buffer).
+//!   The visitor can decide if and how to represent games in memory.
 //! * The reader does not validate move legality. This allows implementing
 //!   support for custom chess variants, or delaying move validation.
 //! * The visitor can signal to the reader that it does not care about a game
