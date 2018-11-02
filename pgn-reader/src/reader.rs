@@ -569,7 +569,7 @@ impl<R: Read> BufferedReader<R> {
     ///
     /// * I/O error from the underlying reader.
     /// * Irrecoverable parser errors.
-    pub fn into_iter<'a, V: Visitor>(self, visitor: &'a mut V) -> IntoIter<'a, V, R> {
+    pub fn into_iter<V: Visitor>(self, visitor: &mut V) -> IntoIter<'_, V, R> {
         IntoIter {
             reader: self,
             visitor,
