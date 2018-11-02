@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//! A fast non-allocating streaming reader for chess games in PGN notation.
+//! A fast non-allocating and streaming reader for chess games in PGN notation.
 //!
 //! [`BufferedReader`] parses games and calls methods of a user provided
 //! [`Visitor`]. Implementing custom visitors allows for maximum flexibility:
