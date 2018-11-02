@@ -24,6 +24,16 @@ pub trait Visitor {
     fn end_game(&mut self) -> Self::Result;
 }
 
+struct SkipVisitor;
+
+impl Visitor for SkipVisitor {
+    type Result = ();
+
+    fn end_headers(&mut self) -> Skip { Skip(true) }
+    fn begin_variation(&mut self) -> Skip { Skip(true) }
+    fn end_game(&mut self) { }
+}
+
 #[derive(Debug)]
 pub struct PgnReader<R> {
     inner: R,
@@ -73,9 +83,9 @@ impl<R: Read> PgnReader<R> {
         Ok(())
     }
 
-    fn skip_line(&mut self) -> io::Result<()> {
+    fn skip_until(&mut self, needle: u8) -> io::Result<()> {
         while self.fill_buffer()? {
-            if let Some(pos) = memchr::memchr(b'\n', self.buffer.as_slice()) {
+            if let Some(pos) = memchr::memchr(needle, self.buffer.as_slice()) {
                 unsafe { self.buffer.move_head(pos as isize + 1); }
                 return Ok(());
             } else {
@@ -91,7 +101,7 @@ impl<R: Read> PgnReader<R> {
             while let Some(ch) = self.buffer.pop_front() {
                 match ch {
                     b' ' | b'\t' | b'\r' | b'\n' => (),
-                    b'%' => self.skip_line()?,
+                    b'%' => self.skip_until(b'\n')?,
                     _ => {
                         self.buffer.push_front(ch);
                         return Ok(());
@@ -108,7 +118,7 @@ impl<R: Read> PgnReader<R> {
             while let Some(ch) = self.buffer.pop_front() {
                 match ch {
                     b' ' | b'\t' | b'\r' | b']' => (),
-                    b'%' => self.skip_line()?,
+                    b'%' => self.skip_until(b'\n')?,
                     b'\n' => return Ok(()),
                     _ => {
                         self.buffer.push_front(ch);
@@ -134,7 +144,7 @@ impl<R: Read> PgnReader<R> {
                                 continue;
                             },
                             None => {
-                                self.skip_line()?;
+                                self.skip_until(b'\n')?;
                                 continue;
                             }
                         };
@@ -173,10 +183,44 @@ impl<R: Read> PgnReader<R> {
                         unsafe { self.buffer.move_head(consumed as isize); }
                         self.skip_ket()?;
                     },
-                    b'%' => self.skip_line()?,
+                    b'%' => self.skip_until(b'\n')?,
                     _ => {
                         self.buffer.push_front(ch);
                         return Ok(());
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn skip_movetext(&mut self) -> io::Result<()> {
+        while self.fill_buffer()? {
+            if let Some(ch) = self.buffer.pop_front() {
+                match ch {
+                    b'{' => self.skip_until(b'}')?,
+                    b';' => {
+                        self.skip_until(b'\n')?;
+                        self.buffer.push_front(b'\n');
+                    },
+                    b'\n' => {
+                        match self.buffer.pop_front() {
+                            Some(b'%') => {
+                                self.skip_until(b'\n');
+                                self.buffer.push_front(b'\n');
+                            },
+                            Some(b'\n') => break,
+                            Some(b'[') => {
+                                self.buffer.push_front(b'[');
+                                break;
+                            }
+                            _ => continue,
+                        }
+                    },
+                    _ => {
+                        let consumed = memchr::memchr3(b'\n', b'{', b';', self.buffer.as_slice()).unwrap_or_else(|| self.buffer.len());
+                        unsafe { self.buffer.move_head(consumed as isize); }
                     }
                 }
             }
@@ -196,10 +240,14 @@ impl<R: Read> PgnReader<R> {
         visitor.begin_game();
         visitor.begin_headers();
         self.read_headers(visitor)?;
-        visitor.end_headers();
+        if let Skip(false) = visitor.end_headers() {
+            //self.skip_until(b'\n')?;
+            self.skip_movetext()?;
+        } else {
+            self.skip_movetext()?;
+        }
 
         self.skip_whitespace()?;
-
         Ok(Some(visitor.end_game()))
     }
 }
