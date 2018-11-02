@@ -31,7 +31,8 @@ mainline of each game.
 ```rust
 extern crate pgn_reader;
 
-use pgn_reader::{Visitor, Skip, Reader, San};
+use std::io;
+use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
 
 struct MoveCounter {
     moves: usize,
@@ -43,14 +44,14 @@ impl MoveCounter {
     }
 }
 
-impl<'pgn> Visitor<'pgn> for MoveCounter {
+impl Visitor for MoveCounter {
     type Result = usize;
 
     fn begin_game(&mut self) {
         self.moves = 0;
     }
 
-    fn san(&mut self, _san: San) {
+    fn san(&mut self, _san_plus: SanPlus) {
         self.moves += 1;
     }
 
@@ -58,21 +59,23 @@ impl<'pgn> Visitor<'pgn> for MoveCounter {
         Skip(true) // stay in the mainline
     }
 
-    fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
+    fn end_game(&mut self) -> Self::Result {
         self.moves
     }
 }
 
-fn main() {
+fn main() -> io::Result<()> {
     let pgn = b"1. e4 e5 2. Nf3 (2. f4)
                 { game paused due to bad weather }
                 2... Nf6 *";
 
-    let mut counter = MoveCounter::new();
-    let reader = Reader::new(&mut counter, pgn);
+    let mut reader = BufferedReader::new_cursor(&pgn[..]);
 
-    let moves: usize = reader.into_iter().sum();
-    assert_eq!(moves, 4);
+    let mut counter = MoveCounter::new();
+    let moves = reader.read_game(&mut counter)?;
+
+    assert_eq!(moves, Some(4));
+    Ok(())
 }
 ```
 
