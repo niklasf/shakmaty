@@ -1,6 +1,6 @@
 use super::{Nag, Outcome, RawHeader, Skip};
-use shakmaty::Color;
-use shakmaty::san::SanPlus;
+use shakmaty::{Color, CastlingSide};
+use shakmaty::san::{San, SanPlus};
 use std::cmp::min;
 use std::io;
 use std::io::Read;
@@ -329,8 +329,38 @@ trait ReadPgn {
                     },
                     b'0' => {
                         self.bump();
-                        let token_end = self.find_token_end(0);
-                        self.consume(token_end); // TODO
+                        if self.buffer().starts_with(b"-1") {
+                            visitor.outcome(Some(Outcome::Decisive { winner: Color::Black }));
+                            self.consume(2);
+                        } else if self.buffer().starts_with(b"-0") {
+                            // Castling notation with zeros.
+                            self.consume(2);
+                            let side = if self.buffer().starts_with(b"-0") {
+                                self.consume(2);
+                                CastlingSide::QueenSide
+                            } else {
+                                CastlingSide::KingSide
+                            };
+                            let (check, checkmate) = match self.peek() {
+                                Some(b'+') => {
+                                    self.bump();
+                                    (true, false)
+                                },
+                                Some(b'#') => {
+                                    self.bump();
+                                    (false, true)
+                                },
+                                _ => (false, false),
+                            };
+                            visitor.san(SanPlus {
+                                san: San::Castle(side),
+                                check,
+                                checkmate,
+                            });
+                        } else {
+                            let token_end = self.find_token_end(0);
+                            self.consume(token_end);
+                        }
                     },
                     b'(' => {
                         self.bump();
