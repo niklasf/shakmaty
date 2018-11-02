@@ -181,6 +181,17 @@ impl<'a> fmt::Debug for RawHeader<'a> {
     }
 }
 
+/// A comment, excluding the braces.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct RawComment<'a>(pub &'a [u8]);
+
+impl<'a> RawComment<'a> {
+    /// Returns the raw byte representation of the comment.
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -6,7 +6,7 @@ use std::env;
 use std::io;
 use std::fs::File;
 
-use pgn_reader::{BufferedReader, RawHeader, Visitor, SanPlus, Nag, Outcome};
+use pgn_reader::{BufferedReader, RawComment, RawHeader, Visitor, SanPlus, Nag, Outcome};
 
 #[derive(Debug, Default)]
 struct Stats {
@@ -40,7 +40,7 @@ impl Visitor for Stats {
         self.nags += 1;
     }
 
-    fn comment(&mut self, _comment: &[u8]) {
+    fn comment(&mut self, _comment: RawComment<'_>) {
         self.comments += 1;
     }
 

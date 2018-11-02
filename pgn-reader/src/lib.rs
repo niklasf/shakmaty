@@ -174,6 +174,6 @@ mod reader;
 pub use shakmaty::{Color, Role, CastlingSide, Outcome, Square, File, Rank};
 pub use shakmaty::san::{San, SanPlus};
 
-pub use types::{Skip, Nag, RawHeader};
+pub use types::{Skip, Nag, RawHeader, RawComment};
 pub use visitor::Visitor;
 pub use reader::{BufferedReader, IntoIter};

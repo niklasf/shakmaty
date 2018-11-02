@@ -23,7 +23,7 @@ use slice_deque::SliceDeque;
 use shakmaty::{Color, CastlingSide, Outcome};
 use shakmaty::san::{San, SanPlus};
 
-use types::{Nag, Skip, RawHeader};
+use types::{Nag, Skip, RawComment, RawHeader};
 use visitor::{Visitor, SkipVisitor};
 
 const MIN_BUFFER_SIZE: usize = 8192;
@@ -250,12 +250,6 @@ trait ReadPgn {
                 b'{' => {
                     self.bump();
 
-                    let value_start = if self.peek() == Some(b' ') {
-                        1
-                    } else {
-                        0
-                    };
-
                     let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer()) {
                         right_brace
                     } else {
@@ -265,15 +259,8 @@ trait ReadPgn {
                         return Err(Self::invalid_data());
                     };
 
-                    let value_end = if right_brace > 0 && self.buffer()[right_brace - 1] == b' ' {
-                        right_brace - 1
-                    } else {
-                        right_brace
-                    };
-
-                    visitor.comment(&self.buffer()[value_start..value_end]);
-                    self.consume(right_brace);
-                    self.bump();
+                    visitor.comment(RawComment(&self.buffer()[..right_brace]));
+                    self.consume(right_brace + 1);
                 },
                 b'\n' => {
                     self.bump();
