@@ -526,10 +526,22 @@ impl<R: Read> BufferedReader<R> {
     /// # }
     /// ```
     pub fn new(inner: R) -> BufferedReader<R> {
-        BufferedReader {
+        let mut reader = BufferedReader {
             inner,
             buffer: Buffer::new(),
+        };
+
+        unsafe {
+            // Initialize the entire ring buffer.
+            //
+            // Use https://doc.rust-lang.org/std/io/struct.Initializer.html
+            // once stabilized.
+            let uninitialized = reader.buffer.inner.tail_head_slice();
+            assert_eq!(uninitialized.len(), MIN_BUFFER_SIZE * 2);
+            ptr::write_bytes(uninitialized.as_mut_ptr(), 0, uninitialized.len());
         }
+
+        reader
     }
 
     /// Read a single game, if any, and returns the result produced by the
@@ -590,13 +602,9 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
         while self.buffer.inner.len() < MIN_BUFFER_SIZE {
             unsafe {
                 let size = {
-                    // This is safe because we initialize the slice before
-                    // reading data into it.
-                    //
-                    // TODO: Use https://doc.rust-lang.org/std/io/struct.Initializer.html
-                    // once stabilized.
+                    // This is safe because we have initialized the entire
+                    // buffer in the constructor.
                     let remainder = self.buffer.inner.tail_head_slice();
-                    ptr::write_bytes(remainder.as_mut_ptr(), 0, remainder.len());
                     self.inner.read(remainder)?
                 };
 
@@ -620,9 +628,8 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     }
 
     fn consume(&mut self, bytes: usize) {
-        // This is safe because we move the head forward (since bytes is
-        // positive, even after casting to isize).
-        assert!(bytes <= MIN_BUFFER_SIZE * 2);
+        // This is unconditionally safe with a fully initialized buffer.
+        debug_assert!(bytes <= MIN_BUFFER_SIZE * 2);
         unsafe { self.buffer.inner.move_head(bytes as isize); }
     }
 
