@@ -1,25 +1,20 @@
 // Validates moves in PGNs.
 // Usage: cargo run --release --example validate -- [PGN]...
 
-extern crate pgn_reader;
-extern crate memmap;
-extern crate madvise;
-extern crate shakmaty;
 extern crate crossbeam;
-
-use pgn_reader::{Visitor, Skip, Reader, RawHeader, San};
-
-use shakmaty::{Chess, Position};
-use shakmaty::fen::Fen;
-
-use memmap::Mmap;
-use madvise::{AccessPattern, AdviseMemory};
+extern crate pgn_reader;
+extern crate shakmaty;
 
 use std::env;
 use std::fs::File;
 use std::mem;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+use shakmaty::{Chess, Position};
+use shakmaty::fen::Fen;
+
+use pgn_reader::{Visitor, Skip, BufferedReader, RawHeader, San, SanPlus};
 
 struct Game {
     index: usize,
@@ -63,14 +58,14 @@ impl Validator {
     }
 }
 
-impl<'pgn> Visitor<'pgn> for Validator {
+impl Visitor for Validator {
     type Result = Game;
 
     fn begin_game(&mut self) {
         self.games += 1;
     }
 
-    fn header(&mut self, key: &'pgn [u8], value: RawHeader<'pgn>) {
+    fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
@@ -101,13 +96,13 @@ impl<'pgn> Visitor<'pgn> for Validator {
         Skip(true) // stay in the mainline
     }
 
-    fn san(&mut self, san: San) {
+    fn san(&mut self, san_plus: SanPlus) {
         if self.game.success {
-            self.game.sans.push(san);
+            self.game.sans.push(san_plus.san);
         }
     }
 
-    fn end_game(&mut self, _game: &'pgn [u8]) -> Self::Result {
+    fn end_game(&mut self) -> Self::Result {
         mem::replace(&mut self.game, Game {
             index: self.games,
             pos: Chess::default(),
@@ -124,16 +119,14 @@ fn main() {
         let success = Arc::new(AtomicBool::new(true));
 
         let file = File::open(&arg).expect("fopen");
-        let pgn = unsafe { Mmap::map(&file).expect("mmap") };
-        pgn.advise_memory_access(AccessPattern::Sequential).expect("madvise");
 
         let mut validator = Validator::new();
         let (send, recv) = crossbeam::channel::bounded(128);
 
         crossbeam::scope(|scope| {
             scope.spawn(move || {
-                for game in Reader::new(&mut validator, &pgn[..]) {
-                    send.send(game);
+                for game in BufferedReader::new(file).into_iter(&mut validator) {
+                    send.send(game.expect("io"));
                 }
             });
 

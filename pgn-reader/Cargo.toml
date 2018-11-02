@@ -20,9 +20,6 @@ shakmaty = "0.12"
 slice-deque = "0.1.14"
 
 [dev-dependencies]
-memmap = "0.7"
-madvise = "0.1"
-unicase = "2.2"
 bencher = "0.1"
 crossbeam = "0.4"
 
