@@ -315,6 +315,9 @@ impl<R: Read> ReadPgn for PgnReader<R> {
         while self.buffer.len() < MIN_BUFFER_SIZE {
             unsafe {
                 let size = {
+                    // This is safe because the buffer does not contain
+                    // uninitialized memory: We have written each byte at
+                    // least once (e.g. with zeros in ReadPgn::new()).
                     let remainder = self.buffer.tail_head_slice();
                     self.inner.read(remainder)?
                 };
@@ -335,7 +338,9 @@ impl<R: Read> ReadPgn for PgnReader<R> {
     }
 
     fn consume(&mut self, bytes: usize) {
-        // TODO: Safety argument.
+        // This is safe because we move the head forward (since bytes is
+        // positive, even after casting to isize).
+        assert!(bytes <= MIN_BUFFER_SIZE * 2);
         unsafe { self.buffer.move_head(bytes as isize); }
     }
 
