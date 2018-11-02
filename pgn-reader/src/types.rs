@@ -1,0 +1,164 @@
+// This file is part of the pgn-reader library.
+// Copyright (C) 2017-2018 Niklas Fiekas <niklas.fiekas@backscattering.de>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+use std::borrow::Cow;
+use std::error::Error;
+use std::fmt;
+use std::str;
+use std::str::{FromStr, Utf8Error};
+
+/// Tell the reader to skip over a game or variation.
+#[derive(Clone, Eq, PartialEq, Debug)]
+#[must_use]
+pub struct Skip(pub bool);
+
+/// A numeric annotation glyph like `?`, `!!` or `$42`.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Nag(pub u8);
+
+impl Nag {
+    /// Tries to parse a NAG from ASCII.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use pgn_reader::Nag;
+    ///
+    /// assert_eq!(Nag::from_ascii(b"??"), Ok(Nag(4)));
+    /// assert_eq!(Nag::from_ascii(b"$24"), Ok(Nag(24)));
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`InvalidNag`] error if the input is neither a known glyph
+    /// (`?!`, `!`, ...) nor a valid numeric annotation (`$0`, ..., `$255`).
+    ///
+    ///
+    /// [`InvalidNag`]: struct.InvalidNag.html
+    pub fn from_ascii(s: &[u8]) -> Result<Nag, InvalidNag> {
+        if s == b"?!" {
+            Ok(Nag(6))
+        } else if s == b"?" {
+            Ok(Nag(2))
+        } else if s == b"??" {
+            Ok(Nag(4))
+        } else if s == b"!" {
+            Ok(Nag(1))
+        } else if s == b"!!" {
+            Ok(Nag(3))
+        } else if s == b"!?" {
+            Ok(Nag(5))
+        } else if s.len() > 1 && s[0] == b'$' {
+            btoi::btou(&s[1..]).ok().map(Nag).ok_or(InvalidNag { _priv: () })
+        } else {
+            Err(InvalidNag { _priv: () })
+        }
+    }
+}
+
+impl fmt::Display for Nag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "${}", self.0)
+    }
+}
+
+impl From<u8> for Nag {
+    fn from(nag: u8) -> Nag {
+        Nag(nag)
+    }
+}
+
+/// Error when parsing an invalid NAG.
+#[derive(Clone, Eq, PartialEq)]
+pub struct InvalidNag {
+    _priv: (),
+}
+
+impl fmt::Debug for InvalidNag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("InvalidNag").finish()
+    }
+}
+
+impl fmt::Display for InvalidNag {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        "invalid nag".fmt(f)
+    }
+}
+
+impl Error for InvalidNag {
+    fn description(&self) -> &str {
+        "invalid nag"
+    }
+}
+
+impl FromStr for Nag {
+    type Err = InvalidNag;
+
+    fn from_str(s: &str) -> Result<Nag, InvalidNag> {
+        Nag::from_ascii(s.as_bytes())
+    }
+}
+
+/// A header value.
+#[derive(Clone)]
+pub struct RawHeader<'a>(pub &'a[u8]);
+
+impl<'a> RawHeader<'a> {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0
+    }
+
+    pub fn decode(&self) -> Cow<'a, [u8]> {
+        let mut head = 0;
+        let mut decoded: Vec<u8> = Vec::new();
+        for escape in memchr::memchr_iter(b'\\', self.0) {
+            match self.0.get(escape + 1).cloned() {
+                Some(ch) if ch == b'\\' || ch == b'"' => {
+                    decoded.extend_from_slice(&self.0[head..escape]);
+                    head = escape + 1;
+                }
+                _ => (),
+            }
+        }
+        if head == 0 {
+            Cow::Borrowed(self.0)
+        } else {
+            decoded.extend_from_slice(&self.0[head..]);
+            Cow::Owned(decoded)
+        }
+    }
+
+    pub fn decode_utf8(&self) -> Result<Cow<'a, str>, Utf8Error> {
+        Ok(match self.decode() {
+            Cow::Borrowed(borrowed) => Cow::Borrowed(str::from_utf8(borrowed)?),
+            Cow::Owned(owned) => Cow::Owned(String::from_utf8(owned).map_err(|e| e.utf8_error())?),
+        })
+    }
+
+    pub fn decode_utf8_lossy(&self) -> Cow<'a, str> {
+        match self.decode() {
+            Cow::Borrowed(borrowed) => String::from_utf8_lossy(borrowed),
+            Cow::Owned(owned) => Cow::Owned(String::from_utf8_lossy(&owned).into_owned()),
+        }
+    }
+}
+
+impl<'a> fmt::Debug for RawHeader<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.decode_utf8_lossy())
+    }
+}
