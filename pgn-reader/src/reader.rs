@@ -635,7 +635,7 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
 /// [`BufferedReader::into_iter()`](struct.BufferedReader.html#method.into_iter).
 #[derive(Debug)]
 #[must_use]
-pub struct IntoIter<'a, V, R> {
+pub struct IntoIter<'a, V: 'a, R> {
     visitor: &'a mut V,
     reader: BufferedReader<R>,
 }
