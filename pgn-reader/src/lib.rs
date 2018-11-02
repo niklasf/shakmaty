@@ -171,7 +171,7 @@ mod types;
 mod visitor;
 mod reader;
 
-pub use shakmaty::{Color, Role, Piece, CastlingSide, Outcome, Square, File, Rank};
+pub use shakmaty::{Color, Role, CastlingSide, Outcome, Square, File, Rank};
 pub use shakmaty::san::{San, SanPlus};
 
 pub use types::{Skip, Nag, RawHeader};
