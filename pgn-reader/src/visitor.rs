@@ -38,7 +38,7 @@ pub trait Visitor {
     fn end_game(&mut self) -> Self::Result;
 }
 
-pub struct SkipVisitor;
+pub(crate) struct SkipVisitor;
 
 impl Visitor for SkipVisitor {
     type Result = ();

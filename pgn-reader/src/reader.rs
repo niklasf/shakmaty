@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::cmp::min;
+use std::io::{self, Read};
+use std::ptr;
+
+use slice_deque::SliceDeque;
+
 use shakmaty::{Color, CastlingSide, Outcome};
 use shakmaty::san::{San, SanPlus};
-use std::cmp::min;
-use std::io;
-use std::io::Read;
-use std::ptr;
-use slice_deque::SliceDeque;
 
 use types::{Nag, Skip, RawHeader};
 use visitor::{Visitor, SkipVisitor};

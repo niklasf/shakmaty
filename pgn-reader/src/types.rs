@@ -17,8 +17,7 @@
 use std::borrow::Cow;
 use std::error::Error;
 use std::fmt;
-use std::str;
-use std::str::{FromStr, Utf8Error};
+use std::str::{self, FromStr, Utf8Error};
 
 /// Tell the reader to skip over a game or variation.
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -114,7 +113,7 @@ impl FromStr for Nag {
 }
 
 /// A header value.
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct RawHeader<'a>(pub &'a[u8]);
 
 impl<'a> RawHeader<'a> {
