@@ -331,3 +331,40 @@ impl<R: Read> ReadPgn for PgnReader<R> {
         self.buffer.front().cloned()
     }
 }
+
+pub struct SliceReader<'a> {
+    bytes: &'a [u8],
+    pos: usize,
+}
+
+impl<'a> SliceReader<'a> {
+    pub fn new(bytes: &'a [u8]) -> SliceReader<'a> {
+        SliceReader {
+            bytes,
+            pos: 0,
+        }
+    }
+
+    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> Option<V::Result> {
+        ReadPgn::read_game(self, visitor).unwrap_or_else(|_| unreachable!())
+    }
+}
+
+enum Never { }
+
+impl<'a> ReadPgn for SliceReader<'a> {
+    type Err = Never;
+
+    fn fill_buffer(&mut self) -> Result<bool, Self::Err> {
+        Ok(self.pos < self.bytes.len())
+    }
+
+    fn buffer(&self) -> &[u8] {
+        &self.bytes[self.pos..]
+    }
+
+    fn consume(&mut self, bytes: usize) {
+        self.pos += bytes;
+        debug_assert!(self.pos <= self.bytes.len());
+    }
+}
