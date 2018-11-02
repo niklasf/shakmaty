@@ -1,4 +1,5 @@
 use super::{Nag, Outcome, RawHeader, Skip};
+use shakmaty::Color;
 use shakmaty::san::SanPlus;
 use std::cmp::min;
 use std::io;
@@ -20,7 +21,7 @@ pub trait Visitor {
     fn comment(&mut self, _comment: &[u8]) { }
     fn begin_variation(&mut self) -> Skip { Skip(false) }
     fn end_variation(&mut self) { }
-    fn outcome(&mut self, _outcome: Outcome) { }
+    fn outcome(&mut self, _outcome: Option<Outcome>) { }
 
     fn end_game(&mut self) -> Self::Result;
 }
@@ -101,7 +102,7 @@ trait ReadPgn {
 
     fn skip_whitespace(&mut self) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
-            while let Some(ch) = self.peek() {
+            if let Some(ch) = self.peek() {
                 match ch {
                     b' ' | b'\t' | b'\r' | b'\n' => {
                         self.bump();
@@ -245,6 +246,21 @@ trait ReadPgn {
         Ok(())
     }
 
+    fn skip_token(&mut self) -> Result<(), Self::Err> {
+        while self.fill_buffer()? {
+            if let Some(ch) = self.peek() {
+                match ch {
+                    b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' | b'.' => break,
+                    _ => {
+                        self.bump();
+                    },
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
         while self.fill_buffer()? {
             if let Some(ch) = self.peek() {
@@ -278,6 +294,42 @@ trait ReadPgn {
                         self.consume(right_brace);
                         self.bump();
                     },
+                    b'\n' => {
+                        self.bump();
+
+                        match self.peek() {
+                            Some(b'%') => {
+                                self.bump();
+                                self.skip_line();
+                            },
+                            Some(b'[') | Some(b'\n') => {
+                                break;
+                            },
+                            Some(b'\r') => {
+                                self.bump();
+                                if self.peek() == Some(b'\n') {
+                                    break;
+                                }
+                            },
+                            _ => continue,
+                        }
+                    },
+                    b';' => {
+                        self.bump();
+                        self.skip_until(b'\n');
+                    },
+                    b'1' => {
+                        self.bump();
+                        if self.buffer().starts_with(b"-0") {
+                            self.consume(2);
+                            visitor.outcome(Some(Outcome::Decisive { winner: Color::White }));
+                        } else if self.buffer().starts_with(b"/2-1/2") {
+                            self.consume(6);
+                            visitor.outcome(Some(Outcome::Draw));
+                        } else {
+                            self.skip_token()?;
+                        }
+                    }
                     _ => { self.bump(); },
                 }
             }
