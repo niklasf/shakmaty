@@ -2,6 +2,11 @@
 // Usage: cargo run --release --example stats -- [PGN]...
 
 extern crate pgn_reader;
+extern crate bzip2;
+extern crate xz2;
+extern crate flate2;
+extern crate lz4;
+
 use std::env;
 use std::io;
 use std::fs::File;
@@ -60,7 +65,20 @@ impl Visitor for Stats {
 fn main() -> Result<(), io::Error> {
     for arg in env::args().skip(1) {
         let file = File::open(&arg).expect("fopen");
-        let mut reader = BufferedReader::new(file);
+
+        let uncompressed: Box<io::Read> = if arg.ends_with(".bz2") {
+            Box::new(bzip2::read::BzDecoder::new(file))
+        } else if arg.ends_with(".xz") {
+            Box::new(xz2::read::XzDecoder::new(file))
+        } else if arg.ends_with(".gz") {
+            Box::new(flate2::read::GzDecoder::new(file))
+        } else if arg.ends_with(".lz4") {
+            Box::new(lz4::Decoder::new(file)?)
+        } else {
+            Box::new(file)
+        };
+
+        let mut reader = BufferedReader::new(uncompressed);
 
         let mut stats = Stats::new();
         reader.read_all(&mut stats)?;
