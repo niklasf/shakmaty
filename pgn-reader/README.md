@@ -84,18 +84,28 @@ Documentation
 
 [Read the documentation](https://docs.rs/pgn-reader)
 
-Benchmarks
-----------
+Benchmarks (v0.12.0)
+--------------------
 
-Run with [lichess_db_standard_rated_2014-07.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2014-07.pgn.bz2) (1,048,440 games, 1048 MB uncompressed) on an SSD, Intel i7-5500U CPU @ 2.40GHz.
+Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2014-07.pgn.bz2) (24,784,600 games, 52,750 MB uncompressed) on an SSD (Samsung 850), Intel i7-6850K CPU @ 3.60 GHz:
 
 Benchmark | Time | Throughput
 --- | --- | ---
-examples/stats.rs | 5.4s | 194.1 MB/s
-examples/validate.rs | 12.2s | 85.9 MB/s
-examples/parallel_validate.rs | 10.7s | 97.9 MB/s
-[`scoutfish make`](https://github.com/mcostalba/scoutfish) | 10.9s | 96.1 MB/s
-`grep -F "[Event " -c` | 1.1s | 952.7 MB/s
+examples/stats.rs | 111.9s | 471.4 MB/s
+examples/validate.rs | 237.1s | 222.5 MB/s
+examples/parallel_validate.rs | 148.6s | 355.0 MB/s
+[`scoutfish make`](https://github.com/mcostalba/scoutfish) | 269.2s | 196.0 MB/s
+`grep -F "[Event " -c` | 39.2s | 1345.7 MB/s
+
+`examples/stats.rs` with compressed files:
+
+Compression | File size | Time | Throughput
+--- | --- | --- | --- | ---
+*none* | 52,750 MB | 111.9s | 471.4 MB/s
+bz2 | 6,226 MB | 1263.1s | 4.9 MB/s
+xz | 6,989 MB | 495.9s | 14.1 MB/s
+gz | 10,627 MB | 335.7s | 31.7 MB/s
+lz4 | 16,428 MB | 180.0s | 91.3 MB/s
 
 License
 -------
