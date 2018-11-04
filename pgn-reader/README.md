@@ -100,7 +100,7 @@ examples/parallel_validate.rs | 148.6s | 355.0 MB/s
 `examples/stats.rs` with compressed files:
 
 Compression | File size | Time | Throughput
---- | --- | --- | --- | ---
+--- | --- | --- | ---
 *none* | 52,750 MB | 111.9s | 471.4 MB/s
 bz2 | 6,226 MB | 1263.1s | 4.9 MB/s
 xz | 6,989 MB | 495.9s | 14.1 MB/s
