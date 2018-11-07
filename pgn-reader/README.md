@@ -87,7 +87,7 @@ Documentation
 Benchmarks (v0.12.0)
 --------------------
 
-Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2014-07.pgn.bz2) (24,784,600 games, 52,750 MB uncompressed) on an SSD (Samsung 850), Intel i7-6850K CPU @ 3.60 GHz:
+Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2018-10.pgn.bz2) (24,784,600 games, 52,750 MB uncompressed) on an SSD (Samsung 850), Intel i7-6850K CPU @ 3.60 GHz:
 
 Benchmark | Time | Throughput
 --- | --- | ---
