@@ -71,7 +71,7 @@ impl File {
 
     #[inline]
     pub fn char(self) -> char {
-        (b'a' + u8::from(self)) as char
+        char::from(b'a' + u8::from(self))
     }
 
     #[inline]
@@ -169,7 +169,7 @@ impl Rank {
 
     #[inline]
     pub fn char(self) -> char {
-        (b'1' + u8::from(self)) as char
+        char::from(b'1' + u8::from(self))
     }
 
     #[inline]

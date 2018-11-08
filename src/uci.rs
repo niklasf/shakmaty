@@ -207,14 +207,14 @@ impl Uci {
         let to = Square::from_ascii(&uci[2..4]).map_err(|_| ())?;
 
         if uci[1] == b'@' {
-            Ok(Uci::Put { role: Role::from_char(uci[0] as char).ok_or(())?, to })
+            Ok(Uci::Put { role: Role::from_char(char::from(uci[0])).ok_or(())?, to })
         } else {
             let from = Square::from_ascii(&uci[0..2]).map_err(|_| ())?;
             if uci.len() == 5 {
                 Ok(Uci::Normal {
                     from,
                     to,
-                    promotion: Some(Role::from_char(uci[4] as char).ok_or(())?)
+                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(())?)
                 })
             } else {
                 Ok(Uci::Normal { from, to, promotion: None })

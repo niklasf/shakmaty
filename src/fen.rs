@@ -163,7 +163,8 @@ impl FenOpts {
                 } else if !self.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
                     fen.push(color.fold('K', 'k'));
                 } else {
-                    fen.push((rook.file() as u8 + color.fold('A', 'a') as u8) as char);
+                    let file = rook.file();
+                    fen.push(color.fold(file.char().to_ascii_uppercase(), file.char()));
                 }
             }
         }
@@ -268,7 +269,7 @@ impl Board {
                 if file > 8 {
                     return Err(ParseFenError::InvalidBoard);
                 }
-            } else if let Some(piece) = Piece::from_char(ch as char) {
+            } else if let Some(piece) = Piece::from_char(char::from(ch)) {
                 match (File::from_index(file), Rank::from_index(rank)) {
                     (Some(f), Some(r)) => {
                         let sq = Square::from_coords(f, r);
