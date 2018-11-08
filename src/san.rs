@@ -481,14 +481,43 @@ impl fmt::Display for San {
     }
 }
 
+/// Check (`+`) or checkmate (`#`) suffix.
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum Suffix {
+    Check,
+    Checkmate,
+}
+
+impl Suffix {
+    pub fn char(self) -> char {
+        match self {
+            Suffix::Check => '+',
+            Suffix::Checkmate => '#',
+        }
+    }
+
+    pub fn from_char(ch: char) -> Option<Suffix> {
+        match ch {
+            '+' => Some(Suffix::Check),
+            '#' => Some(Suffix::Checkmate),
+            _ => None,
+        }
+    }
+}
+
+impl fmt::Display for Suffix {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.char())
+    }
+}
+
 /// A [`San`] and possible check and checkmate suffixes.
 ///
 /// [`San`]: enum.San.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SanPlus {
     pub san: San,
-    pub check: bool,
-    pub checkmate: bool,
+    pub suffix: Option<Suffix>,
 }
 
 impl SanPlus {
@@ -502,8 +531,7 @@ impl SanPlus {
     pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
         San::from_ascii(san).map(|result| SanPlus {
             san: result,
-            checkmate: san.ends_with(b"#"),
-            check: san.ends_with(b"+"),
+            suffix: san.last().cloned().and_then(|ch| Suffix::from_char(char::from(ch))),
         })
     }
 
@@ -516,7 +544,16 @@ impl SanPlus {
             Some(Outcome::Decisive { .. }) => true,
             _ => false,
         };
-        SanPlus { san, checkmate, check: !checkmate && pos.checkers().any() }
+        SanPlus {
+            san,
+            suffix: if checkmate {
+                Some(Suffix::Checkmate)
+            } else if pos.checkers().any() {
+                Some(Suffix::Check)
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -530,19 +567,18 @@ impl FromStr for SanPlus {
 
 impl fmt::Display for SanPlus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.checkmate {
-            write!(f, "{}#", self.san)
-        } else if self.check {
-            write!(f, "{}+", self.san)
-        } else {
-            write!(f, "{}", self.san)
+        write!(f, "{}", self.san)?;
+        if let Some(suffix) = self.suffix {
+            write!(f, "{}", suffix)?;
         }
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::mem;
 
     #[test]
     fn test_read_write() {
@@ -555,5 +591,11 @@ mod tests {
             let result = san.parse::<SanPlus>().expect("valid san").to_string();
             assert_eq!(*san, result, "read {} write {}", san, result);
         }
+    }
+
+    #[test]
+    fn test_size() {
+        assert!(mem::size_of::<San>() <= 8);
+        assert!(mem::size_of::<SanPlus>() <= 8);
     }
 }
