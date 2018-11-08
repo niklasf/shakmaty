@@ -86,7 +86,7 @@ use setup::Setup;
 use position::{Position, PositionError};
 
 /// FEN formatting options.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct FenOpts {
     promoted: bool,
     shredder: bool,

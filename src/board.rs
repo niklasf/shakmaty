@@ -45,7 +45,7 @@ use material::{Material, MaterialSide};
 /// ```
 ///
 /// [`Piece`]: struct.Piece.html
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
     occupied_co: [Bitboard; 2], // indexed by Color
     occupied: [Bitboard; 7], // all and pieces indexed by Role

@@ -149,7 +149,7 @@ impl Error for SanError {
 }
 
 /// A move in Standard Algebraic Notation.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum San {
     Normal {
         role: Role,
@@ -482,7 +482,7 @@ impl fmt::Display for San {
 }
 
 /// Check (`+`) or checkmate (`#`) suffix.
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum Suffix {
     Check,
     Checkmate,
@@ -514,7 +514,7 @@ impl fmt::Display for Suffix {
 /// A [`San`] and possible check and checkmate suffixes.
 ///
 /// [`San`]: enum.San.html
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SanPlus {
     pub san: San,
     pub suffix: Option<Suffix>,

@@ -125,7 +125,7 @@ impl From<()> for ParseUciError {
 }
 
 /// A move as represented in the UCI protocol.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub enum Uci {
     /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {

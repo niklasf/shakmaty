@@ -24,7 +24,7 @@ pub use self::Color::{Black, White};
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
 /// `White` or `Black`.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum Color {
     Black = 0,
     White = 1,
@@ -107,7 +107,7 @@ impl ops::BitXor<bool> for Color {
 /// assert_eq!(u32::from(Role::Pawn), 1);
 /// assert_eq!(u32::from(Role::King), 6);
 /// ```
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub enum Role {
     Pawn = 1,
     Knight = 2,
@@ -216,7 +216,7 @@ pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 ///
 /// [`Color`]: enum.Color.html
 /// [`Role`]: enum.Role.html
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -382,7 +382,7 @@ impl fmt::Display for Move {
 
 /// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-Check).
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct RemainingChecks {
     pub white: u8,
     pub black: u8,
@@ -415,7 +415,7 @@ impl fmt::Display for RemainingChecks {
 }
 
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingSide {
     KingSide = 0,
     QueenSide = 1,
