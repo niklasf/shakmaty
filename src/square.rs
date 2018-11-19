@@ -390,6 +390,21 @@ impl Square {
         Rank::new(i8::from(self) >> 3)
     }
 
+    /// Gets file and rank.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Square, File, Rank};
+    ///
+    /// assert_eq!(Square::A1.coords(), (File::A, Rank::First));
+    /// assert_eq!(Square::H8.coords(), (File::H, Rank::Eighth));
+    /// ```
+    #[inline]
+    pub fn coords(self) -> (File, Rank) {
+        (self.file(), self.rank())
+    }
+
     /// Calculates the offset from a square index.
     ///
     /// # Examples
