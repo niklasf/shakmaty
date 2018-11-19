@@ -179,6 +179,12 @@ pub trait Position: Setup {
         moves.retain(|m| m.is_capture());
     }
 
+    /// Generate promotion moves.
+    fn promotion_moves(&self, moves: &mut MoveList) {
+        self.legal_moves(moves);
+        moves.retain(|m| m.is_promotion());
+    }
+
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
         let mut moves = MoveList::new();
@@ -457,6 +463,25 @@ impl Position for Chess {
         if gen_en_passant(self.board(), self.turn(), self.ep_square, moves) {
             let king = self.board().king_of(self.turn()).expect("king in standard chess");
             let blockers = slider_blockers(self.board(), self.them(), king);
+            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+        }
+    }
+
+    fn promotion_moves(&self, moves: &mut MoveList) {
+        moves.clear();
+
+        let king = self.board().king_of(self.turn()).expect("king in standard chess");
+        let checkers = self.checkers();
+
+        if checkers.is_empty() {
+            gen_pawn_moves(self, Bitboard::BACKRANKS, moves);
+        } else {
+            evasions(self, king, checkers, moves);
+            moves.retain(|m| m.is_promotion());
+        }
+
+        let blockers = slider_blockers(self.board(), self.them(), king);
+        if blockers.any() {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
     }
