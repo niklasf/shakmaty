@@ -75,7 +75,7 @@ impl File {
     }
 
     #[inline]
-    pub fn rotate(self) -> Rank {
+    pub fn flip_diagonal(self) -> Rank {
         Rank::new(i8::from(self))
     }
 
@@ -174,7 +174,7 @@ impl Rank {
     }
 
     #[inline]
-    pub fn rotate(self) -> File {
+    pub fn flip_diagonal(self) -> File {
         File::new(i8::from(self))
     }
 
@@ -459,7 +459,7 @@ impl Square {
     /// assert_eq!(Square::A3.flip_diagonal(), Square::C1);
     /// ```
     pub fn flip_diagonal(self) -> Square {
-        Square::from_coords(self.rank().rotate(), self.file().rotate())
+        Square::from_coords(self.rank().flip_diagonal(), self.file().flip_diagonal())
     }
 
     /// Tests is the square is a light square.
