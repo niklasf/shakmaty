@@ -134,11 +134,13 @@ impl Bitboard {
         self.0 = 0;
     }
 
+    #[must_use]
     #[inline]
     pub fn with<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self | squares
     }
 
+    #[must_use]
     #[inline]
     pub fn without<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self & !squares.into()
