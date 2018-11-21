@@ -101,7 +101,7 @@ impl Bitboard {
     }
 
     #[inline]
-    pub fn flip<T: Into<Bitboard>>(&mut self, squares: T) {
+    pub fn toggle<T: Into<Bitboard>>(&mut self, squares: T) {
         *self ^= squares;
     }
 
@@ -113,7 +113,7 @@ impl Bitboard {
     #[inline]
     pub fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {
-            self.flip(sq);
+            self.toggle(sq);
             true
         } else {
             false

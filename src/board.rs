@@ -196,9 +196,9 @@ impl Board {
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         let piece = self.piece_at(sq);
         if let Some(p) = piece {
-            self.occupied[0].flip(sq);
-            self.by_color_mut(p.color).flip(sq);
-            self.by_role_mut(p.role).flip(sq);
+            self.occupied[0].toggle(sq);
+            self.by_color_mut(p.color).toggle(sq);
+            self.by_role_mut(p.role).toggle(sq);
             self.promoted.discard(sq);
         }
         piece
@@ -221,11 +221,11 @@ impl Board {
     #[inline]
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
         self.discard_piece_at(sq);
-        self.occupied[0].flip(sq);
-        self.by_color_mut(color).flip(sq);
-        self.by_role_mut(role).flip(sq);
+        self.occupied[0].toggle(sq);
+        self.by_color_mut(color).toggle(sq);
+        self.by_role_mut(role).toggle(sq);
         if promoted {
-            self.promoted.flip(sq);
+            self.promoted.toggle(sq);
         }
     }
 

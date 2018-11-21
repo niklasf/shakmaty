@@ -1949,8 +1949,8 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             !(pos.us() & blockers).contains(from) || attacks::aligned(from, to, king),
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board().occupied();
-            occupied.flip(from);
-            occupied.flip(to.combine(from)); // captured pawn
+            occupied.toggle(from);
+            occupied.toggle(to.combine(from)); // captured pawn
             occupied.add(to);
 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&
