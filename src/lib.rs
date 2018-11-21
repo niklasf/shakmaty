@@ -76,7 +76,6 @@
 #![warn(bare_trait_objects)]
 
 #![cfg_attr(nightly, feature(exact_size_is_empty))]
-#![cfg_attr(nightly, feature(tool_lints))]
 
 extern crate arrayvec;
 #[macro_use]
