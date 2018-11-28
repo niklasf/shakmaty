@@ -1303,6 +1303,19 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     }
 }
 
+/// Open a file for random access.
+fn open_raf<P: AsRef<Path>>(path: P) -> io::Result<fs::File> {
+    let file = fs::File::open(path)?;
+
+    #[cfg(unix)]
+    unsafe {
+        use std::os::unix::io::AsRawFd;
+        libc::posix_fadvise(file.as_raw_fd(), 0, file.metadata()?.len() as i64, libc::POSIX_FADV_RANDOM);
+    }
+
+    Ok(file)
+}
+
 /// A WDL Table.
 #[derive(Debug)]
 pub struct WdlTable<S: Position + Syzygy, F: ReadAt> {
@@ -1321,7 +1334,7 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
 
 impl<S: Position + Syzygy> WdlTable<S, fs::File> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, fs::File>> {
-        WdlTable::new(fs::File::open(path)?, material)
+        WdlTable::new(open_raf(path)?, material)
     }
 }
 
@@ -1343,6 +1356,6 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
 
 impl<S: Position + Syzygy> DtzTable<S, fs::File> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, fs::File>> {
-        DtzTable::new(fs::File::open(path)?, material)
+        DtzTable::new(open_raf(path)?, material)
     }
 }

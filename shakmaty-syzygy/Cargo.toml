@@ -27,6 +27,9 @@ double-checked-cell = "2.0"
 failure = "0.1"
 hashbrown = "0.1"
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
 [dependencies.serde]
 version = "1.0"
 optional = true
