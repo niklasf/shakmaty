@@ -23,6 +23,7 @@ use std::path::Path;
 use arrayvec::ArrayVec;
 use byteorder::{BE, LE, ByteOrder, ReadBytesExt};
 use itertools::Itertools;
+use libc;
 use num_integer::binomial;
 use positioned_io::{ReadAt, ReadBytesAtExt};
 
