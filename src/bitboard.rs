@@ -31,6 +31,7 @@ use types::Color;
 ///
 /// ```
 /// # use shakmaty::{Rank, Square, Bitboard};
+/// #
 /// let mask = Bitboard::from(Rank::Third).with(Square::E5);
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -110,6 +111,22 @@ impl Bitboard {
         *self &= !squares.into();
     }
 
+    /// Removes a square from the bitboard.
+    ///
+    /// Returns `true` if the square was in the set. Use
+    /// [`discard()`](struct.Bitboard.html#method.discard) if you do not care
+    /// about the return value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use shakmaty::{Bitboard, Square};
+    /// #
+    /// let mut bitboard = Bitboard::ALL;
+    /// assert_eq!(bitboard.remove(Square::E4), true);
+    /// assert_eq!(bitboard.remove(Square::E4), false);
+    /// ```
+    #[must_use]
     #[inline]
     pub fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {
