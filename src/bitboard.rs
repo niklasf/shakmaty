@@ -30,19 +30,17 @@ use types::Color;
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Rank, Square, Bitboard};
-/// #
-/// let mask = Bitboard::from(Rank::Third).with(Square::E5);
-/// // . . . . . . . .
-/// // . . . . . . . .
-/// // . . . . . . . .
-/// // . . . . 1 . . .
-/// // . . . . . . . .
-/// // 1 1 1 1 1 1 1 1
-/// // . . . . . . . .
-/// // . . . . . . . .
+/// use shakmaty::Bitboard;
 ///
-/// assert_eq!(mask.first(), Some(Square::A3));
+/// let bitboard = Bitboard(0x1e2222120e0a1222);
+/// // . 1 1 1 1 . . .
+/// // . 1 . . . 1 . .
+/// // . 1 . . . 1 . .
+/// // . 1 . . 1 . . .
+/// // . 1 1 1 . . . .
+/// // . 1 . 1 . . . .
+/// // . 1 . . 1 . . .
+/// // . 1 . . . 1 . .
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
@@ -120,8 +118,8 @@ impl Bitboard {
     /// # Examples
     ///
     /// ```
-    /// # use shakmaty::{Bitboard, Square};
-    /// #
+    /// use shakmaty::{Bitboard, Square};
+    ///
     /// let mut bitboard = Bitboard::ALL;
     /// assert_eq!(bitboard.remove(Square::E4), true);
     /// assert_eq!(bitboard.remove(Square::E4), false);
@@ -241,6 +239,92 @@ impl Bitboard {
             subset: 0,
             first: true,
         }
+    }
+
+    /// Mirror the bitboard vertically.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e2222120e0a1222);
+    /// assert_eq!(bitboard.flip_vertical(), Bitboard(0x22120a0e1222221e));
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 . 1 . . . .
+    /// // . 1 1 1 . . . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 1 1 1 . . .
+    /// ```
+    #[must_use]
+    pub fn flip_vertical(self) -> Bitboard {
+        Bitboard(self.0.swap_bytes())
+    }
+
+    /// Mirror the bitboard horizontally.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e2222120e0a1222);
+    /// assert_eq!(bitboard.flip_horizontal(), Bitboard(0x7844444870504844));
+    /// // . . . 1 1 1 1 .
+    /// // . . 1 . . . 1 .
+    /// // . . 1 . . . 1 .
+    /// // . . . 1 . . 1 .
+    /// // . . . . 1 1 1 .
+    /// // . . . . 1 . 1 .
+    /// // . . . 1 . . 1 .
+    /// // . . 1 . . . 1 .
+    /// ```
+    #[must_use]
+    pub fn flip_horizontal(self) -> Bitboard {
+        let k1 = 0x5555555555555555;
+        let k2 = 0x3333333333333333;
+        let k4 = 0x0f0f0f0f0f0f0f0f;
+        let x = self.0;
+        let x = ((x >> 1) & k1) | ((x & k1) << 1);
+        let x = ((x >> 2) & k2) | ((x & k2) << 2);
+        let x = ((x >> 4) & k4) | ((x & k4) << 4);
+        Bitboard(x)
+    }
+
+    /// Mirror the bitboard at the a1-h8 diagonal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e2222120e0a1222);
+    /// assert_eq!(bitboard.flip_diagonal(), Bitboard(0x000061928c88ff00));
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 . . . . 1 1 .
+    /// // . 1 . . 1 . . 1
+    /// // . . 1 1 . . . 1
+    /// // . . . 1 . . . 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . . . . . .
+    /// ```
+    #[must_use]
+    pub fn flip_diagonal(self) -> Bitboard {
+        let k1 = 0x5500550055005500;
+        let k2 = 0x3333000033330000;
+        let k4 = 0x0f0f0f0f00000000;
+        let mut x = self.0;
+        let t = k4 & (x ^ (x << 28));
+        x ^= t ^ (t >> 28);
+        let t = k2 & (x ^ (x << 14));
+        x ^= t ^ (t >> 14);
+        let t = k1 & (x ^ (x << 7));
+        x ^= t ^ (t >>  7) ;
+        Bitboard(x)
     }
 
     /// An empty bitboard.
