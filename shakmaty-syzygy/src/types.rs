@@ -179,58 +179,6 @@ macro_rules! from_wdl_impl {
 
 from_wdl_impl! { Wdl, i8 i16 i32 i64 i128 isize }
 
-#[cfg(feature = "serde-1")]
-impl ::serde::Serialize for Wdl {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ::serde::Serializer,
-    {
-        serializer.serialize_i8(i8::from(*self))
-    }
-}
-
-#[cfg(feature = "serde-1")]
-impl<'de> ::serde::Deserialize<'de> for Wdl {
-    fn deserialize<D>(deserializer: D) -> Result<Wdl, D::Error>
-    where
-        D: ::serde::Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'de> ::serde::de::Visitor<'de> for Visitor {
-            type Value = Wdl;
-
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                formatter.write_str("wdl value (-2, -1, 0, 1, 2)")
-            }
-
-            fn visit_i64<E>(self, value: i64) -> Result<Wdl, E>
-            where
-                E: ::serde::de::Error,
-            {
-                if -2 <= value && value <= 2 {
-                    Ok(unsafe { ::std::mem::transmute(value as i8) })
-                } else {
-                    Err(E::custom(format!("wdl out of range: {}", value)))
-                }
-            }
-
-            fn visit_u64<E>(self, value: u64) -> Result<Wdl, E>
-            where
-                E: ::serde::de::Error,
-            {
-                if value <= 2 {
-                    Ok(unsafe { ::std::mem::transmute(value as i8) })
-                } else {
-                    Err(E::custom(format!("wdl out of range: {}", value)))
-                }
-            }
-        }
-
-        deserializer.deserialize_i8(Visitor)
-    }
-}
-
 /// 4-valued evaluation of a decisive (not drawn) position in the context of
 /// the 50-move rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -372,58 +320,6 @@ impl SubAssign for Dtz {
     #[inline]
     fn sub_assign(&mut self, other: Dtz) {
         self.0 -= other.0;
-    }
-}
-
-#[cfg(feature = "serde-1")]
-impl ::serde::Serialize for Dtz {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: ::serde::Serializer,
-    {
-        serializer.serialize_i32(i32::from(*self))
-    }
-}
-
-#[cfg(feature = "serde-1")]
-impl<'de> ::serde::Deserialize<'de> for Dtz {
-    fn deserialize<D>(deserializer: D) -> Result<Dtz, D::Error>
-    where
-        D: ::serde::Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'de> ::serde::de::Visitor<'de> for Visitor {
-            type Value = Dtz;
-
-            fn expecting(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                formatter.write_str("dtz value (i32)")
-            }
-
-            fn visit_i64<E>(self, value: i64) -> Result<Dtz, E>
-            where
-                E: ::serde::de::Error,
-            {
-                if i64::from(i32::min_value()) <= value && value <= i64::from(i32::max_value()) {
-                    Ok(Dtz(value as i32))
-                } else {
-                    Err(E::custom(format!("dtz out of range: {}", value)))
-                }
-            }
-
-            fn visit_u64<E>(self, value: u64) -> Result<Dtz, E>
-            where
-                E: ::serde::de::Error,
-            {
-                if value <= i32::max_value() as u64 {
-                    Ok(Dtz(value as i32))
-                } else {
-                    Err(E::custom(format!("dtz out of range: {}", value)))
-                }
-            }
-        }
-
-        deserializer.deserialize_i32(Visitor)
     }
 }
 

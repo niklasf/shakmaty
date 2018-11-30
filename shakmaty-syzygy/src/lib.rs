@@ -76,8 +76,6 @@ extern crate double_checked_cell;
 extern crate hashbrown;
 extern crate num_integer;
 extern crate positioned_io_preview as positioned_io;
-#[cfg(feature = "serde-1")]
-extern crate serde;
 extern crate shakmaty;
 
 #[cfg(test)]
