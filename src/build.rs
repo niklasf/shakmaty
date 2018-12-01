@@ -3,6 +3,7 @@
 extern crate version_check;
 
 use std::env;
+use std::fmt::LowerHex;
 use std::fs::File;
 use std::io;
 use std::io::Write;
@@ -69,26 +70,22 @@ fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], 
     }
 }
 
-fn write_u64<W: Write>(w: &mut W, x: u64) -> io::Result<()> {
-    write!(w, "0x{:04x}_{:04x}_{:04x}_{:04x}", x >> 48, (x >> 32) & 0xffff, (x >> 16) & 0xffff, x & 0xffff)
-}
-
-fn dump_slice<W: Write, T: Clone + Into<u64>>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
+fn dump_slice<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
+    write!(w, "#[allow(clippy::unreadable_literal)]\n")?;
     write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
     for v in slice.iter().cloned() {
-        write_u64(w, v.into())?;
-        write!(w, ", ")?;
+        write!(w, "0x{:x}, ", v)?;
     }
     write!(w, "];\n")
 }
 
-fn dump_table<W: Write, T: Clone + Into<u64>>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
+fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
+    write!(w, "#[allow(clippy::unreadable_literal)]\n")?;
     write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
     for row in table.iter() {
         write!(w, "[")?;
         for column in row.iter().cloned() {
-            write_u64(w, column.into())?;
-            write!(w, ", ")?;
+            write!(w, "0x{:x}, ", column)?;
         }
         write!(w, "], ")?;
     }
