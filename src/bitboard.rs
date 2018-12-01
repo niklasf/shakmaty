@@ -285,9 +285,9 @@ impl Bitboard {
     /// ```
     #[must_use]
     pub fn flip_horizontal(self) -> Bitboard {
-        let k1 = 0x5555555555555555;
-        let k2 = 0x3333333333333333;
-        let k4 = 0x0f0f0f0f0f0f0f0f;
+        let k1 = 0x5555_5555_5555_5555;
+        let k2 = 0x3333_3333_3333_3333;
+        let k4 = 0x0f0f_0f0f_0f0f_0f0f;
         let x = self.0;
         let x = ((x >> 1) & k1) | ((x & k1) << 1);
         let x = ((x >> 2) & k2) | ((x & k2) << 2);
@@ -315,9 +315,9 @@ impl Bitboard {
     /// ```
     #[must_use]
     pub fn flip_diagonal(self) -> Bitboard {
-        let k1 = 0x5500550055005500;
-        let k2 = 0x3333000033330000;
-        let k4 = 0x0f0f0f0f00000000;
+        let k1 = 0x5500_5500_5500_5500;
+        let k2 = 0x3333_0000_3333_0000;
+        let k4 = 0x0f0f_0f0f_0000_0000;
         let mut x = self.0;
         let t = k4 & (x ^ (x << 28));
         x ^= t ^ (t >> 28);
