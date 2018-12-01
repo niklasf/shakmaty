@@ -260,6 +260,7 @@ impl Bitboard {
     /// // . 1 1 1 1 . . .
     /// ```
     #[must_use]
+    #[inline]
     pub fn flip_vertical(self) -> Bitboard {
         Bitboard(self.0.swap_bytes())
     }
