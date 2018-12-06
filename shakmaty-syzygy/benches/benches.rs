@@ -1,11 +1,6 @@
-#[macro_use]
-extern crate bencher;
-#[macro_use]
-extern crate matches;
+use bencher::{Bencher, benchmark_group, benchmark_main, black_box};
+use matches::assert_matches;
 
-
-
-use bencher::{Bencher, black_box};
 use shakmaty::Chess;
 use shakmaty::fen::Fen;
 use shakmaty_syzygy::{Tablebase, Wdl};

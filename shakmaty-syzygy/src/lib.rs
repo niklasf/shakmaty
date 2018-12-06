@@ -61,25 +61,6 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.9.0")]
 #![warn(missing_debug_implementations)]
 
-
-#[macro_use]
-extern crate bitflags;
-
-#[macro_use(Fail)]
-extern crate failure;
-use itertools;
-#[macro_use]
-extern crate lazy_static;
-
-use hashbrown;
-
-
-
-
-#[cfg(test)]
-#[macro_use]
-extern crate matches;
-
 #[macro_use]
 mod errors;
 mod material;
@@ -92,6 +73,6 @@ pub use crate::tablebase::Tablebase;
 pub use crate::types::{Dtz, Metric, Syzygy, TableType, Wdl};
 
 #[cfg(fuzzing)]
-pub use table::{DtzTable, WdlTable};
+pub use crate::table::{DtzTable, WdlTable};
 #[cfg(fuzzing)]
-pub use types::DecisiveWdl;
+pub use crate::types::DecisiveWdl;

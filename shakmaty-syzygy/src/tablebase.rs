@@ -586,6 +586,8 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 mod tests {
     use super::*;
 
+    use matches::assert_matches;
+
     use shakmaty::fen::Fen;
     use shakmaty::{Chess, Square};
 

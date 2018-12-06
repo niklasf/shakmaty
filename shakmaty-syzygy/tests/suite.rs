@@ -1,7 +1,5 @@
 use csv;
 
-
-
 use shakmaty::fen::Fen;
 use shakmaty::variants::{Atomic, Chess, Giveaway};
 use shakmaty::Position;
