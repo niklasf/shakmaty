@@ -27,9 +27,6 @@ double-checked-cell = "2.0"
 failure = "0.1"
 hashbrown = "0.1"
 
-[target.'cfg(unix)'.dependencies]
-libc = "0.2"
-
 [dev-dependencies]
 csv = "1.0"
 matches = "0.1"

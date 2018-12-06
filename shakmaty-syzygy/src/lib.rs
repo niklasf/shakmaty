@@ -70,8 +70,6 @@ extern crate failure;
 extern crate itertools;
 #[macro_use]
 extern crate lazy_static;
-#[cfg(unix)]
-extern crate libc;
 extern crate double_checked_cell;
 extern crate hashbrown;
 extern crate num_integer;

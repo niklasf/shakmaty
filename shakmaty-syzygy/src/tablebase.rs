@@ -16,13 +16,13 @@
 
 use std::cmp::{max, Reverse};
 use std::fs;
-use std::fs::File;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
+use positioned_io::RandomAccessFile;
 use hashbrown;
 use itertools;
 
@@ -47,8 +47,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, File>>)>,
-    dtz: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, File>>)>,
+    wdl: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, RandomAccessFile>>)>,
+    dtz: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, RandomAccessFile>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -137,7 +137,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         Ok(())
     }
 
-    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, File>> {
+    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, RandomAccessFile>> {
         if let Some(&(ref path, ref table)) = self.wdl.get(key).or_else(|| self.wdl.get(&key.flipped())) {
             table.get_or_try_init(|| WdlTable::open(path, key)).ctx(Metric::Wdl, key)
         } else {
@@ -148,7 +148,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, File>> {
+    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, RandomAccessFile>> {
         if let Some(&(ref path, ref table)) = self.dtz.get(key).or_else(|| self.dtz.get(&key.flipped())) {
             table.get_or_try_init(|| DtzTable::open(path, key)).ctx(Metric::Dtz, key)
         } else {

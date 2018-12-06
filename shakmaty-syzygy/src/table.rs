@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fs;
 use std::io;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
@@ -23,9 +22,8 @@ use std::path::Path;
 use arrayvec::ArrayVec;
 use byteorder::{BE, LE, ByteOrder, ReadBytesExt};
 use itertools::Itertools;
-use libc;
 use num_integer::binomial;
-use positioned_io::{ReadAt, ReadBytesAtExt};
+use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
 
@@ -1304,19 +1302,6 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     }
 }
 
-/// Open a file for random access.
-fn open_raf<P: AsRef<Path>>(path: P) -> io::Result<fs::File> {
-    let file = fs::File::open(path)?;
-
-    #[cfg(unix)]
-    unsafe {
-        use std::os::unix::io::AsRawFd;
-        libc::posix_fadvise(file.as_raw_fd(), 0, file.metadata()?.len() as i64, libc::POSIX_FADV_RANDOM);
-    }
-
-    Ok(file)
-}
-
 /// A WDL Table.
 #[derive(Debug)]
 pub struct WdlTable<S: Position + Syzygy, F: ReadAt> {
@@ -1333,9 +1318,9 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
     }
 }
 
-impl<S: Position + Syzygy> WdlTable<S, fs::File> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, fs::File>> {
-        WdlTable::new(open_raf(path)?, material)
+impl<S: Position + Syzygy> WdlTable<S, RandomAccessFile> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, RandomAccessFile>> {
+        WdlTable::new(RandomAccessFile::open(path)?, material)
     }
 }
 
@@ -1355,8 +1340,8 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
     }
 }
 
-impl<S: Position + Syzygy> DtzTable<S, fs::File> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, fs::File>> {
-        DtzTable::new(open_raf(path)?, material)
+impl<S: Position + Syzygy> DtzTable<S, RandomAccessFile> {
+    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, RandomAccessFile>> {
+        DtzTable::new(RandomAccessFile::open(path)?, material)
     }
 }
