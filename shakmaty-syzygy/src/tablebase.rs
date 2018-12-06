@@ -28,9 +28,9 @@ use itertools;
 
 use shakmaty::{Material, Move, MoveList, Position, Role};
 
-use errors::{ProbeError, ProbeResultExt, SyzygyError, SyzygyResult};
-use table::{DtzTable, WdlTable};
-use types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
+use crate::errors::{ProbeError, ProbeResultExt, SyzygyError, SyzygyResult};
+use crate::table::{DtzTable, WdlTable};
+use crate::types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -197,7 +197,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             after: S,
         }
 
-        struct WithWdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
+        struct WithWdlEntry<'a, S: Position + Clone + Syzygy> {
             m: Move,
             entry: WdlEntry<'a, S>,
         }
@@ -498,7 +498,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
 /// WDL entry. Prerequisite for probing DTZ tables.
 #[derive(Debug)]
-struct WdlEntry<'a, S: Position + Clone + Syzygy + 'a> {
+struct WdlEntry<'a, S: Position + Clone + Syzygy> {
     tablebase: &'a Tablebase<S>,
     pos: &'a S,
     wdl: Wdl,

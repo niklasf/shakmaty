@@ -27,9 +27,9 @@ use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt};
 
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
 
-use errors::{ProbeError, ProbeResult};
-use material::MaterialExt;
-use types::{DecisiveWdl, Dtz, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
+use crate::errors::{ProbeError, ProbeResult};
+use crate::material::MaterialExt;
+use crate::types::{DecisiveWdl, Dtz, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
 
 trait TableTag {
     const METRIC: Metric;

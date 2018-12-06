@@ -1,6 +1,6 @@
-extern crate csv;
-extern crate shakmaty;
-extern crate shakmaty_syzygy;
+use csv;
+
+
 
 use shakmaty::fen::Fen;
 use shakmaty::variants::{Atomic, Chess, Giveaway};

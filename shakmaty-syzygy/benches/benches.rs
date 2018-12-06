@@ -2,8 +2,8 @@
 extern crate bencher;
 #[macro_use]
 extern crate matches;
-extern crate shakmaty;
-extern crate shakmaty_syzygy;
+
+
 
 use bencher::{Bencher, black_box};
 use shakmaty::Chess;

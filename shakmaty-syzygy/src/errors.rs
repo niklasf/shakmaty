@@ -19,7 +19,7 @@ use std::io;
 use failure::Backtrace;
 
 use shakmaty::Material;
-use types::Metric;
+use crate::types::Metric;
 
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
 
@@ -97,7 +97,7 @@ impl From<io::Error> for ProbeError {
 /// Return a `CorruptedTable` error.
 macro_rules! throw {
     () => {
-        return Err(::errors::ProbeError::CorruptedTable(::failure::Backtrace::new()))
+        return Err(crate::errors::ProbeError::CorruptedTable(::failure::Backtrace::new()))
     }
 }
 

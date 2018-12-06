@@ -61,20 +61,20 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.9.0")]
 #![warn(missing_debug_implementations)]
 
-extern crate arrayvec;
+
 #[macro_use]
 extern crate bitflags;
-extern crate byteorder;
+
 #[macro_use(Fail)]
 extern crate failure;
-extern crate itertools;
+use itertools;
 #[macro_use]
 extern crate lazy_static;
-extern crate double_checked_cell;
-extern crate hashbrown;
-extern crate num_integer;
-extern crate positioned_io;
-extern crate shakmaty;
+
+use hashbrown;
+
+
+
 
 #[cfg(test)]
 #[macro_use]
@@ -87,9 +87,9 @@ mod table;
 mod tablebase;
 mod types;
 
-pub use errors::{ProbeError, SyzygyError};
-pub use tablebase::Tablebase;
-pub use types::{Dtz, Metric, Syzygy, TableType, Wdl};
+pub use crate::errors::{ProbeError, SyzygyError};
+pub use crate::tablebase::Tablebase;
+pub use crate::types::{Dtz, Metric, Syzygy, TableType, Wdl};
 
 #[cfg(fuzzing)]
 pub use table::{DtzTable, WdlTable};
