@@ -21,6 +21,7 @@ use std::error::Error;
 use std::ops::Sub;
 
 /// A file of the chessboard.
+#[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum File {
@@ -120,6 +121,7 @@ macro_rules! from_file_impl {
 from_file_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// A rank of the chessboard.
+#[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Rank {
@@ -241,6 +243,7 @@ impl From<()> for ParseSquareError {
 }
 
 /// A square index.
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Square {

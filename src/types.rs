@@ -24,6 +24,7 @@ pub use self::Color::{Black, White};
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
 /// `White` or `Black`.
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum Color {
     Black = 0,
@@ -107,6 +108,7 @@ impl ops::BitXor<bool> for Color {
 /// assert_eq!(u32::from(Role::Pawn), 1);
 /// assert_eq!(u32::from(Role::King), 6);
 /// ```
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub enum Role {
     Pawn = 1,
@@ -216,6 +218,7 @@ pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 ///
 /// [`Color`]: enum.Color.html
 /// [`Role`]: enum.Role.html
+#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
