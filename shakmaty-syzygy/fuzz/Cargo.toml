@@ -2,12 +2,13 @@
 name = "shakmaty-syzygy-fuzz"
 version = "0.0.0"
 publish = false
+edition = "2018"
 
 [package.metadata]
 cargo-fuzz = true
 
 [dependencies]
-shakmaty = "0.11"
+shakmaty = "0.13"
 shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
 

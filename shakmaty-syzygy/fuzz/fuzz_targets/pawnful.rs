@@ -1,13 +1,10 @@
 #![no_main]
 
-#[macro_use]
-extern crate libfuzzer_sys;
-extern crate shakmaty;
-extern crate shakmaty_syzygy;
+use libfuzzer_sys::fuzz_target;
 
 use shakmaty::{Chess, Setup};
 use shakmaty::fen::Fen;
-use shakmaty_syzygy::{WdlTable, Material};
+use shakmaty_syzygy::WdlTable;
 
 fuzz_target!(|data: &[u8]| {
     let pos: Chess = "8/2K5/8/8/8/8/3p4/1k2N3 b - - 0 1" // KNvKP
@@ -16,7 +13,7 @@ fuzz_target!(|data: &[u8]| {
         .position()
         .expect("valid position");
 
-    if let Ok(table) = WdlTable::new(data, &Material::from_board(pos.board())) {
-        let _ = table.probe_wdl_table(&pos);
+    if let Ok(table) = WdlTable::new(data, &pos.board().material()) {
+        let _ = table.probe_wdl(&pos);
     }
 });
