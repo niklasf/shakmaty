@@ -1,8 +1,6 @@
 #![no_main]
 
-#[macro_use]
-extern crate libfuzzer_sys;
-extern crate shakmaty;
+use libfuzzer_sys::fuzz_target;
 
 use shakmaty::uci::Uci;
 
