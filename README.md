@@ -72,6 +72,16 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* Upcoming
+  - Replaced `SanPlus::check` and `SanPlus::checkmate` with `san::Suffix` enum.
+  - Renamed `{Rank,File}::rotate()` to `flip_diagonal()`.
+  - Renamed `Bitboard::flip()` to `toggle()`.
+  - Added `Square::coords()`.
+  - Added `Bitboard::flip_{vertical,horizontal,diagonal}()`.
+  - Added `Position::promotion_moves()`.
+  - Derive `Hash` on `Board`, `FenOpts`, `San`, `SanPlus`, `Suffix`, `Color`,
+    `Role`, `Piece`, `RemainingChecks`, `CastlingSide`, and `Uci`.
+  - Minimum Rust version 1.31.0.
 * 0.12.0
   - `Setup::halfmove_clock()` is now `Setup::halfmoves()`.
   - New conversions: `f32::from(file)`, `f64::from(rank)`.
