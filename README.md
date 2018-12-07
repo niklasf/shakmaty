@@ -72,7 +72,7 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
-* Upcoming
+* 0.13.0
   - Replaced `SanPlus::check` and `SanPlus::checkmate` with `san::Suffix` enum.
   - Renamed `{Rank,File}::rotate()` to `flip_diagonal()`.
   - Renamed `Bitboard::flip()` to `toggle()`.
