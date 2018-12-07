@@ -419,7 +419,7 @@ fn nibble_to_piece(p: u8) -> Option<Piece> {
 
 /// Checks if a square is on the a1-h8 diagonal.
 fn offdiag(sq: Square) -> bool {
-    sq.file().rotate() != sq.rank()
+    sq.file().flip_diagonal() != sq.rank()
 }
 
 /// Parse a piece list.
@@ -1104,11 +1104,11 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             }
 
             for i in 0..side.groups.lens[0] {
-                if squares[i].file().rotate() == squares[i].rank() {
+                if squares[i].file().flip_diagonal() == squares[i].rank() {
                     continue;
                 }
 
-                if squares[i].rank().rotate() > squares[i].file() {
+                if squares[i].rank().flip_diagonal() > squares[i].file() {
                     for square in &mut squares[i..] {
                         *square = square.flip_diagonal();
                     }
@@ -1178,8 +1178,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     }
                 }
 
-                if squares[0].rank().rotate() > squares[0].file() ||
-                   (!offdiag(squares[0]) && squares[1].rank().rotate() > squares[1].file()) {
+                if squares[0].rank().flip_diagonal() > squares[0].file() ||
+                   (!offdiag(squares[0]) && squares[1].rank().flip_diagonal() > squares[1].file()) {
                     for square in &mut squares {
                         *square = square.flip_diagonal();
                     }
@@ -1213,7 +1213,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     }
                 }
 
-                if squares[0].rank().rotate() > squares[0].file() {
+                if squares[0].rank().flip_diagonal() > squares[0].file() {
                     for square in &mut squares {
                         *square = square.flip_diagonal();
                     }
