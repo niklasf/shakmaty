@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use position::Position;
-use movelist::MoveList;
-use uci::Uci;
+use crate::position::Position;
+use crate::movelist::MoveList;
+use crate::uci::Uci;
 
 /// Counts legal move paths of a given length.
 ///
@@ -82,7 +82,7 @@ pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use position::Chess;
+    use crate::position::Chess;
 
     #[test]
     fn test_perft() {

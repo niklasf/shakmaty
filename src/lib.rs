@@ -98,15 +98,15 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
-pub use square::{ParseSquareError, File, Rank, Square};
-pub use types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
-pub use material::{Material, MaterialSide, ParseMaterialError};
-pub use bitboard::Bitboard;
-pub use board::{Board, Pieces};
-pub use setup::{Castles, Setup};
-pub use movelist::MoveList;
-pub use position::{Chess, IllegalMoveError, Outcome, Position, PositionError};
-pub use perft::perft;
+pub use crate::square::{ParseSquareError, File, Rank, Square};
+pub use crate::types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
+pub use crate::material::{Material, MaterialSide, ParseMaterialError};
+pub use crate::bitboard::Bitboard;
+pub use crate::board::{Board, Pieces};
+pub use crate::setup::{Castles, Setup};
+pub use crate::movelist::MoveList;
+pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, PositionError};
+pub use crate::perft::perft;
 
 pub mod variants {
     //! Chess variants.
@@ -116,12 +116,12 @@ pub mod variants {
     //!
     //! [`Setup`]: ../trait.Setup.html
     //! [`Position`]: ../trait.Position.html
-    pub use Chess;
-    pub use position::Atomic;
-    pub use position::Giveaway;
-    pub use position::KingOfTheHill;
-    pub use position::ThreeCheck;
-    pub use position::Crazyhouse;
-    pub use position::RacingKings;
-    pub use position::Horde;
+    pub use crate::Chess;
+    pub use crate::position::Atomic;
+    pub use crate::position::Giveaway;
+    pub use crate::position::KingOfTheHill;
+    pub use crate::position::ThreeCheck;
+    pub use crate::position::Crazyhouse;
+    pub use crate::position::RacingKings;
+    pub use crate::position::Horde;
 }

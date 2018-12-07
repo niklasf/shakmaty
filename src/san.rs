@@ -87,10 +87,10 @@
 //! # }
 //! ```
 
-use square::{File, Rank, Square};
-use types::{CastlingSide, Move, Role};
-use position::{Outcome, Position};
-use movelist::MoveList;
+use crate::square::{File, Rank, Square};
+use crate::types::{CastlingSide, Move, Role};
+use crate::position::{Outcome, Position};
+use crate::movelist::MoveList;
 
 use std::fmt;
 use std::str::FromStr;

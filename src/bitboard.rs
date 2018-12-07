@@ -21,8 +21,8 @@ use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
 
-use square::{File, Rank, Square};
-use types::Color;
+use crate::square::{File, Rank, Square};
+use crate::types::Color;
 
 /// A set of [squares](../enum.Square.html) represented by a 64 bit
 /// integer mask.

@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use square::{File, Rank, Square};
-use bitboard::Bitboard;
-use attacks;
-use types::{CastlingSide, Color, RemainingChecks, Role};
-use material::Material;
-use board::Board;
+use crate::square::{File, Rank, Square};
+use crate::bitboard::Bitboard;
+use crate::attacks;
+use crate::types::{CastlingSide, Color, RemainingChecks, Role};
+use crate::material::Material;
+use crate::board::Board;
 
 /// A not necessarily legal position.
 pub trait Setup {

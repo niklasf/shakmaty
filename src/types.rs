@@ -18,7 +18,7 @@ use std::fmt;
 use std::char;
 use std::ops;
 
-use square::Square;
+use crate::square::Square;
 
 pub use self::Color::{Black, White};
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};

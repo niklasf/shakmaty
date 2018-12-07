@@ -77,13 +77,13 @@ use std::error::Error;
 
 use btoi;
 
-use square::{File, Rank, Square};
-use types::{Black, Color, Piece, RemainingChecks, White};
-use material::Material;
-use bitboard::Bitboard;
-use board::Board;
-use setup::Setup;
-use position::{Position, PositionError};
+use crate::square::{File, Rank, Square};
+use crate::types::{Black, Color, Piece, RemainingChecks, White};
+use crate::material::Material;
+use crate::bitboard::Bitboard;
+use crate::board::Board;
+use crate::setup::Setup;
+use crate::position::{Position, PositionError};
 
 /// FEN formatting options.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
@@ -531,7 +531,7 @@ pub fn fen(setup: &dyn Setup) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use position::Chess;
+    use crate::position::Chess;
 
     #[test]
     fn test_legal_ep_square() {

@@ -14,14 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use attacks;
-use board::Board;
-use bitboard::Bitboard;
-use square::{Rank, Square};
-use types::{Black, CastlingSide, Color, Move, Piece, RemainingChecks, Role, White};
-use material::{Material, MaterialSide};
-use setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
-use movelist::{ArrayVecExt, MoveList};
+use crate::attacks;
+use crate::board::Board;
+use crate::bitboard::Bitboard;
+use crate::square::{Rank, Square};
+use crate::types::{Black, CastlingSide, Color, Move, Piece, RemainingChecks, Role, White};
+use crate::material::{Material, MaterialSide};
+use crate::setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
+use crate::movelist::{ArrayVecExt, MoveList};
 
 use std::fmt;
 use std::error::Error;
@@ -1972,7 +1972,7 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fen::Fen;
+    use crate::fen::Fen;
 
     struct _AssertObjectSafe(Box<dyn Position>);
 

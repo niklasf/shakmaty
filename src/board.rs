@@ -18,11 +18,11 @@ use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
 
-use attacks;
-use bitboard::Bitboard;
-use square::{File, Rank, Square};
-use types::{Color, Piece, Role};
-use material::{Material, MaterialSide};
+use crate::attacks;
+use crate::bitboard::Bitboard;
+use crate::square::{File, Rank, Square};
+use crate::types::{Color, Piece, Role};
+use crate::material::{Material, MaterialSide};
 
 /// [`Piece`] positions on a board.
 ///
@@ -417,7 +417,7 @@ impl ::std::iter::FusedIterator for Pieces {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use types::{Black, White};
+    use crate::types::{Black, White};
 
     #[test]
     fn test_piece_at() {

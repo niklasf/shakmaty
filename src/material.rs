@@ -21,7 +21,7 @@ use std::iter::FromIterator;
 use std::mem;
 use std::str::FromStr;
 
-use types::{Color, Piece, Role, ROLES};
+use crate::types::{Color, Piece, Role, ROLES};
 
 /// Error when parsing an invalid material key.
 #[derive(Clone, Debug, PartialEq, Eq)]

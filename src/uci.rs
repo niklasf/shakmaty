@@ -98,9 +98,9 @@ use std::fmt;
 use std::str::FromStr;
 use std::error::Error;
 
-use square::{Rank, Square};
-use types::{Move, Role};
-use position::{IllegalMoveError, Position};
+use crate::square::{Rank, Square};
+use crate::types::{Move, Role};
+use crate::position::{IllegalMoveError, Position};
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -314,7 +314,7 @@ impl Uci {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use position::Chess;
+    use crate::position::Chess;
 
     #[test]
     pub fn test_uci_to_en_passant() {
