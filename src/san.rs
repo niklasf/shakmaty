@@ -101,7 +101,7 @@ use std::error::Error;
 pub struct ParseSanError;
 
 impl fmt::Display for ParseSanError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "invalid san".fmt(f)
     }
 }
@@ -137,7 +137,7 @@ impl SanError {
 }
 
 impl fmt::Display for SanError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.desc().fmt(f)
     }
 }
@@ -451,7 +451,7 @@ impl FromStr for San {
 }
 
 impl fmt::Display for San {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 if role != Role::Pawn {
@@ -566,7 +566,7 @@ impl FromStr for SanPlus {
 }
 
 impl fmt::Display for SanPlus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.san)?;
         if let Some(suffix) = self.suffix {
             write!(f, "{}", suffix)?;

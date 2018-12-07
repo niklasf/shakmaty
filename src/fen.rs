@@ -238,7 +238,7 @@ impl ParseFenError {
 }
 
 impl fmt::Display for ParseFenError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.desc().fmt(f)
     }
 }
@@ -305,7 +305,7 @@ impl FromStr for Board {
 }
 
 impl fmt::Display for Board {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", FenOpts::new().promoted(true).board_fen(self))
     }
 }
@@ -436,7 +436,7 @@ impl Fen {
                     let flag = match ch | 32 {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
-                        file @ b'a'...b'h' => {
+                        file @ b'a'..=b'h' => {
                             (candidates & File::new((file as u8 - b'a') as i8)).first()
                         }
                         _ => return Err(ParseFenError::InvalidCastling),
@@ -497,7 +497,7 @@ impl FromStr for Fen {
 }
 
 impl fmt::Display for Fen {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", FenOpts::new().promoted(true).fen(self))
     }
 }

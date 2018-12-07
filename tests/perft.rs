@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-extern crate shakmaty;
-
 use shakmaty::Position;
 use shakmaty::Chess;
 use shakmaty::variants::{Atomic, Giveaway, Crazyhouse, RacingKings, Horde};

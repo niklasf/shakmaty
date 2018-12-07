@@ -9,6 +9,7 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parsing"]
 keywords = ["chess"]
 build = "src/build.rs"
+edition = "2018"
 
 [[bench]]
 name = "benches"

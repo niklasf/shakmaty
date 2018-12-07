@@ -101,7 +101,7 @@ impl Sub for File {
 }
 
 impl fmt::Display for File {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.char())
     }
 }
@@ -201,7 +201,7 @@ impl Sub for Rank {
 }
 
 impl fmt::Display for Rank {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.char())
     }
 }
@@ -225,7 +225,7 @@ from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 pub struct ParseSquareError;
 
 impl fmt::Display for ParseSquareError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "invalid square name".fmt(f)
     }
 }
@@ -557,13 +557,13 @@ impl str::FromStr for Square {
 }
 
 impl fmt::Display for Square {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.file().char(), self.rank().char())
     }
 }
 
 impl fmt::Debug for Square {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_string().to_uppercase())
     }
 }

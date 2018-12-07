@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-extern crate version_check;
+use version_check;
 
 use std::env;
 use std::fmt::LowerHex;
@@ -14,9 +14,9 @@ mod square;
 mod bitboard;
 mod magics;
 
-use square::Square;
-use bitboard::Bitboard;
-use magics::Magic;
+use crate::square::Square;
+use crate::bitboard::Bitboard;
+use crate::magics::Magic;
 
 const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];

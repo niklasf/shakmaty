@@ -310,7 +310,7 @@ impl Default for Board {
 }
 
 impl fmt::Debug for Board {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for rank in (0..8).map(Rank::new).rev() {
             for file in (0..8).map(File::new) {
                 let square = Square::from_coords(file, rank);
@@ -357,7 +357,7 @@ pub struct Pieces {
 }
 
 impl fmt::Debug for Pieces {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Pieces").finish()
     }
 }

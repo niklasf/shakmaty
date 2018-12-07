@@ -374,7 +374,7 @@ static RANKS: [u64; 8] = [0xff, 0xff00, 0xff_0000, 0xff00_0000, 0xff_0000_0000, 
 static FILES: [u64; 8] = [0x0101_0101_0101_0101, 0x0202_0202_0202_0202, 0x0404_0404_0404_0404, 0x0808_0808_0808_0808, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020, 0x4040_4040_4040_4040, 0x8080_8080_8080_8080];
 
 impl fmt::Debug for Bitboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for rank in (0..8).map(Rank::new).rev() {
             for file in (0..8).map(File::new) {
                 let sq = Square::from_coords(file, rank);
@@ -388,25 +388,25 @@ impl fmt::Debug for Bitboard {
 }
 
 impl fmt::UpperHex for Bitboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:X}", self.0)
     }
 }
 
 impl fmt::LowerHex for Bitboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:x}", self.0)
     }
 }
 
 impl fmt::Octal for Bitboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:o}", self.0)
     }
 }
 
 impl fmt::Binary for Bitboard {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:b}", self.0)
     }
 }

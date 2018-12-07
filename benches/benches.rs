@@ -1,8 +1,5 @@
-#[macro_use]
-extern crate criterion;
-extern crate shakmaty;
-
 use criterion::{black_box, Criterion};
+
 use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square, Bitboard};
 use shakmaty::san::San;
 use shakmaty::fen::Fen;

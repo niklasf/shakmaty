@@ -107,7 +107,7 @@ use crate::position::{IllegalMoveError, Position};
 pub struct ParseUciError;
 
 impl fmt::Display for ParseUciError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "invalid uci".fmt(f)
     }
 }
@@ -148,7 +148,7 @@ impl FromStr for Uci {
 }
 
 impl fmt::Display for Uci {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Uci::Normal { from, to, promotion: None } =>
                 write!(f, "{}{}", from, to),

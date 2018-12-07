@@ -28,7 +28,7 @@ use crate::types::{Color, Piece, Role, ROLES};
 pub struct ParseMaterialError;
 
 impl fmt::Display for ParseMaterialError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "invalid material key".fmt(f)
     }
 }
@@ -113,7 +113,7 @@ impl MaterialSide {
 }
 
 impl fmt::Display for MaterialSide {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for &role in ROLES.iter().rev() {
             write!(f, "{}", role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
         }
@@ -122,7 +122,7 @@ impl fmt::Display for MaterialSide {
 }
 
 impl fmt::Debug for MaterialSide {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.count() > 0 {
             write!(f, "{}", self)
         } else {
@@ -288,13 +288,13 @@ impl Material {
 }
 
 impl fmt::Display for Material {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}v{}", self.white, self.black)
     }
 }
 
 impl fmt::Debug for Material {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}v{:?}", self.white, self.black)
     }
 }

@@ -23,6 +23,8 @@ use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use crate::movelist::{ArrayVecExt, MoveList};
 
+use bitflags::bitflags;
+
 use std::fmt;
 use std::error::Error;
 
@@ -43,7 +45,7 @@ impl Outcome {
 }
 
 impl fmt::Display for Outcome {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", match *self {
             Outcome::Decisive { winner: White } => "1-0",
             Outcome::Decisive { winner: Black } => "0-1",
@@ -70,7 +72,7 @@ bitflags! {
 }
 
 impl fmt::Display for PositionError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "illegal position".fmt(f)
     }
 }
@@ -96,7 +98,7 @@ impl PositionError {
 pub struct IllegalMoveError;
 
 impl fmt::Display for IllegalMoveError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "illegal move".fmt(f)
     }
 }

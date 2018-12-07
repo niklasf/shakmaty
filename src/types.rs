@@ -348,7 +348,7 @@ impl Move {
 }
 
 impl fmt::Display for Move {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
@@ -412,7 +412,7 @@ impl RemainingChecks {
 }
 
 impl fmt::Display for RemainingChecks {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}+{}", self.white, self.black)
     }
 }

@@ -77,10 +77,7 @@
 
 #![cfg_attr(nightly, feature(exact_size_is_empty))]
 
-extern crate arrayvec;
-#[macro_use]
-extern crate bitflags;
-extern crate btoi;
+use btoi;
 
 mod square;
 mod types;
