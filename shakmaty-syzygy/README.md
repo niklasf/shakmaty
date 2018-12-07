@@ -39,6 +39,9 @@ Documentation
 Changelog
 ---------
 
+* 0.10.0
+  - Update shakmaty to `0.13`.
+  - Use `FADV_RANDOM` on tablebase files.
 * 0.9.0
   - Update shakmaty to `0.12`.
   - `Tablebase::add_directory()` now returns the number of added files.
