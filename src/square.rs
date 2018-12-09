@@ -110,7 +110,7 @@ macro_rules! from_file_impl {
     ($($t:ty)+) => {
         $(impl From<File> for $t {
             #[inline]
-            #[cfg_attr(nightly, allow(clippy::cast_lossless))]
+            #[allow(clippy::cast_lossless)]
             fn from(file: File) -> $t {
                 file as i8 as $t
             }
@@ -210,7 +210,7 @@ macro_rules! from_rank_impl {
     ($($t:ty)+) => {
         $(impl From<Rank> for $t {
             #[inline]
-            #[cfg_attr(nightly, allow(clippy::cast_lossless))]
+            #[allow(clippy::cast_lossless)]
             fn from(rank: Rank) -> $t {
                 rank as i8 as $t
             }
@@ -522,7 +522,7 @@ macro_rules! from_square_impl {
     ($($t:ty)+) => {
         $(impl From<Square> for $t {
             #[inline]
-            #[cfg_attr(nightly, allow(clippy::cast_lossless))]
+            #[allow(clippy::cast_lossless)]
             fn from(sq: Square) -> $t {
                 sq as $t
             }

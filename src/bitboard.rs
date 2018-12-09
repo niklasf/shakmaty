@@ -592,12 +592,6 @@ impl ExactSizeIterator for IntoIter {
     fn len(&self) -> usize {
         self.0.count()
     }
-
-    #[cfg(nightly)]
-    #[inline]
-    fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
 }
 
 impl ::std::iter::FusedIterator for IntoIter {}

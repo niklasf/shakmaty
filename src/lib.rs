@@ -75,8 +75,6 @@
 #![warn(missing_debug_implementations)]
 #![warn(bare_trait_objects)]
 
-#![cfg_attr(nightly, feature(exact_size_is_empty))]
-
 use btoi;
 
 mod square;

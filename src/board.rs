@@ -402,14 +402,6 @@ impl ExactSizeIterator for Pieces {
         self.pawns.count() + self.knights.count() + self.bishops.count()
             + self.rooks.count() + self.queens.count() + self.kings.count()
     }
-
-    #[cfg(nightly)]
-    fn is_empty(&self) -> bool {
-        self.white.is_empty() && self.pawns.is_empty()
-            && self.knights.is_empty() && self.bishops.is_empty()
-            && self.rooks.is_empty() && self.queens.is_empty()
-            && self.kings.is_empty()
-    }
 }
 
 impl ::std::iter::FusedIterator for Pieces {}
