@@ -75,8 +75,6 @@
 #![warn(missing_debug_implementations)]
 #![warn(bare_trait_objects)]
 
-use btoi;
-
 mod square;
 mod types;
 mod material;

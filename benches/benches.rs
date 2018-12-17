@@ -1,4 +1,4 @@
-use criterion::{black_box, Criterion};
+use criterion::{black_box, Criterion, criterion_group, criterion_main};
 
 use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square, Bitboard};
 use shakmaty::san::San;
