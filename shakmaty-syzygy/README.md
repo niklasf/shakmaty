@@ -7,7 +7,8 @@ A Rust library to probe Syzygy endgame tablebases, based on [shakmaty](https://g
 [![crates.io](https://img.shields.io/crates/v/shakmaty-syzygy.svg)](https://crates.io/crates/shakmaty-syzygy)
 [![docs.rs](https://docs.rs/shakmaty-syzygy/badge.svg)](https://docs.rs/shakmaty-syzygy)
 
-Syzygy tables allow optimal play under the 50-move rule. Tables are available for positions with up to 6 (and experimentally 7) pieces.
+[Syzygy tables](https://syzygy-tables.info/#syzygy) allow optimal play under
+the 50-move rule. Tables are available for positions with up to 7 pieces.
 
 Example
 -------
