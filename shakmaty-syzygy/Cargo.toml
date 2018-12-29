@@ -21,7 +21,7 @@ bitflags = "1.0"
 shakmaty = "0.13"
 num-integer = "0.1"
 byteorder = "1.2"
-itertools = "0.7"
+itertools = "0.8"
 positioned-io = { package = "positioned-io-preview", version = "0.3" }
 lazy_static = "1.2"
 double-checked-cell = "2.0"
