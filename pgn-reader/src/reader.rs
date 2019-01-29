@@ -337,12 +337,45 @@ trait ReadPgn {
                     self.bump();
                     visitor.end_variation();
                 },
-                b'!' | b'?' | b'$' => {
-                    let token_end = self.find_token_end(1);
-                    if let Ok(nag) = Nag::from_ascii(&self.buffer()[..token_end]) {
-                        visitor.nag(nag);
+                b'$' => {
+                    self.bump();
+                    let token_end = self.find_token_end(0);
+                    if let Ok(nag) = btoi::btou(&self.buffer()[..token_end]) {
+                        visitor.nag(Nag(nag));
                     }
                     self.consume(token_end);
+                },
+                b'!' => {
+                    self.bump();
+                    match self.peek() {
+                        Some(b'!') => {
+                            self.bump();
+                            visitor.nag(Nag::BRILLIANT_MOVE);
+                        },
+                        Some(b'?') => {
+                            self.bump();
+                            visitor.nag(Nag::SPECULATIVE_MOVE);
+                        },
+                        _ => {
+                            visitor.nag(Nag::GOOD_MOVE);
+                        },
+                    }
+                },
+                b'?' => {
+                    self.bump();
+                    match self.peek() {
+                        Some(b'!') => {
+                            self.bump();
+                            visitor.nag(Nag::DUBIOUS_MOVE);
+                        },
+                        Some(b'?') => {
+                            self.bump();
+                            visitor.nag(Nag::BLUNDER);
+                        },
+                        _ => {
+                            visitor.nag(Nag::MISTAKE);
+                        },
+                    }
                 },
                 b'*' => {
                     visitor.outcome(None);
