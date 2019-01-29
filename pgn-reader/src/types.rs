@@ -49,23 +49,41 @@ impl Nag {
     /// [`InvalidNag`]: struct.InvalidNag.html
     pub fn from_ascii(s: &[u8]) -> Result<Nag, InvalidNag> {
         if s == b"?!" {
-            Ok(Nag(6))
+            Ok(Nag::DUBIOUS_MOVE)
         } else if s == b"?" {
-            Ok(Nag(2))
+            Ok(Nag::MISTAKE)
         } else if s == b"??" {
-            Ok(Nag(4))
+            Ok(Nag::BLUNDER)
         } else if s == b"!" {
-            Ok(Nag(1))
+            Ok(Nag::GOOD_MOVE)
         } else if s == b"!!" {
-            Ok(Nag(3))
+            Ok(Nag::BRILLIANT_MOVE)
         } else if s == b"!?" {
-            Ok(Nag(5))
+            Ok(Nag::SPECULATIVE_MOVE)
         } else if s.len() > 1 && s[0] == b'$' {
             btoi::btou(&s[1..]).ok().map(Nag).ok_or(InvalidNag { _priv: () })
         } else {
             Err(InvalidNag { _priv: () })
         }
     }
+
+    /// A good move (`!`).
+    pub const GOOD_MOVE: Nag = Nag(1);
+
+    /// A mistake (`?`).
+    pub const MISTAKE: Nag = Nag(2);
+
+    /// A brilliant move (`!!`).
+    pub const BRILLIANT_MOVE: Nag = Nag(3);
+
+    /// A blunder (`??`).
+    pub const BLUNDER: Nag = Nag(4);
+
+    /// A speculative move (`!?`).
+    pub const SPECULATIVE_MOVE: Nag = Nag(5);
+
+    /// A dubious move (`?!`).
+    pub const DUBIOUS_MOVE: Nag = Nag(6);
 }
 
 impl fmt::Display for Nag {
