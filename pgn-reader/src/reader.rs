@@ -682,4 +682,27 @@ mod tests {
         assert_eq!(counter.count, 1);
         Ok(())
     }
+
+    #[test]
+    fn test_nag() -> Result<(), io::Error> {
+        struct NagCollector {
+            nags: Vec<Nag>,
+        }
+
+        impl Visitor for NagCollector {
+            type Result = ();
+
+            fn nag(&mut self, nag: Nag) {
+                self.nags.push(nag);
+            }
+
+            fn end_game(&mut self) { }
+        }
+
+        let mut collector = NagCollector { nags: Vec::new() };
+        let mut reader = BufferedReader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
+        reader.read_game(&mut collector)?;
+        assert_eq!(collector.nags, vec![Nag::GOOD_MOVE, Nag(71), Nag::BLUNDER, Nag::SPECULATIVE_MOVE]);
+        Ok(())
+    }
 }
