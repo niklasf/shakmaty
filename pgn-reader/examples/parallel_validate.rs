@@ -124,16 +124,16 @@ fn main() {
         let (send, recv) = crossbeam::channel::bounded(128);
 
         crossbeam::scope(|scope| {
-            scope.spawn(move || {
+            scope.spawn(move |_| {
                 for game in BufferedReader::new(file).into_iter(&mut validator) {
-                    send.send(game.expect("io"));
+                    send.send(game.expect("io")).unwrap();
                 }
             });
 
             for _ in 0..3 {
                 let recv = recv.clone();
                 let success = success.clone();
-                scope.spawn(move || {
+                scope.spawn(move |_| {
                     for game in recv {
                         let index = game.index;
                         if !game.validate() {
@@ -143,7 +143,7 @@ fn main() {
                     }
                 });
             }
-        });
+        }).unwrap();
 
         let success = success.load(Ordering::SeqCst);
         println!("{}: {}", arg, if success { "success" } else { "errors" });

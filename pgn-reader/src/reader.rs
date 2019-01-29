@@ -21,7 +21,7 @@ use std::ptr;
 use slice_deque::SliceDeque;
 
 use shakmaty::{Color, CastlingSide, Outcome};
-use shakmaty::san::{San, SanPlus};
+use shakmaty::san::{San, SanPlus, Suffix};
 
 use types::{Nag, Skip, RawComment, RawHeader};
 use visitor::{Visitor, SkipVisitor};
@@ -313,21 +313,14 @@ trait ReadPgn {
                         } else {
                             CastlingSide::KingSide
                         };
-                        let (check, checkmate) = match self.peek() {
-                            Some(b'+') => {
-                                self.bump();
-                                (true, false)
-                            },
-                            Some(b'#') => {
-                                self.bump();
-                                (false, true)
-                            },
-                            _ => (false, false),
+                        let suffix = match self.peek() {
+                            Some(b'+') => Some(Suffix::Check),
+                            Some(b'#') => Some(Suffix::Checkmate),
+                            _ => None,
                         };
                         visitor.san(SanPlus {
                             san: San::Castle(side),
-                            check,
-                            checkmate,
+                            suffix,
                         });
                     } else {
                         let token_end = self.find_token_end(0);
