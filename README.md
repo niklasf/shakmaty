@@ -72,6 +72,8 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.13.1
+  - Performance improvements on nightly (aligned `Move` enum).
 * 0.13.0
   - Replaced `SanPlus::check` and `SanPlus::checkmate` with `san::Suffix` enum.
   - Renamed `{Rank,File}::rotate()` to `flip_diagonal()`.
