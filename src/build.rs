@@ -91,6 +91,11 @@ fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
 }
 
 fn main() -> io::Result<()> {
+    // detect support for nightly features
+    if let Some(true) = version_check::supports_features() {
+        println!("cargo:rustc-cfg=nightly");
+    }
+
     // generate attacks.rs
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
     let dest_path = Path::new(&out_dir).join("attacks.rs");

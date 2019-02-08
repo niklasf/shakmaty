@@ -239,6 +239,7 @@ impl Piece {
 
 /// Information about a move.
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[cfg_attr(nightly, repr(align(4)))]
 pub enum Move {
     Normal {
         role: Role,
