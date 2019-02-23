@@ -32,6 +32,7 @@ hashbrown = "0.1"
 csv = "1.0"
 matches = "0.1"
 bencher = "0.1"
+structopt = "0.2.14"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty-syzygy", branch = "master" }
