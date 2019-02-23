@@ -1,14 +1,14 @@
 use std::cmp::min;
-use std::path::PathBuf;
 use std::error::Error;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 use failure::Fail;
 
-use shakmaty::{Chess, Color, Setup, Position, MoveList};
-use shakmaty::san::SanPlus;
 use shakmaty::fen::{fen, Fen};
-use shakmaty_syzygy::{Tablebase, Dtz, Wdl, SyzygyError};
+use shakmaty::san::SanPlus;
+use shakmaty::{Chess, Color, MoveList, Position, Setup};
+use shakmaty_syzygy::{Dtz, SyzygyError, Tablebase, Wdl};
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -36,10 +36,10 @@ fn real_wdl(tb: &Tablebase<Chess>, pos: &Chess, dtz: Dtz) -> Result<Wdl, SyzygyE
     }
 
     if halfmoves == 1 && dtz.0.abs() == 99 {
-         // This could only be a cursed/blessed result if the real DTZ was
-         // 100 instead of 99. But tables with DTZ 100 will always
-         // store precise DTZ values, hence it could not have been 100.
-         return Ok(Wdl::from_dtz_after_zeroing(before_zeroing));
+        // This could only be a cursed/blessed result if the real DTZ was
+        // 100 instead of 99. But tables with DTZ 100 will always
+        // store precise DTZ values, hence it could not have been 100.
+        return Ok(Wdl::from_dtz_after_zeroing(before_zeroing));
     }
 
     let best = tb.best_move(pos)?.expect("has moves");
@@ -56,9 +56,7 @@ fn main() -> Result<(), Box<Error>> {
         tablebase.add_directory(path)?;
     }
 
-    let mut pos: Chess = opt.fen
-        .parse::<Fen>()?
-        .position()?;
+    let mut pos: Chess = opt.fen.parse::<Fen>()?.position()?;
 
     let fen = fen(&pos);
     let dtz = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
@@ -123,10 +121,8 @@ fn main() -> Result<(), Box<Error>> {
         }
 
         match pos.turn() {
-            Color::White =>
-                movetext.push(format!("{}.", pos.fullmoves())),
-            Color::Black if force_movenumber =>
-                movetext.push(format!("{}...", pos.fullmoves())),
+            Color::White => movetext.push(format!("{}.", pos.fullmoves())),
+            Color::Black if force_movenumber => movetext.push(format!("{}...", pos.fullmoves())),
             _ => (),
         }
 
