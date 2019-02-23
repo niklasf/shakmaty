@@ -58,6 +58,7 @@ fn main() -> Result<(), Box<Error>> {
 
     let mut pos: Chess = opt.fen.parse::<Fen>()?.position()?;
 
+    let material = pos.board().material();
     let fen = fen(&pos);
     let dtz = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
     let wdl = real_wdl(&tablebase, &pos, dtz).map_err(|e| e.compat())?;
@@ -139,7 +140,7 @@ fn main() -> Result<(), Box<Error>> {
     if opt.test {
         println!("{}", result);
     } else {
-        println!("[Event \"\"]");
+        println!("[Event \"{}\"]", material);
         println!("[Site \"\"]");
         println!("[Date \"????.??.??\"]");
         println!("[Round \"-\"]");
