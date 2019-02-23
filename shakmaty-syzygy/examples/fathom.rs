@@ -78,10 +78,10 @@ fn main() -> Result<(), Box<Error>> {
         let san = SanPlus::from_move(pos.clone(), m);
         let mut after = pos.clone();
         after.play_unchecked(m);
-        let dtz_after = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
+        let dtz_after = tablebase.probe_dtz(&after).map_err(|e| e.compat())?;
         let list = match real_wdl(&tablebase, &after, dtz_after).map_err(|e| e.compat())? {
-            Wdl::Loss => &mut losing_sans,
-            Wdl::Win => &mut winning_sans,
+            Wdl::Win => &mut losing_sans,
+            Wdl::Loss => &mut winning_sans,
             _ => &mut drawing_sans,
         };
         list.push(san.to_string());
