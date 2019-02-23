@@ -108,7 +108,10 @@ fn main() -> Result<(), Box<Error>> {
             break;
         }
 
-        if pos.halfmoves() == 0 {
+        if pos.halfmoves() == 100 {
+            movetext.push("{ Draw claimed }".to_owned());
+            force_movenumber = true;
+        } else if pos.halfmoves() == 0 {
             let Dtz(dtz) = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
             movetext.push(format!("{{ {} with DTZ {} }}", pos.board().material(), dtz));
             force_movenumber = true;
