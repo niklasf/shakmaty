@@ -20,6 +20,18 @@ use std::str;
 use std::error::Error;
 use std::ops::Sub;
 
+macro_rules! from_repr_i8_impl {
+    ($from:ty, $($t:ty)+) => {
+        $(impl From<$from> for $t {
+            #[inline]
+            #[allow(clippy::cast_lossless)]
+            fn from(value: $from) -> $t {
+                value as i8 as $t
+            }
+        })+
+    }
+}
+
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -106,19 +118,7 @@ impl fmt::Display for File {
     }
 }
 
-macro_rules! from_file_impl {
-    ($($t:ty)+) => {
-        $(impl From<File> for $t {
-            #[inline]
-            #[allow(clippy::cast_lossless)]
-            fn from(file: File) -> $t {
-                file as i8 as $t
-            }
-        })+
-    }
-}
-
-from_file_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_i8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -206,19 +206,7 @@ impl fmt::Display for Rank {
     }
 }
 
-macro_rules! from_rank_impl {
-    ($($t:ty)+) => {
-        $(impl From<Rank> for $t {
-            #[inline]
-            #[allow(clippy::cast_lossless)]
-            fn from(rank: Rank) -> $t {
-                rank as i8 as $t
-            }
-        })+
-    }
-}
-
-from_rank_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_i8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -518,19 +506,7 @@ impl Square {
     }
 }
 
-macro_rules! from_square_impl {
-    ($($t:ty)+) => {
-        $(impl From<Square> for $t {
-            #[inline]
-            #[allow(clippy::cast_lossless)]
-            fn from(sq: Square) -> $t {
-                sq as $t
-            }
-        })+
-    }
-}
-
-from_square_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_repr_i8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
     type Output = i8;
