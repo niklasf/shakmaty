@@ -536,9 +536,16 @@ impl SanPlus {
     }
 
     /// Converts a move to Standard Algebraic Notation including possible
-    /// check and checkmate suffixes.
-    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
-        let san = San::from_move(&pos, m);
+    /// check and checkmate suffixes. Also plays the move.
+    ///
+    /// It is the callers responsibility to ensure the move is legal.
+    ///
+    /// # Panics
+    ///
+    /// Illegal moves can corrupt the state of the position and may
+    /// (or may not) panic or cause panics on future calls.
+    pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: &Move) -> SanPlus {
+        let san = San::from_move(pos, m);
         pos.play_unchecked(m);
         let checkmate = match pos.outcome() {
             Some(Outcome::Decisive { .. }) => true,
