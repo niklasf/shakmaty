@@ -580,6 +580,29 @@ impl SanPlus {
             suffix: Suffix::from_position(pos),
         }
     }
+
+    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
+        let mut moves = MoveList::new();
+        match *m {
+            Move::Normal { role, to, .. } | Move::Put { role, to } =>
+                pos.san_candidates(role, to, &mut moves),
+            Move::EnPassant { to, .. } =>
+                pos.san_candidates(Role::Pawn, to, &mut moves),
+            Move::Castle { king, rook } if king.file() < rook.file() =>
+                pos.castling_moves(CastlingSide::KingSide, &mut moves),
+            Move::Castle { .. } =>
+                pos.castling_moves(CastlingSide::QueenSide, &mut moves),
+        }
+        SanPlus {
+            san: San::disambiguate(m, &moves),
+            suffix: if moves.contains(m) {
+                pos.play_unchecked(m);
+                Suffix::from_position(&pos)
+            } else {
+                None
+            }
+        }
+    }
 }
 
 impl FromStr for SanPlus {
