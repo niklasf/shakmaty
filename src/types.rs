@@ -462,6 +462,14 @@ impl CastlingSide {
         !self.is_queen_side()
     }
 
+    pub fn from_queen_side(queen_side: bool) -> CastlingSide {
+        if queen_side { CastlingSide::QueenSide } else { CastlingSide::KingSide }
+    }
+
+    pub fn from_king_side(king_side: bool) -> CastlingSide {
+        if king_side { CastlingSide::KingSide } else { CastlingSide::QueenSide }
+    }
+
     pub fn king_to(self, color: Color) -> Square {
         match self {
             CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
