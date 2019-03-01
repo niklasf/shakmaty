@@ -77,6 +77,7 @@
 
 #![cfg_attr(nightly, feature(repr_align_enum))]
 
+mod errors;
 mod square;
 mod types;
 mod material;
@@ -93,6 +94,7 @@ pub mod fen;
 pub mod uci;
 pub mod san;
 
+pub use crate::errors::{TryFromIntError, TryFromFloatError};
 pub use crate::square::{ParseSquareError, File, Rank, Square};
 pub use crate::types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
 pub use crate::material::{Material, MaterialSide, ParseMaterialError};
