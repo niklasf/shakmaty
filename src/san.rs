@@ -252,48 +252,15 @@ impl San {
 
     /// Converts a move to Standard Algebraic Notation.
     pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
+        let mut legals = MoveList::new();
+
         match *m {
-            Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
-                San::Normal {
-                    role: Role::Pawn,
-                    file: if capture.is_some() { Some(from.file()) } else { None },
-                    rank: None,
-                    capture: capture.is_some(),
-                    to,
-                    promotion,
-                },
-            Move::Normal { role, from, capture, to, promotion } => {
-                let mut legals = MoveList::new();
-                pos.san_candidates(role, to, &mut legals);
-
-                // Disambiguate.
-                let (rank, file) = legals.iter().fold((false, false), |(rank, file), c| match *c {
-                    Move::Normal { from: candidate, .. } =>
-                        if from == candidate {
-                            (rank, file)
-                        } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
-                            (rank, true)
-                        } else {
-                            (true, file)
-                        },
-                    _ => (rank, file)
-                });
-
-                San::Normal {
-                    role,
-                    file: if file { Some(from.file()) } else { None },
-                    rank: if rank { Some(from.rank()) } else { None },
-                    capture: capture.is_some(),
-                    to,
-                    promotion
-                }
-            },
-            Move::EnPassant { from, to, .. } => San::Normal {
-                role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
-            Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
-            Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
-            Move::Put { role, to } => San::Put { role, to },
+            Move::Normal { role, to, .. } if role != Role::Pawn =>
+                pos.san_candidates(role, to, &mut legals),
+            _ => (),
         }
+
+        San::disambiguate(m, &legals)
     }
 
     /// Tries to convert the `San` to a legal move in the context of a
@@ -342,6 +309,52 @@ impl San {
                 Err(SanError::AmbiguousSan)
             }
         })
+    }
+
+    pub fn disambiguate(m: &Move, moves: &MoveList) -> San {
+        match *m {
+            Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
+                San::Normal {
+                    role: Role::Pawn,
+                    file: if capture.is_some() { Some(from.file()) } else { None },
+                    rank: None,
+                    capture: capture.is_some(),
+                    to,
+                    promotion
+                },
+            Move::Normal { role, from, capture, to, promotion } => {
+                // Disambiguate.
+                let (rank, file) = moves.iter().filter(|c| match *c {
+                    Move::Normal { role: r, to: t, promotion: p, .. } =>
+                        role == *r && to == *t && promotion == *p,
+                    _ => false,
+                }).fold((false, false), |(rank, file), c| match *c {
+                    Move::Normal { from: candidate, .. } =>
+                        if from == candidate {
+                            (rank, file)
+                        } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
+                            (rank, true)
+                        } else {
+                            (true, file)
+                        },
+                    _ => (rank, file)
+                });
+
+                San::Normal {
+                    role,
+                    file: if file { Some(from.file()) } else { None },
+                    rank: if rank { Some(from.rank()) } else { None },
+                    capture: capture.is_some(),
+                    to,
+                    promotion
+                }
+            },
+            Move::EnPassant { from, to, .. } => San::Normal {
+                role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
+            Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
+            Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
+            Move::Put { role, to } => San::Put { role, to },
+        }
     }
 
     /// Searches a [`MoveList`] for a unique matching move.
