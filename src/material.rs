@@ -20,6 +20,7 @@ use std::error::Error;
 use std::iter::FromIterator;
 use std::mem;
 use std::str::FromStr;
+use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 use crate::types::{Color, Piece, Role, ROLES};
 
@@ -176,6 +177,76 @@ impl FromStr for MaterialSide {
     }
 }
 
+impl<'a> AddAssign<&'a MaterialSide> for MaterialSide {
+    fn add_assign(&mut self, other: &'a MaterialSide) {
+        self.pawns += other.pawns;
+        self.knights += other.knights;
+        self.bishops += other.bishops;
+        self.rooks += other.rooks;
+        self.queens += other.queens;
+        self.kings += other.kings;
+    }
+}
+
+impl AddAssign for MaterialSide {
+    fn add_assign(&mut self, other: MaterialSide) {
+        *self += &other;
+    }
+}
+
+impl<'a> Add<&'a MaterialSide> for MaterialSide {
+    type Output = MaterialSide;
+
+    fn add(mut self, other: &'a MaterialSide) -> MaterialSide {
+        self += other;
+        self
+    }
+}
+
+impl Add for MaterialSide {
+    type Output = MaterialSide;
+
+    fn add(mut self, other: MaterialSide) -> MaterialSide {
+        self += other;
+        self
+    }
+}
+
+impl<'a> SubAssign<&'a MaterialSide> for MaterialSide {
+    fn sub_assign(&mut self, other: &'a MaterialSide) {
+        self.pawns -= other.pawns;
+        self.knights -= other.knights;
+        self.bishops -= other.bishops;
+        self.rooks -= other.rooks;
+        self.queens -= other.queens;
+        self.kings -= other.kings;
+    }
+}
+
+impl SubAssign for MaterialSide {
+    fn sub_assign(&mut self, other: MaterialSide) {
+        *self -= &other;
+    }
+}
+
+impl<'a> Sub<&'a MaterialSide> for MaterialSide {
+    type Output = MaterialSide;
+
+    fn sub(mut self, other: &'a MaterialSide) -> MaterialSide {
+        self -= other;
+        self
+    }
+}
+
+impl Sub for MaterialSide {
+    type Output = MaterialSide;
+
+    fn sub(mut self, other: MaterialSide) -> MaterialSide {
+        self -= other;
+        self
+    }
+}
+
 /// The material configuration of both sides.
 #[derive(Clone, Default, Eq, PartialEq, Hash)]
 pub struct Material {
@@ -323,5 +394,67 @@ impl FromStr for Material {
 
     fn from_str(s: &str) -> Result<Material, ParseMaterialError> {
         Material::from_ascii(s.as_bytes())
+    }
+}
+
+impl<'a> AddAssign<&'a Material> for Material {
+    fn add_assign(&mut self, other: &'a Material) {
+        self.white += &other.white;
+        self.black += &other.black;
+    }
+}
+
+impl AddAssign for Material {
+    fn add_assign(&mut self, other: Material) {
+        *self += &other;
+    }
+}
+
+impl<'a> Add<&'a Material> for Material {
+    type Output = Material;
+
+    fn add(mut self, other: &'a Material) -> Material {
+        self += other;
+        self
+    }
+}
+
+impl Add for Material {
+    type Output = Material;
+
+    fn add(mut self, other: Material) -> Material {
+        self += other;
+        self
+    }
+}
+
+impl<'a> SubAssign<&'a Material> for Material {
+    fn sub_assign(&mut self, other: &'a Material) {
+        self.white -= &other.white;
+        self.black -= &other.black;
+    }
+}
+
+impl SubAssign for Material {
+    fn sub_assign(&mut self, other: Material) {
+        *self -= &other;
+    }
+}
+
+impl<'a> Sub<&'a Material> for Material {
+    type Output = Material;
+
+    fn sub(mut self, other: &'a Material) -> Material {
+        self -= other;
+        self
+    }
+}
+
+impl Sub for Material {
+    type Output = Material;
+
+    fn sub(mut self, other: Material) -> Material {
+        self -= other;
+        self
     }
 }
