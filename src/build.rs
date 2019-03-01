@@ -7,6 +7,7 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 
+mod errors;
 mod types;
 mod square;
 mod bitboard;

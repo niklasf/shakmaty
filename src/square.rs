@@ -15,10 +15,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::max;
+use std::convert::TryFrom;
 use std::fmt;
 use std::str;
 use std::error::Error;
 use std::ops::Sub;
+
+use crate::errors::{TryFromIntError, TryFromFloatError};
 
 macro_rules! from_repr_i8_impl {
     ($from:ty, $($t:ty)+) => {
@@ -27,6 +30,25 @@ macro_rules! from_repr_i8_impl {
             #[allow(clippy::cast_lossless)]
             fn from(value: $from) -> $t {
                 value as i8 as $t
+            }
+        })+
+    }
+}
+
+macro_rules! unsafe_try_from_number_impl {
+    ($type:ty, $error:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
+        $(impl TryFrom<$t> for $type {
+            type Error = $error;
+
+            #[inline]
+            #[allow(unused_comparisons)]
+            #[allow(clippy::cast_lossless)]
+            fn try_from(value: $t) -> Result<$type, Self::Error> {
+                if $lower <= value && value < $upper {
+                    Ok(unsafe { <$type>::from_index_unchecked(value as i8) })
+                } else {
+                    Err(<$error>::from(()))
+                }
             }
         })+
     }
@@ -120,6 +142,9 @@ impl fmt::Display for File {
 
 from_repr_i8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
+unsafe_try_from_number_impl! { File, TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+unsafe_try_from_number_impl! { File, TryFromFloatError, 0.0, 8.0, f32 f64 }
+
 /// A rank of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -207,6 +232,9 @@ impl fmt::Display for Rank {
 }
 
 from_repr_i8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+
+unsafe_try_from_number_impl! { Rank, TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+unsafe_try_from_number_impl! { Rank, TryFromFloatError, 0.0, 8.0, f32 f64 }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -507,6 +535,8 @@ impl Square {
 }
 
 from_repr_i8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+unsafe_try_from_number_impl! { Square, TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
     type Output = i8;
