@@ -503,6 +503,21 @@ impl Suffix {
             _ => None,
         }
     }
+
+    pub fn from_position<P: Position>(pos: &P) -> Option<Suffix> {
+        let checkmate = match pos.outcome() {
+            Some(Outcome::Decisive { .. }) => true,
+            _ => false,
+        };
+
+        if checkmate {
+            Some(Suffix::Checkmate)
+        } else if pos.checkers().any() {
+            Some(Suffix::Check)
+        } else {
+            None
+        }
+    }
 }
 
 impl fmt::Display for Suffix {
@@ -547,19 +562,9 @@ impl SanPlus {
     pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: &Move) -> SanPlus {
         let san = San::from_move(pos, m);
         pos.play_unchecked(m);
-        let checkmate = match pos.outcome() {
-            Some(Outcome::Decisive { .. }) => true,
-            _ => false,
-        };
         SanPlus {
             san,
-            suffix: if checkmate {
-                Some(Suffix::Checkmate)
-            } else if pos.checkers().any() {
-                Some(Suffix::Check)
-            } else {
-                None
-            }
+            suffix: Suffix::from_position(pos),
         }
     }
 }
