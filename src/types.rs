@@ -17,7 +17,9 @@
 use std::fmt;
 use std::char;
 use std::ops;
+use std::convert::TryFrom;
 
+use crate::errors::TryFromIntError;
 use crate::square::Square;
 
 pub use self::Color::{Black, White};
@@ -199,7 +201,7 @@ impl Role {
     }
 }
 
-macro_rules! from_role_impl {
+macro_rules! int_from_role_impl {
     ($($t:ty)+) => {
         $(impl From<Role> for $t {
             #[inline]
@@ -210,7 +212,30 @@ macro_rules! from_role_impl {
     }
 }
 
-from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+macro_rules! try_role_from_int_impl {
+    ($($t:ty)+) => {
+        $(impl TryFrom<$t> for Role {
+            type Error = TryFromIntError;
+
+            #[inline]
+            fn try_from(value: $t) -> Result<Role, Self::Error> {
+                Ok(match value {
+                    1 => Role::Pawn,
+                    2 => Role::Knight,
+                    3 => Role::Bishop,
+                    4 => Role::Rook,
+                    5 => Role::Queen,
+                    6 => Role::King,
+                    _ => return Err(TryFromIntError),
+                })
+            }
+        })+
+    }
+}
+
+try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
