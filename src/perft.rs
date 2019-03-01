@@ -29,7 +29,9 @@ use crate::uci::Uci;
 /// faster specialized software.
 ///
 /// Warning: Computing perft numbers can take a long time, even at moderate
-/// depths.
+/// depths. The simple recursive algorithm can also overflow the stack at
+/// high depths, but this will only come into consideration in the rare case
+/// that high depths are feasible at all.
 ///
 /// # Examples
 ///
@@ -41,7 +43,7 @@ use crate::uci::Uci;
 /// assert_eq!(perft(&pos, 2), 400);
 /// assert_eq!(perft(&pos, 3), 8902);
 /// ```
-pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
+pub fn perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
     if depth < 1 {
         1
     } else {
@@ -62,7 +64,7 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
 
 /// Like `perft()`, but also prints the perft of each child for debugging.
 #[allow(unused)]
-pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u8) -> u64 {
+pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
     if depth < 1 {
         1
     } else {
