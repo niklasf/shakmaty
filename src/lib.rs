@@ -75,6 +75,7 @@
 #![warn(missing_debug_implementations)]
 #![warn(bare_trait_objects)]
 
+#![cfg_attr(nightly, feature(try_from))]
 #![cfg_attr(nightly, feature(repr_align_enum))]
 
 mod errors;

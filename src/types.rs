@@ -17,9 +17,7 @@
 use std::fmt;
 use std::char;
 use std::ops;
-use std::convert::TryFrom;
 
-use crate::errors::TryFromIntError;
 use crate::square::Square;
 
 pub use self::Color::{Black, White};
@@ -216,8 +214,8 @@ int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! try_role_from_int_impl {
     ($($t:ty)+) => {
-        $(impl TryFrom<$t> for Role {
-            type Error = TryFromIntError;
+        $(#[cfg(nightly)] impl std::convert::TryFrom<$t> for Role {
+            type Error = crate::errors::TryFromIntError;
 
             #[inline]
             fn try_from(value: $t) -> Result<Role, Self::Error> {
@@ -228,7 +226,7 @@ macro_rules! try_role_from_int_impl {
                     4 => Role::Rook,
                     5 => Role::Queen,
                     6 => Role::King,
-                    _ => return Err(TryFromIntError),
+                    _ => return Err(crate::errors::TryFromIntError),
                 })
             }
         })+

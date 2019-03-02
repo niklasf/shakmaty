@@ -15,13 +15,10 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::max;
-use std::convert::TryFrom;
 use std::fmt;
 use std::str;
 use std::error::Error;
 use std::ops::Sub;
-
-use crate::errors::{TryFromIntError, TryFromFloatError};
 
 macro_rules! from_repr_i8_impl {
     ($from:ty, $($t:ty)+) => {
@@ -37,7 +34,7 @@ macro_rules! from_repr_i8_impl {
 
 macro_rules! unsafe_try_from_number_impl {
     ($type:ty, $error:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
-        $(impl TryFrom<$t> for $type {
+        $(#[cfg(nightly)] impl std::convert::TryFrom<$t> for $type {
             type Error = $error;
 
             #[inline]
@@ -142,8 +139,8 @@ impl fmt::Display for File {
 
 from_repr_i8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
-unsafe_try_from_number_impl! { File, TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
-unsafe_try_from_number_impl! { File, TryFromFloatError, 0.0, 8.0, f32 f64 }
+unsafe_try_from_number_impl! { File, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+unsafe_try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -233,8 +230,8 @@ impl fmt::Display for Rank {
 
 from_repr_i8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
-unsafe_try_from_number_impl! { Rank, TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
-unsafe_try_from_number_impl! { Rank, TryFromFloatError, 0.0, 8.0, f32 f64 }
+unsafe_try_from_number_impl! { Rank, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+unsafe_try_from_number_impl! { Rank, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -536,7 +533,7 @@ impl Square {
 
 from_repr_i8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
-unsafe_try_from_number_impl! { Square, TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+unsafe_try_from_number_impl! { Square, crate::errors::TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
     type Output = i8;
