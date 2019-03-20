@@ -72,6 +72,17 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.14.0
+  - `SanPlus::from_move()` no longer requires the move to be legal, which
+    was an undocumented requirement. The new
+    `SanPlus::from_move_and_play_unchecked()` is closest to the previous
+    behavior.
+  - Added `San::disambiguate()` and `SanSuffix::from_position()`.
+  - Implement `TryFrom` for various types on nightly.
+  - Implement `Add`, `AddAssign`, `Sub`, `SubAssign` for `Material` and
+    `MaterialSide`.
+  - Added `CastlingSide::from_{king|queen}_side()`.
+  - Use `u32` for `depth` argument of `perft()`.
 * 0.13.1
   - Performance improvements on nightly (aligned `Move` enum).
 * 0.13.0
