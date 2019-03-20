@@ -314,7 +314,7 @@ impl fmt::Debug for Board {
         for rank in (0..8).map(Rank::new).rev() {
             for file in (0..8).map(File::new) {
                 let square = Square::from_coords(file, rank);
-                f.write_char(self.piece_at(square).map_or('.', |piece| piece.char()))?;
+                f.write_char(self.piece_at(square).map_or('.', Piece::char))?;
                 f.write_char(if file < File::H { ' ' } else { '\n' })?;
             }
         }
