@@ -130,8 +130,7 @@ fn main() -> Result<(), Box<Error>> {
             _ => (),
         }
 
-        movetext.push(SanPlus::from_move(pos.clone(), &bestmove).to_string());
-        pos.play_unchecked(&bestmove);
+        movetext.push(SanPlus::from_move_and_play_unchecked(&mut pos, &bestmove).to_string());
         force_movenumber = false;
     }
 
