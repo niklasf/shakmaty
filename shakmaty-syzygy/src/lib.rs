@@ -60,7 +60,9 @@
 //! conditions.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.11.0")]
+
 #![warn(missing_debug_implementations)]
+#![warn(rust_2018_idioms)]
 
 #[macro_use]
 mod errors;
