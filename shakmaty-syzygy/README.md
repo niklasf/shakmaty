@@ -42,6 +42,7 @@ Changelog
 
 * 0.11.0
   - Update shakmaty to `0.14`.
+  - Add reimplementation of [Fathom](https://github.com/basil00/Fathom) as example.
 * 0.10.0
   - Update shakmaty to `0.13`.
   - Use `FADV_RANDOM` on tablebase files.
