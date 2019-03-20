@@ -40,6 +40,8 @@ Documentation
 Changelog
 ---------
 
+* 0.11.0
+  - Update shakmaty to `0.14`.
 * 0.10.0
   - Update shakmaty to `0.13`.
   - Use `FADV_RANDOM` on tablebase files.
