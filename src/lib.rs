@@ -73,7 +73,7 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.14.0")]
 
 #![warn(missing_debug_implementations)]
-#![warn(bare_trait_objects)]
+#![warn(rust_2018_idioms)]
 
 #![cfg_attr(nightly, feature(repr_align_enum))]
 
