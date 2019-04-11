@@ -72,6 +72,8 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.14.1
+  - `TryFrom` now available on stable.
 * 0.14.0
   - `SanPlus::from_move()` no longer requires the move to be legal, which
     was an undocumented requirement. The new
