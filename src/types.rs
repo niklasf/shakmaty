@@ -214,7 +214,7 @@ int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! try_role_from_int_impl {
     ($($t:ty)+) => {
-        $(#[cfg(nightly)] impl std::convert::TryFrom<$t> for Role {
+        $(impl std::convert::TryFrom<$t> for Role {
             type Error = crate::errors::TryFromIntError;
 
             #[inline]

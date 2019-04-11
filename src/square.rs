@@ -34,7 +34,7 @@ macro_rules! from_repr_i8_impl {
 
 macro_rules! try_from_number_impl {
     ($type:ty, $error:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
-        $(#[cfg(nightly)] impl std::convert::TryFrom<$t> for $type {
+        $(impl std::convert::TryFrom<$t> for $type {
             type Error = $error;
 
             #[inline]
