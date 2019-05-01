@@ -65,6 +65,8 @@ Documentation
 Changelog
 ---------
 
+* 0.11.1
+  - Update dependencies.
 * 0.11.0
   - Update shakmaty to `0.14`.
   - Add reimplementation of [Fathom](https://github.com/basil00/Fathom) as example.
