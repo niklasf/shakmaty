@@ -10,8 +10,8 @@ A Rust library to probe Syzygy endgame tablebases, based on [shakmaty](https://g
 [Syzygy tables](https://syzygy-tables.info/#syzygy) allow optimal play under
 the 50-move rule. Tables are available for positions with up to 7 pieces.
 
-Example
--------
+Example: Usage
+--------------
 
 ```rust
 use shakmaty::Chess;
@@ -30,6 +30,31 @@ assert_eq!(wdl, Wdl::Loss);
 
 let dtz = tables.probe_dtz(&pos)?;
 assert_eq!(dtz, Dtz(-59));
+```
+
+Example: Command line tool
+--------------------------
+
+A command line tool similar to [Fathom](https://github.com/basil00/Fathom):
+
+```
+$ cargo run --example fathom -- --path tables/regular -- "3qk3/8/8/8/8/8/8/4K3 w - - 0 1"
+[Event "KvKQ"]
+[Site ""]
+[Date "????.??.??"]
+[Round "-"]
+[White "Syzygy"]
+[Black "Syzygy"]
+[Result "0-1"]
+[FEN "3qk3/8/8/8/8/8/8/4K3 w - - 0 1"]
+[Annotator "shakmaty-syzygy"]
+[WDL "Loss"]
+[DTZ "-16"]
+[WinningMoves ""]
+[DrawingMoves ""]
+[LosingMoves "Kf1, Ke2, Kf2"]
+
+{ KvKQ with DTZ -16 } 1. Ke2 Kd7 2. Kd1 Ke6+ 3. Kc1 Qd3 4. Kb2 Qd2+ 5. Ka1 Kd5 6. Kb1 Kc4 7. Ka1 Kb3 8. Kb1 Qd1# { Checkmate } 0-1
 ```
 
 Documentation
