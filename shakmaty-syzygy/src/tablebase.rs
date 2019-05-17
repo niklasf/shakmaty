@@ -24,7 +24,6 @@ use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
 use fxhash::FxHashMap;
 use positioned_io::RandomAccessFile;
-use itertools;
 
 use shakmaty::{Material, Move, MoveList, Position, Role};
 
