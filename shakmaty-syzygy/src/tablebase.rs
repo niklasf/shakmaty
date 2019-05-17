@@ -22,8 +22,8 @@ use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use double_checked_cell::DoubleCheckedCell;
+use fxhash::FxHashMap;
 use positioned_io::RandomAccessFile;
-use hashbrown;
 use itertools;
 
 use shakmaty::{Material, Move, MoveList, Position, Role};
@@ -47,8 +47,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, RandomAccessFile>>)>,
-    dtz: hashbrown::HashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, RandomAccessFile>>)>,
+    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, RandomAccessFile>>)>,
+    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, RandomAccessFile>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -61,8 +61,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebase<S> {
         Tablebase {
-            wdl: hashbrown::HashMap::with_capacity(145),
-            dtz: hashbrown::HashMap::with_capacity(145),
+            wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
+            dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
         }
     }
 
