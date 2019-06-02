@@ -70,6 +70,7 @@
 //! [`Fen`]: struct.Fen.html
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 
+use std::convert::TryFrom;
 use std::str::FromStr;
 use std::fmt;
 use std::char;
@@ -270,8 +271,8 @@ impl Board {
                     return Err(ParseFenError::InvalidBoard);
                 }
             } else if let Some(piece) = Piece::from_char(char::from(ch)) {
-                match (File::from_index(file), Rank::from_index(rank)) {
-                    (Some(f), Some(r)) => {
+                match (File::try_from(file), Rank::try_from(rank)) {
+                    (Ok(f), Ok(r)) => {
                         let sq = Square::from_coords(f, r);
                         board.set_piece_at(sq, piece, promoted);
                         promoted = false;
@@ -437,7 +438,7 @@ impl Fen {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
                         file @ b'a'..=b'h' => {
-                            (candidates & File::new((file as u8 - b'a') as i8)).first()
+                            (candidates & File::new((file as u8 - b'a') as u32)).first()
                         }
                         _ => return Err(ParseFenError::InvalidCastling),
                     };

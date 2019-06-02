@@ -17,14 +17,14 @@ use crate::square::Square;
 use crate::bitboard::Bitboard;
 use crate::magics::Magic;
 
-const ROOK_DELTAS: [i8; 4] = [8, 1, -8, -1];
-const BISHOP_DELTAS: [i8; 4] = [9, 7, -9, -7];
-const KING_DELTAS: [i8; 8] = [9, 8, 7, 1, -9, -8, -7, -1];
-const KNIGHT_DELTAS: [i8; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
-const WHITE_PAWN_DELTAS: [i8; 2] = [7, 9];
-const BLACK_PAWN_DELTAS: [i8; 2] = [-7, -9];
+const ROOK_DELTAS: [i32; 4] = [8, 1, -8, -1];
+const BISHOP_DELTAS: [i32; 4] = [9, 7, -9, -7];
+const KING_DELTAS: [i32; 8] = [9, 8, 7, 1, -9, -8, -7, -1];
+const KNIGHT_DELTAS: [i32; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
+const WHITE_PAWN_DELTAS: [i32; 2] = [7, 9];
+const BLACK_PAWN_DELTAS: [i32; 2] = [-7, -9];
 
-fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i8]) -> Bitboard {
+fn sliding_attacks(sq: Square, occupied: Bitboard, deltas: &[i32]) -> Bitboard {
     let mut attack = Bitboard(0);
 
     for delta in deltas {
@@ -56,11 +56,11 @@ fn sliding_rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     sliding_attacks(sq, occupied, &ROOK_DELTAS)
 }
 
-fn step_attacks(sq: Square, deltas: &[i8]) -> Bitboard {
+fn step_attacks(sq: Square, deltas: &[i32]) -> Bitboard {
     sliding_attacks(sq, Bitboard::ALL, deltas)
 }
 
-fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], deltas: &[i8]) {
+fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], deltas: &[i32]) {
     for subset in Bitboard(magic.mask).carry_rippler() {
         let attack = sliding_attacks(sq, subset, deltas);
         let idx = (magic.factor.wrapping_mul(subset.0) >> (64 - shift)) as usize + magic.offset;

@@ -15,18 +15,19 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::max;
+use std::convert::TryInto;
 use std::fmt;
 use std::str;
 use std::error::Error;
 use std::ops::Sub;
 
-macro_rules! from_repr_i8_impl {
+macro_rules! from_repr_u32_impl {
     ($from:ty, $($t:ty)+) => {
         $(impl From<$from> for $t {
             #[inline]
             #[allow(clippy::cast_lossless)]
             fn from(value: $from) -> $t {
-                value as i8 as $t
+                value as u32 as $t
             }
         })+
     }
@@ -42,7 +43,7 @@ macro_rules! try_from_number_impl {
             #[allow(clippy::cast_lossless)]
             fn try_from(value: $t) -> Result<$type, Self::Error> {
                 if $lower <= value && value < $upper {
-                    Ok(<$type>::new(value as i8))
+                    Ok(<$type>::new(value as u32))
                 } else {
                     Err(<$error>::from(()))
                 }
@@ -54,7 +55,7 @@ macro_rules! try_from_number_impl {
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
+#[repr(u32)]
 pub enum File {
     A = 0, B, C, D, E, F, G, H
 }
@@ -66,27 +67,9 @@ impl File {
     ///
     /// Panics if the index is not in the range `0..=7`.
     #[inline]
-    pub fn new(index: i8) -> File {
-        assert!(0 <= index && index < 8);
-        unsafe { File::from_index_unchecked(index) }
-    }
-
-    #[inline]
-    pub fn from_char(ch: char) -> Option<File> {
-        if 'a' <= ch && ch <= 'h' {
-            Some(File::new((ch as u8 - b'a') as i8))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn from_index(index: i8) -> Option<File> {
-        if 0 <= index && index < 8 {
-            Some(File::new(index))
-        } else {
-            None
-        }
+    pub fn new(index: u32) -> File {
+        assert!(index < 8);
+        unsafe { File::new_unchecked(index) }
     }
 
     /// Gets a `File` from an integer index.
@@ -96,9 +79,19 @@ impl File {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn from_index_unchecked(index: i8) -> File {
-        debug_assert!(0 <= index && index < 8);
+    pub unsafe fn new_unchecked(index: u32) -> File {
+        debug_assert!(index < 8);
         ::std::mem::transmute(index)
+    }
+
+
+    #[inline]
+    pub fn from_char(ch: char) -> Option<File> {
+        if 'a' <= ch && ch <= 'h' {
+            Some(File::new((ch as u8 - b'a') as u32))
+        } else {
+            None
+        }
     }
 
     #[inline]
@@ -108,26 +101,26 @@ impl File {
 
     #[inline]
     pub fn flip_diagonal(self) -> Rank {
-        Rank::new(i8::from(self))
+        Rank::new(u32::from(self))
     }
 
     #[inline]
-    pub fn offset(self, delta: i8) -> Option<Rank> {
-        i8::from(self).checked_add(delta).and_then(Rank::from_index)
+    pub fn offset(self, delta: i32) -> Option<Rank> {
+        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
     #[inline]
     pub fn flip_horizontal(self) -> File {
-        File::new(7 - i8::from(self))
+        File::new(7 - u32::from(self))
     }
 }
 
 impl Sub for File {
-    type Output = i8;
+    type Output = i32;
 
     #[inline]
-    fn sub(self, other: File) -> i8 {
-        i8::from(self) - i8::from(other)
+    fn sub(self, other: File) -> i32 {
+        i32::from(self) - i32::from(other)
     }
 }
 
@@ -137,7 +130,7 @@ impl fmt::Display for File {
     }
 }
 
-from_repr_i8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_u32_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 try_from_number_impl! { File, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
@@ -145,7 +138,7 @@ try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f6
 /// A rank of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
+#[repr(u32)]
 pub enum Rank {
     First = 0, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth
 }
@@ -157,27 +150,9 @@ impl Rank {
     ///
     /// Panics if the index is not in the range `0..=7`.
     #[inline]
-    pub fn new(index: i8) -> Rank {
-        assert!(0 <= index && index < 8);
-        unsafe { Rank::from_index_unchecked(index) }
-    }
-
-    #[inline]
-    pub fn from_char(ch: char) -> Option<Rank> {
-        if '1' <= ch && ch <= '8' {
-            Some(Rank::new((ch as u8 - b'1') as i8))
-        } else {
-            None
-        }
-    }
-
-    #[inline]
-    pub fn from_index(index: i8) -> Option<Rank> {
-        if 0 <= index && index < 8 {
-            Some(Rank::new(index))
-        } else {
-            None
-        }
+    pub fn new(index: u32) -> Rank {
+        assert!(index < 8);
+        unsafe { Rank::new_unchecked(index) }
     }
 
     /// Gets a `Rank` from an integer index.
@@ -187,9 +162,18 @@ impl Rank {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn from_index_unchecked(index: i8) -> Rank {
-        debug_assert!(0 <= index && index < 8);
+    pub unsafe fn new_unchecked(index: u32) -> Rank {
+        debug_assert!(index < 8);
         ::std::mem::transmute(index)
+    }
+
+    #[inline]
+    pub fn from_char(ch: char) -> Option<Rank> {
+        if '1' <= ch && ch <= '8' {
+            Some(Rank::new((ch as u8 - b'1') as u32))
+        } else {
+            None
+        }
     }
 
     #[inline]
@@ -199,26 +183,26 @@ impl Rank {
 
     #[inline]
     pub fn flip_diagonal(self) -> File {
-        File::new(i8::from(self))
+        File::new(u32::from(self))
     }
 
     #[inline]
-    pub fn offset(self, delta: i8) -> Option<Rank> {
-        i8::from(self).checked_add(delta).and_then(Rank::from_index)
+    pub fn offset(self, delta: i32) -> Option<Rank> {
+        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
     #[inline]
     pub fn flip_vertical(self) -> Rank {
-        Rank::new(7 - i8::from(self))
+        Rank::new(7 - u32::from(self))
     }
 }
 
 impl Sub for Rank {
-    type Output = i8;
+    type Output = i32;
 
     #[inline]
-    fn sub(self, other: Rank) -> i8 {
-        i8::from(self) - i8::from(other)
+    fn sub(self, other: Rank) -> i32 {
+        i32::from(self) - i32::from(other)
     }
 }
 
@@ -228,7 +212,7 @@ impl fmt::Display for Rank {
     }
 }
 
-from_repr_i8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_u32_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 try_from_number_impl! { Rank, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_number_impl! { Rank, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
@@ -258,7 +242,7 @@ impl From<()> for ParseSquareError {
 /// A square index.
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
+#[repr(u32)]
 pub enum Square {
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
@@ -286,30 +270,9 @@ impl Square {
     /// assert_eq!(Square::new(63), Square::H8);
     /// ```
     #[inline]
-    pub fn new(index: i8) -> Square {
-        assert!(0 <= index && index < 64);
-        unsafe { Square::from_index_unchecked(index) }
-    }
-
-    /// Tries to get a `Square` from an integer index in the range `0..=63`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use shakmaty::Square;
-    ///
-    /// assert_eq!(Square::from_index(0), Some(Square::A1));
-    /// assert_eq!(Square::from_index(63), Some(Square::H8));
-    ///
-    /// assert_eq!(Square::from_index(64), None);
-    /// ```
-    #[inline]
-    pub fn from_index(index: i8) -> Option<Square> {
-        if 0 <= index && index < 64 {
-            Some(Square::new(index))
-        } else {
-            None
-        }
+    pub fn new(index: u32) -> Square {
+        assert!(index < 64);
+        unsafe { Square::new_unchecked(index) }
     }
 
     /// Gets a `Square` from an integer index.
@@ -318,8 +281,8 @@ impl Square {
     ///
     /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
-    pub unsafe fn from_index_unchecked(index: i8) -> Square {
-        debug_assert!(0 <= index && index < 64);
+    pub unsafe fn new_unchecked(index: u32) -> Square {
+        debug_assert!(index < 64);
         ::std::mem::transmute(index)
     }
 
@@ -334,7 +297,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn from_coords(file: File, rank: Rank) -> Square {
-        unsafe { Square::from_index_unchecked(i8::from(file) | (i8::from(rank) << 3)) }
+        unsafe { Square::new_unchecked(u32::from(file) | (u32::from(rank) << 3)) }
     }
 
     /// Parses a square name.
@@ -388,7 +351,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn file(self) -> File {
-        File::new(i8::from(self) & 7)
+        File::new(u32::from(self) & 7)
     }
 
     /// Gets the rank.
@@ -403,7 +366,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn rank(self) -> Rank {
-        Rank::new(i8::from(self) >> 3)
+        Rank::new(u32::from(self) >> 3)
     }
 
     /// Gets file and rank.
@@ -434,8 +397,8 @@ impl Square {
     /// assert_eq!(Square::F3.offset(48), None);
     /// ```
     #[inline]
-    pub fn offset(self, delta: i8) -> Option<Square> {
-        i8::from(self).checked_add(delta).and_then(Square::from_index)
+    pub fn offset(self, delta: i32) -> Option<Square> {
+        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
     /// Flip the square horizontally.
@@ -449,7 +412,7 @@ impl Square {
     #[inline]
     pub fn flip_horizontal(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
-        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0b000_111) }
+        unsafe { Square::new_unchecked(u32::from(self) ^ 0b000_111) }
     }
 
     /// Flip the square vertically.
@@ -463,7 +426,7 @@ impl Square {
     #[inline]
     pub fn flip_vertical(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
-        unsafe { Square::from_index_unchecked(i8::from(self) ^ 0b111_000) }
+        unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_000) }
     }
 
     /// Flip at the a1-h8 diagonal by swapping file and rank.
@@ -488,7 +451,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_light(self) -> bool {
-        (i8::from(self.rank()) + i8::from(self.file())) % 2 == 1
+        (u32::from(self.rank()) + u32::from(self.file())) % 2 == 1
     }
 
     /// Tests is the square is a dark square.
@@ -501,7 +464,7 @@ impl Square {
     /// ```
     #[inline]
     pub fn is_dark(self) -> bool {
-        (i8::from(self.rank()) + i8::from(self.file())) % 2 == 0
+        (u32::from(self.rank()) + u32::from(self.file())) % 2 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
@@ -512,9 +475,9 @@ impl Square {
     ///
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
-    pub fn distance(self, other: Square) -> i8 {
+    pub fn distance(self, other: Square) -> u32 {
         max((self.file() - other.file()).abs(),
-            (self.rank() - other.rank()).abs())
+            (self.rank() - other.rank()).abs()) as u32
     }
 
     /// Combines two squares, taking the file from the first and the rank from
@@ -531,16 +494,16 @@ impl Square {
     }
 }
 
-from_repr_i8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_repr_u32_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 try_from_number_impl! { Square, crate::errors::TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
-    type Output = i8;
+    type Output = i32;
 
     #[inline]
-    fn sub(self, other: Square) -> i8 {
-        i8::from(self) - i8::from(other)
+    fn sub(self, other: Square) -> i32 {
+        i32::from(self) - i32::from(other)
     }
 }
 
