@@ -1593,8 +1593,8 @@ fn do_move(board: &mut Board,
             board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
         },
         Move::Castle { king, rook } => {
-            let rook_to = (if rook - king < 0 { Square::D1 } else { Square::F1 }).combine(rook);
-            let king_to = (if rook - king < 0 { Square::C1 } else { Square::G1 }).combine(king);
+            let rook_to = (if rook - king < 0 { Square::D1 } else { Square::F1 }).with_rank_of(rook);
+            let king_to = (if rook - king < 0 { Square::C1 } else { Square::G1 }).with_rank_of(king);
 
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
@@ -1604,7 +1604,7 @@ fn do_move(board: &mut Board,
             castles.discard_side(color);
         }
         Move::EnPassant { from, to } => {
-            board.discard_piece_at(to.combine(from)); // captured pawn
+            board.discard_piece_at(to.with_rank_of(from)); // captured pawn
             board.discard_piece_at(from);
             board.set_piece_at(to, color.pawn(), false);
             *halfmoves = 0;
@@ -1952,7 +1952,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board().occupied();
             occupied.toggle(from);
-            occupied.toggle(to.combine(from)); // captured pawn
+            occupied.toggle(to.with_rank_of(from)); // captured pawn
             occupied.add(to);
 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&

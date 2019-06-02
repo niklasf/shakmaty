@@ -486,11 +486,11 @@ impl Square {
     /// ```
     /// use shakmaty::Square;
     ///
-    /// assert_eq!(Square::D3.combine(Square::F5), Square::D5);
+    /// assert_eq!(Square::D3.with_rank_of(Square::F5), Square::D5);
     /// ```
     #[inline]
-    pub fn combine(self, rank: Square) -> Square {
-        Square::from_coords(self.file(), rank.rank())
+    pub fn with_rank_of(self, other: Square) -> Square {
+        Square::from_coords(self.file(), other.rank())
     }
 }
 
