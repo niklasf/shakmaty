@@ -21,7 +21,7 @@ btoi = "0.4"
 arrayvec = "0.4"
 
 [build-dependencies]
-version_check = "0.1"
+version_check = "0.9"
 
 [dev-dependencies]
 criterion = "0.2"

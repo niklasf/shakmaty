@@ -93,7 +93,7 @@ fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
 
 fn main() -> io::Result<()> {
     // detect support for nightly features
-    if let Some(true) = version_check::supports_features() {
+    if let Some(true) = version_check::is_feature_flaggable() {
         println!("cargo:rustc-cfg=nightly");
     }
 
