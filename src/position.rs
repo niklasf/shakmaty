@@ -2055,6 +2055,8 @@ mod tests {
         assert_insufficient_material::<Atomic>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", true, true);
         assert_insufficient_material::<Atomic>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Atomic>("3Q4/5kKB/8/8/8/8/8/8 b - - 0 1", false, true);
+        assert_insufficient_material::<Atomic>("8/5k2/8/8/8/8/5K2/4bb2 w - - 0 1", true, false);
+        assert_insufficient_material::<Atomic>("8/5k2/8/8/8/8/5K2/4nb2 w - - 0 1", true, false);
 
         assert_insufficient_material::<Giveaway>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Giveaway>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
