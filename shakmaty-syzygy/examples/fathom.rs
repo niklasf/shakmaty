@@ -48,7 +48,7 @@ fn real_wdl(tb: &Tablebase<Chess>, pos: &Chess, dtz: Dtz) -> Result<Wdl, SyzygyE
     Ok(-real_wdl(tb, &after, best.1)?)
 }
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
 
     let mut tablebase = Tablebase::new();
