@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use arrayvec::ArrayVec;
-use double_checked_cell::DoubleCheckedCell;
+use once_cell::sync::OnceCell;
 use fxhash::FxHashMap;
 use positioned_io::RandomAccessFile;
 
@@ -46,8 +46,8 @@ enum ProbeState {
 /// A collection of tables.
 #[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: FxHashMap<Material, (PathBuf, DoubleCheckedCell<WdlTable<S, RandomAccessFile>>)>,
-    dtz: FxHashMap<Material, (PathBuf, DoubleCheckedCell<DtzTable<S, RandomAccessFile>>)>,
+    wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S, RandomAccessFile>>)>,
+    dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S, RandomAccessFile>>)>,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -126,9 +126,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         if ext == S::TBW.ext || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext)) {
-            self.wdl.insert(material, (path.to_path_buf(), DoubleCheckedCell::new()));
+            self.wdl.insert(material, (path.to_path_buf(), OnceCell::new()));
         } else if ext == S::TBZ.ext || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext)) {
-            self.dtz.insert(material, (path.to_path_buf(), DoubleCheckedCell::new()));
+            self.dtz.insert(material, (path.to_path_buf(), OnceCell::new()));
         } else {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
