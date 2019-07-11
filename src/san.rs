@@ -643,8 +643,7 @@ mod tests {
 
     #[test]
     fn test_size() {
-        // TODO: Goal: ~8 bytes.
-        assert!(mem::size_of::<San>() <= 32);
-        assert!(mem::size_of::<SanPlus>() <= 32);
+        assert!(mem::size_of::<San>() <= 8);
+        assert!(mem::size_of::<SanPlus>() <= 8);
     }
 }
