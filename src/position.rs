@@ -115,6 +115,8 @@ impl From<()> for IllegalMoveError {
     }
 }
 
+/// Validate and set up an arbitrary position. All provided chess variants
+/// support this.
 pub trait FromSetup {
     /// Set up a position.
     ///
