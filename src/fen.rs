@@ -405,20 +405,29 @@ impl Fen {
 
         let board_part = parts.next().expect("splits have at least one part");
 
-        let (board_part, pockets) = if board_part.ends_with(b"]") {
+        let (board_part, pocket_part) = if board_part.ends_with(b"]") {
+            // ...[pocket]
             let split_point = board_part
                 .iter()
                 .position(|ch| *ch == b'[')
                 .ok_or(ParseFenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
-            let pockets = Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?;
-            (&board_part[..split_point], Some(pockets))
+            (&board_part[..split_point], Some(pocket_part))
+        } else if let Some(split_point) = board_part.iter().enumerate()
+            .filter_map(|(idx, ch)| Some(idx).filter(|_| *ch == b'/'))
+            .nth(8)
+        {
+            // .../pocket
+            (&board_part[..split_point], Some(&board_part[(split_point + 1)..]))
         } else {
             (board_part, None)
         };
 
         result.board = Board::from_board_fen(board_part)?;
-        result.pockets = pockets;
+
+        if let Some(pocket_part) = pocket_part {
+            result.pockets = Some(Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?);
+        }
 
         result.turn = match parts.next() {
             Some(b"w") | None => White,
