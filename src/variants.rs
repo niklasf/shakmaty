@@ -33,7 +33,9 @@ pub use crate::position::RacingKings;
 pub use crate::position::Horde;
 
 use crate::{Board, Color, Bitboard, Square, Material, RemainingChecks};
+use crate::{Role, Move, MoveList, CastlingSide, Outcome, Castles};
 use crate::{Setup, FromSetup, Position, PositionError};
+use crate::setup::SwapTurn;
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Variant {
@@ -134,6 +136,10 @@ impl VariantPosition {
         }
     }
 
+    pub fn swap_turn(self) -> Result<VariantPosition, PositionError> {
+        VariantPosition::from_setup(self.variant(), &SwapTurn(self))
+    }
+
     pub fn variant(&self) -> Variant {
         match self {
             VariantPosition::Chess(_) => Variant::Chess,
@@ -159,6 +165,19 @@ impl VariantPosition {
             VariantPosition::Horde(ref pos) => pos,
         }
     }
+
+    fn borrow_mut(&mut self) -> &mut dyn Position {
+        match *self {
+            VariantPosition::Chess(ref mut pos) => pos,
+            VariantPosition::Atomic(ref mut pos) => pos,
+            VariantPosition::Giveaway(ref mut pos) => pos,
+            VariantPosition::KingOfTheHill(ref mut pos) => pos,
+            VariantPosition::ThreeCheck(ref mut pos) => pos,
+            VariantPosition::Crazyhouse(ref mut pos) => pos,
+            VariantPosition::RacingKings(ref mut pos) => pos,
+            VariantPosition::Horde(ref mut pos) => pos,
+        }
+    }
 }
 
 impl Setup for VariantPosition {
@@ -170,4 +189,33 @@ impl Setup for VariantPosition {
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.borrow().remaining_checks() }
     fn halfmoves(&self) -> u32 { self.borrow().halfmoves() }
     fn fullmoves(&self) -> u32 { self.borrow().fullmoves() }
+}
+
+impl Position for VariantPosition {
+    fn legal_moves(&self, moves: &mut MoveList) { self.borrow().legal_moves(moves) }
+    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) { self.borrow().san_candidates(role, to, moves) }
+    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) { self.borrow().castling_moves(side, moves) }
+    fn en_passant_moves(&self, moves: &mut MoveList) { self.borrow().en_passant_moves(moves) }
+    fn capture_moves(&self, moves: &mut MoveList) { self.borrow().capture_moves(moves) }
+    fn promotion_moves(&self, moves: &mut MoveList) { self.borrow().promotion_moves(moves) }
+    fn is_irreversible(&self, m: &Move) -> bool { self.borrow().is_irreversible(m) }
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.borrow().king_attackers(square, attacker, occupied) }
+    fn castles(&self) -> &Castles { self.borrow().castles() }
+    fn checkers(&self) -> Bitboard { self.borrow().checkers() }
+    fn is_variant_end(&self) -> bool { self.borrow().is_variant_end() }
+    fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
+    fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
+    fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
+
+    // Provided and never overwritten:
+    // - legals
+    // - play
+    // - is_legal
+    // - is_check
+    // - is_checkmate
+    // - is_stalemate
+    // - is_insufficient_material
+    // - is_game_over
+    // - outcome
+    // - play
 }
