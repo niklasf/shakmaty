@@ -297,6 +297,29 @@ impl Board {
     }
 }
 
+impl RemainingChecks {
+    fn from_ascii(s: &[u8]) -> Option<RemainingChecks> {
+        let mut split = s.splitn(3, |ch| *ch == b'+');
+        Some(match (split.next(), split.next(), split.next()) {
+            (Some(b""), Some(white_given), Some(black_given)) => {
+                // format: +0+0
+                RemainingChecks {
+                    white: 3u8.checked_sub(btoi::btou(white_given).ok()?)?,
+                    black: 3u8.checked_sub(btoi::btoi(black_given).ok()?)?,
+                }
+            }
+            (Some(white), Some(black), None) => {
+                // format: 3+3
+                RemainingChecks {
+                    white: btoi::btou(white).ok()?,
+                    black: btoi::btou(black).ok()?,
+                }
+            }
+            _ => return None
+        })
+    }
+}
+
 impl FromStr for Board {
     type Err = ParseFenError;
 
@@ -464,12 +487,8 @@ impl Fen {
         }
 
         let halfmoves_part = if let Some(checks_part) = parts.next() {
-            let mut checks = checks_part.splitn(2, |ch| *ch == b'+');
-            if let (Some(w), Some(b)) = (checks.next(), checks.next()) {
-                result.remaining_checks = Some(RemainingChecks {
-                    white: btoi::btou(w).map_err(|_| ParseFenError::InvalidRemainingChecks)?,
-                    black: btoi::btou(b).map_err(|_| ParseFenError::InvalidRemainingChecks)?,
-                });
+            if let Some(remaining_checks) = RemainingChecks::from_ascii(checks_part) {
+                result.remaining_checks = Some(remaining_checks);
                 parts.next()
             } else {
                 Some(checks_part)
@@ -488,7 +507,20 @@ impl Fen {
                 .map_err(|_| ParseFenError::InvalidFullmoves)?;
         }
 
-        if parts.next().is_some() {
+        let last_part = if let Some(checks_part) = parts.next() {
+            if result.remaining_checks.is_some() {
+                Some(checks_part) // got checks earlier
+            } else if let Some(remaining_checks) = RemainingChecks::from_ascii(checks_part) {
+                result.remaining_checks = Some(remaining_checks);
+                parts.next()
+            } else {
+                Some(checks_part)
+            }
+        } else {
+            None
+        };
+
+        if last_part.is_some() {
             Err(ParseFenError::InvalidFen)
         } else {
             Ok(result)
@@ -596,6 +628,15 @@ mod tests {
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 12);
         assert_eq!(fen.fullmoves, 42);
+    }
+
+    #[test]
+    fn test_lichess_remaining_checks() {
+        let fen: Fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0".parse().expect("valid fen");
+        let expected = RemainingChecks { white: 3, black: 3 };
+        assert_eq!(fen.remaining_checks, Some(expected));
+        assert_eq!(fen.halfmoves, 1);
+        assert_eq!(fen.fullmoves, 2);
     }
 
     #[test]
