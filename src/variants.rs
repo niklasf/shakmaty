@@ -32,9 +32,8 @@ pub use crate::position::Crazyhouse;
 pub use crate::position::RacingKings;
 pub use crate::position::Horde;
 
-use crate::Setup;
-use crate::FromSetup;
-use crate::PositionError;
+use crate::{Board, Color, Bitboard, Square, Material, RemainingChecks};
+use crate::{Setup, FromSetup, Position, PositionError};
 
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Variant {
@@ -109,7 +108,7 @@ impl From<Horde> for VariantPosition {
 }
 
 impl VariantPosition {
-    fn new(variant: Variant) -> VariantPosition {
+    pub fn new(variant: Variant) -> VariantPosition {
         match variant {
             Variant::Chess => Chess::default().into(),
             Variant::Atomic => Atomic::default().into(),
@@ -122,7 +121,7 @@ impl VariantPosition {
         }
     }
 
-    fn from_setup(variant: Variant, setup: &dyn Setup) -> Result<VariantPosition, PositionError> {
+    pub fn from_setup(variant: Variant, setup: &dyn Setup) -> Result<VariantPosition, PositionError> {
         match variant {
             Variant::Chess => Chess::from_setup(setup).map(VariantPosition::Chess),
             Variant::Atomic => Atomic::from_setup(setup).map(VariantPosition::Atomic),
@@ -134,4 +133,41 @@ impl VariantPosition {
             Variant::Horde => Horde::from_setup(setup).map(VariantPosition::Horde),
         }
     }
+
+    pub fn variant(&self) -> Variant {
+        match self {
+            VariantPosition::Chess(_) => Variant::Chess,
+            VariantPosition::Atomic(_) => Variant::Atomic,
+            VariantPosition::Giveaway(_) => Variant::Giveaway,
+            VariantPosition::KingOfTheHill(_) => Variant::KingOfTheHill,
+            VariantPosition::ThreeCheck(_) => Variant::ThreeCheck,
+            VariantPosition::Crazyhouse(_) => Variant::Crazyhouse,
+            VariantPosition::RacingKings(_) => Variant::RacingKings,
+            VariantPosition::Horde(_) => Variant::Horde,
+        }
+    }
+
+    fn borrow(&self) -> &dyn Position {
+        match *self {
+            VariantPosition::Chess(ref pos) => pos,
+            VariantPosition::Atomic(ref pos) => pos,
+            VariantPosition::Giveaway(ref pos) => pos,
+            VariantPosition::KingOfTheHill(ref pos) => pos,
+            VariantPosition::ThreeCheck(ref pos) => pos,
+            VariantPosition::Crazyhouse(ref pos) => pos,
+            VariantPosition::RacingKings(ref pos) => pos,
+            VariantPosition::Horde(ref pos) => pos,
+        }
+    }
+}
+
+impl Setup for VariantPosition {
+    fn board(&self) -> &Board { self.borrow().board() }
+    fn pockets(&self) -> Option<&Material> { self.borrow().pockets() }
+    fn turn(&self) -> Color { self.borrow().turn() }
+    fn castling_rights(&self) -> Bitboard { self.borrow().castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.borrow().ep_square() }
+    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.borrow().remaining_checks() }
+    fn halfmoves(&self) -> u32 { self.borrow().halfmoves() }
+    fn fullmoves(&self) -> u32 { self.borrow().fullmoves() }
 }
