@@ -406,18 +406,15 @@ impl Fen {
         let board_part = parts.next().expect("splits have at least one part");
 
         let (board_part, pocket_part) = if board_part.ends_with(b"]") {
-            // ...[pocket]
+            // format: ...[pocket]
             let split_point = board_part
                 .iter()
                 .position(|ch| *ch == b'[')
                 .ok_or(ParseFenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
             (&board_part[..split_point], Some(pocket_part))
-        } else if let Some(split_point) = board_part.iter().enumerate()
-            .filter_map(|(idx, ch)| Some(idx).filter(|_| *ch == b'/'))
-            .nth(8)
-        {
-            // .../pocket
+        } else if let Some(split_point) = board_part.iter().enumerate().filter_map(|(idx, ch)| Some(idx).filter(|_| *ch == b'/')).nth(7) {
+            // format: .../pocket
             (&board_part[..split_point], Some(&board_part[(split_point + 1)..]))
         } else {
             (board_part, None)
@@ -577,6 +574,12 @@ mod tests {
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
         assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(White.queen())), 1);
+    }
+
+    #[test]
+    fn test_lichess_pockets() {
+        let fen: Fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1".parse().expect("valid fen");
+        assert_eq!(fen.pockets().map(|p| p.is_empty()), Some(true));
     }
 
     #[test]
