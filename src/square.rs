@@ -21,13 +21,13 @@ use std::str;
 use std::error::Error;
 use std::ops::Sub;
 
-macro_rules! from_repr_u32_impl {
+macro_rules! from_repr_u8_impl {
     ($from:ty, $($t:ty)+) => {
         $(impl From<$from> for $t {
             #[inline]
             #[allow(clippy::cast_lossless)]
             fn from(value: $from) -> $t {
-                value as u32 as $t
+                value as u8 as $t
             }
         })+
     }
@@ -55,7 +55,7 @@ macro_rules! try_from_number_impl {
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(u32)]
+#[repr(u8)]
 pub enum File {
     A = 0, B, C, D, E, F, G, H
 }
@@ -81,7 +81,7 @@ impl File {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
-        ::std::mem::transmute(index)
+        ::std::mem::transmute(index as u8)
     }
 
 
@@ -130,7 +130,7 @@ impl fmt::Display for File {
     }
 }
 
-from_repr_u32_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 try_from_number_impl! { File, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
@@ -138,7 +138,7 @@ try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f6
 /// A rank of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(u32)]
+#[repr(u8)]
 pub enum Rank {
     First = 0, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth
 }
@@ -164,7 +164,7 @@ impl Rank {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Rank {
         debug_assert!(index < 8);
-        ::std::mem::transmute(index)
+        ::std::mem::transmute(index as u8)
     }
 
     #[inline]
@@ -212,7 +212,7 @@ impl fmt::Display for Rank {
     }
 }
 
-from_repr_u32_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
+from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
 
 try_from_number_impl! { Rank, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_number_impl! { Rank, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
@@ -242,7 +242,7 @@ impl From<()> for ParseSquareError {
 /// A square index.
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(u32)]
+#[repr(u8)]
 pub enum Square {
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,
@@ -283,7 +283,7 @@ impl Square {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Square {
         debug_assert!(index < 64);
-        ::std::mem::transmute(index)
+        ::std::mem::transmute(index as u8)
     }
 
     /// Tries to get a square from file and rank.
@@ -494,7 +494,7 @@ impl Square {
     }
 }
 
-from_repr_u32_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 try_from_number_impl! { Square, crate::errors::TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
