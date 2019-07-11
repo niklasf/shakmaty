@@ -84,6 +84,15 @@ impl MaterialSide {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.pawns == 0 &&
+        self.knights == 0 &&
+        self.bishops == 0 &&
+        self.rooks == 0 &&
+        self.queens == 0 &&
+        self.kings == 0
+    }
+
     pub fn count(&self) -> usize {
         usize::from(self.pawns) +
         usize::from(self.knights) +
@@ -305,6 +314,10 @@ impl Material {
 
     pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
         self.by_color_mut(piece.color).by_role_mut(piece.role)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.white.is_empty() && self.black.is_empty()
     }
 
     pub fn count(&self) -> usize {
