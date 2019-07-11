@@ -367,8 +367,9 @@ impl Fen {
     /// Returns [`PositionError`] if the setup is not a legal position.
     ///
     /// [`FromSetup`]: ../trait.FromSetup.html
+    /// [`Position`]: ../trait.Position.html
     /// [`PositionError`]: ../enum.PositionError.html
-    pub fn position<P: FromSetup<Fen>>(&self) -> Result<P, PositionError> {
+    pub fn position<P: FromSetup>(&self) -> Result<P, PositionError> {
         P::from_setup(self)
     }
 
