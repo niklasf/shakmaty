@@ -2045,7 +2045,10 @@ mod tests {
         assert!(moves.iter().all(|m| m.is_promotion()));
     }
 
-    fn assert_insufficient_material<P: Position>(fen: &str, white: bool, black: bool) {
+    fn assert_insufficient_material<P>(fen: &str, white: bool, black: bool)
+    where
+        P: Position + FromSetup,
+    {
         let pos: P = fen.parse::<Fen>()
             .expect("valid fen")
             .position()
