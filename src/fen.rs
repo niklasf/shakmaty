@@ -91,6 +91,7 @@ use crate::position::{FromSetup, PositionError};
 pub struct FenOpts {
     promoted: bool,
     shredder: bool,
+    scid: bool,
 }
 
 impl FenOpts {
@@ -99,6 +100,7 @@ impl FenOpts {
         FenOpts {
             promoted: false,
             shredder: false,
+            scid: false,
         }
     }
 
@@ -112,6 +114,13 @@ impl FenOpts {
     /// e.g. `HAha` instead of `KQkq`.
     pub fn shredder(&mut self, shredder: bool) -> &mut FenOpts {
         self.shredder = shredder;
+        self
+    }
+
+    /// Decide if Crazyhouse pockets and remaining check counters should use
+    /// Scid-style, e.g. `/q` instead of `[q]` and `+0+0` instead of `3+3`.
+    pub fn scid(&mut self, scid: bool) -> &mut FenOpts {
+        self.scid = scid;
         self
     }
 
@@ -180,11 +189,21 @@ impl FenOpts {
     /// Create an EPD such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
     pub fn epd(&self, setup: &dyn Setup) -> String {
-        let pockets = setup.pockets()
-                           .map_or("".to_owned(), |p| format!("[{}]", p.fen()));
+        let pockets = setup.pockets().map_or("".to_owned(), |p| {
+            if self.scid {
+                format!("/{}", p.fen())
+            } else {
+                format!("[{}]", p.fen())
+            }
+        });
 
-        let checks = setup.remaining_checks()
-                          .map_or("".to_owned(), |r| format!(" {}", r));
+        let checks = setup.remaining_checks().map_or("".to_owned(), |r| {
+            if self.scid {
+                format!(" +{}+{}", 3u8.saturating_sub(r.white), 3u8.saturating_sub(r.black))
+            } else {
+                format!(" {}", r)
+            }
+        });
 
         format!("{}{} {} {} {}{}",
                 self.board_fen(setup.board()),
@@ -198,7 +217,21 @@ impl FenOpts {
     /// Create a FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
     pub fn fen(&self, setup: &dyn Setup) -> String {
-        format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
+        match setup.remaining_checks() {
+            Some(checks) if self.scid => {
+                format!("{}{} {} {} {} {} {} +{}+{}",
+                    self.board_fen(setup.board()),
+                    setup.pockets().map_or("".to_owned(), |p| format!("/{}", p.fen())),
+                    setup.turn().char(),
+                    self.castling_fen(setup.board(), setup.castling_rights()),
+                    setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                    setup.halfmoves(),
+                    setup.fullmoves(),
+                    3u8.saturating_sub(checks.white),
+                    3u8.saturating_sub(checks.black))
+            }
+            _ => format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
+        }
     }
 }
 
@@ -610,8 +643,10 @@ mod tests {
 
     #[test]
     fn test_lichess_pockets() {
-        let fen: Fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1".parse().expect("valid fen");
+        let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1";
+        let fen: Fen = input.parse().expect("valid fen");
         assert_eq!(fen.pockets().map(|p| p.is_empty()), Some(true));
+        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
     }
 
     #[test]
@@ -632,11 +667,13 @@ mod tests {
 
     #[test]
     fn test_lichess_remaining_checks() {
-        let fen: Fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0".parse().expect("valid fen");
+        let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0";
+        let fen: Fen = input.parse().expect("valid fen");
         let expected = RemainingChecks { white: 3, black: 3 };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 1);
         assert_eq!(fen.fullmoves, 2);
+        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
     }
 
     #[test]
