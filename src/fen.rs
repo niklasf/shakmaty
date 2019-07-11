@@ -487,6 +487,19 @@ impl Fen {
             Ok(result)
         }
     }
+
+    pub fn from_setup<S: Setup>(setup: &S) -> Fen {
+        Fen {
+            board: setup.board().clone(),
+            pockets: setup.pockets().cloned(),
+            turn: setup.turn(),
+            castling_rights: setup.castling_rights(),
+            ep_square: setup.ep_square(),
+            remaining_checks: setup.remaining_checks().cloned(),
+            halfmoves: setup.halfmoves(),
+            fullmoves: setup.fullmoves(),
+        }
+    }
 }
 
 impl FromStr for Fen {
