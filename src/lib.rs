@@ -93,6 +93,7 @@ pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
+pub mod variants;
 
 pub use crate::errors::{TryFromIntError, TryFromFloatError};
 pub use crate::square::{ParseSquareError, File, Rank, Square};
@@ -104,21 +105,3 @@ pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
 pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, FromSetup, PositionError};
 pub use crate::perft::perft;
-
-pub mod variants {
-    //! Chess variants.
-    //!
-    //! These are games played with normal chess pieces but special rules.
-    //! Every chess variant implements [`Setup`] and [`Position`].
-    //!
-    //! [`Setup`]: ../trait.Setup.html
-    //! [`Position`]: ../trait.Position.html
-    pub use crate::Chess;
-    pub use crate::position::Atomic;
-    pub use crate::position::Giveaway;
-    pub use crate::position::KingOfTheHill;
-    pub use crate::position::ThreeCheck;
-    pub use crate::position::Crazyhouse;
-    pub use crate::position::RacingKings;
-    pub use crate::position::Horde;
-}
