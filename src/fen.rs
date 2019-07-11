@@ -84,7 +84,7 @@ use crate::material::Material;
 use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::setup::Setup;
-use crate::position::{Position, PositionError};
+use crate::position::{FromSetup, PositionError};
 
 /// FEN formatting options.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
@@ -366,9 +366,9 @@ impl Fen {
     ///
     /// Returns [`PositionError`] if the setup is not a legal position.
     ///
-    /// [`Position`]: ../trait.Position.html
+    /// [`FromSetup`]: ../trait.FromSetup.html
     /// [`PositionError`]: ../enum.PositionError.html
-    pub fn position<P: Position>(&self) -> Result<P, PositionError> {
+    pub fn position<P: FromSetup<Fen>>(&self) -> Result<P, PositionError> {
         P::from_setup(self)
     }
 

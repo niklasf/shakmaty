@@ -115,11 +115,7 @@ impl From<()> for IllegalMoveError {
     }
 }
 
-/// A legal chess or chess variant position. See [`Chess`] for a concrete
-/// implementation.
-///
-/// [`Chess`]: struct.Chess.html
-pub trait Position: Setup {
+pub trait FromSetup<S: Setup> {
     /// Set up a position.
     ///
     /// # Errors
@@ -127,11 +123,17 @@ pub trait Position: Setup {
     /// Returns [`PositionError`] if the setup is not legal.
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn from_setup<S: Setup>(setup: &S) -> Result<Self, PositionError>
+    fn from_setup(setup: &S) -> Result<Self, PositionError>
     where
         Self: Sized;
+}
 
-    /// Swap turns. This is sometimes called "playing a null move".
+/// A legal chess or chess variant position. See [`Chess`] for a concrete
+/// implementation.
+///
+/// [`Chess`]: struct.Chess.html
+pub trait Position: Setup {
+    /* /// Swap turns. This is sometimes called "playing a null move".
     ///
     /// # Errors
     ///
@@ -139,12 +141,12 @@ pub trait Position: Setup {
     /// due to a check that has to be averted).
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn swap_turn(self) -> Result<Self, PositionError>
+    fn swap_turn<'a>(self) -> Result<Self, PositionError>
     where
-        Self: Sized,
+        Self: Sized + FromSetup<SwapTurn>,
     {
         Self::from_setup(&SwapTurn(self))
-    }
+    } */
 
     /// Generates legal moves.
     fn legals(&self) -> MoveList {
@@ -400,14 +402,8 @@ impl Setup for Chess {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position for Chess {
-    fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<Chess, PositionError> {
+impl<S: Setup> FromSetup<S> for Chess {
+    fn from_setup(setup: &S) -> Result<Chess, PositionError> {
         let (castles, errors) = match Castles::from_setup(setup) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
@@ -423,6 +419,14 @@ impl Position for Chess {
         };
 
         (validate(&pos) | errors).into_result(pos)
+    }
+}
+
+impl Position for Chess {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
+                &mut self.ep_square, &mut self.halfmoves,
+                &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
@@ -613,8 +617,8 @@ impl Setup for Atomic {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position for Atomic {
-    fn from_setup<S: Setup>(setup: &S) -> Result<Atomic, PositionError> {
+impl<S: Setup> FromSetup<S> for Atomic {
+    fn from_setup(setup: &S) -> Result<Atomic, PositionError> {
         let (castles, errors) = match Castles::from_setup(setup) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
@@ -638,7 +642,9 @@ impl Position for Atomic {
 
         errors.into_result(pos)
     }
+}
 
+impl Position for Atomic {
     fn castles(&self) -> &Castles {
         &self.castles
     }
@@ -801,14 +807,8 @@ impl Setup for Giveaway {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position for Giveaway {
-    fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<Giveaway, PositionError> {
+impl<S: Setup> FromSetup<S> for Giveaway {
+    fn from_setup(setup: &S) -> Result<Giveaway, PositionError> {
         let (castles, errors) = match Castles::from_setup(setup) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
@@ -829,6 +829,14 @@ impl Position for Giveaway {
             - PositionError::OPPOSITE_CHECK;
 
         errors.into_result(pos)
+    }
+}
+
+impl Position for Giveaway {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
+                &mut self.ep_square, &mut self.halfmoves,
+                &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
@@ -917,13 +925,15 @@ impl Setup for KingOfTheHill {
     fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
 }
 
+impl<S: Setup> FromSetup<S> for KingOfTheHill {
+    fn from_setup(setup: &S) -> Result<KingOfTheHill, PositionError> {
+        Chess::from_setup(setup).map(|chess| KingOfTheHill { chess })
+    }
+}
+
 impl Position for KingOfTheHill {
     fn play_unchecked(&mut self, m: &Move) {
         self.chess.play_unchecked(m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<KingOfTheHill, PositionError> {
-        Chess::from_setup(setup).map(|chess| KingOfTheHill { chess })
     }
 
     fn castles(&self) -> &Castles {
@@ -1005,16 +1015,8 @@ impl Setup for ThreeCheck {
     fn fullmoves(&self) -> u32 { self.chess.fullmoves }
 }
 
-impl Position for ThreeCheck {
-    fn play_unchecked(&mut self, m: &Move) {
-        let turn = self.chess.turn();
-        self.chess.play_unchecked(m);
-        if self.is_check() {
-            self.remaining_checks.decrement(turn);
-        }
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<ThreeCheck, PositionError> {
+impl<S: Setup> FromSetup<S> for ThreeCheck {
+    fn from_setup(setup: &S) -> Result<ThreeCheck, PositionError> {
         let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
         let errors = if remaining_checks.white == 0 && remaining_checks.black == 0 {
             PositionError::VARIANT
@@ -1025,6 +1027,16 @@ impl Position for ThreeCheck {
         match Chess::from_setup(setup) {
             Ok(chess) => errors.into_result(ThreeCheck { chess, remaining_checks }),
             Err(err) => Err(errors | err)
+        }
+    }
+}
+
+impl Position for ThreeCheck {
+    fn play_unchecked(&mut self, m: &Move) {
+        let turn = self.chess.turn();
+        self.chess.play_unchecked(m);
+        if self.is_check() {
+            self.remaining_checks.decrement(turn);
         }
     }
 
@@ -1138,6 +1150,21 @@ impl Setup for Crazyhouse {
     fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
 }
 
+impl<S: Setup> FromSetup<S> for Crazyhouse {
+    fn from_setup(setup: &S) -> Result<Crazyhouse, PositionError> {
+        Chess::from_setup(setup).and_then(|chess| {
+            let pockets = setup.pockets().cloned().unwrap_or_default();
+            if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
+                Err(PositionError::VARIANT)
+            } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
+                Err(PositionError::TOO_MANY_KINGS)
+            } else {
+                Ok(Crazyhouse { chess, pockets })
+            }
+        })
+    }
+}
+
 impl Position for Crazyhouse {
     fn play_unchecked(&mut self, m: &Move) {
         match *m {
@@ -1160,19 +1187,6 @@ impl Position for Crazyhouse {
         }
 
         self.chess.play_unchecked(m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<Crazyhouse, PositionError> {
-        Chess::from_setup(setup).and_then(|chess| {
-            let pockets = setup.pockets().cloned().unwrap_or_default();
-            if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
-                Err(PositionError::VARIANT)
-            } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
-                Err(PositionError::TOO_MANY_KINGS)
-            } else {
-                Ok(Crazyhouse { chess, pockets })
-            }
-        })
     }
 
     fn castles(&self) -> &Castles {
@@ -1285,14 +1299,8 @@ impl Setup for RacingKings {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position for RacingKings {
-    fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
-                &mut None, &mut self.halfmoves,
-                &mut self.fullmoves, m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<RacingKings, PositionError> {
+impl<S: Setup> FromSetup<S> for RacingKings {
+    fn from_setup(setup: &S) -> Result<RacingKings, PositionError> {
         let mut errors = PositionError::empty();
 
         if setup.castling_rights().any() {
@@ -1326,6 +1334,14 @@ impl Position for RacingKings {
         }
 
         (validate(&pos) | errors).into_result(pos)
+    }
+}
+
+impl Position for RacingKings {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
+                &mut None, &mut self.halfmoves,
+                &mut self.fullmoves, m);
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {
@@ -1445,14 +1461,8 @@ impl Setup for Horde {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl Position for Horde {
-    fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
-    }
-
-    fn from_setup<S: Setup>(setup: &S) -> Result<Horde, PositionError> {
+impl<S: Setup> FromSetup<S> for Horde {
+    fn from_setup(setup: &S) -> Result<Horde, PositionError> {
         let (castles, errors) = match Castles::from_setup(setup) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
@@ -1488,6 +1498,14 @@ impl Position for Horde {
         }
 
         errors.into_result(pos)
+    }
+}
+
+impl Position for Horde {
+    fn play_unchecked(&mut self, m: &Move) {
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
+                &mut self.ep_square, &mut self.halfmoves,
+                &mut self.fullmoves, m);
     }
 
     fn legal_moves(&self, moves: &mut MoveList) {

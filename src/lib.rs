@@ -102,7 +102,7 @@ pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};
 pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
-pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, PositionError};
+pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, FromSetup, PositionError};
 pub use crate::perft::perft;
 
 pub mod variants {
