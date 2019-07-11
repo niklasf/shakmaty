@@ -485,6 +485,7 @@ impl CastlingSide {
 
 #[cfg(test)]
 mod tests {
+    use std::mem;
     use super::*;
 
     #[test]
@@ -494,5 +495,10 @@ mod tests {
         assert!(Role::Bishop < Role::Rook);
         assert!(Role::Rook < Role::Queen);
         assert!(Role::Queen < Role::King);
+    }
+
+    #[test]
+    fn test_size() {
+        assert!(mem::size_of::<Move>() <= 8);
     }
 }
