@@ -37,6 +37,9 @@ use crate::{Role, Move, MoveList, CastlingSide, Outcome, Castles};
 use crate::{Setup, FromSetup, Position, PositionError};
 use crate::setup::SwapTurn;
 
+/// Discriminant of [`VariantPosition`].
+///
+/// [`VariantPosition`]: enum.VariantPosition.html
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Variant {
     Chess,
@@ -49,6 +52,9 @@ pub enum Variant {
     Horde,
 }
 
+/// Dynamically dispatched chess variant [`Position`].
+///
+/// [`Position`]: ../trait.Position.html
 #[derive(Debug, Clone)]
 pub enum VariantPosition {
     Chess(Chess),
