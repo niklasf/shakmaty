@@ -117,7 +117,7 @@ impl From<()> for IllegalMoveError {
 
 /// Validate and set up an arbitrary position. All provided chess variants
 /// support this.
-pub trait FromSetup {
+pub trait FromSetup: Sized {
     /// Set up a position.
     ///
     /// # Errors
@@ -125,9 +125,7 @@ pub trait FromSetup {
     /// Returns [`PositionError`] if the setup is not legal.
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError>
-    where
-        Self: Sized;
+    fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError>;
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
