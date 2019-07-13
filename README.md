@@ -72,11 +72,11 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
-* Upcoming in 0.15.0
+* 0.15.0
   - Moved `Position::from_setup()` to a seperate new trait `FromSetup`.
-  - Square and file/rank index calculations are now performed with u32 and i32,
-    which is more performant than using the narrower types u8 and i8. The types
-    are still `#[repr(u8)]`.
+  - Square and file/rank index calculations are now performed with `u32` and
+    `i32`, which is more performant than using the narrower types `u8` and
+    `i8`. The types are still `#[repr(u8)]`.
   - Renamed `Square::combine()` to `Square::with_rank_of()`.
   - Added `Fen::from_setup()`.
   - Added `FenOpts::scid()` for Scid/Lichess compatible FEN formatting.
