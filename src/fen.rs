@@ -501,7 +501,7 @@ impl Fen {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
                         file @ b'a'..=b'h' => {
-                            (candidates & File::new((file as u8 - b'a') as u32)).first()
+                            (candidates & File::new(u32::from(file as u8 - b'a'))).first()
                         }
                         _ => return Err(ParseFenError::InvalidCastling),
                     };

@@ -88,7 +88,7 @@ impl File {
     #[inline]
     pub fn from_char(ch: char) -> Option<File> {
         if 'a' <= ch && ch <= 'h' {
-            Some(File::new((ch as u8 - b'a') as u32))
+            Some(File::new(u32::from(ch as u8 - b'a')))
         } else {
             None
         }
@@ -170,7 +170,7 @@ impl Rank {
     #[inline]
     pub fn from_char(ch: char) -> Option<Rank> {
         if '1' <= ch && ch <= '8' {
-            Some(Rank::new((ch as u8 - b'1') as u32))
+            Some(Rank::new(u32::from(ch as u8 - b'1')))
         } else {
             None
         }

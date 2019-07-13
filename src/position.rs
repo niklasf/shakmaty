@@ -141,7 +141,7 @@ pub trait Position: Setup {
     /// due to a check that has to be averted).
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn swap_turn<'a>(self) -> Result<Self, PositionError>
+    fn swap_turn(self) -> Result<Self, PositionError>
     where
         Self: Sized + FromSetup
     {
