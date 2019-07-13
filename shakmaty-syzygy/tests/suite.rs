@@ -1,9 +1,12 @@
 use shakmaty::fen::Fen;
 use shakmaty::variants::{Atomic, Chess, Giveaway};
-use shakmaty::Position;
+use shakmaty::{Position, FromSetup};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
-fn test_csv<S: Position + Clone + Syzygy>(path: &str) {
+fn test_csv<S>(path: &str)
+where
+    S: Position + FromSetup + Syzygy + Clone
+{
     let mut tables = Tablebase::new();
     tables.add_directory("tables/regular").expect("read directory");
     tables.add_directory("tables/atomic").expect("read directory");
