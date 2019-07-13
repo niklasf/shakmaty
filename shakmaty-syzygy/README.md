@@ -65,6 +65,8 @@ Documentation
 Changelog
 ---------
 
+* 0.12.0
+  - Update shakmaty to `0.15`.
 * 0.11.1
   - Update dependencies.
 * 0.11.0
