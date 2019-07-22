@@ -72,6 +72,9 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.15.1
+  - FEN parser was expecting `~` before promoted pieces, but it should be
+    after.
 * 0.15.0
   - Moved `Position::from_setup()` to a seperate new trait `FromSetup`.
   - Square and file/rank index calculations are now performed with `u32` and
