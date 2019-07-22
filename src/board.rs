@@ -427,7 +427,7 @@ mod tests {
 
     #[test]
     fn test_promoted() {
-        let board: Board = "4k3/8/8/8/8/8/8/2~q1K3".parse().expect("valid fen");
+        let board: Board = "4k3/8/8/8/8/8/8/2q~1K3".parse().expect("valid fen");
         assert_eq!(board.piece_at(Square::C1), Some(Black.queen()));
         assert!(board.promoted().contains(Square::C1));
     }

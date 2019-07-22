@@ -289,15 +289,13 @@ impl Board {
 
         let mut rank = 7i8;
         let mut file = 0i8;
-        let mut promoted = false;
 
-        for &ch in board_fen {
+        let mut iter = board_fen.into_iter().cloned().peekable();
+
+        while let Some(ch) = iter.next() {
             if ch == b'/' && file == 8 {
                 file = 0;
                 rank -= 1;
-            } else if ch == b'~' {
-                promoted = true;
-                continue;
             } else if b'1' <= ch && ch <= b'8' {
                 file += (ch - b'0') as i8;
                 if file > 8 {
@@ -307,17 +305,16 @@ impl Board {
                 match (File::try_from(file), Rank::try_from(rank)) {
                     (Ok(f), Ok(r)) => {
                         let sq = Square::from_coords(f, r);
+                        let promoted = iter.peek() == Some(&b'~');
+                        if promoted {
+                            iter.next();
+                        }
                         board.set_piece_at(sq, piece, promoted);
-                        promoted = false;
                     }
                     _ => return Err(ParseFenError::InvalidBoard),
                 }
                 file += 1;
             } else {
-                return Err(ParseFenError::InvalidBoard);
-            }
-
-            if promoted {
                 return Err(ParseFenError::InvalidBoard);
             }
         }
@@ -639,6 +636,14 @@ mod tests {
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
         assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(White.queen())), 1);
+    }
+
+    #[test]
+    fn test_lichess_promoted() {
+        let input = "rnbqk1nQ~/ppppp3/8/5p2/8/5N2/PPPPPPP1/RNBQKB1R/PPBR b KQq - 0 6";
+        let fen: Fen = input.parse().expect("valid fen");
+        assert_eq!(fen.board().promoted(), Bitboard::from(Square::H8));
+        assert_eq!(FenOpts::default().scid(true).promoted(true).fen(&fen), input);
     }
 
     #[test]
