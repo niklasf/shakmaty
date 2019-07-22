@@ -290,7 +290,7 @@ impl Board {
         let mut rank = 7i8;
         let mut file = 0i8;
 
-        let mut iter = board_fen.into_iter().cloned().peekable();
+        let mut iter = board_fen.iter().cloned().peekable();
 
         while let Some(ch) = iter.next() {
             if ch == b'/' && file == 8 {
