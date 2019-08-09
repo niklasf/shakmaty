@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 memchr = "2.1"
 btoi = "0.4"
-shakmaty = "0.14"
+shakmaty = "0.15"
 slice-deque = "^0.1.16"
 
 [dev-dependencies]
