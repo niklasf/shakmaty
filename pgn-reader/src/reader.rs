@@ -386,7 +386,7 @@ trait ReadPgn {
                 },
                 _ => {
                     let token_end = self.find_token_end(1);
-                    if ch > b'9' {
+                    if ch > b'9' || ch == b'-' {
                         if let Ok(san) = SanPlus::from_ascii(&self.buffer()[..token_end]) {
                             visitor.san(san);
                         }
@@ -736,6 +736,35 @@ mod tests {
         let mut reader = BufferedReader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
         reader.read_game(&mut collector)?;
         assert_eq!(collector.nags, vec![Nag::GOOD_MOVE, Nag(71), Nag::BLUNDER, Nag::SPECULATIVE_MOVE]);
+        Ok(())
+    }
+
+    #[test]
+    fn test_null_moves() -> Result<(), io::Error> {
+        struct SanCollector {
+            sans: Vec<San>,
+        }
+
+        impl Visitor for SanCollector {
+            type Result = ();
+
+            fn san(&mut self, san: SanPlus) {
+                self.sans.push(san.san);
+            }
+
+            fn end_game(&mut self) { }
+        }
+
+        let mut collector = SanCollector { sans: Vec::new() };
+        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
+        reader.read_game(&mut collector)?;
+        assert_eq!(collector.sans.len(), 6);
+        assert_ne!(collector.sans[0], San::Null);
+        assert_eq!(collector.sans[1], San::Null);
+        assert_ne!(collector.sans[2], San::Null);
+        assert_eq!(collector.sans[3], San::Null);
+        assert_eq!(collector.sans[4], San::Null);
+        assert_ne!(collector.sans[5], San::Null);
         Ok(())
     }
 }
