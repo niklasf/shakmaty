@@ -17,7 +17,7 @@
 use shakmaty::Outcome;
 use shakmaty::san::SanPlus;
 
-use types::{RawComment, RawHeader, Nag, Skip};
+use crate::types::{RawComment, RawHeader, Nag, Skip};
 
 /// Consumes games from a reader.
 ///

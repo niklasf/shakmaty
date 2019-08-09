@@ -23,8 +23,8 @@ use slice_deque::SliceDeque;
 use shakmaty::{Color, CastlingSide, Outcome};
 use shakmaty::san::{San, SanPlus, Suffix};
 
-use types::{Nag, Skip, RawComment, RawHeader};
-use visitor::{Visitor, SkipVisitor};
+use crate::types::{Nag, Skip, RawComment, RawHeader};
+use crate::visitor::{Visitor, SkipVisitor};
 
 const MIN_BUFFER_SIZE: usize = 8192;
 

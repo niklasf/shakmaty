@@ -8,6 +8,7 @@ license = "GPL-3.0+"
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
 keywords = ["chess", "pgn"]
+edition = "2018"
 
 [dependencies]
 memchr = "2.1"
