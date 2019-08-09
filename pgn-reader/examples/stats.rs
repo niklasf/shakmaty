@@ -1,12 +1,6 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
-extern crate pgn_reader;
-extern crate bzip2;
-extern crate xz2;
-extern crate flate2;
-extern crate lz4;
-
 use std::env;
 use std::io;
 use std::fs::File;

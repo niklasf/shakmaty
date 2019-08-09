@@ -38,8 +38,6 @@
 //! of each game.
 //!
 //! ```
-//! extern crate pgn_reader;
-//!
 //! use std::io;
 //! use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
 //!
@@ -91,9 +89,6 @@
 //! A visitor that returns the final position using [Shakmaty].
 //!
 //! ```
-//! extern crate pgn_reader;
-//! extern crate shakmaty;
-//!
 //! use std::io;
 //!
 //! use shakmaty::{Chess, Position};
@@ -161,11 +156,6 @@
 #![doc(html_root_url = "https://docs.rs/pgn-reader/0.15.0")]
 
 #![warn(missing_debug_implementations)]
-
-extern crate memchr;
-extern crate btoi;
-extern crate shakmaty;
-extern crate slice_deque;
 
 mod types;
 mod visitor;

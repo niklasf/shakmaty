@@ -29,8 +29,6 @@ A visitor that counts the number of syntactically valid moves in the
 mainline of each game.
 
 ```rust
-extern crate pgn_reader;
-
 use std::io;
 use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
 

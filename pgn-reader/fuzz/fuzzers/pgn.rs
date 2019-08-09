@@ -1,8 +1,6 @@
 #![no_main]
 
-#[macro_use]
-extern crate libfuzzer_sys;
-extern crate pgn_reader;
+use libfuzzer_sys::fuzz_target;
 
 use pgn_reader::{BufferedReader, Visitor};
 

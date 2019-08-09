@@ -1,9 +1,6 @@
 // Validates moves in PGNs.
 // Usage: cargo run --release --example validate -- [PGN]...
 
-extern crate pgn_reader;
-extern crate shakmaty;
-
 use std::env;
 use std::fs::File;
 use std::io;
