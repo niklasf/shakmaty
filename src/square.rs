@@ -105,6 +105,11 @@ impl File {
     }
 
     #[inline]
+    pub fn flip_anti_diagonal(self) -> Rank {
+        Rank::new(7 - u32::from(self))
+    }
+
+    #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
@@ -184,6 +189,11 @@ impl Rank {
     #[inline]
     pub fn flip_diagonal(self) -> File {
         File::new(u32::from(self))
+    }
+
+    #[inline]
+    pub fn flip_anti_diagonal(self) -> File {
+        File::new(7 - u32::from(self))
     }
 
     #[inline]
@@ -439,6 +449,18 @@ impl Square {
     /// ```
     pub fn flip_diagonal(self) -> Square {
         Square::from_coords(self.rank().flip_diagonal(), self.file().flip_diagonal())
+    }
+
+    /// Flip at the h1-a8 diagonal.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A1.flip_anti_diagonal(), Square::H8);
+    /// assert_eq!(Square::A3.flip_anti_diagonal(), Square::F8);
+    /// ```
+    pub fn flip_anti_diagonal(self) -> Square {
+        Square::from_coords(self.rank().flip_anti_diagonal(), self.file().flip_anti_diagonal())
     }
 
     /// Tests is the square is a light square.

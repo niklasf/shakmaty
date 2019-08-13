@@ -344,7 +344,40 @@ impl Bitboard {
         let t = k2 & (x ^ (x << 14));
         x ^= t ^ (t >> 14);
         let t = k1 & (x ^ (x << 7));
-        x ^= t ^ (t >>  7) ;
+        x ^= t ^ (t >> 7);
+        Bitboard(x)
+    }
+
+    /// Mirror the bitboard at the h1-a8 diagonal.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.flip_anti_diagonal(), Bitboard(0x00ff_1131_4986_0000));
+    /// // . . . . . . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 . . . 1 . . .
+    /// // 1 . . . 1 1 . .
+    /// // 1 . . 1 . . 1 .
+    /// // . 1 1 . . . . 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// ```
+    #[must_use]
+    pub fn flip_anti_diagonal(self) -> Bitboard {
+        let k1 = 0xaa00_aa00_aa00_aa00;
+        let k2 = 0xcccc_0000_cccc_0000;
+        let k4 = 0xf0f0_f0f0_0f0f_0f0f;
+        let mut x = self.0;
+        let t = x ^ (x << 36);
+        x ^= k4 & (t ^ (x >> 36));
+        let t = k2 & (x ^ (x << 18));
+        x ^= t ^ (t >> 18);
+        let t = k1 & (x ^ (x << 9));
+        x ^= t ^ (t >> 9);
         Bitboard(x)
     }
 
