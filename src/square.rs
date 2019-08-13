@@ -468,21 +468,44 @@ impl Square {
         self.flip_diagonal().rotate_180()
     }
 
+    /// Rotate 90 degrees clockwise.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A1.rotate_90(), Square::A8);
+    /// assert_eq!(Square::A3.rotate_90(), Square::C8);
+    /// ```
     #[inline]
     pub fn rotate_90(self) -> Square {
-        // This is safe because all 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_000) }
+        self.flip_diagonal().flip_vertical()
     }
 
+    /// Rotate 180 degrees clockwise.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A1.rotate_180(), Square::H8);
+    /// assert_eq!(Square::A3.rotate_180(), Square::H6);
+    /// ```
     #[inline]
     pub fn rotate_180(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_111) }
     }
 
+    /// Rotate 270 degrees clockwise.
+    ///
+    /// ```
+    /// use shakmaty::Square;
+    ///
+    /// assert_eq!(Square::A1.rotate_270(), Square::H1);
+    /// assert_eq!(Square::A3.rotate_270(), Square::F1);
+    /// ```
     #[inline]
     pub fn rotate_270(self) -> Square {
-        self.flip_diagonal().flip_vertical()
+        self.flip_diagonal().flip_horizontal()
     }
 
     /// Tests is the square is a light square.
