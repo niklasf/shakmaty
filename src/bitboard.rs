@@ -364,6 +364,21 @@ impl Bitboard {
         Bitboard(x)
     }
 
+
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.rotate_90(), Bitboard(0x00ff_888c_9261_0000));
+    /// // . . . . . . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . 1 . . . 1
+    /// // . . 1 1 . . . 1
+    /// // . 1 . . 1 . . 1
+    /// // 1 . . . . 1 1 .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// ```
     pub fn rotate_90(self) -> Bitboard {
         self.flip_diagonal().flip_vertical()
     }
@@ -388,6 +403,20 @@ impl Bitboard {
         Bitboard(self.0.reverse_bits())
     }
 
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.rotate_270(), Bitboard(0x0000_8649_3111_ff00));
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . 1 1 . . . . 1
+    /// // 1 . . 1 . . 1 .
+    /// // 1 . . . 1 1 . .
+    /// // 1 . . . 1 . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . . . . . .
+    /// ```
     pub fn rotate_270(self) -> Bitboard {
         self.flip_vertical().flip_diagonal()
     }
