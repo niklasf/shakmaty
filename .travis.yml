@@ -2,6 +2,6 @@ language: rust
 sudo: false
 
 rust:
- - stable
+# - stable (waiting for 1.37)
  - beta
  - nightly
