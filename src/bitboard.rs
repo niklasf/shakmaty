@@ -71,6 +71,7 @@ impl Bitboard {
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
+    #[must_use]
     #[inline]
     pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
         match color {
@@ -384,6 +385,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // . . . . . . . .
     /// ```
+    #[must_use]
     pub fn rotate_90(self) -> Bitboard {
         self.flip_diagonal().flip_vertical()
     }
@@ -422,6 +424,7 @@ impl Bitboard {
     /// // 1 1 1 1 1 1 1 1
     /// // . . . . . . . .
     /// ```
+    #[must_use]
     pub fn rotate_270(self) -> Bitboard {
         self.flip_vertical().flip_diagonal()
     }

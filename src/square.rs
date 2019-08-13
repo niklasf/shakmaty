@@ -99,21 +99,25 @@ impl File {
         char::from(b'a' + u8::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_horizontal(self) -> File {
         File::new(7 - u32::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_diagonal(self) -> Rank {
         Rank::new(u32::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_anti_diagonal(self) -> Rank {
         Rank::new(7 - u32::from(self))
@@ -186,21 +190,25 @@ impl Rank {
         char::from(b'1' + u8::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_vertical(self) -> Rank {
         Rank::new(7 - u32::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_diagonal(self) -> File {
         File::new(u32::from(self))
     }
 
+    #[must_use]
     #[inline]
     pub fn flip_anti_diagonal(self) -> File {
         File::new(7 - u32::from(self))
@@ -406,6 +414,7 @@ impl Square {
     ///
     /// assert_eq!(Square::F3.offset(48), None);
     /// ```
+    #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Square> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
@@ -419,6 +428,7 @@ impl Square {
     /// assert_eq!(Square::H1.flip_horizontal(), Square::A1);
     /// assert_eq!(Square::D3.flip_horizontal(), Square::E3);
     /// ```
+    #[must_use]
     #[inline]
     pub fn flip_horizontal(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
@@ -433,6 +443,7 @@ impl Square {
     /// assert_eq!(Square::A8.flip_vertical(), Square::A1);
     /// assert_eq!(Square::D3.flip_vertical(), Square::D6);
     /// ```
+    #[must_use]
     #[inline]
     pub fn flip_vertical(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
@@ -447,6 +458,7 @@ impl Square {
     /// assert_eq!(Square::A1.flip_diagonal(), Square::A1);
     /// assert_eq!(Square::A3.flip_diagonal(), Square::C1);
     /// ```
+    #[must_use]
     #[inline]
     pub fn flip_diagonal(self) -> Square {
         // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
@@ -463,6 +475,7 @@ impl Square {
     /// assert_eq!(Square::A1.flip_anti_diagonal(), Square::H8);
     /// assert_eq!(Square::A3.flip_anti_diagonal(), Square::F8);
     /// ```
+    #[must_use]
     #[inline]
     pub fn flip_anti_diagonal(self) -> Square {
         self.flip_diagonal().rotate_180()
@@ -476,6 +489,7 @@ impl Square {
     /// assert_eq!(Square::A1.rotate_90(), Square::A8);
     /// assert_eq!(Square::A3.rotate_90(), Square::C8);
     /// ```
+    #[must_use]
     #[inline]
     pub fn rotate_90(self) -> Square {
         self.flip_diagonal().flip_vertical()
@@ -489,6 +503,7 @@ impl Square {
     /// assert_eq!(Square::A1.rotate_180(), Square::H8);
     /// assert_eq!(Square::A3.rotate_180(), Square::H6);
     /// ```
+    #[must_use]
     #[inline]
     pub fn rotate_180(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
@@ -503,6 +518,7 @@ impl Square {
     /// assert_eq!(Square::A1.rotate_270(), Square::H1);
     /// assert_eq!(Square::A3.rotate_270(), Square::F1);
     /// ```
+    #[must_use]
     #[inline]
     pub fn rotate_270(self) -> Square {
         self.flip_diagonal().flip_horizontal()
