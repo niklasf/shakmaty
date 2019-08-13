@@ -100,16 +100,6 @@ impl File {
     }
 
     #[inline]
-    pub fn flip_diagonal(self) -> Rank {
-        Rank::new(u32::from(self))
-    }
-
-    #[inline]
-    pub fn flip_anti_diagonal(self) -> Rank {
-        Rank::new(7 - u32::from(self))
-    }
-
-    #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
@@ -117,6 +107,16 @@ impl File {
     #[inline]
     pub fn flip_horizontal(self) -> File {
         File::new(7 - u32::from(self))
+    }
+
+    #[inline]
+    pub fn flip_diagonal(self) -> Rank {
+        Rank::new(u32::from(self))
+    }
+
+    #[inline]
+    pub fn flip_anti_diagonal(self) -> Rank {
+        Rank::new(7 - u32::from(self))
     }
 }
 
@@ -187,16 +187,6 @@ impl Rank {
     }
 
     #[inline]
-    pub fn flip_diagonal(self) -> File {
-        File::new(u32::from(self))
-    }
-
-    #[inline]
-    pub fn flip_anti_diagonal(self) -> File {
-        File::new(7 - u32::from(self))
-    }
-
-    #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
@@ -204,6 +194,16 @@ impl Rank {
     #[inline]
     pub fn flip_vertical(self) -> Rank {
         Rank::new(7 - u32::from(self))
+    }
+
+    #[inline]
+    pub fn flip_diagonal(self) -> File {
+        File::new(u32::from(self))
+    }
+
+    #[inline]
+    pub fn flip_anti_diagonal(self) -> File {
+        File::new(7 - u32::from(self))
     }
 }
 
