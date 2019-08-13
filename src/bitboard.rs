@@ -85,6 +85,11 @@ impl Bitboard {
     }
 
     #[inline]
+    pub fn all(self) -> bool {
+        self.0 == !0
+    }
+
+    #[inline]
     pub fn is_empty(self) -> bool {
         self.0 == 0
     }
