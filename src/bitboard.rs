@@ -295,6 +295,25 @@ impl Bitboard {
         Bitboard(x)
     }
 
+    /* /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.rotate_180(), 0x4448_5070_4844_4478);
+    /// // . . 1 . . . 1 .
+    /// // . . . 1 . . 1 .
+    /// // . . . . 1 . 1 .
+    /// // . . . . 1 1 1 .
+    /// // . . . 1 . . 1 .
+    /// // . . 1 . . . 1 .
+    /// // . . 1 . . . 1 .
+    /// // . . . 1 1 1 1 .
+    /// ```
+    #[must_use]
+    pub fn rotate_180(self) -> Bitboard {
+        Bitboard(self.0.reverse_bits())
+    } */
+
     /// Mirror the bitboard at the a1-h8 diagonal.
     ///
     /// # Examples
