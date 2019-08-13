@@ -285,6 +285,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     pub fn flip_horizontal(self) -> Bitboard {
+        // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Horizontal
         let k1 = 0x5555_5555_5555_5555;
         let k2 = 0x3333_3333_3333_3333;
         let k4 = 0x0f0f_0f0f_0f0f_0f0f;
@@ -335,6 +336,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     pub fn flip_diagonal(self) -> Bitboard {
+        // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal
         let k1 = 0x5500_5500_5500_5500;
         let k2 = 0x3333_0000_3333_0000;
         let k4 = 0x0f0f_0f0f_0000_0000;
@@ -368,6 +370,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     pub fn flip_anti_diagonal(self) -> Bitboard {
+        // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Anti-Diagonal
         let k1 = 0xaa00_aa00_aa00_aa00;
         let k2 = 0xcccc_0000_cccc_0000;
         let k4 = 0xf0f0_f0f0_0f0f_0f0f;

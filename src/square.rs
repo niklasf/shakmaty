@@ -448,6 +448,7 @@ impl Square {
     /// assert_eq!(Square::A3.flip_diagonal(), Square::C1);
     /// ```
     pub fn flip_diagonal(self) -> Square {
+        // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
         // This is safe, because we are selecting 32 - 26 = 6 bits with the
         // shift, and all 6 bits values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self).wrapping_mul(0x2080_0000) >> 26) }
@@ -462,6 +463,7 @@ impl Square {
     /// assert_eq!(Square::A3.flip_anti_diagonal(), Square::F8);
     /// ```
     pub fn flip_anti_diagonal(self) -> Square {
+        // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Anti-Diagonal.
         // This is safe, because we are selecting 32 - 26 = 6 bits with the
         // shift, and all 6 bits values are in the range 0..=63.
         unsafe { Square::new_unchecked((u32::from(self).wrapping_mul(0x2080_0000) >> 26) ^ 0b111_111) }
