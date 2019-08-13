@@ -32,7 +32,7 @@ use crate::types::Color;
 /// ```
 /// use shakmaty::Bitboard;
 ///
-/// let bitboard = Bitboard(0x1e2222120e0a1222);
+/// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
 /// // . 1 1 1 1 . . .
 /// // . 1 . . . 1 . .
 /// // . 1 . . . 1 . .
@@ -248,8 +248,8 @@ impl Bitboard {
     /// ```
     /// use shakmaty::Bitboard;
     ///
-    /// let bitboard = Bitboard(0x1e2222120e0a1222);
-    /// assert_eq!(bitboard.flip_vertical(), Bitboard(0x22120a0e1222221e));
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.flip_vertical(), Bitboard(0x2212_0a0e_1222_221e));
     /// // . 1 . . . 1 . .
     /// // . 1 . . 1 . . .
     /// // . 1 . 1 . . . .
@@ -272,8 +272,8 @@ impl Bitboard {
     /// ```
     /// use shakmaty::Bitboard;
     ///
-    /// let bitboard = Bitboard(0x1e2222120e0a1222);
-    /// assert_eq!(bitboard.flip_horizontal(), Bitboard(0x7844444870504844));
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.flip_horizontal(), Bitboard(0x7844_4448_7050_4844));
     /// // . . . 1 1 1 1 .
     /// // . . 1 . . . 1 .
     /// // . . 1 . . . 1 .
@@ -310,6 +310,7 @@ impl Bitboard {
     /// // . . . 1 1 1 1 .
     /// ```
     #[must_use]
+    #[inline]
     pub fn rotate_180(self) -> Bitboard {
         Bitboard(self.0.reverse_bits())
     } */
@@ -321,8 +322,8 @@ impl Bitboard {
     /// ```
     /// use shakmaty::Bitboard;
     ///
-    /// let bitboard = Bitboard(0x1e2222120e0a1222);
-    /// assert_eq!(bitboard.flip_diagonal(), Bitboard(0x000061928c88ff00));
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.flip_diagonal(), Bitboard(0x0000_6192_8c88_ff00));
     /// // . . . . . . . .
     /// // . . . . . . . .
     /// // 1 . . . . 1 1 .
@@ -700,7 +701,7 @@ mod tests {
 
     #[test]
     fn test_rank() {
-        assert_eq!(Bitboard::rank(Rank::Fourth), Bitboard(0xff000000));
+        assert_eq!(Bitboard::rank(Rank::Fourth), Bitboard(0xff00_0000));
     }
 
     #[test]
