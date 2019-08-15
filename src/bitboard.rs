@@ -407,7 +407,17 @@ impl Bitboard {
     #[must_use]
     #[inline]
     pub fn rotate_180(self) -> Bitboard {
+        self.rotate_180_impl()
+    }
+
+    #[cfg(nightly)]
+    fn rotate_180_impl(self) -> Bitboard {
         Bitboard(self.0.reverse_bits())
+    }
+
+    #[cfg(not(nightly))]
+    fn rotate_180_impl(self) -> Bitboard {
+        self.flip_horizontal().flip_vertical()
     }
 
     /// ```
