@@ -1591,8 +1591,10 @@ fn do_move(board: &mut Board,
                 *halfmoves = 0;
             }
 
-            if role == Role::Pawn && (from - to == 16 || from - to == -16) {
-                *ep_square = from.offset(color.fold(8, -8));
+            if role == Role::Pawn && to - from == 16 && from.rank() == Rank::Second {
+                *ep_square = from.offset(8);
+            } else if role == Role::Pawn && from - to == 16 && from.rank() == Rank::Seventh {
+                *ep_square = from.offset(-8);
             }
 
             if role == Role::King {
@@ -1868,7 +1870,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                        !pos.board().occupied();
 
     let double_moves = single_moves.relative_shift(pos.turn(), 8) &
-                       Bitboard::relative_rank(pos.turn(), Rank::Fourth) &
+                       Bitboard::relative_rank(pos.turn(), Rank::Fourth).with(Bitboard::relative_rank(pos.turn(), Rank::Third)) &
                        !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
