@@ -80,14 +80,10 @@ impl Bitboard {
         }
     }
 
+    #[must_use]
     #[inline]
     pub fn any(self) -> bool {
         self.0 != 0
-    }
-
-    #[inline]
-    pub fn all(self) -> bool {
-        self.0 == !0
     }
 
     #[inline]
