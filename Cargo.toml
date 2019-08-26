@@ -21,7 +21,7 @@ btoi = "0.4"
 arrayvec = "0.4"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.3"
 
 [badges]
 travis-ci = { repository = "niklasf/shakmaty", branch = "master" }
