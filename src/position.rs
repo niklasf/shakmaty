@@ -353,12 +353,6 @@ pub trait Position: Setup {
     fn play_unchecked(&mut self, m: &Move);
 }
 
-trait CastlingUncoversRankAttack {
-    /// Tests the rare case where moving the rook to the other side during
-    /// castling would uncover a rank attack.
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool;
-}
-
 /// A standard Chess position.
 #[derive(Clone, Debug)]
 pub struct Chess {
@@ -575,13 +569,6 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
-impl CastlingUncoversRankAttack for Chess {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.castles.is_chess960() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
-}
-
 /// An Atomic Chess position.
 #[derive(Clone, Debug)]
 pub struct Atomic {
@@ -764,13 +751,6 @@ impl Position for Atomic {
     }
 }
 
-impl CastlingUncoversRankAttack for Atomic {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        (attacks::king_attacks(king_to) & self.board().kings() & self.them()).is_empty() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
-    }
-}
-
 /// A Giveaway position. Giveaway is also (somewhat ambiguously) known as
 /// Antichess.
 #[derive(Clone, Debug)]
@@ -902,12 +882,6 @@ impl Position for Giveaway {
     }
 }
 
-impl CastlingUncoversRankAttack for Giveaway {
-    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
-        false
-    }
-}
-
 /// A King Of The Hill position.
 #[derive(Clone, Debug, Default)]
 pub struct KingOfTheHill {
@@ -988,12 +962,6 @@ impl Position for KingOfTheHill {
             }
         }
         None
-    }
-}
-
-impl CastlingUncoversRankAttack for KingOfTheHill {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
     }
 }
 
@@ -1099,12 +1067,6 @@ impl Position for ThreeCheck {
         } else {
             None
         }
-    }
-}
-
-impl CastlingUncoversRankAttack for ThreeCheck {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
     }
 }
 
@@ -1262,12 +1224,6 @@ impl Position for Crazyhouse {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
-impl CastlingUncoversRankAttack for Crazyhouse {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.chess.castling_uncovers_rank_attack(rook, king_to)
-    }
-}
-
 /// A Racing Kings position.
 #[derive(Clone, Debug)]
 pub struct RacingKings {
@@ -1417,12 +1373,6 @@ impl Position for RacingKings {
     }
 }
 
-impl CastlingUncoversRankAttack for RacingKings {
-    fn castling_uncovers_rank_attack(&self, _rook: Square, _king_to: Square) -> bool {
-        false
-    }
-}
-
 /// A Horde position.
 #[derive(Clone, Debug)]
 pub struct Horde {
@@ -1564,13 +1514,6 @@ impl Position for Horde {
         } else {
             None
         }
-    }
-}
-
-impl CastlingUncoversRankAttack for Horde {
-    fn castling_uncovers_rank_attack(&self, rook: Square, king_to: Square) -> bool {
-        self.castles.is_chess960() &&
-        castling_uncovers_rank_attack(self, rook, king_to)
     }
 }
 
@@ -1736,7 +1679,7 @@ fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut 
     }
 }
 
-fn gen_castling_moves<P: Position + CastlingUncoversRankAttack>(pos: &P, castles: &Castles, king: Square, side: CastlingSide, moves: &mut MoveList) {
+fn gen_castling_moves<P: Position>(pos: &P, castles: &Castles, king: Square, side: CastlingSide, moves: &mut MoveList) {
     if let Some(rook) = castles.rook(pos.turn(), side) {
         let path = castles.path(pos.turn(), side);
         if (path & pos.board().occupied()).any() {
@@ -1744,25 +1687,19 @@ fn gen_castling_moves<P: Position + CastlingUncoversRankAttack>(pos: &P, castles
         }
 
         let king_to = side.king_to(pos.turn());
-        let king_path = attacks::between(king, king_to).with(king_to).with(king);
+        let king_path = attacks::between(king, king_to).with(king);
         for sq in king_path {
             if pos.king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king).any() {
                 return;
             }
         }
 
-        if pos.castling_uncovers_rank_attack(rook, king_to) {
+        if pos.king_attackers(king_to, !pos.turn(), pos.board().occupied() ^ king ^ rook ^ side.rook_to(pos.turn())).any() {
             return;
         }
 
         moves.push(Move::Castle { king, rook });
     }
-}
-
-fn castling_uncovers_rank_attack<P: Position>(pos: &P, rook: Square, king_to: Square) -> bool {
-    (attacks::rook_attacks(king_to, pos.board().occupied().without(rook)) &
-     pos.them() & pos.board().rooks_and_queens() &
-     Bitboard::rank(king_to.rank())).any()
 }
 
 trait Stepper {
