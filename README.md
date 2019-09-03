@@ -72,6 +72,9 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.15.3
+  - Follow FICS rules in Atomic castling edge cases.
+  - Use `#[repr(align)] enum` and `reverse_bits()` stabilized in Rust 1.37.
 * 0.15.2
   - In Horde chess, allow double pawn moves from the first rank.
   - Added `{Square,Bitboard}::{flip_anti_diagonal,rotate_90,rotate_180,rotate_270}()`.
