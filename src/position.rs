@@ -768,7 +768,7 @@ impl Default for Giveaway {
         Giveaway {
             board: Board::default(),
             turn: White,
-            castles: Castles::empty(),
+            castles: Castles::default(),
             ep_square: None,
             halfmoves: 0,
             fullmoves: 1,
