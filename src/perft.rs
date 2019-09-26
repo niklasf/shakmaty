@@ -20,8 +20,8 @@ use crate::uci::Uci;
 
 /// Counts legal move paths of a given length.
 ///
-/// Paths with mate or stalemate are not counted unless it occurs in the final
-/// position. Computing perft numbers is useful for comparing, testing and
+/// Shorter paths (due to mate or stalemate) are not counted.
+/// Computing perft numbers is useful for comparing, testing and
 /// debugging move generation correctness and performance.
 ///
 /// The method used here is simply recursively enumerating the entire tree of

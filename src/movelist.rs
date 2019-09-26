@@ -20,7 +20,7 @@ use arrayvec::{Array, ArrayVec};
 
 /// A container for moves that can be stored inline on the stack.
 ///
-/// The capacity is limited, but there is enough space to contain the legal
+/// The capacity is limited, but there is enough space to hold the legal
 /// moves of any chess position, including any of the supported chess variants.
 ///
 /// # Example
