@@ -16,7 +16,7 @@ name = "benches"
 harness = false
 
 [dependencies]
-bitflags = "1.1"
+bitflags = "1.2"
 btoi = "0.4"
 arrayvec = "0.5"
 
