@@ -61,8 +61,8 @@ position. No hashtables. i7-6850K CPU @ 3.60GHz.
 
 perft | 4 | 5
 --- | --- | ---
-shakmaty | 1.4 ms | 33.8 ms
-[jordanbray/chess](https://crates.io/crates/chess) | 1.3 ms | 28.7 ms
+shakmaty 0.16.0 | 1.0 ms | 24.1 ms
+[jordanbray/chess](https://crates.io/crates/chess) 3.1.1 | 0.8 ms | 18.6 ms
 Stockfish 8 (x86-64-bmi2) | 4 ms | 33 ms
 
 It should be noted that Stockfish is not optimized for perft speed and also
