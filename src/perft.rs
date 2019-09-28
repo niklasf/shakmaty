@@ -16,7 +16,6 @@
 
 use crate::position::Position;
 use crate::movelist::MoveList;
-use crate::uci::Uci;
 
 /// Counts legal move paths of a given length.
 ///
@@ -59,25 +58,6 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
                 perft(&child, depth - 1)
             }).sum()
         }
-    }
-}
-
-/// Like `perft()`, but also prints the perft of each child for debugging.
-#[allow(unused)]
-pub fn debug_perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
-    if depth < 1 {
-        1
-    } else {
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-
-        moves.iter().map(|m| {
-            let child = pos.clone().play(m).expect("legal move");
-            let nodes = perft(&child, depth - 1);
-            let uci = Uci::from_move(pos, m);
-            println!("{} {} {}: {}", uci, m, depth - 1, nodes);
-            nodes
-        }).sum()
     }
 }
 
