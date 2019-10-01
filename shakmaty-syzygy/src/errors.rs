@@ -15,8 +15,8 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::io;
-
-use failure::{Backtrace, Fail};
+use std::fmt;
+use std::error::Error;
 
 use shakmaty::Material;
 
@@ -27,49 +27,93 @@ pub type SyzygyResult<T> = Result<T, SyzygyError>;
 pub type ProbeResult<T> = Result<T, ProbeError>;
 
 /// Error when probing tablebase.
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum SyzygyError {
     /// Position has castling rights, but Syzygy tables do not contain
     /// positions with castling rights.
-    #[fail(display = "syzygy tables do not contain positions with castling rights")]
     Castling,
     /// Position has too many pieces. Syzygy tables only support up to
     /// 6 or 7 pieces.
-    #[fail(display = "too many pieces")]
     TooManyPieces,
     /// Missing table.
-    #[fail(display = "required {} table not found: {}", metric, material)]
     MissingTable {
         metric: Metric,
         material: Material
     },
     /// Probe failed.
-    #[fail(display = "failed to probe {} table {}: {}", metric, material, error)]
     ProbeFailed {
         metric: Metric,
         material: Material,
-        #[fail(cause)]
         error: ProbeError,
     },
 }
 
+impl fmt::Display for SyzygyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SyzygyError::Castling =>
+                write!(f, "syzygy tables do not contain position with castling rights"),
+            SyzygyError::TooManyPieces =>
+                write!(f, "too many pieces"),
+            SyzygyError::MissingTable { metric, material } =>
+                write!(f, "required {} table not found: {}", metric, material),
+            SyzygyError::ProbeFailed { metric, material, error } =>
+                write!(f, "failed to probe {} table {}: {}", metric, material, error),
+        }
+    }
+}
+
+impl Error for SyzygyError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            SyzygyError::ProbeFailed { error, .. } => Some(error),
+            _ => None,
+        }
+    }
+}
+
 /// Error when probing a table.
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 pub enum ProbeError {
     /// I/O error.
-    #[fail(display = "i/o error reading table file: {}", error)]
-    Read {
-        #[fail(cause)]
-        error: io::Error,
-    },
+    Read { error: io::Error },
     /// Table file has unexpected magic header bytes.
-    #[fail(display = "invalid magic header bytes: {:x?}", magic)]
-    Magic {
-        magic: [u8; 4],
-    },
+    Magic { magic: [u8; 4] },
     /// Corrupted table.
-    #[fail(display = "corrupted table")]
-    CorruptedTable(Backtrace),
+    CorruptedTable {
+        #[cfg(feature = "backtrace")]
+        backtrace: std::backtrace::Backtrace
+    },
+}
+
+impl fmt::Display for ProbeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ProbeError::Read { error } =>
+                write!(f, "i/o error reading table file: {}", error),
+            ProbeError::Magic { magic } =>
+                write!(f, "invalid magic header bytes: {:x?}", magic),
+            ProbeError::CorruptedTable { .. } =>
+                write!(f, "corrupted table"),
+        }
+    }
+}
+
+impl Error for ProbeError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ProbeError::Read { error } => Some(error),
+            _ => None,
+        }
+    }
+
+    #[cfg(feature = "backtrace")]
+    fn backtrace(&self) -> Option<&std::backtrace::Backtrace> {
+        match self {
+            ProbeError::CorruptedTable { backtrace } => Some(backtrace),
+            _ => None
+        }
+    }
 }
 
 pub trait ProbeResultExt<T> {
@@ -89,7 +133,10 @@ impl<T> ProbeResultExt<T> for ProbeResult<T> {
 impl From<io::Error> for ProbeError {
     fn from(error: io::Error) -> ProbeError {
         match error.kind() {
-            io::ErrorKind::UnexpectedEof => ProbeError::CorruptedTable(Backtrace::new()),
+            io::ErrorKind::UnexpectedEof => ProbeError::CorruptedTable {
+                #[cfg(feature = "backtrace")]
+                backtrace: std::backtrace::Backtrace::capture()
+            },
             _ => ProbeError::Read { error },
         }
     }
@@ -98,7 +145,10 @@ impl From<io::Error> for ProbeError {
 /// Return a `CorruptedTable` error.
 macro_rules! throw {
     () => {
-        return Err(crate::errors::ProbeError::CorruptedTable(::failure::Backtrace::new()))
+        return Err(crate::errors::ProbeError::CorruptedTable {
+            #[cfg(feature = "backtrace")]
+            backtrace: ::std::backtrace::Backtrace::capture()
+        })
     }
 }
 

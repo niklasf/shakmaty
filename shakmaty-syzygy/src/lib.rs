@@ -23,16 +23,15 @@
 //! # Example
 //!
 //! ```
-//! # extern crate failure;
 //! # extern crate shakmaty;
 //! # extern crate shakmaty_syzygy;
 //! #
-//! # use failure::Error;
+//! # use std::error::Error;
 //! use shakmaty::Chess;
 //! use shakmaty::fen::Fen;
 //! use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
 //!
-//! # fn try_main() -> Result<(), Error> {
+//! # fn try_main() -> Result<(), Box<dyn Error>> {
 //! let mut tables = Tablebase::new();
 //! tables.add_directory("tables/regular")?;
 //!
@@ -58,11 +57,19 @@
 //!
 //! See [`SyzygyError`](enum.SyzygyError.html) for possible error
 //! conditions.
+//!
+//! # Cargo features
+//!
+//! * `backtrace`: Provides a `backtrace` field on `ProbeError::CorruptedTable`.
+//!   This may be useful to identify issues with corrupted tablebase files or
+//!   to debug the probing code. Currently requires nightly Rust.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.12.1")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
+
+#![cfg_attr(feature = "backtrace", feature(backtrace))]
 
 #[macro_use]
 mod errors;

@@ -27,7 +27,7 @@ use positioned_io::RandomAccessFile;
 
 use shakmaty::{Material, Move, MoveList, Position, Role};
 
-use crate::errors::{ProbeError, ProbeResultExt, SyzygyError, SyzygyResult};
+use crate::errors::{ProbeResultExt as _, SyzygyError, SyzygyResult};
 use crate::table::{DtzTable, WdlTable};
 use crate::types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
 
@@ -573,11 +573,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             }
         }
 
-        best.ok_or_else(|| SyzygyError::ProbeFailed {
-            metric: Metric::Dtz,
-            material: self.pos.board().material(),
-            error: ProbeError::CorruptedTable(::failure::Backtrace::new()),
-        })
+        (|| Ok(u!(best)))().ctx(Metric::Dtz, &self.pos.board().material())
     }
 }
 

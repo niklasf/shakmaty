@@ -3,8 +3,6 @@ use std::error::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-use failure::Fail;
-
 use shakmaty::fen::{fen, Fen};
 use shakmaty::san::SanPlus;
 use shakmaty::{Chess, Color, MoveList, Position, Setup};
@@ -60,8 +58,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let material = pos.board().material();
     let fen = fen(&pos);
-    let dtz = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
-    let wdl = real_wdl(&tablebase, &pos, dtz).map_err(|e| e.compat())?;
+    let dtz = tablebase.probe_dtz(&pos)?;
+    let wdl = real_wdl(&tablebase, &pos, dtz)?;
 
     let result = match wdl {
         Wdl::Loss => "0-1",
@@ -78,8 +76,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         let san = SanPlus::from_move(pos.clone(), m);
         let mut after = pos.clone();
         after.play_unchecked(m);
-        let dtz_after = tablebase.probe_dtz(&after).map_err(|e| e.compat())?;
-        let list = match real_wdl(&tablebase, &after, dtz_after).map_err(|e| e.compat())? {
+        let dtz_after = tablebase.probe_dtz(&after)?;
+        let list = match real_wdl(&tablebase, &after, dtz_after)? {
             Wdl::Win => &mut losing_sans,
             Wdl::Loss => &mut winning_sans,
             _ => &mut drawing_sans,
@@ -113,12 +111,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             movetext.push("{ Draw claimed }".to_owned());
             force_movenumber = true;
         } else if pos.halfmoves() == 0 {
-            let Dtz(dtz) = tablebase.probe_dtz(&pos).map_err(|e| e.compat())?;
+            let Dtz(dtz) = tablebase.probe_dtz(&pos)?;
             movetext.push(format!("{{ {} with DTZ {} }}", pos.board().material(), dtz));
             force_movenumber = true;
         }
 
-        let (bestmove, dtz) = tablebase.best_move(&pos).map_err(|e| e.compat())?.expect("has moves");
+        let (bestmove, dtz) = tablebase.best_move(&pos)?.expect("has moves");
         if dtz == Dtz(0) {
             movetext.push("{ Tablebase draw }".to_owned());
             break;
