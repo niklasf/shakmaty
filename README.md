@@ -72,6 +72,10 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.16.0
+  - Updated `arrayvec` to 0.5.x, which comes with significant performance
+    improvements.
+  - The default `Giveaway` position now has castling rights.
 * 0.15.3
   - Follow FICS rules in Atomic castling edge cases.
   - Use `#[repr(align)] enum` and `reverse_bits()` stabilized in Rust 1.37.
