@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::io;
+use std::fs;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::path::Path;
@@ -1304,6 +1305,12 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     }
 }
 
+fn open_table_file<P: AsRef<Path>>(path: P) -> ProbeResult<RandomAccessFile> {
+    let file = fs::File::open(path)?;
+    ensure!(file.metadata()?.len() % 64 == 16);
+    Ok(RandomAccessFile::try_new(file)?)
+}
+
 /// A WDL Table.
 #[derive(Debug)]
 pub struct WdlTable<S: Position + Syzygy, F: ReadAt> {
@@ -1322,7 +1329,7 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
 
 impl<S: Position + Syzygy> WdlTable<S, RandomAccessFile> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, RandomAccessFile>> {
-        WdlTable::new(RandomAccessFile::open(path)?, material)
+        WdlTable::new(open_table_file(path)?, material)
     }
 }
 
@@ -1344,6 +1351,6 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
 
 impl<S: Position + Syzygy> DtzTable<S, RandomAccessFile> {
     pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, RandomAccessFile>> {
-        DtzTable::new(RandomAccessFile::open(path)?, material)
+        DtzTable::new(open_table_file(path)?, material)
     }
 }
