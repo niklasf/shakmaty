@@ -65,6 +65,11 @@ Documentation
 Changelog
 ---------
 
+* 0.13.0
+  - Update shakmaty to `0.16`.
+  - No longer depend on `failure`. Instead, nightly Rust and the `backtrace`
+    feature are required to get backtraces for corrupted tables.
+  - Validate file size when opening table files.
 * 0.12.1
   - Update dependencies.
 * 0.12.0

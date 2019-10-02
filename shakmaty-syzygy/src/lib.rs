@@ -1,5 +1,5 @@
 // This file is part of the shakmaty-syzygy library.
-// Copyright (C) 2017-2018 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2019 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@
 //!   This may be useful to identify issues with corrupted tablebase files or
 //!   to debug the probing code. Currently requires nightly Rust.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.12.1")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.13.0")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
