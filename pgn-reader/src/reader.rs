@@ -545,12 +545,13 @@ impl<R: Read> BufferedReader<R> {
         };
 
         unsafe {
-            // Initialize the entire ring buffer.
+            // Initialize the entire ring buffer, so that reading into the
+            // tail-head slice is always safe.
             //
             // Use https://doc.rust-lang.org/std/io/struct.Initializer.html
             // once stabilized.
             let uninitialized = reader.buffer.inner.tail_head_slice();
-            assert_eq!(uninitialized.len(), MIN_BUFFER_SIZE * 2);
+            assert!(uninitialized.len() >= 2 * MIN_BUFFER_SIZE);
             ptr::write_bytes(uninitialized.as_mut_ptr(), 0, uninitialized.len());
         }
 
