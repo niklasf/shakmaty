@@ -559,7 +559,7 @@ impl<R: Read> BufferedReader<R> {
     }
 
     /// Read a single game, if any, and returns the result produced by the
-    /// visitor.
+    /// visitor. Returns Ok(None) if the underlying reader is empty.
     ///
     /// # Errors
     ///
