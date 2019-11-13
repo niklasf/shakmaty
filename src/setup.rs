@@ -247,28 +247,23 @@ impl Castles {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
                     castles.chess960 |= king.file() != File::E || a_side.file() != File::A;
+                    castles.mask.add(a_side);
                     castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
                     castles.path[*color as usize][CastlingSide::QueenSide as usize] =
-                        attacks::between(a_side, rto).with(rto).without(king).without(a_side) |
-                        attacks::between(king, kto).with(kto).without(king).without(a_side);
+                        (attacks::between(a_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(a_side);
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
                     castles.chess960 |= king.file() != File::E || h_side.file() != File::H;
+                    castles.mask.add(h_side);
                     castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
                     castles.path[*color as usize][CastlingSide::KingSide as usize] =
-                        attacks::between(h_side, rto).with(rto).without(king).without(h_side) |
-                        attacks::between(king, kto).with(kto).without(king).without(h_side);
+                        (attacks::between(h_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(h_side);
                 }
             }
         }
-
-        castles.mask.extend(castles.rook[0][0]);
-        castles.mask.extend(castles.rook[0][1]);
-        castles.mask.extend(castles.rook[1][0]);
-        castles.mask.extend(castles.rook[1][1]);
 
         if castles.castling_rights() == castling_rights {
             Ok(castles)
