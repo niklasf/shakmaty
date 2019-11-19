@@ -1210,6 +1210,7 @@ impl Position for Crazyhouse {
         // to implement anyway. Bishops can be captured and put onto a
         // different color complex.
         self.board().occupied().count() + self.pockets.count() <= 3 &&
+        self.board().promoted().is_empty() &&
         self.board().pawns().is_empty() &&
         self.board().rooks_and_queens().is_empty() &&
         self.pockets.white.pawns == 0 &&
