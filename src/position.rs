@@ -2034,6 +2034,7 @@ mod tests {
 
         assert_insufficient_material::<Crazyhouse>("8/5k2/8/8/8/8/3K2N1/8 w - - 0 1", true, true);
         assert_insufficient_material::<Crazyhouse>("8/5k2/8/8/8/5B2/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Crazyhouse>("8/8/8/8/3k4/3N~4/3K4/8 w - - 0 1", false, false);
 
         assert_insufficient_material::<Horde>("8/5k2/8/8/8/4NN2/8/8 w - - 0 1", false_negative, false);
     }
