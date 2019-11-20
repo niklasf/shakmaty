@@ -649,6 +649,10 @@ impl Position for Atomic {
                                        self.board().occupied() &
                                        !self.board.pawns();
 
+                if (explosion_radius & self.board().kings() & self.us()).any() {
+                    self.castles.discard_side(self.turn());
+                }
+
                 for explosion in explosion_radius {
                     self.board.remove_piece_at(explosion);
                     self.castles.discard_rook(explosion);
@@ -2037,5 +2041,27 @@ mod tests {
         assert_insufficient_material::<Crazyhouse>("8/8/8/8/3k4/3N~4/3K4/8 w - - 0 1", false, false);
 
         assert_insufficient_material::<Horde>("8/5k2/8/8/8/4NN2/8/8 w - - 0 1", false_negative, false);
+    }
+
+    #[test]
+    fn test_exploded_king_loses_castling_rights() {
+        let pos: Atomic = "rnb1kbnr/pppppppp/8/4q3/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+
+        let pos = pos.play(&Move::Normal {
+            role: Role::Queen,
+            from: Square::E5,
+            to: Square::E2,
+            capture: Some(Role::Pawn),
+            promotion: None,
+        }).expect("Qxe2# is legal");
+
+        assert_eq!(pos.castling_rights(), Bitboard::from(Square::A8) | Bitboard::from(Square::H8));
+        assert_eq!(pos.castles().rook(Color::White, CastlingSide::QueenSide), None);
+        assert_eq!(pos.castles().rook(Color::White, CastlingSide::KingSide), None);
+        assert_eq!(pos.castles().rook(Color::Black, CastlingSide::QueenSide), Some(Square::A8));
+        assert_eq!(pos.castles().rook(Color::Black, CastlingSide::KingSide), Some(Square::H8));
     }
 }
