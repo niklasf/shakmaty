@@ -2012,6 +2012,7 @@ mod tests {
         assert_insufficient_material::<Chess>("8/4qk2/8/8/8/8/3K4/8 w - - 0 1", true, false);
         assert_insufficient_material::<Chess>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Chess>("8/8/3Q4/2bK4/B7/8/1k6/8 w - - 1 68", false, false);
+        assert_insufficient_material::<Chess>("8/5k2/8/8/8/4B3/3K1B2/8 w - - 0 1", true, true);
 
         assert_insufficient_material::<Atomic>("8/3k4/8/8/2N5/8/3K4/8 b - - 0 1", true, true);
         assert_insufficient_material::<Atomic>("8/4rk2/8/8/8/8/3K4/8 w - - 0 1", true, true);
