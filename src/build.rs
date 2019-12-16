@@ -70,16 +70,16 @@ fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], 
 }
 
 fn dump_slice<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
-    write!(w, "#[allow(clippy::unreadable_literal)]\n")?;
+    writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
     for v in slice.iter().cloned() {
         write!(w, "0x{:x}, ", v)?;
     }
-    write!(w, "];\n")
+    writeln!(w, "];")
 }
 
 fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
-    write!(w, "#[allow(clippy::unreadable_literal)]\n")?;
+    writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
     for row in table.iter() {
         write!(w, "[")?;
@@ -88,7 +88,7 @@ fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
         }
         write!(w, "], ")?;
     }
-    write!(w, "];\n")
+    writeln!(w, "];")
 }
 
 fn main() -> io::Result<()> {
@@ -141,14 +141,12 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     dump_slice(f, "WHITE_PAWN_ATTACKS", "u64", &white_pawn_attacks)?;
     dump_slice(f, "BLACK_PAWN_ATTACKS", "u64", &black_pawn_attacks)?;
 
-    write!(f, "\n")?;
+    writeln!(f)?;
 
     dump_table(f, "BB_RAYS", "u64", &bb_rays)?;
     dump_table(f, "BB_BETWEEN", "u64", &bb_between)?;
 
-    write!(f, "\n")?;
-
-    Ok(())
+    writeln!(f)
 }
 
 fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
