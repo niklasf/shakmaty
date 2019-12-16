@@ -23,7 +23,7 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
+//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::Square;
 //! use shakmaty::uci::Uci;
 //!
@@ -37,10 +37,6 @@
 //! #
 //! #     Ok(())
 //! # }
-//! #
-//! # fn main() {
-//! #     try_main().unwrap();
-//! # }
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -48,7 +44,7 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
+//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::Color::White;
 //! # use shakmaty::uci::Uci;
 //! use shakmaty::{Square, Chess, Setup, Position};
@@ -61,10 +57,6 @@
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //! #
 //! #     Ok(())
-//! # }
-//! #
-//! # fn main() {
-//! #     try_main().unwrap();
 //! # }
 //! ```
 //!
@@ -174,7 +166,7 @@ impl Uci {
     /// ```
     /// # use std::error::Error;
     /// #
-    /// # fn try_main() -> Result<(), Box<Error>> {
+    /// # fn main() -> Result<(), Box<Error>> {
     /// use shakmaty::uci::Uci;
     /// use shakmaty::Square;
     ///
@@ -187,10 +179,6 @@ impl Uci {
     /// });
     /// #
     /// #     Ok(())
-    /// # }
-    /// #
-    /// # fn main() {
-    /// #     try_main().unwrap();
     /// # }
     /// ```
     ///
