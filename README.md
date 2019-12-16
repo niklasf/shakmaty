@@ -72,6 +72,9 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.16.1
+  - Fix (impossible) Crazyhouse insufficient material.
+  - Fix (impossible) castling rights of exploded king in Atomic chess.
 * 0.16.0
   - Updated `arrayvec` to 0.5.x, which comes with significant performance
     improvements.
