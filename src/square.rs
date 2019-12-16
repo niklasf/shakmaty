@@ -74,7 +74,7 @@ impl File {
 
     /// Gets a `File` from an integer index.
     ///
-    /// # Unsafety
+    /// # Safety
     ///
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
@@ -166,7 +166,7 @@ impl Rank {
 
     /// Gets a `Rank` from an integer index.
     ///
-    /// # Unsafety
+    /// # Safety
     ///
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
@@ -295,7 +295,7 @@ impl Square {
 
     /// Gets a `Square` from an integer index.
     ///
-    /// # Unsafety
+    /// # Safety
     ///
     /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
