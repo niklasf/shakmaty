@@ -330,14 +330,12 @@ impl Square {
     /// ```
     /// # use std::error::Error;
     /// #
-    /// # fn main() -> Result<(), Box<Error>> {
     /// use shakmaty::Square;
     ///
     /// let sq = Square::from_ascii(b"a5")?;
     /// assert_eq!(sq, Square::A5);
     /// #
-    /// #     Ok(())
-    /// # }
+    /// # Ok::<_, Box<Error>>(())
     /// ```
     ///
     /// [`ParseSquareError`]: struct.ParseSquareError.html

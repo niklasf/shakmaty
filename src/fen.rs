@@ -48,7 +48,6 @@
 //! # use shakmaty::fen::Fen;
 //! # use shakmaty::Chess;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! use shakmaty::Position;
 //!
 //! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
@@ -57,8 +56,7 @@
 //! let position: Chess = setup.position()?;
 //! assert!(position.is_checkmate());
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! [`Setup`]: ../trait.Setup.html
@@ -433,14 +431,12 @@ impl Fen {
     /// ```
     /// # use std::error::Error;
     /// #
-    /// # fn main() -> Result<(), Box<Error>> {
     /// use shakmaty::fen::Fen;
     ///
     /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
     /// assert_eq!(fen, Fen::default());
     /// #
-    /// #     Ok(())
-    /// # }
+    /// # Ok::<_, Box<Error>>(())
     /// ```
     ///
     /// [`ParseFenError`]: enum.ParseFenError.html

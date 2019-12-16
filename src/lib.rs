@@ -33,7 +33,6 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
 //! use shakmaty::{Square, Move, Role};
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
@@ -47,12 +46,7 @@
 //!     promotion: None,
 //! })?;
 //! #
-//! #     Ok(())
-//! # }
-//! #
-//! # fn main() {
-//! #     try_main().unwrap();
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! Detect game end conditions:

@@ -23,15 +23,13 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! use shakmaty::{Chess, Position};
 //! use shakmaty::san::San;
 //!
 //! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! Converting to a move:
@@ -39,7 +37,6 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::{Square, Chess, Position, Role, Move};
 //! # use shakmaty::san::San;
 //! # let san: San = "Nf3".parse()?;
@@ -54,8 +51,7 @@
 //!     promotion: None,
 //! });
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
@@ -63,7 +59,6 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::{Chess, Position, Role};
 //! # use shakmaty::san::San;
 //! # let pos = Chess::default();
@@ -71,8 +66,7 @@
 //! # let m = san.to_move(&pos)?;
 //! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 
 use crate::square::{File, Rank, Square};
@@ -375,7 +369,6 @@ impl San {
     /// ```
     /// # use std::error::Error;
     /// #
-    /// # fn main() -> Result<(), Box<Error>> {
     /// use shakmaty::{Square, Role, Move};
     /// use shakmaty::san::San;
     ///
@@ -401,8 +394,7 @@ impl San {
     /// let nef3 = San::from_ascii(b"Nef3")?;
     /// assert!(!nef3.matches(&m));
     /// #
-    /// #     Ok(())
-    /// # }
+    /// # Ok::<_, Box<Error>>(())
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {

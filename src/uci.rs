@@ -23,7 +23,6 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::Square;
 //! use shakmaty::uci::Uci;
 //!
@@ -35,8 +34,7 @@
 //!     promotion: None,
 //! });
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -44,7 +42,6 @@
 //! ```
 //! # use std::error::Error;
 //! #
-//! # fn main() -> Result<(), Box<Error>> {
 //! # use shakmaty::Color::White;
 //! # use shakmaty::uci::Uci;
 //! use shakmaty::{Square, Chess, Setup, Position};
@@ -56,8 +53,7 @@
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //! #
-//! #     Ok(())
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:
@@ -166,7 +162,6 @@ impl Uci {
     /// ```
     /// # use std::error::Error;
     /// #
-    /// # fn main() -> Result<(), Box<Error>> {
     /// use shakmaty::uci::Uci;
     /// use shakmaty::Square;
     ///
@@ -178,8 +173,7 @@ impl Uci {
     ///     promotion: None,
     /// });
     /// #
-    /// #     Ok(())
-    /// # }
+    /// # Ok::<_, Box<Error>>(())
     /// ```
     ///
     /// [`ParseUciError`]: struct.ParseUciError.html
