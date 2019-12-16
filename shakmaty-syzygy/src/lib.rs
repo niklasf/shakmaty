@@ -23,15 +23,12 @@
 //! # Example
 //!
 //! ```
-//! # extern crate shakmaty;
-//! # extern crate shakmaty_syzygy;
-//! #
 //! # use std::error::Error;
+//! #
 //! use shakmaty::Chess;
 //! use shakmaty::fen::Fen;
 //! use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
 //!
-//! # fn try_main() -> Result<(), Box<dyn Error>> {
 //! let mut tables = Tablebase::new();
 //! tables.add_directory("tables/regular")?;
 //!
@@ -45,12 +42,7 @@
 //! let dtz = tables.probe_dtz(&pos)?;
 //! assert_eq!(dtz, Dtz(-59));
 //! #
-//! #     Ok(())
-//! # }
-//! #
-//! # fn main() {
-//! #     try_main().expect("success");
-//! # }
+//! # Ok::<_, Box<Error>>(())
 //! ```
 //!
 //! # Errors
