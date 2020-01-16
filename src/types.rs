@@ -332,7 +332,7 @@ impl Move {
     /// Checks if the move zeros the half-move clock.
     pub fn is_zeroing(&self) -> bool {
         match *self {
-            Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } => true,
+            Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } | Move::Put { role: Role::Pawn, .. } => true,
             _ => false,
         }
     }

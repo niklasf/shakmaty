@@ -1531,14 +1531,15 @@ fn do_move(board: &mut Board,
            m: &Move) {
     let color = *turn;
     ep_square.take();
-    *halfmoves = halfmoves.saturating_add(1);
+
+    *halfmoves = if m.is_zeroing() {
+        0
+    } else {
+        halfmoves.saturating_add(1)
+    };
 
     match *m {
         Move::Normal { role, from, capture, to, promotion } => {
-            if role == Role::Pawn || capture.is_some() {
-                *halfmoves = 0;
-            }
-
             if role == Role::Pawn && to - from == 16 && from.rank() == Rank::Second {
                 *ep_square = from.offset(8);
             } else if role == Role::Pawn && from - to == 16 && from.rank() == Rank::Seventh {
@@ -1575,7 +1576,6 @@ fn do_move(board: &mut Board,
             board.discard_piece_at(to.with_rank_of(from)); // captured pawn
             board.discard_piece_at(from);
             board.set_piece_at(to, color.pawn(), false);
-            *halfmoves = 0;
         }
         Move::Put { role, to } => {
             board.set_piece_at(to, Piece { color, role }, false);
