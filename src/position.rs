@@ -1353,7 +1353,7 @@ impl Position for RacingKings {
 
         // White has reached the backrank. Check if black can catch up.
         let black_king = self.board().king_of(Black).expect("king in racingkings");
-        for target in attacks::king_attacks(black_king) & Rank::Eighth {
+        for target in attacks::king_attacks(black_king) & Rank::Eighth & !self.board().black() {
             if self.king_attackers(target, White, self.board().occupied()).is_empty() {
                 return false;
             }
