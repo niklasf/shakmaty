@@ -73,7 +73,7 @@ Changelog
 ---------
 
 * 0.16.2
-  - Fix Racing King game end detection: Black cannot catch up if their own
+  - Fix Racing Kings game end detection: Black cannot catch up if their own
     pieces block the goal.
   - Pawn drops in Crazyhouse are now considered zeroing.
 * 0.16.1
