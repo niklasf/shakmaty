@@ -22,11 +22,11 @@ use std::path::Path;
 
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
-use byteorder::{BE, LE, ByteOrder, ReadBytesExt};
-use itertools::Itertools;
+use byteorder::{BE, LE, ByteOrder as _, ReadBytesExt as _};
+use itertools::Itertools as _;
 use lazy_static::lazy_static;
 use num_integer::binomial;
-use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt};
+use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
 
@@ -1295,13 +1295,13 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             Some(ref map) => map.read(&self.raf, wdl, res)?,
         });
 
-        let stores_moves = match wdl {
-            DecisiveWdl::Win => !side.flags.contains(Flag::WIN_PLIES),
-            DecisiveWdl::Loss => !side.flags.contains(Flag::LOSS_PLIES),
-            DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => true,
+        let stores_plies = match wdl {
+            DecisiveWdl::Win => side.flags.contains(Flag::WIN_PLIES),
+            DecisiveWdl::Loss => side.flags.contains(Flag::LOSS_PLIES),
+            DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
         };
 
-        Ok(Some(Dtz(if stores_moves { res * 2 } else { res })))
+        Ok(Some(Dtz(if stores_plies { res } else { 2 * res })))
     }
 }
 
