@@ -297,6 +297,7 @@ impl Uci {
 mod tests {
     use super::*;
     use crate::position::Chess;
+    use crate::position::Crazyhouse;
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -311,5 +312,21 @@ mod tests {
         pos.play_unchecked(&d5);
         let exd5 = "e5d6".parse::<Uci>().expect("exd6").to_move(&pos).expect("legal en passant");
         assert!(exd5.is_en_passant());
+    }
+
+    #[test]
+    pub fn test_uci_to_crazyhouse() {
+        let mut pos = Crazyhouse::default();
+        let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
+        pos.play_unchecked(&e4);
+        let d5 = "d7d5".parse::<Uci>().expect("d5").to_move(&pos).expect("legal");
+        pos.play_unchecked(&d5);
+        let exd5 = "e4d5".parse::<Uci>().expect("exd5").to_move(&pos).expect("legal");
+        pos.play_unchecked(&exd5);
+        let qxd5 = "d8d5".parse::<Uci>().expect("Qxd5").to_move(&pos).expect("legal");
+        pos.play_unchecked(&qxd5);
+        let p_at_d7 = "P@d7".parse::<Uci>().expect("P@d7+").to_move(&pos).expect("legal");
+        pos.play_unchecked(&p_at_d7);
+        assert!(pos.is_check());
     }
 }
