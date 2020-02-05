@@ -56,7 +56,7 @@ Documentation
 Benchmarks
 ----------
 
-Simple [perft](https://chessprogramming.wikispaces.com/Perft) of the initial
+Simple [perft](https://www.chessprogramming.org/Perft) of the initial
 position. No hashtables. i7-6850K CPU @ 3.60GHz.
 
 perft | 4 | 5
