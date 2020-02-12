@@ -794,7 +794,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         let magic_header = read_magic_header(&raf)?;
         if magic != magic_header &&
-           (material.has_pawns() || !pawnless_magic.map_or(false, |m| m == magic_header))
+           (material.has_pawns() || pawnless_magic.map_or(true, |m| m != magic_header))
         {
             return Err(ProbeError::Magic { magic: magic_header });
         }
