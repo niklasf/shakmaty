@@ -17,6 +17,7 @@
 use std::fmt;
 use std::char;
 use std::ops;
+use std::num;
 
 use crate::square::Square;
 
@@ -211,6 +212,26 @@ macro_rules! int_from_role_impl {
 }
 
 int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+macro_rules! nonzero_int_from_role_impl {
+    ($($t:ty)+) => {
+        $(impl From<Role> for $t {
+            #[inline]
+            fn from(role: Role) -> $t {
+                <$t>::new(role.into()).expect("nonzero role discriminant")
+            }
+        })+
+    }
+}
+
+nonzero_int_from_role_impl! {
+    num::NonZeroU8 num::NonZeroI8
+    num::NonZeroU16 num::NonZeroI16
+    num::NonZeroU32 num::NonZeroI32
+    num::NonZeroU64 num::NonZeroI64
+    num::NonZeroU128 num::NonZeroI128
+    num::NonZeroUsize num::NonZeroIsize
+}
 
 macro_rules! try_role_from_int_impl {
     ($($t:ty)+) => {
