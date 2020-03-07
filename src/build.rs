@@ -107,7 +107,6 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     let mut black_pawn_attacks = [Bitboard(0); 64];
 
     let mut bb_rays = [[Bitboard(0); 64]; 64];
-    let mut bb_between = [[Bitboard(0); 64]; 64];
 
     for sq in Bitboard::ALL {
         knight_attacks[usize::from(sq)] = step_attacks(sq, &KNIGHT_DELTAS);
@@ -122,16 +121,10 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
                 bb_rays[usize::from(a)][usize::from(b)] =
                     (sliding_bishop_attacks(a, Bitboard(0)) &
                      sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
-                bb_between[usize::from(a)][usize::from(b)] =
-                    sliding_bishop_attacks(a, Bitboard::from_square(b)) &
-                    sliding_bishop_attacks(b, Bitboard::from_square(a));
             } else if sliding_rook_attacks(a, Bitboard(0)).contains(b) {
                 bb_rays[usize::from(a)][usize::from(b)] =
                     (sliding_rook_attacks(a, Bitboard(0)) &
                      sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
-                bb_between[usize::from(a)][usize::from(b)] =
-                    sliding_rook_attacks(a, Bitboard::from_square(b)) &
-                    sliding_rook_attacks(b, Bitboard::from_square(a));
             }
         }
     }
@@ -144,7 +137,6 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     writeln!(f)?;
 
     dump_table(f, "BB_RAYS", "u64", &bb_rays)?;
-    dump_table(f, "BB_BETWEEN", "u64", &bb_between)?;
 
     writeln!(f)
 }

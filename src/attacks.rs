@@ -205,7 +205,8 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
-    Bitboard(BB_BETWEEN[usize::from(a)][usize::from(b)])
+    let bb = ray(a, b).0 & ((!0 << u32::from(a)) ^ (!0 << u32::from(b)));
+    Bitboard(bb & bb.wrapping_sub(1))
 }
 
 /// Tests if all three squares are aligned on a rank, file or diagonal.
