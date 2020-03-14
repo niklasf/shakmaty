@@ -65,36 +65,43 @@ where
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_random() {
     test_perft_file::<Chess>("tests/random.perft", 10_000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_tricky() {
     test_perft_file::<Chess>("tests/tricky.perft", 100_0000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_atomic() {
     test_perft_file::<Atomic>("tests/atomic.perft", 1_000_000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_giveaway() {
     test_perft_file::<Giveaway>("tests/giveaway.perft", 1_000_000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_crazyhouse() {
     test_perft_file::<Crazyhouse>("tests/crazyhouse.perft", 1_000_000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_racingkings() {
     test_perft_file::<RacingKings>("tests/racingkings.perft", 1_000_000);
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn test_horde() {
     test_perft_file::<Horde>("tests/horde.perft", 1_000_000);
 }
