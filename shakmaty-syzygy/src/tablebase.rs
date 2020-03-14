@@ -581,8 +581,6 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 mod tests {
     use super::*;
 
-    use matches::assert_matches;
-
     use shakmaty::fen::Fen;
     use shakmaty::{Chess, Square};
 
@@ -606,13 +604,13 @@ mod tests {
             .position()
             .expect("legal position");
 
-        assert_matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
+        assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
             role: Role::Rook,
             from: Square::G8,
             capture: None,
             to: Square::G1,
             promotion: None,
-        }, Dtz(-1)))));
+        }, Dtz(-1))))));
     }
 
     #[test]
@@ -626,13 +624,13 @@ mod tests {
             .position()
             .expect("legal position");
 
-        assert_matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
+        assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
             role: Role::Pawn,
             from: Square::C2,
             to: Square::C1,
             capture: None,
             promotion: Some(Role::Knight),
-        }, Dtz(109)))));
+        }, Dtz(109))))));
     }
 
     #[test]
@@ -647,6 +645,6 @@ mod tests {
             .position()
             .expect("legal position");
 
-        assert_matches!(tables.probe_dtz(&pos), Ok(Dtz(1)));
+        assert!(matches!(tables.probe_dtz(&pos), Ok(Dtz(1))));
     }
 }

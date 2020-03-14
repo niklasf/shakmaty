@@ -29,7 +29,6 @@ once_cell = "1.1"
 
 [dev-dependencies]
 csv = "1.1"
-matches = "0.1"
 bencher = "0.1"
 structopt = "0.3"
 
