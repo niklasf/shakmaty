@@ -116,16 +116,15 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
     }
 
     for a in Bitboard::ALL {
-        for b in Bitboard::ALL {
-            if sliding_bishop_attacks(a, Bitboard(0)).contains(b) {
-                bb_rays[usize::from(a)][usize::from(b)] =
-                    (sliding_bishop_attacks(a, Bitboard(0)) &
-                     sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
-            } else if sliding_rook_attacks(a, Bitboard(0)).contains(b) {
-                bb_rays[usize::from(a)][usize::from(b)] =
-                    (sliding_rook_attacks(a, Bitboard(0)) &
-                     sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
-            }
+        for b in sliding_bishop_attacks(a, Bitboard(0)) {
+            bb_rays[usize::from(a)][usize::from(b)] =
+                (sliding_bishop_attacks(a, Bitboard(0)) &
+                 sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
+        }
+        for b in sliding_rook_attacks(a, Bitboard(0)) {
+            bb_rays[usize::from(a)][usize::from(b)] =
+                (sliding_rook_attacks(a, Bitboard(0)) &
+                 sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
         }
     }
 
