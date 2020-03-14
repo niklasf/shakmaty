@@ -148,7 +148,5 @@ fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
         init_magics(sq, &magics::BISHOP_MAGICS[usize::from(sq)], 9, &mut attacks, &BISHOP_DELTAS);
     }
 
-    dump_slice(f, "ATTACKS", "u64", &attacks)?;
-
-    Ok(())
+    dump_slice(f, "ATTACKS", "u64", &attacks)
 }
