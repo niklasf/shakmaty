@@ -23,7 +23,7 @@ def deps(variant, suite, target, extra_endgames=[]):
     dtz_tables.update(chess.syzygy.all_dependencies(extra_endgames))
 
     one_king = variant != "antichess"
-    wdl_tables = list(chess.syzygy.all_dependencies(dtz_tables, one_king))
+    wdl_tables = list(chess.syzygy.all_dependencies(dtz_tables, one_king=one_king))
     wdl_tables.sort()
     wdl_tables.sort(key=len)
 
