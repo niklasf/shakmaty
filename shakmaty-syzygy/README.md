@@ -65,6 +65,9 @@ Documentation
 Changelog
 ---------
 
+* 0.13.1
+  - Explicit `#![forbid(unsafe_code)]`.
+  - Update dependencies.
 * 0.13.0
   - Update shakmaty to `0.16`.
   - No longer depend on `failure`. Instead, nightly Rust and the `backtrace`
