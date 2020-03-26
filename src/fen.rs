@@ -70,8 +70,6 @@ use std::fmt;
 use std::char;
 use std::error::Error;
 
-use btoi;
-
 use crate::square::{File, Rank, Square};
 use crate::types::{Black, Color, Piece, RemainingChecks, White};
 use crate::material::Material;
