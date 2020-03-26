@@ -64,7 +64,7 @@
 //! Also supports [FEN](fen/index.html), [SAN](san/index.html) and
 //! [UCI](uci/index.html) formats for positions and moves.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.16.2")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.16.3")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]

@@ -72,6 +72,11 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.16.3
+  - Implement `From<Role>` for nonzero integer types.
+  - Performance: Remove internal `BB_BETWEEN` table and compute it from rays at
+    runtime, to improve cache efficiency.
+  - Support Miri.
 * 0.16.2
   - Fix Racing Kings game end detection: Black cannot catch up if their own
     pieces block the goal.
