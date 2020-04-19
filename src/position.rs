@@ -207,10 +207,15 @@ pub trait Position: Setup {
 
     /// Tests if a move is irreversible.
     ///
-    /// In standard chess pawn moves, captures and moves that destroy castling
-    /// rights are irreversible.
+    /// In standard chess pawn moves, captures, moves that destroy castling
+    /// rights, and moves that cede en-passant are irreversible.
+    ///
+    /// The implementation has false-negatives, because it does not consider
+    /// forced lines. For example a checking move that will force the king
+    /// to lose castling rights is not considered irreversible, only the
+    /// actual king move is.
     fn is_irreversible(&self, m: &Move) -> bool {
-        match *m {
+        (match *m {
             Move::Normal { role: Role::Pawn, .. } |
                 Move::Normal { capture: Some(_), .. } |
                 Move::Castle { .. } |
@@ -220,7 +225,7 @@ pub trait Position: Setup {
                 self.castling_rights().contains(from) ||
                 self.castling_rights().contains(to) ||
                 (role == Role::King && self.castles().has_side(self.turn()))
-        }
+        }) || self.ep_square().is_some()
     }
 
     /// Attacks that a king on `square` would have to deal with.
