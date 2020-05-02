@@ -2070,4 +2070,39 @@ mod tests {
         assert_eq!(pos.castles().rook(Color::Black, CastlingSide::QueenSide), Some(Square::A8));
         assert_eq!(pos.castles().rook(Color::Black, CastlingSide::KingSide), Some(Square::H8));
     }
+
+    #[test]
+    fn test_racing_kings_end() {
+        // Both players reached the backrank.
+        let pos: RacingKings = "kr3NK1/1q2R3/8/8/8/5n2/2N5/1rb2B1R w - - 11 14".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+        assert!(pos.is_variant_end());
+        assert_eq!(pos.variant_outcome(), Some(Outcome::Draw));
+
+        // White to move is lost because black reached the backrank.
+        let pos: RacingKings = "1k6/6K1/8/8/8/8/8/8 w - - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+        assert!(pos.is_variant_end());
+        assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::Black }));
+
+        // Black is given a chance to catch up.
+        let pos: RacingKings = "1K6/7k/8/8/8/8/8/8 b - - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+        assert!(!pos.is_variant_end());
+        assert_eq!(pos.variant_outcome(), None);
+
+        // Black near backrank but cannot move there.
+        let pos: RacingKings = "2KR4/k7/2Q5/4q3/8/8/8/2N5 b - - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("valid position");
+        assert!(pos.is_variant_end());
+        assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::White }));
+    }
 }
