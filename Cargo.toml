@@ -15,6 +15,9 @@ edition = "2018"
 name = "benches"
 harness = false
 
+[lib]
+bench = false
+
 [dependencies]
 bitflags = "1.2"
 btoi = "0.4"
