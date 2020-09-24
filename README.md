@@ -72,6 +72,11 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.16.4
+  - Fixed insufficient material detection with same-color bishops on both
+    sides.
+  - Document limitations of `Position::is_irreversible()`. Moves that cede
+    en passant are now considered irreversible.
 * 0.16.3
   - Implement `From<Role>` for nonzero integer types.
   - Performance: Remove internal `BB_BETWEEN` table and compute it from rays at
