@@ -73,8 +73,7 @@ Changelog
 ---------
 
 * 0.16.4
-  - Fixed insufficient material detection with same-color bishops on both
-    sides.
+  - Fix insufficient material detection with same-color bishops on both sides.
   - Document limitations of `Position::is_irreversible()`. Moves that cede
     en passant are now considered irreversible.
 * 0.16.3
@@ -90,7 +89,7 @@ Changelog
   - Fix (impossible) Crazyhouse insufficient material.
   - Fix (impossible) castling rights of exploded king in Atomic chess.
 * 0.16.0
-  - Updated `arrayvec` to 0.5.x, which comes with significant performance
+  - Update `arrayvec` to 0.5.x, which comes with significant performance
     improvements.
   - The default `Giveaway` position now has castling rights.
 * 0.15.3
@@ -142,10 +141,10 @@ Changelog
 * 0.12.0
   - `Setup::halfmove_clock()` is now `Setup::halfmoves()`.
   - New conversions: `f32::from(file)`, `f64::from(rank)`.
-  - Replaced `Pockets` and `Pocket` by more general `Material` and
+  - Replace `Pockets` and `Pocket` by more general `Material` and
     `MaterialSide`. Note that their `Display` and `FromStr` implementations
     differ.
-  - Unified naming of error types.
+  - Unify naming of error types.
 * 0.11.2
   - Fix Atomic insufficient material: KQN can mate.
 * 0.11.1
@@ -154,7 +153,7 @@ Changelog
   - `Outcome` is now `Copy`.
   - `Position::castling_uncovers_rank_attack()` is no longer public.
 * 0.10.0
-  - Added `File`, `Rank`. These are now returned by `Square::{file, rank}`.
+  - Add `File`, `Rank`. These are now returned by `Square::{file, rank}`.
     `Square::from_coords(file, rank)` takes the new types and is no longer
     fallible.
   - `Bitboard` is now `IntoIterator` instead of `Iterator` itself.
@@ -169,9 +168,9 @@ Changelog
 * 0.9.0
   - Remove `uci`, `chess960_uci`, `san` and `san_plus` that were deprecated
     in 0.8.1.
-  - Renamed `*::from_bytes()` to `*::from_ascii()`.
+  - Rename `*::from_bytes()` to `*::from_ascii()`.
   - Take small copy types by value: `Piece::char()`, `CastlingSide::*`.
-  - Added `Castles::has(color, side)`.
+  - Add `Castles::has(color, side)`.
   - `fen::{board_fen, epd, fen}` are now shortcuts for formatting with
     default options.
   - Minimum rust version 1.27.0 (i128 conversions again, fused iterators again,
@@ -183,7 +182,7 @@ Changelog
     respectively.
 * 0.8.0
   - Revert fused iterators and u128. Minimum Rust version back to 1.23.0.
-  - Changed `Role` discriminants. Now starting with `Pawn = 1`.
+  - Change `Role` discriminants. Now starting with `Pawn = 1`.
   - Performance improvements (~12% faster perft).
   - Switch benchmarks to `criterion.rs`.
 * 0.7.2
