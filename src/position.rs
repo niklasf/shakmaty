@@ -563,8 +563,7 @@ impl Position for Chess {
             let same_color =
                 (self.board().bishops() & Bitboard::DARK_SQUARES).is_empty() ||
                 (self.board().bishops() & Bitboard::LIGHT_SQUARES).is_empty();
-            return same_color &&
-                (self.board.by_color(!color) & !self.board.kings() & !self.board().rooks_and_queens()).is_empty()
+            return same_color && self.board().knights().is_empty() && self.board().pawns().is_empty();
         }
 
         true
@@ -2018,6 +2017,9 @@ mod tests {
         assert_insufficient_material::<Chess>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
         assert_insufficient_material::<Chess>("8/8/3Q4/2bK4/B7/8/1k6/8 w - - 1 68", false, false);
         assert_insufficient_material::<Chess>("8/5k2/8/8/8/4B3/3K1B2/8 w - - 0 1", true, true);
+        assert_insufficient_material::<Chess>("5K2/8/8/1B6/8/k7/6b1/8 w - - 0 39", true, true);
+        assert_insufficient_material::<Chess>("8/8/8/4k3/5b2/3K4/8/2B5 w - - 0 33", true, true);
+        assert_insufficient_material::<Chess>("3b4/8/8/6b1/8/8/R7/K1k5 w - - 0 1", false, true);
 
         assert_insufficient_material::<Atomic>("8/3k4/8/8/2N5/8/3K4/8 b - - 0 1", true, true);
         assert_insufficient_material::<Atomic>("8/4rk2/8/8/8/8/3K4/8 w - - 0 1", true, true);
