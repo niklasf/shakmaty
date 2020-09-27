@@ -24,7 +24,7 @@ byteorder = "1.3"
 itertools = "0.9"
 positioned-io = { package = "positioned-io-preview", version = "0.3" }
 lazy_static = "1.4"
-fxhash = "0.2"
+rustc-hash = "1.1"
 once_cell = "1.1"
 
 [dev-dependencies]

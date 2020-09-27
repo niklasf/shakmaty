@@ -22,7 +22,7 @@ use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use once_cell::sync::OnceCell;
-use fxhash::FxHashMap;
+use rustc_hash::FxHashMap;
 use positioned_io::RandomAccessFile;
 
 use shakmaty::{Material, Move, MoveList, Position, Role};
