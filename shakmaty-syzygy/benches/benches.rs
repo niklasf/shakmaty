@@ -1,5 +1,4 @@
 use bencher::{Bencher, benchmark_group, benchmark_main, black_box};
-use matches::assert_matches;
 
 use shakmaty::Chess;
 use shakmaty::fen::Fen;
@@ -24,7 +23,7 @@ fn bench_probe_wdl(bench: &mut Bencher) {
         .expect("legal position");
 
     bench.iter(|| {
-        assert_matches!(tb.probe_wdl(black_box(&pos)), Ok(Wdl::BlessedLoss));
+        assert!(matches!(tb.probe_wdl(black_box(&pos)), Ok(Wdl::BlessedLoss)));
     });
 }
 
