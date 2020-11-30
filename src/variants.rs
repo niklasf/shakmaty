@@ -52,6 +52,23 @@ pub enum Variant {
     Horde,
 }
 
+impl Variant {
+    /// Gets the name of the variant, as expected by the `UCI_Variant` option
+    /// of chess engines.
+    pub fn uci(self) -> &'static str {
+        match self {
+            Variant::Chess => "chess",
+            Variant::Atomic => "atomic",
+            Variant::Giveaway => "giveaway",
+            Variant::KingOfTheHill => "kingofthehill",
+            Variant::ThreeCheck => "3check",
+            Variant::Crazyhouse => "crazyhouse",
+            Variant::RacingKings => "racingkings",
+            Variant::Horde => "horde",
+        }
+    }
+}
+
 /// Dynamically dispatched chess variant [`Position`].
 ///
 /// [`Position`]: ../trait.Position.html
