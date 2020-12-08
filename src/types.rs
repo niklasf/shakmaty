@@ -19,7 +19,7 @@ use std::char;
 use std::ops;
 use std::num;
 
-use crate::square::Square;
+use crate::square::{Square, File, Rank};
 
 pub use self::Color::{Black, White};
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
@@ -63,6 +63,9 @@ impl Color {
     pub fn is_white(self) -> bool { self == Color::White }
     #[inline]
     pub fn is_black(self) -> bool { self == Color::Black }
+
+    #[inline]
+    pub fn backrank(self) -> Rank { self.fold(Rank::First, Rank::Eighth) }
 
     pub fn char(self) -> char { self.fold('w', 'b') }
 
@@ -489,18 +492,26 @@ impl CastlingSide {
         if king_side { CastlingSide::KingSide } else { CastlingSide::QueenSide }
     }
 
-    pub fn king_to(self, color: Color) -> Square {
+    pub fn king_to_file(self) -> File {
         match self {
-            CastlingSide::KingSide => color.fold(Square::G1, Square::G8),
-            CastlingSide::QueenSide => color.fold(Square::C1, Square::C8),
+            CastlingSide::KingSide => File::G,
+            CastlingSide::QueenSide => File::C,
         }
     }
 
-    pub fn rook_to(self, color: Color) -> Square {
+    pub fn rook_to_file(self) -> File {
         match self {
-            CastlingSide::KingSide => color.fold(Square::F1, Square::F8),
-            CastlingSide::QueenSide => color.fold(Square::D1, Square::D8),
+            CastlingSide::KingSide => File::F,
+            CastlingSide::QueenSide => File::D,
         }
+    }
+
+    pub fn king_to(self, color: Color) -> Square {
+        Square::from_coords(self.king_to_file(), color.backrank())
+    }
+
+    pub fn rook_to(self, color: Color) -> Square {
+        Square::from_coords(self.rook_to_file(), color.backrank())
     }
 }
 
