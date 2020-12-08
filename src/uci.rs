@@ -88,7 +88,7 @@ use std::error::Error;
 
 use crate::square::{Rank, Square};
 use crate::types::{CastlingMode, CastlingSide, Move, Role};
-use crate::position::{IllegalMoveError, Position, PositionExt};
+use crate::position::{Position, PositionExt as _};
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -109,6 +109,22 @@ impl Error for ParseUciError {
 impl From<()> for ParseUciError {
     fn from(_: ()) -> ParseUciError {
         ParseUciError
+    }
+}
+
+/// Error when UCI is illegal.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct IllegalUciError;
+
+impl fmt::Display for IllegalUciError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "illegal uci".fmt(f)
+    }
+}
+
+impl Error for IllegalUciError {
+    fn description(&self) -> &str {
+        "illegal uci"
     }
 }
 
@@ -271,17 +287,16 @@ impl Uci {
     ///
     /// # Errors
     ///
-    /// Returns [`IllegalMoveError`] if the move is not legal.
+    /// Returns [`IllegalUciError`] if the move is not legal.
     ///
     /// [`Move`]: ../enum.Move.html
-    /// [`IllegalMoveError`]: ../struct.IllegalMoveError.html
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalMoveError> {
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciError> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {
-                let role = pos.board().role_at(from).ok_or(IllegalMoveError)?;
+                let role = pos.board().role_at(from).ok_or(IllegalUciError)?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(IllegalMoveError)
+                    return Err(IllegalUciError)
                 }
 
                 if role == Role::King && pos.castling_rights().contains(to) {
@@ -304,13 +319,13 @@ impl Uci {
                 }
             },
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(IllegalMoveError)
+            Uci::Null => return Err(IllegalUciError)
         };
 
         if pos.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(IllegalMoveError)
+            Err(IllegalUciError)
         }
     }
 }

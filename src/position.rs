@@ -95,28 +95,6 @@ impl PositionError {
     }
 }
 
-/// Error in case of illegal moves.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct IllegalMoveError;
-
-impl fmt::Display for IllegalMoveError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "illegal move".fmt(f)
-    }
-}
-
-impl Error for IllegalMoveError {
-    fn description(&self) -> &str {
-        "illegal move"
-    }
-}
-
-impl From<()> for IllegalMoveError {
-    fn from(_: ()) -> IllegalMoveError {
-        IllegalMoveError
-    }
-}
-
 /// Validate and set up an arbitrary position. All provided chess variants
 /// support this.
 pub trait FromSetup: Sized {
@@ -353,10 +331,8 @@ pub trait PositionExt: Position {
     ///
     /// # Errors
     ///
-    /// Returns [`IllegalMoveError`] if the move is not legal in the position.
-    ///
-    /// [`IllegalMoveError`]: struct.IllegalMoveError.html
-    fn play(mut self, m: &Move) -> Result<Self, IllegalMoveError>
+    /// Returns the unchanged position if the move is not legal.
+    fn play(mut self, m: &Move) -> Result<Self, Self>
     where
         Self: Sized,
     {
@@ -364,7 +340,7 @@ pub trait PositionExt: Position {
             self.play_unchecked(m);
             Ok(self)
         } else {
-            Err(IllegalMoveError)
+            Err(self)
         }
     }
 }
