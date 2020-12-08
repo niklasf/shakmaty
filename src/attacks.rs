@@ -175,8 +175,6 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// // . . . . 1 . . .
 /// // . . . 1 . . . .
 /// ```
-///
-/// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
     Bitboard(BB_RAYS[usize::from(a)][usize::from(b)])
@@ -201,8 +199,6 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// // . 1 . . . . . .
 /// // . 0 . . . . . .
 /// ```
-///
-/// [`Bitboard`]: ../struct.Bitboard.html
 #[inline]
 pub fn between(a: Square, b: Square) -> Bitboard {
     let bb = ray(a, b).0 & ((!0 << u32::from(a)) ^ (!0 << u32::from(b)));

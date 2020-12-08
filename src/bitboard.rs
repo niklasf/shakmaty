@@ -114,8 +114,7 @@ impl Bitboard {
     /// Removes a square from the bitboard.
     ///
     /// Returns `true` if the square was in the set. Use
-    /// [`discard()`](struct.Bitboard.html#method.discard) if you do not care
-    /// about the return value.
+    /// [`Bitboard::discard()`] if you do not care about the return value.
     ///
     /// # Examples
     ///
@@ -654,8 +653,6 @@ impl IntoIterator for Bitboard {
 }
 
 /// Iterator over the squares of a [`Bitboard`].
-///
-/// [`Bitboard`]: struct.Bitboard.html
 #[derive(Debug, Clone)]
 pub struct IntoIter(Bitboard);
 
@@ -701,8 +698,6 @@ impl DoubleEndedIterator for IntoIter {
 }
 
 /// Iterator over the subsets of a [`Bitboard`].
-///
-/// [`Bitboard`]: struct.Bitboard.html
 #[derive(Debug, Clone)]
 pub struct CarryRippler {
     bb: u64,

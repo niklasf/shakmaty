@@ -43,7 +43,7 @@ pub trait ArrayVecExt {
     /// In other words, remove all elements `e` such that `f(&e)` returns
     /// `false`.
     ///
-    /// Like `ArrayVec::retain()`, but does not preserve order.
+    /// Like [`ArrayVec::retain()`], but does not preserve order.
     fn swap_retain<F>(&mut self, f: F)
     where
         F: FnMut(&mut Self::Item) -> bool;
