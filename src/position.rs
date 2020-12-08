@@ -60,14 +60,15 @@ bitflags! {
     /// [`Setup`]: trait.Setup.html
     /// [`Position`]: trait.Position.html
     pub struct PositionError: u32 {
-        const EMPTY_BOARD = 1;
-        const MISSING_KING = 2;
-        const TOO_MANY_KINGS = 4;
-        const PAWNS_ON_BACKRANK = 8;
-        const BAD_CASTLING_RIGHTS = 16;
-        const INVALID_EP_SQUARE = 32;
-        const OPPOSITE_CHECK = 64;
-        const VARIANT = 128;
+        const EMPTY_BOARD = 1 << 0;
+        const MISSING_KING = 1 << 1;
+        const TOO_MANY_KINGS = 1 << 2;
+        const PAWNS_ON_BACKRANK = 1 << 3;
+        const BAD_CASTLING_RIGHTS = 1 << 4;
+        const INVALID_EP_SQUARE = 1 << 5;
+        const OPPOSITE_CHECK = 1 << 6;
+        const VARIANT = 1 << 7;
+        const IMPOSSIBLE_CHECK = 1 << 8;
     }
 }
 
@@ -631,7 +632,7 @@ impl FromSetup for Atomic {
             errors.remove(PositionError::MISSING_KING);
         }
 
-        errors.into_result(pos)
+        (errors - PositionError::IMPOSSIBLE_CHECK).into_result(pos)
     }
 }
 
@@ -814,7 +815,8 @@ impl FromSetup for Giveaway {
         let errors = (validate(&pos) | errors)
             - PositionError::MISSING_KING
             - PositionError::TOO_MANY_KINGS
-            - PositionError::OPPOSITE_CHECK;
+            - PositionError::OPPOSITE_CHECK
+            - PositionError::IMPOSSIBLE_CHECK;
 
         errors.into_result(pos)
     }
@@ -1288,7 +1290,7 @@ impl FromSetup for RacingKings {
         };
 
         if pos.is_check() {
-            errors |= PositionError::VARIANT;
+            errors |= PositionError::IMPOSSIBLE_CHECK;
         }
 
         if pos.turn().is_black() &&
@@ -1644,6 +1646,16 @@ fn validate<P: Position>(pos: &P) -> PositionError {
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
         if pos.king_attackers(their_king, pos.turn(), pos.board().occupied()).any() {
             errors |= PositionError::OPPOSITE_CHECK;
+        }
+    }
+
+    if let Some(our_king) = pos.board().king_of(pos.turn()) {
+        let checkers = pos.checkers();
+        match (checkers.first(), checkers.last()) {
+            (Some(a), Some(b)) if a != b && (checkers.count() > 2 || attacks::aligned(a, b, our_king)) => {
+                errors |= PositionError::IMPOSSIBLE_CHECK;
+            }
+            _ => (),
         }
     }
 
@@ -2106,5 +2118,13 @@ mod tests {
             .expect("valid position");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::White }));
+    }
+
+    #[test]
+    fn test_aligned_checkers() {
+        let res = "2Nq4/2K5/1b6/8/7R/3k4/7P/8 w - - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position::<Chess>();
+        assert!(matches!(res, Err(PositionError::IMPOSSIBLE_CHECK)));
     }
 }
