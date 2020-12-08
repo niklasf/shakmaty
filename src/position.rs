@@ -133,9 +133,7 @@ pub trait FromSetup: Sized {
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
-/// implementation.
-///
-/// [`Chess`]: struct.Chess.html
+/// implementation and [`PositionExt`] for additional provided methods.
 pub trait Position: Setup {
     /// Collects all legal moves in an existing buffer.
     fn legal_moves(&self, moves: &mut MoveList);
