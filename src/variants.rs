@@ -69,6 +69,10 @@ impl Variant {
             Variant::Horde => "horde",
         }
     }
+
+    pub fn distinguishes_promoted(self) -> bool {
+        self == Variant::Crazyhouse
+    }
 }
 
 /// Dynamically dispatched chess variant [`Position`].
