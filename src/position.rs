@@ -1569,18 +1569,15 @@ fn do_move(board: &mut Board,
             board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
         },
         Move::Castle { king, rook } => {
-            let rook_to = (if rook - king < 0 { Square::D1 } else { Square::F1 }).with_rank_of(rook);
-            let king_to = (if rook - king < 0 { Square::C1 } else { Square::G1 }).with_rank_of(king);
-
+            let side = CastlingSide::from_queen_side(rook < king);
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
-            board.set_piece_at(rook_to, color.rook(), false);
-            board.set_piece_at(king_to, color.king(), false);
-
+            board.set_piece_at(Square::from_coords(side.rook_to_file(), rook.rank()), color.rook(), false);
+            board.set_piece_at(Square::from_coords(side.king_to_file(), king.rank()), color.king(), false);
             castles.discard_side(color);
         }
         Move::EnPassant { from, to } => {
-            board.discard_piece_at(to.with_rank_of(from)); // captured pawn
+            board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn
             board.discard_piece_at(from);
             board.set_piece_at(to, color.pawn(), false);
         }
@@ -1931,7 +1928,7 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
         Move::EnPassant { from, to } => {
             let mut occupied = pos.board().occupied();
             occupied.toggle(from);
-            occupied.toggle(to.with_rank_of(from)); // captured pawn
+            occupied.toggle(Square::from_coords(to.file(), from.rank())); // captured pawn
             occupied.add(to);
 
             (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens()).is_empty() &&

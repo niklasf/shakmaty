@@ -556,19 +556,6 @@ impl Square {
         max((self.file() - other.file()).abs(),
             (self.rank() - other.rank()).abs()) as u32
     }
-
-    /// Combines two squares, taking the file from the first and the rank from
-    /// the second.
-    ///
-    /// ```
-    /// use shakmaty::Square;
-    ///
-    /// assert_eq!(Square::D3.with_rank_of(Square::F5), Square::D5);
-    /// ```
-    #[inline]
-    pub fn with_rank_of(self, other: Square) -> Square {
-        Square::from_coords(self.file(), other.rank())
-    }
 }
 
 from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
