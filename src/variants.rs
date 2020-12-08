@@ -241,3 +241,21 @@ impl Position for VariantPosition {
     fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
     fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::PositionExt as _;
+
+    #[test]
+    fn test_variant_position_play() {
+        let pos = VariantPosition::new(Variant::Chess);
+        pos.play(&Move::Normal {
+            role: Role::Knight,
+            from: Square::G1,
+            to: Square::F3,
+            capture: None,
+            promotion: None,
+        }).expect("legal move");
+    }
+}
