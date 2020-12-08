@@ -35,7 +35,7 @@ pub use crate::position::RacingKings;
 pub use crate::position::Horde;
 
 use crate::{Board, Color, Bitboard, Square, Material, RemainingChecks};
-use crate::{Role, Move, MoveList, CastlingSide, Outcome, Castles};
+use crate::{Role, Move, MoveList, CastlingSide, CastlingMode, Outcome, Castles};
 use crate::{Setup, FromSetup, Position, PositionError};
 use crate::setup::SwapTurn;
 
@@ -153,20 +153,25 @@ impl VariantPosition {
     }
 
     pub fn from_setup(variant: Variant, setup: &dyn Setup) -> Result<VariantPosition, PositionError> {
+        Self::from_setup_with_mode(variant, setup, None)
+    }
+
+    pub fn from_setup_with_mode(variant: Variant, setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<VariantPosition, PositionError> {
         match variant {
-            Variant::Chess => Chess::from_setup(setup).map(VariantPosition::Chess),
-            Variant::Atomic => Atomic::from_setup(setup).map(VariantPosition::Atomic),
-            Variant::Antichess => Antichess::from_setup(setup).map(VariantPosition::Antichess),
-            Variant::KingOfTheHill => KingOfTheHill::from_setup(setup).map(VariantPosition::KingOfTheHill),
-            Variant::ThreeCheck => ThreeCheck::from_setup(setup).map(VariantPosition::ThreeCheck),
-            Variant::Crazyhouse => Crazyhouse::from_setup(setup).map(VariantPosition::Crazyhouse),
-            Variant::RacingKings => RacingKings::from_setup(setup).map(VariantPosition::RacingKings),
-            Variant::Horde => Horde::from_setup(setup).map(VariantPosition::Horde),
+            Variant::Chess => Chess::from_setup_with_mode(setup, mode).map(VariantPosition::Chess),
+            Variant::Atomic => Atomic::from_setup_with_mode(setup, mode).map(VariantPosition::Atomic),
+            Variant::Antichess => Antichess::from_setup_with_mode(setup, mode).map(VariantPosition::Antichess),
+            Variant::KingOfTheHill => KingOfTheHill::from_setup_with_mode(setup, mode).map(VariantPosition::KingOfTheHill),
+            Variant::ThreeCheck => ThreeCheck::from_setup_with_mode(setup, mode).map(VariantPosition::ThreeCheck),
+            Variant::Crazyhouse => Crazyhouse::from_setup_with_mode(setup, mode).map(VariantPosition::Crazyhouse),
+            Variant::RacingKings => RacingKings::from_setup_with_mode(setup, mode).map(VariantPosition::RacingKings),
+            Variant::Horde => Horde::from_setup_with_mode(setup, mode).map(VariantPosition::Horde),
         }
     }
 
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError> {
-        VariantPosition::from_setup(self.variant(), &SwapTurn(self))
+        let mode = self.castles().mode();
+        VariantPosition::from_setup_with_mode(self.variant(), &SwapTurn(self), Some(mode))
     }
 
     pub fn variant(&self) -> Variant {
