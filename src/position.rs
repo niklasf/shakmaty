@@ -123,7 +123,10 @@ pub trait FromSetup: Sized {
     ///
     /// # Errors
     ///
-    /// Returns [`PositionError`] if the setup is not legal.
+    /// Returns [`PositionError`] if the setup does not meet basic validity
+    /// requirements. Meeting the requirements does not imply that the position
+    /// is actually reachable with a series of legal moves from the starting
+    /// position.
     ///
     /// [`PositionError`]: enum.PositionError.html
     fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError>;
