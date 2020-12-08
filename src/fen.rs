@@ -65,6 +65,8 @@
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 
 use std::convert::TryFrom;
+use std::cmp::max;
+use std::num::NonZeroU32;
 use std::str::FromStr;
 use std::fmt;
 use std::char;
@@ -366,7 +368,7 @@ pub struct Fen {
     pub ep_square: Option<Square>,
     pub remaining_checks: Option<RemainingChecks>,
     pub halfmoves: u32,
-    pub fullmoves: u32,
+    pub fullmoves: NonZeroU32,
 }
 
 impl Setup for Fen {
@@ -377,7 +379,7 @@ impl Setup for Fen {
     fn ep_square(&self) -> Option<Square> { self.ep_square }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl Default for Fen {
@@ -390,7 +392,7 @@ impl Default for Fen {
             ep_square: None,
             remaining_checks: None,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -519,8 +521,8 @@ impl Fen {
         }
 
         if let Some(fullmoves_part) = parts.next() {
-            result.fullmoves = btoi::btou_saturating(fullmoves_part)
-                .map_err(|_| ParseFenError::InvalidFullmoves)?;
+            let fullmoves = btoi::btou_saturating(fullmoves_part).map_err(|_| ParseFenError::InvalidFullmoves)?;
+            result.fullmoves = NonZeroU32::new(max(fullmoves, 1)).unwrap();
         }
 
         let last_part = if let Some(checks_part) = parts.next() {
@@ -653,7 +655,7 @@ mod tests {
         let expected = RemainingChecks { white: 1, black: 2 };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 12);
-        assert_eq!(fen.fullmoves, 42);
+        assert_eq!(fen.fullmoves.get(), 42);
     }
 
     #[test]
@@ -663,7 +665,7 @@ mod tests {
         let expected = RemainingChecks { white: 3, black: 3 };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 1);
-        assert_eq!(fen.fullmoves, 2);
+        assert_eq!(fen.fullmoves.get(), 2);
         assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
     }
 

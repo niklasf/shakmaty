@@ -14,6 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::fmt;
+use std::error::Error;
+use std::num::NonZeroU32;
+
+use bitflags::bitflags;
+
 use crate::attacks;
 use crate::board::Board;
 use crate::bitboard::Bitboard;
@@ -22,11 +28,6 @@ use crate::types::{Black, CastlingSide, Color, Move, Piece, RemainingChecks, Rol
 use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use crate::movelist::{ArrayVecExt, MoveList};
-
-use bitflags::bitflags;
-
-use std::fmt;
-use std::error::Error;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -373,7 +374,7 @@ pub struct Chess {
     castles: Castles,
     ep_square: Option<Square>,
     halfmoves: u32,
-    fullmoves: u32,
+    fullmoves: NonZeroU32,
 }
 
 impl Chess {
@@ -392,7 +393,7 @@ impl Default for Chess {
             castles: Castles::default(),
             ep_square: None,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -405,7 +406,7 @@ impl Setup for Chess {
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl FromSetup for Chess {
@@ -588,7 +589,7 @@ pub struct Atomic {
     castles: Castles,
     ep_square: Option<Square>,
     halfmoves: u32,
-    fullmoves: u32,
+    fullmoves: NonZeroU32,
 }
 
 impl Default for Atomic {
@@ -599,7 +600,7 @@ impl Default for Atomic {
             castles: Castles::default(),
             ep_square: None,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -612,7 +613,7 @@ impl Setup for Atomic {
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl FromSetup for Atomic {
@@ -774,7 +775,7 @@ pub struct Antichess {
     turn: Color,
     ep_square: Option<Square>,
     halfmoves: u32,
-    fullmoves: u32,
+    fullmoves: NonZeroU32,
 }
 
 impl Default for Antichess {
@@ -784,7 +785,7 @@ impl Default for Antichess {
             turn: White,
             ep_square: None,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -797,7 +798,7 @@ impl Setup for Antichess {
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl FromSetup for Antichess {
@@ -906,7 +907,7 @@ impl Setup for KingOfTheHill {
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
-    fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
+    fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves() }
 }
 
 impl FromSetup for KingOfTheHill {
@@ -990,7 +991,7 @@ impl Setup for ThreeCheck {
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
-    fn fullmoves(&self) -> u32 { self.chess.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves }
 }
 
 impl FromSetup for ThreeCheck {
@@ -1119,7 +1120,7 @@ impl Setup for Crazyhouse {
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
-    fn fullmoves(&self) -> u32 { self.chess.fullmoves() }
+    fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves() }
 }
 
 impl FromSetup for Crazyhouse {
@@ -1241,7 +1242,7 @@ pub struct RacingKings {
     board: Board,
     turn: Color,
     halfmoves: u32,
-    fullmoves: u32,
+    fullmoves: NonZeroU32,
 }
 
 impl Default for RacingKings {
@@ -1250,7 +1251,7 @@ impl Default for RacingKings {
             board: Board::racing_kings(),
             turn: White,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -1263,7 +1264,7 @@ impl Setup for RacingKings {
     fn ep_square(&self) -> Option<Square> { None }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl FromSetup for RacingKings {
@@ -1392,7 +1393,7 @@ pub struct Horde {
     castles: Castles,
     ep_square: Option<Square>,
     halfmoves: u32,
-    fullmoves: u32,
+    fullmoves: NonZeroU32,
 }
 
 impl Default for Horde {
@@ -1406,7 +1407,7 @@ impl Default for Horde {
             castles,
             ep_square: None,
             halfmoves: 0,
-            fullmoves: 1,
+            fullmoves: NonZeroU32::new(1).unwrap(),
         }
     }
 }
@@ -1419,7 +1420,7 @@ impl Setup for Horde {
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> u32 { self.fullmoves }
+    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
 
 impl FromSetup for Horde {
@@ -1533,7 +1534,7 @@ fn do_move(board: &mut Board,
            castles: &mut Castles,
            ep_square: &mut Option<Square>,
            halfmoves: &mut u32,
-           fullmoves: &mut u32,
+           fullmoves: &mut NonZeroU32,
            m: &Move) {
     let color = *turn;
     ep_square.take();
@@ -1589,7 +1590,7 @@ fn do_move(board: &mut Board,
     }
 
     if color.is_black() {
-        *fullmoves = fullmoves.saturating_add(1);
+        *fullmoves = NonZeroU32::new(fullmoves.get().saturating_add(1)).unwrap();
     }
 
     *turn = !color;

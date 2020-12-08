@@ -23,6 +23,8 @@
 //! [`FromSetup`]: ../trait.FromSetup.html
 //! [`Position`]: ../trait.Position.html
 
+use std::num::NonZeroU32;
+
 pub use crate::Chess;
 pub use crate::position::Atomic;
 pub use crate::position::Antichess;
@@ -211,7 +213,7 @@ impl Setup for VariantPosition {
     fn ep_square(&self) -> Option<Square> { self.borrow().ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.borrow().remaining_checks() }
     fn halfmoves(&self) -> u32 { self.borrow().halfmoves() }
-    fn fullmoves(&self) -> u32 { self.borrow().fullmoves() }
+    fn fullmoves(&self) -> NonZeroU32 { self.borrow().fullmoves() }
 }
 
 impl Position for VariantPosition {

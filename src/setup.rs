@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use std::num::NonZeroU32;
+
 use crate::square::{File, Rank, Square};
 use crate::bitboard::Bitboard;
 use crate::attacks;
@@ -81,9 +83,9 @@ pub trait Setup {
     /// use shakmaty::{Chess, Setup};
     ///
     /// let pos = Chess::default();
-    /// assert_eq!(pos.fullmoves(), 1);
+    /// assert_eq!(pos.fullmoves().get(), 1);
     /// ```
-    fn fullmoves(&self) -> u32;
+    fn fullmoves(&self) -> NonZeroU32;
 
     /// Squares occupied by the side to move.
     ///
@@ -194,7 +196,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     fn ep_square(&self) -> Option<Square> { self.0.ep_square() }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }
     fn halfmoves(&self) -> u32 { self.0.halfmoves() }
-    fn fullmoves(&self) -> u32 { self.0.fullmoves() }
+    fn fullmoves(&self) -> NonZeroU32 { self.0.fullmoves() }
 }
 
 /// Castling paths and unmoved rooks.
