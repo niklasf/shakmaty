@@ -226,12 +226,17 @@ impl Default for Castles {
 }
 
 impl Castles {
-    pub fn empty() -> Castles {
-        EMPTY_CASTLES.clone()
+    pub fn empty(mode: CastlingMode) -> Castles {
+        Castles {
+            mode,
+            mask: Bitboard(0),
+            rook: [[None; 2]; 2],
+            path: [[Bitboard(0); 2]; 2],
+        }
     }
 
     pub fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Castles, Castles> {
-        let mut castles = Castles::empty();
+        let mut castles = Castles::empty(CastlingMode::Standard);
         let mut chess960_castling_rights = false;
 
         let castling_rights = setup.castling_rights();
@@ -357,13 +362,6 @@ impl Castles {
         self.mode
     }
 }
-
-pub static EMPTY_CASTLES: Castles = Castles {
-    mode: CastlingMode::Standard,
-    mask: Bitboard(0),
-    rook: [[None; 2]; 2],
-    path: [[Bitboard(0); 2]; 2],
-};
 
 #[cfg(test)]
 mod tests {

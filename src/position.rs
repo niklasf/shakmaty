@@ -26,7 +26,7 @@ use crate::bitboard::Bitboard;
 use crate::square::{Rank, Square};
 use crate::types::{Black, CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role, White};
 use crate::material::{Material, MaterialSide};
-use crate::setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
+use crate::setup::{Castles, Setup, SwapTurn};
 use crate::movelist::{ArrayVecExt, MoveList};
 
 /// Outcome of a game.
@@ -778,6 +778,7 @@ impl Position for Atomic {
 pub struct Antichess {
     board: Board,
     turn: Color,
+    castles: Castles,
     ep_square: Option<Square>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
@@ -788,6 +789,7 @@ impl Default for Antichess {
         Antichess {
             board: Board::default(),
             turn: White,
+            castles: Castles::empty(CastlingMode::Standard),
             ep_square: None,
             halfmoves: 0,
             fullmoves: NonZeroU32::new(1).unwrap(),
@@ -807,10 +809,11 @@ impl Setup for Antichess {
 }
 
 impl FromSetup for Antichess {
-    fn from_setup_with_mode(setup: &dyn Setup, _mode: Option<CastlingMode>) -> Result<Antichess, PositionError> {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Antichess, PositionError> {
         let pos = Antichess {
             board: setup.board().clone(),
             turn: setup.turn(),
+            castles: Castles::empty(mode.unwrap_or_default()),
             ep_square: setup.ep_square(),
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
@@ -834,13 +837,13 @@ impl FromSetup for Antichess {
 
 impl Position for Antichess {
     fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
                 &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
-        &EMPTY_CASTLES
+        &self.castles
     }
 
     fn en_passant_moves(&self, moves: &mut MoveList) {
@@ -1246,6 +1249,7 @@ impl Position for Crazyhouse {
 pub struct RacingKings {
     board: Board,
     turn: Color,
+    castles: Castles,
     halfmoves: u32,
     fullmoves: NonZeroU32,
 }
@@ -1255,6 +1259,7 @@ impl Default for RacingKings {
         RacingKings {
             board: Board::racing_kings(),
             turn: White,
+            castles: Castles::empty(CastlingMode::Standard),
             halfmoves: 0,
             fullmoves: NonZeroU32::new(1).unwrap(),
         }
@@ -1273,7 +1278,7 @@ impl Setup for RacingKings {
 }
 
 impl FromSetup for RacingKings {
-    fn from_setup_with_mode(setup: &dyn Setup, _mode: Option<CastlingMode>) -> Result<RacingKings, PositionError> {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<RacingKings, PositionError> {
         let mut errors = PositionError::empty();
 
         if setup.castling_rights().any() {
@@ -1291,6 +1296,7 @@ impl FromSetup for RacingKings {
         let pos = RacingKings {
             board,
             turn: setup.turn(),
+            castles: Castles::empty(mode.unwrap_or_default()),
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
@@ -1312,7 +1318,7 @@ impl FromSetup for RacingKings {
 
 impl Position for RacingKings {
     fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
+        do_move(&mut self.board, &mut self.turn, &mut self.castles,
                 &mut None, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
@@ -1345,7 +1351,7 @@ impl Position for RacingKings {
     }
 
     fn castles(&self) -> &Castles {
-        &EMPTY_CASTLES
+        &self.castles
     }
 
     fn has_insufficient_material(&self, _color: Color) -> bool {
