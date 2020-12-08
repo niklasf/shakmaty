@@ -772,7 +772,6 @@ impl Position for Atomic {
 pub struct Antichess {
     board: Board,
     turn: Color,
-    castles: Castles,
     ep_square: Option<Square>,
     halfmoves: u32,
     fullmoves: u32,
@@ -783,7 +782,6 @@ impl Default for Antichess {
         Antichess {
             board: Board::default(),
             turn: White,
-            castles: Castles::empty(),
             ep_square: None,
             halfmoves: 0,
             fullmoves: 1,
@@ -795,7 +793,7 @@ impl Setup for Antichess {
     fn board(&self) -> &Board { &self.board }
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
+    fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
@@ -804,18 +802,18 @@ impl Setup for Antichess {
 
 impl FromSetup for Antichess {
     fn from_setup(setup: &dyn Setup) -> Result<Antichess, PositionError> {
-        let (castles, errors) = match Castles::from_setup(setup) {
-            Ok(castles) => (castles, PositionError::empty()),
-            Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
-        };
-
         let pos = Antichess {
             board: setup.board().clone(),
             turn: setup.turn(),
-            castles,
             ep_square: setup.ep_square(),
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
+        };
+
+        let errors = if setup.castling_rights().any() {
+            PositionError::BAD_CASTLING_RIGHTS
+        } else {
+            PositionError::empty()
         };
 
         let errors = (validate(&pos) | errors)
@@ -830,13 +828,13 @@ impl FromSetup for Antichess {
 
 impl Position for Antichess {
     fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castles,
+        do_move(&mut self.board, &mut self.turn, &mut Castles::empty(),
                 &mut self.ep_square, &mut self.halfmoves,
                 &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
-        &self.castles
+        &EMPTY_CASTLES
     }
 
     fn en_passant_moves(&self, moves: &mut MoveList) {
@@ -860,10 +858,6 @@ impl Position for Antichess {
             gen_non_king(self, !self.board().occupied(), moves);
             add_king_promotions(moves);
             KingTag::gen_moves(self, !self.board().occupied(), moves);
-            if let Some(king) = self.board().king_of(self.turn()) {
-                gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
-                gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
-            }
         }
     }
 
