@@ -48,7 +48,7 @@
 //! # use shakmaty::fen::Fen;
 //! # use shakmaty::Chess;
 //! #
-//! use shakmaty::Position;
+//! use shakmaty::{Position, PositionExt};
 //!
 //! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
 //!
@@ -56,7 +56,7 @@
 //! let position: Chess = setup.position()?;
 //! assert!(position.is_checkmate());
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! [`Setup`]: ../trait.Setup.html

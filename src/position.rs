@@ -137,28 +137,6 @@ pub trait FromSetup: Sized {
 ///
 /// [`Chess`]: struct.Chess.html
 pub trait Position: Setup {
-    /// Swap turns. This is sometimes called "playing a null move".
-    ///
-    /// # Errors
-    ///
-    /// Returns [`PositionError`] if swapping turns is not possible (usually
-    /// due to a check that has to be averted).
-    ///
-    /// [`PositionError`]: enum.PositionError.html
-    fn swap_turn(self) -> Result<Self, PositionError>
-    where
-        Self: Sized + FromSetup
-    {
-        Self::from_setup(&SwapTurn(self))
-    }
-
-    /// Generates legal moves.
-    fn legals(&self) -> MoveList {
-        let mut legals = MoveList::new();
-        self.legal_moves(&mut legals);
-        legals
-    }
-
     /// Collects all legal moves in an existing buffer.
     fn legal_moves(&self, moves: &mut MoveList);
 
@@ -193,22 +171,6 @@ pub trait Position: Setup {
         moves.retain(|m| m.is_promotion());
     }
 
-    /// Tests a move for legality.
-    fn is_legal(&self, m: &Move) -> bool {
-        let mut moves = MoveList::new();
-        match *m {
-            Move::Normal { role, to, .. } | Move::Put { role, to } =>
-                self.san_candidates(role, to, &mut moves),
-            Move::EnPassant { to, .. } =>
-                self.san_candidates(Role::Pawn, to, &mut moves),
-            Move::Castle { king, rook } if king.file() < rook.file() =>
-                self.castling_moves(CastlingSide::KingSide, &mut moves),
-            Move::Castle { .. } =>
-                self.castling_moves(CastlingSide::QueenSide, &mut moves),
-        }
-        moves.contains(m)
-    }
-
     /// Tests if a move is irreversible.
     ///
     /// In standard chess pawn moves, captures, moves that destroy castling
@@ -240,11 +202,6 @@ pub trait Position: Setup {
     /// Castling paths and unmoved rooks.
     fn castles(&self) -> &Castles;
 
-    /// Tests if the king is in check.
-    fn is_check(&self) -> bool {
-        self.checkers().any()
-    }
-
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first().map_or(Bitboard(0), |king| {
@@ -259,6 +216,83 @@ pub trait Position: Setup {
     /// a special [`variant_outcome()`](#tymethod.variant_outcome) in suicide
     /// chess.
     fn is_variant_end(&self) -> bool;
+
+    /// Tests if a side has insufficient winning material.
+    ///
+    /// Returns `false` if there is any series of legal moves that allows
+    /// `color` to win the game.
+    ///
+    /// The converse is not necessarily true: The position might be locked up
+    /// such that `color` can never win the game (even if `!color` cooperates),
+    /// or insufficient material might only become apparent after a forced
+    /// sequence of moves.
+    ///
+    /// The current implementation can be summarized as follows: Looking
+    /// only at the material configuration, taking into account if bishops
+    /// are positioned on dark or light squares, but not concrete piece
+    /// positions, is there a position with the same material configuration
+    /// where `color` can win with a series of legal moves. If not, then
+    /// `color` has insufficient winning material.
+    fn has_insufficient_material(&self, color: Color) -> bool;
+
+    /// Tests special variant winning, losing and drawing conditions.
+    fn variant_outcome(&self) -> Option<Outcome>;
+
+    /// Plays a move. It is the callers responsibility to ensure the move is
+    /// legal.
+    ///
+    /// # Panics
+    ///
+    /// Illegal moves can corrupt the state of the position and may
+    /// (or may not) panic or cause panics on future calls. Consider using
+    /// [`Position::play()`](trait.Position.html#method.play) instead.
+    fn play_unchecked(&mut self, m: &Move);
+}
+
+/// Additional provided methods for [`Position`].
+pub trait PositionExt: Position {
+    /// Swap turns. This is sometimes called "playing a null move".
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PositionError`] if swapping turns is not possible (usually
+    /// due to a check that has to be averted).
+    ///
+    /// [`PositionError`]: enum.PositionError.html
+    fn swap_turn(self) -> Result<Self, PositionError>
+    where
+        Self: Sized + FromSetup
+    {
+        Self::from_setup(&SwapTurn(self))
+    }
+
+    /// Generates legal moves.
+    fn legals(&self) -> MoveList {
+        let mut legals = MoveList::new();
+        self.legal_moves(&mut legals);
+        legals
+    }
+
+    /// Tests a move for legality.
+    fn is_legal(&self, m: &Move) -> bool {
+        let mut moves = MoveList::new();
+        match *m {
+            Move::Normal { role, to, .. } | Move::Put { role, to } =>
+                self.san_candidates(role, to, &mut moves),
+            Move::EnPassant { to, .. } =>
+                self.san_candidates(Role::Pawn, to, &mut moves),
+            Move::Castle { king, rook } if king.file() < rook.file() =>
+                self.castling_moves(CastlingSide::KingSide, &mut moves),
+            Move::Castle { .. } =>
+                self.castling_moves(CastlingSide::QueenSide, &mut moves),
+        }
+        moves.contains(m)
+    }
+
+    /// Tests if the king is in check.
+    fn is_check(&self) -> bool {
+        self.checkers().any()
+    }
 
     /// Tests for checkmate.
     fn is_checkmate(&self) -> bool {
@@ -288,24 +322,6 @@ pub trait Position: Setup {
         self.has_insufficient_material(White) && self.has_insufficient_material(Black)
     }
 
-    /// Tests if a side has insufficient winning material.
-    ///
-    /// Returns `false` if there is any series of legal moves that allows
-    /// `color` to win the game.
-    ///
-    /// The converse is not necessarily true: The position might be locked up
-    /// such that `color` can never win the game (even if `!color` cooperates),
-    /// or insufficient material might only become apparent after a forced
-    /// sequence of moves.
-    ///
-    /// The current implementation can be summarized as follows: Looking
-    /// only at the material configuration, taking into account if bishops
-    /// are positioned on dark or light squares, but not concrete piece
-    /// positions, is there a position with the same material configuration
-    /// where `color` can win with a series of legal moves. If not, then
-    /// `color` has insufficient winning material.
-    fn has_insufficient_material(&self, color: Color) -> bool;
-
     /// Tests if the game is over due to [checkmate](#method.is_checkmate),
     /// [stalemate](#method.is_stalemate),
     /// [insufficient material](#tymethod.is_insufficient_material) or
@@ -315,9 +331,6 @@ pub trait Position: Setup {
         self.legal_moves(&mut legals);
         legals.is_empty() || self.is_insufficient_material()
     }
-
-    /// Tests special variant winning, losing and drawing conditions.
-    fn variant_outcome(&self) -> Option<Outcome>;
 
     /// The outcome of the game, or `None` if the game is not over.
     fn outcome(&self) -> Option<Outcome> {
@@ -350,17 +363,9 @@ pub trait Position: Setup {
             Err(IllegalMoveError)
         }
     }
-
-    /// Plays a move. It is the callers responsibility to ensure the move is
-    /// legal.
-    ///
-    /// # Panics
-    ///
-    /// Illegal moves can corrupt the state of the position and may
-    /// (or may not) panic or cause panics on future calls. Consider using
-    /// [`Position::play()`](trait.Position.html#method.play) instead.
-    fn play_unchecked(&mut self, m: &Move);
 }
+
+impl<T: Position> PositionExt for T { }
 
 /// A standard Chess position.
 #[derive(Clone, Debug)]

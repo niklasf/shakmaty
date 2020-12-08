@@ -71,7 +71,7 @@
 
 use crate::square::{File, Rank, Square};
 use crate::types::{CastlingSide, Move, Role};
-use crate::position::{Outcome, Position};
+use crate::position::{Outcome, Position, PositionExt};
 use crate::movelist::MoveList;
 
 use std::fmt;

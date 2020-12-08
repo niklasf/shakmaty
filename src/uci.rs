@@ -88,7 +88,7 @@ use std::error::Error;
 
 use crate::square::{Rank, Square};
 use crate::types::{Move, Role};
-use crate::position::{IllegalMoveError, Position};
+use crate::position::{IllegalMoveError, Position, PositionExt};
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug, Eq, PartialEq)]

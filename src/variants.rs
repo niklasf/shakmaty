@@ -229,16 +229,4 @@ impl Position for VariantPosition {
     fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
     fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
     fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
-
-    // Provided and never overwritten:
-    // - legals
-    // - play
-    // - is_legal
-    // - is_check
-    // - is_checkmate
-    // - is_stalemate
-    // - is_insufficient_material
-    // - is_game_over
-    // - outcome
-    // - play
 }

@@ -21,7 +21,7 @@
 //! Generate legal moves in the starting position:
 //!
 //! ```
-//! use shakmaty::{Chess, Position};
+//! use shakmaty::{Chess, Position, PositionExt};
 //!
 //! let pos = Chess::default();
 //! let legals = pos.legals();
@@ -34,7 +34,7 @@
 //! # use std::error::Error;
 //! #
 //! use shakmaty::{Square, Move, Role};
-//! # use shakmaty::{Chess, Position};
+//! # use shakmaty::{Chess, Position, PositionExt};
 //! # let pos = Chess::default();
 //!
 //! // 1. e4
@@ -46,13 +46,13 @@
 //!     promotion: None,
 //! })?;
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Detect game end conditions:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position};
+//! # use shakmaty::{Chess, Position, PositionExt};
 //! # let pos = Chess::default();
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
@@ -95,5 +95,5 @@ pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};
 pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
-pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, FromSetup, PositionError};
+pub use crate::position::{Chess, IllegalMoveError, Outcome, Position, PositionExt, FromSetup, PositionError};
 pub use crate::perft::perft;
