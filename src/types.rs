@@ -515,6 +515,31 @@ impl CastlingSide {
     }
 }
 
+/// `Standard` or `Chess960`.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+pub enum CastlingMode {
+    Standard,
+    Chess960,
+}
+
+impl CastlingMode {
+    pub fn from_standard(standard: bool) -> CastlingMode {
+        if standard { CastlingMode::Standard } else { CastlingMode::Chess960 }
+    }
+
+    pub fn from_chess960(chess960: bool) -> CastlingMode {
+        if chess960 { CastlingMode::Chess960 } else { CastlingMode::Standard }
+    }
+
+    pub fn is_standard(self) -> bool {
+        self == CastlingMode::Standard
+    }
+
+    pub fn is_chess960(self) -> bool {
+        self == CastlingMode::Chess960
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::mem;

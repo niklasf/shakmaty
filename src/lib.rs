@@ -89,7 +89,7 @@ pub mod variants;
 
 pub use crate::errors::{TryFromIntError, TryFromFloatError};
 pub use crate::square::{ParseSquareError, File, Rank, Square};
-pub use crate::types::{CastlingSide, Color, Move, Piece, RemainingChecks, Role};
+pub use crate::types::{CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role};
 pub use crate::material::{Material, MaterialSide, ParseMaterialError};
 pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};

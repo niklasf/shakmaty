@@ -213,7 +213,7 @@ impl Uci {
     /// [`Uci::from_chess960()`](enum.Uci.html#method.from_chess960).
     pub fn from_move<P: Position>(pos: &P, m: &Move) -> Uci {
         match *m {
-            Move::Castle { king, rook } if !pos.castles().is_chess960() => {
+            Move::Castle { king, rook } if pos.castles().mode().is_standard() => {
                 Uci::Normal {
                     from: king,
                     to: if king < rook {

@@ -19,7 +19,7 @@ use std::num::NonZeroU32;
 use crate::square::{File, Rank, Square};
 use crate::bitboard::Bitboard;
 use crate::attacks;
-use crate::types::{CastlingSide, Color, RemainingChecks, Role};
+use crate::types::{CastlingSide, CastlingMode, Color, RemainingChecks, Role};
 use crate::material::Material;
 use crate::board::Board;
 
@@ -205,13 +205,13 @@ pub struct Castles {
     mask: Bitboard,
     rook: [[Option<Square>; 2]; 2],
     path: [[Bitboard; 2]; 2],
-    chess960: bool,
+    mode: CastlingMode,
 }
 
 impl Default for Castles {
     fn default() -> Castles {
         Castles {
-            chess960: false,
+            mode: CastlingMode::Standard,
             mask: Bitboard::CORNERS,
             rook: [
                 [Some(Square::H8), Some(Square::A8)], // black
@@ -232,6 +232,7 @@ impl Castles {
 
     pub fn from_setup(setup: &dyn Setup) -> Result<Castles, Castles> {
         let mut castles = Castles::empty();
+        let mut chess960 = false;
 
         let castling_rights = setup.castling_rights();
         let rooks = castling_rights & setup.board().rooks();
@@ -248,7 +249,7 @@ impl Castles {
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
-                    castles.chess960 |= king.file() != File::E || a_side.file() != File::A;
+                    chess960 |= king.file() != File::E || a_side.file() != File::A;
                     castles.mask.add(a_side);
                     castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
                     castles.path[*color as usize][CastlingSide::QueenSide as usize] =
@@ -258,7 +259,7 @@ impl Castles {
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
-                    castles.chess960 |= king.file() != File::E || h_side.file() != File::H;
+                    chess960 |= king.file() != File::E || h_side.file() != File::H;
                     castles.mask.add(h_side);
                     castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
                     castles.path[*color as usize][CastlingSide::KingSide as usize] =
@@ -266,6 +267,8 @@ impl Castles {
                 }
             }
         }
+
+        castles.mode = CastlingMode::from_chess960(chess960);
 
         if castles.castling_rights() == castling_rights {
             Ok(castles)
@@ -340,13 +343,13 @@ impl Castles {
         self.mask
     }
 
-    pub fn is_chess960(&self) -> bool {
-        self.chess960
+    pub fn mode(&self) -> CastlingMode {
+        self.mode
     }
 }
 
 pub static EMPTY_CASTLES: Castles = Castles {
-    chess960: false,
+    mode: CastlingMode::Standard,
     mask: Bitboard(0),
     rook: [[None; 2]; 2],
     path: [[Bitboard(0); 2]; 2],
