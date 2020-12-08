@@ -898,7 +898,7 @@ impl Position for Antichess {
     }
 }
 
-/// A King Of The Hill position.
+/// A King of the Hill position.
 #[derive(Clone, Debug, Default)]
 pub struct KingOfTheHill {
     chess: Chess,

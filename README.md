@@ -41,7 +41,7 @@ Features
 * Read and write FENs, SANs and UCIs.
 
 * Supports standard chess, Chess960, Antichess, Atomic, King of the Hill,
-  Three-check, Crazyhouse, Racing Kings and Horde. Provides vocabulary
+  Three-Check, Crazyhouse, Racing Kings and Horde. Provides vocabulary
   to implement other variants.
 
 * Bitboards and compact fixed shift magic attack tables.
