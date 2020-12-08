@@ -13,7 +13,7 @@ Features
 * Generate legal moves:
 
   ```rust
-  use shakmaty::{Chess, Position};
+  use shakmaty::{Chess, PositionExt};
 
   let pos = Chess::default();
   let legals = pos.legals();
