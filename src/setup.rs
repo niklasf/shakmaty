@@ -230,9 +230,9 @@ impl Castles {
         EMPTY_CASTLES.clone()
     }
 
-    pub fn from_setup(setup: &dyn Setup) -> Result<Castles, Castles> {
+    pub fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Castles, Castles> {
         let mut castles = Castles::empty();
-        let mut chess960 = false;
+        let mut chess960_castling_rights = false;
 
         let castling_rights = setup.castling_rights();
         let rooks = castling_rights & setup.board().rooks();
@@ -249,32 +249,42 @@ impl Castles {
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
                     let kto = CastlingSide::QueenSide.king_to(*color);
-                    chess960 |= king.file() != File::E || a_side.file() != File::A;
-                    castles.mask.add(a_side);
-                    castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
-                    castles.path[*color as usize][CastlingSide::QueenSide as usize] =
-                        (attacks::between(a_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(a_side);
+                    let chess960 = king.file() != File::E || a_side.file() != File::A;
+                    if !chess960 || mode.unwrap_or(CastlingMode::Chess960).is_chess960() {
+                        chess960_castling_rights |= chess960;
+                        castles.mask.add(a_side);
+                        castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
+                        castles.path[*color as usize][CastlingSide::QueenSide as usize] =
+                            (attacks::between(a_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(a_side);
+                    }
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
                     let rto = CastlingSide::KingSide.rook_to(*color);
                     let kto = CastlingSide::KingSide.king_to(*color);
-                    chess960 |= king.file() != File::E || h_side.file() != File::H;
-                    castles.mask.add(h_side);
-                    castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
-                    castles.path[*color as usize][CastlingSide::KingSide as usize] =
-                        (attacks::between(h_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(h_side);
+                    let chess960 = king.file() != File::E || h_side.file() != File::H;
+                    if !chess960 || mode.unwrap_or(CastlingMode::Chess960).is_chess960() {
+                        chess960_castling_rights |= chess960;
+                        castles.mask.add(h_side);
+                        castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
+                        castles.path[*color as usize][CastlingSide::KingSide as usize] =
+                            (attacks::between(h_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(h_side);
+                    }
                 }
             }
         }
 
-        castles.mode = CastlingMode::from_chess960(chess960);
+        castles.mode = mode.unwrap_or_else(|| CastlingMode::from_chess960(chess960_castling_rights));
 
         if castles.castling_rights() == castling_rights {
             Ok(castles)
         } else {
             Err(castles)
         }
+    }
+
+    pub fn from_setup(setup: &dyn Setup) -> Result<Castles, Castles> {
+        Castles::from_setup_with_mode(setup, None)
     }
 
     pub fn any(&self) -> bool {

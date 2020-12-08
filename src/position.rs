@@ -24,7 +24,7 @@ use crate::attacks;
 use crate::board::Board;
 use crate::bitboard::Bitboard;
 use crate::square::{Rank, Square};
-use crate::types::{Black, CastlingSide, Color, Move, Piece, RemainingChecks, Role, White};
+use crate::types::{Black, CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role, White};
 use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, Setup, SwapTurn, EMPTY_CASTLES};
 use crate::movelist::{ArrayVecExt, MoveList};
@@ -130,7 +130,11 @@ pub trait FromSetup: Sized {
     /// position.
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError>;
+    fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError> {
+        Self::from_setup_with_mode(setup, None)
+    }
+
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Self, PositionError>;
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
@@ -262,7 +266,8 @@ pub trait PositionExt: Position {
     where
         Self: Sized + FromSetup
     {
-        Self::from_setup(&SwapTurn(self))
+        let mode = self.castles().mode();
+        Self::from_setup_with_mode(&SwapTurn(self), Some(mode))
     }
 
     /// Generates legal moves.
@@ -410,8 +415,8 @@ impl Setup for Chess {
 }
 
 impl FromSetup for Chess {
-    fn from_setup(setup: &dyn Setup) -> Result<Chess, PositionError> {
-        let (castles, errors) = match Castles::from_setup(setup) {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Chess, PositionError> {
+        let (castles, errors) = match Castles::from_setup_with_mode(setup, mode) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
         };
@@ -617,8 +622,8 @@ impl Setup for Atomic {
 }
 
 impl FromSetup for Atomic {
-    fn from_setup(setup: &dyn Setup) -> Result<Atomic, PositionError> {
-        let (castles, errors) = match Castles::from_setup(setup) {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Atomic, PositionError> {
+        let (castles, errors) = match Castles::from_setup_with_mode(setup, mode) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
         };
@@ -802,7 +807,7 @@ impl Setup for Antichess {
 }
 
 impl FromSetup for Antichess {
-    fn from_setup(setup: &dyn Setup) -> Result<Antichess, PositionError> {
+    fn from_setup_with_mode(setup: &dyn Setup, _mode: Option<CastlingMode>) -> Result<Antichess, PositionError> {
         let pos = Antichess {
             board: setup.board().clone(),
             turn: setup.turn(),
@@ -911,8 +916,8 @@ impl Setup for KingOfTheHill {
 }
 
 impl FromSetup for KingOfTheHill {
-    fn from_setup(setup: &dyn Setup) -> Result<KingOfTheHill, PositionError> {
-        Chess::from_setup(setup).map(|chess| KingOfTheHill { chess })
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<KingOfTheHill, PositionError> {
+        Chess::from_setup_with_mode(setup, mode).map(|chess| KingOfTheHill { chess })
     }
 }
 
@@ -995,7 +1000,7 @@ impl Setup for ThreeCheck {
 }
 
 impl FromSetup for ThreeCheck {
-    fn from_setup(setup: &dyn Setup) -> Result<ThreeCheck, PositionError> {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<ThreeCheck, PositionError> {
         let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
         let errors = if remaining_checks.white == 0 && remaining_checks.black == 0 {
             PositionError::VARIANT
@@ -1003,7 +1008,7 @@ impl FromSetup for ThreeCheck {
             PositionError::empty()
         };
 
-        match Chess::from_setup(setup) {
+        match Chess::from_setup_with_mode(setup, mode) {
             Ok(chess) => errors.into_result(ThreeCheck { chess, remaining_checks }),
             Err(err) => Err(errors | err)
         }
@@ -1124,8 +1129,8 @@ impl Setup for Crazyhouse {
 }
 
 impl FromSetup for Crazyhouse {
-    fn from_setup(setup: &dyn Setup) -> Result<Crazyhouse, PositionError> {
-        Chess::from_setup(setup).and_then(|chess| {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Crazyhouse, PositionError> {
+        Chess::from_setup_with_mode(setup, mode).and_then(|chess| {
             let pockets = setup.pockets().cloned().unwrap_or_default();
             if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
                 Err(PositionError::VARIANT)
@@ -1268,7 +1273,7 @@ impl Setup for RacingKings {
 }
 
 impl FromSetup for RacingKings {
-    fn from_setup(setup: &dyn Setup) -> Result<RacingKings, PositionError> {
+    fn from_setup_with_mode(setup: &dyn Setup, _mode: Option<CastlingMode>) -> Result<RacingKings, PositionError> {
         let mut errors = PositionError::empty();
 
         if setup.castling_rights().any() {
@@ -1424,8 +1429,8 @@ impl Setup for Horde {
 }
 
 impl FromSetup for Horde {
-    fn from_setup(setup: &dyn Setup) -> Result<Horde, PositionError> {
-        let (castles, errors) = match Castles::from_setup(setup) {
+    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Horde, PositionError> {
+        let (castles, errors) = match Castles::from_setup_with_mode(setup, mode) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
         };
