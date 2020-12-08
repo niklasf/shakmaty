@@ -250,12 +250,13 @@ mod tests {
     #[test]
     fn test_variant_position_play() {
         let pos = VariantPosition::new(Variant::Chess);
-        pos.play(&Move::Normal {
+        let pos = pos.play(&Move::Normal {
             role: Role::Knight,
             from: Square::G1,
             to: Square::F3,
             capture: None,
             promotion: None,
         }).expect("legal move");
+        assert_eq!(pos.variant(), Variant::Chess);
     }
 }
