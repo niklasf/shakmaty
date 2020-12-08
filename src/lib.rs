@@ -21,7 +21,7 @@
 //! Generate legal moves in the starting position:
 //!
 //! ```
-//! use shakmaty::{Chess, Position, PositionExt};
+//! use shakmaty::{Chess, PositionExt};
 //!
 //! let pos = Chess::default();
 //! let legals = pos.legals();
@@ -34,7 +34,7 @@
 //! # use std::error::Error;
 //! #
 //! use shakmaty::{Square, Move, Role};
-//! # use shakmaty::{Chess, Position, PositionExt};
+//! # use shakmaty::{Chess, PositionExt};
 //! # let pos = Chess::default();
 //!
 //! // 1. e4
@@ -52,7 +52,7 @@
 //! Detect game end conditions:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position, PositionExt};
+//! # use shakmaty::{Chess, PositionExt};
 //! # let pos = Chess::default();
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
