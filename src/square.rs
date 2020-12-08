@@ -236,7 +236,7 @@ try_from_number_impl! { Rank, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i1
 try_from_number_impl! { Rank, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
 
 /// Error when parsing an invalid square name.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ParseSquareError;
 
 impl fmt::Display for ParseSquareError {
@@ -248,12 +248,6 @@ impl fmt::Display for ParseSquareError {
 impl Error for ParseSquareError {
     fn description(&self) -> &str {
         "invalid square name"
-    }
-}
-
-impl From<()> for ParseSquareError {
-    fn from(_: ()) -> ParseSquareError {
-        ParseSquareError
     }
 }
 

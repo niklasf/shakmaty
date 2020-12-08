@@ -46,7 +46,7 @@
 //!     promotion: None,
 //! })?;
 //! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Chess>(())
 //! ```
 //!
 //! Detect game end conditions:

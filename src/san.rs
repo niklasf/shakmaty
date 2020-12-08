@@ -29,7 +29,7 @@
 //! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Converting to a move:
@@ -51,7 +51,7 @@
 //!     promotion: None,
 //! });
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
@@ -66,7 +66,7 @@
 //! # let m = san.to_move(&pos)?;
 //! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 
 use crate::square::{File, Rank, Square};
@@ -79,7 +79,7 @@ use std::str::FromStr;
 use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ParseSanError;
 
 impl fmt::Display for ParseSanError {
@@ -91,12 +91,6 @@ impl fmt::Display for ParseSanError {
 impl Error for ParseSanError {
     fn description(&self) -> &str {
         "invalid san"
-    }
-}
-
-impl From<()> for ParseSanError {
-    fn from(_: ()) -> ParseSanError {
-        ParseSanError
     }
 }
 
@@ -168,27 +162,27 @@ impl San {
         } else if san.len() == 3 && san[0] == b'@' {
             Ok(San::Put {
                 role: Role::Pawn,
-                to: Square::from_ascii(&san[1..]).map_err(|_| ())?,
+                to: Square::from_ascii(&san[1..]).map_err(|_| ParseSanError)?,
             })
         } else if san.len() == 4 && san[1] == b'@' {
             Ok(San::Put {
-                role: Role::from_char(char::from(san[0])).ok_or(())?,
-                to: Square::from_ascii(&san[2..]).map_err(|_| ())?,
+                role: Role::from_char(char::from(san[0])).ok_or(ParseSanError)?,
+                to: Square::from_ascii(&san[2..]).map_err(|_| ParseSanError)?,
             })
         } else {
             let mut chars = san.iter().cloned();
 
             let (role, next) = {
-                let ch = chars.next().ok_or(())?;
+                let ch = chars.next().ok_or(ParseSanError)?;
                 if ch >= b'a' {
                     (Role::Pawn, ch)
                 } else {
-                    (Role::from_char(char::from(ch)).ok_or(())?, chars.next().ok_or(())?)
+                    (Role::from_char(char::from(ch)).ok_or(ParseSanError)?, chars.next().ok_or(ParseSanError)?)
                 }
             };
 
             let (file, next) = if let Some(file) = File::from_char(char::from(next)) {
-                (Some(file), chars.next().ok_or(())?)
+                (Some(file), chars.next().ok_or(ParseSanError)?)
             } else {
                 (None, next)
             };
@@ -203,27 +197,27 @@ impl San {
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == b'x' {
-                    let to_file = chars.next().and_then(|ch| File::from_char(char::from(ch))).ok_or(())?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(())?;
+                    let to_file = chars.next().and_then(|ch| File::from_char(char::from(ch))).ok_or(ParseSanError)?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(ParseSanError)?;
                     let square = Square::from_coords(to_file, to_rank);
                     (true, file, rank, square, chars.next())
                 } else if next == b'=' {
-                    let square = Square::from_coords(file.ok_or(())?, rank.ok_or(())?);
+                    let square = Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
                     (false, None, None, square, Some(b'='))
                 } else {
-                    let to_file = File::from_char(char::from(next)).ok_or(())?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(())?;
+                    let to_file = File::from_char(char::from(next)).ok_or(ParseSanError)?;
+                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(ParseSanError)?;
                     let square = Square::from_coords(to_file, to_rank);
                     (false, file, rank, square, chars.next())
                 }
             } else {
-                let square = Square::from_coords(file.ok_or(())?, rank.ok_or(())?);
+                let square = Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
                 (false, None, None, square, None)
             };
 
             let promotion = match next {
                 Some(b'=') =>
-                    Some(chars.next().and_then(|r| Role::from_char(char::from(r))).ok_or(())?),
+                    Some(chars.next().and_then(|r| Role::from_char(char::from(r))).ok_or(ParseSanError)?),
                 Some(_) => return Err(ParseSanError),
                 None => None,
             };

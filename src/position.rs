@@ -68,8 +68,8 @@ bitflags! {
         const BAD_CASTLING_RIGHTS = 1 << 4;
         const INVALID_EP_SQUARE = 1 << 5;
         const OPPOSITE_CHECK = 1 << 6;
-        const VARIANT = 1 << 7;
-        const IMPOSSIBLE_CHECK = 1 << 8;
+        const IMPOSSIBLE_CHECK = 1 << 7;
+        const VARIANT = 1 << 8;
     }
 }
 

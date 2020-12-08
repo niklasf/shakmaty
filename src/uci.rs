@@ -91,7 +91,7 @@ use crate::types::{CastlingMode, CastlingSide, Move, Role};
 use crate::position::{Position, PositionExt as _};
 
 /// Error when parsing an invalid UCI.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct ParseUciError;
 
 impl fmt::Display for ParseUciError {
@@ -106,14 +106,8 @@ impl Error for ParseUciError {
     }
 }
 
-impl From<()> for ParseUciError {
-    fn from(_: ()) -> ParseUciError {
-        ParseUciError
-    }
-}
-
 /// Error when UCI is illegal.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct IllegalUciError;
 
 impl fmt::Display for IllegalUciError {
@@ -202,17 +196,17 @@ impl Uci {
             return Ok(Uci::Null);
         }
 
-        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ())?;
+        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciError)?;
 
         if uci[1] == b'@' {
-            Ok(Uci::Put { role: Role::from_char(char::from(uci[0])).ok_or(())?, to })
+            Ok(Uci::Put { role: Role::from_char(char::from(uci[0])).ok_or(ParseUciError)?, to })
         } else {
-            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ())?;
+            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciError)?;
             if uci.len() == 5 {
                 Ok(Uci::Normal {
                     from,
                     to,
-                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(())?)
+                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciError)?)
                 })
             } else {
                 Ok(Uci::Normal { from, to, promotion: None })

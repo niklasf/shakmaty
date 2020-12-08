@@ -25,7 +25,7 @@ use std::ops::{Add, AddAssign, Sub, SubAssign};
 use crate::types::{Color, Piece, Role, ROLES};
 
 /// Error when parsing an invalid material key.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct ParseMaterialError;
 
 impl fmt::Display for ParseMaterialError {
@@ -37,12 +37,6 @@ impl fmt::Display for ParseMaterialError {
 impl Error for ParseMaterialError {
     fn description(&self) -> &str {
         "invalid square name"
-    }
-}
-
-impl From<()> for ParseMaterialError {
-    fn from(_: ()) -> ParseMaterialError {
-        ParseMaterialError
     }
 }
 
