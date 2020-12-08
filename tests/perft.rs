@@ -17,7 +17,7 @@
 use shakmaty::Position;
 use shakmaty::FromSetup;
 use shakmaty::Chess;
-use shakmaty::variants::{Atomic, Giveaway, Crazyhouse, RacingKings, Horde};
+use shakmaty::variants::{Atomic, Antichess, Crazyhouse, RacingKings, Horde};
 use shakmaty::fen::Fen;
 use shakmaty::perft;
 
@@ -84,8 +84,8 @@ fn test_atomic() {
 
 #[test]
 #[cfg_attr(miri, ignore)]
-fn test_giveaway() {
-    test_perft_file::<Giveaway>("tests/giveaway.perft", 1_000_000);
+fn test_antichess() {
+    test_perft_file::<Antichess>("tests/antichess.perft", 1_000_000);
 }
 
 #[test]

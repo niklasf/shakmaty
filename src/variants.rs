@@ -25,7 +25,7 @@
 
 pub use crate::Chess;
 pub use crate::position::Atomic;
-pub use crate::position::Giveaway;
+pub use crate::position::Antichess;
 pub use crate::position::KingOfTheHill;
 pub use crate::position::ThreeCheck;
 pub use crate::position::Crazyhouse;
@@ -44,7 +44,7 @@ use crate::setup::SwapTurn;
 pub enum Variant {
     Chess,
     Atomic,
-    Giveaway,
+    Antichess,
     KingOfTheHill,
     ThreeCheck,
     Crazyhouse,
@@ -59,7 +59,7 @@ impl Variant {
         match self {
             Variant::Chess => "chess",
             Variant::Atomic => "atomic",
-            Variant::Giveaway => "giveaway",
+            Variant::Antichess => "antichess",
             Variant::KingOfTheHill => "kingofthehill",
             Variant::ThreeCheck => "3check",
             Variant::Crazyhouse => "crazyhouse",
@@ -76,7 +76,7 @@ impl Variant {
 pub enum VariantPosition {
     Chess(Chess),
     Atomic(Atomic),
-    Giveaway(Giveaway),
+    Antichess(Antichess),
     KingOfTheHill(KingOfTheHill),
     ThreeCheck(ThreeCheck),
     Crazyhouse(Crazyhouse),
@@ -96,9 +96,9 @@ impl From<Atomic> for VariantPosition {
     }
 }
 
-impl From<Giveaway> for VariantPosition {
-    fn from(pos: Giveaway) -> VariantPosition {
-        VariantPosition::Giveaway(pos)
+impl From<Antichess> for VariantPosition {
+    fn from(pos: Antichess) -> VariantPosition {
+        VariantPosition::Antichess(pos)
     }
 }
 
@@ -137,7 +137,7 @@ impl VariantPosition {
         match variant {
             Variant::Chess => Chess::default().into(),
             Variant::Atomic => Atomic::default().into(),
-            Variant::Giveaway => Giveaway::default().into(),
+            Variant::Antichess => Antichess::default().into(),
             Variant::KingOfTheHill => KingOfTheHill::default().into(),
             Variant::ThreeCheck => ThreeCheck::default().into(),
             Variant::Crazyhouse => Crazyhouse::default().into(),
@@ -150,7 +150,7 @@ impl VariantPosition {
         match variant {
             Variant::Chess => Chess::from_setup(setup).map(VariantPosition::Chess),
             Variant::Atomic => Atomic::from_setup(setup).map(VariantPosition::Atomic),
-            Variant::Giveaway => Giveaway::from_setup(setup).map(VariantPosition::Giveaway),
+            Variant::Antichess => Antichess::from_setup(setup).map(VariantPosition::Antichess),
             Variant::KingOfTheHill => KingOfTheHill::from_setup(setup).map(VariantPosition::KingOfTheHill),
             Variant::ThreeCheck => ThreeCheck::from_setup(setup).map(VariantPosition::ThreeCheck),
             Variant::Crazyhouse => Crazyhouse::from_setup(setup).map(VariantPosition::Crazyhouse),
@@ -167,7 +167,7 @@ impl VariantPosition {
         match self {
             VariantPosition::Chess(_) => Variant::Chess,
             VariantPosition::Atomic(_) => Variant::Atomic,
-            VariantPosition::Giveaway(_) => Variant::Giveaway,
+            VariantPosition::Antichess(_) => Variant::Antichess,
             VariantPosition::KingOfTheHill(_) => Variant::KingOfTheHill,
             VariantPosition::ThreeCheck(_) => Variant::ThreeCheck,
             VariantPosition::Crazyhouse(_) => Variant::Crazyhouse,
@@ -180,7 +180,7 @@ impl VariantPosition {
         match *self {
             VariantPosition::Chess(ref pos) => pos,
             VariantPosition::Atomic(ref pos) => pos,
-            VariantPosition::Giveaway(ref pos) => pos,
+            VariantPosition::Antichess(ref pos) => pos,
             VariantPosition::KingOfTheHill(ref pos) => pos,
             VariantPosition::ThreeCheck(ref pos) => pos,
             VariantPosition::Crazyhouse(ref pos) => pos,
@@ -193,7 +193,7 @@ impl VariantPosition {
         match *self {
             VariantPosition::Chess(ref mut pos) => pos,
             VariantPosition::Atomic(ref mut pos) => pos,
-            VariantPosition::Giveaway(ref mut pos) => pos,
+            VariantPosition::Antichess(ref mut pos) => pos,
             VariantPosition::KingOfTheHill(ref mut pos) => pos,
             VariantPosition::ThreeCheck(ref mut pos) => pos,
             VariantPosition::Crazyhouse(ref mut pos) => pos,

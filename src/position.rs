@@ -763,10 +763,10 @@ impl Position for Atomic {
     }
 }
 
-/// A Giveaway position. Giveaway is also (somewhat ambiguously) known as
-/// Antichess.
+/// An Antichess position. Antichess is also known as Giveaway, but players
+/// start without castling rights.
 #[derive(Clone, Debug)]
-pub struct Giveaway {
+pub struct Antichess {
     board: Board,
     turn: Color,
     castles: Castles,
@@ -775,12 +775,12 @@ pub struct Giveaway {
     fullmoves: u32,
 }
 
-impl Default for Giveaway {
-    fn default() -> Giveaway {
-        Giveaway {
+impl Default for Antichess {
+    fn default() -> Antichess {
+        Antichess {
             board: Board::default(),
             turn: White,
-            castles: Castles::default(),
+            castles: Castles::empty(),
             ep_square: None,
             halfmoves: 0,
             fullmoves: 1,
@@ -788,7 +788,7 @@ impl Default for Giveaway {
     }
 }
 
-impl Setup for Giveaway {
+impl Setup for Antichess {
     fn board(&self) -> &Board { &self.board }
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
@@ -799,14 +799,14 @@ impl Setup for Giveaway {
     fn fullmoves(&self) -> u32 { self.fullmoves }
 }
 
-impl FromSetup for Giveaway {
-    fn from_setup(setup: &dyn Setup) -> Result<Giveaway, PositionError> {
+impl FromSetup for Antichess {
+    fn from_setup(setup: &dyn Setup) -> Result<Antichess, PositionError> {
         let (castles, errors) = match Castles::from_setup(setup) {
             Ok(castles) => (castles, PositionError::empty()),
             Err(castles) => (castles, PositionError::BAD_CASTLING_RIGHTS),
         };
 
-        let pos = Giveaway {
+        let pos = Antichess {
             board: setup.board().clone(),
             turn: setup.turn(),
             castles,
@@ -825,7 +825,7 @@ impl FromSetup for Giveaway {
     }
 }
 
-impl Position for Giveaway {
+impl Position for Antichess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
                 &mut self.ep_square, &mut self.halfmoves,
@@ -2046,11 +2046,11 @@ mod tests {
         assert_insufficient_material::<Atomic>("8/5k2/8/8/8/8/5K2/4bb2 w - - 0 1", true, false);
         assert_insufficient_material::<Atomic>("8/5k2/8/8/8/8/5K2/4nb2 w - - 0 1", true, false);
 
-        assert_insufficient_material::<Giveaway>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
-        assert_insufficient_material::<Giveaway>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
-        assert_insufficient_material::<Giveaway>("8/8/8/6b1/8/3B4/4B3/5B2 w - - 0 1", true, true);
-        assert_insufficient_material::<Giveaway>("8/8/5b2/8/8/3B4/3B4/8 w - - 0 1", true, false);
-        assert_insufficient_material::<Giveaway>("8/5p2/5P2/8/3B4/1bB5/8/8 b - - 0 1", false_negative, false_negative);
+        assert_insufficient_material::<Antichess>("8/4bk2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Antichess>("4b3/5k2/8/8/8/8/3KB3/8 w - - 0 1", false, false);
+        assert_insufficient_material::<Antichess>("8/8/8/6b1/8/3B4/4B3/5B2 w - - 0 1", true, true);
+        assert_insufficient_material::<Antichess>("8/8/5b2/8/8/3B4/3B4/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Antichess>("8/5p2/5P2/8/3B4/1bB5/8/8 b - - 0 1", false_negative, false_negative);
 
         assert_insufficient_material::<KingOfTheHill>("8/5k2/8/8/8/8/3K4/8 w - - 0 1", false, false);
 
