@@ -522,6 +522,12 @@ pub enum CastlingMode {
     Chess960,
 }
 
+impl Default for CastlingMode {
+    fn default() -> CastlingMode {
+        CastlingMode::Standard
+    }
+}
+
 impl CastlingMode {
     pub fn from_standard(standard: bool) -> CastlingMode {
         if standard { CastlingMode::Standard } else { CastlingMode::Chess960 }

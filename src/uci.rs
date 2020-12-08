@@ -72,7 +72,7 @@
 //!     promotion: None,
 //! };
 //!
-//! let uci = Uci::from_move(&pos, &m);
+//! let uci = Uci::from_standard(&m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
 //! let uci = Uci::from_chess960(&m);
@@ -87,7 +87,7 @@ use std::str::FromStr;
 use std::error::Error;
 
 use crate::square::{Rank, Square};
-use crate::types::{Move, Role};
+use crate::types::{CastlingMode, CastlingSide, Move, Role};
 use crate::position::{IllegalMoveError, Position, PositionExt};
 
 /// Error when parsing an invalid UCI.
@@ -204,23 +204,30 @@ impl Uci {
         }
     }
 
-    /// Converts a move to UCI notation.
+    /// Converts a move to UCI notation. Castling moves are represented as
+    /// a move of the king to its new position.
     ///
-    /// If `pos` does not and did not have castling rights that are only
-    /// possible in [Chess960](../trait.Position.html#tymethod.is_chess960),
-    /// castling moves are represented as `e1g1`, `e1c1`, `e8g8` and `e8c8`.
-    /// Alternatively, see
-    /// [`Uci::from_chess960()`](enum.Uci.html#method.from_chess960).
-    pub fn from_move<P: Position>(pos: &P, m: &Move) -> Uci {
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::uci::Uci;
+    /// use shakmaty::{Move, Square};
+    ///
+    /// let m = Move::Castle {
+    ///     king: Square::E8,
+    ///     rook: Square::H8,
+    /// };
+    ///
+    /// let uci = Uci::from_standard(&m);
+    /// assert_eq!(uci.to_string(), "e8g8");
+    /// ```
+    pub fn from_standard(m: &Move) -> Uci {
         match *m {
-            Move::Castle { king, rook } if pos.castles().mode().is_standard() => {
+            Move::Castle { king, rook } => {
+                let side = CastlingSide::from_king_side(king < rook);
                 Uci::Normal {
                     from: king,
-                    to: if king < rook {
-                        pos.turn().fold(Square::G1, Square::G8)
-                    } else {
-                        pos.turn().fold(Square::C1, Square::C8)
-                    },
+                    to: Square::from_coords(side.king_to_file(), king.rank()),
                     promotion: None,
                 }
             }
@@ -231,6 +238,21 @@ impl Uci {
     /// Converts a move to UCI notation. Castling moves are represented as
     /// a move of the king to the corresponding rook square, independently of
     /// the position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::uci::Uci;
+    /// use shakmaty::{Move, Square};
+    ///
+    /// let m = Move::Castle {
+    ///     king: Square::E8,
+    ///     rook: Square::H8,
+    /// };
+    ///
+    /// let uci = Uci::from_chess960(&m);
+    /// assert_eq!(uci.to_string(), "e8h8");
+    /// ```
     pub fn from_chess960(m: &Move) -> Uci {
         match *m {
             Move::Normal { from, to, promotion, .. } =>
@@ -289,6 +311,15 @@ impl Uci {
             Ok(candidate)
         } else {
             Err(IllegalMoveError)
+        }
+    }
+}
+
+impl CastlingMode {
+    pub fn uci(self, m: &Move) -> Uci  {
+        match self {
+            CastlingMode::Standard => Uci::from_standard(m),
+            CastlingMode::Chess960 => Uci::from_chess960(m),
         }
     }
 }
