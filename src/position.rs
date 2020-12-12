@@ -94,7 +94,7 @@ bitflags! {
         /// Such a position cannot be reached by any sequence of legal moves.
         const IMPOSSIBLE_CHECK = 1 << 7;
 
-        /// The material configuration cannot be reached by any sequence offset
+        /// The material configuration cannot be reached with any sequence of
         /// legal moves.
         ///
         /// This can be ignored using
@@ -132,6 +132,13 @@ impl<P> PositionError<P> {
 
     pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
+    }
+
+    /// Get the position, even if the material configuration cannot be reached
+    /// with any sequence of legal moves. Note that other programs may not work
+    /// with too much material.
+    pub fn ignore_impossible_material(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKinds::IMPOSSIBLE_MATERIAL)
     }
 
     pub fn kinds(&self) -> PositionErrorKinds {
