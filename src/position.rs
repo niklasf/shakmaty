@@ -57,19 +57,53 @@ impl fmt::Display for Outcome {
 
 bitflags! {
     /// Reasons for a [`Setup`] not beeing a legal [`Position`].
-    ///
-    /// [`Setup`]: trait.Setup.html
-    /// [`Position`]: trait.Position.html
     pub struct PositionErrorKind: u32 {
+        /// There are no pieces on the board.
         const EMPTY_BOARD = 1 << 0;
+
+        /// A king is required but missing.
         const MISSING_KING = 1 << 1;
+
+        /// A player has too many kings.
         const TOO_MANY_KINGS = 1 << 2;
+
+        /// There are pawns on the backrank. Only [`Horde`] allows players to
+        /// have pawns on their own backrank.
         const PAWNS_ON_BACKRANK = 1 << 3;
+
+        /// Some castling rights are invalid.
+        ///
+        /// Can be recovered by ignoring the
+        /// invalid castling rights using
+        /// [`PositionError::ignore_invalid_castling_rights()`].
         const INVALID_CASTLING_RIGHTS = 1 << 4;
+
+        /// The en passant square is on the wrong rank, not empty, or the
+        /// allegedly pushed pawn is not present.
+        ///
+        /// Can be recovered by ignoring the invalid en passant square using
+        /// [`PositionError::ignore_invalid_ep_square()`].
         const INVALID_EP_SQUARE = 1 << 5;
+
+        /// The player not to move is in check.
         const OPPOSITE_CHECK = 1 << 6;
+
+        /// There are impossibly many checkers, or two sliding checkers are
+        /// aligned.
+        ///
+        /// Such a position cannot be reached by any sequence of legal moves.
         const IMPOSSIBLE_CHECK = 1 << 7;
-        const VARIANT = 1 << 8;
+
+        /// The material configuration cannot be reached by any sequence offset
+        /// legal moves.
+        ///
+        /// This can be ignored using
+        /// [`PositionError::ignore_impossible_material()`], but note that
+        /// other programs may not work with too much material.
+        const IMPOSSIBLE_MATERIAL = 1 << 8;
+
+        /// A variant specific rule is violated.
+        const VARIANT = 1 << 9;
     }
 }
 
@@ -92,7 +126,7 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKind::empty())
     }
 
-    pub fn ignore_bad_castling_rights(self) -> Result<P, Self> {
+    pub fn ignore_invalid_castling_rights(self) -> Result<P, Self> {
         self.ignore(PositionErrorKind::INVALID_CASTLING_RIGHTS)
     }
 
