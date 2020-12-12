@@ -235,7 +235,6 @@ impl Position for VariantPosition {
     fn is_irreversible(&self, m: &Move) -> bool { self.borrow().is_irreversible(m) }
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.borrow().king_attackers(square, attacker, occupied) }
     fn castles(&self) -> &Castles { self.borrow().castles() }
-    fn checkers(&self) -> Bitboard { self.borrow().checkers() }
     fn is_variant_end(&self) -> bool { self.borrow().is_variant_end() }
     fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
     fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }

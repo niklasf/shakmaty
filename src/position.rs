@@ -183,13 +183,6 @@ pub trait Position: Setup {
     /// Castling paths and unmoved rooks.
     fn castles(&self) -> &Castles;
 
-    /// Bitboard of pieces giving check.
-    fn checkers(&self) -> Bitboard {
-        self.our(Role::King).first().map_or(Bitboard(0), |king| {
-            self.king_attackers(king, !self.turn(), self.board().occupied())
-        })
-    }
-
     /// Checks if the game is over due to a special variant end condition.
     ///
     /// Note that for example stalemate is not considered a variant-specific
@@ -269,6 +262,13 @@ pub trait PositionExt: Position {
                 self.castling_moves(CastlingSide::QueenSide, &mut moves),
         }
         moves.contains(m)
+    }
+
+    /// Bitboard of pieces giving check.
+    fn checkers(&self) -> Bitboard {
+        self.our(Role::King).first().map_or(Bitboard(0), |king| {
+            self.king_attackers(king, !self.turn(), self.board().occupied())
+        })
     }
 
     /// Tests if the king is in check.
