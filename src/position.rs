@@ -177,8 +177,6 @@ pub trait FromSetup: Sized {
     /// requirements. Meeting the requirements does not imply that the position
     /// is actually reachable with a series of legal moves from the starting
     /// position.
-    ///
-    /// [`PositionError`]: enum.PositionError.html
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
 
@@ -286,7 +284,7 @@ pub trait Position: Setup {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls. Consider using
-    /// [`Position::play()`](trait.Position.html#method.play) instead.
+    /// [`Position::play()`] instead.
     fn play_unchecked(&mut self, m: &Move);
 
     // Implementation note: Trait methods above this comment should be made
@@ -300,8 +298,6 @@ pub trait Position: Setup {
     ///
     /// Returns [`PositionError`] if swapping turns is not possible (usually
     /// due to a check that has to be averted).
-    ///
-    /// [`PositionError`]: enum.PositionError.html
     fn swap_turn(self) -> Result<Self, PositionError<Self>>
     where
         Self: Sized + FromSetup
