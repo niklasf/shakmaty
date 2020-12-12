@@ -1232,6 +1232,12 @@ impl FromSetup for Crazyhouse {
             errors |= PositionErrorKinds::TOO_MANY_KINGS;
         }
 
+        if pockets.count().saturating_add(chess.board().occupied().count()) <= 32 &&
+           usize::from(pockets.white.pawns.saturating_add(pockets.black.pawns)).saturating_add(chess.board().pawns().count()) <= 16
+        {
+            errors -= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+        }
+
         PositionError {
             errors,
             pos: Crazyhouse { chess, pockets },
@@ -1562,7 +1568,24 @@ impl FromSetup for Horde {
 
         errors |= validate(&pos)
             - PositionErrorKinds::PAWNS_ON_BACKRANK
-            - PositionErrorKinds::MISSING_KING;
+            - PositionErrorKinds::MISSING_KING
+            - PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+
+        if (pos.board().kings() & pos.board.white()).is_empty() {
+            if pos.board().white().count() > 36 ||
+               pos.board().black().count() > 16 ||
+               (pos.board().black() & pos.board().pawns()).count() > 8
+            {
+                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+            }
+        } else {
+            if pos.board().black().count() > 36 ||
+               pos.board().white().count() > 16 ||
+               (pos.board().white() & pos.board().pawns()).count() > 8
+            {
+                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+            }
+        }
 
         if (pos.board().pawns() & pos.board().white() & Rank::Eighth).any() ||
            (pos.board().pawns() & pos.board().black() & Rank::First).any()
@@ -1735,6 +1758,14 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
        (pos.board().kings() & pos.board().black()).more_than_one()
     {
         errors |= PositionErrorKinds::TOO_MANY_KINGS;
+    }
+
+    if pos.board().white().count() > 16 ||
+       pos.board().black().count() > 16 ||
+       (pos.board().pawns() & pos.board().white()).count() > 8 ||
+       (pos.board().pawns() & pos.board().black()).count() > 8
+    {
+        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
