@@ -97,10 +97,12 @@ Changelog
   - Remove `Square::with_rank_of()`.
   - Remove `Giveaway` in favor of `Antichess` (where players start without
     castling rights).
+  - Fix `swap_turn()` if en passant square exists. Would always fail, now
+    discards the en passant square.
   - Add `CastlingSide::{king,rook}_to_file()`.
   - Add `Variant::distinguishes_promoted()`.
   - Add `Variant::uci()` and `Variant::from_uci()`.
-  - Future proof traits (remove some implemented traits and available
+  - Future proof error types (remove some implemented traits and available
     constructors).
 * 0.16.4
   - Fix insufficient material detection with same-color bishops on both sides.

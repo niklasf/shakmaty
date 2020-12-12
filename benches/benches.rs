@@ -1,6 +1,6 @@
 use criterion::{black_box, Criterion, criterion_group, criterion_main};
 
-use shakmaty::{perft, Chess, Move, MoveList, Position, Role, Square, Bitboard};
+use shakmaty::{perft, CastlingMode, Chess, Move, MoveList, Position, Role, Square, Bitboard};
 use shakmaty::san::San;
 use shakmaty::fen::Fen;
 
@@ -29,7 +29,7 @@ fn bench_generate_moves(c: &mut Criterion) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         b.iter(|| {
@@ -45,7 +45,7 @@ fn bench_play_unchecked(c: &mut Criterion) {
         let fen = "rn1qkb1r/pbp2ppp/1p2p3/3n4/8/2N2NP1/PP1PPPBP/R1BQ1RK1 b kq -";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         let m = Move::Normal {
@@ -69,7 +69,7 @@ fn bench_san_candidates(c: &mut Criterion) {
         let fen = "r2q1rk1/pb1nbppp/5n2/1p2p3/3NP3/P1NB4/1P2QPPP/R1BR2K1 w - -";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         b.iter(|| {
