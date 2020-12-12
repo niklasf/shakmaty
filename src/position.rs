@@ -57,7 +57,7 @@ impl fmt::Display for Outcome {
 
 bitflags! {
     /// Reasons for a [`Setup`] not beeing a legal [`Position`].
-    pub struct PositionErrorKind: u32 {
+    pub struct PositionErrorKinds: u32 {
         /// There are no pieces on the board.
         const EMPTY_BOARD = 1 << 0;
 
@@ -110,11 +110,11 @@ bitflags! {
 /// Error when trying to create a [`Position`] from an illegal [`Setup`].
 pub struct PositionError<P> {
     pub(crate) pos: Option<P>,
-    pub(crate) errors: PositionErrorKind,
+    pub(crate) errors: PositionErrorKinds,
 }
 
 impl<P> PositionError<P> {
-    fn ignore(mut self, ignore: PositionErrorKind) -> Result<P, Self> {
+    fn ignore(mut self, ignore: PositionErrorKinds) -> Result<P, Self> {
         self.errors -= ignore;
         match self {
             PositionError { pos: Some(pos), errors } if errors.is_empty() => Ok(pos),
@@ -123,18 +123,18 @@ impl<P> PositionError<P> {
     }
 
     fn strict(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKind::empty())
+        self.ignore(PositionErrorKinds::empty())
     }
 
     pub fn ignore_invalid_castling_rights(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKind::INVALID_CASTLING_RIGHTS)
+        self.ignore(PositionErrorKinds::INVALID_CASTLING_RIGHTS)
     }
 
     pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKind::INVALID_EP_SQUARE)
+        self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
     }
 
-    pub fn kind(&self) -> PositionErrorKind {
+    pub fn kinds(&self) -> PositionErrorKinds {
         self.errors
     }
 }
@@ -429,15 +429,15 @@ impl Chess {
         pos.is_check()
     }
 
-    fn from_setup_with_mode_unchecked(setup: &dyn Setup, mode: Option<CastlingMode>) -> (Chess, PositionErrorKind) {
-        let mut errors = PositionErrorKind::empty();
+    fn from_setup_with_mode_unchecked(setup: &dyn Setup, mode: Option<CastlingMode>) -> (Chess, PositionErrorKinds) {
+        let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
@@ -445,7 +445,7 @@ impl Chess {
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
             Err(_) => {
-                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
                 None
             }
         };
@@ -688,14 +688,14 @@ impl Setup for Atomic {
 
 impl FromSetup for Atomic {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Atomic, PositionError<Atomic>> {
-        let mut errors = PositionErrorKind::empty();
+        let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
@@ -703,7 +703,7 @@ impl FromSetup for Atomic {
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
             Err(()) => {
-                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
                 None
             }
         };
@@ -717,11 +717,11 @@ impl FromSetup for Atomic {
             fullmoves: setup.fullmoves(),
         };
 
-        errors |= validate(&pos) - PositionErrorKind::IMPOSSIBLE_CHECK;
+        errors |= validate(&pos) - PositionErrorKinds::IMPOSSIBLE_CHECK;
 
         if (pos.them() & pos.board().kings()).any() {
             // Our king just exploded. Game over, but valid position.
-            errors.remove(PositionErrorKind::MISSING_KING);
+            errors.remove(PositionErrorKinds::MISSING_KING);
         }
 
         PositionError {
@@ -893,14 +893,14 @@ impl Setup for Antichess {
 
 impl FromSetup for Antichess {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Antichess, PositionError<Antichess>> {
-        let mut errors = PositionErrorKind::empty();
+        let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
             Err(()) => {
-                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
                 None
             }
         };
@@ -915,14 +915,14 @@ impl FromSetup for Antichess {
         };
 
         if setup.castling_rights().any() {
-            errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS
+            errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS
         }
 
         errors |= validate(&pos)
-            - PositionErrorKind::MISSING_KING
-            - PositionErrorKind::TOO_MANY_KINGS
-            - PositionErrorKind::OPPOSITE_CHECK
-            - PositionErrorKind::IMPOSSIBLE_CHECK;
+            - PositionErrorKinds::MISSING_KING
+            - PositionErrorKinds::TOO_MANY_KINGS
+            - PositionErrorKinds::OPPOSITE_CHECK
+            - PositionErrorKinds::IMPOSSIBLE_CHECK;
 
         PositionError {
             errors,
@@ -1108,7 +1108,7 @@ impl FromSetup for ThreeCheck {
 
         let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
         if remaining_checks.white == 0 && remaining_checks.black == 0 {
-            errors |= PositionErrorKind::VARIANT
+            errors |= PositionErrorKinds::VARIANT
         }
 
         PositionError {
@@ -1237,9 +1237,9 @@ impl FromSetup for Crazyhouse {
 
         let pockets = setup.pockets().cloned().unwrap_or_default();
         if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
-            errors |= PositionErrorKind::VARIANT;
+            errors |= PositionErrorKinds::VARIANT;
         } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
-            errors |= PositionErrorKind::TOO_MANY_KINGS;
+            errors |= PositionErrorKinds::TOO_MANY_KINGS;
         }
 
         PositionError {
@@ -1382,18 +1382,18 @@ impl Setup for RacingKings {
 
 impl FromSetup for RacingKings {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<RacingKings, PositionError<RacingKings>> {
-        let mut errors = PositionErrorKind::empty();
+        let mut errors = PositionErrorKinds::empty();
 
         if setup.castling_rights().any() {
-            errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
+            errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
         }
 
         let board = setup.board().clone();
         if board.pawns().any() {
-            errors |= PositionErrorKind::VARIANT;
+            errors |= PositionErrorKinds::VARIANT;
         }
         if setup.ep_square().is_some() {
-            errors |= PositionErrorKind::INVALID_EP_SQUARE;
+            errors |= PositionErrorKinds::INVALID_EP_SQUARE;
         }
 
         let pos = RacingKings {
@@ -1405,14 +1405,14 @@ impl FromSetup for RacingKings {
         };
 
         if pos.is_check() {
-            errors |= PositionErrorKind::IMPOSSIBLE_CHECK;
+            errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
         }
 
         if pos.turn().is_black() &&
            (pos.board().white() & pos.board().kings() & Rank::Eighth).any() &&
            (pos.board().black() & pos.board().kings() & Rank::Eighth).any()
         {
-            errors |= PositionErrorKind::VARIANT;
+            errors |= PositionErrorKinds::VARIANT;
         }
 
         PositionError {
@@ -1542,14 +1542,14 @@ impl Setup for Horde {
 
 impl FromSetup for Horde {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Horde, PositionError<Horde>> {
-        let mut errors = PositionErrorKind::empty();
+        let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
@@ -1557,7 +1557,7 @@ impl FromSetup for Horde {
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
             Err(()) => {
-                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
                 None
             }
         };
@@ -1572,23 +1572,23 @@ impl FromSetup for Horde {
         };
 
         errors |= validate(&pos)
-            - PositionErrorKind::PAWNS_ON_BACKRANK
-            - PositionErrorKind::MISSING_KING;
+            - PositionErrorKinds::PAWNS_ON_BACKRANK
+            - PositionErrorKinds::MISSING_KING;
 
         if (pos.board().pawns() & pos.board().white() & Rank::Eighth).any() ||
            (pos.board().pawns() & pos.board().black() & Rank::First).any()
         {
-            errors |= PositionErrorKind::PAWNS_ON_BACKRANK;
+            errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
         }
 
         if (pos.board().kings() & !pos.board().promoted()).is_empty() {
-            errors |= PositionErrorKind::MISSING_KING;
+            errors |= PositionErrorKinds::MISSING_KING;
         }
 
         if (pos.board().kings() & pos.board().white()).any() &&
            (pos.board().kings() & pos.board().black()).any()
         {
-            errors |= PositionErrorKind::VARIANT;
+            errors |= PositionErrorKinds::VARIANT;
         }
 
         PositionError {
@@ -1728,32 +1728,32 @@ fn do_move(board: &mut Board,
     *turn = !color;
 }
 
-fn validate<P: Position>(pos: &P) -> PositionErrorKind {
-    let mut errors = PositionErrorKind::empty();
+fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
+    let mut errors = PositionErrorKinds::empty();
 
     if pos.board().occupied().is_empty() {
-        errors |= PositionErrorKind::EMPTY_BOARD;
+        errors |= PositionErrorKinds::EMPTY_BOARD;
     }
 
     if (pos.board().pawns() & Bitboard::BACKRANKS).any() {
-        errors |= PositionErrorKind::PAWNS_ON_BACKRANK;
+        errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
     }
 
     for &color in &[White, Black] {
         if pos.board().king_of(color).is_none() {
-            errors |= PositionErrorKind::MISSING_KING;
+            errors |= PositionErrorKinds::MISSING_KING;
         }
     }
 
     if (pos.board().kings() & pos.board().white()).more_than_one() ||
        (pos.board().kings() & pos.board().black()).more_than_one()
     {
-        errors |= PositionErrorKind::TOO_MANY_KINGS;
+        errors |= PositionErrorKinds::TOO_MANY_KINGS;
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
         if pos.king_attackers(their_king, pos.turn(), pos.board().occupied()).any() {
-            errors |= PositionErrorKind::OPPOSITE_CHECK;
+            errors |= PositionErrorKinds::OPPOSITE_CHECK;
         }
     }
 
@@ -1761,7 +1761,7 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKind {
         let checkers = pos.checkers();
         match (checkers.first(), checkers.last()) {
             (Some(a), Some(b)) if a != b && (checkers.count() > 2 || attacks::aligned(a, b, our_king)) => {
-                errors |= PositionErrorKind::IMPOSSIBLE_CHECK;
+                errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
             }
             _ => (),
         }
@@ -2237,7 +2237,7 @@ mod tests {
         let res = "2Nq4/2K5/1b6/8/7R/3k4/7P/8 w - - 0 1".parse::<Fen>()
             .expect("valid fen")
             .position::<Chess>();
-        assert_eq!(res.expect_err("impossible check").kind(), PositionErrorKind::IMPOSSIBLE_CHECK);
+        assert_eq!(res.expect_err("impossible check").kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
     }
 
     #[test]
