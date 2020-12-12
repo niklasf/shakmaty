@@ -183,7 +183,7 @@ pub trait Setup {
     }
 }
 
-pub struct SwapTurn<S: Setup>(pub S);
+pub(crate) struct SwapTurn<S: Setup>(pub S);
 
 impl<S: Setup> Setup for SwapTurn<S> {
     fn turn(&self) -> Color {
@@ -193,7 +193,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     fn board(&self) -> &Board { self.0.board() }
     fn pockets(&self) -> Option<&Material> { self.0.pockets() }
     fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.0.ep_square() }
+    fn ep_square(&self) -> Option<Square> { None }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }
     fn halfmoves(&self) -> u32 { self.0.halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.0.fullmoves() }

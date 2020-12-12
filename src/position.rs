@@ -1992,7 +1992,7 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fen::Fen;
+    use crate::fen::{fen, Fen};
 
     struct _AssertObjectSafe(Box<dyn Position>);
 
@@ -2166,5 +2166,15 @@ mod tests {
             .expect("valid fen")
             .position::<Chess>();
         assert_eq!(res.expect_err("impossible check").kind(), PositionErrorKind::IMPOSSIBLE_CHECK);
+    }
+
+    #[test]
+    fn test_swap_turn() {
+        let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3".parse::<Fen>()
+            .expect("valid fen")
+            .position()
+            .expect("validation position");
+        let swapped_fen = fen(&pos.swap_turn().expect("swap turn"));
+        assert_eq!(swapped_fen, "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3");
     }
 }
