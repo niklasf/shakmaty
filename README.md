@@ -76,27 +76,31 @@ Changelog
   - Introduce `CastlingMode`, now required for
     `FromSetup::from_setup(..., mode)`, the new method
     `Move::to_uci(mode)`, and exposed on `Castles::mode()`.
-  - Remove `IllegalMoveError`. In the context of UCI validation, replace with
-    `IllegalUciError`. `Position::play()` instead returns the original position
-    as the error.
-  - Future proof traits (implemented traits and available constructors).
-  - Rework `PositionError`. The original error kinds are available as
-    `PositionError::kinds()`. There are now methods to safely ignore particular
-    errors.
-  - Detect impossible material.
-  - Rename `BAD_CASTLING_RIGHTS` to `INVALID_CASTLING_RIGHTS`.
-  - Remove public `Castles::from_setup()`.
-  - Remove `Square::with_rank_of()`.
-  - Change `fullmoves` from `u32` to `NonZeroU32` everywhere.
-  - Remove `Giveaway` in favor of `Antichess` (where players start without
-    castling rights).
-  - Reject setups with multiple aligned sliding checkers.
   - Remove `Uci::from_move()`. Use the new `Move::to_uci()` and give a castling
     mode (like `pos.castles().mode()` for the old behavior).
   - Add `Uci::from_standard()`.
+  - Rework `PositionError`. The original error kinds are available as
+    `PositionError::kinds()`. There are now methods to safely ignore particular
+    errors.
+  - Reject setups with impossible (i.e., too much) material with the new
+    `PositionErrorKinds::IMPOSSIBLE_MATERIAL`. Can be ignored using
+    `PositionError::ignore_impossible_material()` for the previous behavior.
+  - Reject setups with multiple aligned sliding checkers with the new
+    `PositionErrorKinds::IMPOSSIBLE_CHECK`.
+  - Rename `BAD_CASTLING_RIGHTS` to `INVALID_CASTLING_RIGHTS`.
+  - Remove `IllegalMoveError`. In the context of UCI validation, replace with
+    `IllegalUciError`. `Position::play()` instead returns the original position
+    as the error.
+  - Change `fullmoves` from `u32` to `NonZeroU32` everywhere.
+  - Remove public `Castles::from_setup()`.
+  - Remove `Square::with_rank_of()`.
+  - Remove `Giveaway` in favor of `Antichess` (where players start without
+    castling rights).
   - Add `CastlingSide::{king,rook}_to_file()`.
   - Add `Variant::distinguishes_promoted()`.
   - Add `Variant::uci()`.
+  - Future proof traits (remove some implemented traits and available
+    constructors).
 * 0.16.4
   - Fix insufficient material detection with same-color bishops on both sides.
   - Document limitations of `Position::is_irreversible()`. Moves that cede
