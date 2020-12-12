@@ -73,7 +73,7 @@ use std::char;
 use std::error::Error;
 
 use crate::square::{File, Rank, Square};
-use crate::types::{Black, Color, Piece, RemainingChecks, White};
+use crate::types::{Black, Color, Piece, RemainingChecks, White, CastlingMode};
 use crate::material::Material;
 use crate::bitboard::Bitboard;
 use crate::board::Board;
@@ -416,8 +416,8 @@ impl Fen {
     /// [`FromSetup`]: ../trait.FromSetup.html
     /// [`Position`]: ../trait.Position.html
     /// [`PositionError`]: ../enum.PositionError.html
-    pub fn position<P: FromSetup>(&self) -> Result<P, PositionError<P>> {
-        P::from_setup(self)
+    pub fn position<P: FromSetup>(&self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+        P::from_setup(self, mode)
     }
 
     /// Parses a FEN.

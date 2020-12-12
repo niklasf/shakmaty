@@ -172,11 +172,7 @@ pub trait FromSetup: Sized {
     /// position.
     ///
     /// [`PositionError`]: enum.PositionError.html
-    fn from_setup(setup: &dyn Setup) -> Result<Self, PositionError<Self>> {
-        Self::from_setup_with_mode(setup, None)
-    }
-
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Self, PositionError<Self>>;
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
@@ -304,7 +300,7 @@ pub trait Position: Setup {
         Self: Sized + FromSetup
     {
         let mode = self.castles().mode();
-        Self::from_setup_with_mode(&SwapTurn(self), Some(mode))
+        Self::from_setup(&SwapTurn(self), mode)
     }
 
     /// Generates legal moves.
@@ -429,12 +425,12 @@ impl Chess {
         pos.is_check()
     }
 
-    fn from_setup_with_mode_unchecked(setup: &dyn Setup, mode: Option<CastlingMode>) -> (Chess, PositionErrorKinds) {
+    fn from_setup_unchecked(setup: &dyn Setup, mode: CastlingMode) -> (Chess, PositionErrorKinds) {
         let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
-        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+        let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -490,8 +486,8 @@ impl Setup for Chess {
 }
 
 impl FromSetup for Chess {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Chess, PositionError<Chess>> {
-        let (pos, errors) = Chess::from_setup_with_mode_unchecked(setup, mode);
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
+        let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
         PositionError {
             pos: Some(pos),
             errors,
@@ -687,12 +683,12 @@ impl Setup for Atomic {
 }
 
 impl FromSetup for Atomic {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Atomic, PositionError<Atomic>> {
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
         let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
-        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+        let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -892,7 +888,7 @@ impl Setup for Antichess {
 }
 
 impl FromSetup for Antichess {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Antichess, PositionError<Antichess>> {
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Antichess, PositionError<Antichess>> {
         let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
@@ -908,7 +904,7 @@ impl FromSetup for Antichess {
         let pos = Antichess {
             board,
             turn,
-            castles: Castles::empty(mode.unwrap_or_default()),
+            castles: Castles::empty(mode),
             ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
@@ -1015,8 +1011,8 @@ impl Setup for KingOfTheHill {
 }
 
 impl FromSetup for KingOfTheHill {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
-        let (chess, errors) = Chess::from_setup_with_mode_unchecked(setup, mode);
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
+        let (chess, errors) = Chess::from_setup_unchecked(setup, mode);
         PositionError {
             errors,
             pos: Some(KingOfTheHill { chess }),
@@ -1103,8 +1099,8 @@ impl Setup for ThreeCheck {
 }
 
 impl FromSetup for ThreeCheck {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
-        let (chess, mut errors) = Chess::from_setup_with_mode_unchecked(setup, mode);
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
+        let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
         let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
         if remaining_checks.white == 0 && remaining_checks.black == 0 {
@@ -1232,8 +1228,8 @@ impl Setup for Crazyhouse {
 }
 
 impl FromSetup for Crazyhouse {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
-        let (chess, mut errors) = Chess::from_setup_with_mode_unchecked(setup, mode);
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
+        let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
         let pockets = setup.pockets().cloned().unwrap_or_default();
         if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
@@ -1381,7 +1377,7 @@ impl Setup for RacingKings {
 }
 
 impl FromSetup for RacingKings {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<RacingKings, PositionError<RacingKings>> {
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<RacingKings, PositionError<RacingKings>> {
         let mut errors = PositionErrorKinds::empty();
 
         if setup.castling_rights().any() {
@@ -1399,7 +1395,7 @@ impl FromSetup for RacingKings {
         let pos = RacingKings {
             board,
             turn: setup.turn(),
-            castles: Castles::empty(mode.unwrap_or_default()),
+            castles: Castles::empty(mode),
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
@@ -1541,12 +1537,12 @@ impl Setup for Horde {
 }
 
 impl FromSetup for Horde {
-    fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Horde, PositionError<Horde>> {
+    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
         let mut errors = PositionErrorKinds::empty();
         let board = setup.board().clone();
         let turn = setup.turn();
 
-        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+        let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
