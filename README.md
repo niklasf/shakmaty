@@ -74,10 +74,11 @@ Changelog
 
 * Upcoming in 0.17.0
   - Introduce `CastlingMode`, now required for
-    `FromSetup::from_setup(..., mode)`, the new method
-    `Move::to_uci(mode)`, and exposed on `Castles::mode()`.
-  - Remove `Uci::from_move()`. Use the new `Move::to_uci()` and give a castling
-    mode (like `pos.castles().mode()` for the old behavior).
+    `FromSetup::from_setup(..., mode)`, the `VariantPosition` analogon,
+    `Fen::position(mode)`, the new method `Move::to_uci(mode)`, and exposed by
+    `Castles::mode()`.
+  - Remove `Uci::from_move()`. Use the new `Move::to_uci(mode)` and give a
+    castling mode (like `pos.castles().mode()` for the old behavior).
   - Add `Uci::from_standard()`.
   - Rework `PositionError`. The original error kinds are available as
     `PositionError::kinds()`. There are now methods to safely ignore particular
@@ -98,7 +99,7 @@ Changelog
     castling rights).
   - Add `CastlingSide::{king,rook}_to_file()`.
   - Add `Variant::distinguishes_promoted()`.
-  - Add `Variant::uci()`.
+  - Add `Variant::uci()` and `Variant::from_uci()`.
   - Future proof traits (remove some implemented traits and available
     constructors).
 * 0.16.4

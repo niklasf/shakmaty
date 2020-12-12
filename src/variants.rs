@@ -70,6 +70,20 @@ impl Variant {
         }
     }
 
+    pub fn from_uci(s: &str) -> Option<Variant> {
+        Some(match s {
+            "chess" => Variant::Chess,
+            "atomic" => Variant::Atomic,
+            "antichess" => Variant::Antichess,
+            "kingofthehill" => Variant::KingOfTheHill,
+            "3check" => Variant::ThreeCheck,
+            "crazyhouse" => Variant::Crazyhouse,
+            "racingkings" => Variant::RacingKings,
+            "horde" => Variant::Horde,
+            _ => return None,
+        })
+    }
+
     pub fn distinguishes_promoted(self) -> bool {
         self == Variant::Crazyhouse
     }
