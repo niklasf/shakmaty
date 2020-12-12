@@ -1572,19 +1572,11 @@ impl FromSetup for Horde {
             - PositionErrorKinds::IMPOSSIBLE_MATERIAL;
 
         if (pos.board().kings() & pos.board.white()).is_empty() {
-            if pos.board().white().count() > 36 ||
-               pos.board().black().count() > 16 ||
-               (pos.board().black() & pos.board().pawns()).count() > 8
-            {
+            if pos.board().white().count() > 36 || pos.board().black().count() > 16 || (pos.board().black() & pos.board().pawns()).count() > 8 {
                 errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
             }
-        } else {
-            if pos.board().black().count() > 36 ||
-               pos.board().white().count() > 16 ||
-               (pos.board().white() & pos.board().pawns()).count() > 8
-            {
-                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
-            }
+        } else if pos.board().black().count() > 36 || pos.board().white().count() > 16 || (pos.board().white() & pos.board().pawns()).count() > 8 {
+            errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
         }
 
         if (pos.board().pawns() & pos.board().white() & Rank::Eighth).any() ||
