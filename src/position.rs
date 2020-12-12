@@ -2090,7 +2090,7 @@ mod tests {
         let fen = "R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         let mut moves = MoveList::new();
@@ -2103,7 +2103,7 @@ mod tests {
         let fen = "R2r2k1/6pp/1Np2p2/1p2pP2/4p3/4K3/3r2PP/8 b - - 5 37";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
 
         let mut moves = MoveList::new();
@@ -2125,7 +2125,7 @@ mod tests {
         let fen = "3r3K/6PP/8/8/8/2k5/8/8 w - - 0 1";
         let pos: Chess = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
 
         let mut moves = MoveList::new();
@@ -2140,7 +2140,7 @@ mod tests {
     {
         let pos: P = fen.parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
 
         assert_eq!(pos.has_insufficient_material(White), white);
@@ -2196,7 +2196,7 @@ mod tests {
     fn test_exploded_king_loses_castling_rights() {
         let pos: Atomic = "rnb1kbnr/pppppppp/8/4q3/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
 
         let pos = pos.play(&Move::Normal {
@@ -2219,7 +2219,7 @@ mod tests {
         // Both players reached the backrank.
         let pos: RacingKings = "kr3NK1/1q2R3/8/8/8/5n2/2N5/1rb2B1R w - - 11 14".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Draw));
@@ -2227,7 +2227,7 @@ mod tests {
         // White to move is lost because black reached the backrank.
         let pos: RacingKings = "1k6/6K1/8/8/8/8/8/8 w - - 0 1".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::Black }));
@@ -2235,7 +2235,7 @@ mod tests {
         // Black is given a chance to catch up.
         let pos: RacingKings = "1K6/7k/8/8/8/8/8/8 b - - 0 1".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
         assert!(!pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), None);
@@ -2243,7 +2243,7 @@ mod tests {
         // Black near backrank but cannot move there.
         let pos: RacingKings = "2KR4/k7/2Q5/4q3/8/8/8/2N5 b - - 0 1".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("valid position");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::White }));
@@ -2253,7 +2253,7 @@ mod tests {
     fn test_aligned_checkers() {
         let res = "2Nq4/2K5/1b6/8/7R/3k4/7P/8 w - - 0 1".parse::<Fen>()
             .expect("valid fen")
-            .position::<Chess>();
+            .position::<Chess>(CastlingMode::Chess960);
         assert_eq!(res.expect_err("impossible check").kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
     }
 
@@ -2261,7 +2261,7 @@ mod tests {
     fn test_swap_turn() {
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3".parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("validation position");
         let swapped_fen = fen(&pos.swap_turn().expect("swap turn"));
         assert_eq!(swapped_fen, "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3");

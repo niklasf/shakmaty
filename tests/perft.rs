@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use shakmaty::Position;
-use shakmaty::FromSetup;
-use shakmaty::Chess;
+use shakmaty::{CastlingMode, Chess, FromSetup, Position};
 use shakmaty::variants::{Atomic, Antichess, Crazyhouse, RacingKings, Horde};
 use shakmaty::fen::Fen;
 use shakmaty::perft;
@@ -42,9 +40,12 @@ where
 
         match slices.next() {
             Some("epd") => {
-                pos = slices.next().expect("missing epd")
-                            .parse::<Fen>().expect("invalid fen")
-                            .position().expect("illegal fen");
+                pos = slices.next()
+                    .expect("missing epd")
+                    .parse::<Fen>()
+                    .expect("invalid fen")
+                    .position(CastlingMode::Chess960)
+                    .expect("illegal fen");
             },
             Some("perft") => {
                 let mut params = slices.next().expect("missing perft params").splitn(2, ' ');

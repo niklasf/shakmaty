@@ -48,12 +48,12 @@
 //! # use shakmaty::fen::Fen;
 //! # use shakmaty::Chess;
 //! #
-//! use shakmaty::Position;
+//! use shakmaty::{CastlingMode, Position};
 //!
 //! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
 //!
 //! let setup: Fen = input.parse()?;
-//! let position: Chess = setup.position()?;
+//! let position: Chess = setup.position(CastlingMode::Standard)?;
 //! assert!(position.is_checkmate());
 //! #
 //! # Ok::<_, Box<dyn Error>>(())
@@ -611,7 +611,7 @@ mod tests {
         assert_eq!(epd(&fen), original_epd);
 
         // The en passant square is not actually legal.
-        let pos: Chess = fen.position().expect("legal position");
+        let pos: Chess = fen.position(CastlingMode::Standard).expect("legal position");
         assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
