@@ -339,26 +339,17 @@ impl Move {
 
     /// Checks if the move is a capture.
     pub fn is_capture(&self) -> bool {
-        match *self {
-            Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } => true,
-            _ => false,
-        }
+        matches!(*self, Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. })
     }
 
     /// Checks if the move is en passant.
     pub fn is_en_passant(&self) -> bool {
-        match *self {
-            Move::EnPassant { .. } => true,
-            _ => false,
-        }
+        matches!(*self, Move::EnPassant { .. })
     }
 
     /// Checks if the move zeros the half-move clock.
     pub fn is_zeroing(&self) -> bool {
-        match *self {
-            Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } | Move::Put { role: Role::Pawn, .. } => true,
-            _ => false,
-        }
+        matches!(*self, Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } | Move::Put { role: Role::Pawn, .. })
     }
 
     /// Gets the castling side.
