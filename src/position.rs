@@ -116,7 +116,7 @@ pub trait FromSetup: Sized {
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
-/// implementation and [`PositionExt`] for additional provided methods.
+/// implementation.
 pub trait Position: Setup {
     /// Collects all legal moves in an existing buffer.
     fn legal_moves(&self, moves: &mut MoveList);
@@ -221,10 +221,12 @@ pub trait Position: Setup {
     /// (or may not) panic or cause panics on future calls. Consider using
     /// [`Position::play()`](trait.Position.html#method.play) instead.
     fn play_unchecked(&mut self, m: &Move);
-}
 
-/// Additional provided methods for [`Position`].
-pub trait PositionExt: Position {
+    // Implementation note: Trait methods above this comment should be made
+    // available for VariantPosition. The provided methods below this comment
+    // are never overwritten in implementations, but for simplicity of use
+    // (especially around dyn) they are not moved to an extension trait.
+
     /// Swap turns. This is sometimes called "playing a null move".
     ///
     /// # Errors
@@ -344,8 +346,6 @@ pub trait PositionExt: Position {
         }
     }
 }
-
-impl<T: Position> PositionExt for T { }
 
 /// A standard Chess position.
 #[derive(Clone, Debug)]

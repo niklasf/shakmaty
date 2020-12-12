@@ -48,7 +48,7 @@
 //! # use shakmaty::fen::Fen;
 //! # use shakmaty::Chess;
 //! #
-//! use shakmaty::{Position, PositionExt};
+//! use shakmaty::Position;
 //!
 //! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
 //!

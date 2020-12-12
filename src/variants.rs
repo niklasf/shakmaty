@@ -244,7 +244,6 @@ impl Position for VariantPosition {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::PositionExt as _;
 
     #[test]
     fn test_variant_position_play() {

@@ -88,7 +88,7 @@ use std::error::Error;
 
 use crate::square::{Rank, Square};
 use crate::types::{CastlingMode, CastlingSide, Move, Role};
-use crate::position::{Position, PositionExt as _};
+use crate::position::Position;
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug)]
