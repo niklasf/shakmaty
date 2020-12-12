@@ -363,10 +363,7 @@ impl Move {
 
     /// Checks if the move is a castling move.
     pub fn is_castle(&self) -> bool {
-        match *self {
-            Move::Castle { .. } => true,
-            _ => false,
-        }
+        matches!(*self, Move::Castle { .. })
     }
 
     /// Gets the promotion role.
@@ -379,10 +376,7 @@ impl Move {
 
     /// Checks if the move is a promotion.
     pub fn is_promotion(&self) -> bool {
-        match *self {
-            Move::Normal { promotion: Some(_), .. } => true,
-            _ => false,
-        }
+        matches!(*self, Move::Normal { promotion: Some(_), .. })
     }
 }
 

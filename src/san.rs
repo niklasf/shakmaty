@@ -270,10 +270,7 @@ impl San {
             San::Castle(side) => pos.castling_moves(side, &mut legals),
             San::Put { role, to } => {
                 pos.san_candidates(role, to, &mut legals);
-                legals.retain(|m| match *m {
-                    Move::Put { .. } => true,
-                    _ => false,
-                });
+                legals.retain(|m| matches!(*m, Move::Put { .. }));
             },
             San::Null => return Err(SanError::IllegalSan),
         }
@@ -488,12 +485,7 @@ impl Suffix {
     }
 
     pub fn from_position<P: Position>(pos: &P) -> Option<Suffix> {
-        let checkmate = match pos.outcome() {
-            Some(Outcome::Decisive { .. }) => true,
-            _ => false,
-        };
-
-        if checkmate {
+        if matches!(pos.outcome(), Some(Outcome::Decisive { .. })) {
             Some(Suffix::Checkmate)
         } else if pos.checkers().any() {
             Some(Suffix::Check)
