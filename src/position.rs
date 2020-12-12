@@ -80,11 +80,20 @@ pub struct PositionError<P> {
 }
 
 impl<P> PositionError<P> {
-    fn strict(self) -> Result<P, Self> {
+    fn ignore(mut self, ignore: PositionErrorKind) -> Result<P, Self> {
+        self.errors -= ignore;
         match self {
             PositionError { pos: Some(pos), errors } if errors.is_empty() => Ok(pos),
             _ => Err(self),
         }
+    }
+
+    fn strict(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKind::empty())
+    }
+
+    pub fn ignore_bad_castling_rights(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKind::BAD_CASTLING_RIGHTS)
     }
 
     pub fn kind(&self) -> PositionErrorKind {
