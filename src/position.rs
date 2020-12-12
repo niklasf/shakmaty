@@ -26,7 +26,7 @@ use crate::bitboard::Bitboard;
 use crate::square::{Rank, Square};
 use crate::types::{Black, CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role, White};
 use crate::material::{Material, MaterialSide};
-use crate::setup::{Castles, Setup, SwapTurn};
+use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::{ArrayVecExt, MoveList};
 
 /// Outcome of a game.
@@ -94,6 +94,10 @@ impl<P> PositionError<P> {
 
     pub fn ignore_bad_castling_rights(self) -> Result<P, Self> {
         self.ignore(PositionErrorKind::BAD_CASTLING_RIGHTS)
+    }
+
+    pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKind::INVALID_EP_SQUARE)
     }
 
     pub fn kind(&self) -> PositionErrorKind {
@@ -379,7 +383,7 @@ pub struct Chess {
     board: Board,
     turn: Color,
     castles: Castles,
-    ep_square: Option<Square>,
+    ep_square: Option<EpSquare>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
 }
@@ -392,18 +396,31 @@ impl Chess {
     }
 
     fn from_setup_with_mode_unchecked(setup: &dyn Setup, mode: Option<CastlingMode>) -> (Chess, PositionErrorKind) {
+        let mut errors = PositionErrorKind::empty();
         let board = setup.board().clone();
+        let turn = setup.turn();
 
-        let (castles, mut errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
-            Ok(castles) => (castles, PositionErrorKind::empty()),
-            Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
+        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+            Ok(castles) => castles,
+            Err(castles) => {
+                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                castles
+            }
+        };
+
+        let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
+            Ok(ep_square) => ep_square,
+            Err(_) => {
+                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                None
+            }
         };
 
         let pos = Chess {
             board,
-            turn: setup.turn(),
+            turn,
             castles,
-            ep_square: setup.ep_square(),
+            ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
@@ -432,7 +449,7 @@ impl Setup for Chess {
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
@@ -557,7 +574,7 @@ impl Position for Chess {
 
         let has_ep =
             role == Role::Pawn &&
-            Some(to) == self.ep_square &&
+            Some(EpSquare(to)) == self.ep_square &&
             gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
@@ -606,7 +623,7 @@ pub struct Atomic {
     board: Board,
     turn: Color,
     castles: Castles,
-    ep_square: Option<Square>,
+    ep_square: Option<EpSquare>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
 }
@@ -629,7 +646,7 @@ impl Setup for Atomic {
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
@@ -637,23 +654,36 @@ impl Setup for Atomic {
 
 impl FromSetup for Atomic {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Atomic, PositionError<Atomic>> {
+        let mut errors = PositionErrorKind::empty();
         let board = setup.board().clone();
+        let turn = setup.turn();
 
-        let (castles, errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
-            Ok(castles) => (castles, PositionErrorKind::empty()),
-            Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
+        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+            Ok(castles) => castles,
+            Err(castles) => {
+                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                castles
+            }
+        };
+
+        let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
+            Ok(ep_square) => ep_square,
+            Err(()) => {
+                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                None
+            }
         };
 
         let pos = Atomic {
             board,
-            turn: setup.turn(),
+            turn,
             castles,
-            ep_square: setup.ep_square(),
+            ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
-        let mut errors = validate(&pos) | errors;
+        errors |= validate(&pos) - PositionErrorKind::IMPOSSIBLE_CHECK;
 
         if (pos.them() & pos.board().kings()).any() {
             // Our king just exploded. Game over, but valid position.
@@ -661,7 +691,7 @@ impl FromSetup for Atomic {
         }
 
         PositionError {
-            errors: (errors - PositionErrorKind::IMPOSSIBLE_CHECK),
+            errors,
             pos: Some(pos),
         }.strict()
     }
@@ -798,7 +828,7 @@ pub struct Antichess {
     board: Board,
     turn: Color,
     castles: Castles,
-    ep_square: Option<Square>,
+    ep_square: Option<EpSquare>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
 }
@@ -821,7 +851,7 @@ impl Setup for Antichess {
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { Bitboard(0) }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
@@ -829,22 +859,32 @@ impl Setup for Antichess {
 
 impl FromSetup for Antichess {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Antichess, PositionError<Antichess>> {
+        let mut errors = PositionErrorKind::empty();
+        let board = setup.board().clone();
+        let turn = setup.turn();
+
+        let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
+            Ok(ep_square) => ep_square,
+            Err(()) => {
+                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                None
+            }
+        };
+
         let pos = Antichess {
-            board: setup.board().clone(),
-            turn: setup.turn(),
+            board,
+            turn,
             castles: Castles::empty(mode.unwrap_or_default()),
-            ep_square: setup.ep_square(),
+            ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
-        let errors = if setup.castling_rights().any() {
-            PositionErrorKind::BAD_CASTLING_RIGHTS
-        } else {
-            PositionErrorKind::empty()
-        };
+        if setup.castling_rights().any() {
+            errors |= PositionErrorKind::BAD_CASTLING_RIGHTS
+        }
 
-        let errors = (validate(&pos) | errors)
+        errors |= validate(&pos)
             - PositionErrorKind::MISSING_KING
             - PositionErrorKind::TOO_MANY_KINGS
             - PositionErrorKind::OPPOSITE_CHECK
@@ -1434,7 +1474,7 @@ pub struct Horde {
     board: Board,
     turn: Color,
     castles: Castles,
-    ep_square: Option<Square>,
+    ep_square: Option<EpSquare>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
 }
@@ -1460,7 +1500,7 @@ impl Setup for Horde {
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.ep_square.filter(|_| has_relevant_ep(self)) }
+    fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
     fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
@@ -1468,23 +1508,36 @@ impl Setup for Horde {
 
 impl FromSetup for Horde {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Horde, PositionError<Horde>> {
+        let mut errors = PositionErrorKind::empty();
         let board = setup.board().clone();
+        let turn = setup.turn();
 
-        let (castles, errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
-            Ok(castles) => (castles, PositionErrorKind::empty()),
-            Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
+        let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
+            Ok(castles) => castles,
+            Err(castles) => {
+                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                castles
+            }
+        };
+
+        let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
+            Ok(ep_square) => ep_square,
+            Err(()) => {
+                errors |= PositionErrorKind::INVALID_EP_SQUARE;
+                None
+            }
         };
 
         let pos = Horde {
             board,
-            turn: setup.turn(),
+            turn,
             castles,
-            ep_square: setup.ep_square(),
+            ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
         };
 
-        let mut errors = (errors | validate(&pos))
+        errors |= validate(&pos)
             - PositionErrorKind::PAWNS_ON_BACKRANK
             - PositionErrorKind::MISSING_KING;
 
@@ -1580,7 +1633,7 @@ impl Position for Horde {
 fn do_move(board: &mut Board,
            turn: &mut Color,
            castles: &mut Castles,
-           ep_square: &mut Option<Square>,
+           ep_square: &mut Option<EpSquare>,
            halfmoves: &mut u32,
            fullmoves: &mut NonZeroU32,
            m: &Move) {
@@ -1596,9 +1649,9 @@ fn do_move(board: &mut Board,
     match *m {
         Move::Normal { role, from, capture, to, promotion } => {
             if role == Role::Pawn && to - from == 16 && from.rank() == Rank::Second {
-                *ep_square = from.offset(8);
+                *ep_square = from.offset(8).map(EpSquare);
             } else if role == Role::Pawn && from - to == 16 && from.rank() == Rank::Seventh {
-                *ep_square = from.offset(-8);
+                *ep_square = from.offset(-8).map(EpSquare);
             }
 
             if role == Role::King {
@@ -1650,31 +1703,6 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKind {
 
     if (pos.board().pawns() & Bitboard::BACKRANKS).any() {
         errors |= PositionErrorKind::PAWNS_ON_BACKRANK;
-    }
-
-    // validate en passant square
-    if let Some(ep_square) = pos.ep_square() {
-        if !Bitboard::relative_rank(pos.turn(), Rank::Sixth).contains(ep_square) {
-            errors |= PositionErrorKind::INVALID_EP_SQUARE;
-        } else {
-            let fifth_rank_sq = ep_square
-                .offset(pos.turn().fold(-8, 8))
-                .expect("ep square is on sixth rank");
-
-            let seventh_rank_sq = ep_square
-                .offset(pos.turn().fold(8, -8))
-                .expect("ep square is on sixth rank");
-
-            // The last move must have been a double pawn push. Check for the
-            // presence of that pawn.
-            if !pos.their(Role::Pawn).contains(fifth_rank_sq) {
-                errors |= PositionErrorKind::INVALID_EP_SQUARE;
-            }
-
-            if pos.board().occupied().contains(ep_square) || pos.board().occupied().contains(seventh_rank_sq) {
-                errors |= PositionErrorKind::INVALID_EP_SQUARE;
-            }
-        }
     }
 
     for &color in &[White, Black] {
@@ -1933,16 +1961,20 @@ fn add_king_promotions(moves: &mut MoveList) {
     moves.extend(king_promotions);
 }
 
-fn has_relevant_ep<P: Position>(pos: &P) -> bool {
+fn relevant_ep<P: Position>(EpSquare(ep_square): EpSquare, pos: &P) -> Option<Square> {
     let mut moves = MoveList::new();
     pos.en_passant_moves(&mut moves);
-    !moves.is_empty()
+    if moves.is_empty() {
+        None
+    } else {
+        Some(ep_square)
+    }
 }
 
-fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<Square>, moves: &mut MoveList) -> bool {
+fn gen_en_passant(board: &Board, turn: Color, ep_square: Option<EpSquare>, moves: &mut MoveList) -> bool {
     let mut found = false;
 
-    if let Some(to) = ep_square {
+    if let Some(EpSquare(to)) = ep_square {
         for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
             moves.push(Move::EnPassant { from, to });
             found = true;

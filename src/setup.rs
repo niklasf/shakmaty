@@ -357,6 +357,48 @@ impl Castles {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub(crate) struct EpSquare(pub Square);
+
+impl From<EpSquare> for Square {
+    fn from(EpSquare(square): EpSquare) -> Square {
+        square
+    }
+}
+
+impl EpSquare {
+    pub fn from_setup(board: &Board, turn: Color, ep_square: Option<Square>) -> Result<Option<EpSquare>, ()> {
+        let ep_square = match ep_square {
+            Some(ep_square) => ep_square,
+            None => return Ok(None),
+        };
+
+        if !Bitboard::relative_rank(turn, Rank::Sixth).contains(ep_square) {
+            return Err(());
+        }
+
+        let fifth_rank_sq = ep_square
+            .offset(turn.fold(-8, 8))
+            .expect("ep square is on sixth rank");
+
+        let seventh_rank_sq = ep_square
+            .offset(turn.fold(8, -8))
+            .expect("ep square is on sixth rank");
+
+        // The last move must have been a double pawn push. Check for the
+        // presence of that pawn.
+        if !((board.pawns() & board.by_color(!turn)).contains(fifth_rank_sq)) {
+            return Err(());
+        }
+
+        if board.occupied().contains(ep_square) || board.occupied().contains(seventh_rank_sq) {
+            return Err(());
+        }
+
+        Ok(Some(EpSquare(ep_square)))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
