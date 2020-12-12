@@ -109,7 +109,7 @@ bitflags! {
 
 /// Error when trying to create a [`Position`] from an illegal [`Setup`].
 pub struct PositionError<P> {
-    pub(crate) pos: Option<P>,
+    pub(crate) pos: P,
     pub(crate) errors: PositionErrorKinds,
 }
 
@@ -117,7 +117,7 @@ impl<P> PositionError<P> {
     fn ignore(mut self, ignore: PositionErrorKinds) -> Result<P, Self> {
         self.errors -= ignore;
         match self {
-            PositionError { pos: Some(pos), errors } if errors.is_empty() => Ok(pos),
+            PositionError { pos, errors } if errors.is_empty() => Ok(pos),
             _ => Err(self),
         }
     }
@@ -443,7 +443,7 @@ impl Chess {
 
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
-            Err(_) => {
+            Err(()) => {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
                 None
             }
@@ -491,10 +491,7 @@ impl Setup for Chess {
 impl FromSetup for Chess {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
         let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
-        PositionError {
-            pos: Some(pos),
-            errors,
-        }.strict()
+        PositionError { errors, pos }.strict()
     }
 }
 
@@ -723,10 +720,7 @@ impl FromSetup for Atomic {
             errors.remove(PositionErrorKinds::MISSING_KING);
         }
 
-        PositionError {
-            errors,
-            pos: Some(pos),
-        }.strict()
+        PositionError { errors, pos }.strict()
     }
 }
 
@@ -923,10 +917,7 @@ impl FromSetup for Antichess {
             - PositionErrorKinds::OPPOSITE_CHECK
             - PositionErrorKinds::IMPOSSIBLE_CHECK;
 
-        PositionError {
-            errors,
-            pos: Some(pos),
-        }.strict()
+        PositionError { errors, pos }.strict()
     }
 }
 
@@ -1018,7 +1009,7 @@ impl FromSetup for KingOfTheHill {
         let (chess, errors) = Chess::from_setup_unchecked(setup, mode);
         PositionError {
             errors,
-            pos: Some(KingOfTheHill { chess }),
+            pos: KingOfTheHill { chess },
         }.strict()
     }
 }
@@ -1112,7 +1103,7 @@ impl FromSetup for ThreeCheck {
 
         PositionError {
             errors,
-            pos: Some(ThreeCheck { chess, remaining_checks }),
+            pos: ThreeCheck { chess, remaining_checks },
         }.strict()
     }
 }
@@ -1243,7 +1234,7 @@ impl FromSetup for Crazyhouse {
 
         PositionError {
             errors,
-            pos: Some(Crazyhouse { chess, pockets }),
+            pos: Crazyhouse { chess, pockets },
         }.strict()
     }
 }
@@ -1414,10 +1405,9 @@ impl FromSetup for RacingKings {
             errors |= PositionErrorKinds::VARIANT;
         }
 
-        PositionError {
-            errors: validate(&pos) | errors,
-            pos: Some(pos),
-        }.strict()
+        errors |= validate(&pos);
+
+        PositionError { errors, pos }.strict()
     }
 }
 
@@ -1590,10 +1580,7 @@ impl FromSetup for Horde {
             errors |= PositionErrorKinds::VARIANT;
         }
 
-        PositionError {
-            errors,
-            pos: Some(pos)
-        }.strict()
+        PositionError { errors, pos }.strict()
     }
 }
 

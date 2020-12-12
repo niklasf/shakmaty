@@ -159,8 +159,7 @@ impl VariantPosition {
         {
             match result {
                 Ok(p) => Ok(f(p)),
-                Err(PositionError { errors, pos: Some(pos) }) => Err(PositionError { errors, pos: Some(f(pos)) }),
-                Err(PositionError { errors, .. }) => Err(PositionError { errors, pos: None }),
+                Err(PositionError { errors, pos }) => Err(PositionError { errors, pos: f(pos) }),
             }
         }
 
