@@ -227,7 +227,11 @@ impl Default for Castles {
 
 impl CastlingMode {
     pub fn detect(setup: &dyn Setup) -> CastlingMode {
-        todo!()
+        let board = setup.board();
+        let castling_rights = setup.castling_rights();
+        let standard = Castles::from_setup(board, castling_rights, CastlingMode::Standard).unwrap_or_else(|c| c);
+        let chess960 = Castles::from_setup(board, castling_rights, CastlingMode::Chess960).unwrap_or_else(|c| c);
+        CastlingMode::from_standard(standard.mask == chess960.mask)
     }
 }
 
