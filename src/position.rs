@@ -65,7 +65,7 @@ bitflags! {
         const MISSING_KING = 1 << 1;
         const TOO_MANY_KINGS = 1 << 2;
         const PAWNS_ON_BACKRANK = 1 << 3;
-        const BAD_CASTLING_RIGHTS = 1 << 4;
+        const INVALID_CASTLING_RIGHTS = 1 << 4;
         const INVALID_EP_SQUARE = 1 << 5;
         const OPPOSITE_CHECK = 1 << 6;
         const IMPOSSIBLE_CHECK = 1 << 7;
@@ -93,7 +93,7 @@ impl<P> PositionError<P> {
     }
 
     pub fn ignore_bad_castling_rights(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKind::BAD_CASTLING_RIGHTS)
+        self.ignore(PositionErrorKind::INVALID_CASTLING_RIGHTS)
     }
 
     pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
@@ -403,7 +403,7 @@ impl Chess {
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
@@ -661,7 +661,7 @@ impl FromSetup for Atomic {
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
@@ -866,7 +866,7 @@ impl FromSetup for Antichess {
         let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
             Ok(ep_square) => ep_square,
             Err(()) => {
-                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
                 None
             }
         };
@@ -881,7 +881,7 @@ impl FromSetup for Antichess {
         };
 
         if setup.castling_rights().any() {
-            errors |= PositionErrorKind::BAD_CASTLING_RIGHTS
+            errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS
         }
 
         errors |= validate(&pos)
@@ -1351,7 +1351,7 @@ impl FromSetup for RacingKings {
         let mut errors = PositionErrorKind::empty();
 
         if setup.castling_rights().any() {
-            errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+            errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
         }
 
         let board = setup.board().clone();
@@ -1515,7 +1515,7 @@ impl FromSetup for Horde {
         let castles = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => castles,
             Err(castles) => {
-                errors |= PositionErrorKind::BAD_CASTLING_RIGHTS;
+                errors |= PositionErrorKind::INVALID_CASTLING_RIGHTS;
                 castles
             }
         };
