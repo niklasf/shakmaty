@@ -324,11 +324,11 @@ impl Uci {
     }
 }
 
-impl CastlingMode {
-    pub fn uci(self, m: &Move) -> Uci  {
-        match self {
-            CastlingMode::Standard => Uci::from_standard(m),
-            CastlingMode::Chess960 => Uci::from_chess960(m),
+impl Move {
+    pub fn to_uci(&self, mode: CastlingMode) -> Uci {
+        match mode {
+            CastlingMode::Standard => Uci::from_standard(self),
+            CastlingMode::Chess960 => Uci::from_chess960(self),
         }
     }
 }
