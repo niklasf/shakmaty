@@ -152,24 +152,35 @@ impl VariantPosition {
         }
     }
 
-    pub fn from_setup(variant: Variant, setup: &dyn Setup) -> Result<VariantPosition, PositionError> {
+    pub fn from_setup(variant: Variant, setup: &dyn Setup) -> Result<VariantPosition, PositionError<VariantPosition>> {
         Self::from_setup_with_mode(variant, setup, None)
     }
 
-    pub fn from_setup_with_mode(variant: Variant, setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<VariantPosition, PositionError> {
+    pub fn from_setup_with_mode(variant: Variant, setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<VariantPosition, PositionError<VariantPosition>> {
+        fn wrap<F, P, U>(result: Result<P, PositionError<P>>, f: F) -> Result<U, PositionError<U>>
+        where
+            F: FnOnce(P) -> U,
+        {
+            match result {
+                Ok(p) => Ok(f(p)),
+                Err(PositionError { errors, pos: Some(pos) }) => Err(PositionError { errors, pos: Some(f(pos)) }),
+                Err(PositionError { errors, .. }) => Err(PositionError { errors, pos: None }),
+            }
+        }
+
         match variant {
-            Variant::Chess => Chess::from_setup_with_mode(setup, mode).map(VariantPosition::Chess),
-            Variant::Atomic => Atomic::from_setup_with_mode(setup, mode).map(VariantPosition::Atomic),
-            Variant::Antichess => Antichess::from_setup_with_mode(setup, mode).map(VariantPosition::Antichess),
-            Variant::KingOfTheHill => KingOfTheHill::from_setup_with_mode(setup, mode).map(VariantPosition::KingOfTheHill),
-            Variant::ThreeCheck => ThreeCheck::from_setup_with_mode(setup, mode).map(VariantPosition::ThreeCheck),
-            Variant::Crazyhouse => Crazyhouse::from_setup_with_mode(setup, mode).map(VariantPosition::Crazyhouse),
-            Variant::RacingKings => RacingKings::from_setup_with_mode(setup, mode).map(VariantPosition::RacingKings),
-            Variant::Horde => Horde::from_setup_with_mode(setup, mode).map(VariantPosition::Horde),
+            Variant::Chess => wrap(Chess::from_setup_with_mode(setup, mode), VariantPosition::Chess),
+            Variant::Atomic => wrap(Atomic::from_setup_with_mode(setup, mode), VariantPosition::Atomic),
+            Variant::Antichess => wrap(Antichess::from_setup_with_mode(setup, mode), VariantPosition::Antichess),
+            Variant::KingOfTheHill => wrap(KingOfTheHill::from_setup_with_mode(setup, mode), VariantPosition::KingOfTheHill),
+            Variant::ThreeCheck => wrap(ThreeCheck::from_setup_with_mode(setup, mode), VariantPosition::ThreeCheck),
+            Variant::Crazyhouse => wrap(Crazyhouse::from_setup_with_mode(setup, mode), VariantPosition::Crazyhouse),
+            Variant::RacingKings => wrap(RacingKings::from_setup_with_mode(setup, mode), VariantPosition::RacingKings),
+            Variant::Horde => wrap(Horde::from_setup_with_mode(setup, mode), VariantPosition::Horde),
         }
     }
 
-    pub fn swap_turn(self) -> Result<VariantPosition, PositionError> {
+    pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();
         VariantPosition::from_setup_with_mode(self.variant(), &SwapTurn(self), Some(mode))
     }

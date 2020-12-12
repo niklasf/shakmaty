@@ -95,5 +95,5 @@ pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};
 pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
-pub use crate::position::{Chess, Outcome, Position, FromSetup, PositionError};
+pub use crate::position::{Chess, Outcome, Position, FromSetup, PositionError, PositionErrorKind};
 pub use crate::perft::perft;

@@ -416,7 +416,7 @@ impl Fen {
     /// [`FromSetup`]: ../trait.FromSetup.html
     /// [`Position`]: ../trait.Position.html
     /// [`PositionError`]: ../enum.PositionError.html
-    pub fn position<P: FromSetup>(&self) -> Result<P, PositionError> {
+    pub fn position<P: FromSetup>(&self) -> Result<P, PositionError<P>> {
         P::from_setup(self)
     }
 
