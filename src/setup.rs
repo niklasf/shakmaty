@@ -235,21 +235,19 @@ impl Castles {
         }
     }
 
-    pub fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Castles, Castles> {
+    pub(crate) fn from_setup_with_mode(board: &Board, castling_rights: Bitboard, mode: Option<CastlingMode>) -> Result<Castles, Castles> {
         let mut castles = Castles::empty(CastlingMode::Standard);
         let mut chess960_castling_rights = false;
 
-        let castling_rights = setup.castling_rights();
-        let rooks = castling_rights & setup.board().rooks();
+        let rooks = castling_rights & board.rooks();
 
         for color in &[Color::Black, Color::White] {
-            if let Some(king) = setup.board().king_of(*color) {
+            if let Some(king) = board.king_of(*color) {
                 if king.file() == File::A || king.file() == File::H || king.rank() != color.fold(Rank::First, Rank::Eighth) {
                     continue;
                 }
 
-                let side = rooks & setup.board().by_color(*color) &
-                           Bitboard::relative_rank(*color, Rank::First);
+                let side = rooks & board.by_color(*color) & Bitboard::relative_rank(*color, Rank::First);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(*color);
@@ -286,10 +284,6 @@ impl Castles {
         } else {
             Err(castles)
         }
-    }
-
-    pub fn from_setup(setup: &dyn Setup) -> Result<Castles, Castles> {
-        Castles::from_setup_with_mode(setup, None)
     }
 
     pub fn any(&self) -> bool {

@@ -392,13 +392,15 @@ impl Chess {
     }
 
     fn from_setup_with_mode_unchecked(setup: &dyn Setup, mode: Option<CastlingMode>) -> (Chess, PositionErrorKind) {
-        let (castles, mut errors) = match Castles::from_setup_with_mode(setup, mode) {
+        let board = setup.board().clone();
+
+        let (castles, mut errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => (castles, PositionErrorKind::empty()),
             Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
         };
 
         let pos = Chess {
-            board: setup.board().clone(),
+            board,
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
@@ -635,13 +637,15 @@ impl Setup for Atomic {
 
 impl FromSetup for Atomic {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Atomic, PositionError<Atomic>> {
-        let (castles, errors) = match Castles::from_setup_with_mode(setup, mode) {
+        let board = setup.board().clone();
+
+        let (castles, errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => (castles, PositionErrorKind::empty()),
             Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
         };
 
         let pos = Atomic {
-            board: setup.board().clone(),
+            board,
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
@@ -1464,13 +1468,15 @@ impl Setup for Horde {
 
 impl FromSetup for Horde {
     fn from_setup_with_mode(setup: &dyn Setup, mode: Option<CastlingMode>) -> Result<Horde, PositionError<Horde>> {
-        let (castles, errors) = match Castles::from_setup_with_mode(setup, mode) {
+        let board = setup.board().clone();
+
+        let (castles, errors) = match Castles::from_setup_with_mode(&board, setup.castling_rights(), mode) {
             Ok(castles) => (castles, PositionErrorKind::empty()),
             Err(castles) => (castles, PositionErrorKind::BAD_CASTLING_RIGHTS),
         };
 
         let pos = Horde {
-            board: setup.board().clone(),
+            board,
             turn: setup.turn(),
             castles,
             ep_square: setup.ep_square(),
