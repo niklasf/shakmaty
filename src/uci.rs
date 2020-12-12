@@ -217,6 +217,10 @@ impl Uci {
     /// Converts a move to UCI notation. Castling moves are represented as
     /// a move of the king to its new position.
     ///
+    /// Warning: Using standard notation for castling moves in Chess960 may
+    /// create moves that are illegal or moves that can be confused with
+    /// king moves.
+    ///
     /// # Examples
     ///
     /// ```
@@ -325,6 +329,7 @@ impl Uci {
 }
 
 impl Move {
+    /// See [`Uci::from_standard()`] or [`Uci::from_chess960()`].
     pub fn to_uci(&self, mode: CastlingMode) -> Uci {
         match mode {
             CastlingMode::Standard => Uci::from_standard(self),
