@@ -65,6 +65,9 @@ Documentation
 Changelog
 ---------
 
+* 0.14.0
+  - Update shakmaty to `0.17`.
+  - Fix panic when lead pawns are corrupted.
 * 0.13.1
   - Explicit `#![forbid(unsafe_code)]`.
   - Update dependencies.
