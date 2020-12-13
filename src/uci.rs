@@ -72,6 +72,9 @@
 //!     promotion: None,
 //! };
 //!
+//! let uci = m.to_uci(pos.castles().mode());
+//! assert_eq!(uci.to_string(), "b1c3");
+//!
 //! let uci = Uci::from_standard(&m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!

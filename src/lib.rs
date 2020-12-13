@@ -31,8 +31,6 @@
 //! Play moves:
 //!
 //! ```
-//! # use std::error::Error;
-//! #
 //! use shakmaty::{Square, Move, Role};
 //! # use shakmaty::{Chess, Position};
 //! # let pos = Chess::default();
