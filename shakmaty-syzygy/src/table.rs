@@ -1073,7 +1073,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         for piece in side.groups.pieces.iter().skip(lead_pawns_count) {
             let color = piece.color ^ flip;
-            let square = (pos.board().by_piece(piece.role.of(color)) & !used).first().expect("piece exists");
+            let square = u!((pos.board().by_piece(piece.role.of(color)) & !used).first());
             squares.push(if flip { square.flip_vertical() } else { square });
             used.add(square);
         }
