@@ -75,10 +75,9 @@ Changelog
 * Upcoming in 0.17.0
   - Introduce `CastlingMode`, now required for
     `FromSetup::from_setup(..., mode)`, the `VariantPosition` analogon,
-    `Fen::position(mode)`, the new method `Move::to_uci(mode)`, and exposed by
-    `Castles::mode()`.
-  - Remove `Uci::from_move()`. Use the new `Move::to_uci(mode)` and give a
-    castling mode (like `pos.castles().mode()` for the old behavior).
+    `Fen::position(mode)`, and exposed by `Castles::mode()`.
+  - `Uci::from_move()` now takes the mode as context instead of the position.
+    Give `pos.castles().mode()` for the old behavior.
   - Add `Uci::from_standard()`.
   - Rework `PositionError`. The original error kinds are available as
     `PositionError::kinds()`. There are now methods to safely ignore particular
@@ -99,6 +98,7 @@ Changelog
     castling rights).
   - Fix `swap_turn()` if en passant square exists. Would always fail, now
     discards the en passant square.
+  - Add `Move::to_uci()` convenience method.
   - Add `CastlingSide::{king,rook}_to_file()`.
   - Add `Variant::distinguishes_promoted()`.
   - Add `Variant::uci()` and `Variant::from_uci()`.

@@ -283,6 +283,14 @@ impl Uci {
         }
     }
 
+    /// See [`Uci::from_standard()`] or [`Uci::from_chess960()`].
+    pub fn from_move(m: &Move, mode: CastlingMode) -> Uci {
+        match mode {
+            CastlingMode::Standard => Uci::from_standard(m),
+            CastlingMode::Chess960 => Uci::from_chess960(m),
+        }
+    }
+
     /// Tries to convert the `Uci` to a legal [`Move`] in the context of a
     /// position.
     ///
@@ -332,12 +340,9 @@ impl Uci {
 }
 
 impl Move {
-    /// See [`Uci::from_standard()`] or [`Uci::from_chess960()`].
+    /// See [`Uci::from_move()`].
     pub fn to_uci(&self, mode: CastlingMode) -> Uci {
-        match mode {
-            CastlingMode::Standard => Uci::from_standard(self),
-            CastlingMode::Chess960 => Uci::from_chess960(self),
-        }
+        Uci::from_move(self, mode)
     }
 }
 
