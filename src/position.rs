@@ -2258,4 +2258,11 @@ mod tests {
         let swapped_fen = fen(&pos.swap_turn().expect("swap turn"));
         assert_eq!(swapped_fen, "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3");
     }
+
+    #[test]
+    fn test_invalid_ep_square() {
+        let fen: Fen = "4k3/8/8/8/8/8/8/4K3 w - e3 0 1".parse().expect("valid fen");
+        assert_eq!(fen.position::<Chess>(CastlingMode::Standard).expect_err("invalid ep square").kinds(), PositionErrorKinds::INVALID_EP_SQUARE);
+        assert_eq!(fen.position::<Chess>(CastlingMode::Standard).or_else(PositionError::ignore_invalid_ep_square).expect("now valid").ep_square(), None);
+    }
 }
