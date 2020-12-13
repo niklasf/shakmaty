@@ -158,27 +158,27 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    /// Probe tables for the [`Wdl`](enum.Wdl.html) value of a position.
+    /// Probe tables for the [`Wdl`] value of a position.
     ///
     /// This indicates if the position is winning, lost or drawn with
     /// or without the 50-move rule.
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// See [`SyzygyError`] for possible error
     /// conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
         self.probe(pos).map(|entry| entry.wdl())
     }
 
-    /// Probe tables for the [`Dtz`](struct.Dtz.html) value of a position.
+    /// Probe tables for the [`Dtz`] value of a position.
     ///
     /// Min-maxing the DTZ of the available moves guarantees achieving the
     /// optimal outcome under the 50-move rule.
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// See [`SyzygyError`] for possible error
     /// conditions.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         self.probe(pos).and_then(|entry| entry.dtz())
@@ -188,7 +188,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`](enum.SyzygyError.html) for possible error
+    /// See [`SyzygyError`] for possible error
     /// conditions.
     pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
         struct WithAfter<S> {

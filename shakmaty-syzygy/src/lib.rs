@@ -47,7 +47,7 @@
 //!
 //! # Errors
 //!
-//! See [`SyzygyError`](enum.SyzygyError.html) for possible error
+//! See [`SyzygyError`] for possible error
 //! conditions.
 //!
 //! # Cargo features
