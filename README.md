@@ -72,7 +72,7 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
-* Upcoming in 0.17.0
+* 0.17.0
   - Introduce `CastlingMode`, now required for
     `FromSetup::from_setup(..., mode)`, the `VariantPosition` analogon,
     `Fen::position(mode)`, and exposed by `Castles::mode()`.
