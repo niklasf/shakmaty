@@ -19,7 +19,7 @@ use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 use arrayvec::ArrayVec;
 
-use shakmaty::variants::{Atomic, Chess, Giveaway};
+use shakmaty::variants::{Atomic, Chess, Antichess};
 use shakmaty::{Color, Outcome, Piece};
 
 /// File extension and magic header bytes of Syzygy tables.
@@ -75,7 +75,7 @@ impl Syzygy for Atomic {
     const CAPTURES_COMPULSORY: bool = false;
 }
 
-impl Syzygy for Giveaway {
+impl Syzygy for Antichess {
     const TBW: TableType = TableType { ext: "gtbw", magic: [0xbc, 0x55, 0xbc, 0x21] };
     const TBZ: TableType = TableType { ext: "gtbz", magic: [0xd6, 0xf5, 0x1b, 0x50] };
 

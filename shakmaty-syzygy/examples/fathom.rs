@@ -5,7 +5,7 @@ use structopt::StructOpt;
 
 use shakmaty::fen::{fen, Fen};
 use shakmaty::san::SanPlus;
-use shakmaty::{Chess, Color, MoveList, Position, Setup};
+use shakmaty::{CastlingMode, Chess, Color, MoveList, Position, Setup};
 use shakmaty_syzygy::{Dtz, SyzygyError, Tablebase, Wdl};
 
 #[derive(Debug, StructOpt)]
@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         tablebase.add_directory(path)?;
     }
 
-    let mut pos: Chess = opt.fen.parse::<Fen>()?.position()?;
+    let mut pos: Chess = opt.fen.parse::<Fen>()?.position(CastlingMode::Chess960)?;
 
     let material = pos.board().material();
     let fen = fen(&pos);

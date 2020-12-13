@@ -582,7 +582,7 @@ mod tests {
     use super::*;
 
     use shakmaty::fen::Fen;
-    use shakmaty::{Chess, Square};
+    use shakmaty::{CastlingMode, Chess, Square};
 
     #[test]
     fn test_send_sync() {
@@ -596,12 +596,12 @@ mod tests {
     #[test]
     fn test_mating_best_move() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/regular").expect("read directory");
+        tables.add_directory("tables/chess").expect("read directory");
 
         let pos: Chess = "5BrN/8/8/8/8/2k5/8/2K5 b - -"
             .parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
@@ -616,12 +616,12 @@ mod tests {
     #[test]
     fn test_black_escapes_via_underpromotion() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/regular").expect("read directory");
+        tables.add_directory("tables/chess").expect("read directory");
 
         let pos: Chess = "8/6B1/8/8/B7/8/K1pk4/8 b - - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
@@ -637,12 +637,12 @@ mod tests {
     #[ignore]
     fn test_many_pawns() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/regular").expect("read directory");
+        tables.add_directory("tables/chess").expect("read directory");
 
         let pos: Chess = "3k4/5P2/8/8/4K3/2P3P1/PP6/8 w - - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position()
+            .position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(tables.probe_dtz(&pos), Ok(Dtz(1))));

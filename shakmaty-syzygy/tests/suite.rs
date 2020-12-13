@@ -1,6 +1,6 @@
 use shakmaty::fen::Fen;
-use shakmaty::variants::{Atomic, Chess, Giveaway};
-use shakmaty::{Position, FromSetup};
+use shakmaty::variants::{Atomic, Chess, Antichess};
+use shakmaty::{CastlingMode, Position, FromSetup};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
 fn test_csv<S>(path: &str)
@@ -8,9 +8,9 @@ where
     S: Position + FromSetup + Syzygy + Clone
 {
     let mut tables = Tablebase::new();
-    tables.add_directory("tables/regular").expect("read directory");
+    tables.add_directory("tables/chess").expect("read directory");
     tables.add_directory("tables/atomic").expect("read directory");
-    tables.add_directory("tables/giveaway").expect("read directory");
+    tables.add_directory("tables/antichess").expect("read directory");
 
     let mut reader = csv::Reader::from_path(path).expect("reader");
 
@@ -29,7 +29,7 @@ where
             .get(2).expect("dtz field")
             .parse().expect("valid dtz");
 
-        let pos: S = fen.position().expect("legal");
+        let pos: S = fen.position(CastlingMode::Chess960).expect("legal");
 
         println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
 
@@ -46,8 +46,8 @@ where
 }
 
 #[test]
-fn test_regular() {
-    test_csv::<Chess>("tests/regular.csv");
+fn test_chess() {
+    test_csv::<Chess>("tests/chess.csv");
 }
 
 #[test]
@@ -56,6 +56,6 @@ fn test_atomic() {
 }
 
 #[test]
-fn test_giveaway() {
-    test_csv::<Giveaway>("tests/giveaway.csv");
+fn test_antichess() {
+    test_csv::<Antichess>("tests/antichess.csv");
 }

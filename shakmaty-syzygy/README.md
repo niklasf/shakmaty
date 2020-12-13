@@ -14,16 +14,16 @@ Example: Usage
 --------------
 
 ```rust
-use shakmaty::Chess;
+use shakmaty::{CastlingMode, Chess};
 use shakmaty::fen::Fen;
 use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
 
 let mut tables = Tablebase::new();
-tables.add_directory("tables/regular")?;
+tables.add_directory("tables/chess")?;
 
 let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
     .parse::<Fen>()?
-    .position()?;
+    .position(CastlingMode::Standard)?;
 
 let wdl = tables.probe_wdl(&pos)?;
 assert_eq!(wdl, Wdl::Loss);
@@ -38,7 +38,7 @@ Example: Command line tool
 A command line tool similar to [Fathom](https://github.com/basil00/Fathom):
 
 ```
-$ cargo run --example fathom -- --path tables/regular -- "3qk3/8/8/8/8/8/8/4K3 w - - 0 1"
+$ cargo run --example fathom -- --path tables/chess -- "3qk3/8/8/8/8/8/8/4K3 w - - 0 1"
 [Event "KvKQ"]
 [Site ""]
 [Date "????.??.??"]

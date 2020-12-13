@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-cd tables/regular
+cd tables/chess
 wget -nc -i TEST-SOURCE.txt
 cd ../..
 
@@ -8,6 +8,6 @@ cd tables/atomic
 wget -nc -i TEST-SOURCE.txt
 cd ../..
 
-cd tables/giveaway
+cd tables/antichess
 wget -nc -i TEST-SOURCE.txt
 cd ../..

@@ -31,9 +31,9 @@ def deps(variant, suite, target, extra_endgames=[]):
         for table in wdl_tables:
             w, b = table.split("v")
             also_dtz = table in dtz_tables
-            base = "https://tablebase.lichess.ovh/tables/{}".format(variant)
+            base = "https://tablebase.lichess.ovh/tables/{}".format("standard" if variant == "chess" else variant)
 
-            if variant == "standard":
+            if variant == "chess":
                 if len(table) <= 6:
                     print("{}/3-4-5/{}.rtbw".format(base, table), file=out)
                     if also_dtz:
@@ -71,6 +71,6 @@ def deps(variant, suite, target, extra_endgames=[]):
 
 
 if __name__ == "__main__":
-    deps("standard", "tests/regular.csv", "tables/regular/TEST-SOURCE.txt", ["KBNvKR", "KBBvKP"])
+    deps("chess", "tests/chess.csv", "tables/chess/TEST-SOURCE.txt", ["KBNvKR", "KBBvKP"])
     deps("atomic", "tests/atomic.csv", "tables/atomic/TEST-SOURCE.txt")
-    deps("antichess", "tests/giveaway.csv", "tables/giveaway/TEST-SOURCE.txt")
+    deps("antichess", "tests/antichess.csv", "tables/antichess/TEST-SOURCE.txt")
