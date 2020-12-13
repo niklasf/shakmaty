@@ -82,8 +82,7 @@
 //! assert_eq!(uci.to_string(), "b1c3");
 //! ```
 //!
-//! [`Move`]: ../enum.Move.html
-//! [`Uci`]: enum.Uci.html
+//! [`Move`]: super::Move
 
 use std::fmt;
 use std::str::FromStr;
@@ -188,8 +187,6 @@ impl Uci {
     /// #
     /// # Ok::<_, Box<Error>>(())
     /// ```
-    ///
-    /// [`ParseUciError`]: struct.ParseUciError.html
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {
             return Err(ParseUciError);
@@ -298,7 +295,7 @@ impl Uci {
     ///
     /// Returns [`IllegalUciError`] if the move is not legal.
     ///
-    /// [`Move`]: ../enum.Move.html
+    /// [`Move`]: super::Move
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciError> {
         let candidate = match *self {
             Uci::Normal { from, to, promotion } => {

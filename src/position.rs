@@ -252,7 +252,7 @@ pub trait Position: Setup {
     ///
     /// Note that for example stalemate is not considered a variant-specific
     /// end condition (`is_variant_end()` will return `false`), but it can have
-    /// a special [`variant_outcome()`](#tymethod.variant_outcome) in suicide
+    /// a special [`variant_outcome()`](Position::variant_outcome) in suicide
     /// chess.
     fn is_variant_end(&self) -> bool;
 
@@ -364,15 +364,15 @@ pub trait Position: Setup {
     }
 
     /// Tests if both sides
-    /// [have insufficient winning material](#tymethod.has_insufficient_material).
+    /// [have insufficient winning material](Position::has_insufficient_material).
     fn is_insufficient_material(&self) -> bool {
         self.has_insufficient_material(White) && self.has_insufficient_material(Black)
     }
 
-    /// Tests if the game is over due to [checkmate](#method.is_checkmate),
-    /// [stalemate](#method.is_stalemate),
-    /// [insufficient material](#tymethod.is_insufficient_material) or
-    /// [variant end](#tymethod.is_variant_end).
+    /// Tests if the game is over due to [checkmate](Position::is_checkmate()),
+    /// [stalemate](Position::is_stalemate()),
+    /// [insufficient material](Position::is_insufficient_material) or
+    /// [variant end](Position::is_variant_end).
     fn is_game_over(&self) -> bool {
         let mut legals = MoveList::new();
         self.legal_moves(&mut legals);

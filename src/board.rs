@@ -43,8 +43,6 @@ use crate::material::{Material, MaterialSide};
 ///
 /// assert_eq!(board.piece_at(Square::E8), Some(Black.king()));
 /// ```
-///
-/// [`Piece`]: struct.Piece.html
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
     occupied_co: [Bitboard; 2], // indexed by Color
@@ -343,8 +341,6 @@ impl FromIterator<(Square, Piece)> for Board {
 }
 
 /// Iterator over the pieces of a [`Board`].
-///
-/// [`Board`]: struct.Board.html
 #[derive(Clone)]
 pub struct Pieces {
     pawns: Bitboard,

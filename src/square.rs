@@ -331,8 +331,6 @@ impl Square {
     /// #
     /// # Ok::<_, Box<Error>>(())
     /// ```
-    ///
-    /// [`ParseSquareError`]: struct.ParseSquareError.html
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {

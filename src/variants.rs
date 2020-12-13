@@ -19,9 +19,9 @@
 //! These are games played with normal chess pieces but special rules.
 //! Every chess variant implements [`Setup`], [`FromSetup`] and [`Position`].
 //!
-//! [`Setup`]: ../trait.Setup.html
-//! [`FromSetup`]: ../trait.FromSetup.html
-//! [`Position`]: ../trait.Position.html
+//! [`Setup`]: super::Setup
+//! [`FromSetup`]: super::FromSetup
+//! [`Position`]: super::Position
 
 use std::num::NonZeroU32;
 
@@ -40,8 +40,6 @@ use crate::{Setup, FromSetup, Position, PositionError};
 use crate::setup::SwapTurn;
 
 /// Discriminant of [`VariantPosition`].
-///
-/// [`VariantPosition`]: enum.VariantPosition.html
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Variant {
     Chess,
@@ -91,7 +89,7 @@ impl Variant {
 
 /// Dynamically dispatched chess variant [`Position`].
 ///
-/// [`Position`]: ../trait.Position.html
+/// [`Position`]: super::Position
 #[derive(Debug, Clone)]
 pub enum VariantPosition {
     Chess(Chess),

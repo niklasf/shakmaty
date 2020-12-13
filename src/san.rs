@@ -146,8 +146,6 @@ impl San {
     /// # Errors
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    ///
-    /// [`ParseSanError`]: struct.ParseSanError.html
     pub fn from_ascii(mut san: &[u8]) -> Result<San, ParseSanError> {
         if san.ends_with(b"#") || san.ends_with(b"+") {
             san = &san[0..(san.len() - 1)];
@@ -245,8 +243,6 @@ impl San {
     /// # Errors
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
-    ///
-    /// [`SanError`]: enum.SanError.html
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
         let mut legals = MoveList::new();
 
@@ -335,9 +331,6 @@ impl San {
     /// # Errors
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
-    ///
-    /// [`MoveList`]: type.MoveList.html
-    /// [`SanError`]: enum.SanError.html
     pub fn find_move<'a>(&self, moves: &'a MoveList) -> Result<&'a Move, SanError> {
         let mut filtered = moves.iter().filter(|m| self.matches(m));
 
@@ -502,8 +495,6 @@ impl fmt::Display for Suffix {
 }
 
 /// A [`San`] and possible check and checkmate suffixes.
-///
-/// [`San`]: enum.San.html
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SanPlus {
     pub san: San,
@@ -516,8 +507,6 @@ impl SanPlus {
     /// # Errors
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    ///
-    /// [`ParseSanError`]: struct.ParseSanError.html
     pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
         San::from_ascii(san).map(|result| SanPlus {
             san: result,

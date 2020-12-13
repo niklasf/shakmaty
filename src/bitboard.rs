@@ -24,7 +24,7 @@ use std::iter::FromIterator;
 use crate::square::{File, Rank, Square};
 use crate::types::Color;
 
-/// A set of [squares](../enum.Square.html) represented by a 64 bit
+/// A set of [squares](super::Square) represented by a 64 bit
 /// integer mask.
 ///
 /// # Examples

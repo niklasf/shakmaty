@@ -18,7 +18,7 @@
 //!
 //! # Examples
 //!
-//! [`fen::fen()`](fn.fen.html) and [`fen::epd()`](fn.epd.html) can produce a
+//! [`fen::fen()`](fen()) and [`fen::epd()`](epd()) can produce a
 //! FEN for any [`Setup`].
 //!
 //! ```
@@ -59,10 +59,9 @@
 //! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
-//! [`Setup`]: ../trait.Setup.html
-//! [`Board`]: ../struct.Board.html
-//! [`Fen`]: struct.Fen.html
-//! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
+//! [`Setup`]: super::Setup
+//! [`Board`]: super::Board
+//! [`Display`]: std::fmt::Display
 
 use std::convert::TryFrom;
 use std::cmp::max;
@@ -413,9 +412,9 @@ impl Fen {
     ///
     /// Returns [`PositionError`] if the setup is not a legal position.
     ///
-    /// [`FromSetup`]: ../trait.FromSetup.html
-    /// [`Position`]: ../trait.Position.html
-    /// [`PositionError`]: ../enum.PositionError.html
+    /// [`FromSetup`]: super::FromSetup
+    /// [`Position`]: super::Position
+    /// [`PositionError`]: super::PositionError
     pub fn position<P: FromSetup>(&self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self, mode)
     }
@@ -438,8 +437,6 @@ impl Fen {
     /// #
     /// # Ok::<_, Box<Error>>(())
     /// ```
-    ///
-    /// [`ParseFenError`]: enum.ParseFenError.html
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
         let mut parts = fen.split(|ch| *ch == b' ');
         let mut result = Fen::empty();
@@ -575,8 +572,6 @@ impl fmt::Display for Fen {
 
 /// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`
 /// with default [`FenOpts`].
-///
-/// [`FenOpts`]: struct.FenOpts.html
 pub fn board_fen(board: &Board) -> String {
     FenOpts::default().board_fen(board)
 }
@@ -584,8 +579,6 @@ pub fn board_fen(board: &Board) -> String {
 /// Create an EPD such as
 /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -` with default
 /// [`FenOpts`].
-///
-/// [`FenOpts`]: struct.FenOpts.html
 pub fn epd(setup: &dyn Setup) -> String {
     FenOpts::default().epd(setup)
 }
@@ -593,8 +586,6 @@ pub fn epd(setup: &dyn Setup) -> String {
 /// Create a FEN such as
 /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1` with default
 /// [`FenOpts`].
-///
-/// [`FenOpts`]: struct.FenOpts.html
 pub fn fen(setup: &dyn Setup) -> String {
     FenOpts::default().fen(setup)
 }

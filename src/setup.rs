@@ -61,7 +61,7 @@ pub trait Setup {
     fn remaining_checks(&self) -> Option<&RemainingChecks>;
 
     /// Number of half-moves since the last
-    /// [capture or pawn move](enum.Move.html#method.is_zeroing).
+    /// [capture or pawn move](super::Move::is_zeroing()).
     ///
     /// # Examples
     ///

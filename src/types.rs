@@ -148,7 +148,7 @@ impl Role {
         }
     }
 
-    /// Gets a [`Piece`](struct.Piece.html) of the given color.
+    /// Gets a [`Piece`] of the given color.
     ///
     /// # Examples
     ///
@@ -262,9 +262,6 @@ try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
 /// A piece with [`Color`] and [`Role`].
-///
-/// [`Color`]: enum.Color.html
-/// [`Role`]: enum.Role.html
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
