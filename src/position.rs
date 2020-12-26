@@ -1775,6 +1775,9 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
             _ => (),
         }
 
+        // Determining if there is a valid en passant square requires move
+        // generation. We know the king exists, so its fine to call it even
+        // before full validation.
         if let Some(ep_suare) = pos.ep_square() {
             for checker in checkers {
                 if attacks::aligned(our_king, ep_suare, checker) {
