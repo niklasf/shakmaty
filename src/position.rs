@@ -1774,6 +1774,14 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
             }
             _ => (),
         }
+
+        if let Some(ep_suare) = pos.ep_square() {
+            for checker in checkers {
+                if attacks::aligned(our_king, ep_suare, checker) {
+                    errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
+                }
+            }
+        }
     }
 
     errors
@@ -2252,6 +2260,11 @@ mod tests {
             .expect("valid fen")
             .position::<Chess>(CastlingMode::Standard)
             .expect("checkers aligned with opponent king not relevant");
+
+        let res = "8/8/8/1k6/3Pp3/8/8/4KQ2 b - d3 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position::<Chess>(CastlingMode::Standard);
+        assert_eq!(res.expect_err("impossible check due to ep square").kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
     }
 
     #[test]
