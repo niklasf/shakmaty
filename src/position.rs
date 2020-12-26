@@ -2247,6 +2247,11 @@ mod tests {
             .expect("valid fen")
             .position::<Chess>(CastlingMode::Chess960);
         assert_eq!(res.expect_err("impossible check").kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
+
+        let _ = "8/8/5k2/p1q5/PP1rp1P1/3P1N2/2RK1r2/5nN1 w - - 0 3".parse::<Fen>()
+            .expect("valid fen")
+            .position::<Chess>(CastlingMode::Standard)
+            .expect("checkers aligned with opponent king not relevant");
     }
 
     #[test]
