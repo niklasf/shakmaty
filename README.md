@@ -72,6 +72,9 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.17.1
+  - Also reject checker aligned with king and en passant square with
+    `PositionErrorKinds::IMPOSSIBLE_CHECK`.
 * 0.17.0
   - Introduce `CastlingMode`, now required for
     `FromSetup::from_setup(..., mode)`, the `VariantPosition` analogon,
