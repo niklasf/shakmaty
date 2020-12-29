@@ -34,7 +34,7 @@
 //!     promotion: None,
 //! });
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -53,7 +53,7 @@
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //! #
-//! # Ok::<_, Box<Error>>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:
@@ -185,7 +185,7 @@ impl Uci {
     ///     promotion: None,
     /// });
     /// #
-    /// # Ok::<_, Box<Error>>(())
+    /// # Ok::<_, Box<dyn Error>>(())
     /// ```
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {

@@ -435,7 +435,7 @@ impl Fen {
     /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
     /// assert_eq!(fen, Fen::default());
     /// #
-    /// # Ok::<_, Box<Error>>(())
+    /// # Ok::<_, Box<dyn Error>>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
         let mut parts = fen.split(|ch| *ch == b' ');

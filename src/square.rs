@@ -329,7 +329,7 @@ impl Square {
     /// let sq = Square::from_ascii(b"a5")?;
     /// assert_eq!(sq, Square::A5);
     /// #
-    /// # Ok::<_, Box<Error>>(())
+    /// # Ok::<_, Box<dyn Error>>(())
     /// ```
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {

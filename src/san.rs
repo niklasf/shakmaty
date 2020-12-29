@@ -378,7 +378,7 @@ impl San {
     /// let nef3 = San::from_ascii(b"Nef3")?;
     /// assert!(!nef3.matches(&m));
     /// #
-    /// # Ok::<_, Box<Error>>(())
+    /// # Ok::<_, Box<dyn Error>>(())
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {
