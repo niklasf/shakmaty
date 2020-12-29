@@ -55,6 +55,38 @@ impl fmt::Display for Outcome {
     }
 }
 
+/// Error when trying to play an illegal move.
+pub struct PlayError<'a, P> {
+    m: &'a Move,
+    inner: P,
+}
+
+impl<'a, P> PlayError<'a, P> {
+    pub fn into_inner(self) -> P {
+        self.inner
+    }
+}
+
+impl<P> fmt::Debug for PlayError<'_, P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PlayError")
+            .field("m", self.m)
+            .finish()
+    }
+}
+
+impl<P> fmt::Display for PlayError<'_, P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "illegal move".fmt(f)
+    }
+}
+
+impl<P> Error for PlayError<'_, P> {
+    fn description(&self) -> &str {
+        "illegal move"
+    }
+}
+
 bitflags! {
     /// Reasons for a [`Setup`] not beeing a legal [`Position`].
     pub struct PositionErrorKinds: u32 {
@@ -397,7 +429,7 @@ pub trait Position: Setup {
     /// # Errors
     ///
     /// Returns the unchanged position if the move is not legal.
-    fn play(mut self, m: &Move) -> Result<Self, Self>
+    fn play<'a>(mut self, m: &'a Move) -> Result<Self, PlayError<'a, Self>>
     where
         Self: Sized,
     {
@@ -405,7 +437,10 @@ pub trait Position: Setup {
             self.play_unchecked(m);
             Ok(self)
         } else {
-            Err(self)
+            Err(PlayError {
+                m,
+                inner: self,
+            })
         }
     }
 }

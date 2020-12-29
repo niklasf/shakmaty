@@ -31,8 +31,10 @@
 //! Play moves:
 //!
 //! ```
-//! use shakmaty::{Square, Move, Role};
+//! # use std::error::Error;
 //! # use shakmaty::{Chess, Position};
+//! use shakmaty::{Square, Move, Role};
+//! #
 //! # let pos = Chess::default();
 //!
 //! // 1. e4
@@ -44,7 +46,7 @@
 //!     promotion: None,
 //! })?;
 //! #
-//! # Ok::<_, Chess>(())
+//! # Ok::<_, Box<dyn Error>>(())
 //! ```
 //!
 //! Detect game end conditions:
@@ -93,5 +95,5 @@ pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};
 pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
-pub use crate::position::{Chess, Outcome, Position, FromSetup, PositionError, PositionErrorKinds};
+pub use crate::position::{Chess, Outcome, Position, FromSetup, PlayError, PositionError, PositionErrorKinds};
 pub use crate::perft::perft;
