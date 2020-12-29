@@ -1,5 +1,5 @@
 // This file is part of the shakmaty library.
-// Copyright (C) 2017-2019 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2021 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,10 +16,13 @@
 
 use std::cmp::max;
 use std::convert::TryInto;
+use std::num::TryFromIntError;
 use std::fmt;
 use std::str;
 use std::error::Error;
 use std::ops::Sub;
+
+use crate::util::overflow_error;
 
 macro_rules! from_repr_u8_impl {
     ($from:ty, $($t:ty)+) => {
@@ -33,10 +36,10 @@ macro_rules! from_repr_u8_impl {
     }
 }
 
-macro_rules! try_from_number_impl {
-    ($type:ty, $error:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
+macro_rules! try_from_int_impl {
+    ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
         $(impl std::convert::TryFrom<$t> for $type {
-            type Error = $error;
+            type Error = TryFromIntError;
 
             #[inline]
             #[allow(unused_comparisons)]
@@ -45,7 +48,7 @@ macro_rules! try_from_number_impl {
                 if $lower <= value && value < $upper {
                     Ok(<$type>::new(value as u32))
                 } else {
-                    Err(<$error>::from(()))
+                    Err(overflow_error())
                 }
             }
         })+
@@ -140,9 +143,7 @@ impl fmt::Display for File {
 }
 
 from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
-
-try_from_number_impl! { File, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
-try_from_number_impl! { File, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
+try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -231,9 +232,7 @@ impl fmt::Display for Rank {
 }
 
 from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize f32 f64 }
-
-try_from_number_impl! { Rank, crate::errors::TryFromIntError, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
-try_from_number_impl! { Rank, crate::errors::TryFromFloatError, 0.0, 8.0, f32 f64 }
+try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug)]
@@ -552,7 +551,7 @@ impl Square {
 
 from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
-try_from_number_impl! { Square, crate::errors::TryFromIntError, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
     type Output = i32;

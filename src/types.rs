@@ -1,5 +1,5 @@
 // This file is part of the shakmaty library.
-// Copyright (C) 2017-2019 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2021 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ use std::char;
 use std::ops;
 use std::num;
 
+use crate::util::overflow_error;
 use crate::square::{Square, File, Rank};
 
 pub use self::Color::{Black, White};
@@ -239,7 +240,7 @@ nonzero_int_from_role_impl! {
 macro_rules! try_role_from_int_impl {
     ($($t:ty)+) => {
         $(impl std::convert::TryFrom<$t> for Role {
-            type Error = crate::errors::TryFromIntError;
+            type Error = num::TryFromIntError;
 
             #[inline]
             fn try_from(value: $t) -> Result<Role, Self::Error> {
@@ -250,7 +251,7 @@ macro_rules! try_role_from_int_impl {
                     4 => Role::Rook,
                     5 => Role::Queen,
                     6 => Role::King,
-                    _ => return Err(crate::errors::TryFromIntError),
+                    _ => return Err(overflow_error()),
                 })
             }
         })+

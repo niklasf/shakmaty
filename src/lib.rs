@@ -1,5 +1,5 @@
 // This file is part of the shakmaty library.
-// Copyright (C) 2017-2019 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2021 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -69,7 +69,6 @@
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
 
-mod errors;
 mod square;
 mod types;
 mod material;
@@ -79,6 +78,7 @@ mod setup;
 mod movelist;
 mod magics;
 mod perft;
+mod util;
 
 pub mod attacks;
 pub mod bitboard;
@@ -87,7 +87,6 @@ pub mod uci;
 pub mod san;
 pub mod variants;
 
-pub use crate::errors::{TryFromIntError, TryFromFloatError};
 pub use crate::square::{ParseSquareError, File, Rank, Square};
 pub use crate::types::{CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role};
 pub use crate::material::{Material, MaterialSide, ParseMaterialError};
