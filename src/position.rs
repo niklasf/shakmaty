@@ -56,6 +56,7 @@ impl fmt::Display for Outcome {
 }
 
 /// Error when trying to play an illegal move.
+#[derive(Debug)]
 pub struct PlayError<'a, P> {
     m: &'a Move,
     inner: P,
@@ -67,21 +68,13 @@ impl<'a, P> PlayError<'a, P> {
     }
 }
 
-impl<P> fmt::Debug for PlayError<'_, P> {
+impl<P: fmt::Debug> fmt::Display for PlayError<'_, P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PlayError")
-            .field("m", self.m)
-            .finish()
+        write!(f, "illegal move {:?} in {:?}", self.m, self.inner)
     }
 }
 
-impl<P> fmt::Display for PlayError<'_, P> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "illegal move".fmt(f)
-    }
-}
-
-impl<P> Error for PlayError<'_, P> {
+impl<P: fmt::Debug> Error for PlayError<'_, P> {
     fn description(&self) -> &str {
         "illegal move"
     }
