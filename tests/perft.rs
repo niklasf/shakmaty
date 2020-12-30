@@ -65,44 +65,26 @@ where
     }
 }
 
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_random() {
-    test_perft_file::<Chess>("tests/random.perft", 10_000);
+// macro for generating tests
+macro_rules! gen_tests {
+    ($($fn_name:ident, $t:ty, $path:tt, $num:expr,)+) => {
+        $(
+			#[test]
+			#[cfg_attr(miri, ignore)]			
+			fn $fn_name() {
+				test_perft_file::<$t>($path, $num);
+			}
+		)+
+    }
 }
 
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_tricky() {
-    test_perft_file::<Chess>("tests/tricky.perft", 100_0000);
-}
-
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_atomic() {
-    test_perft_file::<Atomic>("tests/atomic.perft", 1_000_000);
-}
-
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_antichess() {
-    test_perft_file::<Antichess>("tests/antichess.perft", 1_000_000);
-}
-
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_crazyhouse() {
-    test_perft_file::<Crazyhouse>("tests/crazyhouse.perft", 1_000_000);
-}
-
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_racingkings() {
-    test_perft_file::<RacingKings>("tests/racingkings.perft", 1_000_000);
-}
-
-#[test]
-#[cfg_attr(miri, ignore)]
-fn test_horde() {
-    test_perft_file::<Horde>("tests/horde.perft", 1_000_000);
+// generate tests
+gen_tests! { 	
+	test_random,      Chess,       "tests/random.perft",         10_000 ,
+	test_tricky,      Chess,       "tests/tricky.perft",        100_000 ,
+	test_atomic,      Atomic,      "tests/atomic.perft",      1_000_000 ,
+	test_antichess,   Antichess,   "tests/antichess.perft",   1_000_000 ,
+	test_crazyhouse,  Crazyhouse,  "tests/crazyhouse.perft",  1_000_000 ,
+	test_racingkings, RacingKings, "tests/racingkings.perft", 1_000_000 ,
+	test_horde,       Horde,       "tests/horde.perft",       1_000_000 ,
 }
