@@ -153,7 +153,7 @@
 //! [`Visitor`]: trait.Visitor.html
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![doc(html_root_url = "https://docs.rs/pgn-reader/0.15.0")]
+#![doc(html_root_url = "https://docs.rs/pgn-reader/0.16.0")]
 
 #![warn(missing_debug_implementations)]
 
