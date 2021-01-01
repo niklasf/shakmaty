@@ -11,14 +11,14 @@ keywords = ["chess", "pgn"]
 edition = "2018"
 
 [dependencies]
-memchr = "2.1"
+memchr = "2.2"
 btoi = "0.4"
-shakmaty = "0.16"
+shakmaty = "0.17"
 slice-deque = "0.3"
 
 [dev-dependencies]
-crossbeam = "0.7"
-bzip2 = "0.3"
+crossbeam = "0.8"
+bzip2 = "0.4"
 xz2 = "0.1"
 flate2 = "1.0"
 lz4 = "1.23"

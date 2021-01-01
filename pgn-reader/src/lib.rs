@@ -91,7 +91,7 @@
 //! ```
 //! use std::io;
 //!
-//! use shakmaty::{Chess, Position};
+//! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
 //!
 //! use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
@@ -113,7 +113,7 @@
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
-//!                 .and_then(|f| f.position().ok());
+//!                 .and_then(|f| f.position(CastlingMode::Standard).ok());
 //!
 //!             if let Some(pos) = pos {
 //!                 self.pos = pos;

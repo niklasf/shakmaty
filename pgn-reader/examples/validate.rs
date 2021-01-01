@@ -5,7 +5,7 @@ use std::env;
 use std::fs::File;
 use std::io;
 
-use shakmaty::{Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position};
 use shakmaty::fen::Fen;
 
 use pgn_reader::{Visitor, Skip, BufferedReader, RawHeader, SanPlus};
@@ -43,7 +43,7 @@ impl Visitor for Validator {
                 },
             };
 
-            self.pos = match fen.position() {
+            self.pos = match fen.position(CastlingMode::Chess960) {
                 Ok(pos) => pos,
                 Err(err) => {
                     eprintln!("illegal fen header in game {}: {} ({})", self.games, err, fen);

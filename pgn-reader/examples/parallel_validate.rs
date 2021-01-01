@@ -7,7 +7,7 @@ use std::mem;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use shakmaty::{Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position};
 use shakmaty::fen::Fen;
 
 use pgn_reader::{Visitor, Skip, BufferedReader, RawHeader, San, SanPlus};
@@ -73,7 +73,7 @@ impl Visitor for Validator {
                 },
             };
 
-            self.game.pos = match fen.position() {
+            self.game.pos = match fen.position(CastlingMode::Chess960) {
                 Ok(pos) => pos,
                 Err(err) => {
                     eprintln!("illegal fen header in game {}: {} ({})", self.games, err, fen);
