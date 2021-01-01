@@ -74,7 +74,7 @@ trait ReadPgn {
     }
 
     fn skip_until(&mut self, needle: u8) -> Result<(), Self::Err> {
-        while let Some(_) = self.fill_buffer_and_peek()? {
+        while self.fill_buffer_and_peek()?.is_some() {
             if let Some(pos) = memchr::memchr(needle, self.buffer()) {
                 self.consume(pos);
                 return Ok(());
@@ -586,7 +586,7 @@ impl<R: Read> BufferedReader<R> {
     /// * I/O error from the underlying reader.
     /// * Irrecoverable parser errors.
     pub fn read_all<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
-        while let Some(_) = self.read_game(visitor)? { }
+        while self.read_game(visitor)?.is_some() { }
         Ok(())
     }
 
