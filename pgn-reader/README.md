@@ -8,6 +8,19 @@ as a Rust library.
 [![crates.io](https://img.shields.io/crates/v/pgn-reader.svg)](https://crates.io/crates/pgn-reader)
 [![docs.rs](https://docs.rs/pgn-reader/badge.svg)](https://docs.rs/pgn-reader)
 
+State of the library
+--------------------
+
+:warning: The current implementation may be very slow on Windows
+([#17](https://github.com/niklasf/rust-pgn-reader/issues/17)) and has lost
+some performance compared to the `mmap` based approach from old versions
+([#12](https://github.com/niklasf/rust-pgn-reader/issues/12)). It is likely
+that these shortcomings will require a rewrite of all internals with a
+completely different strategy. Until then, I intend to do minimal maintenance,
+following `shakmaty` as required.
+
+Nonetheless, it is probably still one of the fastest PGN parsers around.
+
 Introduction
 ------------
 
