@@ -42,13 +42,21 @@ use crate::setup::SwapTurn;
 /// Discriminant of [`VariantPosition`].
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Variant {
+    /// See [`Chess`].
     Chess,
+    /// See [`Atomic`].
     Atomic,
+    /// See [`Antichess`].
     Antichess,
+    /// See [`KingOfTheHill`].
     KingOfTheHill,
+    /// See [`ThreeCheck`].
     ThreeCheck,
+    /// See [`Crazyhouse`].
     Crazyhouse,
+    /// See [`RacingKings`].
     RacingKings,
+    /// See [`Horde`].
     Horde,
 }
 
@@ -90,6 +98,7 @@ impl Variant {
 /// Dynamically dispatched chess variant [`Position`].
 ///
 /// [`Position`]: super::Position
+#[allow(missing_docs)]
 #[derive(Debug, Clone)]
 pub enum VariantPosition {
     Chess(Chess),
