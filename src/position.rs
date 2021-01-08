@@ -422,7 +422,7 @@ pub trait Position: Setup {
     /// # Errors
     ///
     /// Returns the unchanged position if the move is not legal.
-    fn play<'a>(mut self, m: &'a Move) -> Result<Self, PlayError<'a, Self>>
+    fn play(mut self, m: &Move) -> Result<Self, PlayError<'_, Self>>
     where
         Self: Sized,
     {

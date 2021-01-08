@@ -289,7 +289,7 @@ impl Board {
             if ch == b'/' && file == 8 {
                 file = 0;
                 rank -= 1;
-            } else if b'1' <= ch && ch <= b'8' {
+            } else if (b'1'..=b'8').contains(&ch) {
                 file += (ch - b'0') as i8;
                 if file > 8 {
                     return Err(ParseFenError::InvalidBoard);

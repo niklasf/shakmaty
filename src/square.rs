@@ -45,7 +45,7 @@ macro_rules! try_from_int_impl {
             #[allow(unused_comparisons)]
             #[allow(clippy::cast_lossless)]
             fn try_from(value: $t) -> Result<$type, Self::Error> {
-                if $lower <= value && value < $upper {
+                if ($lower..$upper).contains(&value) {
                     Ok(<$type>::new(value as u32))
                 } else {
                     Err(overflow_error())
@@ -90,7 +90,7 @@ impl File {
 
     #[inline]
     pub fn from_char(ch: char) -> Option<File> {
-        if 'a' <= ch && ch <= 'h' {
+        if ('a'..='h').contains(&ch) {
             Some(File::new(u32::from(ch as u8 - b'a')))
         } else {
             None
@@ -179,7 +179,7 @@ impl Rank {
 
     #[inline]
     pub fn from_char(ch: char) -> Option<Rank> {
-        if '1' <= ch && ch <= '8' {
+        if ('1'..='8').contains(&ch) {
             Some(Rank::new(u32::from(ch as u8 - b'1')))
         } else {
             None
@@ -415,6 +415,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
+    #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_horizontal(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b000_111) }
@@ -430,6 +431,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
+    #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_vertical(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_000) }
@@ -490,6 +492,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
+    #[allow(clippy::unusual_byte_groupings)]
     pub fn rotate_180(self) -> Square {
         // This is safe because all 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_111) }
