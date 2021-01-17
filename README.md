@@ -72,6 +72,8 @@ Stockfish put even less emphasis on this.
 Changelog
 ---------
 
+* 0.17.2
+  - Parse `Uci::to_move()` where king captures unmoved rook.
 * 0.17.1
   - Also reject checker aligned with king and en passant square with
     `PositionErrorKinds::IMPOSSIBLE_CHECK`.
