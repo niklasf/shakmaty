@@ -2303,7 +2303,7 @@ mod tests {
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3".parse::<Fen>()
             .expect("valid fen")
             .position(CastlingMode::Chess960)
-            .expect("validation position");
+            .expect("valid position");
         let swapped_fen = fen(&pos.swap_turn().expect("swap turn"));
         assert_eq!(swapped_fen, "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3");
     }

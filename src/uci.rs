@@ -305,7 +305,7 @@ impl Uci {
                     return Err(IllegalUciError)
                 }
 
-                if role == Role::King && pos.castling_rights().contains(to) {
+                if role == Role::King && (pos.castling_rights() & pos.us()).contains(to) {
                     Move::Castle { king: from, rook: to }
                 } else if role == Role::King &&
                           from == pos.turn().fold(Square::E1, Square::E8) &&
@@ -348,6 +348,7 @@ mod tests {
     use super::*;
     use crate::position::Chess;
     use crate::position::Crazyhouse;
+    use crate::fen::Fen;
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -378,5 +379,22 @@ mod tests {
         let p_at_d7 = "P@d7".parse::<Uci>().expect("P@d7+").to_move(&pos).expect("legal");
         pos.play_unchecked(&p_at_d7);
         assert!(pos.is_check());
+    }
+
+    #[test]
+    fn test_king_captures_ummoved_rook() {
+        let pos: Chess = "8/8/8/B2p3Q/2qPp1P1/b7/2P2PkP/4K2R b K - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position(CastlingMode::Standard)
+            .expect("valid position");
+        let uci = "g2h1".parse::<Uci>().expect("valid uci");
+        let m = uci.to_move(&pos).expect("legal uci");
+        assert_eq!(m, Move::Normal {
+            role: Role::King,
+            from: Square::G2,
+            capture: Some(Role::Rook),
+            to: Square::H1,
+            promotion: None,
+        });
     }
 }
