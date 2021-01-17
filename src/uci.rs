@@ -348,7 +348,7 @@ mod tests {
     use super::*;
     use crate::position::Chess;
     use crate::position::Crazyhouse;
-    use crate::fen::Fen;
+    use crate::fen::{fen, Fen};
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -396,5 +396,18 @@ mod tests {
             to: Square::H1,
             promotion: None,
         });
+    }
+
+    #[test]
+    fn test_uci_to_castles() {
+        let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1".parse::<Fen>()
+            .expect("valid fen")
+            .position(CastlingMode::Chess960)
+            .expect("valid position");
+        for uci in &["f2f4", "d7d6", "f1g3", "c8g4", "g1f2", "e8d8", "e1g1"] {
+            let m = uci.parse::<Uci>().expect("valid uci").to_move(&pos).expect("legal");
+            pos.play_unchecked(&m);
+        }
+        assert_eq!(fen(&pos), "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4");
     }
 }
