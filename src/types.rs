@@ -20,7 +20,7 @@ use std::num;
 
 use crate::util::overflow_error;
 use crate::square::{Square, File};
-use crate::color::Color;
+use crate::color::{Color, ByColor};
 
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
@@ -361,6 +361,34 @@ impl RemainingChecks {
 
     pub fn decrement(&mut self, color: Color) {
         *self.by_color_mut(color) = self.by_color(color).saturating_sub(1);
+    }
+
+    pub fn map<F, U>(&self, mut f: F) -> ByColor<U>
+    where
+        F: FnMut(u8) -> U
+    {
+        ByColor {
+            white: f(self.white),
+            black: f(self.black),
+        }
+    }
+}
+
+impl From<ByColor<u8>> for RemainingChecks {
+    fn from(by_color: ByColor<u8>) -> RemainingChecks {
+        RemainingChecks {
+            white: by_color.white,
+            black: by_color.black,
+        }
+    }
+}
+
+impl From<RemainingChecks> for ByColor<u8> {
+    fn from(remaining_checks: RemainingChecks) -> ByColor<u8> {
+        ByColor {
+            white: remaining_checks.white,
+            black: remaining_checks.black,
+        }
     }
 }
 
