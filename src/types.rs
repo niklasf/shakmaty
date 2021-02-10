@@ -16,91 +16,13 @@
 
 use std::fmt;
 use std::char;
-use std::ops;
 use std::num;
 
 use crate::util::overflow_error;
-use crate::square::{Square, File, Rank};
+use crate::square::{Square, File};
+use crate::color::Color;
 
-pub use self::Color::{Black, White};
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
-
-/// `White` or `Black`.
-#[allow(missing_docs)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-pub enum Color {
-    Black = 0,
-    White = 1,
-}
-
-impl Color {
-    pub fn from_char(ch: char) -> Option<Color> {
-        match ch {
-            'w' => Some(Color::White),
-            'b' => Some(Color::Black),
-            _ => None,
-        }
-    }
-
-    #[inline]
-    pub fn from_white(white: bool) -> Color {
-        if white { Color::White } else { Color::Black }
-    }
-
-    #[inline]
-    pub fn from_black(black: bool) -> Color {
-        if black { Color::Black } else { Color::White }
-    }
-
-    #[inline]
-    pub fn fold<T>(self, white: T, black: T) -> T {
-        match self {
-            Color::White => white,
-            Color::Black => black
-        }
-    }
-
-    #[inline]
-    pub fn is_white(self) -> bool { self == Color::White }
-    #[inline]
-    pub fn is_black(self) -> bool { self == Color::Black }
-
-    #[inline]
-    pub fn backrank(self) -> Rank { self.fold(Rank::First, Rank::Eighth) }
-
-    pub fn char(self) -> char { self.fold('w', 'b') }
-
-    #[inline]
-    pub fn pawn(self)   -> Piece { Pawn.of(self) }
-    #[inline]
-    pub fn knight(self) -> Piece { Knight.of(self) }
-    #[inline]
-    pub fn bishop(self) -> Piece { Bishop.of(self) }
-    #[inline]
-    pub fn rook(self)   -> Piece { Rook.of(self) }
-    #[inline]
-    pub fn queen(self)  -> Piece { Queen.of(self) }
-    #[inline]
-    pub fn king(self)   -> Piece { King.of(self) }
-}
-
-impl ops::Not for Color {
-    type Output = Color;
-
-    #[inline]
-    fn not(self) -> Color {
-        self.fold(Color::Black, Color::White)
-    }
-}
-
-impl ops::BitXor<bool> for Color {
-    type Output = Color;
-
-    #[inline]
-    fn bitxor(self, flip: bool) -> Color {
-        Color::from_white(self.is_white() ^ flip)
-    }
-}
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 ///

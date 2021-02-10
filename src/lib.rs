@@ -69,6 +69,7 @@
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
 
+mod color;
 mod square;
 mod types;
 mod material;
@@ -88,7 +89,8 @@ pub mod san;
 pub mod variants;
 
 pub use crate::square::{ParseSquareError, File, Rank, Square};
-pub use crate::types::{CastlingSide, CastlingMode, Color, Move, Piece, RemainingChecks, Role};
+pub use crate::color::{Color, ByColor};
+pub use crate::types::{CastlingSide, CastlingMode, Move, Piece, RemainingChecks, Role};
 pub use crate::material::{Material, MaterialSide, ParseMaterialError};
 pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};

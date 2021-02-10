@@ -22,7 +22,7 @@ use std::fmt::Write;
 use std::iter::FromIterator;
 
 use crate::square::{File, Rank, Square};
-use crate::types::Color;
+use crate::color::Color;
 
 /// A set of [squares](super::Square) represented by a 64 bit
 /// integer mask.

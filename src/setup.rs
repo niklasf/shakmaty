@@ -18,8 +18,9 @@ use std::num::NonZeroU32;
 
 use crate::square::{File, Rank, Square};
 use crate::bitboard::Bitboard;
+use crate::color::Color;
 use crate::attacks;
-use crate::types::{CastlingSide, CastlingMode, Color, RemainingChecks, Role};
+use crate::types::{CastlingSide, CastlingMode, RemainingChecks, Role};
 use crate::material::Material;
 use crate::board::Board;
 

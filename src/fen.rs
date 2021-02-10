@@ -72,7 +72,9 @@ use std::char;
 use std::error::Error;
 
 use crate::square::{File, Rank, Square};
-use crate::types::{Black, Color, Piece, RemainingChecks, White, CastlingMode};
+use crate::color::Color;
+use crate::color::Color::{Black, White};
+use crate::types::{Piece, RemainingChecks, CastlingMode};
 use crate::material::Material;
 use crate::bitboard::Bitboard;
 use crate::board::Board;

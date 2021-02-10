@@ -20,8 +20,9 @@ use std::iter::FromIterator;
 
 use crate::attacks;
 use crate::bitboard::Bitboard;
+use crate::color::{Color, ByColor};
 use crate::square::{File, Rank, Square};
-use crate::types::{Color, Piece, Role};
+use crate::types::{Piece, Role};
 use crate::material::{Material, MaterialSide};
 
 /// [`Piece`] positions on a board.
@@ -45,7 +46,7 @@ use crate::material::{Material, MaterialSide};
 /// ```
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
-    occupied_co: [Bitboard; 2], // indexed by Color
+    occupied_co: ByColor<Bitboard>,
     occupied: [Bitboard; 7], // all and pieces indexed by Role
     promoted: Bitboard,
 }
@@ -53,7 +54,10 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            occupied_co: [Bitboard(0xffff_0000_0000_0000), Bitboard(0xffff)],
+            occupied_co: ByColor {
+                black: Bitboard(0xffff_0000_0000_0000),
+                white: Bitboard(0xffff),
+            },
             occupied: [
                 Bitboard(0xffff_0000_0000_ffff),
                 Bitboard(0x00ff_0000_0000_ff00), // pawns
@@ -69,7 +73,7 @@ impl Board {
 
     pub fn empty() -> Board {
         Board {
-            occupied_co: [Bitboard(0), Bitboard(0)],
+            occupied_co: ByColor::default(),
             occupied: [Bitboard(0); 7],
             promoted: Bitboard(0),
         }
@@ -77,7 +81,10 @@ impl Board {
 
     pub fn racing_kings() -> Board {
         Board {
-            occupied_co: [Bitboard(0x0f0f), Bitboard(0xf0f0)],
+            occupied_co: ByColor {
+                black: Bitboard(0x0f0f),
+                white: Bitboard(0xf0f0),
+            },
             occupied: [
                 Bitboard(0xffff),
                 Bitboard(0x0000), // pawns
@@ -93,10 +100,10 @@ impl Board {
 
     pub fn horde() -> Board {
         Board {
-            occupied_co: [
-                Bitboard(0xffff_0000_0000_0000), // black
-                Bitboard(0x0000_0066_ffff_ffff), // white
-            ],
+            occupied_co: ByColor {
+                black: Bitboard(0xffff_0000_0000_0000),
+                white: Bitboard(0x0000_0066_ffff_ffff),
+            },
             occupied: [
                 Bitboard(0xffff_0066_ffff_ffff),
                 Bitboard(0x00ff_0066_ffff_ffff), // pawns
@@ -127,9 +134,9 @@ impl Board {
     pub fn kings(&self)   -> Bitboard { self.occupied[Role::King as usize] }
 
     #[inline]
-    pub fn white(&self) -> Bitboard { self.occupied_co[Color::White as usize] }
+    pub fn white(&self) -> Bitboard { self.occupied_co.white }
     #[inline]
-    pub fn black(&self) -> Bitboard { self.occupied_co[Color::Black as usize] }
+    pub fn black(&self) -> Bitboard { self.occupied_co.black }
 
     #[inline]
     pub fn promoted(&self) -> Bitboard { self.promoted }
@@ -204,8 +211,8 @@ impl Board {
 
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
-        self.occupied_co[0].discard(sq);
-        self.occupied_co[1].discard(sq);
+        self.occupied_co.black.discard(sq);
+        self.occupied_co.white.discard(sq);
         self.occupied[0].discard(sq);
         self.occupied[1].discard(sq);
         self.occupied[2].discard(sq);
@@ -229,12 +236,12 @@ impl Board {
 
     #[inline]
     pub fn by_color(&self, color: Color) -> Bitboard {
-        self.occupied_co[color as usize]
+        *self.occupied_co.by_color(color)
     }
 
     #[inline]
     fn by_color_mut(&mut self, color: Color) -> &mut Bitboard {
-        &mut self.occupied_co[color as usize]
+        self.occupied_co.by_color_mut(color)
     }
 
     #[inline]
@@ -405,7 +412,7 @@ impl ::std::iter::FusedIterator for Pieces {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Black, White};
+    use crate::color::Color::{Black, White};
 
     #[test]
     fn test_piece_at() {

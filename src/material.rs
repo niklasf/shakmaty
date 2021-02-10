@@ -22,7 +22,8 @@ use std::mem;
 use std::str::FromStr;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
-use crate::types::{Color, Piece, Role, ROLES};
+use crate::color::Color;
+use crate::types::{Piece, Role, ROLES};
 
 /// Error when parsing an invalid material key.
 #[derive(Clone, Debug)]
