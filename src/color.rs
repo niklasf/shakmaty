@@ -105,6 +105,7 @@ pub struct ByColor<T> {
 }
 
 impl<T> ByColor<T> {
+    #[inline]
     pub fn new_with<F>(self, mut init: F) -> ByColor<T>
     where
         F: FnMut(Color) -> T,
@@ -115,6 +116,7 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn by_color(&self, color: Color) -> &T {
         match color {
             Color::White => &self.white,
@@ -122,6 +124,7 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn by_color_mut(&mut self, color: Color) -> &mut T {
         match color {
             Color::White => &mut self.white,
@@ -129,6 +132,7 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn into_color(self, color: Color) -> T {
         match color {
             Color::White => self.white,
@@ -136,6 +140,7 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByColor<U>
     where
         F: FnMut(T) -> U,
