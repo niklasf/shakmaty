@@ -22,7 +22,7 @@ use std::mem;
 use std::str::FromStr;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
-use crate::color::Color;
+use crate::color::{Color, ByColor};
 use crate::types::{Piece, Role, ROLES};
 
 /// Error when parsing an invalid material key.
@@ -363,6 +363,34 @@ impl Material {
         }
 
         fen
+    }
+
+    pub fn map<F, U>(&self, mut f: F) -> ByColor<U>
+    where
+        F: FnMut(&MaterialSide) -> U
+    {
+        ByColor {
+            white: f(&self.white),
+            black: f(&self.black),
+        }
+    }
+}
+
+impl From<ByColor<MaterialSide>> for Material {
+    fn from(by_color: ByColor<MaterialSide>) -> Material {
+        Material {
+            white: by_color.white,
+            black: by_color.black,
+        }
+    }
+}
+
+impl From<Material> for ByColor<MaterialSide> {
+    fn from(material: Material) -> ByColor<MaterialSide> {
+        ByColor {
+            white: material.white,
+            black: material.black,
+        }
     }
 }
 
