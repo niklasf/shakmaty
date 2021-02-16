@@ -1,6 +1,6 @@
 use iai::black_box;
 
-use shakmaty::{perft, CastlingMode, Chess, Move, MoveList, Position, Role, Square, Bitboard};
+use shakmaty::{perft, CastlingMode, Chess, Move, Position, Role, Square, Bitboard};
 use shakmaty::san::{San, ParseSanError};
 use shakmaty::fen::Fen;
 

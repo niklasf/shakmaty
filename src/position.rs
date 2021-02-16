@@ -2130,9 +2130,7 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("legal position");
 
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
-        assert_eq!(moves.len(), 218);
+        assert_eq!(pos.legal_moves().len(), 218);
     }
 
     #[test]
@@ -2143,8 +2141,7 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("valid position");
 
-        let mut moves = MoveList::new();
-        pos.san_candidates(Role::Rook, Square::D3, &mut moves);
+        let moves = pos.san_candidates(Role::Rook, Square::D3);
 
         assert_eq!(moves[0], Move::Normal {
             role: Role::Rook,
@@ -2165,8 +2162,7 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("valid position");
 
-        let mut moves = MoveList::new();
-        pos.legal_moves(&mut moves);
+        let moves = pos.legal_moves();
         assert!(moves.iter().all(|m| m.role() == Role::Pawn));
         assert!(moves.iter().all(|m| m.is_promotion()));
     }

@@ -26,12 +26,12 @@ use arrayvec::{Array, ArrayVec};
 /// # Example
 ///
 /// ```
-/// use shakmaty::{Chess, Position, MoveList};
+/// use shakmaty::{Chess, Position, Role};
 ///
 /// let pos = Chess::default();
-/// let mut legals = MoveList::new();
-/// pos.legal_moves(&mut legals);
-/// assert_eq!(legals.len(), 20);
+/// let mut moves = pos.legal_moves();
+/// moves.retain(|m| m.role() == Role::Pawn);
+/// assert_eq!(moves.len(), 16);
 /// ```
 pub type MoveList = ArrayVec<[Move; 512]>;
 
