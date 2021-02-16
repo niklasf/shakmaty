@@ -242,7 +242,7 @@ impl San {
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
-        let legals = match *self {
+        match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| match *m {
@@ -258,24 +258,22 @@ impl San {
                         promotion.is_none(),
                     _ => false,
                 });
-                legals
+                legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
+                    if others.is_empty() {
+                        Ok(m.clone())
+                    } else {
+                        Err(SanError::AmbiguousSan)
+                    }
+                })
             },
-            San::Castle(side) => pos.castling_moves(side),
+            San::Castle(side) => pos.castling_moves(side).first().cloned().ok_or(SanError::IllegalSan),
             San::Put { role, to } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| matches!(*m, Move::Put { .. }));
-                legals
+                legals.first().cloned().ok_or(SanError::IllegalSan)
             },
-            San::Null => return Err(SanError::IllegalSan),
-        };
-
-        legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
-            if others.is_empty() {
-                Ok(m.clone())
-            } else {
-                Err(SanError::AmbiguousSan)
-            }
-        })
+            San::Null => Err(SanError::IllegalSan),
+        }
     }
 
     pub fn disambiguate(m: &Move, moves: &MoveList) -> San {
