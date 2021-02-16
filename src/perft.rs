@@ -45,7 +45,7 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
     if depth < 1 {
         1
     } else {
-        let moves = pos.legals();
+        let moves = pos.legal_moves();
 
         if depth == 1 {
             moves.len() as u64

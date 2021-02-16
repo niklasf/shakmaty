@@ -226,13 +226,11 @@ impl San {
 
     /// Converts a move to Standard Algebraic Notation.
     pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
-        let mut legals = MoveList::new();
-
-        match *m {
+        let legals = match *m {
             Move::Normal { role, to, .. } if role != Role::Pawn =>
-                pos.san_candidates(role, to, &mut legals),
-            _ => (),
-        }
+                pos.san_candidates(role, to),
+            _ => MoveList::new(),
+        };
 
         San::disambiguate(m, &legals)
     }
@@ -244,11 +242,9 @@ impl San {
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
-        let mut legals = MoveList::new();
-
-        match *self {
+        let legals = match *self {
             San::Normal { role, file, rank, capture, to, promotion } => {
-                pos.san_candidates(role, to, &mut legals);
+                let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| match *m {
                     Move::Normal { from, capture: c, promotion: p, .. } =>
                         file.map_or(true, |f| f == from.file()) &&
@@ -262,14 +258,16 @@ impl San {
                         promotion.is_none(),
                     _ => false,
                 });
+                legals
             },
-            San::Castle(side) => pos.castling_moves(side, &mut legals),
+            San::Castle(side) => pos.castling_moves(side),
             San::Put { role, to } => {
-                pos.san_candidates(role, to, &mut legals);
+                let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| matches!(*m, Move::Put { .. }));
+                legals
             },
             San::Null => return Err(SanError::IllegalSan),
-        }
+        };
 
         legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
             if others.is_empty() {
@@ -533,17 +531,16 @@ impl SanPlus {
     }
 
     pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
-        let mut moves = MoveList::new();
-        match *m {
+        let moves = match *m {
             Move::Normal { role, to, .. } | Move::Put { role, to } =>
-                pos.san_candidates(role, to, &mut moves),
+                pos.san_candidates(role, to),
             Move::EnPassant { to, .. } =>
-                pos.san_candidates(Role::Pawn, to, &mut moves),
+                pos.san_candidates(Role::Pawn, to),
             Move::Castle { king, rook } if king.file() < rook.file() =>
-                pos.castling_moves(CastlingSide::KingSide, &mut moves),
+                pos.castling_moves(CastlingSide::KingSide),
             Move::Castle { .. } =>
-                pos.castling_moves(CastlingSide::QueenSide, &mut moves),
-        }
+                pos.castling_moves(CastlingSide::QueenSide),
+        };
         SanPlus {
             san: San::disambiguate(m, &moves),
             suffix: if moves.contains(m) {

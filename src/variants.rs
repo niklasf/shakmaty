@@ -253,12 +253,12 @@ impl Setup for VariantPosition {
 }
 
 impl Position for VariantPosition {
-    fn legal_moves(&self, moves: &mut MoveList) { self.borrow().legal_moves(moves) }
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) { self.borrow().san_candidates(role, to, moves) }
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) { self.borrow().castling_moves(side, moves) }
-    fn en_passant_moves(&self, moves: &mut MoveList) { self.borrow().en_passant_moves(moves) }
-    fn capture_moves(&self, moves: &mut MoveList) { self.borrow().capture_moves(moves) }
-    fn promotion_moves(&self, moves: &mut MoveList) { self.borrow().promotion_moves(moves) }
+    fn legal_moves(&self) -> MoveList { self.borrow().legal_moves() }
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList { self.borrow().san_candidates(role, to) }
+    fn castling_moves(&self, side: CastlingSide) -> MoveList { self.borrow().castling_moves(side) }
+    fn en_passant_moves(&self) -> MoveList { self.borrow().en_passant_moves() }
+    fn capture_moves(&self) -> MoveList { self.borrow().capture_moves() }
+    fn promotion_moves(&self) -> MoveList { self.borrow().promotion_moves() }
     fn is_irreversible(&self, m: &Move) -> bool { self.borrow().is_irreversible(m) }
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.borrow().king_attackers(square, attacker, occupied) }
     fn castles(&self) -> &Castles { self.borrow().castles() }

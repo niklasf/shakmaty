@@ -25,9 +25,7 @@ fn bench_generate_moves() {
         .position(CastlingMode::Chess960)
         .expect("legal position");
 
-    let mut moves = MoveList::new();
-    black_box(&pos).legal_moves(&mut moves);
-    assert_eq!(moves.len(), 39);
+    assert_eq!(black_box(&pos).legal_moves().len(), 39);
 }
 
 fn bench_play_unchecked() -> Chess {
@@ -57,8 +55,7 @@ fn bench_san_candidates() {
         .position(CastlingMode::Chess960)
         .expect("legal position");
 
-    let mut moves = MoveList::new();
-    black_box(&pos).san_candidates(Role::Knight, Square::B5, &mut moves);
+    let moves = black_box(&pos).san_candidates(Role::Knight, Square::B5);
     assert_eq!(moves.len(), 2);
 }
 

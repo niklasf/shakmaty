@@ -211,37 +211,42 @@ pub trait FromSetup: Sized {
 /// implementation. Extends [`Setup`].
 pub trait Position: Setup {
     /// Collects all legal moves in an existing buffer.
-    fn legal_moves(&self, moves: &mut MoveList);
+    fn legal_moves(&self) -> MoveList;
 
     /// Generates a subset of legal moves: All piece moves and drops of type
     /// `role` to the square `to`, excluding castling moves.
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
-        self.legal_moves(moves);
-        filter_san_candidates(role, to, moves);
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
+        let mut moves = self.legal_moves();
+        filter_san_candidates(role, to, &mut moves);
+        moves
     }
 
     /// Generates legal castling moves.
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
-        self.legal_moves(moves);
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
+        let mut moves = self.legal_moves();
         moves.retain(|m| m.castling_side().map_or(false, |s| side == s));
+        moves
     }
 
     /// Generates en passant moves.
-    fn en_passant_moves(&self, moves: &mut MoveList) {
-        self.legal_moves(moves);
+    fn en_passant_moves(&self) -> MoveList {
+        let mut moves = self.legal_moves();
         moves.retain(|m| m.is_en_passant());
+        moves
     }
 
     /// Generates capture moves.
-    fn capture_moves(&self, moves: &mut MoveList) {
-        self.legal_moves(moves);
+    fn capture_moves(&self) -> MoveList {
+        let mut moves = self.legal_moves();
         moves.retain(|m| m.is_capture());
+        moves
     }
 
     /// Generate promotion moves.
-    fn promotion_moves(&self, moves: &mut MoveList) {
-        self.legal_moves(moves);
+    fn promotion_moves(&self) -> MoveList {
+        let mut moves = self.legal_moves();
         moves.retain(|m| m.is_promotion());
+        moves
     }
 
     /// Tests if a move is irreversible.
@@ -333,26 +338,18 @@ pub trait Position: Setup {
         Self::from_setup(&SwapTurn(self), mode)
     }
 
-    /// Generates legal moves.
-    fn legals(&self) -> MoveList {
-        let mut legals = MoveList::new();
-        self.legal_moves(&mut legals);
-        legals
-    }
-
     /// Tests a move for legality.
     fn is_legal(&self, m: &Move) -> bool {
-        let mut moves = MoveList::new();
-        match *m {
+        let moves = match *m {
             Move::Normal { role, to, .. } | Move::Put { role, to } =>
-                self.san_candidates(role, to, &mut moves),
+                self.san_candidates(role, to),
             Move::EnPassant { to, .. } =>
-                self.san_candidates(Role::Pawn, to, &mut moves),
+                self.san_candidates(Role::Pawn, to),
             Move::Castle { king, rook } if king.file() < rook.file() =>
-                self.castling_moves(CastlingSide::KingSide, &mut moves),
+                self.castling_moves(CastlingSide::KingSide),
             Move::Castle { .. } =>
-                self.castling_moves(CastlingSide::QueenSide, &mut moves),
-        }
+                self.castling_moves(CastlingSide::QueenSide),
+        };
         moves.contains(m)
     }
 
@@ -370,24 +367,12 @@ pub trait Position: Setup {
 
     /// Tests for checkmate.
     fn is_checkmate(&self) -> bool {
-        if self.checkers().is_empty() {
-            return false;
-        }
-
-        let mut legals = MoveList::new();
-        self.legal_moves(&mut legals);
-        legals.is_empty()
+        !self.checkers().is_empty() && self.legal_moves().is_empty()
     }
 
     /// Tests for stalemate.
     fn is_stalemate(&self) -> bool {
-        if !self.checkers().is_empty() || self.is_variant_end() {
-            false
-        } else {
-            let mut legals = MoveList::new();
-            self.legal_moves(&mut legals);
-            legals.is_empty()
-        }
+        self.checkers().is_empty() && !self.is_variant_end() && self.legal_moves().is_empty()
     }
 
     /// Tests if both sides
@@ -401,9 +386,7 @@ pub trait Position: Setup {
     /// [insufficient material](Position::is_insufficient_material) or
     /// [variant end](Position::is_variant_end).
     fn is_game_over(&self) -> bool {
-        let mut legals = MoveList::new();
-        self.legal_moves(&mut legals);
-        legals.is_empty() || self.is_insufficient_material()
+        self.legal_moves().is_empty() || self.is_insufficient_material()
     }
 
     /// The outcome of the game, or `None` if the game is not over.
@@ -536,56 +519,61 @@ impl Position for Chess {
         &self.castles
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
 
-        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
 
         let checkers = self.checkers();
         if checkers.is_empty() {
             let target = !self.us();
-            gen_non_king(self, target, moves);
-            gen_safe_king(self, king, target, moves);
-            gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
-            gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
+            gen_non_king(self, target, &mut moves);
+            gen_safe_king(self, king, target, &mut moves);
+            gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, &mut moves);
+            gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, &mut moves);
         } else {
-            evasions(self, king, checkers, moves);
+            evasions(self, king, checkers, &mut moves);
         }
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
+
+        moves
     }
 
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
-        moves.clear();
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
+        let mut moves = MoveList::new();
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
-        gen_castling_moves(self, &self.castles, king, side, moves);
+        gen_castling_moves(self, &self.castles, king, side, &mut moves);
+        moves
     }
 
-    fn en_passant_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn en_passant_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
-        if gen_en_passant(self.board(), self.turn(), self.ep_square, moves) {
+        if gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves) {
             let king = self.board().king_of(self.turn()).expect("king in standard chess");
             let blockers = slider_blockers(self.board(), self.them(), king);
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
+
+        moves
     }
 
-    fn promotion_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn promotion_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
         let checkers = self.checkers();
 
         if checkers.is_empty() {
-            gen_pawn_moves(self, Bitboard::BACKRANKS, moves);
+            gen_pawn_moves(self, Bitboard::BACKRANKS, &mut moves);
         } else {
-            evasions(self, king, checkers, moves);
+            evasions(self, king, checkers, &mut moves);
             moves.retain(|m| m.is_promotion());
         }
 
@@ -593,10 +581,12 @@ impl Position for Chess {
         if blockers.any() {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
+
+        moves
     }
 
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
-        moves.clear();
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
+        let mut moves = MoveList::new();
 
         let king = self.board().king_of(self.turn()).expect("king in standard chess");
         let checkers = self.checkers();
@@ -612,8 +602,8 @@ impl Position for Chess {
 
             if !self.us().contains(to) {
                 match role {
-                    Role::Pawn => gen_pawn_moves(self, Bitboard::from_square(to), moves),
-                    Role::King => gen_safe_king(self, king, Bitboard::from_square(to), moves),
+                    Role::Pawn => gen_pawn_moves(self, Bitboard::from_square(to), &mut moves),
+                    Role::King => gen_safe_king(self, king, Bitboard::from_square(to), &mut moves),
                     _ => {}
                 }
 
@@ -628,19 +618,21 @@ impl Position for Chess {
                 }
             }
         } else {
-            evasions(self, king, checkers, moves);
-            filter_san_candidates(role, to, moves);
+            evasions(self, king, checkers, &mut moves);
+            filter_san_candidates(role, to, &mut moves);
         }
 
         let has_ep =
             role == Role::Pawn &&
             Some(EpSquare(to)) == self.ep_square &&
-            gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+            gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
             moves.swap_retain(|m| is_safe(self, king, m, blockers));
         }
+
+        moves
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
@@ -785,15 +777,15 @@ impl Position for Atomic {
         }
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
-        gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
-        gen_non_king(self, !self.us(), moves);
-        KingTag::gen_moves(self, !self.board().occupied(), moves);
+        gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
+        gen_non_king(self, !self.us(), &mut moves);
+        KingTag::gen_moves(self, !self.board().occupied(), &mut moves);
         if let Some(king) = self.board().king_of(self.turn()) {
-            gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
-            gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
+            gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, &mut moves);
+            gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, &mut moves);
         }
 
         // Atomic move generation could be implemented more efficiently.
@@ -808,6 +800,8 @@ impl Position for Atomic {
                 false
             }
         });
+
+        moves
     }
 
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
@@ -962,28 +956,32 @@ impl Position for Antichess {
         &self.castles
     }
 
-    fn en_passant_moves(&self, moves: &mut MoveList) {
-        moves.clear();
-        gen_en_passant(self.board(), self.turn, self.ep_square, moves);
+    fn en_passant_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
+        gen_en_passant(self.board(), self.turn, self.ep_square, &mut moves);
+        moves
     }
 
-    fn capture_moves(&self, moves: &mut MoveList) {
-        self.en_passant_moves(moves); // clears move list
+    fn capture_moves(&self) -> MoveList {
+        let mut moves = self.en_passant_moves();
         let them = self.them();
-        gen_non_king(self, them, moves);
-        add_king_promotions(moves);
-        KingTag::gen_moves(self, them, moves);
+        gen_non_king(self, them, &mut moves);
+        add_king_promotions(&mut moves);
+        KingTag::gen_moves(self, them, &mut moves);
+        moves
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        self.capture_moves(moves); // clears move list
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = self.capture_moves();
 
         if moves.is_empty() {
             // No compulsory captures. Generate everything else.
-            gen_non_king(self, !self.board().occupied(), moves);
-            add_king_promotions(moves);
-            KingTag::gen_moves(self, !self.board().occupied(), moves);
+            gen_non_king(self, !self.board().occupied(), &mut moves);
+            add_king_promotions(&mut moves);
+            KingTag::gen_moves(self, !self.board().occupied(), &mut moves);
         }
+
+        moves
     }
 
     fn king_attackers(&self, _square: Square, _attacker: Color, _occupied: Bitboard) -> Bitboard {
@@ -1053,35 +1051,35 @@ impl Position for KingOfTheHill {
         self.chess.castles()
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
+    fn legal_moves(&self) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.legal_moves(moves);
+            self.chess.legal_moves()
         }
     }
 
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.castling_moves(side, moves);
+            self.chess.castling_moves(side)
         }
     }
 
-    fn en_passant_moves(&self, moves: &mut MoveList) {
+    fn en_passant_moves(&self) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.en_passant_moves(moves);
+            self.chess.en_passant_moves()
         }
     }
 
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.san_candidates(role, to, moves);
+            self.chess.san_candidates(role, to)
         }
     }
 
@@ -1151,35 +1149,35 @@ impl Position for ThreeCheck {
         self.chess.castles()
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
+    fn legal_moves(&self) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.legal_moves(moves);
+            self.chess.legal_moves()
         }
     }
 
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.castling_moves(side, moves);
+            self.chess.castling_moves(side)
         }
     }
 
-    fn en_passant_moves(&self, moves: &mut MoveList) {
+    fn en_passant_moves(&self) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.en_passant_moves(moves);
+            self.chess.en_passant_moves()
         }
     }
 
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
         if self.is_variant_end() {
-            moves.clear();
+            MoveList::new()
         } else {
-            self.chess.san_candidates(role, to, moves);
+            self.chess.san_candidates(role, to)
         }
     }
 
@@ -1303,8 +1301,8 @@ impl Position for Crazyhouse {
         self.chess.castles()
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        self.chess.legal_moves(moves);
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = self.chess.legal_moves();
 
         let pocket = self.our_pocket();
         let targets = self.legal_put_squares();
@@ -1322,24 +1320,28 @@ impl Position for Crazyhouse {
                 moves.push(Move::Put { role: Role::Pawn, to });
             }
         }
+
+        moves
     }
 
-    fn castling_moves(&self, side: CastlingSide, moves: &mut MoveList) {
-        self.chess.castling_moves(side, moves);
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
+        self.chess.castling_moves(side)
     }
 
-    fn en_passant_moves(&self, moves: &mut MoveList) {
-        self.chess.en_passant_moves(moves);
+    fn en_passant_moves(&self) -> MoveList {
+        self.chess.en_passant_moves()
     }
 
-    fn san_candidates(&self, role: Role, to: Square, moves: &mut MoveList) {
-        self.chess.san_candidates(role, to, moves);
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
+        let mut moves = self.chess.san_candidates(role, to);
 
         if self.our_pocket().by_role(role) > 0 && self.legal_put_squares().contains(to) &&
            (role != Role::Pawn || !Bitboard::BACKRANKS.contains(to))
         {
             moves.push(Move::Put { role, to });
         }
+
+        moves
     }
 
     fn is_irreversible(&self, m: &Move) -> bool {
@@ -1454,18 +1456,18 @@ impl Position for RacingKings {
                 &mut self.fullmoves, m);
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
         if self.is_variant_end() {
-            return;
+            return moves;
         }
 
         // Generate all legal moves (no castling, no ep).
         let target = !self.us();
-        gen_non_king(self, target, moves);
+        gen_non_king(self, target, &mut moves);
         let king = self.board().king_of(self.turn()).expect("king in racingkings");
-        gen_safe_king(self, king, target, moves);
+        gen_safe_king(self, king, target, &mut moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() {
@@ -1479,6 +1481,8 @@ impl Position for RacingKings {
             after.play_unchecked(m);
             !after.is_check()
         });
+
+        moves
     }
 
     fn castles(&self) -> &Castles {
@@ -1636,23 +1640,23 @@ impl Position for Horde {
                 &mut self.fullmoves, m);
     }
 
-    fn legal_moves(&self, moves: &mut MoveList) {
-        moves.clear();
+    fn legal_moves(&self) -> MoveList {
+        let mut moves = MoveList::new();
 
         let king = self.board().king_of(self.turn());
-        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
 
         let checkers = self.checkers();
         if checkers.is_empty() {
             let target = !self.us();
-            gen_non_king(self, target, moves);
+            gen_non_king(self, target, &mut moves);
             if let Some(king) = king {
-                gen_safe_king(self, king, target, moves);
-                gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
-                gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
+                gen_safe_king(self, king, target, &mut moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, &mut moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, &mut moves);
             }
         } else {
-            evasions(self, king.expect("king in check"), checkers, moves);
+            evasions(self, king.expect("king in check"), checkers, &mut moves);
         }
 
         if let Some(king) = king {
@@ -1661,6 +1665,8 @@ impl Position for Horde {
                 moves.swap_retain(|m| is_safe(self, king, m, blockers));
             }
         }
+
+        moves
     }
 
     fn castles(&self) -> &Castles {
@@ -2046,9 +2052,7 @@ fn add_king_promotions(moves: &mut MoveList) {
 }
 
 fn relevant_ep<P: Position>(EpSquare(ep_square): EpSquare, pos: &P) -> Option<Square> {
-    let mut moves = MoveList::new();
-    pos.en_passant_moves(&mut moves);
-    if moves.is_empty() {
+    if pos.en_passant_moves().is_empty() {
         None
     } else {
         Some(ep_square)
