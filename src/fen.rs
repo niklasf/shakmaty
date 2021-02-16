@@ -453,7 +453,7 @@ impl Fen {
                 .ok_or(ParseFenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
             (&board_part[..split_point], Some(pocket_part))
-        } else if let Some(split_point) = board_part.iter().enumerate().filter_map(|(idx, ch)| Some(idx).filter(|_| *ch == b'/')).nth(7) {
+        } else if let Some(split_point) = board_part.iter().enumerate().filter_map(|(idx, ch)| (*ch == b'/').then(|| idx)).nth(7) {
             // format: .../pocket
             (&board_part[..split_point], Some(&board_part[(split_point + 1)..]))
         } else {
