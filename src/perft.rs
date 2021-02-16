@@ -15,7 +15,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::position::Position;
-use crate::movelist::MoveList;
 
 /// Counts legal move paths of a given length.
 ///
