@@ -21,7 +21,7 @@ bench = false
 [dependencies]
 bitflags = "1.2"
 btoi = "0.4"
-arrayvec = "0.5"
+arrayvec = { git = "https://github.com/niklasf/arrayvec", branch = "optimize-retain" }
 
 [dev-dependencies]
 iai = "0.1"

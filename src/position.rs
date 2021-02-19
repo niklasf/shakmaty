@@ -29,7 +29,7 @@ use crate::square::{Rank, Square};
 use crate::types::{CastlingSide, CastlingMode, Move, Piece, RemainingChecks, Role};
 use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
-use crate::movelist::{ArrayVecExt, MoveList};
+use crate::movelist::MoveList;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -539,7 +539,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
 
         moves
@@ -558,7 +558,7 @@ impl Position for Chess {
         if gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves) {
             let king = self.board().king_of(self.turn()).expect("king in standard chess");
             let blockers = slider_blockers(self.board(), self.them(), king);
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
 
         moves
@@ -579,7 +579,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
 
         moves
@@ -629,7 +629,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
 
         moves
@@ -790,7 +790,7 @@ impl Position for Atomic {
 
         // Atomic move generation could be implemented more efficiently.
         // For simplicity we filter all pseudo legal moves.
-        moves.swap_retain(|m| {
+        moves.retain(|m| {
             let mut after = self.clone();
             after.play_unchecked(m);
             if let Some(our_king) = after.board().king_of(self.turn()) {
@@ -1471,12 +1471,12 @@ impl Position for RacingKings {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() {
-            moves.swap_retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, m, blockers));
         }
 
         // Do not allow giving check. This could be implemented more
         // efficiently.
-        moves.swap_retain(|m| {
+        moves.retain(|m| {
             let mut after = self.clone();
             after.play_unchecked(m);
             !after.is_check()
@@ -1662,7 +1662,7 @@ impl Position for Horde {
         if let Some(king) = king {
             let blockers = slider_blockers(self.board(), self.them(), king);
             if blockers.any() || has_ep {
-                moves.swap_retain(|m| is_safe(self, king, m, blockers));
+                moves.retain(|m| is_safe(self, king, m, blockers));
             }
         }
 
