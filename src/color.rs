@@ -15,6 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::ops;
+use std::mem;
 
 use crate::types::Piece;
 use crate::types::Role;
@@ -140,6 +141,17 @@ impl<T> ByColor<T> {
         }
     }
 
+    pub fn flip(&mut self) {
+        mem::swap(&mut self.white, &mut self.black);
+    }
+
+    pub fn into_flipped(self) -> ByColor<T> {
+        ByColor {
+            white: self.black,
+            black: self.white,
+        }
+    }
+
     #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByColor<U>
     where
@@ -186,6 +198,25 @@ impl<T> ByColor<T> {
             white: &self.white,
             black: &self.black,
         }
+    }
+}
+
+impl<T: PartialOrd> ByColor<T> {
+    pub fn normalize(&mut self) {
+        if self.white < self.black {
+            self.flip();
+        }
+    }
+
+    pub fn into_normalized(mut self) -> ByColor<T> {
+        self.normalize();
+        self
+    }
+}
+
+impl<T: PartialEq> ByColor<T> {
+    pub fn is_symmetric(&self) -> bool {
+        self.white == self.black
     }
 }
 

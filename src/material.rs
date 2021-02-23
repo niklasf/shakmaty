@@ -18,7 +18,6 @@ use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
 use std::error::Error;
 use std::iter::FromIterator;
-use std::mem;
 use std::str::FromStr;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
@@ -252,55 +251,11 @@ impl Sub for MaterialSide {
 }
 
 /// The material configuration of both sides.
-#[derive(Clone, Default, Eq, PartialEq, Hash)]
-pub struct Material {
-    pub white: MaterialSide,
-    pub black: MaterialSide,
-}
+pub type Material = ByColor<MaterialSide>;
 
 impl Material {
     pub fn new() -> Material {
         Material::default()
-    }
-
-    pub fn flip(&mut self) {
-        mem::swap(&mut self.white, &mut self.black);
-    }
-
-    pub fn flipped(&self) -> Material {
-        let mut material = self.clone();
-        material.flip();
-        material
-    }
-
-    pub fn normalize(&mut self) {
-        if self.white < self.black {
-            self.flip();
-        }
-    }
-
-    pub fn normalized(&self) -> Material {
-        let mut material = self.clone();
-        material.normalize();
-        material
-    }
-
-    pub fn is_symmetric(&self) -> bool {
-        self.white == self.black
-    }
-
-    pub fn by_color(&self, color: Color) -> &MaterialSide {
-        match color {
-            Color::Black => &self.black,
-            Color::White => &self.white,
-        }
-    }
-
-    pub fn by_color_mut(&mut self, color: Color) -> &mut MaterialSide {
-        match color {
-            Color::Black => &mut self.black,
-            Color::White => &mut self.white,
-        }
     }
 
     pub fn by_piece(&self, piece: Piece) -> u8 {
@@ -364,45 +319,11 @@ impl Material {
 
         fen
     }
-
-    pub fn map<F, U>(&self, mut f: F) -> ByColor<U>
-    where
-        F: FnMut(&MaterialSide) -> U
-    {
-        ByColor {
-            white: f(&self.white),
-            black: f(&self.black),
-        }
-    }
-}
-
-impl From<ByColor<MaterialSide>> for Material {
-    fn from(by_color: ByColor<MaterialSide>) -> Material {
-        Material {
-            white: by_color.white,
-            black: by_color.black,
-        }
-    }
-}
-
-impl From<Material> for ByColor<MaterialSide> {
-    fn from(material: Material) -> ByColor<MaterialSide> {
-        ByColor {
-            white: material.white,
-            black: material.black,
-        }
-    }
 }
 
 impl fmt::Display for Material {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}v{}", self.white, self.black)
-    }
-}
-
-impl fmt::Debug for Material {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}v{:?}", self.white, self.black)
     }
 }
 
