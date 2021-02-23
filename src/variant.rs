@@ -25,7 +25,8 @@
 
 use std::num::NonZeroU32;
 
-pub use crate::position::{Chess, Atomic, Antichess, KingOfTheHill, ThreeCheck, Crazyhouse, RacingKings, Horde};
+pub use crate::position::Chess;
+pub use crate::position::variant::{Atomic, Antichess, KingOfTheHill, ThreeCheck, Crazyhouse, RacingKings, Horde};
 
 use crate::board::Board;
 use crate::color::{ByColor, Color};

@@ -347,7 +347,6 @@ impl Move {
 mod tests {
     use super::*;
     use crate::position::Chess;
-    use crate::position::Crazyhouse;
     use crate::fen::{fen, Fen};
 
     #[test]
@@ -367,6 +366,8 @@ mod tests {
 
     #[test]
     pub fn test_uci_to_crazyhouse() {
+        use crate::position::variant::Crazyhouse;
+
         let mut pos = Crazyhouse::default();
         let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
         pos.play_unchecked(&e4);
