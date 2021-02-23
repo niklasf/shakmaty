@@ -189,9 +189,7 @@ impl Bitboard {
         if self.is_empty() {
             None
         } else {
-            // This is safe, because a non-zero u64 can have at most
-            // 63 trailing zeros.
-            Some(unsafe { Square::new_unchecked(self.0.trailing_zeros()) })
+            Some(Square::new(self.0.trailing_zeros()))
         }
     }
 
@@ -207,9 +205,7 @@ impl Bitboard {
         if self.is_empty() {
             None
         } else {
-            // This is safe because a non-zero u64 has between 0 and
-            // 63 (included) leading zeros.
-            Some(unsafe { Square::new_unchecked(63 - self.0.leading_zeros()) })
+            Some(Square::new(63 - self.0.leading_zeros()))
         }
     }
 
