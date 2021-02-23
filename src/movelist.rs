@@ -21,7 +21,8 @@ use arrayvec::ArrayVec;
 /// A container for moves that can be stored inline on the stack.
 ///
 /// The capacity is limited, but there is enough space to hold the legal
-/// moves of any chess position, including any of the supported chess variants.
+/// moves of any chess position, including any of the supported chess variants,
+/// if enabled.
 ///
 /// # Example
 ///
@@ -33,4 +34,9 @@ use arrayvec::ArrayVec;
 /// moves.retain(|m| m.role() == Role::Pawn);
 /// assert_eq!(moves.len(), 16);
 /// ```
-pub type MoveList = ArrayVec<[Move; 512]>;
+pub type MoveList = MoveListImpl;
+
+#[cfg(feature = "variant")]
+type MoveListImpl = ArrayVec<[Move; 512]>;
+#[cfg(not(feature = "variant"))]
+type MoveListImpl = ArrayVec<[Move; 256]>;
