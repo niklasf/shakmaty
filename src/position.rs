@@ -59,24 +59,25 @@ impl fmt::Display for Outcome {
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
-pub struct PlayError<'a, P> {
-    m: &'a Move,
+pub struct PlayError<P> {
+    m: Move,
     inner: P,
 }
 
-impl<'a, P> PlayError<'a, P> {
+impl<P> PlayError<P> {
+    /// Returns the unchanged position.
     pub fn into_inner(self) -> P {
         self.inner
     }
 }
 
-impl<P: fmt::Debug> fmt::Display for PlayError<'_, P> {
+impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "illegal move {:?} in {:?}", self.m, self.inner)
     }
 }
 
-impl<P: fmt::Debug> Error for PlayError<'_, P> {
+impl<P: fmt::Debug> Error for PlayError<P> {
     fn description(&self) -> &str {
         "illegal move"
     }
@@ -406,8 +407,8 @@ pub trait Position: Setup {
     ///
     /// # Errors
     ///
-    /// Returns the unchanged position if the move is not legal.
-    fn play(mut self, m: &Move) -> Result<Self, PlayError<'_, Self>>
+    /// Returns a [`PlayError`] if the move is not legal.
+    fn play(mut self, m: &Move) -> Result<Self, PlayError<Self>>
     where
         Self: Sized,
     {
@@ -416,7 +417,7 @@ pub trait Position: Setup {
             Ok(self)
         } else {
             Err(PlayError {
-                m,
+                m: m.clone(),
                 inner: self,
             })
         }
