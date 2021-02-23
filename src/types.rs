@@ -357,12 +357,18 @@ impl RemainingChecks {
     }
 }
 
-// TODO: Implement for more integer types.
-impl From<RemainingChecks> for u8 {
-    fn from(RemainingChecks(checks): RemainingChecks) -> u8 {
-        checks
+macro_rules! int_from_remaining_checks_impl {
+    ($($t:ty)+) => {
+        $(impl From<RemainingChecks> for $t {
+            #[inline]
+            fn from(RemainingChecks(checks): RemainingChecks) -> $t {
+                checks as $t
+            }
+        })+
     }
 }
+
+int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl fmt::Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
