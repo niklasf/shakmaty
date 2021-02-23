@@ -23,21 +23,20 @@
 //! [`FromSetup`]: super::FromSetup
 //! [`Position`]: super::Position
 
+use std::fmt;
 use std::num::NonZeroU32;
 
-pub use crate::Chess;
-pub use crate::position::Atomic;
-pub use crate::position::Antichess;
-pub use crate::position::KingOfTheHill;
-pub use crate::position::ThreeCheck;
-pub use crate::position::Crazyhouse;
-pub use crate::position::RacingKings;
-pub use crate::position::Horde;
+pub use crate::position::{Chess, Atomic, Antichess, KingOfTheHill, ThreeCheck, Crazyhouse, RacingKings, Horde};
 
-use crate::{Board, ByColor, Color, Bitboard, Square, Material, RemainingChecks};
-use crate::{Role, Move, MoveList, CastlingSide, CastlingMode, Outcome, Castles};
-use crate::{Setup, FromSetup, Position, PositionError};
-use crate::setup::SwapTurn;
+use crate::board::Board;
+use crate::color::{ByColor, Color};
+use crate::bitboard::Bitboard;
+use crate::square::Square;
+use crate::material::Material;
+use crate::types::{Role, Move, CastlingSide, CastlingMode};
+use crate::position::{Outcome, Position, PositionError, FromSetup};
+use crate::setup::{Castles, Setup, SwapTurn};
+use crate::movelist::MoveList;
 
 /// Discriminant of [`VariantPosition`].
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -266,6 +265,46 @@ impl Position for VariantPosition {
     fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
     fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
     fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
+}
+
+/// The number of checks the respective side needs to give in order to win
+/// (in a game of Three-Check).
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+pub struct RemainingChecks(pub u8);
+
+impl Default for RemainingChecks {
+    fn default() -> RemainingChecks {
+        RemainingChecks(3)
+    }
+}
+
+impl RemainingChecks {
+    pub fn is_zero(self) -> bool {
+        self.0 == 0
+    }
+
+    pub fn minus_one(self) -> RemainingChecks {
+        RemainingChecks(self.0.saturating_sub(1))
+    }
+}
+
+macro_rules! int_from_remaining_checks_impl {
+    ($($t:ty)+) => {
+        $(impl From<RemainingChecks> for $t {
+            #[inline]
+            fn from(RemainingChecks(checks): RemainingChecks) -> $t {
+                checks as $t
+            }
+        })+
+    }
+}
+
+int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+impl fmt::Display for ByColor<RemainingChecks> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}+{}", self.white.0, self.black.0)
+    }
 }
 
 #[cfg(test)]

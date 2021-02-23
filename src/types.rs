@@ -20,7 +20,7 @@ use std::num;
 
 use crate::util::overflow_error;
 use crate::square::{Square, File};
-use crate::color::{Color, ByColor};
+use crate::color::Color;
 
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
@@ -333,46 +333,6 @@ impl fmt::Display for Move {
                 write!(f, "@{}", to)
             },
         }
-    }
-}
-
-/// The number of checks the respective side needs to give in order to win
-/// (in a game of Three-Check).
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
-pub struct RemainingChecks(pub u8);
-
-impl Default for RemainingChecks {
-    fn default() -> RemainingChecks {
-        RemainingChecks(3)
-    }
-}
-
-impl RemainingChecks {
-    pub fn is_zero(self) -> bool {
-        self.0 == 0
-    }
-
-    pub fn minus_one(self) -> RemainingChecks {
-        RemainingChecks(self.0.saturating_sub(1))
-    }
-}
-
-macro_rules! int_from_remaining_checks_impl {
-    ($($t:ty)+) => {
-        $(impl From<RemainingChecks> for $t {
-            #[inline]
-            fn from(RemainingChecks(checks): RemainingChecks) -> $t {
-                checks as $t
-            }
-        })+
-    }
-}
-
-int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
-
-impl fmt::Display for ByColor<RemainingChecks> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}+{}", self.white.0, self.black.0)
     }
 }
 
