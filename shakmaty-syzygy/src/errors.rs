@@ -124,7 +124,7 @@ impl<T> ProbeResultExt<T> for ProbeResult<T> {
     fn ctx(self, metric: Metric, material: &Material) -> SyzygyResult<T> {
         self.map_err(|error| SyzygyError::ProbeFailed {
             metric,
-            material: material.normalized(),
+            material: material.clone().into_normalized(),
             error,
         })
     }

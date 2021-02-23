@@ -25,7 +25,7 @@ use once_cell::sync::OnceCell;
 use rustc_hash::FxHashMap;
 use positioned_io::RandomAccessFile;
 
-use shakmaty::{Material, Move, MoveList, Position, Role};
+use shakmaty::{Material, Move, Position, Role};
 
 use crate::errors::{ProbeResultExt as _, SyzygyError, SyzygyResult};
 use crate::table::{DtzTable, WdlTable};
@@ -137,23 +137,23 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self.wdl.get(key).or_else(|| self.wdl.get(&key.flipped())) {
+        if let Some(&(ref path, ref table)) = self.wdl.get(key).or_else(|| self.wdl.get(&key.clone().into_flipped())) {
             table.get_or_try_init(|| WdlTable::open(path, key)).ctx(Metric::Wdl, key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
-                material: key.normalized(),
+                material: key.clone().into_normalized(),
             })
         }
     }
 
     fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self.dtz.get(key).or_else(|| self.dtz.get(&key.flipped())) {
+        if let Some(&(ref path, ref table)) = self.dtz.get(key).or_else(|| self.dtz.get(&key.clone().into_flipped())) {
             table.get_or_try_init(|| DtzTable::open(path, key)).ctx(Metric::Dtz, key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
-                material: key.normalized(),
+                material: key.clone().into_normalized(),
             })
         }
     }
@@ -209,9 +209,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Build list of successor positions.
-        let mut legals = MoveList::new();
-        pos.legal_moves(&mut legals);
-        let with_after = legals.into_iter().map(|m| {
+        let with_after = pos.legal_moves().into_iter().map(|m| {
             let mut after = pos.clone();
             after.play_unchecked(&m);
             WithAfter { m, after }
@@ -296,8 +294,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         let mut best_capture = Wdl::Loss;
         let mut best_ep = Wdl::Loss;
 
-        let mut legals = MoveList::new();
-        pos.legal_moves(&mut legals);
+        let legals = pos.legal_moves();
 
         for m in legals.iter().filter(|m| m.is_capture()) {
             let mut after = pos.clone();
@@ -373,10 +370,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // for positions without ep rights.
         assert!(pos.ep_square().is_none());
 
-        let mut captures = MoveList::new();
-        pos.capture_moves(&mut captures);
-
-        for m in captures {
+        for m in pos.capture_moves() {
             let mut after = pos.clone();
             after.play_unchecked(&m);
             let v = -self.probe_ab_no_ep(&after, -beta, -alpha)?;
@@ -405,9 +399,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         } else {
             // The opponent only has one piece left. If we need to capture it
             // this immediately ends the game.
-            let mut captures = MoveList::new();
-            pos.capture_moves(&mut captures);
-            if !captures.is_empty() {
+            if !pos.capture_moves().is_empty() {
                 return Ok((Wdl::Loss, ProbeState::ZeroingBestMove));
             }
         }
@@ -417,9 +409,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // For 6 piece endgames (or if indicated by the threats flag) also
         // explore threat moves that will force a capture on following move.
         if threats || pos.board().occupied().count() >= 6 {
-            let mut moves = MoveList::new();
-            pos.legal_moves(&mut moves);
-            for threat in moves {
+            for threat in pos.legal_moves() {
                 if threat.role() != Role::Pawn {
                     let mut after = pos.clone();
                     after.play_unchecked(&threat);
@@ -451,10 +441,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         // Explore capture moves in antichess variants. If captures exists they
         // are also the only moves, because captures are compulsory.
-        let mut captures = MoveList::new();
-        pos.capture_moves(&mut captures);
+        let captures = pos.capture_moves();
 
-        for m in &captures {
+        for m in pos.capture_moves() {
             let mut after = pos.clone();
             after.play_unchecked(&m);
 
@@ -527,8 +516,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         // If winning, check for a winning pawn move. No need to look at
         // captures again, they were already handled above.
         if wdl >= DecisiveWdl::CursedWin {
-            let mut pawn_advances = MoveList::new();
-            self.pos.legal_moves(&mut pawn_advances);
+            let mut pawn_advances = self.pos.legal_moves();
             pawn_advances.retain(|m| !m.is_capture() && m.role() == Role::Pawn);
 
             for m in &pawn_advances {
@@ -548,8 +536,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         }
 
         // We have to probe the other side by doing a 1-ply search.
-        let mut moves = MoveList::new();
-        self.pos.legal_moves(&mut moves);
+        let mut moves = self.pos.legal_moves();
         moves.retain(|m| !m.is_zeroing());
 
         let mut best = if wdl >= DecisiveWdl::CursedWin {

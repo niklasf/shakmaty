@@ -52,6 +52,7 @@
 //!
 //! # Cargo features
 //!
+//! * `variant`: Enables support for Antichess and Atomic chess.
 //! * `backtrace`: Provides a `backtrace` field on `ProbeError::CorruptedTable`.
 //!   This may be useful to identify issues with corrupted tablebase files or
 //!   to debug the probing code. Currently requires nightly Rust.

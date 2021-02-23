@@ -5,7 +5,7 @@ use structopt::StructOpt;
 
 use shakmaty::fen::{fen, Fen};
 use shakmaty::san::SanPlus;
-use shakmaty::{CastlingMode, Chess, Color, MoveList, Position, Setup};
+use shakmaty::{CastlingMode, Chess, Color, Position, Setup};
 use shakmaty_syzygy::{Dtz, SyzygyError, Tablebase, Wdl};
 
 #[derive(Debug, StructOpt)]
@@ -67,15 +67,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => "1/2-1/2",
     };
 
-    let mut legals = MoveList::new();
     let mut winning_sans = Vec::new();
     let mut drawing_sans = Vec::new();
     let mut losing_sans = Vec::new();
-    pos.legal_moves(&mut legals);
-    for m in &legals {
-        let san = SanPlus::from_move(pos.clone(), m);
+    for m in pos.legal_moves() {
+        let san = SanPlus::from_move(pos.clone(), &m);
         let mut after = pos.clone();
-        after.play_unchecked(m);
+        after.play_unchecked(&m);
         let dtz_after = tablebase.probe_dtz(&after)?;
         let list = match real_wdl(&tablebase, &after, dtz_after)? {
             Wdl::Win => &mut losing_sans,

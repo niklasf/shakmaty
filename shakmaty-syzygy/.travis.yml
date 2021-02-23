@@ -2,16 +2,22 @@ language: rust
 sudo: false
 
 rust:
- - stable
- - beta
- - nightly
+  - stable
+  - beta
+  - nightly
 
 cache:
   directories:
-   - tables
+    - tables
 
 before_install:
- - ./download-test-tables.sh
+  - ./download-test-tables.sh
+
+test:
+  - cargo test
+  - cargo test --all-features
+  - cargo doc
+  - cargo doc --all-features
 
 before_cache:
- - rm -f tables/**/*.txt
+  - rm -f tables/**/*.txt

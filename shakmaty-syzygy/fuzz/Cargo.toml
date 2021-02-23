@@ -8,7 +8,7 @@ edition = "2018"
 cargo-fuzz = true
 
 [dependencies]
-shakmaty = "0.17"
+shakmaty = "0.18"
 shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
 

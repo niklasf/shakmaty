@@ -1,6 +1,5 @@
 use shakmaty::fen::Fen;
-use shakmaty::variants::{Atomic, Chess, Antichess};
-use shakmaty::{CastlingMode, Position, FromSetup};
+use shakmaty::{Chess, CastlingMode, Position, FromSetup};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
 fn test_csv<S>(path: &str)
@@ -50,12 +49,14 @@ fn test_chess() {
     test_csv::<Chess>("tests/chess.csv");
 }
 
+#[cfg(feature = "variant")]
 #[test]
 fn test_atomic() {
-    test_csv::<Atomic>("tests/atomic.csv");
+    test_csv::<shakmaty::variant::Atomic>("tests/atomic.csv");
 }
 
+#[cfg(feature = "variant")]
 #[test]
 fn test_antichess() {
-    test_csv::<Antichess>("tests/antichess.csv");
+    test_csv::<shakmaty::variant::Antichess>("tests/antichess.csv");
 }
