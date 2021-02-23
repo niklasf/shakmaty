@@ -72,7 +72,7 @@ use std::char;
 use std::error::Error;
 
 use crate::square::{File, Rank, Square};
-use crate::color::Color;
+use crate::color::{ByColor, Color};
 use crate::color::Color::{Black, White};
 use crate::types::{Piece, RemainingChecks, CastlingMode};
 use crate::material::Material;
@@ -194,7 +194,7 @@ impl FenOpts {
 
         let checks = setup.remaining_checks().map_or("".to_owned(), |r| {
             if self.scid {
-                format!(" +{}+{}", 3u8.saturating_sub(r.white), 3u8.saturating_sub(r.black))
+                format!(" +{}+{}", 3u8.saturating_sub(u8::from(r.white)), 3u8.saturating_sub(u8::from(r.black)))
             } else {
                 format!(" {}", r)
             }
@@ -222,8 +222,8 @@ impl FenOpts {
                     setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
                     setup.halfmoves(),
                     setup.fullmoves(),
-                    3u8.saturating_sub(checks.white),
-                    3u8.saturating_sub(checks.black))
+                    3u8.saturating_sub(u8::from(checks.white)),
+                    3u8.saturating_sub(u8::from(checks.black)))
             }
             _ => format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
         }
@@ -322,27 +322,25 @@ impl Board {
     }
 }
 
-impl RemainingChecks {
-    fn from_ascii(s: &[u8]) -> Option<RemainingChecks> {
-        let mut split = s.splitn(3, |ch| *ch == b'+');
-        Some(match (split.next(), split.next(), split.next()) {
-            (Some(b""), Some(white_given), Some(black_given)) => {
-                // format: +0+0
-                RemainingChecks {
-                    white: 3u8.checked_sub(btoi::btou(white_given).ok()?)?,
-                    black: 3u8.checked_sub(btoi::btoi(black_given).ok()?)?,
-                }
+fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
+    let mut split = s.splitn(3, |ch| *ch == b'+');
+    Some(match (split.next(), split.next(), split.next()) {
+        (Some(b""), Some(white_given), Some(black_given)) => {
+            // format: +0+0
+            ByColor {
+                white: RemainingChecks(3u8.checked_sub(btoi::btou(white_given).ok()?)?),
+                black: RemainingChecks(3u8.checked_sub(btoi::btoi(black_given).ok()?)?),
             }
-            (Some(white), Some(black), None) => {
-                // format: 3+3
-                RemainingChecks {
-                    white: btoi::btou(white).ok()?,
-                    black: btoi::btou(black).ok()?,
-                }
+        }
+        (Some(white), Some(black), None) => {
+            // format: 3+3
+            ByColor {
+                white: RemainingChecks(btoi::btou(white).ok()?),
+                black: RemainingChecks(btoi::btou(black).ok()?),
             }
-            _ => return None
-        })
-    }
+        }
+        _ => return None
+    })
 }
 
 impl FromStr for Board {
@@ -367,7 +365,7 @@ pub struct Fen {
     pub turn: Color,
     pub castling_rights: Bitboard,
     pub ep_square: Option<Square>,
-    pub remaining_checks: Option<RemainingChecks>,
+    pub remaining_checks: Option<ByColor<RemainingChecks>>,
     pub halfmoves: u32,
     pub fullmoves: NonZeroU32,
 }
@@ -378,7 +376,7 @@ impl Setup for Fen {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
     fn ep_square(&self) -> Option<Square> { self.ep_square }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.remaining_checks.as_ref() }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.remaining_checks.as_ref() }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
@@ -504,7 +502,7 @@ impl Fen {
         }
 
         let halfmoves_part = if let Some(checks_part) = parts.next() {
-            if let Some(remaining_checks) = RemainingChecks::from_ascii(checks_part) {
+            if let Some(remaining_checks) = parse_remaining_checks(checks_part) {
                 result.remaining_checks = Some(remaining_checks);
                 parts.next()
             } else {
@@ -527,7 +525,7 @@ impl Fen {
         let last_part = if let Some(checks_part) = parts.next() {
             if result.remaining_checks.is_some() {
                 Some(checks_part) // got checks earlier
-            } else if let Some(remaining_checks) = RemainingChecks::from_ascii(checks_part) {
+            } else if let Some(remaining_checks) = parse_remaining_checks(checks_part) {
                 result.remaining_checks = Some(remaining_checks);
                 parts.next()
             } else {
@@ -645,7 +643,7 @@ mod tests {
     #[test]
     fn test_remaining_checks() {
         let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42".parse().expect("valid fen");
-        let expected = RemainingChecks { white: 1, black: 2 };
+        let expected = ByColor { white: RemainingChecks(1), black: RemainingChecks(2) };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 12);
         assert_eq!(fen.fullmoves.get(), 42);
@@ -655,7 +653,7 @@ mod tests {
     fn test_lichess_remaining_checks() {
         let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0";
         let fen: Fen = input.parse().expect("valid fen");
-        let expected = RemainingChecks { white: 3, black: 3 };
+        let expected = ByColor { white: RemainingChecks(3), black: RemainingChecks(3) };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 1);
         assert_eq!(fen.fullmoves.get(), 2);

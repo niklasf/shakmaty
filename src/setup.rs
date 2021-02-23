@@ -18,7 +18,7 @@ use std::num::NonZeroU32;
 
 use crate::square::{File, Rank, Square};
 use crate::bitboard::Bitboard;
-use crate::color::Color;
+use crate::color::{ByColor, Color};
 use crate::attacks;
 use crate::types::{CastlingSide, CastlingMode, RemainingChecks, Role};
 use crate::material::Material;
@@ -59,7 +59,7 @@ pub trait Setup {
     fn ep_square(&self) -> Option<Square>;
 
     /// Remaining checks in chess variants like Three-Check.
-    fn remaining_checks(&self) -> Option<&RemainingChecks>;
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>>;
 
     /// Number of half-moves since the last
     /// [capture or pawn move](super::Move::is_zeroing()).
@@ -195,7 +195,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     fn pockets(&self) -> Option<&Material> { self.0.pockets() }
     fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
     fn ep_square(&self) -> Option<Square> { None }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.0.remaining_checks() }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.0.remaining_checks() }
     fn halfmoves(&self) -> u32 { self.0.halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.0.fullmoves() }
 }

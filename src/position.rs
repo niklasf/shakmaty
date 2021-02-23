@@ -23,7 +23,7 @@ use bitflags::bitflags;
 use crate::attacks;
 use crate::board::Board;
 use crate::bitboard::Bitboard;
-use crate::color::Color;
+use crate::color::{ByColor, Color};
 use crate::color::Color::{Black, White};
 use crate::square::{Rank, Square};
 use crate::types::{CastlingSide, CastlingMode, Move, Piece, RemainingChecks, Role};
@@ -497,7 +497,7 @@ impl Setup for Chess {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
@@ -700,7 +700,7 @@ impl Setup for Atomic {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
@@ -904,7 +904,7 @@ impl Setup for Antichess {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
@@ -1028,7 +1028,7 @@ impl Setup for KingOfTheHill {
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves() }
 }
@@ -1107,7 +1107,7 @@ impl Position for KingOfTheHill {
 #[derive(Clone, Debug, Default)]
 pub struct ThreeCheck {
     chess: Chess,
-    remaining_checks: RemainingChecks,
+    remaining_checks: ByColor<RemainingChecks>,
 }
 
 impl Setup for ThreeCheck {
@@ -1116,7 +1116,7 @@ impl Setup for ThreeCheck {
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { Some(&self.remaining_checks) }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { Some(&self.remaining_checks) }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves }
 }
@@ -1126,8 +1126,8 @@ impl FromSetup for ThreeCheck {
         let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
         let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
-        if remaining_checks.white == 0 && remaining_checks.black == 0 {
-            errors |= PositionErrorKinds::VARIANT
+        if remaining_checks.all(|remaining| remaining.is_zero()) {
+            errors |= PositionErrorKinds::VARIANT;
         }
 
         PositionError {
@@ -1142,7 +1142,8 @@ impl Position for ThreeCheck {
         let turn = self.chess.turn();
         self.chess.play_unchecked(m);
         if self.is_check() {
-            self.remaining_checks.decrement(turn);
+            let checks = self.remaining_checks.by_color_mut(turn);
+            *checks = RemainingChecks::minus_one(*checks);
         }
     }
 
@@ -1192,19 +1193,12 @@ impl Position for ThreeCheck {
     }
 
     fn is_variant_end(&self) -> bool {
-        self.remaining_checks.white == 0 || self.remaining_checks.black == 0
+        self.remaining_checks.any(|remaining| remaining.is_zero())
     }
 
     fn variant_outcome(&self) -> Option<Outcome> {
-        if self.remaining_checks.white == 0 && self.remaining_checks.black == 0 {
-            Some(Outcome::Draw)
-        } else if self.remaining_checks.white == 0 {
-            Some(Outcome::Decisive { winner: White })
-        } else if self.remaining_checks.black == 0 {
-            Some(Outcome::Decisive { winner: Black })
-        } else {
-            None
-        }
+        self.remaining_checks.find(|remaining| remaining.is_zero())
+            .map(|winner| Outcome::Decisive { winner })
     }
 }
 
@@ -1245,7 +1239,7 @@ impl Setup for Crazyhouse {
     fn turn(&self) -> Color { self.chess.turn() }
     fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.chess.ep_square() }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.chess.halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.chess.fullmoves() }
 }
@@ -1404,7 +1398,7 @@ impl Setup for RacingKings {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { Bitboard(0) }
     fn ep_square(&self) -> Option<Square> { None }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }
@@ -1565,7 +1559,7 @@ impl Setup for Horde {
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.ep_square.and_then(|ep| relevant_ep(ep, self)) }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { None }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { None }
     fn halfmoves(&self) -> u32 { self.halfmoves }
     fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
 }

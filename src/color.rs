@@ -152,29 +152,29 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn any<F>(self, mut predicate: F) -> bool
+    pub fn any<F>(&self, mut predicate: F) -> bool
     where
-        F: FnMut(T) -> bool,
+        F: FnMut(&T) -> bool,
     {
-        predicate(self.white) || predicate(self.black)
+        predicate(&self.white) || predicate(&self.black)
     }
 
     #[inline]
-    pub fn all<F>(self, mut predicate: F) -> bool
+    pub fn all<F>(&self, mut predicate: F) -> bool
     where
-        F: FnMut(T) -> bool,
+        F: FnMut(&T) -> bool,
     {
-        predicate(self.white) && predicate(self.black)
+        predicate(&self.white) && predicate(&self.black)
     }
 
     #[inline]
-    pub fn find<F>(self, mut predicate: F) -> Option<Color>
+    pub fn find<F>(&self, mut predicate: F) -> Option<Color>
     where
-        F: FnMut(T) -> bool,
+        F: FnMut(&T) -> bool,
     {
-        if predicate(self.white) {
+        if predicate(&self.white) {
             Some(Color::White)
-        } else if predicate(self.black) {
+        } else if predicate(&self.black) {
             Some(Color::Black)
         } else {
             None

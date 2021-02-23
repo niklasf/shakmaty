@@ -34,7 +34,7 @@ pub use crate::position::Crazyhouse;
 pub use crate::position::RacingKings;
 pub use crate::position::Horde;
 
-use crate::{Board, Color, Bitboard, Square, Material, RemainingChecks};
+use crate::{Board, ByColor, Color, Bitboard, Square, Material, RemainingChecks};
 use crate::{Role, Move, MoveList, CastlingSide, CastlingMode, Outcome, Castles};
 use crate::{Setup, FromSetup, Position, PositionError};
 use crate::setup::SwapTurn;
@@ -247,7 +247,7 @@ impl Setup for VariantPosition {
     fn turn(&self) -> Color { self.borrow().turn() }
     fn castling_rights(&self) -> Bitboard { self.borrow().castling_rights() }
     fn ep_square(&self) -> Option<Square> { self.borrow().ep_square() }
-    fn remaining_checks(&self) -> Option<&RemainingChecks> { self.borrow().remaining_checks() }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.borrow().remaining_checks() }
     fn halfmoves(&self) -> u32 { self.borrow().halfmoves() }
     fn fullmoves(&self) -> NonZeroU32 { self.borrow().fullmoves() }
 }

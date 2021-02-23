@@ -338,63 +338,35 @@ impl fmt::Display for Move {
 
 /// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-Check).
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
-pub struct RemainingChecks {
-    pub white: u8,
-    pub black: u8,
-}
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+pub struct RemainingChecks(pub u8);
 
 impl Default for RemainingChecks {
     fn default() -> RemainingChecks {
-        RemainingChecks { white: 3, black: 3 }
+        RemainingChecks(3)
     }
 }
 
 impl RemainingChecks {
-    pub fn by_color(&self, color: Color) -> u8 {
-        color.fold(self.white, self.black)
+    pub fn is_zero(self) -> bool {
+        self.0 == 0
     }
 
-    pub fn by_color_mut(&mut self, color: Color) -> &mut u8 {
-        color.fold(&mut self.white, &mut self.black)
-    }
-
-    pub fn decrement(&mut self, color: Color) {
-        *self.by_color_mut(color) = self.by_color(color).saturating_sub(1);
-    }
-
-    pub fn map<F, U>(&self, mut f: F) -> ByColor<U>
-    where
-        F: FnMut(u8) -> U
-    {
-        ByColor {
-            white: f(self.white),
-            black: f(self.black),
-        }
+    pub fn minus_one(self) -> RemainingChecks {
+        RemainingChecks(self.0.saturating_sub(1))
     }
 }
 
-impl From<ByColor<u8>> for RemainingChecks {
-    fn from(by_color: ByColor<u8>) -> RemainingChecks {
-        RemainingChecks {
-            white: by_color.white,
-            black: by_color.black,
-        }
+// TODO: Implement for more integer types.
+impl From<RemainingChecks> for u8 {
+    fn from(RemainingChecks(checks): RemainingChecks) -> u8 {
+        checks
     }
 }
 
-impl From<RemainingChecks> for ByColor<u8> {
-    fn from(remaining_checks: RemainingChecks) -> ByColor<u8> {
-        ByColor {
-            white: remaining_checks.white,
-            black: remaining_checks.black,
-        }
-    }
-}
-
-impl fmt::Display for RemainingChecks {
+impl fmt::Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}+{}", self.white, self.black)
+        write!(f, "{}+{}", self.white.0, self.black.0)
     }
 }
 
