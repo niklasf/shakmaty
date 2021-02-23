@@ -25,6 +25,3 @@ arrayvec = "0.5"
 
 [dev-dependencies]
 iai = "0.1"
-
-[badges]
-travis-ci = { repository = "niklasf/shakmaty", branch = "master" }
