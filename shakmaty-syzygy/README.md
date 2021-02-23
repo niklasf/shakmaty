@@ -65,6 +65,8 @@ Documentation
 Changelog
 ---------
 
+* 0.15.0
+  - Update shakmaty to `0.18`.
 * 0.14.0
   - Update shakmaty to `0.17`.
   - Fix panic when lead pawns are corrupted.
