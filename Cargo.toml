@@ -29,3 +29,7 @@ arrayvec = "0.5"
 
 [dev-dependencies]
 iai = "0.1"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docs_rs"]

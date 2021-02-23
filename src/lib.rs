@@ -63,11 +63,17 @@
 //!
 //! Also supports [FEN](fen), [SAN](san) and
 //! [UCI](uci) formats for positions and moves.
+//!
+//! # Feature flags
+//!
+//! * `variant`: Enables `shakmaty::variant` module for common chess variants.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.17.2")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
+
+#![cfg_attr(docs_rs, feature(doc_cfg))]
 
 mod color;
 mod square;
@@ -88,6 +94,7 @@ pub mod uci;
 pub mod san;
 
 #[cfg(feature = "variant")]
+#[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
 pub use crate::square::{ParseSquareError, File, Rank, Square};
