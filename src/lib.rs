@@ -86,7 +86,7 @@ pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
-pub mod variants;
+pub mod variant;
 
 pub use crate::square::{ParseSquareError, File, Rank, Square};
 pub use crate::color::{Color, ByColor};

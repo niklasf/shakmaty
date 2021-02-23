@@ -16,7 +16,7 @@
 
 use shakmaty::fen::Fen;
 use shakmaty::perft;
-use shakmaty::variants::{Antichess, Atomic, Crazyhouse, Horde, RacingKings};
+use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings};
 use shakmaty::{CastlingMode, Chess, FromSetup, Position};
 
 use std::fs::File;
