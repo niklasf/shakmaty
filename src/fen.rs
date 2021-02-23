@@ -74,13 +74,12 @@ use std::error::Error;
 use crate::square::{File, Rank, Square};
 use crate::color::{ByColor, Color};
 use crate::color::Color::{Black, White};
-use crate::types::{Piece, CastlingMode};
+use crate::types::{Piece, CastlingMode, RemainingChecks};
 use crate::material::Material;
 use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::setup::Setup;
 use crate::position::{FromSetup, PositionError};
-use crate::variant::RemainingChecks;
 
 /// FEN formatting options.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]

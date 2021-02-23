@@ -26,11 +26,10 @@ use crate::bitboard::Bitboard;
 use crate::color::{ByColor, Color};
 use crate::color::Color::{Black, White};
 use crate::square::{Rank, Square};
-use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role};
+use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingChecks};
 use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
-use crate::variant::RemainingChecks;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

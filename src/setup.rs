@@ -20,10 +20,9 @@ use crate::square::{File, Rank, Square};
 use crate::bitboard::Bitboard;
 use crate::color::{ByColor, Color};
 use crate::attacks;
-use crate::types::{CastlingSide, CastlingMode, Role};
+use crate::types::{CastlingSide, CastlingMode, Role, RemainingChecks};
 use crate::material::Material;
 use crate::board::Board;
-use crate::variant::RemainingChecks;
 
 /// A not necessarily legal position.
 pub trait Setup {
