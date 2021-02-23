@@ -30,7 +30,7 @@ use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role};
 use crate::material::{Material, MaterialSide};
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
-use crate::variants::RemainingChecks;
+use crate::variant::RemainingChecks;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

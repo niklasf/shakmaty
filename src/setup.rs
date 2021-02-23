@@ -23,7 +23,7 @@ use crate::attacks;
 use crate::types::{CastlingSide, CastlingMode, Role};
 use crate::material::Material;
 use crate::board::Board;
-use crate::variants::RemainingChecks;
+use crate::variant::RemainingChecks;
 
 /// A not necessarily legal position.
 pub trait Setup {

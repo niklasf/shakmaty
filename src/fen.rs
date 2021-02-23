@@ -80,7 +80,7 @@ use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::setup::Setup;
 use crate::position::{FromSetup, PositionError};
-use crate::variants::RemainingChecks;
+use crate::variant::RemainingChecks;
 
 /// FEN formatting options.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]

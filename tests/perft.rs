@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use shakmaty::{CastlingMode, Chess, FromSetup, Position};
-use shakmaty::variants::{Atomic, Antichess, Crazyhouse, RacingKings, Horde};
+use shakmaty::variant::{Atomic, Antichess, Crazyhouse, RacingKings, Horde};
 use shakmaty::fen::Fen;
 use shakmaty::perft;
 
