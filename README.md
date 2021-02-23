@@ -67,6 +67,15 @@ Stockfish put even less emphasis on this.
 
 ## Changelog
 
+- 0.18.0
+  - Remove `f32`, `f64`, `u128`, and `i128` conversions.
+  - Use `std::num::TryFromIntError`.
+  - Functions now return `MoveList` instead of using it as an out parameter.
+    Return value optimization by hand is no longer required.
+  - Introduce `ByColor`, used as `Material` and `ByColor<RemainingChecks>`.
+  - Introduce `PlayError`.
+  - Renamed `variants` module to `variant`. Now gated behind a non-default
+    feature `variant`.
 - 0.17.2
   - Parse `Uci::to_move()` where king captures unmoved rook.
 - 0.17.1
