@@ -1,0 +1,30 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        toolchain: ["stable", "beta", "nightly"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: doc
+      - uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all-features
