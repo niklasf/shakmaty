@@ -86,6 +86,8 @@ pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
+
+#[cfg(feature = "variant")]
 pub mod variant;
 
 pub use crate::square::{ParseSquareError, File, Rank, Square};

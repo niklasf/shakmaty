@@ -436,6 +436,7 @@ pub struct Chess {
 }
 
 impl Chess {
+    #[cfg(feature = "variant")]
     fn gives_check(&self, m: &Move) -> bool {
         let mut pos = self.clone();
         pos.play_unchecked(m);
@@ -670,6 +671,7 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
+#[cfg(feature = "variant")]
 pub(crate) mod variant {
     use super::*;
     use crate::material::MaterialSide;
@@ -1699,6 +1701,24 @@ pub(crate) mod variant {
             }
         }
     }
+
+    fn add_king_promotions(moves: &mut MoveList) {
+        let mut king_promotions = MoveList::new();
+
+        for m in &moves[..] {
+            if let Move::Normal { role, from, capture, to, promotion: Some(Role::Queen) } = *m {
+                king_promotions.push(Move::Normal {
+                    role,
+                    from,
+                    capture,
+                    to,
+                    promotion: Some(Role::King),
+                });
+            }
+        }
+
+        moves.extend(king_promotions);
+    }
 }
 
 fn do_move(board: &mut Board,
@@ -2033,24 +2053,6 @@ fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Opti
     moves.push(Move::Normal { role: Role::Pawn, from, capture, to, promotion: Some(Role::Knight) });
 }
 
-fn add_king_promotions(moves: &mut MoveList) {
-    let mut king_promotions = MoveList::new();
-
-    for m in &moves[..] {
-        if let Move::Normal { role, from, capture, to, promotion: Some(Role::Queen) } = *m {
-            king_promotions.push(Move::Normal {
-                role,
-                from,
-                capture,
-                to,
-                promotion: Some(Role::King),
-            });
-        }
-    }
-
-    moves.extend(king_promotions);
-}
-
 fn relevant_ep<P: Position>(EpSquare(ep_square): EpSquare, pos: &P) -> Option<Square> {
     if pos.en_passant_moves().is_empty() {
         None
@@ -2194,6 +2196,7 @@ mod tests {
         assert_insufficient_material::<Chess>("3b4/8/8/6b1/8/8/R7/K1k5 w - - 0 1", false, true);
     }
 
+    #[cfg(feature = "variant")]
     #[test]
     fn test_variant_insufficient_material() {
         use super::variant::*;
@@ -2230,6 +2233,7 @@ mod tests {
         assert_insufficient_material::<Horde>("8/5k2/8/8/8/4NN2/8/8 w - - 0 1", false_negative, false);
     }
 
+    #[cfg(feature = "variant")]
     #[test]
     fn test_exploded_king_loses_castling_rights() {
         use super::variant::Atomic;
@@ -2254,6 +2258,7 @@ mod tests {
         assert_eq!(pos.castles().rook(Color::Black, CastlingSide::KingSide), Some(Square::H8));
     }
 
+    #[cfg(feature = "variant")]
     #[test]
     fn test_racing_kings_end() {
         use super::variant::RacingKings;

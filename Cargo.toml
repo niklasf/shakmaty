@@ -11,6 +11,10 @@ keywords = ["chess"]
 build = "src/build.rs"
 edition = "2018"
 
+[features]
+default = []
+variant = []
+
 [[bench]]
 name = "benches"
 harness = false

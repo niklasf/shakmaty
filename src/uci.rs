@@ -364,6 +364,7 @@ mod tests {
         assert!(exd5.is_en_passant());
     }
 
+    #[cfg(feature = "variant")]
     #[test]
     pub fn test_uci_to_crazyhouse() {
         use crate::position::variant::Crazyhouse;

@@ -16,7 +16,6 @@
 
 use shakmaty::fen::Fen;
 use shakmaty::perft;
-use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings};
 use shakmaty::{CastlingMode, Chess, FromSetup, Position};
 
 use std::fs::File;
@@ -76,22 +75,27 @@ where
 macro_rules! gen_tests {
     ($($fn_name:ident, $t:ty, $path:tt, $num:expr,)+) => {
         $(
-			#[test]
-			#[cfg_attr(miri, ignore)]
-			fn $fn_name() {
-				test_perft_file::<$t>($path, $num);
-			}
-		)+
+            #[test]
+            #[cfg_attr(miri, ignore)]
+            fn $fn_name() {
+                test_perft_file::<$t>($path, $num);
+            }
+        )+
     }
 }
 
-// generate tests
 gen_tests! {
-    test_random,      Chess,       "tests/random.perft",         10_000 ,
-    test_tricky,      Chess,       "tests/tricky.perft",        100_000 ,
-    test_atomic,      Atomic,      "tests/atomic.perft",      1_000_000 ,
-    test_antichess,   Antichess,   "tests/antichess.perft",   1_000_000 ,
-    test_crazyhouse,  Crazyhouse,  "tests/crazyhouse.perft",  1_000_000 ,
-    test_racingkings, RacingKings, "tests/racingkings.perft", 1_000_000 ,
-    test_horde,       Horde,       "tests/horde.perft",       1_000_000 ,
+    test_random,      Chess,       "tests/random.perft",         10_000,
+    test_tricky,      Chess,       "tests/tricky.perft",        100_000,
+}
+
+#[cfg(feature = "variant")]
+use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings};
+#[cfg(feature = "variant")]
+gen_tests! {
+    test_atomic,      Atomic,      "tests/atomic.perft",      1_000_000,
+    test_antichess,   Antichess,   "tests/antichess.perft",   1_000_000,
+    test_crazyhouse,  Crazyhouse,  "tests/crazyhouse.perft",  1_000_000,
+    test_racingkings, RacingKings, "tests/racingkings.perft", 1_000_000,
+    test_horde,       Horde,       "tests/horde.perft",       1_000_000,
 }
