@@ -425,7 +425,7 @@ pub trait Position: Setup {
 }
 
 /// A standard Chess position.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Chess {
     board: Board,
     turn: Color,
@@ -677,7 +677,7 @@ pub(crate) mod variant {
     use crate::material::MaterialSide;
 
     /// An Atomic Chess position.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq, Hash)]
     pub struct Atomic {
         board: Board,
         turn: Color,
@@ -881,7 +881,7 @@ pub(crate) mod variant {
 
     /// An Antichess position. Antichess is also known as Giveaway, but players
     /// start without castling rights.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq, Hash)]
     pub struct Antichess {
         board: Board,
         turn: Color,
@@ -1023,7 +1023,7 @@ pub(crate) mod variant {
     }
 
     /// A King of the Hill position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
     pub struct KingOfTheHill {
         chess: Chess,
     }
@@ -1110,7 +1110,7 @@ pub(crate) mod variant {
     }
 
     /// A Three-Check position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
     pub struct ThreeCheck {
         chess: Chess,
         remaining_checks: ByColor<RemainingChecks>,
@@ -1209,7 +1209,7 @@ pub(crate) mod variant {
     }
 
     /// A Crazyhouse position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, Eq, PartialEq, Hash)]
     pub struct Crazyhouse {
         chess: Chess,
         pockets: Material,
@@ -1377,7 +1377,7 @@ pub(crate) mod variant {
     }
 
     /// A Racing Kings position.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq, Hash)]
     pub struct RacingKings {
         board: Board,
         turn: Color,
@@ -1533,7 +1533,7 @@ pub(crate) mod variant {
     }
 
     /// A Horde position.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Eq, PartialEq, Hash)]
     pub struct Horde {
         board: Board,
         turn: Color,

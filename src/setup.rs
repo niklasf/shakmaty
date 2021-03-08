@@ -201,7 +201,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
 }
 
 /// Castling paths and unmoved rooks.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Castles {
     mask: Bitboard,
     rook: [[Option<Square>; 2]; 2],

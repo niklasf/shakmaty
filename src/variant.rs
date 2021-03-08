@@ -98,7 +98,7 @@ impl Variant {
 ///
 /// [`Position`]: super::Position
 #[allow(missing_docs)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum VariantPosition {
     Chess(Chess),
     Atomic(Atomic),
