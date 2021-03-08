@@ -237,7 +237,7 @@ impl Default for FenOpts {
 }
 
 /// Errors that can occur when parsing a FEN.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub enum ParseFenError {
     InvalidFen,
     InvalidBoard,
@@ -358,7 +358,7 @@ impl fmt::Display for Board {
 }
 
 /// A parsed FEN.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Fen {
     pub board: Board,
     pub pockets: Option<Material>,

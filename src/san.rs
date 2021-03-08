@@ -95,7 +95,7 @@ impl Error for ParseSanError {
 }
 
 /// `IllegalSan` or `AmbiguousSan`.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum SanError {
     /// Standard algebraic notation does not match a legal move.
     IllegalSan,

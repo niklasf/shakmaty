@@ -204,7 +204,7 @@ impl Piece {
 }
 
 /// Information about a move.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 #[repr(align(4))]
 pub enum Move {
     Normal {
