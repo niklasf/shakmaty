@@ -32,7 +32,7 @@ use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
 
 /// Outcome of a game.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw,

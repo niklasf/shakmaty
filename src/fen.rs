@@ -358,7 +358,7 @@ impl fmt::Display for Board {
 }
 
 /// A parsed FEN.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Fen {
     pub board: Board,
     pub pockets: Option<Material>,
