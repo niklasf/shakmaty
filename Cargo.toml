@@ -23,12 +23,16 @@ harness = false
 bench = false
 
 [dependencies]
+arrayvec = "0.6"
 bitflags = "1.2"
 btoi = "0.4"
-arrayvec = "0.5"
 
 [dev-dependencies]
 iai = "0.1"
+rand = "0.8"
+
+[build-dependencies]
+rand = { version="0.8", features=["std_rng"] }
 
 [package.metadata.docs.rs]
 all-features = true

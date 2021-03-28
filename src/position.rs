@@ -433,6 +433,7 @@ pub struct Chess {
     ep_square: Option<EpSquare>,
     halfmoves: u32,
     fullmoves: NonZeroU32,
+    zobrist: u64 // zobrist hash value of the current game/state
 }
 
 impl Chess {
@@ -464,6 +465,9 @@ impl Chess {
             }
         };
 
+        // compute the zobrist hash
+        let mut zobrist = board.zobrist();
+
         let pos = Chess {
             board,
             turn,
@@ -471,23 +475,34 @@ impl Chess {
             ep_square,
             halfmoves: setup.halfmoves(),
             fullmoves: setup.fullmoves(),
+            zobrist
         };
 
         errors |= validate(&pos);
 
         (pos, errors)
     }
+
+    /// Computes the zobrist hash of the current game state
+    pub fn zobrist(&self) -> u64 {
+        self.zobrist
+    }
 }
 
 impl Default for Chess {
     fn default() -> Chess {
+        let board = Board::default();
+
+        let mut zobrist = board.zobrist();
+
         Chess {
-            board: Board::default(),
+            board,
             turn: White,
             castles: Castles::default(),
             ep_square: None,
             halfmoves: 0,
             fullmoves: NonZeroU32::new(1).unwrap(),
+            zobrist
         }
     }
 }

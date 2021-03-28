@@ -22,6 +22,9 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 
+use rand::prelude::*;
+
+
 mod color;
 mod util;
 mod types;
@@ -94,9 +97,9 @@ fn dump_slice<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
     writeln!(w, "];")
 }
 
-fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
+fn dump_table<W: Write, T: Clone + LowerHex, const ROWS: usize, const COLS: usize>(w: &mut W, name: &str, tname: &str, table: &[[T; COLS]; ROWS]) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
-    write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
+    write!(w, "static {}: [[{}; {}]; {}] = [", name, tname, COLS, ROWS)?;
     for row in table.iter() {
         write!(w, "[")?;
         for column in row.iter().cloned() {
@@ -108,12 +111,18 @@ fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
 }
 
 fn main() -> io::Result<()> {
-    // generate attacks.rs
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
-    let dest_path = Path::new(&out_dir).join("attacks.rs");
-    let mut f = File::create(&dest_path).expect("created attacks.rs");
+
+    // generate attacks.rs
+    let attacks_path = Path::new(&out_dir).join("attacks.rs");
+    let mut f = File::create(&attacks_path).expect("created attacks.rs");
     generate_basics(&mut f)?;
-    generate_sliding_attacks(&mut f)
+    generate_sliding_attacks(&mut f)?;
+
+    // generate zobrist.rs
+    let zobrist_path = Path::new(&out_dir).join("zobrist.rs");
+    let mut f = File::create(&zobrist_path).expect("error creating zobrist.rs");
+    generate_zobrist(&mut f)
 }
 
 fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
@@ -165,4 +174,58 @@ fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
     }
 
     dump_slice(f, "ATTACKS", "u64", &attacks)
+}
+
+// inspiration from this implementation taken from: https://github.com/sfleischman105/Pleco
+fn generate_zobrist<W: Write>(f: &mut W) -> io::Result<()> {
+    let seed = 0x30b3_1137_bb45_7b1b_u64;
+    let mut rnd = StdRng::seed_from_u64(seed);
+
+    let mut piece_square :[[u64; 16]; 64] = [[0; 16]; 64];
+
+    // generate random values for the piece-square table
+    for row in piece_square.iter_mut() {
+        for col in row.iter_mut() {
+            *col = rnd.gen::<u64>();
+        }
+    }
+
+    dump_table(f, "PIECE_SQUARE", "u64", &piece_square)?;
+
+
+    // generate random values for enpassant
+    let mut enpassant :[u64; 8] = [0; 8];
+
+    for file in enpassant.iter_mut() {
+        *file = rnd.gen::<u64>();
+    }
+
+    dump_slice(f, "ENPASSANT", "u64", &enpassant);
+
+
+    // generate random values for castling
+    let mut castle :[u64; 16] = [0; 16];
+
+    for c in 0..16_u64 {
+        let mut board = Bitboard(c);
+
+        while let Some(square) = board.pop_back() {
+            let mut k :u64 = castle[1 << square as usize];
+
+            if k == 0 {
+                k = rnd.gen::<u64>();
+            }
+
+            castle[c as usize] ^= k;
+        }
+    }
+
+    dump_slice(f, "CASTLE", "u64", &castle);
+
+
+    // generate two random values: side & no-pawns
+    writeln!(f, "const SIDE :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
+    writeln!(f, "const NO_PAWNS :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
+
+    Ok( () )
 }

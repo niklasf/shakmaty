@@ -86,6 +86,7 @@ mod movelist;
 mod magics;
 mod perft;
 mod util;
+mod zobrist;
 
 pub mod attacks;
 pub mod bitboard;

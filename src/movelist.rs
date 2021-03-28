@@ -37,6 +37,6 @@ use arrayvec::ArrayVec;
 pub type MoveList = MoveListImpl;
 
 #[cfg(feature = "variant")]
-type MoveListImpl = ArrayVec<[Move; 512]>;
+type MoveListImpl = ArrayVec<Move, 512>;
 #[cfg(not(feature = "variant"))]
-type MoveListImpl = ArrayVec<[Move; 256]>;
+type MoveListImpl = ArrayVec<Move, 256>;
