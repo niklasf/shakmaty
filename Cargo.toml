@@ -23,9 +23,9 @@ harness = false
 bench = false
 
 [dependencies]
-bitflags = "1.2"
+bitflags = "1"
 btoi = "0.4"
-arrayvec = "=0.6.0"
+arrayvec = "0.7"
 
 [dev-dependencies]
 iai = "0.1"
