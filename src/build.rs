@@ -200,32 +200,22 @@ fn generate_zobrist<W: Write>(f: &mut W) -> io::Result<()> {
         *file = rnd.gen::<u64>();
     }
 
-    dump_slice(f, "ENPASSANT", "u64", &enpassant);
+    dump_slice(f, "ENPASSANT", "u64", &enpassant).expect("Error dumping enpassant slice");
 
 
     // generate random values for castling
-    let mut castle :[u64; 16] = [0; 16];
+    let mut castle :[u64; 4] = [0; 4];
 
-    for c in 0..16_u64 {
-        let mut board = Bitboard(c);
-
-        while let Some(square) = board.pop_back() {
-            let mut k :u64 = castle[1 << square as usize];
-
-            if k == 0 {
-                k = rnd.gen::<u64>();
-            }
-
-            castle[c as usize] ^= k;
-        }
+    for castle in castle.iter_mut() {
+        *castle = rnd.gen::<u64>();
     }
 
-    dump_slice(f, "CASTLE", "u64", &castle);
+    dump_slice(f, "CASTLE", "u64", &castle).expect("Error dumping castle slice");
 
 
     // generate two random values: side & no-pawns
     writeln!(f, "const SIDE :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
-    writeln!(f, "const NO_PAWNS :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
+    // writeln!(f, "const NO_PAWNS :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
 
     Ok( () )
 }

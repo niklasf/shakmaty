@@ -20,7 +20,7 @@ use std::num::NonZeroU32;
 
 use bitflags::bitflags;
 
-use crate::attacks;
+use crate::{attacks, File};
 use crate::board::Board;
 use crate::bitboard::Bitboard;
 use crate::color::{ByColor, Color};
@@ -30,6 +30,7 @@ use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingCheck
 use crate::material::Material;
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
+use crate::zobrist;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -465,8 +466,33 @@ impl Chess {
             }
         };
 
-        // compute the zobrist hash
+        // compute the zobrist hash for the board
         let mut zobrist = board.zobrist();
+
+        // set castling
+        if castles.has(Color::White, CastlingSide::KingSide) {
+            zobrist ^= zobrist::castle(Color::White, CastlingSide::KingSide);
+        }
+
+        if castles.has(Color::White, CastlingSide::QueenSide) {
+            zobrist ^= zobrist::castle(Color::White, CastlingSide::QueenSide);
+        }
+
+        if castles.has(Color::Black, CastlingSide::KingSide) {
+            zobrist ^= zobrist::castle(Color::Black, CastlingSide::KingSide);
+        }
+
+        if castles.has(Color::Black, CastlingSide::QueenSide) {
+            zobrist ^= zobrist::castle(Color::Black, CastlingSide::QueenSide);
+        }
+
+        if let Some(sq) = ep_square {
+            zobrist ^= zobrist::enpassant(sq.0);
+        }
+
+        if turn == Color::Black {
+            zobrist ^= zobrist::side();
+        }
 
         let pos = Chess {
             board,
@@ -495,7 +521,13 @@ impl Default for Chess {
 
         let mut zobrist = board.zobrist();
 
-        Chess {
+        // add in all the castling
+        zobrist ^= zobrist::castle(Color::White, CastlingSide::KingSide);
+        zobrist ^= zobrist::castle(Color::White, CastlingSide::QueenSide);
+        zobrist ^= zobrist::castle(Color::Black, CastlingSide::KingSide);
+        zobrist ^= zobrist::castle(Color::Black, CastlingSide::QueenSide);
+
+    Chess {
             board,
             turn: White,
             castles: Castles::default(),
@@ -528,8 +560,8 @@ impl FromSetup for Chess {
 impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
+                &mut self.ep_square, &mut self.zobrist,
+                &mut self.halfmoves, &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
@@ -1740,11 +1772,16 @@ fn do_move(board: &mut Board,
            turn: &mut Color,
            castles: &mut Castles,
            ep_square: &mut Option<EpSquare>,
+           zobrist: &mut u64,
            halfmoves: &mut u32,
            fullmoves: &mut NonZeroU32,
            m: &Move) {
     let color = *turn;
-    ep_square.take();
+
+    // we need to "remove" the old EP square if there is one
+    if let Some(sq) = ep_square.take() {
+        *zobrist ^= zobrist::enpassant(sq.0);
+    }
 
     *halfmoves = if m.is_zeroing() {
         0
@@ -1760,36 +1797,99 @@ fn do_move(board: &mut Board,
                 *ep_square = from.offset(-8).map(EpSquare);
             }
 
+            // if we have an enpassant square, add it to the hash
+            if let Some(sq) = ep_square {
+                *zobrist ^= zobrist::enpassant(sq.0);
+            }
+
             if role == Role::King {
+                // if we have the castling ability, then need to "remove" it
+                if castles.has(color, CastlingSide::KingSide) {
+                    *zobrist ^= zobrist::castle(color, CastlingSide::KingSide);
+                }
+
+                if castles.has(color, CastlingSide::QueenSide) {
+                    *zobrist ^= zobrist::castle(color, CastlingSide::QueenSide);
+                }
+
                 castles.discard_side(color);
             } else if role == Role::Rook {
+                let side = CastlingSide::from_queen_side(from.file() == File::A);
+
+                if castles.has(color, side) {
+                    *zobrist ^= zobrist::castle(color, side);
+                }
+
                 castles.discard_rook(from);
             }
 
             if capture == Some(Role::Rook) {
+                let side = CastlingSide::from_queen_side(to.file() == File::A);
+
+                if castles.has(color, side) {
+                    *zobrist ^= zobrist::castle(color, side);
+                }
+
                 castles.discard_rook(to);
             }
 
             let promoted = board.promoted().contains(from) || promotion.is_some();
 
+            // remove the piece at the from square
+            *zobrist ^= zobrist::square(from, board.piece_at(from).unwrap());
             board.discard_piece_at(from);
-            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
+
+            // remove the piece at the to square if there is one
+            if let Some(to_piece) = board.piece_at(to) {
+                *zobrist ^= zobrist::square(to, to_piece);
+            }
+
+            let to_piece = promotion.map_or(role.of(color), |p| p.of(color));
+            board.set_piece_at(to, to_piece, promoted);
+            *zobrist ^= zobrist::square(to, to_piece); // add in the moving piece or promotion
         },
         Move::Castle { king, rook } => {
             let side = CastlingSide::from_queen_side(rook < king);
+
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
-            board.set_piece_at(Square::from_coords(side.rook_to_file(), rook.rank()), color.rook(), false);
-            board.set_piece_at(Square::from_coords(side.king_to_file(), king.rank()), color.king(), false);
+
+            *zobrist ^= zobrist::square(king, color.king());
+            *zobrist ^= zobrist::square(rook, color.rook());
+
+            let rook_sq = Square::from_coords(side.rook_to_file(), rook.rank());
+            let king_sq = Square::from_coords(side.king_to_file(), king.rank());
+            board.set_piece_at(rook_sq, color.rook(), false);
+            board.set_piece_at(king_sq, color.king(), false);
+
+            *zobrist ^= zobrist::square(rook_sq, color.rook());
+            *zobrist ^= zobrist::square(king_sq, color.king());
+
             castles.discard_side(color);
+
+            if castles.has(color, CastlingSide::KingSide) {
+                *zobrist ^= zobrist::castle(color, CastlingSide::KingSide);
+            }
+
+            if castles.has(color, CastlingSide::QueenSide) {
+                *zobrist ^= zobrist::castle(color, CastlingSide::QueenSide);
+            }
         }
         Move::EnPassant { from, to } => {
-            board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn
+            let captured_pawn_sq = Square::from_coords(to.file(), from.rank());
+            board.discard_piece_at(captured_pawn_sq); // captured pawn
+            *zobrist ^= zobrist::square(captured_pawn_sq, (!color).pawn());
+
             board.discard_piece_at(from);
+            *zobrist ^= zobrist::square(from, color.pawn());
+
             board.set_piece_at(to, color.pawn(), false);
+            *zobrist ^= zobrist::square(to, color.pawn());
         }
         Move::Put { role, to } => {
-            board.set_piece_at(to, Piece { color, role }, false);
+            let piece = Piece { color, role };
+            board.set_piece_at(to, piece, false);
+            *zobrist ^= zobrist::square(to, piece);
         }
     }
 
@@ -1798,6 +1898,8 @@ fn do_move(board: &mut Board,
     }
 
     *turn = !color;
+    // *zobrist ^= zobrist::side();
+    *zobrist ^= 0x01;
 }
 
 fn validate<P: Position>(pos: &P) -> PositionErrorKinds {

@@ -14,8 +14,14 @@ pub fn enpassant(sq: Square) -> u64 {
 }
 
 #[inline(always)]
-pub fn castle(castle: CastlingSide, color :Color) -> u64 {
-    CASTLE[castle.to_usize(color)]
+pub fn castle(color :Color, castle: CastlingSide) -> u64 {
+    // there are 4 values in CASTLE: WHITE_KING[0], WHITE_QUEEN[1], BLACK_KING[2], BLACK_QUEEN[3]
+    match (color, castle) {
+        (Color::White, CastlingSide::KingSide) => CASTLE[0],
+        (Color::White, CastlingSide::QueenSide) => CASTLE[1],
+        (Color::Black, CastlingSide::KingSide) => CASTLE[2],
+        (Color::Black, CastlingSide::QueenSide) => CASTLE[3]
+    }
 }
 
 #[inline(always)]
@@ -23,18 +29,18 @@ pub fn side() -> u64 {
     SIDE
 }
 
-#[inline(always)]
-pub fn z_no_pawns() -> u64 {
-    NO_PAWNS
-}
+// #[inline(always)]
+// pub fn z_no_pawns() -> u64 {
+//     NO_PAWNS
+// }
 
 #[cfg(test)]
 mod zobrist_tests {
-    use crate::{Square, Piece, Chess, Position};
-    use crate::fen::epd;
+    use crate::{Square, Piece, Chess, Position, CastlingMode, Move};
+    use crate::fen::{epd, Fen};
     use crate::zobrist::square;
     use std::collections::{HashSet, HashMap};
-    use rand::Rng;
+    use rand::prelude::*;
 
     #[test]
     fn square_test() {
@@ -57,20 +63,39 @@ mod zobrist_tests {
     }
 
     #[test]
+    fn fen_test() {
+        let setup1 :Fen = "8/8/8/8/p7/P7/6k1/2K5 w - -".parse().expect("Error parsing FEN");
+        let setup2 :Fen = "8/8/8/8/p7/P7/6k1/2K5 w - -".parse().expect("Error parsing FEN");
+
+        let game1 :Chess = setup1.position(CastlingMode::Standard).expect("Error setting up game");
+        let game2 :Chess = setup2.position(CastlingMode::Standard).expect("Error setting up game");
+
+        println!("0x{:x} != 0x{:x}", game1.zobrist(), game2.zobrist());
+
+        assert_ne!(game1.zobrist(), game2.zobrist());
+    }
+
+    #[test]
     fn moves_test() {
         // randomly move through a bunch of moves, ensuring we get different zobrist hashes
-        const MAX_MOVES :usize = 10_000;
+        const MAX_MOVES :usize = 100_000;
         let mut hash_fen :HashMap<u64, String> = HashMap::new();
+        let mut hash_moves :HashMap<u64, Vec<Move>> = HashMap::new();
+        let mut moves = Vec::new();
         let mut chess = Chess::default();
-        let mut rnd = rand::thread_rng();
+        let mut rnd = StdRng::seed_from_u64(0x30b3_1137_bb45_7b1b_u64);
 
         while hash_fen.len() < MAX_MOVES {
             // generate and collect all the moves
-            let moves = chess.legal_moves();
-            let mv_i = rnd.gen_range(0..moves.len());
+            let legal_moves = chess.legal_moves();
+            let mv_i = rnd.gen_range(0..legal_moves.len());
+            let mv = legal_moves[mv_i].clone();
 
             // play a random move
-            chess.play_unchecked(&moves[mv_i]);
+            chess.play_unchecked(&mv);
+
+            // add to our current list of moves
+            moves.push(mv);
 
             // get the zobrist hash value
             let z = chess.zobrist();
@@ -79,17 +104,62 @@ mod zobrist_tests {
             if let Some(existing_fen) = hash_fen.get(&z) {
                 // found a collision!!!
                 if fen != *existing_fen {
-                    panic!("ZOBRIST COLLISION AFTER {}: 0x{:016x}: {} != {}", hash_fen.len(), z, fen, existing_fen);
+                    // check to see if the FENs are also the same
+                    let setup1 :Fen = fen.parse().expect("Error parsing FEN");
+                    let setup2 :Fen = existing_fen.parse().expect("Error parsing FEN");
+
+                    let game1 :Chess = setup1.position(CastlingMode::Standard).expect("Error setting up game");
+                    let game2 :Chess = setup2.position(CastlingMode::Standard).expect("Error setting up game");
+
+                    if game1.zobrist() == game2.zobrist() {
+                        panic!("COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})", fen, game1.zobrist(), existing_fen, game2.zobrist());
+                    } else {
+                        let mvs1 = hash_moves.get(&z).unwrap();
+                        let mvs2 = moves;
+                        let mut game = Chess::default();
+
+                        let mut panic_str = format!("ZOBRIST COLLISION AFTER {}: 0x{:016x} ({} {})\n", hash_fen.len(), z, mvs1.len(), mvs2.len());
+
+                        for (i, (mv1, mv2)) in mvs1.iter().zip(mvs2.iter()).enumerate() {
+                            if mv1 == mv2 {
+                                game.play_unchecked(mv1);
+                                panic_str += format!("{:03}: {:?} -> {}\t0x{:08x}\n", i, mv1, epd(&game), game.zobrist()).as_str();
+                            } else {
+                                panic_str += format!("DIFF {:03}: {:?} {:?}", i, mv1, mv2).as_str();
+                                break
+                            }
+                        }
+
+                        if mvs1.len() > mvs2.len() {
+                            for (i, mv1) in mvs1.iter().skip(mvs2.len()).enumerate() {
+                                game.play_unchecked(mv1);
+                                panic_str += format!("MV1 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs2.len(), mv1, epd(&game), game.zobrist()).as_str();
+                            }
+                        } else {
+                            for (i, mv2) in mvs2.iter().skip(mvs1.len()).enumerate() {
+                                game.play_unchecked(mv2);
+                                panic_str += format!("MV2 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs1.len(), mv2, epd(&game), game.zobrist()).as_str();
+                            }
+                        }
+
+                        panic!("{}", panic_str);
+                    }
                 }
             } else {
+                // keep around the FEN of the board, and also the moves that got us there
                 hash_fen.insert(z, fen);
+                hash_moves.insert(z, moves.clone());
             }
 
             // check to see if the game is over, and if so restart it
             if chess.is_game_over() {
                 chess = Chess::default();
+                moves.clear();
+                println!("{} of {}", hash_fen.len(), MAX_MOVES);
             }
         }
+
+        println!("Found {} unique hashes for boards", hash_fen.len());
     }
 
 }
