@@ -68,7 +68,7 @@
 //!
 //! * `variant`: Enables `shakmaty::variant` module for all Lichess variants.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.18.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.19.0")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
