@@ -1,6 +1,6 @@
 [package]
 name = "pgn-reader"
-version = "0.17.0" # remember to update html_root_url and benchmarks
+version = "0.18.0" # remember to update html_root_url and benchmarks
 description = "Fast non-allocating and streaming reader for chess games in PGN notation"
 repository = "https://github.com/niklasf/rust-pgn-reader.git"
 readme = "README.md"
@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 memchr = "2.2"
 btoi = "0.4"
-shakmaty = "0.18"
+shakmaty = "0.19"
 slice-deque = "0.3"
 
 [dev-dependencies]
