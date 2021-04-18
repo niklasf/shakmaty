@@ -328,7 +328,7 @@ impl SubAssign for Dtz {
 pub const MAX_PIECES: usize = 7;
 
 /// List of up to `MAX_PIECES` pieces.
-pub type Pieces = ArrayVec<[Piece; MAX_PIECES]>;
+pub type Pieces = ArrayVec<Piece, MAX_PIECES>;
 
 /// Metric stored in a table: WDL or DTZ.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

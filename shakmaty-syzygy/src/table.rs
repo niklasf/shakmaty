@@ -438,7 +438,7 @@ fn parse_pieces<F: ReadAt>(raf: &F, ptr: u64, count: usize, side: Color) -> Prob
 }
 
 /// Group pieces that will be encoded together.
-fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
+fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     let mut result = ArrayVec::new();
     let material = Material::from_iter(pieces.clone());
 
@@ -472,8 +472,8 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<[usize; MAX_PIECES]> {
 #[derive(Debug, Clone)]
 struct GroupData {
     pieces: Pieces,
-    lens: ArrayVec<[usize; MAX_PIECES]>,
-    factors: ArrayVec<[u64; MAX_PIECES + 1]>,
+    lens: ArrayVec<usize, MAX_PIECES>,
+    factors: ArrayVec<u64, { MAX_PIECES + 1 }>,
 }
 
 impl GroupData {
@@ -756,7 +756,7 @@ fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &m
 /// Descripton of encoding and compression for both sides of a table.
 #[derive(Debug)]
 struct FileData {
-    sides: ArrayVec<[PairsData; 2]>,
+    sides: ArrayVec<PairsData, 2>,
 }
 
 /// A Syzygy table.
@@ -769,7 +769,7 @@ struct Table<T: TableTag, P: Position + Syzygy, F: ReadAt> {
 
     num_unique_pieces: u8,
     min_like_man: u8,
-    files: ArrayVec<[FileData; 4]>,
+    files: ArrayVec<FileData, 4>,
 }
 
 impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
@@ -828,12 +828,12 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 let key = Material::from_iter(pieces.clone());
                 ensure!(key == material || key.into_flipped() == material);
                 GroupData::new::<S>(pieces, order[side.fold(0, 1)], file)
-            }).collect::<ProbeResult<ArrayVec<[_; 2]>>>()?;
+            }).collect::<ProbeResult<ArrayVec<_, 2>>>()?;
 
             ptr += material.count() as u64;
 
             Ok(sides)
-        }).collect::<ProbeResult<ArrayVec<[_; 4]>>>()?;
+        }).collect::<ProbeResult<ArrayVec<_, 4>>>()?;
 
         ptr += ptr & 1;
 
@@ -860,10 +860,10 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 ptr = next_ptr;
 
                 Ok(pairs)
-            }).collect::<ProbeResult<ArrayVec<[_; 2]>>>()?;
+            }).collect::<ProbeResult<ArrayVec<_, 2>>>()?;
 
             Ok(FileData { sides })
-        }).collect::<ProbeResult<ArrayVec<[_; 4]>>>()?;
+        }).collect::<ProbeResult<ArrayVec<_, 4>>>()?;
 
         // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
@@ -1027,7 +1027,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         let flip = symmetric_btm || black_stronger;
         let bside = pos.turn().is_black() ^ flip;
 
-        let mut squares: ArrayVec<[Square; MAX_PIECES]> = ArrayVec::new();
+        let mut squares: ArrayVec<Square, MAX_PIECES> = ArrayVec::new();
         let mut used = Bitboard(0);
 
         // For pawns there are subtables for each file (a, b, c, d) the

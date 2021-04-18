@@ -213,13 +213,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             let mut after = pos.clone();
             after.play_unchecked(&m);
             WithAfter { m, after }
-        }).collect::<ArrayVec<[_; 256]>>();
+        }).collect::<ArrayVec<_, 256>>();
 
         // Determine WDL for each move.
         let with_wdl = with_after.iter().map(|e| Ok(WithWdlEntry {
             m: e.m.clone(),
             entry: self.probe(&e.after)?,
-        })).collect::<SyzygyResult<ArrayVec<[_; 256]>>>()?;
+        })).collect::<SyzygyResult<ArrayVec<_, 256>>>()?;
 
         // Find best WDL.
         let best_wdl = with_wdl.iter().map(|a| a.entry.wdl).min().unwrap_or(Wdl::Loss);
