@@ -481,25 +481,25 @@ impl fmt::Debug for Bitboard {
 
 impl fmt::UpperHex for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:X}", self.0)
+        fmt::UpperHex::fmt(&self.0, f)
     }
 }
 
 impl fmt::LowerHex for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:x}", self.0)
+        fmt::LowerHex::fmt(&self.0, f)
     }
 }
 
 impl fmt::Octal for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:o}", self.0)
+        fmt::Octal::fmt(&self.0, f)
     }
 }
 
 impl fmt::Binary for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:b}", self.0)
+        fmt::Binary::fmt(&self.0, f)
     }
 }
 
@@ -777,5 +777,29 @@ mod tests {
         assert_eq!(Bitboard::from_iter(None), Bitboard(0));
         assert_eq!(Bitboard::from_iter(Some(Square::D2)),
                    Bitboard::from_square(Square::D2));
+    }
+
+    #[test]
+    fn test_upper_hex() {
+        assert_eq!(format!("{:#0X}", Bitboard(42)), 
+                   format!("{:#0X}", 42));
+    }
+
+    #[test]
+    fn test_lower_hex() {
+        assert_eq!(format!("{:#0x}", Bitboard(42)), 
+                   format!("{:#0x}", 42));
+    }
+
+    #[test]
+    fn test_octal() {
+        assert_eq!(format!("{:#0o}", Bitboard(42)), 
+                   format!("{:#0o}", 42));
+    }
+
+    #[test]
+    fn test_binary() {
+        assert_eq!(format!("{:#0b}", Bitboard(42)), 
+                   format!("{:#0b}", 42));
     }
 }
