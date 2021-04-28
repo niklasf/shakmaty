@@ -1,0 +1,19 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "04:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: arrayvec
+    versions:
+    - 0.6.0
+    - 0.7.0
+  - dependency-name: shakmaty
+    versions:
+    - 0.19.0
+  - dependency-name: itertools
+    versions:
+    - 0.10.0
