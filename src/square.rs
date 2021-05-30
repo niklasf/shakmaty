@@ -55,6 +55,27 @@ macro_rules! try_from_int_impl {
     }
 }
 
+macro_rules! step_impl {
+    ($type:ty) => {
+        #[cfg(feature = "step")]
+        unsafe impl std::iter::Step for $type {
+            fn steps_between(start: &Self, end: &Self) -> Option<usize> {
+                usize::from(*end).checked_sub(usize::from(*start))
+            }
+
+            fn forward_checked(start: Self, count: usize) -> Option<Self> {
+                use std::convert::TryFrom as _;
+                i32::try_from(count).ok().and_then(|count| start.offset(count))
+            }
+
+            fn backward_checked(start: Self, count: usize) -> Option<Self> {
+                use std::convert::TryFrom as _;
+                i32::try_from(count).ok().and_then(|count| start.offset(-count))
+            }
+        }
+    }
+}
+
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -144,6 +165,7 @@ impl fmt::Display for File {
 
 from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+step_impl! { File }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -233,6 +255,7 @@ impl fmt::Display for Rank {
 
 from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+step_impl! { Rank }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug)]
@@ -553,8 +576,8 @@ impl Square {
 }
 
 from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-
 try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+step_impl! { Square }
 
 impl Sub for Square {
     type Output = i32;

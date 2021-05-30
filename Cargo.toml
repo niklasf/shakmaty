@@ -13,6 +13,7 @@ edition = "2018"
 
 [features]
 default = []
+step = []
 variant = []
 
 [[bench]]
