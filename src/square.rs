@@ -104,7 +104,7 @@ impl File {
 
     #[must_use]
     #[inline]
-    pub fn offset(self, delta: i32) -> Option<Rank> {
+    pub fn offset(self, delta: i32) -> Option<File> {
         i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
     }
 
