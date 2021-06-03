@@ -58,7 +58,7 @@ macro_rules! try_from_int_impl {
 macro_rules! unsafe_step_impl {
     ($type:ty) => {
         #[cfg(feature = "step")]
-        unsafe impl std::iter::Step for $type {
+        impl std::iter::Step for $type {
             fn steps_between(start: &Self, end: &Self) -> Option<usize> {
                 usize::from(*end).checked_sub(usize::from(*start))
             }

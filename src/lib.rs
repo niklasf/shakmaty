@@ -76,7 +76,6 @@
 #![warn(rust_2018_idioms)]
 
 #![cfg_attr(feature = "step", feature(step_trait))]
-#![cfg_attr(feature = "step", feature(step_trait_ext))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 
 mod color;
