@@ -18,7 +18,7 @@ use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
 
-use crate::{attacks, zobrist};
+use crate::attacks;
 use crate::bitboard::Bitboard;
 use crate::color::{Color, ByColor};
 use crate::square::{File, Rank, Square};
@@ -305,20 +305,6 @@ impl Board {
             black: self.material_side(Color::Black),
             white: self.material_side(Color::White),
         }
-    }
-
-    /// Computes the zobrist hash of the pieces on the board
-    /// This is *not* the complete hash; call Chess::zobrist
-    pub(crate) fn zobrist(&self) -> u64 {
-        let mut ret :u64 = 0;
-
-        for square in (0..64).into_iter().map(|i| Square::new(i)) {
-            if let Some(piece) = self.piece_at(square) {
-                ret ^= zobrist::square(square, piece);
-            }
-        }
-
-        ret
     }
 }
 
