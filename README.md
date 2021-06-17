@@ -67,6 +67,11 @@ Stockfish put even less emphasis on this.
 
 ## Changelog
 
+- 0.19.0
+  - Update `arrayvec` to 0.7.x. `MoveList` is now using const generics.
+  - Derive `Hash` for `Move`, `Outcome`, and `Fen`.
+  - Eliminate unsafe usage where no longer required for performance. Justify
+    remaining cases.
 - 0.18.0
   - Remove `f32`, `f64`, `u128`, and `i128` conversions.
   - Use `std::num::TryFromIntError`.

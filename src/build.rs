@@ -12,7 +12,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
-//
+
+#![cfg_attr(feature = "step", feature(step_trait))]
+
 #![allow(dead_code)]
 
 use std::env;

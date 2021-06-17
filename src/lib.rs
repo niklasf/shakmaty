@@ -67,12 +67,15 @@
 //! # Feature flags
 //!
 //! * `variant`: Enables `shakmaty::variant` module for all Lichess variants.
+//! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
+//!   Requires nightly.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.18.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.19.0")]
 
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
 
+#![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 
 mod color;
