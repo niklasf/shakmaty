@@ -481,7 +481,7 @@ impl Chess {
 
 impl Default for Chess {
     fn default() -> Chess {
-        Chess {
+    Chess {
             board: Board::default(),
             turn: White,
             castles: Castles::default(),
@@ -514,7 +514,7 @@ impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
                 &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
+            &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {

@@ -203,6 +203,19 @@ impl Piece {
     }
 }
 
+// we implement Into instead of From (or TryFrom) because we only need one-way conversion
+// Piece -> usize
+impl Into<usize> for Piece {
+    #[inline(always)]
+    fn into(self) -> usize {
+        if self.color == Color::Black {
+            self.role as usize + 8_usize
+        } else {
+            self.role as usize
+        }
+    }
+}
+
 /// Information about a move.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(align(4))]
@@ -382,6 +395,22 @@ impl CastlingSide {
 
     pub fn rook_to(self, color: Color) -> Square {
         Square::from_coords(self.rook_to_file(), color.backrank())
+    }
+
+    // used for zobrist hashing
+    #[inline(always)]
+    pub fn to_usize(self, color: Color) -> usize {
+        if color == Color::White {
+            match self {
+                CastlingSide::KingSide => 0,
+                CastlingSide::QueenSide => 1,
+            }
+        } else {
+            match self {
+                CastlingSide::KingSide => 2,
+                CastlingSide::QueenSide => 3
+            }
+        }
     }
 }
 
