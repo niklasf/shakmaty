@@ -72,8 +72,8 @@
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.19.0")]
 
+#![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
-#![warn(rust_2018_idioms)]
 
 #![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
