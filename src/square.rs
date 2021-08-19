@@ -74,11 +74,11 @@ macro_rules! unsafe_step_impl {
             }
 
             unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
-                Self::new_unchecked(u32::from(start) + count as u32)
+                unsafe { Self::new_unchecked(u32::from(start) + count as u32) }
             }
 
             unsafe fn backward_unchecked(start: Self, count: usize) -> Self {
-                Self::new_unchecked(u32::from(start) - count as u32)
+                unsafe { Self::new_unchecked(u32::from(start) - count as u32) }
             }
         }
     }
@@ -113,7 +113,7 @@ impl File {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
-        ::std::mem::transmute(index as u8)
+        unsafe { ::std::mem::transmute(index as u8) }
     }
 
 
@@ -204,7 +204,7 @@ impl Rank {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Rank {
         debug_assert!(index < 8);
-        ::std::mem::transmute(index as u8)
+        unsafe { ::std::mem::transmute(index as u8) }
     }
 
     #[inline]
@@ -325,7 +325,7 @@ impl Square {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Square {
         debug_assert!(index < 64);
-        ::std::mem::transmute(index as u8)
+        unsafe { ::std::mem::transmute(index as u8) }
     }
 
     /// Tries to get a square from file and rank.
