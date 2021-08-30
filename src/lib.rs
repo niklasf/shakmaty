@@ -89,13 +89,13 @@ mod movelist;
 mod magics;
 mod perft;
 mod util;
+mod zobrist;
 
 pub mod attacks;
 pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
-pub mod zobrist;
 
 #[cfg(feature = "variant")]
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
@@ -111,3 +111,4 @@ pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
 pub use crate::position::{Chess, Outcome, Position, FromSetup, PlayError, PositionError, PositionErrorKinds};
 pub use crate::perft::perft;
+pub use crate::zobrist::Zobrist;
