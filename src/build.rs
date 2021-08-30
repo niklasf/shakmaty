@@ -217,8 +217,5 @@ fn generate_zobrist<W: Write>(f: &mut W) -> io::Result<()> {
 
 
     // generate two random values: side & no-pawns
-    writeln!(f, "const SIDE :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
-    // writeln!(f, "const NO_PAWNS :u64 = 0x{:x}_u64;", rnd.gen::<u64>());
-
-    Ok( () )
+    writeln!(f, "const SIDE :u64 = 0x{:x}_u64;", rnd.gen::<u64>())
 }
