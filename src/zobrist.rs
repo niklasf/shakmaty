@@ -123,7 +123,7 @@ impl <P: Position> Setup for Zobrist<P> {
     }
 }
 
-// call thruogh to the underlying methods for everything except `play_unchecked`
+// call through to the underlying methods for everything except `play_unchecked`
 impl <P: Position> Position for Zobrist<P> {
     #[inline(always)]
     fn legal_moves(&self) -> MoveList {
