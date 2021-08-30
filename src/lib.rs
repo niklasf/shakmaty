@@ -89,13 +89,13 @@ mod movelist;
 mod magics;
 mod perft;
 mod util;
-mod zobrist;
 
 pub mod attacks;
 pub mod bitboard;
 pub mod fen;
 pub mod uci;
 pub mod san;
+pub mod zobrist;
 
 #[cfg(feature = "variant")]
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
