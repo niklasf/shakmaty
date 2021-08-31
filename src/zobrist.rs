@@ -12,7 +12,7 @@ pub trait ZobristHashable {}
 ///
 /// It can be used with every variant that implements the [`ZobristHashable`] trait.
 /// Updating the hash includes some overhead so only use it if needed.
-/// [`zobrist_from_pos`] can be an alternative when needing an hash sporadically.
+/// [`hash_from_pos`] can be an alternative when needing an hash sporadically.
 #[derive(Debug)]
 pub struct Zobrist<P: Position + ZobristHashable> {
     pos: P,
@@ -53,7 +53,7 @@ impl <P:FromSetup + Position + ZobristHashable> FromSetup for Zobrist<P> {
             Err(e) => return Err(PositionError { pos: Zobrist { pos: e.pos, zobrist: 0 }, errors: e.errors }), // Note, returning an hash not corresponding to the position
             Ok(p) => p
         };
-        let zobrist = zobrist_from_pos(&pos);
+        let zobrist = hash_from_pos(&pos);
         Ok(Zobrist { pos, zobrist })
     }
 }
@@ -226,7 +226,7 @@ fn zobrist_from_board(board: &Board) -> u64 {
 }
 
 /// Computes the Zobrist hash for given a position.
-pub fn zobrist_from_pos<T: Position + ZobristHashable>(pos: &T) -> u64 {
+pub fn hash_from_pos<T: Position + ZobristHashable>(pos: &T) -> u64 {
     // compute the zobrist hash from the pieces on the board
     let mut zobrist = zobrist_from_board(&pos.board());
 
