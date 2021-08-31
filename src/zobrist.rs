@@ -249,12 +249,12 @@ fn zobrist_from_board(board: &Board) -> u64 {
 }
 
 #[inline(always)]
-pub fn square(sq: Square, piece: Piece) -> u64 {
+fn square(sq: Square, piece: Piece) -> u64 {
     PIECE_SQUARE[sq as usize][<Piece as Into<usize>>::into(piece)]
 }
 
 #[inline(always)]
-pub fn castle(color :Color, castle: CastlingSide) -> u64 {
+fn castle(color :Color, castle: CastlingSide) -> u64 {
     // there are 4 values in CASTLE: WHITE_KING[0], WHITE_QUEEN[1], BLACK_KING[2], BLACK_QUEEN[3]
     match (color, castle) {
         (Color::White, CastlingSide::KingSide) => CASTLE[0],
