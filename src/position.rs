@@ -30,6 +30,7 @@ use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingCheck
 use crate::material::Material;
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
+use crate::zobrist::ZobristHashable;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -84,7 +85,7 @@ impl<P: fmt::Debug> Error for PlayError<P> {
 }
 
 bitflags! {
-    /// Reasons for a [`Setup`] not beeing a legal [`Position`].
+    /// Reasons for a [`Setup`] not being a legal [`Position`].
     pub struct PositionErrorKinds: u32 {
         /// There are no pieces on the board.
         const EMPTY_BOARD = 1 << 0;
@@ -481,7 +482,7 @@ impl Chess {
 
 impl Default for Chess {
     fn default() -> Chess {
-        Chess {
+    Chess {
             board: Board::default(),
             turn: White,
             castles: Castles::default(),
@@ -514,7 +515,7 @@ impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(&mut self.board, &mut self.turn, &mut self.castles,
                 &mut self.ep_square, &mut self.halfmoves,
-                &mut self.fullmoves, m);
+            &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
@@ -670,6 +671,8 @@ impl Position for Chess {
     fn is_variant_end(&self) -> bool { false }
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
+
+impl ZobristHashable for Chess {}
 
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
@@ -1022,6 +1025,8 @@ pub(crate) mod variant {
         }
     }
 
+    impl ZobristHashable for Antichess {}
+
     /// A King of the Hill position.
     #[derive(Clone, Debug, Default)]
     pub struct KingOfTheHill {
@@ -1108,6 +1113,8 @@ pub(crate) mod variant {
             None
         }
     }
+
+    impl ZobristHashable for KingOfTheHill {}
 
     /// A Three-Check position.
     #[derive(Clone, Debug, Default)]
@@ -1532,6 +1539,8 @@ pub(crate) mod variant {
         }
     }
 
+    impl ZobristHashable for RacingKings {}
+
     /// A Horde position.
     #[derive(Clone, Debug)]
     pub struct Horde {
@@ -1930,6 +1939,8 @@ pub(crate) mod variant {
             }
         }
     }
+
+    impl ZobristHashable for Horde {}
 
     fn add_king_promotions(moves: &mut MoveList) {
         let mut king_promotions = MoveList::new();

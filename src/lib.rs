@@ -89,6 +89,7 @@ mod movelist;
 mod magics;
 mod perft;
 mod util;
+mod zobrist;
 
 pub mod attacks;
 pub mod bitboard;
@@ -110,3 +111,4 @@ pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
 pub use crate::position::{Chess, Outcome, Position, FromSetup, PlayError, PositionError, PositionErrorKinds};
 pub use crate::perft::perft;
+pub use crate::zobrist::{Zobrist, ZobristHashable, hash_from_pos};
