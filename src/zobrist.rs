@@ -39,44 +39,10 @@ impl <P:FromSetup + Position> FromSetup for Zobrist<P> {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
         // create the underlying from the setup
         let pos = match P::from_setup(setup, mode) {
-            Err(e) => return Err(PositionError { pos: Zobrist { pos: e.pos, zobrist: 0 }, errors: e.errors }),
+            Err(e) => return Err(PositionError { pos: Zobrist { pos: e.pos, zobrist: 0 }, errors: e.errors }), // Note, returning an hash not corresponding to the position
             Ok(p) => p
         };
-
-        let board = pos.board();
-        let turn = pos.turn();
-
-        let castles = pos.castles();
-        let ep_square = pos.ep_square();
-
-        // compute the zobrist hash for the board
-        let mut zobrist = zobrist_from_board(&board);
-
-        // set castling
-        if castles.has(Color::White, CastlingSide::KingSide) {
-            zobrist ^= castle(Color::White, CastlingSide::KingSide);
-        }
-
-        if castles.has(Color::White, CastlingSide::QueenSide) {
-            zobrist ^= castle(Color::White, CastlingSide::QueenSide);
-        }
-
-        if castles.has(Color::Black, CastlingSide::KingSide) {
-            zobrist ^= castle(Color::Black, CastlingSide::KingSide);
-        }
-
-        if castles.has(Color::Black, CastlingSide::QueenSide) {
-            zobrist ^= castle(Color::Black, CastlingSide::QueenSide);
-        }
-
-        if let Some(sq) = ep_square {
-            zobrist ^= ENPASSANT[sq.file() as usize];
-        }
-
-        if turn == Color::Black {
-            zobrist ^= SIDE;
-        }
-
+        let zobrist = zobrist_from_pos(&pos);
         Ok(Zobrist { pos, zobrist })
     }
 }
@@ -234,7 +200,7 @@ impl <P: Position> Position for Zobrist<P> {
 }
 
 /// Computes the Zobrist hash given a board
-/// <b>This is NOT the complete hash... castling and en passant are not included</b>
+/// This is NOT the complete hash... castling and en passant are not included
 fn zobrist_from_board(board: &Board) -> u64 {
     // compute the zobrist hash from the pieces on the board
     let mut zobrist = 0u64;
@@ -245,6 +211,40 @@ fn zobrist_from_board(board: &Board) -> u64 {
         }
     }
 
+    zobrist
+}
+
+/// Computes the Zobrist hash given a position.
+pub fn zobrist_from_pos<T: Position>(pos: &T) -> u64 {
+    // compute the zobrist hash from the pieces on the board
+    let mut zobrist = zobrist_from_board(&pos.board());
+
+    let castles = pos.castles();
+
+    // set castling
+    if castles.has(Color::White, CastlingSide::KingSide) {
+        zobrist ^= castle(Color::White, CastlingSide::KingSide);
+    }
+
+    if castles.has(Color::White, CastlingSide::QueenSide) {
+        zobrist ^= castle(Color::White, CastlingSide::QueenSide);
+    }
+
+    if castles.has(Color::Black, CastlingSide::KingSide) {
+        zobrist ^= castle(Color::Black, CastlingSide::KingSide);
+    }
+
+    if castles.has(Color::Black, CastlingSide::QueenSide) {
+        zobrist ^= castle(Color::Black, CastlingSide::QueenSide);
+    }
+
+    if let Some(sq) = pos.ep_square() {
+        zobrist ^= ENPASSANT[sq.file() as usize];
+    }
+
+    if pos.turn() == Color::Black {
+        zobrist ^= SIDE;
+    }
     zobrist
 }
 
