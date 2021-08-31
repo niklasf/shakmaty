@@ -30,6 +30,7 @@ use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingCheck
 use crate::material::Material;
 use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
 use crate::movelist::MoveList;
+use crate::zobrist::ZobristHashable;
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
@@ -671,6 +672,8 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Option<Outcome> { None }
 }
 
+impl ZobristHashable for Chess {}
+
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
     use super::*;
@@ -1022,6 +1025,8 @@ pub(crate) mod variant {
         }
     }
 
+    impl ZobristHashable for Antichess {}
+
     /// A King of the Hill position.
     #[derive(Clone, Debug, Default)]
     pub struct KingOfTheHill {
@@ -1108,6 +1113,8 @@ pub(crate) mod variant {
             None
         }
     }
+
+    impl ZobristHashable for KingOfTheHill {}
 
     /// A Three-Check position.
     #[derive(Clone, Debug, Default)]
@@ -1532,6 +1539,8 @@ pub(crate) mod variant {
         }
     }
 
+    impl ZobristHashable for RacingKings {}
+
     /// A Horde position.
     #[derive(Clone, Debug)]
     pub struct Horde {
@@ -1930,6 +1939,8 @@ pub(crate) mod variant {
             }
         }
     }
+
+    impl ZobristHashable for Horde {}
 
     fn add_king_promotions(moves: &mut MoveList) {
         let mut king_promotions = MoveList::new();

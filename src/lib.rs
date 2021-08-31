@@ -111,4 +111,4 @@ pub use crate::setup::{Castles, Setup};
 pub use crate::movelist::MoveList;
 pub use crate::position::{Chess, Outcome, Position, FromSetup, PlayError, PositionError, PositionErrorKinds};
 pub use crate::perft::perft;
-pub use crate::zobrist::{Zobrist, zobrist_from_pos};
+pub use crate::zobrist::{Zobrist, ZobristHashable, zobrist_from_pos};
