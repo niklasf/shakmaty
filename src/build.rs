@@ -188,30 +188,18 @@ fn generate_zobrist<W: Write>(f: &mut W) -> io::Result<()> {
 
     // generate random values for the piece-square table
     for row in piece_square.iter_mut() {
-        for col in row.iter_mut() {
-            *col = rnd.gen::<u64>();
-        }
+        *row = rnd.gen();
     }
 
     dump_table(f, "PIECE_SQUARE", "u64", &piece_square)?;
 
-
     // generate random values for enpassant
-    let mut enpassant :[u64; 8] = [0; 8];
-
-    for file in enpassant.iter_mut() {
-        *file = rnd.gen::<u64>();
-    }
+    let enpassant :[u64; 8] = rnd.gen();
 
     dump_slice(f, "ENPASSANT", "u64", &enpassant).expect("Error dumping enpassant slice");
 
-
     // generate random values for castling
-    let mut castle :[u64; 4] = [0; 4];
-
-    for castle in castle.iter_mut() {
-        *castle = rnd.gen::<u64>();
-    }
+    let castle :[u64; 4] = rnd.gen();
 
     dump_slice(f, "CASTLE", "u64", &castle).expect("Error dumping castle slice");
 
