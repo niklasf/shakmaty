@@ -348,7 +348,7 @@ impl FromIterator<(Square, Piece)> for Board {
 }
 
 /// Iterator over the pieces of a [`Board`].
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Pieces {
     pawns: Bitboard,
     knights: Bitboard,
