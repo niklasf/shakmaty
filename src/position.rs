@@ -496,7 +496,8 @@ impl Default for Chess {
 
 impl PartialEq for Chess {
     fn eq(&self, other: &Self) -> bool {
-        self.board == other.board &&
+        // We disregard the `promoted` bitboard
+        self.board.pieces() == other.board.pieces() &&
         self.turn == other.turn &&
         // tricky part, see https://github.com/niklasf/shakmaty/pull/37#issuecomment-793052003
         // "For example, Castles instances can be distinct due to the path field, even when no castling rights remain. 
@@ -2493,7 +2494,27 @@ mod tests {
             capture: None,
             promotion: None,
         }).expect("Ke1 is legal");
-        assert_eq(pos_after_move, ffen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1"))
+        assert_eq(pos_after_move, ffen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1"));
+        // check if `board.promoted` does not interfere.
+        let pos2: Chess = ffen("rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNBQKBNR w KQq - 0 26");
+        let pos2_after_promotion_Q = pos2.clone().play(&Move::Normal {
+            role: Role::Pawn,
+            from: Square::H7,
+            to: Square::H8,
+            capture: None,
+            promotion: Some(Role::Queen),
+        }).expect("h8=Q is legal");
+        let pos2_after_promotion_N = pos2.play(&Move::Normal {
+            role: Role::Pawn,
+            from: Square::H7,
+            to: Square::H8,
+            capture: None,
+            promotion: Some(Role::Knight),
+        }).expect("h8=N is legal");
+        let final_pos: Chess = ffen("rnbqkbnQ/ppppppp1/8/8/8/8/PPPPPPP1/RNBQKBNR b KQq - 0 26");
+        assert_eq(pos2_after_promotion_Q, final_pos.clone());
+        assert_ne(pos2_after_promotion_N, final_pos);
+
     }
 
     #[cfg(feature = "variant")]
