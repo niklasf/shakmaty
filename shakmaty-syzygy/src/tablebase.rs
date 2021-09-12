@@ -161,7 +161,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Probe tables for the [`Wdl`] value of a position.
     ///
     /// This indicates if the position is winning, lost or drawn with
-    /// or without the 50-move rule.
+    /// or without the 50-move rule, assuming `pos` is reached directly after
+    /// a capture or pawn move.
     ///
     /// # Errors
     ///

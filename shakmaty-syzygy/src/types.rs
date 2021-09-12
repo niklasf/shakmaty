@@ -88,8 +88,8 @@ impl Syzygy for shakmaty::variant::Antichess {
     const CAPTURES_COMPULSORY: bool = true;
 }
 
-/// 5-valued evaluation of a position in the context of the 50-move drawing
-/// rule.
+/// WDL<sub>50</sub>. 5-valued evaluation of a position in the context of the
+/// 50-move drawing rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Wdl {
@@ -209,15 +209,24 @@ impl Neg for DecisiveWdl {
 
 from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 
-/// Distance to zeroing of the half-move clock.
+/// DTZ<sub>50</sub>′′ with rounding. Based on the distance to zeroing of the
+/// half-move clock.
 ///
 /// Zeroing the half-move clock while keeping the game theoretical result in
 /// hand guarantees making progress.
 ///
-/// Can be off by one: `Dtz(-n)` can mean a loss in `n + 1` plies and `Dtz(n)`
-/// can mean a win in `n + 1` plies. This is guaranteed not to happen for
-/// positions exactly on the edge of the 50-move rule, so that (with some care)
-/// this never impacts results of practical play.
+/// Can be off by one due to
+/// [rounding](http://www.talkchess.com/forum3/viewtopic.php?f=7&t=58488#p651293):
+/// `Dtz(-n)` can mean a loss in `n + 1` plies and
+/// `Dtz(n)` can mean a win in `n + 1` plies.
+/// This implies some primary tablebase lines may waste up to 1 ply.
+/// Rounding is never used for endgame phases where it would change the game
+/// theoretical outcome.
+///
+/// This means users need to be careful in positions that are nearly drawn
+/// under the 50-move rule! Carelessly wasting 1 more ply by not following the
+/// tablebase recommendation, for a total of 2 wasted plies, may change the
+/// outcome of the game.
 ///
 /// | DTZ | WDL | |
 /// | --- | --- | --- |
