@@ -70,6 +70,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
     /// actually opened. This happens lazily when probing.
     ///
+    /// Note that probing generally requires tables for the specific material
+    /// composition, as well as material compositions that are transitively
+    /// reachable by captures and promotions. These are sometimes distributed
+    /// separately, so make sure to add tables from all relevant directories.
+    ///
     /// Returns the number of added table files.
     ///
     /// # Errors
@@ -177,6 +182,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Min-maxing the DTZ of the available moves guarantees achieving the
     /// optimal outcome under the 50-move rule.
     ///
+    /// Requires both WDL and DTZ tables.
+    ///
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error
@@ -186,6 +193,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     /// Select a DTZ-optimal move.
+    ///
+    /// Requires both WDL and DTZ tables.
     ///
     /// # Errors
     ///
