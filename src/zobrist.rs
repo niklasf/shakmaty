@@ -262,7 +262,7 @@ pub fn hash_from_pos<T: Position + ZobristHashable>(pos: &T) -> u64 {
 }
 
 fn square(sq: Square, piece: Piece) -> u64 {
-    POLYGLOT_RANDOM_ARRAY[64 * <Piece as Into<usize>>::into(piece) + usize::from(sq)]
+    POLYGLOT_RANDOM_ARRAY[64 * piece_idx(piece) + usize::from(sq)]
 }
 
 fn castle(color :Color, castle: CastlingSide) -> u64 {
@@ -272,6 +272,10 @@ fn castle(color :Color, castle: CastlingSide) -> u64 {
         (Color::Black, CastlingSide::KingSide) => 2,
         (Color::Black, CastlingSide::QueenSide) => 3,
     }]
+}
+
+fn piece_idx(piece: Piece) -> usize {
+    usize::from(piece.role) - 1 + piece.color.fold(6, 0)
 }
 
 #[cfg(test)]
@@ -400,39 +404,6 @@ mod zobrist_tests {
         }
 
         println!("Found {} unique hashes for boards", hash_fen.len());
-    }
-}
-
-// we implement Into instead of From (or TryFrom) because we only need one-way conversion
-// Piece -> usize
-// TODO: Avoid trait leak.
-impl Into<usize> for Piece {
-    #[inline(always)]
-    fn into(self) -> usize {
-        if self.color == Color::Black {
-            (self.role as usize - 1) + 6
-        } else {
-            self.role as usize - 1
-        }
-    }
-}
-
-// TODO: Impl should be private.
-impl CastlingSide {
-    // used for zobrist hashing
-    #[inline(always)]
-    pub fn to_usize(self, color: Color) -> usize {
-        if color == Color::White {
-            match self {
-                CastlingSide::KingSide => 0,
-                CastlingSide::QueenSide => 1,
-            }
-        } else {
-            match self {
-                CastlingSide::KingSide => 2,
-                CastlingSide::QueenSide => 3
-            }
-        }
     }
 }
 
