@@ -16,6 +16,7 @@
 
 use std::fmt;
 use std::error::Error;
+use std::hash::{Hash, Hasher};
 use std::num::NonZeroU32;
 
 use bitflags::bitflags;
@@ -493,6 +494,16 @@ impl Default for Chess {
     }
 }
 
+impl Hash for Chess {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.board.hash(state);
+        self.turn.hash(state);
+        self.castling_rights().hash(state);
+        self.ep_square().hash(state);
+        self.halfmoves.hash(state);
+        self.fullmoves.hash(state);
+    }
+}
 
 impl PartialEq for Chess {
     fn eq(&self, other: &Self) -> bool {
