@@ -482,7 +482,7 @@ impl Chess {
 
 impl Default for Chess {
     fn default() -> Chess {
-    Chess {
+        Chess {
             board: Board::default(),
             turn: White,
             castles: Castles::default(),
@@ -496,16 +496,10 @@ impl Default for Chess {
 
 impl PartialEq for Chess {
     fn eq(&self, other: &Self) -> bool {
-        // We disregard the `promoted` bitboard
-        self.board.pieces() == other.board.pieces() &&
+        self.board == other.board &&
         self.turn == other.turn &&
-        // tricky part, see https://github.com/niklasf/shakmaty/pull/37#issuecomment-793052003
-        // "For example, Castles instances can be distinct due to the path field, even when no castling rights remain. 
-        // The corresponding positions would be semantically equal (but not structurally) and have the same FEN."
-
-        // We intentionally do not check for the castling mode.
         self.castling_rights() == other.castling_rights() &&
-        self.ep_square == other.ep_square &&
+        self.ep_square() == other.ep_square() &&
         self.halfmoves == other.halfmoves &&
         self.fullmoves == other.fullmoves
     }
@@ -532,7 +526,6 @@ impl PartialEq for Chess {
 /// #
 /// # Ok::<_, Box<dyn Error>>(())
 /// ```
-
 impl Eq for Chess {}
 
 impl Setup for Chess {

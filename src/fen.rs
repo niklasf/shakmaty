@@ -82,7 +82,7 @@ use crate::setup::Setup;
 use crate::position::{FromSetup, PositionError};
 
 /// FEN formatting options.
-#[derive(Default, Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Default, Clone, Debug)]
 pub struct FenOpts {
     shredder: bool,
     scid: bool,
