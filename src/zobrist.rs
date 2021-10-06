@@ -1,6 +1,10 @@
 //! Zobrist hashing for positions.
 
-use crate::{Square, Piece, CastlingSide, Color, Setup, Position, MoveList, Move, Outcome, Castles, RemainingChecks, Board, ByColor, Material, Bitboard, Role, File, FromSetup, CastlingMode, PositionError};
+use crate::{
+    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Color, File, FromSetup,
+    Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
+    Setup, Square,
+};
 use std::num::NonZeroU32;
 
 /// Used to discriminate which variants support Zobrist hashing. See [`Zobrist`].
@@ -14,16 +18,16 @@ pub trait ZobristHashable {}
 #[derive(Debug)]
 pub struct Zobrist<P: Position + ZobristHashable> {
     pos: P,
-    zobrist: u64
+    zobrist: u64,
 }
 
-impl <P: Position + ZobristHashable> Zobrist<P> {
+impl<P: Position + ZobristHashable> Zobrist<P> {
     pub fn zobrist_hash(&self) -> u64 {
         self.zobrist
     }
 }
 
-impl <P: Default + Position + ZobristHashable> Default for Zobrist<P> {
+impl<P: Default + Position + ZobristHashable> Default for Zobrist<P> {
     fn default() -> Self {
         let pos = P::default();
         let board = pos.board();
@@ -41,12 +45,20 @@ impl <P: Default + Position + ZobristHashable> Default for Zobrist<P> {
     }
 }
 
-impl <P:FromSetup + Position + ZobristHashable> FromSetup for Zobrist<P> {
+impl<P: FromSetup + Position + ZobristHashable> FromSetup for Zobrist<P> {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
         // create the underlying from the setup
         let pos = match P::from_setup(setup, mode) {
-            Err(e) => return Err(PositionError { pos: Zobrist { pos: e.pos, zobrist: 0 }, errors: e.errors }), // Note, returning an hash not corresponding to the position
-            Ok(p) => p
+            Err(e) => {
+                return Err(PositionError {
+                    pos: Zobrist {
+                        pos: e.pos,
+                        zobrist: 0,
+                    },
+                    errors: e.errors,
+                });
+            } // Note, returning an hash not corresponding to the position
+            Ok(p) => p,
         };
         let zobrist = hash_from_pos(&pos);
         Ok(Zobrist { pos, zobrist })
@@ -54,7 +66,7 @@ impl <P:FromSetup + Position + ZobristHashable> FromSetup for Zobrist<P> {
 }
 
 // Simply call through to the underlying methods
-impl <P: Position + ZobristHashable> Setup for Zobrist<P> {
+impl<P: Position + ZobristHashable> Setup for Zobrist<P> {
     #[inline(always)]
     fn board(&self) -> &Board {
         self.pos.board()
@@ -102,7 +114,7 @@ impl <P: Position + ZobristHashable> Setup for Zobrist<P> {
 }
 
 // call through to the underlying methods for everything except `play_unchecked`
-impl <P: Position + ZobristHashable> Position for Zobrist<P> {
+impl<P: Position + ZobristHashable> Position for Zobrist<P> {
     #[inline(always)]
     fn legal_moves(&self) -> MoveList {
         self.pos.legal_moves()
@@ -137,7 +149,13 @@ impl <P: Position + ZobristHashable> Position for Zobrist<P> {
         }
 
         match *m {
-            Move::Normal { role, from, capture, to, promotion } => {
+            Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion,
+            } => {
                 // if we have an enpassant square, add it to the hash
                 if let Some(sq) = self.pos.ep_square() {
                     self.zobrist ^= POLYGLOT_RANDOM_ARRAY[772 + sq.file() as usize];
@@ -185,8 +203,14 @@ impl <P: Position + ZobristHashable> Position for Zobrist<P> {
                 self.zobrist ^= square(king, color.king());
                 self.zobrist ^= square(rook, color.rook());
 
-                self.zobrist ^= square(Square::from_coords(side.rook_to_file(), rook.rank()), color.rook());
-                self.zobrist ^= square(Square::from_coords(side.king_to_file(), king.rank()), color.king());
+                self.zobrist ^= square(
+                    Square::from_coords(side.rook_to_file(), rook.rank()),
+                    color.rook(),
+                );
+                self.zobrist ^= square(
+                    Square::from_coords(side.king_to_file(), king.rank()),
+                    color.king(),
+                );
 
                 if self.castles().has(color, CastlingSide::KingSide) {
                     self.zobrist ^= castle(color, CastlingSide::KingSide);
@@ -197,7 +221,8 @@ impl <P: Position + ZobristHashable> Position for Zobrist<P> {
                 }
             }
             Move::EnPassant { from, to } => {
-                self.zobrist ^= square(Square::from_coords(to.file(), from.rank()), (!color).pawn());
+                self.zobrist ^=
+                    square(Square::from_coords(to.file(), from.rank()), (!color).pawn());
                 self.zobrist ^= square(from, color.pawn());
                 self.zobrist ^= square(to, color.pawn());
             }
@@ -206,7 +231,7 @@ impl <P: Position + ZobristHashable> Position for Zobrist<P> {
             }
         }
 
-        self.zobrist ^= 0x01;  // flip the side
+        self.zobrist ^= 0x01; // flip the side
     }
 }
 
@@ -263,13 +288,14 @@ fn square(sq: Square, piece: Piece) -> u64 {
     POLYGLOT_RANDOM_ARRAY[64 * piece_idx(piece) + usize::from(sq)]
 }
 
-fn castle(color :Color, castle: CastlingSide) -> u64 {
-    POLYGLOT_RANDOM_ARRAY[768 + match (color, castle) {
-        (Color::White, CastlingSide::KingSide) => 0,
-        (Color::White, CastlingSide::QueenSide) => 1,
-        (Color::Black, CastlingSide::KingSide) => 2,
-        (Color::Black, CastlingSide::QueenSide) => 3,
-    }]
+fn castle(color: Color, castle: CastlingSide) -> u64 {
+    POLYGLOT_RANDOM_ARRAY[768
+        + match (color, castle) {
+            (Color::White, CastlingSide::KingSide) => 0,
+            (Color::White, CastlingSide::QueenSide) => 1,
+            (Color::Black, CastlingSide::KingSide) => 2,
+            (Color::Black, CastlingSide::QueenSide) => 3,
+        }]
 }
 
 fn piece_idx(piece: Piece) -> usize {
@@ -278,11 +304,11 @@ fn piece_idx(piece: Piece) -> usize {
 
 #[cfg(test)]
 mod zobrist_tests {
-    use crate::{Square, Piece, Chess, Position, CastlingMode, Move};
     use crate::fen::{epd, Fen};
     use crate::zobrist::{square, Zobrist};
-    use std::collections::{HashSet, HashMap};
+    use crate::{CastlingMode, Chess, Move, Piece, Position, Square};
     use rand::prelude::*;
+    use std::collections::{HashMap, HashSet};
 
     #[test]
     fn square_test() {
@@ -290,11 +316,17 @@ mod zobrist_tests {
 
         // go through each square and piece combo and make sure they're unique
         for sq in (0..64).into_iter().map(|i| Square::new(i)) {
-            for piece in ['p','n','b','r','q','k','P','N','B','R','Q','K'].iter().map(|c| Piece::from_char(*c).unwrap()) {
+            for piece in ['p', 'n', 'b', 'r', 'q', 'k', 'P', 'N', 'B', 'R', 'Q', 'K']
+                .iter()
+                .map(|c| Piece::from_char(*c).unwrap())
+            {
                 let h = square(sq, piece);
 
                 if hashes.contains(&h) {
-                    panic!("Zobrist square({}, {:?}) = {} already exists!!!", sq, piece, h);
+                    panic!(
+                        "Zobrist square({}, {:?}) = {} already exists!!!",
+                        sq, piece, h
+                    );
                 } else {
                     hashes.insert(h);
                 }
@@ -306,13 +338,25 @@ mod zobrist_tests {
 
     #[test]
     fn fen_test() {
-        let setup1 :Fen = "8/8/8/8/p7/P7/6k1/2K5 w - -".parse().expect("Error parsing FEN");
-        let setup2 :Fen = "8/8/8/8/p7/P7/6k1/2K5 b - -".parse().expect("Error parsing FEN");
+        let setup1: Fen = "8/8/8/8/p7/P7/6k1/2K5 w - -"
+            .parse()
+            .expect("Error parsing FEN");
+        let setup2: Fen = "8/8/8/8/p7/P7/6k1/2K5 b - -"
+            .parse()
+            .expect("Error parsing FEN");
 
-        let game1 :Zobrist<Chess> = setup1.position(CastlingMode::Standard).expect("Error setting up game");
-        let game2 :Zobrist<Chess> = setup2.position(CastlingMode::Standard).expect("Error setting up game");
+        let game1: Zobrist<Chess> = setup1
+            .position(CastlingMode::Standard)
+            .expect("Error setting up game");
+        let game2: Zobrist<Chess> = setup2
+            .position(CastlingMode::Standard)
+            .expect("Error setting up game");
 
-        println!("0x{:x} != 0x{:x}", game1.zobrist_hash(), game2.zobrist_hash());
+        println!(
+            "0x{:x} != 0x{:x}",
+            game1.zobrist_hash(),
+            game2.zobrist_hash()
+        );
 
         assert_ne!(game1.zobrist_hash(), game2.zobrist_hash());
     }
@@ -320,9 +364,9 @@ mod zobrist_tests {
     #[test]
     fn moves_test() {
         // randomly move through a bunch of moves, ensuring we get different zobrist hashes
-        const MAX_MOVES :usize = 10_000;
-        let mut hash_fen :HashMap<u64, String> = HashMap::new();
-        let mut hash_moves :HashMap<u64, Vec<Move>> = HashMap::new();
+        const MAX_MOVES: usize = 10_000;
+        let mut hash_fen: HashMap<u64, String> = HashMap::new();
+        let mut hash_moves: HashMap<u64, Vec<Move>> = HashMap::new();
         let mut moves = Vec::new();
         let mut chess = Zobrist::<Chess>::default();
         let mut rnd = StdRng::seed_from_u64(0x30b3_1137_bb45_7b1b_u64);
@@ -347,40 +391,77 @@ mod zobrist_tests {
                 // found a collision!!!
                 if fen != *existing_fen {
                     // check to see if the FENs are also the same
-                    let setup1 :Fen = fen.parse().expect("Error parsing FEN");
-                    let setup2 :Fen = existing_fen.parse().expect("Error parsing FEN");
+                    let setup1: Fen = fen.parse().expect("Error parsing FEN");
+                    let setup2: Fen = existing_fen.parse().expect("Error parsing FEN");
 
-                    let game1 :Zobrist<Chess> = setup1.position(CastlingMode::Standard).expect("Error setting up game");
-                    let game2 :Zobrist<Chess> = setup2.position(CastlingMode::Standard).expect("Error setting up game");
+                    let game1: Zobrist<Chess> = setup1
+                        .position(CastlingMode::Standard)
+                        .expect("Error setting up game");
+                    let game2: Zobrist<Chess> = setup2
+                        .position(CastlingMode::Standard)
+                        .expect("Error setting up game");
 
                     if game1.zobrist_hash() == game2.zobrist_hash() {
-                        panic!("COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})", fen, game1.zobrist_hash(), existing_fen, game2.zobrist_hash());
+                        panic!(
+                            "COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})",
+                            fen,
+                            game1.zobrist_hash(),
+                            existing_fen,
+                            game2.zobrist_hash()
+                        );
                     } else {
                         let mvs1 = hash_moves.get(&z).unwrap();
                         let mvs2 = moves;
                         let mut game = Zobrist::<Chess>::default();
 
-                        let mut panic_str = format!("ZOBRIST COLLISION AFTER {}: 0x{:016x} ({} {})\n", hash_fen.len(), z, mvs1.len(), mvs2.len());
+                        let mut panic_str = format!(
+                            "ZOBRIST COLLISION AFTER {}: 0x{:016x} ({} {})\n",
+                            hash_fen.len(),
+                            z,
+                            mvs1.len(),
+                            mvs2.len()
+                        );
 
                         for (i, (mv1, mv2)) in mvs1.iter().zip(mvs2.iter()).enumerate() {
                             if mv1 == mv2 {
                                 game.play_unchecked(mv1);
-                                panic_str += format!("{:03}: {:?} -> {}\t0x{:08x}\n", i, mv1, epd(&game), game.zobrist_hash()).as_str();
+                                panic_str += format!(
+                                    "{:03}: {:?} -> {}\t0x{:08x}\n",
+                                    i,
+                                    mv1,
+                                    epd(&game),
+                                    game.zobrist_hash()
+                                )
+                                .as_str();
                             } else {
                                 panic_str += format!("DIFF {:03}: {:?} {:?}", i, mv1, mv2).as_str();
-                                break
+                                break;
                             }
                         }
 
                         if mvs1.len() > mvs2.len() {
                             for (i, mv1) in mvs1.iter().skip(mvs2.len()).enumerate() {
                                 game.play_unchecked(mv1);
-                                panic_str += format!("MV1 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs2.len(), mv1, epd(&game), game.zobrist_hash()).as_str();
+                                panic_str += format!(
+                                    "MV1 {:03}: {:?} -> {}\t0x{:08x}\n",
+                                    i + mvs2.len(),
+                                    mv1,
+                                    epd(&game),
+                                    game.zobrist_hash()
+                                )
+                                .as_str();
                             }
                         } else {
                             for (i, mv2) in mvs2.iter().skip(mvs1.len()).enumerate() {
                                 game.play_unchecked(mv2);
-                                panic_str += format!("MV2 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs1.len(), mv2, epd(&game), game.zobrist_hash()).as_str();
+                                panic_str += format!(
+                                    "MV2 {:03}: {:?} -> {}\t0x{:08x}\n",
+                                    i + mvs1.len(),
+                                    mv2,
+                                    epd(&game),
+                                    game.zobrist_hash()
+                                )
+                                .as_str();
                             }
                         }
 
@@ -405,6 +486,7 @@ mod zobrist_tests {
     }
 }
 
+#[rustfmt::skip]
 const POLYGLOT_RANDOM_ARRAY: [u64; 781] = [
     0x9D39247E33776D41, 0x2AF7398005AAA5C7, 0x44DB015024623547, 0x9C15F73E62A76AE2,
     0x75834465489C0C89, 0x3290AC3A203001BF, 0x0FBBAD1F61042279, 0xE83A908FF2FB60CA,
