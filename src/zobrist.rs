@@ -74,6 +74,10 @@ impl<P, V> Zobrist<P, V> {
             zobrist: None,
         }
     }
+
+    pub fn into_inner(self) -> P {
+        self.pos
+    }
 }
 
 impl<P: Default, V> Default for Zobrist<P, V> {
