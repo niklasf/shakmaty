@@ -407,5 +407,37 @@ mod zobrist_tests {
 
         println!("Found {} unique hashes for boards", hash_fen.len());
     }
+}
 
+// we implement Into instead of From (or TryFrom) because we only need one-way conversion
+// Piece -> usize
+// TODO: Avoid trait leak.
+impl Into<usize> for Piece {
+    #[inline(always)]
+    fn into(self) -> usize {
+        if self.color == Color::Black {
+            self.role as usize + 8_usize
+        } else {
+            self.role as usize
+        }
+    }
+}
+
+// TODO: Impl should be private.
+impl CastlingSide {
+    // used for zobrist hashing
+    #[inline(always)]
+    pub fn to_usize(self, color: Color) -> usize {
+        if color == Color::White {
+            match self {
+                CastlingSide::KingSide => 0,
+                CastlingSide::QueenSide => 1,
+            }
+        } else {
+            match self {
+                CastlingSide::KingSide => 2,
+                CastlingSide::QueenSide => 3
+            }
+        }
+    }
 }
