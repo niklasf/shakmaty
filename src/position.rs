@@ -505,23 +505,22 @@ impl PartialEq for Chess {
     }
 }
 
-/// Equivalent to comparing the [`fen()`](crate::fen::fen()) of both positions, but much faster.
+/// Equivalent to comparing [`Fen::from_setup()`](crate::fen::Fen::from_setup)
+/// of both positions.
 ///
 /// # Example
 ///
-/// It means positions with the same castling rights are equals even though they don't have
-/// the same [`CastlingMode`].
+/// Note that positions with different [`CastlingMode`] may be equivalent.
+///
 /// ```
 /// # use std::error::Error;
-/// # use shakmaty::Chess;
-/// use shakmaty::fen::{Fen, fen};
-/// use shakmaty::{CastlingMode};
+/// use shakmaty::{CastlingMode, Chess};
+/// use shakmaty::fen::Fen;
 ///
-/// let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
-/// let setup: Fen = input.parse()?;
+/// let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
+/// let setup: Fen = fen.parse()?;
 /// let position: Chess = setup.position(CastlingMode::Standard)?;
 /// let position_960: Chess = setup.position(CastlingMode::Chess960)?;
-/// assert_eq!(fen(&position), fen(&position_960));
 /// assert_eq!(position, position_960);
 /// #
 /// # Ok::<_, Box<dyn Error>>(())
