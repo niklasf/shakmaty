@@ -1,9 +1,10 @@
+//! Zobrist hashing for positions.
+
 use crate::{Square, Piece, CastlingSide, Color, Setup, Position, MoveList, Move, Outcome, Castles, RemainingChecks, Board, ByColor, Material, Bitboard, Role, File, FromSetup, CastlingMode, PositionError};
 use std::num::NonZeroU32;
 
 /// Used to discriminate which variants support Zobrist hashing. See [`Zobrist`].
 pub trait ZobristHashable {}
-
 
 /// An extension of [`Position`] that includes an zobrist hash updated at every move.
 ///
@@ -16,16 +17,13 @@ pub struct Zobrist<P: Position + ZobristHashable> {
     zobrist: u64
 }
 
-impl <P:Position + ZobristHashable> ZobristHashable for Zobrist<P> {}
-
-impl <P:Position + ZobristHashable> Zobrist<P> {
-    /// Get the zobrist hash of the current game state.
-    pub fn hash(&self) -> u64 {
+impl <P: Position + ZobristHashable> Zobrist<P> {
+    pub fn zobrist_hash(&self) -> u64 {
         self.zobrist
     }
 }
 
-impl <P:Default + Position + ZobristHashable> Default for Zobrist<P> {
+impl <P: Default + Position + ZobristHashable> Default for Zobrist<P> {
     fn default() -> Self {
         let pos = P::default();
         let board = pos.board();
@@ -314,9 +312,9 @@ mod zobrist_tests {
         let game1 :Zobrist<Chess> = setup1.position(CastlingMode::Standard).expect("Error setting up game");
         let game2 :Zobrist<Chess> = setup2.position(CastlingMode::Standard).expect("Error setting up game");
 
-        println!("0x{:x} != 0x{:x}", game1.hash(), game2.hash());
+        println!("0x{:x} != 0x{:x}", game1.zobrist_hash(), game2.zobrist_hash());
 
-        assert_ne!(game1.hash(), game2.hash());
+        assert_ne!(game1.zobrist_hash(), game2.zobrist_hash());
     }
 
     #[test]
@@ -342,7 +340,7 @@ mod zobrist_tests {
             moves.push(mv);
 
             // get the zobrist hash value
-            let z = chess.hash();
+            let z = chess.zobrist_hash();
             let fen = epd(&chess);
 
             if let Some(existing_fen) = hash_fen.get(&z) {
@@ -355,8 +353,8 @@ mod zobrist_tests {
                     let game1 :Zobrist<Chess> = setup1.position(CastlingMode::Standard).expect("Error setting up game");
                     let game2 :Zobrist<Chess> = setup2.position(CastlingMode::Standard).expect("Error setting up game");
 
-                    if game1.hash() == game2.hash() {
-                        panic!("COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})", fen, game1.hash(), existing_fen, game2.hash());
+                    if game1.zobrist_hash() == game2.zobrist_hash() {
+                        panic!("COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})", fen, game1.zobrist_hash(), existing_fen, game2.zobrist_hash());
                     } else {
                         let mvs1 = hash_moves.get(&z).unwrap();
                         let mvs2 = moves;
@@ -367,7 +365,7 @@ mod zobrist_tests {
                         for (i, (mv1, mv2)) in mvs1.iter().zip(mvs2.iter()).enumerate() {
                             if mv1 == mv2 {
                                 game.play_unchecked(mv1);
-                                panic_str += format!("{:03}: {:?} -> {}\t0x{:08x}\n", i, mv1, epd(&game), game.hash()).as_str();
+                                panic_str += format!("{:03}: {:?} -> {}\t0x{:08x}\n", i, mv1, epd(&game), game.zobrist_hash()).as_str();
                             } else {
                                 panic_str += format!("DIFF {:03}: {:?} {:?}", i, mv1, mv2).as_str();
                                 break
@@ -377,12 +375,12 @@ mod zobrist_tests {
                         if mvs1.len() > mvs2.len() {
                             for (i, mv1) in mvs1.iter().skip(mvs2.len()).enumerate() {
                                 game.play_unchecked(mv1);
-                                panic_str += format!("MV1 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs2.len(), mv1, epd(&game), game.hash()).as_str();
+                                panic_str += format!("MV1 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs2.len(), mv1, epd(&game), game.zobrist_hash()).as_str();
                             }
                         } else {
                             for (i, mv2) in mvs2.iter().skip(mvs1.len()).enumerate() {
                                 game.play_unchecked(mv2);
-                                panic_str += format!("MV2 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs1.len(), mv2, epd(&game), game.hash()).as_str();
+                                panic_str += format!("MV2 {:03}: {:?} -> {}\t0x{:08x}\n", i + mvs1.len(), mv2, epd(&game), game.zobrist_hash()).as_str();
                             }
                         }
 
