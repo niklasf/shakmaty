@@ -5,141 +5,88 @@ use crate::{
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
 };
+use std::ops::BitXorAssign;
 use std::num::NonZeroU32;
 
-/// Used to discriminate which variants support Zobrist hashing. See [`Zobrist`].
-pub trait ZobristHashable {}
+pub trait ZobristHash {
+    fn zobrist_hash<T: BitXorAssign + Default>(&self, table: &[T]) -> T;
 
-/// An extension of [`Position`] that includes an zobrist hash updated at every move.
-///
-/// It can be used with every variant that implements the [`ZobristHashable`] trait.
-/// Updating the hash includes some overhead so only use it if needed.
-/// [`hash_from_pos`] can be an alternative when needing an hash sporadically.
+    fn incremental_zobrist_hash<T: BitXorAssign + Default>(
+        &self,
+        table: &[T],
+        current: T,
+        m: Move
+    ) -> Option<T> {
+        None
+    }
+}
+
+/// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
 #[derive(Debug)]
-pub struct Zobrist<P: Position + ZobristHashable> {
+pub struct Zobrist<P, T: 'static> {
     pos: P,
-    zobrist: u64,
+    zobrist: Option<T>,
+    table: &'static [T],
 }
 
-impl<P: Position + ZobristHashable> Zobrist<P> {
-    pub fn zobrist_hash(&self) -> u64 {
-        self.zobrist
+impl<P, T> Zobrist<P, T> {
+    pub fn new(pos: P) -> Zobrist<P, T> {
+        Zobrist {
+            pos,
+            zobrist: None,
+            table: POLYGLOT_RANDOM_ARRAY,
+        }
     }
 }
 
-impl<P: Default + Position + ZobristHashable> Default for Zobrist<P> {
-    fn default() -> Self {
-        let pos = P::default();
-        let board = pos.board();
-
-        // compute the zobrist hash from the pieces on the board
-        let mut zobrist = zobrist_from_board(board);
-
-        // add in all the castling
-        zobrist ^= castle(Color::White, CastlingSide::KingSide);
-        zobrist ^= castle(Color::White, CastlingSide::QueenSide);
-        zobrist ^= castle(Color::Black, CastlingSide::KingSide);
-        zobrist ^= castle(Color::Black, CastlingSide::QueenSide);
-
-        Zobrist { pos, zobrist }
+impl<P: Default, T> Default for Zobrist<P, T> {
+    fn default() -> Zobrist<P, T> {
+        Self::new(P::default())
     }
 }
 
-impl<P: FromSetup + Position + ZobristHashable> FromSetup for Zobrist<P> {
+impl<P: FromSetup, T> FromSetup for Zobrist<P, T> {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
-        // create the underlying from the setup
-        let pos = match P::from_setup(setup, mode) {
-            Err(e) => {
-                return Err(PositionError {
-                    pos: Zobrist {
-                        pos: e.pos,
-                        zobrist: 0,
-                    },
-                    errors: e.errors,
-                });
-            } // Note, returning an hash not corresponding to the position
-            Ok(p) => p,
-        };
-        let zobrist = hash_from_pos(&pos);
-        Ok(Zobrist { pos, zobrist })
+        Zobrist {
+            pos: P::from_setup(setup, mode)?,
+            zobrist: None,
+        }
     }
 }
 
-// Simply call through to the underlying methods
-impl<P: Position + ZobristHashable> Setup for Zobrist<P> {
-    #[inline(always)]
-    fn board(&self) -> &Board {
-        self.pos.board()
-    }
+impl<P: Setup, T> Setup for Zobrist<P, T> {
+    fn board(&self) -> &Board { self.pos.board() }
+    fn promoted(&self) -> Bitboard { self.pos.promoted() }
+    fn pockets(&self) -> Option<&Material> { self.pos.pockets() }
+    fn turn(&self) -> Color { self.pos.turn() }
+    fn castling_rights(&self) -> Bitboard { self.pos.castling_rights() }
+    fn ep_square(&self) -> Option<Square> { self.pos.ep_square() }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.pos.remaining_checks() }
+    fn halfmoves(&self) -> u32 { self.pos.halfmoves() }
+    fn fullmoves(&self) -> NonZeroU32 { self.pos.fullmoves() }
+}
 
-    #[inline(always)]
-    fn promoted(&self) -> Bitboard {
-        self.pos.promoted()
-    }
+impl<P: Position + ZobristHash, T> Position for Zobrist<P, T> {
+    fn legal_moves(&self) -> MoveList { self.pos.legal_moves() }
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList { self.pos.san_candidates() }
+    fn castling_moves(&self, side: CastlingSide) -> MoveList { self.pos.castling_moves() }
+    fn en_passant_moves(&self) -> MoveList { self.pos.en_passant_moves() }
+    fn capture_moves(&self) -> MoveList { self.pos.capture_moves() }
+    fn promotion_moves(&self) -> MoveList { self.pos.promotion_moves() }
+    fn is_irreversible(&self, m: &Move) -> bool { self.pos.is_irreversible() }
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.pos.king_attackers(square, attacker, occupied) }
+    fn castles(&self) -> &Castles { self.pos.castles() }
+    fn is_variant_end(&self) -> bool { self.pos.is_variant_end() }
+    fn has_insufficient_material(&self, color: Color) -> bool { self.pos.has_insufficient_material(color) }
+    fn variant_outcome(&self) -> Option<Outcome> { self.pos.variant_outcome() }
 
-    #[inline(always)]
-    fn pockets(&self) -> Option<&Material> {
-        self.pos.pockets()
-    }
-
-    #[inline(always)]
-    fn turn(&self) -> Color {
-        self.pos.turn()
-    }
-
-    #[inline(always)]
-    fn castling_rights(&self) -> Bitboard {
-        self.pos.castling_rights()
-    }
-
-    #[inline(always)]
-    fn ep_square(&self) -> Option<Square> {
-        self.pos.ep_square()
-    }
-
-    #[inline(always)]
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-        self.pos.remaining_checks()
-    }
-
-    #[inline(always)]
-    fn halfmoves(&self) -> u32 {
-        self.pos.halfmoves()
-    }
-
-    #[inline(always)]
-    fn fullmoves(&self) -> NonZeroU32 {
-        self.pos.fullmoves()
+    fn play_unchecked(&mut self, m: &Move) {
+        self.zobrist = self.zobrist.and_then(|zobrist| self.incremental_zobrist_hash(self.table, zobrist, m));
+        self.pos.play_unchecked(m);
     }
 }
 
-// call through to the underlying methods for everything except `play_unchecked`
-impl<P: Position + ZobristHashable> Position for Zobrist<P> {
-    #[inline(always)]
-    fn legal_moves(&self) -> MoveList {
-        self.pos.legal_moves()
-    }
-
-    #[inline(always)]
-    fn castles(&self) -> &Castles {
-        self.pos.castles()
-    }
-
-    #[inline(always)]
-    fn is_variant_end(&self) -> bool {
-        self.pos.is_variant_end()
-    }
-
-    #[inline(always)]
-    fn has_insufficient_material(&self, color: Color) -> bool {
-        self.pos.has_insufficient_material(color)
-    }
-
-    #[inline(always)]
-    fn variant_outcome(&self) -> Option<Outcome> {
-        self.pos.variant_outcome()
-    }
-
+/*
     fn play_unchecked(&mut self, m: &Move) {
         let color = self.pos.turn();
 
@@ -233,76 +180,59 @@ impl<P: Position + ZobristHashable> Position for Zobrist<P> {
 
         self.zobrist ^= 0x01; // flip the side
     }
+} */
+
+fn hash_piece_square<T>(table: &[T], piece: Piece, sq: Square) -> T {
+    let piece_idx = usize::from(piece.role) - 1 + piece.color.fold(6, 0);
+    table[64 * piece_idx + usize::from(sq)]
 }
 
-/// Computes the Zobrist hash given a board
-/// This is NOT the complete hash... castling and en passant are not included
-fn zobrist_from_board(board: &Board) -> u64 {
-    // compute the zobrist hash from the pieces on the board
-    let mut zobrist = 0u64;
-
-    for sq in (0..64).into_iter().map(|i| Square::new(i)) {
-        if let Some(piece) = board.piece_at(sq) {
-            zobrist ^= square(sq, piece);
-        }
+fn hash_board<T: BitXorAssign + Default>(table: &[T], board: &Board) -> T {
+    let mut zobrist = T::default();
+    for (sq, piece) in board.pieces() {
+        zobrist ^= hash_piece_square(table, piece, sq);
     }
-
     zobrist
 }
 
-/// Computes the Zobrist hash for given a position.
-pub fn hash_from_pos<T: Position + ZobristHashable>(pos: &T) -> u64 {
-    // compute the zobrist hash from the pieces on the board
-    let mut zobrist = zobrist_from_board(&pos.board());
+fn hash_castle<T>(table: &[T], color: Color, castle: CastlingSide) -> T {
+    table[768 + match (color, castle) {
+        (Color::White, CastlingSide::KingSide) => 0,
+        (Color::White, CastlingSide::QueenSide) => 1,
+        (Color::Black, CastlingSide::KingSide) => 2,
+        (Color::Black, CastlingSide::QueenSide) => 3,
+    }]
+}
+
+fn hash_position<P: Position, T: BitXorAssign + Default>(table: &[T], pos: &P) -> T {
+    let mut zobrist = hash_board(table, pos.board());
+
+    if pos.turn() == Color::Black {
+        zobrist ^= table[780];
+    }
 
     let castles = pos.castles();
-
-    // set castling
     if castles.has(Color::White, CastlingSide::KingSide) {
-        zobrist ^= castle(Color::White, CastlingSide::KingSide);
+        zobrist ^= table[768];
     }
-
     if castles.has(Color::White, CastlingSide::QueenSide) {
-        zobrist ^= castle(Color::White, CastlingSide::QueenSide);
+        zobrist ^= table[768 + 1];
     }
-
     if castles.has(Color::Black, CastlingSide::KingSide) {
-        zobrist ^= castle(Color::Black, CastlingSide::KingSide);
+        zobrist ^= table[768 + 2];
     }
-
     if castles.has(Color::Black, CastlingSide::QueenSide) {
-        zobrist ^= castle(Color::Black, CastlingSide::QueenSide);
+        zobrist ^= table[768 + 3];
     }
 
     if let Some(sq) = pos.ep_square() {
-        zobrist ^= POLYGLOT_RANDOM_ARRAY[772 + sq.file() as usize];
+        zobrist ^= table[772 + usize::from(sq.file())];
     }
 
-    if pos.turn() == Color::Black {
-        zobrist ^= POLYGLOT_RANDOM_ARRAY[780];
-    }
     zobrist
 }
 
-fn square(sq: Square, piece: Piece) -> u64 {
-    POLYGLOT_RANDOM_ARRAY[64 * piece_idx(piece) + usize::from(sq)]
-}
-
-fn castle(color: Color, castle: CastlingSide) -> u64 {
-    POLYGLOT_RANDOM_ARRAY[768
-        + match (color, castle) {
-            (Color::White, CastlingSide::KingSide) => 0,
-            (Color::White, CastlingSide::QueenSide) => 1,
-            (Color::Black, CastlingSide::KingSide) => 2,
-            (Color::Black, CastlingSide::QueenSide) => 3,
-        }]
-}
-
-fn piece_idx(piece: Piece) -> usize {
-    usize::from(piece.role) - 1 + piece.color.fold(6, 0)
-}
-
-#[cfg(test)]
+/* #[cfg(test)]
 mod zobrist_tests {
     use crate::fen::{epd, Fen};
     use crate::zobrist::{square, Zobrist};
@@ -484,7 +414,7 @@ mod zobrist_tests {
 
         println!("Found {} unique hashes for boards", hash_fen.len());
     }
-}
+} */
 
 #[rustfmt::skip]
 const POLYGLOT_RANDOM_ARRAY: [u64; 781] = [
