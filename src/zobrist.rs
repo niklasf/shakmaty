@@ -1,60 +1,100 @@
 //! Zobrist hashing for positions.
 
 use crate::{
-    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Color, File, FromSetup,
+    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Color, FromSetup,
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
+    Chess,
 };
 use std::ops::BitXorAssign;
 use std::num::NonZeroU32;
 
-pub trait ZobristHash {
-    fn zobrist_hash<T: BitXorAssign + Default>(&self, table: &[T]) -> T;
+pub trait ZobristValue: BitXorAssign + Default {
+    fn zobrist_value(index: usize) -> Self;
+}
 
-    fn incremental_zobrist_hash<T: BitXorAssign + Default>(
+impl ZobristValue for u64 {
+    fn zobrist_value(index: usize) -> u64 {
+        POLYGLOT_RANDOM_ARRAY[index]
+    }
+}
+
+pub trait ZobristHash {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V;
+
+    fn incremental_zobrist_hash<V: ZobristValue>(
         &self,
-        table: &[T],
-        current: T,
-        m: Move
-    ) -> Option<T> {
+        _current: V,
+        _m: &Move
+    ) -> Option<V> {
         None
     }
 }
 
-/// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
-#[derive(Debug)]
-pub struct Zobrist<P, T: 'static> {
-    pos: P,
-    zobrist: Option<T>,
-    table: &'static [T],
+impl ZobristHash for Chess {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
 }
 
-impl<P, T> Zobrist<P, T> {
-    pub fn new(pos: P) -> Zobrist<P, T> {
+#[cfg(feature = "variant")]
+impl ZobristHash for Antichess {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+}
+
+#[cfg(feature = "variant")]
+impl ZobristHash for Atomic {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+}
+
+#[cfg(feature = "variant")]
+impl ZobristHash for Horde {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+}
+
+#[cfg(feature = "variant")]
+impl ZobristHash for KingOfTheHill {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+}
+
+#[cfg(feature = "variant")]
+impl ZobristHash for RacingKings {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+}
+
+/// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
+#[derive(Debug, Clone)]
+pub struct Zobrist<P, V> {
+    pos: P,
+    zobrist: Option<V>,
+}
+
+impl<P, V> Zobrist<P, V> {
+    pub fn new(pos: P) -> Zobrist<P, V> {
         Zobrist {
             pos,
             zobrist: None,
-            table: POLYGLOT_RANDOM_ARRAY,
         }
     }
 }
 
-impl<P: Default, T> Default for Zobrist<P, T> {
-    fn default() -> Zobrist<P, T> {
+impl<P: Default, V> Default for Zobrist<P, V> {
+    fn default() -> Zobrist<P, V> {
         Self::new(P::default())
     }
 }
 
-impl<P: FromSetup, T> FromSetup for Zobrist<P, T> {
+impl<P: FromSetup + Position, V> FromSetup for Zobrist<P, V> {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
-        Zobrist {
-            pos: P::from_setup(setup, mode)?,
-            zobrist: None,
+        match P::from_setup(setup, mode) {
+            Ok(pos) => Ok(Zobrist::new(pos)),
+            Err(err) => Err(PositionError {
+                pos: Zobrist::new(err.pos),
+                errors: err.errors,
+            }),
         }
     }
 }
 
-impl<P: Setup, T> Setup for Zobrist<P, T> {
+impl<P: Setup, V> Setup for Zobrist<P, V> {
     fn board(&self) -> &Board { self.pos.board() }
     fn promoted(&self) -> Bitboard { self.pos.promoted() }
     fn pockets(&self) -> Option<&Material> { self.pos.pockets() }
@@ -66,14 +106,14 @@ impl<P: Setup, T> Setup for Zobrist<P, T> {
     fn fullmoves(&self) -> NonZeroU32 { self.pos.fullmoves() }
 }
 
-impl<P: Position + ZobristHash, T> Position for Zobrist<P, T> {
+impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn legal_moves(&self) -> MoveList { self.pos.legal_moves() }
-    fn san_candidates(&self, role: Role, to: Square) -> MoveList { self.pos.san_candidates() }
-    fn castling_moves(&self, side: CastlingSide) -> MoveList { self.pos.castling_moves() }
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList { self.pos.san_candidates(role, to) }
+    fn castling_moves(&self, side: CastlingSide) -> MoveList { self.pos.castling_moves(side) }
     fn en_passant_moves(&self) -> MoveList { self.pos.en_passant_moves() }
     fn capture_moves(&self) -> MoveList { self.pos.capture_moves() }
     fn promotion_moves(&self) -> MoveList { self.pos.promotion_moves() }
-    fn is_irreversible(&self, m: &Move) -> bool { self.pos.is_irreversible() }
+    fn is_irreversible(&self, m: &Move) -> bool { self.pos.is_irreversible(m) }
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.pos.king_attackers(square, attacker, occupied) }
     fn castles(&self) -> &Castles { self.pos.castles() }
     fn is_variant_end(&self) -> bool { self.pos.is_variant_end() }
@@ -81,340 +121,71 @@ impl<P: Position + ZobristHash, T> Position for Zobrist<P, T> {
     fn variant_outcome(&self) -> Option<Outcome> { self.pos.variant_outcome() }
 
     fn play_unchecked(&mut self, m: &Move) {
-        self.zobrist = self.zobrist.and_then(|zobrist| self.incremental_zobrist_hash(self.table, zobrist, m));
+        self.zobrist = self.zobrist.take().and_then(|zobrist| self.pos.incremental_zobrist_hash(zobrist, m));
         self.pos.play_unchecked(m);
     }
 }
 
-/*
-    fn play_unchecked(&mut self, m: &Move) {
-        let color = self.pos.turn();
-
-        // we need to "remove" the old EP square if there is one
-        if let Some(sq) = self.pos.ep_square() {
-            self.zobrist ^= POLYGLOT_RANDOM_ARRAY[772 + sq.file() as usize];
-        }
-
-        match *m {
-            Move::Normal {
-                role,
-                from,
-                capture,
-                to,
-                promotion,
-            } => {
-                // if we have an enpassant square, add it to the hash
-                if let Some(sq) = self.pos.ep_square() {
-                    self.zobrist ^= POLYGLOT_RANDOM_ARRAY[772 + sq.file() as usize];
-                }
-
-                if role == Role::King {
-                    // if we have the castling ability, then need to "remove" it
-                    if self.castles().has(color, CastlingSide::KingSide) {
-                        self.zobrist ^= castle(color, CastlingSide::KingSide);
-                    }
-
-                    if self.castles().has(color, CastlingSide::QueenSide) {
-                        self.zobrist ^= castle(color, CastlingSide::QueenSide);
-                    }
-                } else if role == Role::Rook {
-                    let side = CastlingSide::from_queen_side(from.file() == File::A);
-
-                    if self.castles().has(color, side) {
-                        self.zobrist ^= castle(color, side);
-                    }
-                }
-
-                if capture == Some(Role::Rook) {
-                    let side = CastlingSide::from_queen_side(to.file() == File::A);
-
-                    if self.castles().has(color, side) {
-                        self.zobrist ^= castle(color, side);
-                    }
-                }
-
-                // remove the piece at the from square
-                self.zobrist ^= square(from, self.board().piece_at(from).unwrap());
-
-                // remove the piece at the to square if there is one
-                if let Some(to_piece) = self.board().piece_at(to) {
-                    self.zobrist ^= square(to, to_piece);
-                }
-
-                let to_piece = promotion.map_or(role.of(color), |p| p.of(color));
-                self.zobrist ^= square(to, to_piece); // add in the moving piece or promotion
-            }
-            Move::Castle { king, rook } => {
-                let side = CastlingSide::from_queen_side(rook < king);
-
-                self.zobrist ^= square(king, color.king());
-                self.zobrist ^= square(rook, color.rook());
-
-                self.zobrist ^= square(
-                    Square::from_coords(side.rook_to_file(), rook.rank()),
-                    color.rook(),
-                );
-                self.zobrist ^= square(
-                    Square::from_coords(side.king_to_file(), king.rank()),
-                    color.king(),
-                );
-
-                if self.castles().has(color, CastlingSide::KingSide) {
-                    self.zobrist ^= castle(color, CastlingSide::KingSide);
-                }
-
-                if self.castles().has(color, CastlingSide::QueenSide) {
-                    self.zobrist ^= castle(color, CastlingSide::QueenSide);
-                }
-            }
-            Move::EnPassant { from, to } => {
-                self.zobrist ^=
-                    square(Square::from_coords(to.file(), from.rank()), (!color).pawn());
-                self.zobrist ^= square(from, color.pawn());
-                self.zobrist ^= square(to, color.pawn());
-            }
-            Move::Put { role, to } => {
-                self.zobrist ^= square(to, Piece { color, role });
-            }
-        }
-
-        self.zobrist ^= 0x01; // flip the side
-    }
-} */
-
-fn hash_piece_square<T>(table: &[T], piece: Piece, sq: Square) -> T {
-    let piece_idx = usize::from(piece.role) - 1 + piece.color.fold(6, 0);
-    table[64 * piece_idx + usize::from(sq)]
+fn hash_piece<V: ZobristValue>(sq: Square, piece: Piece) -> V {
+    let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
+    V::zobrist_value(64 * piece_idx + usize::from(sq))
 }
 
-fn hash_board<T: BitXorAssign + Default>(table: &[T], board: &Board) -> T {
-    let mut zobrist = T::default();
+fn hash_board<V: ZobristValue>(board: &Board) -> V {
+    let mut zobrist = V::default();
     for (sq, piece) in board.pieces() {
-        zobrist ^= hash_piece_square(table, piece, sq);
+        zobrist ^= hash_piece(sq, piece);
     }
     zobrist
 }
 
-fn hash_castle<T>(table: &[T], color: Color, castle: CastlingSide) -> T {
-    table[768 + match (color, castle) {
-        (Color::White, CastlingSide::KingSide) => 0,
-        (Color::White, CastlingSide::QueenSide) => 1,
-        (Color::Black, CastlingSide::KingSide) => 2,
-        (Color::Black, CastlingSide::QueenSide) => 3,
-    }]
-}
+fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
+    let mut zobrist = hash_board(pos.board());
 
-fn hash_position<P: Position, T: BitXorAssign + Default>(table: &[T], pos: &P) -> T {
-    let mut zobrist = hash_board(table, pos.board());
-
-    if pos.turn() == Color::Black {
-        zobrist ^= table[780];
+    if pos.turn() == Color::White {
+        zobrist ^= V::zobrist_value(780);
     }
 
     let castles = pos.castles();
     if castles.has(Color::White, CastlingSide::KingSide) {
-        zobrist ^= table[768];
+        zobrist ^= V::zobrist_value(768);
     }
     if castles.has(Color::White, CastlingSide::QueenSide) {
-        zobrist ^= table[768 + 1];
+        zobrist ^= V::zobrist_value(768 + 1);
     }
     if castles.has(Color::Black, CastlingSide::KingSide) {
-        zobrist ^= table[768 + 2];
+        zobrist ^= V::zobrist_value(768 + 2);
     }
     if castles.has(Color::Black, CastlingSide::QueenSide) {
-        zobrist ^= table[768 + 3];
+        zobrist ^= V::zobrist_value(768 + 3);
     }
 
     if let Some(sq) = pos.ep_square() {
-        zobrist ^= table[772 + usize::from(sq.file())];
+        zobrist ^= V::zobrist_value(772 + usize::from(sq.file()));
     }
 
     zobrist
 }
 
-/* #[cfg(test)]
-mod zobrist_tests {
-    use crate::fen::{epd, Fen};
-    use crate::zobrist::{square, Zobrist};
-    use crate::{CastlingMode, Chess, Move, Piece, Position, Square};
-    use rand::prelude::*;
-    use std::collections::{HashMap, HashSet};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Chess;
+    use crate::fen::Fen;
 
     #[test]
-    fn square_test() {
-        let mut hashes = HashSet::new();
+    fn test_polyglot() {
+        let pos = Chess::default();
+        assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
 
-        // go through each square and piece combo and make sure they're unique
-        for sq in (0..64).into_iter().map(|i| Square::new(i)) {
-            for piece in ['p', 'n', 'b', 'r', 'q', 'k', 'P', 'N', 'B', 'R', 'Q', 'K']
-                .iter()
-                .map(|c| Piece::from_char(*c).unwrap())
-            {
-                let h = square(sq, piece);
-
-                if hashes.contains(&h) {
-                    panic!(
-                        "Zobrist square({}, {:?}) = {} already exists!!!",
-                        sq, piece, h
-                    );
-                } else {
-                    hashes.insert(h);
-                }
-            }
-        }
-
-        println!("LEN: {}", hashes.len());
-    }
-
-    #[test]
-    fn fen_test() {
-        let setup1: Fen = "8/8/8/8/p7/P7/6k1/2K5 w - -"
-            .parse()
-            .expect("Error parsing FEN");
-        let setup2: Fen = "8/8/8/8/p7/P7/6k1/2K5 b - -"
-            .parse()
-            .expect("Error parsing FEN");
-
-        let game1: Zobrist<Chess> = setup1
+        let pos: Chess = "rnbqkbnr/p1pppppp/8/8/P6P/R1p5/1P1PPPP1/1NBQKBNR b Kkq - 1 4"
+            .parse::<Fen>()
+            .expect("valid fen")
             .position(CastlingMode::Standard)
-            .expect("Error setting up game");
-        let game2: Zobrist<Chess> = setup2
-            .position(CastlingMode::Standard)
-            .expect("Error setting up game");
-
-        println!(
-            "0x{:x} != 0x{:x}",
-            game1.zobrist_hash(),
-            game2.zobrist_hash()
-        );
-
-        assert_ne!(game1.zobrist_hash(), game2.zobrist_hash());
+            .expect("legal position");
+        assert_eq!(pos.zobrist_hash::<u64>(), 0x5c3f9b829b279560);
     }
-
-    #[test]
-    fn moves_test() {
-        // randomly move through a bunch of moves, ensuring we get different zobrist hashes
-        const MAX_MOVES: usize = 10_000;
-        let mut hash_fen: HashMap<u64, String> = HashMap::new();
-        let mut hash_moves: HashMap<u64, Vec<Move>> = HashMap::new();
-        let mut moves = Vec::new();
-        let mut chess = Zobrist::<Chess>::default();
-        let mut rnd = StdRng::seed_from_u64(0x30b3_1137_bb45_7b1b_u64);
-
-        while hash_fen.len() < MAX_MOVES {
-            // generate and collect all the moves
-            let legal_moves = chess.legal_moves();
-            let mv_i = rnd.gen_range(0..legal_moves.len());
-            let mv = legal_moves[mv_i].clone();
-
-            // play a random move
-            chess.play_unchecked(&mv);
-
-            // add to our current list of moves
-            moves.push(mv);
-
-            // get the zobrist hash value
-            let z = chess.zobrist_hash();
-            let fen = epd(&chess);
-
-            if let Some(existing_fen) = hash_fen.get(&z) {
-                // found a collision!!!
-                if fen != *existing_fen {
-                    // check to see if the FENs are also the same
-                    let setup1: Fen = fen.parse().expect("Error parsing FEN");
-                    let setup2: Fen = existing_fen.parse().expect("Error parsing FEN");
-
-                    let game1: Zobrist<Chess> = setup1
-                        .position(CastlingMode::Standard)
-                        .expect("Error setting up game");
-                    let game2: Zobrist<Chess> = setup2
-                        .position(CastlingMode::Standard)
-                        .expect("Error setting up game");
-
-                    if game1.zobrist_hash() == game2.zobrist_hash() {
-                        panic!(
-                            "COLLISION FOUND FOR 2 FENs: {} (0x{:x}) & {} (0x{:x})",
-                            fen,
-                            game1.zobrist_hash(),
-                            existing_fen,
-                            game2.zobrist_hash()
-                        );
-                    } else {
-                        let mvs1 = hash_moves.get(&z).unwrap();
-                        let mvs2 = moves;
-                        let mut game = Zobrist::<Chess>::default();
-
-                        let mut panic_str = format!(
-                            "ZOBRIST COLLISION AFTER {}: 0x{:016x} ({} {})\n",
-                            hash_fen.len(),
-                            z,
-                            mvs1.len(),
-                            mvs2.len()
-                        );
-
-                        for (i, (mv1, mv2)) in mvs1.iter().zip(mvs2.iter()).enumerate() {
-                            if mv1 == mv2 {
-                                game.play_unchecked(mv1);
-                                panic_str += format!(
-                                    "{:03}: {:?} -> {}\t0x{:08x}\n",
-                                    i,
-                                    mv1,
-                                    epd(&game),
-                                    game.zobrist_hash()
-                                )
-                                .as_str();
-                            } else {
-                                panic_str += format!("DIFF {:03}: {:?} {:?}", i, mv1, mv2).as_str();
-                                break;
-                            }
-                        }
-
-                        if mvs1.len() > mvs2.len() {
-                            for (i, mv1) in mvs1.iter().skip(mvs2.len()).enumerate() {
-                                game.play_unchecked(mv1);
-                                panic_str += format!(
-                                    "MV1 {:03}: {:?} -> {}\t0x{:08x}\n",
-                                    i + mvs2.len(),
-                                    mv1,
-                                    epd(&game),
-                                    game.zobrist_hash()
-                                )
-                                .as_str();
-                            }
-                        } else {
-                            for (i, mv2) in mvs2.iter().skip(mvs1.len()).enumerate() {
-                                game.play_unchecked(mv2);
-                                panic_str += format!(
-                                    "MV2 {:03}: {:?} -> {}\t0x{:08x}\n",
-                                    i + mvs1.len(),
-                                    mv2,
-                                    epd(&game),
-                                    game.zobrist_hash()
-                                )
-                                .as_str();
-                            }
-                        }
-
-                        panic!("{}", panic_str);
-                    }
-                }
-            } else {
-                // keep around the FEN of the board, and also the moves that got us there
-                hash_fen.insert(z, fen);
-                hash_moves.insert(z, moves.clone());
-            }
-
-            // check to see if the game is over, and if so restart it
-            if chess.is_game_over() {
-                chess = Zobrist::<Chess>::default();
-                moves.clear();
-                println!("{} of {}", hash_fen.len(), MAX_MOVES);
-            }
-        }
-
-        println!("Found {} unique hashes for boards", hash_fen.len());
-    }
-} */
+}
 
 #[rustfmt::skip]
 const POLYGLOT_RANDOM_ARRAY: [u64; 781] = [

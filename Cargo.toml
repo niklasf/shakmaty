@@ -30,7 +30,6 @@ arrayvec = "0.7"
 
 [dev-dependencies]
 iai = "0.1"
-rand = "0.8" # TODO: Reconsider once zobrist is done
 
 [package.metadata.docs.rs]
 all-features = true
