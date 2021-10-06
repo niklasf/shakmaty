@@ -242,6 +242,7 @@ impl VariantPosition {
 
 impl Setup for VariantPosition {
     fn board(&self) -> &Board { self.borrow().board() }
+    fn promoted(&self) -> Bitboard { self.borrow().promoted() }
     fn pockets(&self) -> Option<&Material> { self.borrow().pockets() }
     fn turn(&self) -> Color { self.borrow().turn() }
     fn castling_rights(&self) -> Bitboard { self.borrow().castling_rights() }

@@ -66,6 +66,11 @@ impl <P: Position + ZobristHashable> Setup for Zobrist<P> {
     }
 
     #[inline(always)]
+    fn promoted(&self) -> Bitboard {
+        self.pos.promoted()
+    }
+
+    #[inline(always)]
     fn pockets(&self) -> Option<&Material> {
         self.pos.pockets()
     }

@@ -537,6 +537,7 @@ impl Eq for Chess {}
 
 impl Setup for Chess {
     fn board(&self) -> &Board { &self.board }
+    fn promoted(&self) -> Bitboard { Bitboard(0) }
     fn pockets(&self) -> Option<&Material> { None }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
@@ -555,9 +556,9 @@ impl FromSetup for Chess {
 
 impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
-        do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                &mut self.ep_square, &mut self.halfmoves,
-            &mut self.fullmoves, m);
+        do_move(&mut self.board, &mut Bitboard(0), &mut self.turn,
+                &mut self.castles, &mut self.ep_square, &mut self.halfmoves,
+                &mut self.fullmoves, m);
     }
 
     fn castles(&self) -> &Castles {
@@ -747,6 +748,7 @@ pub(crate) mod variant {
 
     impl Setup for Atomic {
         fn board(&self) -> &Board { &self.board }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.turn }
         fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
@@ -804,9 +806,9 @@ pub(crate) mod variant {
         }
 
         fn play_unchecked(&mut self, m: &Move) {
-            do_move(&mut self.board, &mut self.turn, &mut self.castles,
-                    &mut self.ep_square, &mut self.halfmoves,
-                    &mut self.fullmoves, m);
+            do_move(&mut self.board, &mut Bitboard(0), &mut self.turn,
+                    &mut self.castles, &mut self.ep_square,
+                    &mut self.halfmoves, &mut self.fullmoves, m);
 
             match *m {
                 Move::Normal { capture: Some(_), to, .. } | Move::EnPassant { to, .. } => {
@@ -951,6 +953,7 @@ pub(crate) mod variant {
 
     impl Setup for Antichess {
         fn board(&self) -> &Board { &self.board }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.turn }
         fn castling_rights(&self) -> Bitboard { Bitboard(0) }
@@ -999,7 +1002,8 @@ pub(crate) mod variant {
 
     impl Position for Antichess {
         fn play_unchecked(&mut self, m: &Move) {
-            do_move(&mut self.board, &mut self.turn, &mut self.castles,
+            do_move(&mut self.board, &mut Bitboard(0),
+                    &mut self.turn, &mut self.castles,
                     &mut self.ep_square, &mut self.halfmoves,
                     &mut self.fullmoves, m);
         }
@@ -1077,6 +1081,7 @@ pub(crate) mod variant {
 
     impl Setup for KingOfTheHill {
         fn board(&self) -> &Board { self.chess.board() }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.chess.turn() }
         fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
@@ -1167,6 +1172,7 @@ pub(crate) mod variant {
 
     impl Setup for ThreeCheck {
         fn board(&self) -> &Board { self.chess.board() }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.chess.turn() }
         fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
@@ -1261,6 +1267,7 @@ pub(crate) mod variant {
     #[derive(Clone, Debug, Default)]
     pub struct Crazyhouse {
         chess: Chess,
+        promoted: Bitboard,
         pockets: Material,
     }
 
@@ -1290,6 +1297,7 @@ pub(crate) mod variant {
 
     impl Setup for Crazyhouse {
         fn board(&self) -> &Board { self.chess.board() }
+        fn promoted(&self) -> Bitboard { self.promoted }
         fn pockets(&self) -> Option<&Material> { Some(&self.pockets) }
         fn turn(&self) -> Color { self.chess.turn() }
         fn castling_rights(&self) -> Bitboard { self.chess.castling_rights() }
@@ -1302,6 +1310,7 @@ pub(crate) mod variant {
     impl FromSetup for Crazyhouse {
         fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
             let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
+            let promoted = setup.promoted() & chess.board().occupied() & !chess.board().pawns() & !chess.board.kings();
 
             let pockets = setup.pockets().cloned().unwrap_or_default();
             if pockets.count().saturating_add(chess.board().occupied().count()) > 64 {
@@ -1318,7 +1327,7 @@ pub(crate) mod variant {
 
             PositionError {
                 errors,
-                pos: Crazyhouse { chess, pockets },
+                pos: Crazyhouse { chess, promoted, pockets },
             }.strict()
         }
     }
@@ -1327,7 +1336,7 @@ pub(crate) mod variant {
         fn play_unchecked(&mut self, m: &Move) {
             match *m {
                 Move::Normal { capture: Some(capture), to, .. } => {
-                    let capture = if self.board().promoted().contains(to) {
+                    let capture = if self.promoted.contains(to) {
                         Role::Pawn
                     } else {
                         capture
@@ -1344,7 +1353,10 @@ pub(crate) mod variant {
                 _ => {}
             }
 
-            self.chess.play_unchecked(m);
+            do_move(&mut self.chess.board, &mut self.promoted,
+                    &mut self.chess.turn, &mut self.chess.castles,
+                    &mut self.chess.ep_square,
+                    &mut self.chess.halfmoves, &mut self.chess.fullmoves, m);
         }
 
         fn castles(&self) -> &Castles {
@@ -1410,7 +1422,7 @@ pub(crate) mod variant {
             // to implement anyway. Bishops can be captured and put onto a
             // different color complex.
             self.board().occupied().count() + self.pockets.count() <= 3 &&
-            self.board().promoted().is_empty() &&
+            self.promoted.is_empty() &&
             self.board().pawns().is_empty() &&
             self.board().rooks_and_queens().is_empty() &&
             self.pockets.white.pawns == 0 &&
@@ -1449,6 +1461,7 @@ pub(crate) mod variant {
 
     impl Setup for RacingKings {
         fn board(&self) -> &Board { &self.board }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.turn }
         fn castling_rights(&self) -> Bitboard { Bitboard(0) }
@@ -1501,7 +1514,8 @@ pub(crate) mod variant {
 
     impl Position for RacingKings {
         fn play_unchecked(&mut self, m: &Move) {
-            do_move(&mut self.board, &mut self.turn, &mut self.castles,
+            do_move(&mut self.board, &mut Bitboard(0),
+                    &mut self.turn, &mut self.castles,
                     &mut None, &mut self.halfmoves,
                     &mut self.fullmoves, m);
         }
@@ -1612,6 +1626,7 @@ pub(crate) mod variant {
 
     impl Setup for Horde {
         fn board(&self) -> &Board { &self.board }
+        fn promoted(&self) -> Bitboard { Bitboard(0) }
         fn pockets(&self) -> Option<&Material> { None }
         fn turn(&self) -> Color { self.turn }
         fn castling_rights(&self) -> Bitboard { self.castles.castling_rights() }
@@ -1671,7 +1686,7 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
             }
 
-            if (pos.board().kings() & !pos.board().promoted()).is_empty() {
+            if pos.board().kings().is_empty() {
                 errors |= PositionErrorKinds::MISSING_KING;
             }
 
@@ -1687,7 +1702,8 @@ pub(crate) mod variant {
 
     impl Position for Horde {
         fn play_unchecked(&mut self, m: &Move) {
-            do_move(&mut self.board, &mut self.turn, &mut self.castles,
+            do_move(&mut self.board, &mut Bitboard(0),
+                    &mut self.turn, &mut self.castles,
                     &mut self.ep_square, &mut self.halfmoves,
                     &mut self.fullmoves, m);
         }
@@ -1836,9 +1852,9 @@ pub(crate) mod variant {
                     let pawn_square =
                         (self.board.pawns() & self.board.by_color(color)).single_square().unwrap();
                     let mut promote_to_queen = self.clone();
-                    promote_to_queen.board.set_piece_at(pawn_square, color.queen(), true);
+                    promote_to_queen.board.set_piece_at(pawn_square, color.queen());
                     let mut promote_to_knight = self.clone();
-                    promote_to_knight.board.set_piece_at(pawn_square, color.knight(), true);
+                    promote_to_knight.board.set_piece_at(pawn_square, color.knight());
                     return promote_to_queen.has_insufficient_material(color)
                         && promote_to_knight.has_insufficient_material(color);
                 } else if horde.rooks == 1 {
@@ -2004,6 +2020,7 @@ pub(crate) mod variant {
 }
 
 fn do_move(board: &mut Board,
+           promoted: &mut Bitboard,
            turn: &mut Color,
            castles: &mut Castles,
            ep_square: &mut Option<EpSquare>,
@@ -2037,26 +2054,27 @@ fn do_move(board: &mut Board,
                 castles.discard_rook(to);
             }
 
-            let promoted = board.promoted().contains(from) || promotion.is_some();
-
             board.discard_piece_at(from);
-            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)), promoted);
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)));
+
+            let is_promoted = promoted.remove(from) || promotion.is_some();
+            promoted.set(to, is_promoted);
         },
         Move::Castle { king, rook } => {
             let side = CastlingSide::from_queen_side(rook < king);
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
-            board.set_piece_at(Square::from_coords(side.rook_to_file(), rook.rank()), color.rook(), false);
-            board.set_piece_at(Square::from_coords(side.king_to_file(), king.rank()), color.king(), false);
+            board.set_piece_at(Square::from_coords(side.rook_to_file(), rook.rank()), color.rook());
+            board.set_piece_at(Square::from_coords(side.king_to_file(), king.rank()), color.king());
             castles.discard_side(color);
         }
         Move::EnPassant { from, to } => {
             board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn
             board.discard_piece_at(from);
-            board.set_piece_at(to, color.pawn(), false);
+            board.set_piece_at(to, color.pawn());
         }
         Move::Put { role, to } => {
-            board.set_piece_at(to, Piece { color, role }, false);
+            board.set_piece_at(to, Piece { color, role });
         }
     }
 
@@ -2514,7 +2532,6 @@ mod tests {
         let final_pos: Chess = ffen("rnbqkbnQ/ppppppp1/8/8/8/8/PPPPPPP1/RNBQKBNR b KQq - 0 26");
         assert_eq(pos2_after_promotion_Q, final_pos.clone());
         assert_ne(pos2_after_promotion_N, final_pos);
-
     }
 
     #[cfg(feature = "variant")]

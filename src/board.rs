@@ -48,7 +48,6 @@ use crate::material::{Material, MaterialSide};
 pub struct Board {
     occupied_co: ByColor<Bitboard>,
     occupied: [Bitboard; 7], // all and pieces indexed by Role
-    promoted: Bitboard,
 }
 
 impl Board {
@@ -67,7 +66,6 @@ impl Board {
                 Bitboard(0x0800_0000_0000_0008), // queens
                 Bitboard(0x1000_0000_0000_0010), // kings
             ],
-            promoted: Bitboard(0),
         }
     }
 
@@ -75,7 +73,6 @@ impl Board {
         Board {
             occupied_co: ByColor::default(),
             occupied: [Bitboard(0); 7],
-            promoted: Bitboard(0),
         }
     }
 
@@ -94,7 +91,6 @@ impl Board {
                 Bitboard(0x0081), // queens
                 Bitboard(0x8100), // kings
             ],
-            promoted: Bitboard(0),
         }
     }
 
@@ -113,7 +109,6 @@ impl Board {
                 Bitboard(0x0800_0000_0000_0000), // queens
                 Bitboard(0x1000_0000_0000_0000), // kings
             ],
-            promoted: Bitboard(0),
         }
     }
 
@@ -138,9 +133,6 @@ impl Board {
     #[inline]
     pub fn black(&self) -> Bitboard { self.occupied_co.black }
 
-    #[inline]
-    pub fn promoted(&self) -> Bitboard { self.promoted }
-
     /// Bishops, rooks and queens.
     #[inline]
     pub fn sliders(&self) -> Bitboard { self.bishops() ^ self.rooks() ^ self.queens() }
@@ -153,10 +145,10 @@ impl Board {
     #[inline]
     pub fn bishops_and_queens(&self) -> Bitboard { self.bishops() ^ self.queens() }
 
-    /// The (unique, unpromoted) king of the given side.
+    /// The (unique) king of the given side.
     #[inline]
     pub fn king_of(&self, color: Color) -> Option<Square> {
-        (self.kings() & self.by_color(color) & !self.promoted).single_square()
+        (self.kings() & self.by_color(color)).single_square()
     }
 
     #[inline]
@@ -204,7 +196,6 @@ impl Board {
             self.occupied[0].toggle(sq);
             self.by_color_mut(p.color).toggle(sq);
             self.by_role_mut(p.role).toggle(sq);
-            self.promoted.discard(sq);
         }
         piece
     }
@@ -220,18 +211,14 @@ impl Board {
         self.occupied[4].discard(sq);
         self.occupied[5].discard(sq);
         self.occupied[6].discard(sq);
-        self.promoted.discard(sq);
     }
 
     #[inline]
-    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece, promoted: bool) {
+    pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
         self.discard_piece_at(sq);
         self.occupied[0].toggle(sq);
         self.by_color_mut(color).toggle(sq);
         self.by_role_mut(role).toggle(sq);
-        if promoted {
-            self.promoted.toggle(sq);
-        }
     }
 
     #[inline]
@@ -331,7 +318,7 @@ impl fmt::Debug for Board {
 impl Extend<(Square, Piece)> for Board {
     fn extend<T: IntoIterator<Item = (Square, Piece)>>(&mut self, iter: T) {
         for (sq, piece) in iter {
-            self.set_piece_at(sq, piece, false);
+            self.set_piece_at(sq, piece);
         }
     }
 }
@@ -424,7 +411,7 @@ mod tests {
     #[test]
     fn test_set_piece_at() {
         let mut board = Board::new();
-        board.set_piece_at(Square::A3, White.pawn(), false);
+        board.set_piece_at(Square::A3, White.pawn());
         assert_eq!(board.piece_at(Square::A3), Some(White.pawn()));
     }
 
@@ -432,6 +419,5 @@ mod tests {
     fn test_promoted() {
         let board: Board = "4k3/8/8/8/8/8/8/2q~1K3".parse().expect("valid fen");
         assert_eq!(board.piece_at(Square::C1), Some(Black.queen()));
-        assert!(board.promoted().contains(Square::C1));
     }
 }

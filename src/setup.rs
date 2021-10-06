@@ -29,6 +29,9 @@ pub trait Setup {
     /// Piece positions on the board.
     fn board(&self) -> &Board;
 
+    /// Positions of tracked promoted pieces. Used only for Crazyhouse.
+    fn promoted(&self) -> Bitboard;
+
     /// Pockets in chess variants like Crazyhouse.
     fn pockets(&self) -> Option<&Material>;
 
@@ -192,6 +195,7 @@ impl<S: Setup> Setup for SwapTurn<S> {
     }
 
     fn board(&self) -> &Board { self.0.board() }
+    fn promoted(&self) -> Bitboard { self.0.promoted() }
     fn pockets(&self) -> Option<&Material> { self.0.pockets() }
     fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
     fn ep_square(&self) -> Option<Square> { None }

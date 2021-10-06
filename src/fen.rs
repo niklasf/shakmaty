@@ -82,9 +82,8 @@ use crate::setup::Setup;
 use crate::position::{FromSetup, PositionError};
 
 /// FEN formatting options.
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Default, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct FenOpts {
-    promoted: bool,
     shredder: bool,
     scid: bool,
 }
@@ -92,17 +91,7 @@ pub struct FenOpts {
 impl FenOpts {
     /// Standard X-FEN.
     pub fn new() -> FenOpts {
-        FenOpts {
-            promoted: false,
-            shredder: false,
-            scid: false,
-        }
-    }
-
-    /// Decide if promoted pieces should be tracked, e.g. `Q~`.
-    pub fn promoted(&mut self, promoted: bool) -> &mut FenOpts {
-        self.promoted = promoted;
-        self
+        FenOpts::default()
     }
 
     /// Decide if castling rights should be displayed in Shredder format,
@@ -121,7 +110,9 @@ impl FenOpts {
 
     /// Create a board FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
-    pub fn board_fen(&self, board: &Board) -> String {
+    ///
+    /// Promotied pieces are marked like `Q~`.
+    pub fn board_fen(&self, board: &Board, promoted: Bitboard) -> String {
         let mut fen = String::with_capacity(15);
 
         for rank in (0..8).map(Rank::new).rev() {
@@ -135,7 +126,7 @@ impl FenOpts {
                         fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
                     }
                     fen.push(piece.char());
-                    if self.promoted && board.promoted().contains(square) {
+                    if promoted.contains(square) {
                         fen.push('~');
                     }
                     0
@@ -201,7 +192,7 @@ impl FenOpts {
         });
 
         format!("{}{} {} {} {}{}",
-                self.board_fen(setup.board()),
+                self.board_fen(setup.board(), setup.promoted()),
                 pockets,
                 setup.turn().char(),
                 self.castling_fen(setup.board(), setup.castling_rights()),
@@ -215,7 +206,7 @@ impl FenOpts {
         match setup.remaining_checks() {
             Some(checks) if self.scid => {
                 format!("{}{} {} {} {} {} {} +{}+{}",
-                    self.board_fen(setup.board()),
+                    self.board_fen(setup.board(), setup.promoted()),
                     setup.pockets().map_or("".to_owned(), |p| format!("/{}", p.fen())),
                     setup.turn().char(),
                     self.castling_fen(setup.board(), setup.castling_rights()),
@@ -227,12 +218,6 @@ impl FenOpts {
             }
             _ => format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
         }
-    }
-}
-
-impl Default for FenOpts {
-    fn default() -> FenOpts {
-        FenOpts::new()
     }
 }
 
@@ -278,47 +263,47 @@ impl Error for ParseFenError {
     }
 }
 
-impl Board {
-    fn from_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
-        let mut board = Board::empty();
+fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
+    let mut promoted = Bitboard(0);
+    let mut board = Board::empty();
 
-        let mut rank = 7i8;
-        let mut file = 0i8;
+    let mut rank = 7i8;
+    let mut file = 0i8;
 
-        let mut iter = board_fen.iter().cloned().peekable();
+    let mut iter = board_fen.iter().cloned().peekable();
 
-        while let Some(ch) = iter.next() {
-            if ch == b'/' && file == 8 {
-                file = 0;
-                rank -= 1;
-            } else if (b'1'..=b'8').contains(&ch) {
-                file += (ch - b'0') as i8;
-                if file > 8 {
-                    return Err(ParseFenError::InvalidBoard);
-                }
-            } else if let Some(piece) = Piece::from_char(char::from(ch)) {
-                match (File::try_from(file), Rank::try_from(rank)) {
-                    (Ok(f), Ok(r)) => {
-                        let sq = Square::from_coords(f, r);
-                        let promoted = iter.peek() == Some(&b'~');
-                        if promoted {
-                            iter.next();
-                        }
-                        board.set_piece_at(sq, piece, promoted);
-                    }
-                    _ => return Err(ParseFenError::InvalidBoard),
-                }
-                file += 1;
-            } else {
+    while let Some(ch) = iter.next() {
+        if ch == b'/' && file == 8 {
+            file = 0;
+            rank -= 1;
+        } else if (b'1'..=b'8').contains(&ch) {
+            file += (ch - b'0') as i8;
+            if file > 8 {
                 return Err(ParseFenError::InvalidBoard);
             }
-        }
-
-        if rank == 0 && file == 8 {
-            Ok(board)
+        } else if let Some(piece) = Piece::from_char(char::from(ch)) {
+            match (File::try_from(file), Rank::try_from(rank)) {
+                (Ok(f), Ok(r)) => {
+                    let sq = Square::from_coords(f, r);
+                    let is_promoted = iter.peek() == Some(&b'~');
+                    if is_promoted {
+                        promoted.add(sq);
+                        iter.next();
+                    }
+                    board.set_piece_at(sq, piece);
+                }
+                _ => return Err(ParseFenError::InvalidBoard),
+            }
+            file += 1;
         } else {
-            Err(ParseFenError::InvalidBoard)
+            return Err(ParseFenError::InvalidBoard);
         }
+    }
+
+    if rank == 0 && file == 8 {
+        Ok((board, promoted))
+    } else {
+        Err(ParseFenError::InvalidBoard)
     }
 }
 
@@ -343,6 +328,12 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
     })
 }
 
+impl Board {
+    pub fn from_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
+        Ok(parse_board_fen(board_fen)?.0)
+    }
+}
+
 impl FromStr for Board {
     type Err = ParseFenError;
 
@@ -353,7 +344,7 @@ impl FromStr for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", FenOpts::new().promoted(true).board_fen(self))
+        write!(f, "{}", FenOpts::new().board_fen(self, Bitboard(0)))
     }
 }
 
@@ -361,6 +352,7 @@ impl fmt::Display for Board {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Fen {
     pub board: Board,
+    pub promoted: Bitboard,
     pub pockets: Option<Material>,
     pub turn: Color,
     pub castling_rights: Bitboard,
@@ -372,6 +364,7 @@ pub struct Fen {
 
 impl Setup for Fen {
     fn board(&self) -> &Board { &self.board }
+    fn promoted(&self) -> Bitboard { self.promoted }
     fn pockets(&self) -> Option<&Material> { self.pockets.as_ref() }
     fn turn(&self) -> Color { self.turn }
     fn castling_rights(&self) -> Bitboard { self.castling_rights }
@@ -385,6 +378,7 @@ impl Default for Fen {
     fn default() -> Fen {
         Fen {
             board: Board::default(),
+            promoted: Bitboard(0),
             pockets: None,
             turn: White,
             castling_rights: Bitboard::CORNERS,
@@ -458,7 +452,9 @@ impl Fen {
             (board_part, None)
         };
 
-        result.board = Board::from_board_fen(board_part)?;
+        let (board, promoted) = parse_board_fen(board_part)?;
+        result.board = board;
+        result.promoted = promoted;
 
         if let Some(pocket_part) = pocket_part {
             result.pockets = Some(Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?);
@@ -545,6 +541,7 @@ impl Fen {
     pub fn from_setup<S: Setup>(setup: &S) -> Fen {
         Fen {
             board: setup.board().clone(),
+            promoted: setup.promoted(),
             pockets: setup.pockets().cloned(),
             turn: setup.turn(),
             castling_rights: setup.castling_rights(),
@@ -566,14 +563,14 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", FenOpts::new().promoted(true).fen(self))
+        write!(f, "{}", FenOpts::default().fen(self))
     }
 }
 
 /// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`
 /// with default [`FenOpts`].
-pub fn board_fen(board: &Board) -> String {
-    FenOpts::default().board_fen(board)
+pub fn board_fen(board: &Board, promoted: Bitboard) -> String {
+    FenOpts::default().board_fen(board, promoted)
 }
 
 /// Create an EPD such as
@@ -621,8 +618,8 @@ mod tests {
     fn test_lichess_promoted() {
         let input = "rnbqk1nQ~/ppppp3/8/5p2/8/5N2/PPPPPPP1/RNBQKB1R/PPBR b KQq - 0 6";
         let fen: Fen = input.parse().expect("valid fen");
-        assert_eq!(fen.board().promoted(), Bitboard::from(Square::H8));
-        assert_eq!(FenOpts::default().scid(true).promoted(true).fen(&fen), input);
+        assert_eq!(fen.promoted, Bitboard::from(Square::H8));
+        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
     }
 
     #[test]
