@@ -59,6 +59,9 @@ pub trait Setup {
     fn castling_rights(&self) -> Bitboard;
 
     /// En passant target square on the third or sixth rank.
+    ///
+    /// In the context of a legal position, en passant squares are only
+    /// given if there is a fully legal en passant capture.
     fn ep_square(&self) -> Option<Square>;
 
     /// Remaining checks in chess variants like Three-Check.

@@ -89,7 +89,7 @@ pub struct FenOpts {
 }
 
 impl FenOpts {
-    /// Standard X-FEN.
+    /// Default X-FEN formatting.
     pub fn new() -> FenOpts {
         FenOpts::default()
     }
