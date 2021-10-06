@@ -16,6 +16,13 @@
 
 //! Parse and write Forsyth-Edwards-Notation.
 //!
+//! # En passant only if fully legal
+//!
+//! This implementation intentionally deviates from the specification in
+//! a backwards compatible way: [`Setup::ep_square()`]
+//! implemented for each [`Position`](crate::Position) omits en passant
+//! squares, unless there is a fully legal en passant capture.
+//!
 //! # Examples
 //!
 //! [`fen::fen()`](fen()) and [`fen::epd()`](epd()) can produce a
