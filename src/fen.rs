@@ -108,43 +108,6 @@ impl FenOpts {
         self
     }
 
-    /// Create a board FEN such as
-    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
-    ///
-    /// Promotied pieces are marked like `Q~`.
-    pub fn board_fen(&self, board: &Board, promoted: Bitboard) -> String {
-        let mut fen = String::with_capacity(15);
-
-        for rank in (0..8).map(Rank::new).rev() {
-            let mut empty = 0;
-
-            for file in (0..8).map(File::new) {
-                let square = Square::from_coords(file, rank);
-
-                empty = board.piece_at(square).map_or_else(|| empty + 1, |piece| {
-                    if empty > 0 {
-                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                    }
-                    fen.push(piece.char());
-                    if promoted.contains(square) {
-                        fen.push('~');
-                    }
-                    0
-                });
-
-                if file == File::H && empty > 0 {
-                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                }
-
-                if file == File::H && rank > Rank::First {
-                    fen.push('/')
-                }
-            }
-        }
-
-        fen
-    }
-
     fn castling_fen(&self, board: &Board, castling_rights: Bitboard) -> String {
         let mut fen = String::with_capacity(4);
 
@@ -191,11 +154,13 @@ impl FenOpts {
             }
         });
 
+        let board = setup.board();
+
         format!("{}{} {} {} {}{}",
-                self.board_fen(setup.board(), setup.promoted()),
+                board.board_fen(setup.promoted()),
                 pockets,
                 setup.turn().char(),
-                self.castling_fen(setup.board(), setup.castling_rights()),
+                self.castling_fen(board, setup.castling_rights()),
                 setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
                 checks)
     }
@@ -205,11 +170,13 @@ impl FenOpts {
     pub fn fen(&self, setup: &dyn Setup) -> String {
         match setup.remaining_checks() {
             Some(checks) if self.scid => {
+                let board = setup.board();
+
                 format!("{}{} {} {} {} {} {} +{}+{}",
-                    self.board_fen(setup.board(), setup.promoted()),
+                    board.board_fen(setup.promoted()),
                     setup.pockets().map_or("".to_owned(), |p| format!("/{}", p.fen())),
                     setup.turn().char(),
-                    self.castling_fen(setup.board(), setup.castling_rights()),
+                    self.castling_fen(board, setup.castling_rights()),
                     setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
                     setup.halfmoves(),
                     setup.fullmoves(),
@@ -332,6 +299,43 @@ impl Board {
     pub fn from_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
         Ok(parse_board_fen(board_fen)?.0)
     }
+
+    /// Create a board FEN such as
+    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
+    ///
+    /// Promoted pieces are marked like `Q~`.
+    pub fn board_fen(&self, promoted: Bitboard) -> String {
+        let mut fen = String::with_capacity(15);
+
+        for rank in (0..8).map(Rank::new).rev() {
+            let mut empty = 0;
+
+            for file in (0..8).map(File::new) {
+                let square = Square::from_coords(file, rank);
+
+                empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
+                    if empty > 0 {
+                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                    }
+                    fen.push(piece.char());
+                    if promoted.contains(square) {
+                        fen.push('~');
+                    }
+                    0
+                });
+
+                if file == File::H && empty > 0 {
+                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                }
+
+                if file == File::H && rank > Rank::First {
+                    fen.push('/')
+                }
+            }
+        }
+
+        fen
+    }
 }
 
 impl FromStr for Board {
@@ -344,7 +348,7 @@ impl FromStr for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", FenOpts::new().board_fen(self, Bitboard(0)))
+        write!(f, "{}", self.board_fen(Bitboard(0)))
     }
 }
 
@@ -565,12 +569,6 @@ impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", FenOpts::default().fen(self))
     }
-}
-
-/// Create a board FEN such as `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`
-/// with default [`FenOpts`].
-pub fn board_fen(board: &Board, promoted: Bitboard) -> String {
-    FenOpts::default().board_fen(board, promoted)
 }
 
 /// Create an EPD such as
