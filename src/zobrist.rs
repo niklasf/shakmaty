@@ -17,6 +17,7 @@ use crate::{
     Chess,
     File,
 };
+use crate::types::ROLES;
 use std::cell::Cell;
 use std::ops::BitXorAssign;
 use std::num::NonZeroU32;
@@ -27,7 +28,7 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
     fn zobrist_for_white_turn() -> Self;
     fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> Self;
     fn zobrist_for_en_passant_file(file: File) -> Self;
-    fn zobrist_for_remaining_checks(color: Color, remaining: u8) -> Self;
+    fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> Self;
     fn zobrist_for_promoted(square: Square) -> Self;
     fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> Self;
 }
@@ -57,7 +58,7 @@ macro_rules! zobrist_value_impl {
                 EN_PASSANT_FILE_MASKS[usize::from(file)] as $t
             }
 
-            fn zobrist_for_remaining_checks(color: Color, remaining: u8) -> $t {
+            fn zobrist_for_remaining_checks(color: Color, RemainingChecks(remaining): RemainingChecks) -> $t {
                 if remaining < 3 {
                     REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold(0, 3)] as $t
                 } else {
@@ -70,8 +71,11 @@ macro_rules! zobrist_value_impl {
             }
 
             fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
-                if pieces > 0 {
-                    POCKET_MASKS[usize::from(pieces - 1)] as $t // TODO
+                if 0 < pieces && pieces <= 16 {
+                    let color_idx = color as usize;
+                    let role_idx = usize::from(role) - 1;
+                    let pieces_idx = usize::from(pieces) - 1;
+                    POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as $t
                 } else {
                     <$t>::default()
                 }
@@ -90,14 +94,14 @@ pub trait ZobristHash {
     /// Prepares an incremental update of the Zobrist hash before playing move
     /// `m` in `self`. Returns a new intermediate Zobrist hash, or `None`
     /// if incremental updating is not supported.
-    fn prepare_incremental_zobrist_hash<V: ZobristValue>(&self, previous: V, m: &Move) -> Option<V> {
+    fn prepare_incremental_zobrist_hash<V: ZobristValue>(&self, _previous: V, _m: &Move) -> Option<V> {
         None
     }
 
     /// Finalizes an incremental update of the Zobrist hash after playing move
     /// `m` in `self`. Returns the new Zobrist hash, or `None` if incremental
     /// updating is not supported.
-    fn finalize_incremental_zobrist_hash<V: ZobristValue>(&self, intermediate: V, m: &Move) -> Option<V> {
+    fn finalize_incremental_zobrist_hash<V: ZobristValue>(&self, _intermediate: V, _m: &Move) -> Option<V> {
         None
     }
 }
@@ -108,23 +112,33 @@ impl ZobristHash for Chess {
 
 #[cfg(feature = "variant")]
 mod variant {
-    impl ZobristHash for Antichess {
+    use super::*;
+
+    impl ZobristHash for crate::variant::Antichess {
         fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
     }
 
-    impl ZobristHash for Atomic {
+    impl ZobristHash for crate::variant::Atomic {
         fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
     }
 
-    impl ZobristHash for Horde {
+    impl ZobristHash for crate::variant::Crazyhouse {
         fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
     }
 
-    impl ZobristHash for KingOfTheHill {
+    impl ZobristHash for crate::variant::Horde {
         fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
     }
 
-    impl ZobristHash for RacingKings {
+    impl ZobristHash for crate::variant::KingOfTheHill {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
+
+    impl ZobristHash for crate::variant::RacingKings {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
+
+    impl ZobristHash for crate::variant::ThreeCheck {
         fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
     }
 }
@@ -251,26 +265,39 @@ fn hash_board<V: ZobristValue>(board: &Board) -> V {
 fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     let mut zobrist = hash_board(pos.board());
 
+    for sq in pos.promoted() {
+        zobrist ^= V::zobrist_for_promoted(sq);
+    }
+
+    if let Some(pockets) = pos.pockets() {
+        for color in [Color::White, Color::Black] {
+            for role in ROLES {
+                zobrist ^= V::zobrist_for_pocket(color, role, pockets.by_piece(role.of(color)));
+            }
+        }
+    }
+
     if pos.turn() == Color::White {
         zobrist ^= V::zobrist_for_white_turn();
     }
 
     let castles = pos.castles();
-    if castles.has(Color::White, CastlingSide::KingSide) {
-        zobrist ^= V::zobrist_for_castling_right(Color::White, CastlingSide::KingSide);
-    }
-    if castles.has(Color::White, CastlingSide::QueenSide) {
-        zobrist ^= V::zobrist_for_castling_right(Color::White, CastlingSide::QueenSide);
-    }
-    if castles.has(Color::Black, CastlingSide::KingSide) {
-        zobrist ^= V::zobrist_for_castling_right(Color::Black, CastlingSide::KingSide);
-    }
-    if castles.has(Color::Black, CastlingSide::QueenSide) {
-        zobrist ^= V::zobrist_for_castling_right(Color::Black, CastlingSide::QueenSide);
+    for color in [Color::White, Color::Black] {
+        for side in [CastlingSide::KingSide, CastlingSide::QueenSide] {
+            if castles.has(color, side) {
+                zobrist ^= V::zobrist_for_castling_right(color, side);
+            }
+        }
     }
 
     if let Some(sq) = pos.ep_square() {
         zobrist ^= V::zobrist_for_en_passant_file(sq.file());
+    }
+
+    if let Some(remaining_checks) = pos.remaining_checks() {
+        for color in [Color::White, Color::Black] {
+            zobrist ^= V::zobrist_for_remaining_checks(color, *remaining_checks.by_color(color));
+        }
     }
 
     zobrist
@@ -337,6 +364,21 @@ mod tests {
             pos.play_unchecked(&m);
 
             assert_eq!(pos.zobrist_hash(), pos.clone().into_inner().zobrist_hash());
+        }
+    }
+
+    #[test]
+    fn test_full_pockets() {
+        // 8/8/8/7k/8/8/3K4/8[ppppppppppppppppnnnnbbbbrrrrqq] w - - 0 54
+        for color in [Color::Black, Color::White] {
+            assert_ne!(
+                u64::zobrist_for_pocket(color, Role::Pawn, 16),
+                u64::zobrist_for_pocket(color, Role::Pawn, 15)
+            );
+            assert_ne!(
+                u64::zobrist_for_pocket(color, Role::Queen, 2),
+                u64::zobrist_for_pocket(color, Role::Queen, 1)
+            );
         }
     }
 }
@@ -1208,7 +1250,7 @@ const PROMOTED_MASKS: [u128; 64] = [
     0x06a79ac414c9632e_7e3de4bfbef5566f,
 ];
 
-const POCKET_MASKS: [u128; 5 * 2 * 15] = [
+const POCKET_MASKS: [u128; 2 * 6 * 16] = [
     0x6e21a47d5b561a1d_b262e9f9d6123320,
     0x4263a757e414fe44_91533947cdaa8bec,
     0x93c43f67cf55b53f_a13b56b45723a3d4,
@@ -1359,4 +1401,46 @@ const POCKET_MASKS: [u128; 5 * 2 * 15] = [
     0xe12508294de8e35e_1aada836dedb3ba7,
     0x49960c597d119ace_f37991753c7df558,
     0x57b7ccbb21f74d1c_e80840e623a19d08,
+    0xee1339362cfc2fde_cb865270dc12ea71,
+    0x6938614f83f2eadb_350f4bc8d3ab3787,
+    0x225cad0b9f393fce_8d0e2e1e3609b3b0,
+    0xc18248d84de01920_96d3be73348cc215,
+    0x517667a25d5d4dda_a8faccf90f4006ba,
+    0x4c850d85739bf00d_4e6402cd300e37f4,
+    0xb14bec813f456e88_e9f5d81a6c4ebc04,
+    0xf451ce39caa46649_3127edce389b25d4,
+    0xb5a70d2a7d51278f_7d1c0961900c7fc6,
+    0x586d2606687d8bd8_745a35d999546397,
+    0x2f0a3192e89aae69_ee16ac7edc0ab87a,
+    0x562233c333514b66_2c61c06220f15ad6,
+    0xce076f19270be140_5faa92f8047283fe,
+    0x514d0d1383141fd0_287552937fe10b06,
+    0x79cc7716c5a0bcdb_fc6f01a790e7b387,
+    0x70d558d99c099cd4_1a815748392014a9,
+    0x93e4a1ebc793cd9f_247d9f295ed98529,
+    0x5a849eed2afe12ba_507da517084b6bf ,
+    0x97785a97b3475d08_7fc75297e547ee09,
+    0x7a6ff51733b60e02_9c001de00030a7db,
+    0xd45152c077f2476c_dceaa53f7ca6ea65,
+    0x3c5df4f9d7d5c1ca_8c5969da7a5726d3,
+    0xcf12a391ff1b694c_aca05f0c0d8bff7c,
+    0xc288a95f133ce1e3_bafec4f209d172df,
+    0x64c97efb318b3a03_4a83b8ca5258098b,
+    0x87790ec7dec7dc2c_79e2016dacd148ef,
+    0x969f7f767f9258ca_902bad8a8d8b8104,
+    0x84b1ff0120f759f5_87e689a62d87f03f,
+    0xa19ddf4773efd2a1_2fb57fd252d52552,
+    0xa75f9c5e34cca8e6_6eb4813221774e02,
+    0x521c8a92a2a3e260_4281066c9a5a7407,
+    0xc50f0a89eea16db0_4f53f7c7b022f55d,
+    0x6e137415e7765cd5_66f13e4205c01ea2,
+    0x578ae522a1acd365_9d645bfec6b6698c,
+    0xb128f93800ce9611_d8f0c9a03a4c201d,
+    0x220e4eaccb1be67b_e33f0569aa8331c4,
+    0x987b37d3c1320443_919a4f35461a3b24,
+    0x223e00d7caa57a43_b4de88f56962e1fa,
+    0xf077a83628e3293b_bcff222b02520b0d,
+    0xa0bf5607e3b18b86_22aa53665a3f23de,
+    0xb4e0aff4e90ccb0d_22c3ce121986d762,
+    0x484ea0a48998be25_fa2c98ac27e2e5b3,
 ];
