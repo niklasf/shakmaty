@@ -541,7 +541,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
-        if let Some(Dtz(dtz)) = self.tablebase.probe_dtz_table(&self.pos, wdl)? {
+        if let Some(Dtz(dtz)) = self.tablebase.probe_dtz_table(self.pos, wdl)? {
             return Ok(Dtz::before_zeroing(wdl).add_plies(dtz));
         }
 

@@ -123,11 +123,11 @@ impl Wdl {
     /// win or loss.
     pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
         match dtz.0 {
-            n if -100 <= n && n <= -1 => Wdl::Loss,
             n if n < -100 => Wdl::BlessedLoss,
+            n if n < 0 => Wdl::Loss,
             0 => Wdl::Draw,
-            n if 100 < n => Wdl::CursedWin,
-            _ => Wdl::Win,
+            n if n <= 100 => Wdl::Win,
+            _ => Wdl::CursedWin,
         }
     }
 
