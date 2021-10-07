@@ -22,28 +22,28 @@ use std::num::NonZeroU32;
 
 /// Integer type that can be returned as a Zobrist hash.
 pub trait ZobristValue: BitXorAssign + Default {
-    fn piece(square: Square, piece: Piece) -> Self;
-    fn white_turn() -> Self;
-    fn castling_right(color: Color, side: CastlingSide) -> Self;
-    fn en_passant_file(file: File) -> Self;
-    fn remaining_checks(color: Color, remaining: u8) -> Self;
-    fn promoted(square: Square) -> Self;
-    fn pocket(color: Color, role: Role, pieces: u8) -> Self;
+    fn zobrist_for_piece(square: Square, piece: Piece) -> Self;
+    fn zobrist_for_white_turn() -> Self;
+    fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> Self;
+    fn zobrist_for_en_passant_file(file: File) -> Self;
+    fn zobrist_for_remaining_checks(color: Color, remaining: u8) -> Self;
+    fn zobrist_for_promoted(square: Square) -> Self;
+    fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> Self;
 }
 
 macro_rules! zobrist_value_impl {
     ($($t:ty)+) => {
         $(impl ZobristValue for $t {
-            fn piece(square: Square, piece: Piece) -> $t {
+            fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
                 let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
                 PIECE_MASKS[64 * piece_idx + usize::from(square)] as $t
             }
 
-            fn white_turn() -> $t {
+            fn zobrist_for_white_turn() -> $t {
                 WHITE_TURN_MASK as $t
             }
 
-            fn castling_right(color: Color, side: CastlingSide) -> $t {
+            fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> $t {
                 CASTLING_RIGHT_MASKS[match (color, side) {
                     (Color::White, CastlingSide::KingSide) => 0,
                     (Color::White, CastlingSide::QueenSide) => 1,
@@ -52,11 +52,11 @@ macro_rules! zobrist_value_impl {
                 }] as $t
             }
 
-            fn en_passant_file(file: File) -> $t {
+            fn zobrist_for_en_passant_file(file: File) -> $t {
                 EN_PASSANT_FILE_MASKS[usize::from(file)] as $t
             }
 
-            fn remaining_checks(color: Color, remaining: u8) -> $t {
+            fn zobrist_for_remaining_checks(color: Color, remaining: u8) -> $t {
                 if remaining < 3 {
                     REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold(0, 3)] as $t
                 } else {
@@ -64,11 +64,11 @@ macro_rules! zobrist_value_impl {
                 }
             }
 
-            fn promoted(square: Square) -> $t {
+            fn zobrist_for_promoted(square: Square) -> $t {
                 PROMOTED_MASKS[usize::from(square)] as $t
             }
 
-            fn pocket(color: Color, role: Role, pieces: u8) -> $t {
+            fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
                 if pieces > 0 {
                     POCKET_MASKS[usize::from(pieces - 1)] as $t // TODO
                 } else {
@@ -196,7 +196,7 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
 fn hash_board<V: ZobristValue>(board: &Board) -> V {
     let mut zobrist = V::default();
     for (sq, piece) in board.pieces() {
-        zobrist ^= V::piece(sq, piece);
+        zobrist ^= V::zobrist_for_piece(sq, piece);
     }
     zobrist
 }
@@ -205,25 +205,25 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     let mut zobrist = hash_board(pos.board());
 
     if pos.turn() == Color::White {
-        zobrist ^= V::white_turn();
+        zobrist ^= V::zobrist_for_white_turn();
     }
 
     let castles = pos.castles();
     if castles.has(Color::White, CastlingSide::KingSide) {
-        zobrist ^= V::castling_right(Color::White, CastlingSide::KingSide);
+        zobrist ^= V::zobrist_for_castling_right(Color::White, CastlingSide::KingSide);
     }
     if castles.has(Color::White, CastlingSide::QueenSide) {
-        zobrist ^= V::castling_right(Color::White, CastlingSide::QueenSide);
+        zobrist ^= V::zobrist_for_castling_right(Color::White, CastlingSide::QueenSide);
     }
     if castles.has(Color::Black, CastlingSide::KingSide) {
-        zobrist ^= V::castling_right(Color::Black, CastlingSide::KingSide);
+        zobrist ^= V::zobrist_for_castling_right(Color::Black, CastlingSide::KingSide);
     }
     if castles.has(Color::Black, CastlingSide::QueenSide) {
-        zobrist ^= V::castling_right(Color::Black, CastlingSide::QueenSide);
+        zobrist ^= V::zobrist_for_castling_right(Color::Black, CastlingSide::QueenSide);
     }
 
     if let Some(sq) = pos.ep_square() {
-        zobrist ^= V::en_passant_file(sq.file());
+        zobrist ^= V::zobrist_for_en_passant_file(sq.file());
     }
 
     zobrist
