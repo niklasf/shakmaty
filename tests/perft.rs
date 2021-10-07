@@ -16,7 +16,7 @@
 
 use shakmaty::fen::Fen;
 use shakmaty::perft;
-use shakmaty::{CastlingMode, Chess, FromSetup, Position};
+use shakmaty::{CastlingMode, Chess, FromSetup, Position, PositionError};
 
 use std::fs::File;
 use std::io::prelude::*;
@@ -45,6 +45,7 @@ where
                     .parse::<Fen>()
                     .expect("invalid fen")
                     .position(CastlingMode::Chess960)
+                    .or_else(PositionError::ignore_impossible_check)
                     .expect("illegal fen");
             }
             Some("perft") => {

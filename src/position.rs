@@ -121,6 +121,9 @@ bitflags! {
         /// aligned.
         ///
         /// Such a position cannot be reached by any sequence of legal moves.
+        ///
+        /// Can be recovered by ignoring the situation using
+        /// [`PositionError::ignore_impossible_check()`].
         const IMPOSSIBLE_CHECK = 1 << 7;
 
         /// The material configuration cannot be reached with any sequence of
@@ -168,6 +171,13 @@ impl<P> PositionError<P> {
     /// with too much material.
     pub fn ignore_impossible_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_MATERIAL)
+    }
+
+    /// Get the position, even if there are too many checkers, or the alignment
+    /// of checkers cannot be reached with any sequence of legal moves.
+    /// Note that other programs may not work in such a situation.
+    pub fn ignore_impossible_check(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKinds::IMPOSSIBLE_CHECK)
     }
 
     pub fn kinds(&self) -> PositionErrorKinds {
