@@ -1,5 +1,11 @@
 //! Zobrist hashing for positions.
 //!
+//! # Stability
+//!
+//! The Zobrist hash for each position is guaranteed to be stable. Changing
+//! hash values is considered a semver breaking change and will be noted in the
+//! changelog.
+//!
 //! # Examples
 //!
 //! ```
