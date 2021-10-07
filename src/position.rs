@@ -2416,8 +2416,7 @@ mod tests {
 
     struct _AssertObjectSafe(Box<dyn Position>);
 
-    // from fen
-    fn ffen<T: Position + FromSetup>(fen: &str) -> T {
+    fn setup_fen<T: Position + FromSetup>(fen: &str) -> T {
         fen.parse::<Fen>()
             .expect("valid fen")
             .position::<T>(CastlingMode::Chess960)
@@ -2426,13 +2425,13 @@ mod tests {
 
     #[test]
     fn test_most_known_legals() {
-        let pos: Chess = ffen("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1");
+        let pos: Chess = setup_fen("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1");
         assert_eq!(pos.legal_moves().len(), 218);
     }
 
     #[test]
     fn test_pinned_san_candidate() {
-        let pos: Chess = ffen("R2r2k1/6pp/1Np2p2/1p2pP2/4p3/4K3/3r2PP/8 b - - 5 37");
+        let pos: Chess = setup_fen("R2r2k1/6pp/1Np2p2/1p2pP2/4p3/4K3/3r2PP/8 b - - 5 37");
 
         let moves = pos.san_candidates(Role::Rook, Square::D3);
 
@@ -2449,7 +2448,7 @@ mod tests {
 
     #[test]
     fn test_promotion() {
-        let pos: Chess = ffen("3r3K/6PP/8/8/8/2k5/8/8 w - - 0 1");
+        let pos: Chess = setup_fen("3r3K/6PP/8/8/8/2k5/8/8 w - - 0 1");
 
         let moves = pos.legal_moves();
         assert!(moves.iter().all(|m| m.role() == Role::Pawn));
@@ -2460,7 +2459,7 @@ mod tests {
     where
         P: Position + FromSetup,
     {
-        let pos: P = ffen(fen);
+        let pos: P = setup_fen(fen);
 
         assert_eq!(pos.has_insufficient_material(White), white);
         assert_eq!(pos.has_insufficient_material(Black), black);
@@ -2482,48 +2481,39 @@ mod tests {
 
     #[test]
     fn test_eq() {
-        fn assert_pos(left: Chess, right: Chess, check_equal: bool) {
-            if check_equal {
-            assert_eq!(left, right);
-            assert_eq!(fen(&left), fen(&right));
-            } else {
-            assert_ne!(left, right);
-            assert_ne!(fen(&left), fen(&right));         
-            }
-        }
-        fn assert_eq(left: Chess, right: Chess) {assert_pos(left, right, true)}
-        fn assert_ne(left: Chess, right: Chess) {assert_pos(left, right, false)}
-        assert_eq(Chess::default(), Chess::default());
-        assert_ne(Chess::default(), Chess::default().swap_turn().expect("swap turn legal"));
-        // check if `Castles.paths` do not interfere.
-        let pos: Chess = ffen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBK1BNR w KQkq - 0 1");
-        let pos_after_move = pos.play(&Move::Normal { // breaks white castling
+        assert_eq!(Chess::default(), Chess::default());
+        assert_ne!(Chess::default(), Chess::default().swap_turn().expect("swap turn legal"));
+
+        // Check that castling paths do not interfere.
+        let pos: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBK1BNR w KQkq - 0 1");
+        let pos_after_move = pos.play(&Move::Normal {
             role: Role::King,
             from: Square::D1,
             to: Square::E1,
             capture: None,
             promotion: None,
         }).expect("Ke1 is legal");
-        assert_eq(pos_after_move, ffen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1"));
-        // check if `board.promoted` does not interfere.
-        let pos2: Chess = ffen("rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNBQKBNR w KQq - 0 26");
-        let pos2_after_promotion_Q = pos2.clone().play(&Move::Normal {
+        assert_eq!(pos_after_move, setup_fen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1"));
+
+        // Check that promoted pieces are irrelevant in standard chess.
+        let pos: Chess = setup_fen("rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNB~QKBNR w KQq - 0 26");
+        let pos_after_queen_promotion = pos.clone().play(&Move::Normal {
             role: Role::Pawn,
             from: Square::H7,
             to: Square::H8,
             capture: None,
             promotion: Some(Role::Queen),
         }).expect("h8=Q is legal");
-        let pos2_after_promotion_N = pos2.play(&Move::Normal {
+        let pos_after_knight_promotion = pos.play(&Move::Normal {
             role: Role::Pawn,
             from: Square::H7,
             to: Square::H8,
             capture: None,
             promotion: Some(Role::Knight),
         }).expect("h8=N is legal");
-        let final_pos: Chess = ffen("rnbqkbnQ/ppppppp1/8/8/8/8/PPPPPPP1/RNBQKBNR b KQq - 0 26");
-        assert_eq(pos2_after_promotion_Q, final_pos.clone());
-        assert_ne(pos2_after_promotion_N, final_pos);
+        let final_pos: Chess = setup_fen("rnbqkbnQ/ppppppp1/8/8/8/8/PPPPPPP1/RNBQKBNR b KQq - 0 26");
+        assert_eq!(pos_after_queen_promotion, final_pos);
+        assert_ne!(pos_after_knight_promotion, final_pos);
     }
 
     #[cfg(feature = "variant")]
@@ -2568,7 +2558,7 @@ mod tests {
     fn test_exploded_king_loses_castling_rights() {
         use super::variant::Atomic;
 
-        let pos: Atomic = ffen("rnb1kbnr/pppppppp/8/4q3/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
+        let pos: Atomic = setup_fen("rnb1kbnr/pppppppp/8/4q3/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
 
         let pos = pos.play(&Move::Normal {
             role: Role::Queen,
@@ -2591,21 +2581,21 @@ mod tests {
         use super::variant::RacingKings;
 
         // Both players reached the backrank.
-        let pos: RacingKings = ffen("kr3NK1/1q2R3/8/8/8/5n2/2N5/1rb2B1R w - - 11 14");
+        let pos: RacingKings = setup_fen("kr3NK1/1q2R3/8/8/8/5n2/2N5/1rb2B1R w - - 11 14");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Draw));
 
         // White to move is lost because black reached the backrank.
-        let pos: RacingKings = ffen("1k6/6K1/8/8/8/8/8/8 w - - 0 1");
+        let pos: RacingKings = setup_fen("1k6/6K1/8/8/8/8/8/8 w - - 0 1");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::Black }));
 
         // Black is given a chance to catch up.
-        let pos: RacingKings = ffen("1K6/7k/8/8/8/8/8/8 b - - 0 1");
+        let pos: RacingKings = setup_fen("1K6/7k/8/8/8/8/8/8 b - - 0 1");
         assert_eq!(pos.variant_outcome(), None);
 
         // Black near backrank but cannot move there.
-        let pos: RacingKings = ffen("2KR4/k7/2Q5/4q3/8/8/8/2N5 b - - 0 1");
+        let pos: RacingKings = setup_fen("2KR4/k7/2Q5/4q3/8/8/8/2N5 b - - 0 1");
         assert!(pos.is_variant_end());
         assert_eq!(pos.variant_outcome(), Some(Outcome::Decisive { winner: Color::White }));
     }
