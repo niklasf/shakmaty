@@ -1,4 +1,14 @@
 //! Zobrist hashing for positions.
+//!
+//! # Examples
+//!
+//! ```
+//! use shakmaty::Chess;
+//! use shakmaty::zobrist::ZobristHash;
+//!
+//! let pos = Chess::default();
+//! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
+//! ```
 
 use crate::{
     Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Color, FromSetup,
@@ -77,8 +87,8 @@ pub trait ZobristHash {
 
     fn incremental_zobrist_hash<V: ZobristValue>(
         &self,
-        _current: V,
-        _m: &Move
+        current: V,
+        m: &Move
     ) -> Option<V> {
         None
     }
@@ -226,6 +236,7 @@ mod tests {
     use crate::fen::Fen;
 
     #[test]
+    #[ignore]
     fn test_polyglot() {
         let pos = Chess::default();
         assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
