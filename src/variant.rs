@@ -37,6 +37,7 @@ use crate::types::{Role, Move, CastlingSide, CastlingMode, RemainingChecks};
 use crate::position::{Outcome, Position, PositionError, FromSetup};
 use crate::setup::{Castles, Setup, SwapTurn};
 use crate::movelist::MoveList;
+use crate::zobrist::{ZobristHash, ZobristValue};
 
 /// Discriminant of [`VariantPosition`].
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -266,6 +267,47 @@ impl Position for VariantPosition {
     fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
     fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
     fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
+}
+
+impl ZobristHash for VariantPosition {
+    fn zobrist_hash<V: ZobristValue>(&self) -> V {
+        match self {
+            VariantPosition::Chess(pos) => pos.zobrist_hash(),
+            VariantPosition::Atomic(pos) => pos.zobrist_hash(),
+            VariantPosition::Antichess(pos) => pos.zobrist_hash(),
+            VariantPosition::KingOfTheHill(pos) => pos.zobrist_hash(),
+            VariantPosition::ThreeCheck(pos) => pos.zobrist_hash(),
+            VariantPosition::Crazyhouse(pos) => pos.zobrist_hash(),
+            VariantPosition::RacingKings(pos) => pos.zobrist_hash(),
+            VariantPosition::Horde(pos) => pos.zobrist_hash(),
+        }
+    }
+
+    fn prepare_incremental_zobrist_hash<V: ZobristValue>(&self, previous: V, m: &Move) -> Option<V> {
+        match self {
+            VariantPosition::Chess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::Atomic(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::Antichess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::KingOfTheHill(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::ThreeCheck(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::Crazyhouse(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::RacingKings(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::Horde(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+        }
+    }
+
+    fn finalize_incremental_zobrist_hash<V: ZobristValue>(&self, intermediate: V, m: &Move) -> Option<V> {
+        match self {
+            VariantPosition::Chess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::Atomic(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::Antichess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::KingOfTheHill(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::ThreeCheck(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::Crazyhouse(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::RacingKings(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::Horde(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+        }
+    }
 }
 
 #[cfg(test)]
