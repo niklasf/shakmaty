@@ -70,7 +70,7 @@
 //! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
 //!   Requires nightly.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.19.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.20.0")]
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]

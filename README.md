@@ -67,6 +67,18 @@ Stockfish put even less emphasis on this.
 
 ## Changelog
 
+- 0.20.0
+  - Removed tracking of promoted pieces from `Board` and added
+    `Setup::promoted()` instead. This is used only by Crazyhouse. All other
+    variants will return `Bitboard(0)`. Removed `FenOpts::promoted()`
+    accordingly. Moved `fen::board_fen()` as a method to `Board`.
+  - Implemented Zobrist hashing.
+  - Fixed (or rather implemented) insufficient material detection for `Horde`.
+  - Added new feature `step` that implements the nightly `Step` trait for
+    `File`, `Rank` and `Square`.
+  - Let `Bitboard` respect `Display` formatting options.
+  - Fixed return type of `File::offset()`.
+  - Implemented `Eq` and `Hash` for `Chess` and `Pieces`.
 - 0.19.0
   - Update `arrayvec` to 0.7.x. `MoveList` is now using const generics.
   - Derive `Hash` for `Move`, `Outcome`, and `Fen`.
