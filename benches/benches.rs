@@ -45,7 +45,7 @@ fn bench_play_unchecked() -> Chess {
         promotion: None,
     };
 
-    let mut pos = black_box(pos.clone());
+    let mut pos = black_box(pos);
     pos.play_unchecked(&m);
     pos
 }

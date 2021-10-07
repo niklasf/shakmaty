@@ -1918,7 +1918,7 @@ pub(crate) mod variant {
                     // A king on A1 is mated by two knights, if it is obstructed by a
                     // pawn/bishop/knight on B2. On the other hand, if black only has
                     // major pieces it is a draw.
-                    return !(pieces.pawns + pieces.bishops + pieces.knights >= 1);
+                    return pieces.pawns + pieces.bishops + pieces.knights < 1;
                 } else if has_bishop_pair(color) {
                     return !(
                         // A king on A1 obstructed by a pawn/bishop on A2 is mated
@@ -1976,7 +1976,7 @@ pub(crate) mod variant {
                 }
             }
 
-            return true;
+            true
         }
 
         fn variant_outcome(&self) -> Option<Outcome> {
@@ -2011,6 +2011,7 @@ pub(crate) mod variant {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn do_move(board: &mut Board,
            promoted: &mut Bitboard,
            turn: &mut Color,
