@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty-syzygy"
-version = "0.16.1" # remember to update changelog and html_root_url
+version = "0.17.0" # remember to update changelog and html_root_url
 description = "Probe Syzygy tablebases"
 repository = "https://github.com/niklasf/shakmaty-syzygy"
 readme = "README.md"
@@ -28,7 +28,7 @@ rustc-hash = "1.1"
 once_cell = "1.1"
 
 [dev-dependencies]
-csv = "1.1"
+csv = "1"
 bencher = "0.1"
 structopt = "0.3"
 
