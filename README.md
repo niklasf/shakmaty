@@ -44,6 +44,8 @@ A Rust library for chess move generation
 
 - Bitboards and compact fixed shift magic attack tables.
 
+- Zobrist hash positions.
+
 - Probe Syzygy tablebases with [shakmaty-syzygy](https://crates.io/crates/shakmaty-syzygy).
 
 ## Documentation
