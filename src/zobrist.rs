@@ -83,13 +83,20 @@ zobrist_value_impl! { u8 u16 u32 u64 u128 }
 
 /// Supports Zobrist hashing.
 pub trait ZobristHash {
+    /// Computes the Zobrist hash from scratch.
     fn zobrist_hash<V: ZobristValue>(&self) -> V;
 
-    fn incremental_zobrist_hash<V: ZobristValue>(
-        &self,
-        current: V,
-        m: &Move
-    ) -> Option<V> {
+    /// Prepares an incremental update of the Zobrist hash before playing move
+    /// `m` in `self`. Returns a new intermediate Zobrist hash, or `None`
+    /// if incremental updating is not supported.
+    fn prepare_incremental_zobrist_hash<V: ZobristValue>(&self, previous: V, m: &Move) -> Option<V> {
+        None
+    }
+
+    /// Finalizes an incremental update of the Zobrist hash after playing move
+    /// `m` in `self`. Returns the new Zobrist hash, or `None` if incremental
+    /// updating is not supported.
+    fn finalize_incremental_zobrist_hash<V: ZobristValue>(&self, intermediate: V, m: &Move) -> Option<V> {
         None
     }
 }
@@ -99,28 +106,26 @@ impl ZobristHash for Chess {
 }
 
 #[cfg(feature = "variant")]
-impl ZobristHash for Antichess {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
-}
+mod variant {
+    impl ZobristHash for Antichess {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
 
-#[cfg(feature = "variant")]
-impl ZobristHash for Atomic {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
-}
+    impl ZobristHash for Atomic {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
 
-#[cfg(feature = "variant")]
-impl ZobristHash for Horde {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
-}
+    impl ZobristHash for Horde {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
 
-#[cfg(feature = "variant")]
-impl ZobristHash for KingOfTheHill {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
-}
+    impl ZobristHash for KingOfTheHill {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
 
-#[cfg(feature = "variant")]
-impl ZobristHash for RacingKings {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    impl ZobristHash for RacingKings {
+        fn zobrist_hash<V: ZobristValue>(&self) -> V { hash_position(self) }
+    }
 }
 
 /// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
@@ -188,8 +193,9 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn variant_outcome(&self) -> Option<Outcome> { self.pos.variant_outcome() }
 
     fn play_unchecked(&mut self, m: &Move) {
-        self.zobrist = self.zobrist.take().and_then(|zobrist| self.pos.incremental_zobrist_hash(zobrist, m));
+        self.zobrist = self.zobrist.take().and_then(|value| self.pos.prepare_incremental_zobrist_hash(value, m));
         self.pos.play_unchecked(m);
+        self.zobrist = self.zobrist.take().and_then(|value| self.pos.finalize_incremental_zobrist_hash(value, m));
     }
 }
 
