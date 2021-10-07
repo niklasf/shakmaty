@@ -17,11 +17,12 @@ use crate::{
     Chess,
     File,
 };
+use std::cell::Cell;
 use std::ops::BitXorAssign;
 use std::num::NonZeroU32;
 
 /// Integer type that can be returned as a Zobrist hash.
-pub trait ZobristValue: BitXorAssign + Default {
+pub trait ZobristValue: BitXorAssign + Default + Copy {
     fn zobrist_for_piece(square: Square, piece: Piece) -> Self;
     fn zobrist_for_white_turn() -> Self;
     fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> Self;
@@ -130,16 +131,16 @@ mod variant {
 
 /// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
 #[derive(Debug, Clone)]
-pub struct Zobrist<P, V> {
+pub struct Zobrist<P, V: ZobristValue> {
     pos: P,
-    zobrist: Option<V>,
+    zobrist: Cell<Option<V>>,
 }
 
-impl<P, V> Zobrist<P, V> {
+impl<P, V: ZobristValue> Zobrist<P, V> {
     pub fn new(pos: P) -> Zobrist<P, V> {
         Zobrist {
             pos,
-            zobrist: None,
+            zobrist: Cell::new(None),
         }
     }
 
@@ -148,13 +149,25 @@ impl<P, V> Zobrist<P, V> {
     }
 }
 
-impl<P: Default, V> Default for Zobrist<P, V> {
+impl<P: ZobristHash, V: ZobristValue> Zobrist<P, V> {
+    pub fn zobrist_hash(&self) -> V {
+        if let Some(zobrist) = self.zobrist.get() {
+            zobrist
+        } else {
+            let zobrist = self.pos.zobrist_hash();
+            self.zobrist.set(Some(zobrist));
+            zobrist
+        }
+    }
+}
+
+impl<P: Default, V: ZobristValue> Default for Zobrist<P, V> {
     fn default() -> Zobrist<P, V> {
         Self::new(P::default())
     }
 }
 
-impl<P: FromSetup + Position, V> FromSetup for Zobrist<P, V> {
+impl<P: FromSetup + Position, V: ZobristValue> FromSetup for Zobrist<P, V> {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
         match P::from_setup(setup, mode) {
             Ok(pos) => Ok(Zobrist::new(pos)),
@@ -166,7 +179,7 @@ impl<P: FromSetup + Position, V> FromSetup for Zobrist<P, V> {
     }
 }
 
-impl<P: Setup, V> Setup for Zobrist<P, V> {
+impl<P: Setup, V: ZobristValue> Setup for Zobrist<P, V> {
     fn board(&self) -> &Board { self.pos.board() }
     fn promoted(&self) -> Bitboard { self.pos.promoted() }
     fn pockets(&self) -> Option<&Material> { self.pos.pockets() }
@@ -193,9 +206,9 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn variant_outcome(&self) -> Option<Outcome> { self.pos.variant_outcome() }
 
     fn play_unchecked(&mut self, m: &Move) {
-        self.zobrist = self.zobrist.take().and_then(|value| self.pos.prepare_incremental_zobrist_hash(value, m));
+        self.zobrist.set(self.zobrist.get().and_then(|value| self.pos.prepare_incremental_zobrist_hash(value, m)));
         self.pos.play_unchecked(m);
-        self.zobrist = self.zobrist.take().and_then(|value| self.pos.finalize_incremental_zobrist_hash(value, m));
+        self.zobrist.set(self.zobrist.get().and_then(|value| self.pos.finalize_incremental_zobrist_hash(value, m)));
     }
 }
 
@@ -240,6 +253,7 @@ mod tests {
     use super::*;
     use crate::Chess;
     use crate::fen::Fen;
+    use crate::uci::Uci;
 
     #[test]
     fn test_polyglot() {
@@ -262,6 +276,39 @@ mod tests {
                 .expect("legal position");
 
             assert_eq!(pos.zobrist_hash::<u64>(), expected, "{}", fen);
+        }
+    }
+
+    #[test]
+    fn test_incremental() {
+        let moves = [
+            "e2e4", "e7e5", "g2g3", "g8f6", "f1g2", "f8c5", "g1e2", "h7h5",
+            "h2h3", "h5h4", "g3g4", "d7d5", "e4d5", "f6d5", "d2d4", "e5d4",
+            "e2d4", "b8c6", "d4b3", "c5f2", "e1f2", "c8e6", "h1e1", "e8g8",
+            "b1d2", "c6e5", "d2f3", "e5f3", "g2f3", "c7c6", "c2c3", "f7f5",
+            "g4g5", "d8d6", "e1g1", "d6h2", "g1g2", "h2h3", "b3d4", "a8e8",
+            "c1d2", "f5f4", "d1h1", "h3h1", "a1h1", "h4h3", "g2g1", "e6c8",
+            "f3g4", "d5e3", "g4c8", "e8c8", "h1h3", "e3d5", "g5g6", "d5e7",
+            "h3h4", "f8f6", "h4g4", "c8f8", "g4g5", "b7b6", "d4f3", "f8d8",
+            "d2c1", "d8d6", "g1e1", "e7g6", "g5h5", "g6f8", "h5e5", "d6e6",
+            "e5e6", "f6e6", "e1e6", "f8e6", "f3d4", "e6d4", "c3d4", "g7g5",
+            "f2f3", "g8f7", "c1f4", "f7g6", "f4d6", "a7a6", "d4d5", "b6b5",
+            "d5c6", "g6f5", "c6c7", "g5g4", "f3g3", "f5e6", "c7c8q", "e6d6",
+            "c8a6", "d6c5", "a6a5", "c5c4", "b2b3", "c4c5", "a5a8", "c5b4",
+            "a8g2", "b4a3", "g3g4", "b5b4", "g2e4", "a3b2", "a2a4",
+        ];
+
+        let mut pos: Zobrist<Chess, u128> = Zobrist::default();
+
+        for uci in moves {
+            let m = uci.parse::<Uci>()
+                .expect("valid uci")
+                .to_move(&pos)
+                .expect("legal uci");
+
+            pos.play_unchecked(&m);
+
+            assert_eq!(pos.zobrist_hash(), pos.clone().into_inner().zobrist_hash());
         }
     }
 }
