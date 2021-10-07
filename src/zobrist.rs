@@ -130,6 +130,34 @@ mod variant {
 }
 
 /// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
+///
+/// # Examples
+///
+/// ```
+/// # use std::error::Error;
+/// use shakmaty::{Chess, Position, Move, Square, Role};
+/// use shakmaty::zobrist::Zobrist;
+///
+/// let pos: Zobrist<Chess, u64> = Zobrist::default();
+///
+/// assert_eq!(pos.zobrist_hash(), 0x463b96181691fc9c);
+/// assert_eq!(pos.zobrist_hash(), 0x463b96181691fc9c); // cached
+///
+/// // 1. e4
+/// let pos = pos.play(&Move::Normal {
+///     role: Role::Pawn,
+///     from: Square::E2,
+///     to: Square::E4,
+///     capture: None,
+///     promotion: None,
+/// })?;
+///
+/// // Incrementally updated (or recomputed from scratch if incremental
+/// // updates not supported).
+/// assert_eq!(pos.zobrist_hash(), 0x823c9b50fd114196);
+/// #
+/// # Ok::<_, Box<dyn Error>>(())
+/// ```
 #[derive(Debug, Clone)]
 pub struct Zobrist<P, V: ZobristValue> {
     pos: P,
