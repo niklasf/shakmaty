@@ -2,7 +2,7 @@ use iai::black_box;
 
 use shakmaty::fen::Fen;
 use shakmaty::san::{ParseSanError, San};
-use shakmaty::{perft, Bitboard, CastlingMode, Chess, Move, Position, Role, Square};
+use shakmaty::{perft, CastlingMode, Chess, Move, Position, Role, Square};
 
 fn bench_shallow_perft() {
     let pos = Chess::default();
@@ -88,12 +88,6 @@ fn bench_play_sans() -> Chess {
     pos
 }
 
-fn bench_bitboard_reverse_iter() {
-    for sq in Bitboard(black_box(0xfaed_16db_af12_d8a1)).into_iter().rev() {
-        black_box(sq);
-    }
-}
-
 iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
@@ -102,5 +96,4 @@ iai::main!(
     bench_play_unchecked,
     bench_san_candidates,
     bench_play_sans,
-    bench_bitboard_reverse_iter,
 );
