@@ -199,6 +199,13 @@ impl<T> ByColor<T> {
             black: &self.black,
         }
     }
+
+    pub fn as_mut(&mut self) -> ByColor<&mut T> {
+        ByColor {
+            white: &mut self.white,
+            black: &mut self.black,
+        }
+    }
 }
 
 impl<T: PartialOrd> ByColor<T> {
