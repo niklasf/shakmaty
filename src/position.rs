@@ -40,6 +40,13 @@ pub enum Outcome {
 }
 
 impl Outcome {
+    pub fn from_winner(winner: Option<Color>) -> Outcome {
+        match winner {
+            Some(winner) => Outcome::Decisive { winner },
+            None => Outcome::Draw,
+        }
+    }
+
     pub fn winner(self) -> Option<Color> {
         match self {
             Outcome::Decisive { winner } => Some(winner),
