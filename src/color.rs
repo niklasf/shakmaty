@@ -107,7 +107,7 @@ pub struct ByColor<T> {
 
 impl<T> ByColor<T> {
     #[inline]
-    pub fn new_with<F>(self, mut init: F) -> ByColor<T>
+    pub fn new_with<F>(mut init: F) -> ByColor<T>
     where
         F: FnMut(Color) -> T,
     {
