@@ -615,7 +615,7 @@ mod tests {
     #[test]
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
-        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(White.queen())), 1);
+        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(Color::White.queen())), 1);
     }
 
     #[test]
