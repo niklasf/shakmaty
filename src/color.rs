@@ -30,7 +30,7 @@ pub enum Color {
 }
 
 impl Color {
-    // `White` and `Black`.
+    // `White` and `Black`, in this order.
     pub const ALL: [Color; 2] = [Color::White, Color::Black];
 
     pub fn from_char(ch: char) -> Option<Color> {

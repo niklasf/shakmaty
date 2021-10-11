@@ -47,6 +47,9 @@ pub enum Role {
 }
 
 impl Role {
+    /// `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, and `King`, in this order.
+    pub const ALL: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
+
     /// Gets the piece type from its English letter.
     ///
     /// # Examples
@@ -180,8 +183,6 @@ macro_rules! try_role_from_int_impl {
 }
 
 try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-
-pub const ROLES: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]

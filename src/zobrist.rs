@@ -39,7 +39,6 @@ use crate::{
     Chess,
     File,
 };
-use crate::types::ROLES;
 use std::cell::Cell;
 use std::ops::BitXorAssign;
 use std::num::NonZeroU32;
@@ -303,7 +302,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
 
     if let Some(pockets) = pos.pockets() {
         for (color, pocket) in pockets.as_ref().zip_color() {
-            for role in ROLES {
+            for role in Role::ALL {
                 zobrist ^= V::zobrist_for_pocket(color, role, pocket.by_role(role));
             }
         }

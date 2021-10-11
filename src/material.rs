@@ -22,7 +22,7 @@ use std::str::FromStr;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 use crate::color::{Color, ByColor};
-use crate::types::{Piece, Role, ROLES};
+use crate::types::{Piece, Role};
 
 /// Error when parsing an invalid material key.
 #[derive(Clone, Debug)]
@@ -118,7 +118,7 @@ impl MaterialSide {
 
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for &role in ROLES.iter().rev() {
+        for role in IntoIterator::into_iter(Role::ALL).rev() {
             write!(f, "{}", role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
         }
         Ok(())
@@ -309,7 +309,7 @@ impl Material {
         let mut fen = String::with_capacity(self.count());
 
         for color in Color::ALL {
-            for &role in &ROLES {
+            for role in Role::ALL {
                 let piece = Piece { color, role };
                 for _ in 0..self.by_piece(piece) {
                     fen.push(piece.char());
