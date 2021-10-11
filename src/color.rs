@@ -273,6 +273,7 @@ impl<T> IntoIterator for ByColor<T> {
     }
 }
 
+/// Iterator over [`ByColor`].
 #[derive(Debug, Clone)]
 pub struct ByColorIter<T> {
     inner: ByColor<Option<T>>,

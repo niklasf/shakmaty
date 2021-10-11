@@ -102,7 +102,7 @@ pub mod zobrist;
 pub mod variant;
 
 pub use crate::square::{ParseSquareError, File, Rank, Square};
-pub use crate::color::{Color, ByColor};
+pub use crate::color::{Color, ByColor, ByColorIter};
 pub use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingChecks};
 pub use crate::material::{Material, MaterialSide, ParseMaterialError};
 pub use crate::bitboard::Bitboard;
