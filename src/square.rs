@@ -155,6 +155,7 @@ impl File {
         Rank::new(7 - u32::from(self))
     }
 
+    /// `A`, ..., `H`.
     pub const ALL: [File; 8] = [File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H];
 }
 
@@ -247,6 +248,7 @@ impl Rank {
         File::new(7 - u32::from(self))
     }
 
+    /// `First`, ..., `Eighth`.
     pub const ALL: [Rank; 8] = [
         Rank::First,
         Rank::Second,
@@ -599,6 +601,7 @@ impl Square {
 mod all_squares {
     use super::Square::{self, *};
     impl Square {
+        /// `A1`, `B1`, ..., `G8`, `H8`.
         pub const ALL: [Square; 64] = [
             A1, B1, C1, D1, E1, F1, G1, H1,
             A2, B2, C2, D2, E2, F2, G2, H2,
