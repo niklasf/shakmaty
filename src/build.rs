@@ -76,7 +76,7 @@ fn sliding_rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 }
 
 fn step_attacks(sq: Square, deltas: &[i32]) -> Bitboard {
-    sliding_attacks(sq, Bitboard::ALL, deltas)
+    sliding_attacks(sq, Bitboard::FULL, deltas)
 }
 
 fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], deltas: &[i32]) {
@@ -127,14 +127,14 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 
     let mut bb_rays = [[Bitboard(0); 64]; 64];
 
-    for sq in Bitboard::ALL {
+    for sq in Bitboard::FULL {
         knight_attacks[usize::from(sq)] = step_attacks(sq, &KNIGHT_DELTAS);
         king_attacks[usize::from(sq)] = step_attacks(sq, &KING_DELTAS);
         white_pawn_attacks[usize::from(sq)] = step_attacks(sq, &WHITE_PAWN_DELTAS);
         black_pawn_attacks[usize::from(sq)] = step_attacks(sq, &BLACK_PAWN_DELTAS);
     }
 
-    for a in Bitboard::ALL {
+    for a in Bitboard::FULL {
         for b in sliding_bishop_attacks(a, Bitboard(0)) {
             bb_rays[usize::from(a)][usize::from(b)] =
                 (sliding_bishop_attacks(a, Bitboard(0)) &
@@ -162,7 +162,7 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
     let mut attacks = [Bitboard(0); 88772];
 
-    for sq in Bitboard::ALL {
+    for sq in Bitboard::FULL {
         init_magics(sq, &magics::ROOK_MAGICS[usize::from(sq)], 12, &mut attacks, &ROOK_DELTAS);
         init_magics(sq, &magics::BISHOP_MAGICS[usize::from(sq)], 9, &mut attacks, &BISHOP_DELTAS);
     }

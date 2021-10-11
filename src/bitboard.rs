@@ -121,7 +121,7 @@ impl Bitboard {
     /// ```
     /// use shakmaty::{Bitboard, Square};
     ///
-    /// let mut bitboard = Bitboard::ALL;
+    /// let mut bitboard = Bitboard::FULL;
     /// assert_eq!(bitboard.remove(Square::E4), true);
     /// assert_eq!(bitboard.remove(Square::E4), false);
     /// ```
@@ -424,7 +424,7 @@ impl Bitboard {
     pub const EMPTY: Bitboard = Bitboard(0);
 
     /// A bitboard containing all squares.
-    pub const ALL: Bitboard = Bitboard(!0u64);
+    pub const FULL: Bitboard = Bitboard(!0u64);
 
     /// All dark squares.
     pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
@@ -440,6 +440,10 @@ impl Bitboard {
 
     /// The four center squares.
     pub const CENTER: Bitboard = Bitboard(0x0000_0018_1800_0000);
+
+    #[deprecated(since = "0.20.1", note = "Renamed to Bitboard::FULL for consistency")]
+    pub const ALL: Bitboard = Bitboard::FULL;
+
 }
 
 /// Square masks.
@@ -743,7 +747,7 @@ mod tests {
         assert_eq!(Bitboard(1).more_than_one(), false);
         assert_eq!(Bitboard(2).more_than_one(), false);
         assert_eq!(Bitboard(3).more_than_one(), true);
-        assert_eq!(Bitboard::ALL.more_than_one(), true);
+        assert_eq!(Bitboard::FULL.more_than_one(), true);
     }
 
     #[test]
