@@ -399,6 +399,19 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_variants_not_distinguished() {
+        // Useful when indexing a table of opening names by Zorbist hash.
+        let chess: u128 = Chess::default().zobrist_hash();
+        let crazyhouse = crate::variant::Crazyhouse::default().zobrist_hash();
+        let three_check = crate::variant::ThreeCheck::default().zobrist_hash();
+        let king_of_the_hill = crate::variant::KingOfTheHill::default().zobrist_hash();
+        assert_eq!(chess, crazyhouse);
+        assert_eq!(chess, three_check);
+        assert_eq!(chess, king_of_the_hill);
+    }
+
     #[test]
     fn test_full_pockets() {
         // 8/8/8/7k/8/8/3K4/8[ppppppppppppppppnnnnbbbbrrrrqq] w - - 0 54
