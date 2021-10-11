@@ -217,6 +217,10 @@ impl<P, V: ZobristValue> Zobrist<P, V> {
     pub fn into_inner(self) -> P {
         self.pos
     }
+
+    pub fn as_inner(&self) -> &P {
+        &self.pos
+    }
 }
 
 impl<P: ZobristHash, V: ZobristValue> Zobrist<P, V> {
