@@ -193,6 +193,7 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn as_ref(&self) -> ByColor<&T> {
         ByColor {
             white: &self.white,
@@ -200,11 +201,20 @@ impl<T> ByColor<T> {
         }
     }
 
+    #[inline]
     pub fn as_mut(&mut self) -> ByColor<&mut T> {
         ByColor {
             white: &mut self.white,
             black: &mut self.black,
         }
+    }
+
+    pub fn iter(&self) -> ByColorIter<&T> {
+        self.as_ref().into_iter()
+    }
+
+    pub fn iter_mut(&mut self) -> ByColorIter<&mut T> {
+        self.as_mut().into_iter()
     }
 }
 
@@ -244,3 +254,51 @@ impl<T: Clone> ByColor<&T> {
         }
     }
 }
+
+impl<T> IntoIterator for ByColor<T> {
+    type Item = (Color, T);
+    type IntoIter = ByColorIter<T>;
+
+    fn into_iter(self) -> ByColorIter<T> {
+        ByColorIter {
+            white: Some(self.white),
+            black: Some(self.black),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ByColorIter<T> {
+    white: Option<T>,
+    black: Option<T>,
+}
+
+impl<T> Iterator for ByColorIter<T> {
+    type Item = (Color, T);
+
+    fn next(&mut self) -> Option<(Color, T)> {
+        self.white.take().map(|v| (Color::White, v))
+            .or_else(|| self.black.take().map(|v| (Color::Black, v)))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.len();
+        (len, Some(len))
+    }
+}
+
+impl<T> DoubleEndedIterator for ByColorIter<T> {
+    fn next_back(&mut self) -> Option<(Color, T)> {
+        self.black.take().map(|v| (Color::Black, v))
+            .or_else(|| self.white.take().map(|v| (Color::White, v)))
+    }
+}
+
+impl<T> ExactSizeIterator for ByColorIter<T> {
+    fn len(&self) -> usize {
+        (if self.white.is_some() { 1 } else { 0 }) +
+        (if self.black.is_some() { 1 } else { 0 })
+    }
+}
+
+impl<T> std::iter::FusedIterator for ByColorIter<T> {}

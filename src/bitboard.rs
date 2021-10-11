@@ -684,7 +684,7 @@ impl ExactSizeIterator for IntoIter {
     }
 }
 
-impl ::std::iter::FusedIterator for IntoIter {}
+impl std::iter::FusedIterator for IntoIter {}
 
 impl DoubleEndedIterator for IntoIter {
     #[inline]
