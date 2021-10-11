@@ -93,6 +93,8 @@ pub enum File {
 }
 
 impl File {
+    pub const ALL: [File; 8] = [File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H];
+
     /// Gets a `File` from an integer index.
     ///
     /// # Panics
@@ -184,6 +186,17 @@ pub enum Rank {
 }
 
 impl Rank {
+    pub const ALL: [Rank; 8] = [
+        Rank::First,
+        Rank::Second,
+        Rank::Third,
+        Rank::Fourth,
+        Rank::Fifth,
+        Rank::Sixth,
+        Rank::Seventh,
+        Rank::Eighth,
+    ];
+
     /// Gets a `Rank` from an integer index.
     ///
     /// # Panics

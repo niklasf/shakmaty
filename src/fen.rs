@@ -313,10 +313,10 @@ impl Board {
     pub fn board_fen(&self, promoted: Bitboard) -> String {
         let mut fen = String::with_capacity(15);
 
-        for rank in (0..8).map(Rank::new).rev() {
+        for rank in IntoIterator::into_iter(Rank::ALL).rev() {
             let mut empty = 0;
 
-            for file in (0..8).map(File::new) {
+            for file in File::ALL {
                 let square = Square::from_coords(file, rank);
 
                 empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {

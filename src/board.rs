@@ -303,8 +303,8 @@ impl Default for Board {
 
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for rank in (0..8).map(Rank::new).rev() {
-            for file in (0..8).map(File::new) {
+        for rank in IntoIterator::into_iter(Rank::ALL).rev() {
+            for file in File::ALL {
                 let square = Square::from_coords(file, rank);
                 f.write_char(self.piece_at(square).map_or('.', Piece::char))?;
                 f.write_char(if file < File::H { ' ' } else { '\n' })?;
