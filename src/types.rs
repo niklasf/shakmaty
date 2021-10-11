@@ -47,9 +47,6 @@ pub enum Role {
 }
 
 impl Role {
-    /// `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, and `King`, in this order.
-    pub const ALL: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
-
     /// Gets the piece type from its English letter.
     ///
     /// # Examples
@@ -127,6 +124,9 @@ impl Role {
             Role::King => 'K',
         }
     }
+
+    /// `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, and `King`, in this order.
+    pub const ALL: [Role; 6] = [Pawn, Knight, Bishop, Rook, Queen, King];
 }
 
 macro_rules! int_from_role_impl {
@@ -344,9 +344,6 @@ pub enum CastlingSide {
 }
 
 impl CastlingSide {
-    /// `KingSide` and `QueenSide`, in this order.
-    pub const ALL: [CastlingSide; 2] = [CastlingSide::KingSide, CastlingSide::QueenSide];
-
     pub fn is_queen_side(self) -> bool {
         match self {
             CastlingSide::KingSide => false,
@@ -387,6 +384,9 @@ impl CastlingSide {
     pub fn rook_to(self, color: Color) -> Square {
         Square::from_coords(self.rook_to_file(), color.backrank())
     }
+
+    /// `KingSide` and `QueenSide`, in this order.
+    pub const ALL: [CastlingSide; 2] = [CastlingSide::KingSide, CastlingSide::QueenSide];
 }
 
 /// `Standard` or `Chess960`.

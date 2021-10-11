@@ -30,9 +30,6 @@ pub enum Color {
 }
 
 impl Color {
-    // `White` and `Black`, in this order.
-    pub const ALL: [Color; 2] = [Color::White, Color::Black];
-
     pub fn from_char(ch: char) -> Option<Color> {
         match ch {
             'w' => Some(Color::White),
@@ -81,6 +78,9 @@ impl Color {
     pub fn queen(self)  -> Piece { Role::Queen.of(self) }
     #[inline]
     pub fn king(self)   -> Piece { Role::King.of(self) }
+
+    /// `White` and `Black`, in this order.
+    pub const ALL: [Color; 2] = [Color::White, Color::Black];
 }
 
 impl ops::Not for Color {
