@@ -216,12 +216,12 @@ impl<P> fmt::Display for PositionError<P> {
         reason(PositionErrorKinds::MISSING_KING, "missing king")?;
         reason(PositionErrorKinds::TOO_MANY_KINGS, "too many kings")?;
         reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "pawns on backrank")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "invalid castling rights")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "invalid ep square")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "opposite check")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "impossible check")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "impossible material")?;
-        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "variant rule violated")?;
+        reason(PositionErrorKinds::INVALID_CASTLING_RIGHTS, "invalid castling rights")?;
+        reason(PositionErrorKinds::INVALID_EP_SQUARE, "invalid ep square")?;
+        reason(PositionErrorKinds::OPPOSITE_CHECK, "opposite check")?;
+        reason(PositionErrorKinds::IMPOSSIBLE_CHECK, "impossible check")?;
+        reason(PositionErrorKinds::IMPOSSIBLE_MATERIAL, "impossible material")?;
+        reason(PositionErrorKinds::VARIANT, "variant rule violated")?;
         if first {
             f.write_str("unknown reason")?;
         }
