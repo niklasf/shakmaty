@@ -344,6 +344,9 @@ pub enum CastlingSide {
 }
 
 impl CastlingSide {
+    /// `KingSide` and `QueenSide`, in this order.
+    pub const ALL: [CastlingSide; 2] = [CastlingSide::KingSide, CastlingSide::QueenSide];
+
     pub fn is_queen_side(self) -> bool {
         match self {
             CastlingSide::KingSide => false,

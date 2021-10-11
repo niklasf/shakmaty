@@ -314,7 +314,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
 
     let castles = pos.castles();
     for color in Color::ALL {
-        for side in [CastlingSide::KingSide, CastlingSide::QueenSide] {
+        for side in CastlingSide::ALL {
             if castles.has(color, side) {
                 zobrist ^= V::zobrist_for_castling_right(color, side);
             }
