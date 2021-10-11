@@ -290,11 +290,7 @@ impl fmt::Display for ParseSquareError {
     }
 }
 
-impl Error for ParseSquareError {
-    fn description(&self) -> &str {
-        "invalid square name"
-    }
-}
+impl Error for ParseSquareError {}
 
 /// A square index.
 #[allow(missing_docs)]

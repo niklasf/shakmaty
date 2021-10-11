@@ -102,11 +102,7 @@ impl fmt::Display for ParseUciError {
     }
 }
 
-impl Error for ParseUciError {
-    fn description(&self) -> &str {
-        "invalid uci"
-    }
-}
+impl Error for ParseUciError {}
 
 /// Error when UCI is illegal.
 #[derive(Clone, Debug)]
@@ -118,11 +114,7 @@ impl fmt::Display for IllegalUciError {
     }
 }
 
-impl Error for IllegalUciError {
-    fn description(&self) -> &str {
-        "illegal uci"
-    }
-}
+impl Error for IllegalUciError {}
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]

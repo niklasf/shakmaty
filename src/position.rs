@@ -85,11 +85,7 @@ impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     }
 }
 
-impl<P: fmt::Debug> Error for PlayError<P> {
-    fn description(&self) -> &str {
-        "illegal move"
-    }
-}
+impl<P: fmt::Debug> Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
@@ -234,11 +230,7 @@ impl<P> fmt::Display for PositionError<P> {
     }
 }
 
-impl<P> Error for PositionError<P> {
-    fn description(&self) -> &str {
-        "illegal position"
-    }
-}
+impl<P> Error for PositionError<P> {}
 
 /// Validate and set up an arbitrary position. All provided chess variants
 /// support this.

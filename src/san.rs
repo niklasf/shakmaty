@@ -88,11 +88,7 @@ impl fmt::Display for ParseSanError {
     }
 }
 
-impl Error for ParseSanError {
-    fn description(&self) -> &str {
-        "invalid san"
-    }
-}
+impl Error for ParseSanError {}
 
 /// `IllegalSan` or `AmbiguousSan`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -118,11 +114,7 @@ impl fmt::Display for SanError {
     }
 }
 
-impl Error for SanError {
-    fn description(&self) -> &str {
-        self.desc()
-    }
-}
+impl Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]

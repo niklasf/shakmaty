@@ -34,11 +34,7 @@ impl fmt::Display for ParseMaterialError {
     }
 }
 
-impl Error for ParseMaterialError {
-    fn description(&self) -> &str {
-        "invalid square name"
-    }
-}
+impl Error for ParseMaterialError {}
 
 /// The material configuration of one side.
 #[derive(Clone, Default, Eq, PartialEq, Hash)]

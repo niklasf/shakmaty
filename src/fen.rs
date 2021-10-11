@@ -230,11 +230,7 @@ impl fmt::Display for ParseFenError {
     }
 }
 
-impl Error for ParseFenError {
-    fn description(&self) -> &str {
-        self.desc()
-    }
-}
+impl Error for ParseFenError {}
 
 fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
     let mut promoted = Bitboard(0);
