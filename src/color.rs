@@ -209,6 +209,13 @@ impl<T> ByColor<T> {
         }
     }
 
+    pub fn zip_color(self) -> ByColor<(Color, T)> {
+        ByColor {
+            white: (Color::White, self.white),
+            black: (Color::Black, self.black),
+        }
+    }
+
     pub fn iter(&self) -> ByColorIter<&T> {
         self.as_ref().into_iter()
     }
@@ -256,29 +263,26 @@ impl<T: Clone> ByColor<&T> {
 }
 
 impl<T> IntoIterator for ByColor<T> {
-    type Item = (Color, T);
+    type Item = T;
     type IntoIter = ByColorIter<T>;
 
     fn into_iter(self) -> ByColorIter<T> {
         ByColorIter {
-            white: Some(self.white),
-            black: Some(self.black),
+            inner: self.map(Some),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ByColorIter<T> {
-    white: Option<T>,
-    black: Option<T>,
+    inner: ByColor<Option<T>>,
 }
 
 impl<T> Iterator for ByColorIter<T> {
-    type Item = (Color, T);
+    type Item = T;
 
-    fn next(&mut self) -> Option<(Color, T)> {
-        self.white.take().map(|v| (Color::White, v))
-            .or_else(|| self.black.take().map(|v| (Color::Black, v)))
+    fn next(&mut self) -> Option<T> {
+        self.inner.white.take().or_else(|| self.inner.black.take())
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -287,17 +291,16 @@ impl<T> Iterator for ByColorIter<T> {
     }
 }
 
-impl<T> DoubleEndedIterator for ByColorIter<T> {
-    fn next_back(&mut self) -> Option<(Color, T)> {
-        self.black.take().map(|v| (Color::Black, v))
-            .or_else(|| self.white.take().map(|v| (Color::White, v)))
+impl<T> ExactSizeIterator for ByColorIter<T> {
+    fn len(&self) -> usize {
+        (if self.inner.white.is_some() { 1 } else { 0 }) +
+        (if self.inner.black.is_some() { 1 } else { 0 })
     }
 }
 
-impl<T> ExactSizeIterator for ByColorIter<T> {
-    fn len(&self) -> usize {
-        (if self.white.is_some() { 1 } else { 0 }) +
-        (if self.black.is_some() { 1 } else { 0 })
+impl<T> DoubleEndedIterator for ByColorIter<T> {
+    fn next_back(&mut self) -> Option<T> {
+        self.inner.black.take().or_else(|| self.inner.white.take())
     }
 }
 
