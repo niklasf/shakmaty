@@ -934,7 +934,7 @@ pub(crate) mod variant {
         }
 
         fn variant_outcome(&self) -> Option<Outcome> {
-            for &color in &[White, Black] {
+            for color in Color::ALL {
                 if (self.board().by_color(color) & self.board().kings()).is_empty() {
                     return Some(Outcome::Decisive { winner: !color });
                 }
@@ -1167,7 +1167,7 @@ pub(crate) mod variant {
         }
 
         fn variant_outcome(&self) -> Option<Outcome> {
-            for &color in &[White, Black] {
+            for color in Color::ALL {
                 if (self.board().by_color(color) & self.board().kings() & Bitboard::CENTER).any() {
                     return Some(Outcome::Decisive { winner: color });
                 }
@@ -1771,9 +1771,7 @@ pub(crate) mod variant {
             let horde_lightb =
                 (Bitboard::LIGHT_SQUARES & self.board.by_color(color) & self.board.bishops())
                     .count() as u8;
-            let horde_bishop_co = || {
-                if horde_lightb >= 1 { White } else { Black }
-            };
+            let horde_bishop_co = || Color::from_white(horde_lightb >= 1);
             let horde_num = horde.pawns
                 + horde.knights
                 + horde.rooks
@@ -2106,7 +2104,7 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
         errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
     }
 
-    for &color in &[White, Black] {
+    for color in Color::ALL {
         if pos.board().king_of(color).is_none() {
             errors |= PositionErrorKinds::MISSING_KING;
         }

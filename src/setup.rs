@@ -258,34 +258,34 @@ impl Castles {
 
         let rooks = castling_rights & board.rooks();
 
-        for color in &[Color::Black, Color::White] {
-            if let Some(king) = board.king_of(*color) {
+        for color in Color::ALL {
+            if let Some(king) = board.king_of(color) {
                 if king.file() == File::A || king.file() == File::H || king.rank() != color.fold(Rank::First, Rank::Eighth) {
                     continue;
                 }
 
-                let side = rooks & board.by_color(*color) & Bitboard::relative_rank(*color, Rank::First);
+                let side = rooks & board.by_color(color) & Bitboard::relative_rank(color, Rank::First);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
-                    let rto = CastlingSide::QueenSide.rook_to(*color);
-                    let kto = CastlingSide::QueenSide.king_to(*color);
+                    let rto = CastlingSide::QueenSide.rook_to(color);
+                    let kto = CastlingSide::QueenSide.king_to(color);
                     let chess960 = king.file() != File::E || a_side.file() != File::A;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(a_side);
-                        castles.rook[*color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
-                        castles.path[*color as usize][CastlingSide::QueenSide as usize] =
+                        castles.rook[color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
+                        castles.path[color as usize][CastlingSide::QueenSide as usize] =
                             (attacks::between(a_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(a_side);
                     }
                 }
 
                 if let Some(h_side) = side.last().filter(|rook| king.file() < rook.file()) {
-                    let rto = CastlingSide::KingSide.rook_to(*color);
-                    let kto = CastlingSide::KingSide.king_to(*color);
+                    let rto = CastlingSide::KingSide.rook_to(color);
+                    let kto = CastlingSide::KingSide.king_to(color);
                     let chess960 = king.file() != File::E || h_side.file() != File::H;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(h_side);
-                        castles.rook[*color as usize][CastlingSide::KingSide as usize] = Some(h_side);
-                        castles.path[*color as usize][CastlingSide::KingSide as usize] =
+                        castles.rook[color as usize][CastlingSide::KingSide as usize] = Some(h_side);
+                        castles.path[color as usize][CastlingSide::KingSide as usize] =
                             (attacks::between(h_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(h_side);
                     }
                 }

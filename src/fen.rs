@@ -80,7 +80,6 @@ use std::error::Error;
 
 use crate::square::{File, Rank, Square};
 use crate::color::{ByColor, Color};
-use crate::color::Color::{Black, White};
 use crate::types::{Piece, CastlingMode, RemainingChecks};
 use crate::material::Material;
 use crate::bitboard::Bitboard;
@@ -118,10 +117,10 @@ impl FenOpts {
     fn castling_fen(&self, board: &Board, castling_rights: Bitboard) -> String {
         let mut fen = String::with_capacity(4);
 
-        for color in &[White, Black] {
-            let king = board.king_of(*color);
+        for color in Color::ALL {
+            let king = board.king_of(color);
 
-            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(*color, Rank::First);
+            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(color, Rank::First);
 
             for rook in (candidates & castling_rights).into_iter().rev() {
                 if !self.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
@@ -391,7 +390,7 @@ impl Default for Fen {
             board: Board::default(),
             promoted: Bitboard(0),
             pockets: None,
-            turn: White,
+            turn: Color::White,
             castling_rights: Bitboard::CORNERS,
             ep_square: None,
             remaining_checks: None,
@@ -472,8 +471,8 @@ impl Fen {
         }
 
         result.turn = match parts.next() {
-            Some(b"w") | None => White,
-            Some(b"b") => Black,
+            Some(b"w") | None => Color::White,
+            Some(b"b") => Color::Black,
             Some(_) => return Err(ParseFenError::InvalidTurn),
         };
 

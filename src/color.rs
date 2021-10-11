@@ -30,6 +30,9 @@ pub enum Color {
 }
 
 impl Color {
+    // `White` and `Black`.
+    pub const ALL: [Color; 2] = [Color::White, Color::Black];
+
     pub fn from_char(ch: char) -> Option<Color> {
         match ch {
             'w' => Some(Color::White),

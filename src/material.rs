@@ -308,7 +308,7 @@ impl Material {
     pub fn fen(&self) -> String {
         let mut fen = String::with_capacity(self.count());
 
-        for &color in &[Color::White, Color::Black] {
+        for color in Color::ALL {
             for &role in &ROLES {
                 let piece = Piece { color, role };
                 for _ in 0..self.by_piece(piece) {

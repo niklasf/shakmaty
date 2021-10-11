@@ -302,9 +302,9 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     }
 
     if let Some(pockets) = pos.pockets() {
-        for color in [Color::White, Color::Black] {
+        for (color, pocket) in pockets.as_ref().zip_color() {
             for role in ROLES {
-                zobrist ^= V::zobrist_for_pocket(color, role, pockets.by_piece(role.of(color)));
+                zobrist ^= V::zobrist_for_pocket(color, role, pocket.by_role(role));
             }
         }
     }
@@ -314,7 +314,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     }
 
     let castles = pos.castles();
-    for color in [Color::White, Color::Black] {
+    for color in Color::ALL {
         for side in [CastlingSide::KingSide, CastlingSide::QueenSide] {
             if castles.has(color, side) {
                 zobrist ^= V::zobrist_for_castling_right(color, side);
@@ -327,8 +327,8 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     }
 
     if let Some(remaining_checks) = pos.remaining_checks() {
-        for color in [Color::White, Color::Black] {
-            zobrist ^= V::zobrist_for_remaining_checks(color, *remaining_checks.by_color(color));
+        for (color, remaining) in remaining_checks.as_ref().zip_color() {
+            zobrist ^= V::zobrist_for_remaining_checks(color, *remaining);
         }
     }
 
@@ -415,7 +415,7 @@ mod tests {
     #[test]
     fn test_full_pockets() {
         // 8/8/8/7k/8/8/3K4/8[ppppppppppppppppnnnnbbbbrrrrqq] w - - 0 54
-        for color in [Color::Black, Color::White] {
+        for color in Color::ALL {
             assert_ne!(
                 u64::zobrist_for_pocket(color, Role::Pawn, 16),
                 u64::zobrist_for_pocket(color, Role::Pawn, 15)
