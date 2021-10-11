@@ -202,7 +202,35 @@ impl<P> fmt::Debug for PositionError<P> {
 
 impl<P> fmt::Display for PositionError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "illegal position".fmt(f)
+        f.write_str("illegal position: ")?;
+
+        let mut first = true;
+        let mut reason = |kind: PositionErrorKinds, display: &str| -> fmt::Result {
+            if self.errors.contains(kind) {
+                if !first {
+                    f.write_str(", ")?;
+                }
+                f.write_str(display)?;
+                first = false;
+            }
+            Ok(())
+        };
+
+        reason(PositionErrorKinds::EMPTY_BOARD, "empty board")?;
+        reason(PositionErrorKinds::MISSING_KING, "missing king")?;
+        reason(PositionErrorKinds::TOO_MANY_KINGS, "too many kings")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "pawns on backrank")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "invalid castling rights")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "invalid ep square")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "opposite check")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "impossible check")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "impossible material")?;
+        reason(PositionErrorKinds::PAWNS_ON_BACKRANK, "variant rule violated")?;
+        if first {
+            f.write_str("unknown reason")?;
+        }
+
+        Ok(())
     }
 }
 
