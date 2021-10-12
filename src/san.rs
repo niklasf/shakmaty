@@ -84,7 +84,7 @@ pub struct ParseSanError;
 
 impl fmt::Display for ParseSanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "invalid san".fmt(f)
+        f.write_str("invalid san")
     }
 }
 
@@ -99,18 +99,12 @@ pub enum SanError {
     AmbiguousSan,
 }
 
-impl SanError {
-    fn desc(&self) -> &str {
-        match *self {
-            SanError::IllegalSan => "illegal san",
-            SanError::AmbiguousSan => "ambiguous san",
-        }
-    }
-}
-
 impl fmt::Display for SanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.desc().fmt(f)
+        f.write_str(match *self {
+            SanError::IllegalSan => "illegal san",
+            SanError::AmbiguousSan => "ambiguous san",
+        })
     }
 }
 

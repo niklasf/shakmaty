@@ -208,9 +208,9 @@ pub enum ParseFenError {
     InvalidFullmoves,
 }
 
-impl ParseFenError {
-    fn desc(&self) -> &str {
-        match *self {
+impl fmt::Display for ParseFenError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match *self {
             ParseFenError::InvalidFen => "invalid fen",
             ParseFenError::InvalidBoard => "invalid board part in fen",
             ParseFenError::InvalidPocket => "invalid pocket in fen",
@@ -220,13 +220,7 @@ impl ParseFenError {
             ParseFenError::InvalidRemainingChecks => "invalid remaining checks in fen",
             ParseFenError::InvalidHalfmoveClock => "invalid halfmove clock in fen",
             ParseFenError::InvalidFullmoves => "invalid fullmove part in fen",
-        }
-    }
-}
-
-impl fmt::Display for ParseFenError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.desc().fmt(f)
+        })
     }
 }
 

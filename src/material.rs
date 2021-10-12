@@ -30,7 +30,7 @@ pub struct ParseMaterialError;
 
 impl fmt::Display for ParseMaterialError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "invalid material key".fmt(f)
+        f.write_str("invalid material key")
     }
 }
 

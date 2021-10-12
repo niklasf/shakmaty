@@ -98,7 +98,7 @@ pub struct ParseUciError;
 
 impl fmt::Display for ParseUciError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "invalid uci".fmt(f)
+        f.write_str("invalid uci")
     }
 }
 
@@ -110,7 +110,7 @@ pub struct IllegalUciError;
 
 impl fmt::Display for IllegalUciError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "illegal uci".fmt(f)
+        f.write_str("illegal uci")
     }
 }
 

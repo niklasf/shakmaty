@@ -286,7 +286,7 @@ pub struct ParseSquareError;
 
 impl fmt::Display for ParseSquareError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        "invalid square name".fmt(f)
+        f.write_str("invalid square name")
     }
 }
 
