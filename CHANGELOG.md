@@ -1,14 +1,14 @@
 Changelog for shakmaty
 ======================
 
-## v0.20.1
+## Upcoming in v0.20.1
 
-- Fix signature of `ByColor::new_with()`.
+- Fix signature of `ByColor::new_with()`. Technically semver breaking.
 - Deprecated `Bitboard::ALL`. Use `Bitboard::FULL` instead.
 - Improved `Display` of `PositionError`.
 - Removed implementations of deprecated `Error::description()`.
 - Added `PositionError::ignore_impossible_check()`.
-- Added `{Color, Role, CastlingSide, Rank, File, Square}::ALL`.
+- Added `{Color,Role,CastlingSide,Rank,File,Square}::ALL`.
 - Added `Outcome::from_winner()`.
 - Added `ByColor::as_mut()`.
 - Added `ByColor::zip_color()`.
