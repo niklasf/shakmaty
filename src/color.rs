@@ -219,6 +219,13 @@ impl<T> ByColor<T> {
         }
     }
 
+    pub fn zip<U>(self, other: ByColor<U>) -> ByColor<(T, U)> {
+        ByColor {
+            white: (self.white, other.white),
+            black: (self.black, other.black),
+        }
+    }
+
     pub fn iter(&self) -> ByColorIter<&T> {
         self.as_ref().into_iter()
     }

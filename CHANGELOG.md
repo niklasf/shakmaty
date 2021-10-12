@@ -11,7 +11,7 @@ Changelog for shakmaty
 - Added `{Color,Role,CastlingSide,Rank,File,Square}::ALL`.
 - Added `Outcome::from_winner()`.
 - Added `ByColor::as_mut()`.
-- Added `ByColor::zip_color()`.
+- Added `ByColor::zip()` and `ByColor::zip_color()`.
 - Implement `IntoIterator` for `ByColor`.
 - Added `Zobrist::as_inner()`.
 
