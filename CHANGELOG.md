@@ -13,6 +13,7 @@ Changelog for shakmaty
 - Added `ByColor::as_mut()`.
 - Added `ByColor::zip()` and `ByColor::zip_color()`.
 - Implement `IntoIterator` for `ByColor`.
+- Implement `Display` and `FromStr` for `Color`.
 - Added `Zobrist::as_inner()`.
 
 ## v0.20.0

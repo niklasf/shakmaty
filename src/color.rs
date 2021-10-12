@@ -16,6 +16,9 @@
 
 use std::ops;
 use std::mem;
+use std::fmt;
+use std::error::Error;
+use std::str::FromStr;
 
 use crate::types::Piece;
 use crate::types::Role;
@@ -98,6 +101,36 @@ impl ops::BitXor<bool> for Color {
     #[inline]
     fn bitxor(self, flip: bool) -> Color {
         Color::from_white(self.is_white() ^ flip)
+    }
+}
+
+impl fmt::Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.fold("white", "black"))
+    }
+}
+
+/// Error when parsing an invalid color name.
+#[derive(Clone, Debug)]
+pub struct ParseColorError;
+
+impl fmt::Display for ParseColorError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("invalid color")
+    }
+}
+
+impl Error for ParseColorError {}
+
+impl FromStr for Color {
+    type Err = ParseColorError;
+
+    fn from_str(s: &str) -> Result<Color, ParseColorError> {
+        Ok(match s {
+            "black" => Color::Black,
+            "white" => Color::White,
+            _ => return Err(ParseColorError),
+        })
     }
 }
 
