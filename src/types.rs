@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt;
+use std::fmt::{self, Write as _};
 use std::char;
 use std::num;
 
@@ -305,7 +305,7 @@ impl fmt::Display for Move {
         match *self {
             Move::Normal { role, from, capture, to, promotion } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", role.upper_char())?;
+                    f.write_char(role.upper_char())?;
                 }
 
                 write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to)?;
@@ -320,15 +320,15 @@ impl fmt::Display for Move {
                 write!(f, "{}x{}", from, to)
             },
             Move::Castle { king, rook } => {
-                if king < rook {
-                    write!(f, "O-O")
+                f.write_str(if king < rook {
+                    "O-O"
                 } else {
-                    write!(f, "O-O-O")
-                }
+                    "O-O-O"
+                })
             },
             Move::Put { role, to } => {
                 if role != Role::Pawn {
-                    write!(f, "{}", role.upper_char())?;
+                    f.write_char(role.upper_char())?;
                 }
                 write!(f, "@{}", to)
             },

@@ -344,7 +344,7 @@ impl FromStr for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.board_fen(Bitboard(0)))
+        f.write_str(&self.board_fen(Bitboard(0)))
     }
 }
 
@@ -563,7 +563,7 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", FenOpts::default().fen(self))
+        f.write_str(&FenOpts::default().fen(self))
     }
 }
 

@@ -57,7 +57,7 @@ impl Outcome {
 
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", match *self {
+        f.write_str(match *self {
             Outcome::Decisive { winner: White } => "1-0",
             Outcome::Decisive { winner: Black } => "0-1",
             Outcome::Draw => "1/2-1/2",

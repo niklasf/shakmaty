@@ -149,7 +149,7 @@ impl fmt::Display for Uci {
             Uci::Put { to, role } =>
                 write!(f, "{}@{}", role.upper_char(), to),
             Uci::Null =>
-                write!(f, "0000")
+                f.write_str("0000"),
         }
     }
 }

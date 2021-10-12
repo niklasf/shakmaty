@@ -115,7 +115,7 @@ impl MaterialSide {
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for role in IntoIterator::into_iter(Role::ALL).rev() {
-            write!(f, "{}", role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
+            f.write_str(&role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
         }
         Ok(())
     }
@@ -124,7 +124,7 @@ impl fmt::Display for MaterialSide {
 impl fmt::Debug for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.count() > 0 {
-            write!(f, "{}", self)
+            <Self as fmt::Display>::fmt(self, f)
         } else {
             f.write_str("-")
         }

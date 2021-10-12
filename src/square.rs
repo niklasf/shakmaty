@@ -17,7 +17,7 @@
 use std::cmp::max;
 use std::convert::TryInto;
 use std::num::TryFromIntError;
-use std::fmt;
+use std::fmt::{self, Write as _};
 use std::str;
 use std::error::Error;
 use std::ops::Sub;
@@ -131,6 +131,11 @@ impl File {
         char::from(b'a' + u8::from(self))
     }
 
+    #[inline]
+    pub fn upper_char(self) -> char {
+        char::from(b'A' + u8::from(self))
+    }
+
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<File> {
@@ -170,7 +175,7 @@ impl Sub for File {
 
 impl fmt::Display for File {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.char())
+        f.write_char(self.char())
     }
 }
 
@@ -272,7 +277,7 @@ impl Sub for Rank {
 
 impl fmt::Display for Rank {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.char())
+        f.write_char(self.char())
     }
 }
 
@@ -641,13 +646,15 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}", self.file().char(), self.rank().char())
+        f.write_char(self.file().char())?;
+        f.write_char(self.rank().char())
     }
 }
 
 impl fmt::Debug for Square {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_string().to_uppercase())
+        f.write_char(self.file().upper_char())?;
+        f.write_char(self.rank().char())
     }
 }
 
