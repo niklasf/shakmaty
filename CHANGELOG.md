@@ -1,7 +1,6 @@
-Changelog for shakmaty
-======================
+# Changelog for shakmaty
 
-## Upcoming in v0.20.1
+## v0.20.1
 
 - Fix signature of `ByColor::new_with()`. Technically semver breaking.
 - Deprecated `Bitboard::ALL`. Use `Bitboard::FULL` instead.
