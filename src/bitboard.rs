@@ -16,13 +16,13 @@
 
 //! Sets of squares.
 
-use std::ops;
 use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
+use std::ops;
 
-use crate::square::{File, Rank, Square};
 use crate::color::Color;
+use crate::square::{File, Rank, Square};
 
 /// A set of [squares](super::Square) represented by a 64 bit
 /// integer mask.
@@ -361,7 +361,6 @@ impl Bitboard {
         Bitboard(x)
     }
 
-
     /// ```
     /// use shakmaty::Bitboard;
     ///
@@ -443,31 +442,99 @@ impl Bitboard {
 
     #[deprecated(since = "0.20.1", note = "Renamed to Bitboard::FULL for consistency")]
     pub const ALL: Bitboard = Bitboard::FULL;
-
 }
 
 /// Square masks.
-static SQUARES: [u64; 64] = [0x1, 0x2, 0x4, 0x8, 0x10, 0x20, 0x40, 0x80, 0x100,
-    0x200, 0x400, 0x800, 0x1000, 0x2000, 0x4000, 0x8000, 0x1_0000, 0x2_0000,
-    0x4_0000, 0x8_0000, 0x10_0000, 0x20_0000, 0x40_0000, 0x80_0000, 0x100_0000,
-    0x200_0000, 0x400_0000, 0x800_0000, 0x1000_0000, 0x2000_0000, 0x4000_0000,
-    0x8000_0000, 0x1_0000_0000, 0x2_0000_0000, 0x4_0000_0000, 0x8_0000_0000,
-    0x10_0000_0000, 0x20_0000_0000, 0x40_0000_0000, 0x80_0000_0000,
-    0x100_0000_0000, 0x200_0000_0000, 0x400_0000_0000, 0x800_0000_0000,
-    0x1000_0000_0000, 0x2000_0000_0000, 0x4000_0000_0000, 0x8000_0000_0000,
-    0x1_0000_0000_0000, 0x2_0000_0000_0000, 0x4_0000_0000_0000,
-    0x8_0000_0000_0000, 0x10_0000_0000_0000, 0x20_0000_0000_0000,
-    0x40_0000_0000_0000, 0x80_0000_0000_0000, 0x100_0000_0000_0000,
-    0x200_0000_0000_0000, 0x400_0000_0000_0000, 0x800_0000_0000_0000,
-    0x1000_0000_0000_0000, 0x2000_0000_0000_0000, 0x4000_0000_0000_0000,
-    0x8000_0000_0000_0000
+static SQUARES: [u64; 64] = [
+    0x1,
+    0x2,
+    0x4,
+    0x8,
+    0x10,
+    0x20,
+    0x40,
+    0x80,
+    0x100,
+    0x200,
+    0x400,
+    0x800,
+    0x1000,
+    0x2000,
+    0x4000,
+    0x8000,
+    0x1_0000,
+    0x2_0000,
+    0x4_0000,
+    0x8_0000,
+    0x10_0000,
+    0x20_0000,
+    0x40_0000,
+    0x80_0000,
+    0x100_0000,
+    0x200_0000,
+    0x400_0000,
+    0x800_0000,
+    0x1000_0000,
+    0x2000_0000,
+    0x4000_0000,
+    0x8000_0000,
+    0x1_0000_0000,
+    0x2_0000_0000,
+    0x4_0000_0000,
+    0x8_0000_0000,
+    0x10_0000_0000,
+    0x20_0000_0000,
+    0x40_0000_0000,
+    0x80_0000_0000,
+    0x100_0000_0000,
+    0x200_0000_0000,
+    0x400_0000_0000,
+    0x800_0000_0000,
+    0x1000_0000_0000,
+    0x2000_0000_0000,
+    0x4000_0000_0000,
+    0x8000_0000_0000,
+    0x1_0000_0000_0000,
+    0x2_0000_0000_0000,
+    0x4_0000_0000_0000,
+    0x8_0000_0000_0000,
+    0x10_0000_0000_0000,
+    0x20_0000_0000_0000,
+    0x40_0000_0000_0000,
+    0x80_0000_0000_0000,
+    0x100_0000_0000_0000,
+    0x200_0000_0000_0000,
+    0x400_0000_0000_0000,
+    0x800_0000_0000_0000,
+    0x1000_0000_0000_0000,
+    0x2000_0000_0000_0000,
+    0x4000_0000_0000_0000,
+    0x8000_0000_0000_0000,
 ];
 
 /// Rank masks.
-static RANKS: [u64; 8] = [0xff, 0xff00, 0xff_0000, 0xff00_0000, 0xff_0000_0000, 0xff00_0000_0000, 0xff_0000_0000_0000, 0xff00_0000_0000_0000];
+static RANKS: [u64; 8] = [
+    0xff,
+    0xff00,
+    0xff_0000,
+    0xff00_0000,
+    0xff_0000_0000,
+    0xff00_0000_0000,
+    0xff_0000_0000_0000,
+    0xff00_0000_0000_0000,
+];
 
 /// File masks.
-static FILES: [u64; 8] = [0x0101_0101_0101_0101, 0x0202_0202_0202_0202, 0x0404_0404_0404_0404, 0x0808_0808_0808_0808, 0x1010_1010_1010_1010, 0x2020_2020_2020_2020, 0x4040_4040_4040_4040, 0x8080_8080_8080_8080];
+static FILES: [u64; 8] = [
+    0x0101_0101_0101_0101,
+    0x0202_0202_0202_0202,
+    0x0404_0404_0404_0404,
+    0x0808_0808_0808_0808,
+    0x1010_1010_1010_1010,
+    0x2020_2020_2020_2020,
+    0x4040_4040_4040_4040,
+    0x8080_8080_8080_8080,
+];
 
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -760,8 +827,10 @@ mod tests {
     #[test]
     fn test_last() {
         assert_eq!(Bitboard::from_square(Square::A1).last(), Some(Square::A1));
-        assert_eq!(Bitboard(0).with(Square::A1).with(Square::H1).last(),
-                   Some(Square::H1));
+        assert_eq!(
+            Bitboard(0).with(Square::A1).with(Square::H1).last(),
+            Some(Square::H1)
+        );
         assert_eq!(Bitboard(0).last(), None);
     }
 
@@ -779,31 +848,29 @@ mod tests {
     #[test]
     fn test_from_iter() {
         assert_eq!(Bitboard::from_iter(None), Bitboard(0));
-        assert_eq!(Bitboard::from_iter(Some(Square::D2)),
-                   Bitboard::from_square(Square::D2));
+        assert_eq!(
+            Bitboard::from_iter(Some(Square::D2)),
+            Bitboard::from_square(Square::D2)
+        );
     }
 
     #[test]
     fn test_upper_hex() {
-        assert_eq!(format!("{:#0X}", Bitboard(42)), 
-                   format!("{:#0X}", 42));
+        assert_eq!(format!("{:#0X}", Bitboard(42)), format!("{:#0X}", 42));
     }
 
     #[test]
     fn test_lower_hex() {
-        assert_eq!(format!("{:#0x}", Bitboard(42)), 
-                   format!("{:#0x}", 42));
+        assert_eq!(format!("{:#0x}", Bitboard(42)), format!("{:#0x}", 42));
     }
 
     #[test]
     fn test_octal() {
-        assert_eq!(format!("{:#0o}", Bitboard(42)), 
-                   format!("{:#0o}", 42));
+        assert_eq!(format!("{:#0o}", Bitboard(42)), format!("{:#0o}", 42));
     }
 
     #[test]
     fn test_binary() {
-        assert_eq!(format!("{:#0b}", Bitboard(42)), 
-                   format!("{:#0b}", 42));
+        assert_eq!(format!("{:#0b}", Bitboard(42)), format!("{:#0b}", 42));
     }
 }

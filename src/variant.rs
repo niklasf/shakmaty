@@ -25,18 +25,20 @@
 
 use std::num::NonZeroU32;
 
+pub use crate::position::variant::{
+    Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck,
+};
 pub use crate::position::Chess;
-pub use crate::position::variant::{Atomic, Antichess, KingOfTheHill, ThreeCheck, Crazyhouse, RacingKings, Horde};
 
+use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::color::{ByColor, Color};
-use crate::bitboard::Bitboard;
-use crate::square::Square;
 use crate::material::Material;
-use crate::types::{Role, Move, CastlingSide, CastlingMode, RemainingChecks};
-use crate::position::{Outcome, Position, PositionError, FromSetup};
-use crate::setup::{Castles, Setup, SwapTurn};
 use crate::movelist::MoveList;
+use crate::position::{FromSetup, Outcome, Position, PositionError};
+use crate::setup::{Castles, Setup, SwapTurn};
+use crate::square::Square;
+use crate::types::{CastlingMode, CastlingSide, Move, RemainingChecks, Role};
 use crate::zobrist::{ZobristHash, ZobristValue};
 
 /// Discriminant of [`VariantPosition`].
@@ -173,25 +175,47 @@ impl VariantPosition {
         }
     }
 
-    pub fn from_setup(variant: Variant, setup: &dyn Setup, mode: CastlingMode) -> Result<VariantPosition, PositionError<VariantPosition>> {
+    pub fn from_setup(
+        variant: Variant,
+        setup: &dyn Setup,
+        mode: CastlingMode,
+    ) -> Result<VariantPosition, PositionError<VariantPosition>> {
         fn wrap<F, P, U>(result: Result<P, PositionError<P>>, f: F) -> Result<U, PositionError<U>>
         where
             F: FnOnce(P) -> U,
         {
             match result {
                 Ok(p) => Ok(f(p)),
-                Err(PositionError { errors, pos }) => Err(PositionError { errors, pos: f(pos) }),
+                Err(PositionError { errors, pos }) => Err(PositionError {
+                    errors,
+                    pos: f(pos),
+                }),
             }
         }
 
         match variant {
             Variant::Chess => wrap(Chess::from_setup(setup, mode), VariantPosition::Chess),
             Variant::Atomic => wrap(Atomic::from_setup(setup, mode), VariantPosition::Atomic),
-            Variant::Antichess => wrap(Antichess::from_setup(setup, mode), VariantPosition::Antichess),
-            Variant::KingOfTheHill => wrap(KingOfTheHill::from_setup(setup, mode), VariantPosition::KingOfTheHill),
-            Variant::ThreeCheck => wrap(ThreeCheck::from_setup(setup, mode), VariantPosition::ThreeCheck),
-            Variant::Crazyhouse => wrap(Crazyhouse::from_setup(setup, mode), VariantPosition::Crazyhouse),
-            Variant::RacingKings => wrap(RacingKings::from_setup(setup, mode), VariantPosition::RacingKings),
+            Variant::Antichess => wrap(
+                Antichess::from_setup(setup, mode),
+                VariantPosition::Antichess,
+            ),
+            Variant::KingOfTheHill => wrap(
+                KingOfTheHill::from_setup(setup, mode),
+                VariantPosition::KingOfTheHill,
+            ),
+            Variant::ThreeCheck => wrap(
+                ThreeCheck::from_setup(setup, mode),
+                VariantPosition::ThreeCheck,
+            ),
+            Variant::Crazyhouse => wrap(
+                Crazyhouse::from_setup(setup, mode),
+                VariantPosition::Crazyhouse,
+            ),
+            Variant::RacingKings => wrap(
+                RacingKings::from_setup(setup, mode),
+                VariantPosition::RacingKings,
+            ),
             Variant::Horde => wrap(Horde::from_setup(setup, mode), VariantPosition::Horde),
         }
     }
@@ -242,31 +266,75 @@ impl VariantPosition {
 }
 
 impl Setup for VariantPosition {
-    fn board(&self) -> &Board { self.borrow().board() }
-    fn promoted(&self) -> Bitboard { self.borrow().promoted() }
-    fn pockets(&self) -> Option<&Material> { self.borrow().pockets() }
-    fn turn(&self) -> Color { self.borrow().turn() }
-    fn castling_rights(&self) -> Bitboard { self.borrow().castling_rights() }
-    fn ep_square(&self) -> Option<Square> { self.borrow().ep_square() }
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.borrow().remaining_checks() }
-    fn halfmoves(&self) -> u32 { self.borrow().halfmoves() }
-    fn fullmoves(&self) -> NonZeroU32 { self.borrow().fullmoves() }
+    fn board(&self) -> &Board {
+        self.borrow().board()
+    }
+    fn promoted(&self) -> Bitboard {
+        self.borrow().promoted()
+    }
+    fn pockets(&self) -> Option<&Material> {
+        self.borrow().pockets()
+    }
+    fn turn(&self) -> Color {
+        self.borrow().turn()
+    }
+    fn castling_rights(&self) -> Bitboard {
+        self.borrow().castling_rights()
+    }
+    fn ep_square(&self) -> Option<Square> {
+        self.borrow().ep_square()
+    }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+        self.borrow().remaining_checks()
+    }
+    fn halfmoves(&self) -> u32 {
+        self.borrow().halfmoves()
+    }
+    fn fullmoves(&self) -> NonZeroU32 {
+        self.borrow().fullmoves()
+    }
 }
 
 impl Position for VariantPosition {
-    fn legal_moves(&self) -> MoveList { self.borrow().legal_moves() }
-    fn san_candidates(&self, role: Role, to: Square) -> MoveList { self.borrow().san_candidates(role, to) }
-    fn castling_moves(&self, side: CastlingSide) -> MoveList { self.borrow().castling_moves(side) }
-    fn en_passant_moves(&self) -> MoveList { self.borrow().en_passant_moves() }
-    fn capture_moves(&self) -> MoveList { self.borrow().capture_moves() }
-    fn promotion_moves(&self) -> MoveList { self.borrow().promotion_moves() }
-    fn is_irreversible(&self, m: &Move) -> bool { self.borrow().is_irreversible(m) }
-    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard { self.borrow().king_attackers(square, attacker, occupied) }
-    fn castles(&self) -> &Castles { self.borrow().castles() }
-    fn is_variant_end(&self) -> bool { self.borrow().is_variant_end() }
-    fn has_insufficient_material(&self, color: Color) -> bool { self.borrow().has_insufficient_material(color) }
-    fn variant_outcome(&self) -> Option<Outcome> { self.borrow().variant_outcome() }
-    fn play_unchecked(&mut self, m: &Move) { self.borrow_mut().play_unchecked(m) }
+    fn legal_moves(&self) -> MoveList {
+        self.borrow().legal_moves()
+    }
+    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
+        self.borrow().san_candidates(role, to)
+    }
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
+        self.borrow().castling_moves(side)
+    }
+    fn en_passant_moves(&self) -> MoveList {
+        self.borrow().en_passant_moves()
+    }
+    fn capture_moves(&self) -> MoveList {
+        self.borrow().capture_moves()
+    }
+    fn promotion_moves(&self) -> MoveList {
+        self.borrow().promotion_moves()
+    }
+    fn is_irreversible(&self, m: &Move) -> bool {
+        self.borrow().is_irreversible(m)
+    }
+    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
+        self.borrow().king_attackers(square, attacker, occupied)
+    }
+    fn castles(&self) -> &Castles {
+        self.borrow().castles()
+    }
+    fn is_variant_end(&self) -> bool {
+        self.borrow().is_variant_end()
+    }
+    fn has_insufficient_material(&self, color: Color) -> bool {
+        self.borrow().has_insufficient_material(color)
+    }
+    fn variant_outcome(&self) -> Option<Outcome> {
+        self.borrow().variant_outcome()
+    }
+    fn play_unchecked(&mut self, m: &Move) {
+        self.borrow_mut().play_unchecked(m)
+    }
 }
 
 impl ZobristHash for VariantPosition {
@@ -283,12 +351,18 @@ impl ZobristHash for VariantPosition {
         }
     }
 
-    fn prepare_incremental_zobrist_hash<V: ZobristValue>(&self, previous: V, m: &Move) -> Option<V> {
+    fn prepare_incremental_zobrist_hash<V: ZobristValue>(
+        &self,
+        previous: V,
+        m: &Move,
+    ) -> Option<V> {
         match self {
             VariantPosition::Chess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
             VariantPosition::Atomic(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
             VariantPosition::Antichess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::KingOfTheHill(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            VariantPosition::KingOfTheHill(pos) => {
+                pos.prepare_incremental_zobrist_hash(previous, m)
+            }
             VariantPosition::ThreeCheck(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
             VariantPosition::Crazyhouse(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
             VariantPosition::RacingKings(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
@@ -296,15 +370,29 @@ impl ZobristHash for VariantPosition {
         }
     }
 
-    fn finalize_incremental_zobrist_hash<V: ZobristValue>(&self, intermediate: V, m: &Move) -> Option<V> {
+    fn finalize_incremental_zobrist_hash<V: ZobristValue>(
+        &self,
+        intermediate: V,
+        m: &Move,
+    ) -> Option<V> {
         match self {
             VariantPosition::Chess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
             VariantPosition::Atomic(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::Antichess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::KingOfTheHill(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::ThreeCheck(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::Crazyhouse(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::RacingKings(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            VariantPosition::Antichess(pos) => {
+                pos.finalize_incremental_zobrist_hash(intermediate, m)
+            }
+            VariantPosition::KingOfTheHill(pos) => {
+                pos.finalize_incremental_zobrist_hash(intermediate, m)
+            }
+            VariantPosition::ThreeCheck(pos) => {
+                pos.finalize_incremental_zobrist_hash(intermediate, m)
+            }
+            VariantPosition::Crazyhouse(pos) => {
+                pos.finalize_incremental_zobrist_hash(intermediate, m)
+            }
+            VariantPosition::RacingKings(pos) => {
+                pos.finalize_incremental_zobrist_hash(intermediate, m)
+            }
             VariantPosition::Horde(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
         }
     }
@@ -317,13 +405,15 @@ mod tests {
     #[test]
     fn test_variant_position_play() {
         let pos = VariantPosition::new(Variant::Chess);
-        let pos = pos.play(&Move::Normal {
-            role: Role::Knight,
-            from: Square::G1,
-            to: Square::F3,
-            capture: None,
-            promotion: None,
-        }).expect("legal move");
+        let pos = pos
+            .play(&Move::Normal {
+                role: Role::Knight,
+                from: Square::G1,
+                to: Square::F3,
+                capture: None,
+                promotion: None,
+            })
+            .expect("legal move");
         assert_eq!(pos.variant(), Variant::Chess);
     }
 }

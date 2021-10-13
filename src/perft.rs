@@ -50,11 +50,14 @@ pub fn perft<P: Position + Clone>(pos: &P, depth: u32) -> u64 {
         if depth == 1 {
             moves.len() as u64
         } else {
-            moves.iter().map(|m| {
-                let mut child = pos.clone();
-                child.play_unchecked(m);
-                perft(&child, depth - 1)
-            }).sum()
+            moves
+                .iter()
+                .map(|m| {
+                    let mut child = pos.clone();
+                    child.play_unchecked(m);
+                    perft(&child, depth - 1)
+                })
+                .sum()
         }
     }
 }

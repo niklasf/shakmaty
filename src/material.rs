@@ -15,13 +15,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::cmp::{Ord, Ordering, PartialOrd};
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 use std::iter::FromIterator;
-use std::str::FromStr;
 use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::str::FromStr;
 
-use crate::color::{Color, ByColor};
+use crate::color::{ByColor, Color};
 use crate::types::{Piece, Role};
 
 /// Error when parsing an invalid material key.
@@ -75,21 +75,21 @@ impl MaterialSide {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.pawns == 0 &&
-        self.knights == 0 &&
-        self.bishops == 0 &&
-        self.rooks == 0 &&
-        self.queens == 0 &&
-        self.kings == 0
+        self.pawns == 0
+            && self.knights == 0
+            && self.bishops == 0
+            && self.rooks == 0
+            && self.queens == 0
+            && self.kings == 0
     }
 
     pub fn count(&self) -> usize {
-        usize::from(self.pawns) +
-        usize::from(self.knights) +
-        usize::from(self.bishops) +
-        usize::from(self.rooks) +
-        usize::from(self.queens) +
-        usize::from(self.kings)
+        usize::from(self.pawns)
+            + usize::from(self.knights)
+            + usize::from(self.bishops)
+            + usize::from(self.rooks)
+            + usize::from(self.queens)
+            + usize::from(self.kings)
     }
 
     pub fn has_pawns(&self) -> bool {
@@ -115,7 +115,13 @@ impl MaterialSide {
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for role in IntoIterator::into_iter(Role::ALL).rev() {
-            f.write_str(&role.char().to_uppercase().to_string().repeat(usize::from(self.by_role(role))))?;
+            f.write_str(
+                &role
+                    .char()
+                    .to_uppercase()
+                    .to_string()
+                    .repeat(usize::from(self.by_role(role))),
+            )?;
         }
         Ok(())
     }
@@ -152,7 +158,8 @@ impl FromIterator<Role> for MaterialSide {
 
 impl Ord for MaterialSide {
     fn cmp(&self, other: &MaterialSide) -> Ordering {
-        self.count().cmp(&other.count())
+        self.count()
+            .cmp(&other.count())
             .then(self.kings.cmp(&other.kings))
             .then(self.queens.cmp(&other.queens))
             .then(self.rooks.cmp(&other.rooks))
@@ -296,7 +303,8 @@ impl Material {
 
         let mut material = Material::new();
         for &ch in s {
-            *material.by_piece_mut(Piece::from_char(char::from(ch)).ok_or(ParseMaterialError)?) += 1;
+            *material.by_piece_mut(Piece::from_char(char::from(ch)).ok_or(ParseMaterialError)?) +=
+                1;
         }
         Ok(material)
     }

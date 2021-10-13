@@ -34,9 +34,16 @@ use arrayvec::ArrayVec;
 /// moves.retain(|m| m.role() == Role::Pawn);
 /// assert_eq!(moves.len(), 16);
 /// ```
-pub type MoveList = ArrayVec<Move, {
-    #[cfg(feature = "variant")]
-    { 512 }
-    #[cfg(not(feature = "variant"))]
-    { 256 }
-}>;
+pub type MoveList = ArrayVec<
+    Move,
+    {
+        #[cfg(feature = "variant")]
+        {
+            512
+        }
+        #[cfg(not(feature = "variant"))]
+        {
+            256
+        }
+    },
+>;

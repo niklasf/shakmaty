@@ -16,13 +16,13 @@
 
 use std::num::NonZeroU32;
 
-use crate::square::{File, Rank, Square};
-use crate::bitboard::Bitboard;
-use crate::color::{ByColor, Color};
 use crate::attacks;
-use crate::types::{CastlingSide, CastlingMode, Role, RemainingChecks};
-use crate::material::Material;
+use crate::bitboard::Bitboard;
 use crate::board::Board;
+use crate::color::{ByColor, Color};
+use crate::material::Material;
+use crate::square::{File, Rank, Square};
+use crate::types::{CastlingMode, CastlingSide, RemainingChecks, Role};
 
 /// A not necessarily legal position.
 pub trait Setup {
@@ -197,14 +197,30 @@ impl<S: Setup> Setup for SwapTurn<S> {
         !self.0.turn()
     }
 
-    fn board(&self) -> &Board { self.0.board() }
-    fn promoted(&self) -> Bitboard { self.0.promoted() }
-    fn pockets(&self) -> Option<&Material> { self.0.pockets() }
-    fn castling_rights(&self) -> Bitboard { self.0.castling_rights() }
-    fn ep_square(&self) -> Option<Square> { None }
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.0.remaining_checks() }
-    fn halfmoves(&self) -> u32 { self.0.halfmoves() }
-    fn fullmoves(&self) -> NonZeroU32 { self.0.fullmoves() }
+    fn board(&self) -> &Board {
+        self.0.board()
+    }
+    fn promoted(&self) -> Bitboard {
+        self.0.promoted()
+    }
+    fn pockets(&self) -> Option<&Material> {
+        self.0.pockets()
+    }
+    fn castling_rights(&self) -> Bitboard {
+        self.0.castling_rights()
+    }
+    fn ep_square(&self) -> Option<Square> {
+        None
+    }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+        self.0.remaining_checks()
+    }
+    fn halfmoves(&self) -> u32 {
+        self.0.halfmoves()
+    }
+    fn fullmoves(&self) -> NonZeroU32 {
+        self.0.fullmoves()
+    }
 }
 
 /// Castling paths and unmoved rooks.
@@ -226,9 +242,15 @@ impl Default for Castles {
                 [Some(Square::H1), Some(Square::A1)], // white
             ],
             path: [
-                [Bitboard(0x6000_0000_0000_0000), Bitboard(0x0e00_0000_0000_0000)],
-                [Bitboard(0x0000_0000_0000_0060), Bitboard(0x0000_0000_0000_000e)],
-            ]
+                [
+                    Bitboard(0x6000_0000_0000_0000),
+                    Bitboard(0x0e00_0000_0000_0000),
+                ],
+                [
+                    Bitboard(0x0000_0000_0000_0060),
+                    Bitboard(0x0000_0000_0000_000e),
+                ],
+            ],
         }
     }
 }
@@ -237,8 +259,10 @@ impl CastlingMode {
     pub fn detect(setup: &dyn Setup) -> CastlingMode {
         let board = setup.board();
         let castling_rights = setup.castling_rights();
-        let standard = Castles::from_setup(board, castling_rights, CastlingMode::Standard).unwrap_or_else(|c| c);
-        let chess960 = Castles::from_setup(board, castling_rights, CastlingMode::Chess960).unwrap_or_else(|c| c);
+        let standard = Castles::from_setup(board, castling_rights, CastlingMode::Standard)
+            .unwrap_or_else(|c| c);
+        let chess960 = Castles::from_setup(board, castling_rights, CastlingMode::Chess960)
+            .unwrap_or_else(|c| c);
         CastlingMode::from_standard(standard.mask == chess960.mask)
     }
 }
@@ -253,18 +277,26 @@ impl Castles {
         }
     }
 
-    pub(crate) fn from_setup(board: &Board, castling_rights: Bitboard, mode: CastlingMode) -> Result<Castles, Castles> {
+    pub(crate) fn from_setup(
+        board: &Board,
+        castling_rights: Bitboard,
+        mode: CastlingMode,
+    ) -> Result<Castles, Castles> {
         let mut castles = Castles::empty(mode);
 
         let rooks = castling_rights & board.rooks();
 
         for color in Color::ALL {
             if let Some(king) = board.king_of(color) {
-                if king.file() == File::A || king.file() == File::H || king.rank() != color.fold(Rank::First, Rank::Eighth) {
+                if king.file() == File::A
+                    || king.file() == File::H
+                    || king.rank() != color.fold(Rank::First, Rank::Eighth)
+                {
                     continue;
                 }
 
-                let side = rooks & board.by_color(color) & Bitboard::relative_rank(color, Rank::First);
+                let side =
+                    rooks & board.by_color(color) & Bitboard::relative_rank(color, Rank::First);
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rto = CastlingSide::QueenSide.rook_to(color);
@@ -272,9 +304,13 @@ impl Castles {
                     let chess960 = king.file() != File::E || a_side.file() != File::A;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(a_side);
-                        castles.rook[color as usize][CastlingSide::QueenSide as usize] = Some(a_side);
+                        castles.rook[color as usize][CastlingSide::QueenSide as usize] =
+                            Some(a_side);
                         castles.path[color as usize][CastlingSide::QueenSide as usize] =
-                            (attacks::between(a_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(a_side);
+                            (attacks::between(a_side, rto).with(rto)
+                                | attacks::between(king, kto).with(kto))
+                            .without(king)
+                            .without(a_side);
                     }
                 }
 
@@ -284,9 +320,13 @@ impl Castles {
                     let chess960 = king.file() != File::E || h_side.file() != File::H;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(h_side);
-                        castles.rook[color as usize][CastlingSide::KingSide as usize] = Some(h_side);
+                        castles.rook[color as usize][CastlingSide::KingSide as usize] =
+                            Some(h_side);
                         castles.path[color as usize][CastlingSide::KingSide as usize] =
-                            (attacks::between(h_side, rto).with(rto) | attacks::between(king, kto).with(kto)).without(king).without(h_side);
+                            (attacks::between(h_side, rto).with(rto)
+                                | attacks::between(king, kto).with(kto))
+                            .without(king)
+                            .without(h_side);
                     }
                 }
             }
@@ -325,7 +365,8 @@ impl Castles {
     }
 
     pub fn discard_side(&mut self, color: Color) {
-        self.mask.discard(Bitboard::relative_rank(color, Rank::First));
+        self.mask
+            .discard(Bitboard::relative_rank(color, Rank::First));
         self.rook[color as usize] = [None, None];
     }
 
@@ -380,7 +421,11 @@ impl From<EpSquare> for Square {
 }
 
 impl EpSquare {
-    pub fn from_setup(board: &Board, turn: Color, ep_square: Option<Square>) -> Result<Option<EpSquare>, ()> {
+    pub fn from_setup(
+        board: &Board,
+        turn: Color,
+        ep_square: Option<Square>,
+    ) -> Result<Option<EpSquare>, ()> {
         let ep_square = match ep_square {
             Some(ep_square) => ep_square,
             None => return Ok(None),

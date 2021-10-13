@@ -16,11 +16,11 @@
 
 use std::cmp::max;
 use std::convert::TryInto;
-use std::num::TryFromIntError;
-use std::fmt::{self, Write as _};
-use std::str;
 use std::error::Error;
+use std::fmt::{self, Write as _};
+use std::num::TryFromIntError;
 use std::ops::Sub;
+use std::str;
 
 use crate::util::overflow_error;
 
@@ -65,12 +65,16 @@ macro_rules! unsafe_step_impl {
 
             fn forward_checked(start: Self, count: usize) -> Option<Self> {
                 use std::convert::TryFrom as _;
-                i32::try_from(count).ok().and_then(|count| start.offset(count))
+                i32::try_from(count)
+                    .ok()
+                    .and_then(|count| start.offset(count))
             }
 
             fn backward_checked(start: Self, count: usize) -> Option<Self> {
                 use std::convert::TryFrom as _;
-                i32::try_from(count).ok().and_then(|count| start.offset(-count))
+                i32::try_from(count)
+                    .ok()
+                    .and_then(|count| start.offset(-count))
             }
 
             unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
@@ -81,7 +85,7 @@ macro_rules! unsafe_step_impl {
                 unsafe { Self::new_unchecked(u32::from(start) - count as u32) }
             }
         }
-    }
+    };
 }
 
 /// A file of the chessboard.
@@ -89,7 +93,14 @@ macro_rules! unsafe_step_impl {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum File {
-    A = 0, B, C, D, E, F, G, H
+    A = 0,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
 }
 
 impl File {
@@ -116,7 +127,6 @@ impl File {
         unsafe { ::std::mem::transmute(index as u8) }
     }
 
-
     #[inline]
     pub fn from_char(ch: char) -> Option<File> {
         if ('a'..='h').contains(&ch) {
@@ -139,7 +149,9 @@ impl File {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<File> {
-        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
+        i32::from(self)
+            .checked_add(delta)
+            .and_then(|index| index.try_into().ok())
     }
 
     #[must_use]
@@ -161,7 +173,16 @@ impl File {
     }
 
     /// `A`, ..., `H`.
-    pub const ALL: [File; 8] = [File::A, File::B, File::C, File::D, File::E, File::F, File::G, File::H];
+    pub const ALL: [File; 8] = [
+        File::A,
+        File::B,
+        File::C,
+        File::D,
+        File::E,
+        File::F,
+        File::G,
+        File::H,
+    ];
 }
 
 impl Sub for File {
@@ -188,7 +209,14 @@ unsafe_step_impl! { File }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum Rank {
-    First = 0, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth
+    First = 0,
+    Second,
+    Third,
+    Fourth,
+    Fifth,
+    Sixth,
+    Seventh,
+    Eighth,
 }
 
 impl Rank {
@@ -232,7 +260,9 @@ impl Rank {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
-        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
+        i32::from(self)
+            .checked_add(delta)
+            .and_then(|index| index.try_into().ok())
     }
 
     #[must_use]
@@ -381,7 +411,10 @@ impl Square {
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
-            match (File::from_char(char::from(s[0])), Rank::from_char(char::from(s[1]))) {
+            match (
+                File::from_char(char::from(s[0])),
+                Rank::from_char(char::from(s[1])),
+            ) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
             }
@@ -450,7 +483,9 @@ impl Square {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Square> {
-        i32::from(self).checked_add(delta).and_then(|index| index.try_into().ok())
+        i32::from(self)
+            .checked_add(delta)
+            .and_then(|index| index.try_into().ok())
     }
 
     /// Flip the square horizontally.
@@ -595,8 +630,10 @@ impl Square {
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
     pub fn distance(self, other: Square) -> u32 {
-        max((self.file() - other.file()).abs(),
-            (self.rank() - other.rank()).abs()) as u32
+        max(
+            (self.file() - other.file()).abs(),
+            (self.rank() - other.rank()).abs(),
+        ) as u32
     }
 }
 
@@ -605,14 +642,9 @@ mod all_squares {
     impl Square {
         /// `A1`, `B1`, ..., `G8`, `H8`.
         pub const ALL: [Square; 64] = [
-            A1, B1, C1, D1, E1, F1, G1, H1,
-            A2, B2, C2, D2, E2, F2, G2, H2,
-            A3, B3, C3, D3, E3, F3, G3, H3,
-            A4, B4, C4, D4, E4, F4, G4, H4,
-            A5, B5, C5, D5, E5, F5, G5, H5,
-            A6, B6, C6, D6, E6, F6, G6, H6,
-            A7, B7, C7, D7, E7, F7, G7, H7,
-            A8, B8, C8, D8, E8, F8, G8, H8,
+            A1, B1, C1, D1, E1, F1, G1, H1, A2, B2, C2, D2, E2, F2, G2, H2, A3, B3, C3, D3, E3, F3,
+            G3, H3, A4, B4, C4, D4, E4, F4, G4, H4, A5, B5, C5, D5, E5, F5, G5, H5, A6, B6, C6, D6,
+            E6, F6, G6, H6, A7, B7, C7, D7, E7, F7, G7, H7, A8, B8, C8, D8, E8, F8, G8, H8,
         ];
     }
 }

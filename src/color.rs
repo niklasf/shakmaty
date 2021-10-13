@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::ops;
-use std::mem;
-use std::fmt;
 use std::error::Error;
+use std::fmt;
+use std::mem;
+use std::ops;
 use std::str::FromStr;
 
+use crate::square::Rank;
 use crate::types::Piece;
 use crate::types::Role;
-use crate::square::Rank;
 
 /// `White` or `Black`.
 #[allow(missing_docs)]
@@ -43,12 +43,20 @@ impl Color {
 
     #[inline]
     pub fn from_white(white: bool) -> Color {
-        if white { Color::White } else { Color::Black }
+        if white {
+            Color::White
+        } else {
+            Color::Black
+        }
     }
 
     #[inline]
     pub fn from_black(black: bool) -> Color {
-        if black { Color::Black } else { Color::White }
+        if black {
+            Color::Black
+        } else {
+            Color::White
+        }
     }
 
     #[inline]
@@ -60,27 +68,47 @@ impl Color {
     }
 
     #[inline]
-    pub fn is_white(self) -> bool { self == Color::White }
+    pub fn is_white(self) -> bool {
+        self == Color::White
+    }
     #[inline]
-    pub fn is_black(self) -> bool { self == Color::Black }
+    pub fn is_black(self) -> bool {
+        self == Color::Black
+    }
 
     #[inline]
-    pub fn backrank(self) -> Rank { self.fold(Rank::First, Rank::Eighth) }
+    pub fn backrank(self) -> Rank {
+        self.fold(Rank::First, Rank::Eighth)
+    }
 
-    pub fn char(self) -> char { self.fold('w', 'b') }
+    pub fn char(self) -> char {
+        self.fold('w', 'b')
+    }
 
     #[inline]
-    pub fn pawn(self)   -> Piece { Role::Pawn.of(self) }
+    pub fn pawn(self) -> Piece {
+        Role::Pawn.of(self)
+    }
     #[inline]
-    pub fn knight(self) -> Piece { Role::Knight.of(self) }
+    pub fn knight(self) -> Piece {
+        Role::Knight.of(self)
+    }
     #[inline]
-    pub fn bishop(self) -> Piece { Role::Bishop.of(self) }
+    pub fn bishop(self) -> Piece {
+        Role::Bishop.of(self)
+    }
     #[inline]
-    pub fn rook(self)   -> Piece { Role::Rook.of(self) }
+    pub fn rook(self) -> Piece {
+        Role::Rook.of(self)
+    }
     #[inline]
-    pub fn queen(self)  -> Piece { Role::Queen.of(self) }
+    pub fn queen(self) -> Piece {
+        Role::Queen.of(self)
+    }
     #[inline]
-    pub fn king(self)   -> Piece { Role::King.of(self) }
+    pub fn king(self) -> Piece {
+        Role::King.of(self)
+    }
 
     /// `White` and `Black`, in this order.
     pub const ALL: [Color; 2] = [Color::White, Color::Black];
@@ -337,8 +365,8 @@ impl<T> Iterator for ByColorIter<T> {
 
 impl<T> ExactSizeIterator for ByColorIter<T> {
     fn len(&self) -> usize {
-        (if self.inner.white.is_some() { 1 } else { 0 }) +
-        (if self.inner.black.is_some() { 1 } else { 0 })
+        (if self.inner.white.is_some() { 1 } else { 0 })
+            + (if self.inner.black.is_some() { 1 } else { 0 })
     }
 }
 

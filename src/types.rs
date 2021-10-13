@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt::{self, Write as _};
 use std::char;
+use std::fmt::{self, Write as _};
 use std::num;
 
-use crate::util::overflow_error;
-use crate::square::{Square, File};
 use crate::color::{ByColor, Color};
+use crate::square::{File, Square};
+use crate::util::overflow_error;
 
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
@@ -198,9 +198,7 @@ impl Piece {
     }
 
     pub fn from_char(ch: char) -> Option<Piece> {
-        Role::from_char(ch).map(|role| {
-            role.of(Color::from_white(32 & ch as u8 == 0))
-        })
+        Role::from_char(ch).map(|role| role.of(Color::from_white(32 & ch as u8 == 0)))
     }
 }
 
@@ -215,9 +213,18 @@ pub enum Move {
         to: Square,
         promotion: Option<Role>,
     },
-    EnPassant { from: Square, to: Square },
-    Castle { king: Square, rook: Square },
-    Put { role: Role, to: Square },
+    EnPassant {
+        from: Square,
+        to: Square,
+    },
+    Castle {
+        king: Square,
+        rook: Square,
+    },
+    Put {
+        role: Role,
+        to: Square,
+    },
 }
 
 impl Move {
@@ -259,7 +266,13 @@ impl Move {
 
     /// Checks if the move is a capture.
     pub fn is_capture(&self) -> bool {
-        matches!(*self, Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. })
+        matches!(
+            *self,
+            Move::Normal {
+                capture: Some(_),
+                ..
+            } | Move::EnPassant { .. }
+        )
     }
 
     /// Checks if the move is en passant.
@@ -269,7 +282,20 @@ impl Move {
 
     /// Checks if the move zeros the half-move clock.
     pub fn is_zeroing(&self) -> bool {
-        matches!(*self, Move::Normal { role: Role::Pawn, ..} | Move::Normal { capture: Some(_), .. } | Move::EnPassant { .. } | Move::Put { role: Role::Pawn, .. })
+        matches!(
+            *self,
+            Move::Normal {
+                role: Role::Pawn,
+                ..
+            } | Move::Normal {
+                capture: Some(_),
+                ..
+            } | Move::EnPassant { .. }
+                | Move::Put {
+                    role: Role::Pawn,
+                    ..
+                }
+        )
     }
 
     /// Gets the castling side.
@@ -296,42 +322,54 @@ impl Move {
 
     /// Checks if the move is a promotion.
     pub fn is_promotion(&self) -> bool {
-        matches!(*self, Move::Normal { promotion: Some(_), .. })
+        matches!(
+            *self,
+            Move::Normal {
+                promotion: Some(_),
+                ..
+            }
+        )
     }
 }
 
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Move::Normal { role, from, capture, to, promotion } => {
+            Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion,
+            } => {
                 if role != Role::Pawn {
                     f.write_char(role.upper_char())?;
                 }
 
-                write!(f, "{}{}{}", from, if capture.is_some() { 'x' } else { '-' }, to)?;
+                write!(
+                    f,
+                    "{}{}{}",
+                    from,
+                    if capture.is_some() { 'x' } else { '-' },
+                    to
+                )?;
 
                 if let Some(p) = promotion {
                     write!(f, "={}", p.upper_char())?;
                 }
 
                 Ok(())
-            },
+            }
             Move::EnPassant { from, to, .. } => {
                 write!(f, "{}x{}", from, to)
-            },
-            Move::Castle { king, rook } => {
-                f.write_str(if king < rook {
-                    "O-O"
-                } else {
-                    "O-O-O"
-                })
-            },
+            }
+            Move::Castle { king, rook } => f.write_str(if king < rook { "O-O" } else { "O-O-O" }),
             Move::Put { role, to } => {
                 if role != Role::Pawn {
                     f.write_char(role.upper_char())?;
                 }
                 write!(f, "@{}", to)
-            },
+            }
         }
     }
 }
@@ -356,11 +394,19 @@ impl CastlingSide {
     }
 
     pub fn from_queen_side(queen_side: bool) -> CastlingSide {
-        if queen_side { CastlingSide::QueenSide } else { CastlingSide::KingSide }
+        if queen_side {
+            CastlingSide::QueenSide
+        } else {
+            CastlingSide::KingSide
+        }
     }
 
     pub fn from_king_side(king_side: bool) -> CastlingSide {
-        if king_side { CastlingSide::KingSide } else { CastlingSide::QueenSide }
+        if king_side {
+            CastlingSide::KingSide
+        } else {
+            CastlingSide::QueenSide
+        }
     }
 
     pub fn king_to_file(self) -> File {
@@ -398,11 +444,19 @@ pub enum CastlingMode {
 
 impl CastlingMode {
     pub fn from_standard(standard: bool) -> CastlingMode {
-        if standard { CastlingMode::Standard } else { CastlingMode::Chess960 }
+        if standard {
+            CastlingMode::Standard
+        } else {
+            CastlingMode::Chess960
+        }
     }
 
     pub fn from_chess960(chess960: bool) -> CastlingMode {
-        if chess960 { CastlingMode::Chess960 } else { CastlingMode::Standard }
+        if chess960 {
+            CastlingMode::Chess960
+        } else {
+            CastlingMode::Standard
+        }
     }
 
     pub fn is_standard(self) -> bool {
@@ -416,8 +470,8 @@ impl CastlingMode {
 
 #[cfg(test)]
 mod tests {
-    use std::mem;
     use super::*;
+    use std::mem;
 
     #[test]
     fn test_role_order() {
@@ -473,4 +527,3 @@ impl fmt::Display for ByColor<RemainingChecks> {
         write!(f, "{}+{}", self.white.0, self.black.0)
     }
 }
-

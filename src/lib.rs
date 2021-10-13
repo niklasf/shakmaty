@@ -71,43 +71,43 @@
 //!   Requires nightly.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.20.1")]
-
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
-
 #![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 
-mod color;
-mod square;
-mod types;
-mod material;
 mod board;
+mod color;
+mod magics;
+mod material;
+mod movelist;
+mod perft;
 mod position;
 mod setup;
-mod movelist;
-mod magics;
-mod perft;
+mod square;
+mod types;
 mod util;
 
 pub mod attacks;
 pub mod bitboard;
 pub mod fen;
-pub mod uci;
 pub mod san;
+pub mod uci;
 pub mod zobrist;
 
 #[cfg(feature = "variant")]
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
-pub use crate::square::{ParseSquareError, File, Rank, Square};
-pub use crate::color::{ParseColorError, Color, ByColor, ByColorIter};
-pub use crate::types::{CastlingSide, CastlingMode, Move, Piece, Role, RemainingChecks};
-pub use crate::material::{Material, MaterialSide, ParseMaterialError};
 pub use crate::bitboard::Bitboard;
 pub use crate::board::{Board, Pieces};
-pub use crate::setup::{Castles, Setup};
+pub use crate::color::{ByColor, ByColorIter, Color, ParseColorError};
+pub use crate::material::{Material, MaterialSide, ParseMaterialError};
 pub use crate::movelist::MoveList;
-pub use crate::position::{Chess, Outcome, Position, FromSetup, PlayError, PositionError, PositionErrorKinds};
 pub use crate::perft::perft;
+pub use crate::position::{
+    Chess, FromSetup, Outcome, PlayError, Position, PositionError, PositionErrorKinds,
+};
+pub use crate::setup::{Castles, Setup};
+pub use crate::square::{File, ParseSquareError, Rank, Square};
+pub use crate::types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role};

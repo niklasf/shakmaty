@@ -44,7 +44,6 @@ expected_outcome={:?}\n\n",
         );
     }
 
-
     let file =
         File::open("tests/horde_insufficient_material.csv").expect("failed to open test suite");
     let reader = BufReader::new(file);

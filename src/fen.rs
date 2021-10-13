@@ -70,22 +70,22 @@
 //! [`Board`]: super::Board
 //! [`Display`]: std::fmt::Display
 
-use std::convert::TryFrom;
+use std::char;
 use std::cmp::max;
+use std::convert::TryFrom;
+use std::error::Error;
+use std::fmt;
 use std::num::NonZeroU32;
 use std::str::FromStr;
-use std::fmt;
-use std::char;
-use std::error::Error;
 
-use crate::square::{File, Rank, Square};
-use crate::color::{ByColor, Color};
-use crate::types::{Piece, CastlingMode, RemainingChecks};
-use crate::material::Material;
 use crate::bitboard::Bitboard;
 use crate::board::Board;
-use crate::setup::Setup;
+use crate::color::{ByColor, Color};
+use crate::material::Material;
 use crate::position::{FromSetup, PositionError};
+use crate::setup::Setup;
+use crate::square::{File, Rank, Square};
+use crate::types::{CastlingMode, Piece, RemainingChecks};
 
 /// FEN formatting options.
 #[derive(Default, Clone, Debug)]
@@ -120,12 +120,19 @@ impl FenOpts {
         for color in Color::ALL {
             let king = board.king_of(color);
 
-            let candidates = board.by_piece(color.rook()) & Bitboard::relative_rank(color, Rank::First);
+            let candidates =
+                board.by_piece(color.rook()) & Bitboard::relative_rank(color, Rank::First);
 
             for rook in (candidates & castling_rights).into_iter().rev() {
-                if !self.shredder && Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                if !self.shredder
+                    && Some(rook) == candidates.first()
+                    && king.map_or(false, |k| rook < k)
+                {
                     fen.push(color.fold('Q', 'q'));
-                } else if !self.shredder && Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                } else if !self.shredder
+                    && Some(rook) == candidates.last()
+                    && king.map_or(false, |k| k < rook)
+                {
                     fen.push(color.fold('K', 'k'));
                 } else {
                     let file = rook.file();
@@ -154,7 +161,11 @@ impl FenOpts {
 
         let checks = setup.remaining_checks().map_or("".to_owned(), |r| {
             if self.scid {
-                format!(" +{}+{}", 3u8.saturating_sub(u8::from(r.white)), 3u8.saturating_sub(u8::from(r.black)))
+                format!(
+                    " +{}+{}",
+                    3u8.saturating_sub(u8::from(r.white)),
+                    3u8.saturating_sub(u8::from(r.black))
+                )
             } else {
                 format!(" {}", r)
             }
@@ -162,13 +173,17 @@ impl FenOpts {
 
         let board = setup.board();
 
-        format!("{}{} {} {} {}{}",
-                board.board_fen(setup.promoted()),
-                pockets,
-                setup.turn().char(),
-                self.castling_fen(board, setup.castling_rights()),
-                setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
-                checks)
+        format!(
+            "{}{} {} {} {}{}",
+            board.board_fen(setup.promoted()),
+            pockets,
+            setup.turn().char(),
+            self.castling_fen(board, setup.castling_rights()),
+            setup
+                .ep_square()
+                .map_or("-".to_owned(), |sq| sq.to_string()),
+            checks
+        )
     }
 
     /// Create a FEN such as
@@ -178,18 +193,29 @@ impl FenOpts {
             Some(checks) if self.scid => {
                 let board = setup.board();
 
-                format!("{}{} {} {} {} {} {} +{}+{}",
+                format!(
+                    "{}{} {} {} {} {} {} +{}+{}",
                     board.board_fen(setup.promoted()),
-                    setup.pockets().map_or("".to_owned(), |p| format!("/{}", p.fen())),
+                    setup
+                        .pockets()
+                        .map_or("".to_owned(), |p| format!("/{}", p.fen())),
                     setup.turn().char(),
                     self.castling_fen(board, setup.castling_rights()),
-                    setup.ep_square().map_or("-".to_owned(), |sq| sq.to_string()),
+                    setup
+                        .ep_square()
+                        .map_or("-".to_owned(), |sq| sq.to_string()),
                     setup.halfmoves(),
                     setup.fullmoves(),
                     3u8.saturating_sub(u8::from(checks.white)),
-                    3u8.saturating_sub(u8::from(checks.black)))
+                    3u8.saturating_sub(u8::from(checks.black))
+                )
             }
-            _ => format!("{} {} {}", self.epd(setup), setup.halfmoves(), setup.fullmoves())
+            _ => format!(
+                "{} {} {}",
+                self.epd(setup),
+                setup.halfmoves(),
+                setup.fullmoves()
+            ),
         }
     }
 }
@@ -287,7 +313,7 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
                 black: RemainingChecks(btoi::btou(black).ok()?),
             }
         }
-        _ => return None
+        _ => return None,
     })
 }
 
@@ -309,19 +335,27 @@ impl Board {
             for file in File::ALL {
                 let square = Square::from_coords(file, rank);
 
-                empty = self.piece_at(square).map_or_else(|| empty + 1, |piece| {
-                    if empty > 0 {
-                        fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
-                    }
-                    fen.push(piece.char());
-                    if promoted.contains(square) {
-                        fen.push('~');
-                    }
-                    0
-                });
+                empty = self.piece_at(square).map_or_else(
+                    || empty + 1,
+                    |piece| {
+                        if empty > 0 {
+                            fen.push(
+                                char::from_digit(empty, 10)
+                                    .expect("at most 8 empty squares on a rank"),
+                            );
+                        }
+                        fen.push(piece.char());
+                        if promoted.contains(square) {
+                            fen.push('~');
+                        }
+                        0
+                    },
+                );
 
                 if file == File::H && empty > 0 {
-                    fen.push(char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"));
+                    fen.push(
+                        char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"),
+                    );
                 }
 
                 if file == File::H && rank > Rank::First {
@@ -363,15 +397,33 @@ pub struct Fen {
 }
 
 impl Setup for Fen {
-    fn board(&self) -> &Board { &self.board }
-    fn promoted(&self) -> Bitboard { self.promoted }
-    fn pockets(&self) -> Option<&Material> { self.pockets.as_ref() }
-    fn turn(&self) -> Color { self.turn }
-    fn castling_rights(&self) -> Bitboard { self.castling_rights }
-    fn ep_square(&self) -> Option<Square> { self.ep_square }
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> { self.remaining_checks.as_ref() }
-    fn halfmoves(&self) -> u32 { self.halfmoves }
-    fn fullmoves(&self) -> NonZeroU32 { self.fullmoves }
+    fn board(&self) -> &Board {
+        &self.board
+    }
+    fn promoted(&self) -> Bitboard {
+        self.promoted
+    }
+    fn pockets(&self) -> Option<&Material> {
+        self.pockets.as_ref()
+    }
+    fn turn(&self) -> Color {
+        self.turn
+    }
+    fn castling_rights(&self) -> Bitboard {
+        self.castling_rights
+    }
+    fn ep_square(&self) -> Option<Square> {
+        self.ep_square
+    }
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+        self.remaining_checks.as_ref()
+    }
+    fn halfmoves(&self) -> u32 {
+        self.halfmoves
+    }
+    fn fullmoves(&self) -> NonZeroU32 {
+        self.fullmoves
+    }
 }
 
 impl Default for Fen {
@@ -445,9 +497,17 @@ impl Fen {
                 .ok_or(ParseFenError::InvalidBoard)?;
             let pocket_part = &board_part[(split_point + 1)..(board_part.len() - 1)];
             (&board_part[..split_point], Some(pocket_part))
-        } else if let Some(split_point) = board_part.iter().enumerate().filter_map(|(idx, ch)| (*ch == b'/').then(|| idx)).nth(7) {
+        } else if let Some(split_point) = board_part
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, ch)| (*ch == b'/').then(|| idx))
+            .nth(7)
+        {
             // format: .../pocket
-            (&board_part[..split_point], Some(&board_part[(split_point + 1)..]))
+            (
+                &board_part[..split_point],
+                Some(&board_part[(split_point + 1)..]),
+            )
         } else {
             (board_part, None)
         };
@@ -457,7 +517,9 @@ impl Fen {
         result.promoted = promoted;
 
         if let Some(pocket_part) = pocket_part {
-            result.pockets = Some(Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?);
+            result.pockets = Some(
+                Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?,
+            );
         }
 
         result.turn = match parts.next() {
@@ -472,8 +534,8 @@ impl Fen {
                 for &ch in castling_part {
                     let color = Color::from_white(ch < b'a'); // uppercase
 
-                    let candidates = Bitboard::relative_rank(color, Rank::First) &
-                                     result.board.by_piece(color.rook());
+                    let candidates = Bitboard::relative_rank(color, Rank::First)
+                        & result.board.by_piece(color.rook());
 
                     let flag = match ch | 32 {
                         b'k' => candidates.last(),
@@ -484,7 +546,9 @@ impl Fen {
                         _ => return Err(ParseFenError::InvalidCastling),
                     };
 
-                    result.castling_rights.add(flag.ok_or(ParseFenError::InvalidCastling)?);
+                    result
+                        .castling_rights
+                        .add(flag.ok_or(ParseFenError::InvalidCastling)?);
                 }
             }
         }
@@ -514,7 +578,8 @@ impl Fen {
         }
 
         if let Some(fullmoves_part) = parts.next() {
-            let fullmoves = btoi::btou_saturating(fullmoves_part).map_err(|_| ParseFenError::InvalidFullmoves)?;
+            let fullmoves = btoi::btou_saturating(fullmoves_part)
+                .map_err(|_| ParseFenError::InvalidFullmoves)?;
             result.fullmoves = NonZeroU32::new(max(fullmoves, 1)).unwrap();
         }
 
@@ -593,19 +658,29 @@ mod tests {
         assert_eq!(epd(&fen), original_epd);
 
         // The en passant square is not actually legal.
-        let pos: Chess = fen.position(CastlingMode::Standard).expect("legal position");
+        let pos: Chess = fen
+            .position(CastlingMode::Standard)
+            .expect("legal position");
         assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
     #[test]
     fn test_invalid_fen() {
-        assert!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1".parse::<Fen>().is_err());
+        assert!(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1"
+                .parse::<Fen>()
+                .is_err()
+        );
     }
 
     #[test]
     fn test_pockets() {
         let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
-        assert_eq!(fen.pockets().map_or(0, |p| p.by_piece(Color::White.queen())), 1);
+        assert_eq!(
+            fen.pockets()
+                .map_or(0, |p| p.by_piece(Color::White.queen())),
+            1
+        );
     }
 
     #[test]
@@ -627,14 +702,21 @@ mod tests {
     #[test]
     fn test_shredder_fen() {
         let pos = Chess::default();
-        assert_eq!(FenOpts::default().shredder(true).fen(&pos),
-                   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1");
+        assert_eq!(
+            FenOpts::default().shredder(true).fen(&pos),
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1"
+        );
     }
 
     #[test]
     fn test_remaining_checks() {
-        let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42".parse().expect("valid fen");
-        let expected = ByColor { white: RemainingChecks(1), black: RemainingChecks(2) };
+        let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42"
+            .parse()
+            .expect("valid fen");
+        let expected = ByColor {
+            white: RemainingChecks(1),
+            black: RemainingChecks(2),
+        };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 12);
         assert_eq!(fen.fullmoves.get(), 42);
@@ -644,7 +726,10 @@ mod tests {
     fn test_lichess_remaining_checks() {
         let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0";
         let fen: Fen = input.parse().expect("valid fen");
-        let expected = ByColor { white: RemainingChecks(3), black: RemainingChecks(3) };
+        let expected = ByColor {
+            white: RemainingChecks(3),
+            black: RemainingChecks(3),
+        };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 1);
         assert_eq!(fen.fullmoves.get(), 2);

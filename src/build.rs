@@ -14,7 +14,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(feature = "step", feature(step_trait))]
-
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 
@@ -25,16 +24,16 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 
-mod color;
-mod util;
-mod types;
-mod square;
 mod bitboard;
+mod color;
 mod magics;
+mod square;
+mod types;
+mod util;
 
-use crate::square::Square;
 use crate::bitboard::Bitboard;
 use crate::magics::Magic;
+use crate::square::Square;
 
 const ROOK_DELTAS: [i32; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i32; 4] = [9, 7, -9, -7];
@@ -88,7 +87,12 @@ fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], 
     }
 }
 
-fn dump_slice<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, slice: &[T]) -> io::Result<()> {
+fn dump_slice<W: Write, T: Clone + LowerHex>(
+    w: &mut W,
+    name: &str,
+    tname: &str,
+    slice: &[T],
+) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
     for v in slice.iter().cloned() {
@@ -97,7 +101,12 @@ fn dump_slice<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str,
     writeln!(w, "];")
 }
 
-fn dump_table<W: Write, T: Clone + LowerHex>(w: &mut W, name: &str, tname: &str, table: &[[T; 64]; 64]) -> io::Result<()> {
+fn dump_table<W: Write, T: Clone + LowerHex>(
+    w: &mut W,
+    name: &str,
+    tname: &str,
+    table: &[[T; 64]; 64],
+) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
     for row in table.iter() {
@@ -136,14 +145,16 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 
     for a in Square::ALL {
         for b in sliding_bishop_attacks(a, Bitboard(0)) {
-            bb_rays[usize::from(a)][usize::from(b)] =
-                (sliding_bishop_attacks(a, Bitboard(0)) &
-                 sliding_bishop_attacks(b, Bitboard(0))).with(a).with(b);
+            bb_rays[usize::from(a)][usize::from(b)] = (sliding_bishop_attacks(a, Bitboard(0))
+                & sliding_bishop_attacks(b, Bitboard(0)))
+            .with(a)
+            .with(b);
         }
         for b in sliding_rook_attacks(a, Bitboard(0)) {
-            bb_rays[usize::from(a)][usize::from(b)] =
-                (sliding_rook_attacks(a, Bitboard(0)) &
-                 sliding_rook_attacks(b, Bitboard(0))).with(a).with(b);
+            bb_rays[usize::from(a)][usize::from(b)] = (sliding_rook_attacks(a, Bitboard(0))
+                & sliding_rook_attacks(b, Bitboard(0)))
+            .with(a)
+            .with(b);
         }
     }
 
@@ -163,8 +174,20 @@ fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
     let mut attacks = [Bitboard(0); 88772];
 
     for sq in Square::ALL {
-        init_magics(sq, &magics::ROOK_MAGICS[usize::from(sq)], 12, &mut attacks, &ROOK_DELTAS);
-        init_magics(sq, &magics::BISHOP_MAGICS[usize::from(sq)], 9, &mut attacks, &BISHOP_DELTAS);
+        init_magics(
+            sq,
+            &magics::ROOK_MAGICS[usize::from(sq)],
+            12,
+            &mut attacks,
+            &ROOK_DELTAS,
+        );
+        init_magics(
+            sq,
+            &magics::BISHOP_MAGICS[usize::from(sq)],
+            9,
+            &mut attacks,
+            &BISHOP_DELTAS,
+        );
     }
 
     dump_slice(f, "ATTACKS", "u64", &attacks)

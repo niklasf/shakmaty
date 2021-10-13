@@ -69,14 +69,14 @@
 //! # Ok::<_, Box<dyn Error>>(())
 //! ```
 
+use crate::movelist::MoveList;
+use crate::position::{Outcome, Position};
 use crate::square::{File, Rank, Square};
 use crate::types::{CastlingSide, Move, Role};
-use crate::position::{Outcome, Position};
-use crate::movelist::MoveList;
 
+use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
-use std::error::Error;
 
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Clone, Debug)]
@@ -122,7 +122,10 @@ pub enum San {
         promotion: Option<Role>,
     },
     Castle(CastlingSide),
-    Put { role: Role, to: Square },
+    Put {
+        role: Role,
+        to: Square,
+    },
     Null,
 }
 
@@ -161,7 +164,10 @@ impl San {
                 if ch >= b'a' {
                     (Role::Pawn, ch)
                 } else {
-                    (Role::from_char(char::from(ch)).ok_or(ParseSanError)?, chars.next().ok_or(ParseSanError)?)
+                    (
+                        Role::from_char(char::from(ch)).ok_or(ParseSanError)?,
+                        chars.next().ok_or(ParseSanError)?,
+                    )
                 }
             };
 
@@ -181,40 +187,61 @@ impl San {
             // by file_from_char or rank_from_char.
             let (capture, file, rank, to, next) = if let Some(next) = next {
                 if next == b'x' {
-                    let to_file = chars.next().and_then(|ch| File::from_char(char::from(ch))).ok_or(ParseSanError)?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(ParseSanError)?;
+                    let to_file = chars
+                        .next()
+                        .and_then(|ch| File::from_char(char::from(ch)))
+                        .ok_or(ParseSanError)?;
+                    let to_rank = chars
+                        .next()
+                        .and_then(|ch| Rank::from_char(char::from(ch)))
+                        .ok_or(ParseSanError)?;
                     let square = Square::from_coords(to_file, to_rank);
                     (true, file, rank, square, chars.next())
                 } else if next == b'=' {
-                    let square = Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
+                    let square =
+                        Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
                     (false, None, None, square, Some(b'='))
                 } else {
                     let to_file = File::from_char(char::from(next)).ok_or(ParseSanError)?;
-                    let to_rank = chars.next().and_then(|ch| Rank::from_char(char::from(ch))).ok_or(ParseSanError)?;
+                    let to_rank = chars
+                        .next()
+                        .and_then(|ch| Rank::from_char(char::from(ch)))
+                        .ok_or(ParseSanError)?;
                     let square = Square::from_coords(to_file, to_rank);
                     (false, file, rank, square, chars.next())
                 }
             } else {
-                let square = Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
+                let square =
+                    Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
                 (false, None, None, square, None)
             };
 
             let promotion = match next {
-                Some(b'=') =>
-                    Some(chars.next().and_then(|r| Role::from_char(char::from(r))).ok_or(ParseSanError)?),
+                Some(b'=') => Some(
+                    chars
+                        .next()
+                        .and_then(|r| Role::from_char(char::from(r)))
+                        .ok_or(ParseSanError)?,
+                ),
                 Some(_) => return Err(ParseSanError),
                 None => None,
             };
 
-            Ok(San::Normal { role, file, rank, capture, to, promotion })
+            Ok(San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            })
         }
     }
 
     /// Converts a move to Standard Algebraic Notation.
     pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
         let legals = match *m {
-            Move::Normal { role, to, .. } if role != Role::Pawn =>
-                pos.san_candidates(role, to),
+            Move::Normal { role, to, .. } if role != Role::Pawn => pos.san_candidates(role, to),
             _ => MoveList::new(),
         };
 
@@ -229,67 +256,114 @@ impl San {
     /// Returns [`SanError`] if there is no unique matching legal move.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
         match *self {
-            San::Normal { role, file, rank, capture, to, promotion } => {
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| match *m {
-                    Move::Normal { from, capture: c, promotion: p, .. } =>
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture == c.is_some() &&
-                        promotion == p,
-                    Move::EnPassant { from, .. } =>
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture &&
-                        promotion.is_none(),
+                    Move::Normal {
+                        from,
+                        capture: c,
+                        promotion: p,
+                        ..
+                    } => {
+                        file.map_or(true, |f| f == from.file())
+                            && rank.map_or(true, |r| r == from.rank())
+                            && capture == c.is_some()
+                            && promotion == p
+                    }
+                    Move::EnPassant { from, .. } => {
+                        file.map_or(true, |f| f == from.file())
+                            && rank.map_or(true, |r| r == from.rank())
+                            && capture
+                            && promotion.is_none()
+                    }
                     _ => false,
                 });
-                legals.split_first().map_or(Err(SanError::IllegalSan), |(m, others)| {
-                    if others.is_empty() {
-                        Ok(m.clone())
-                    } else {
-                        Err(SanError::AmbiguousSan)
-                    }
-                })
-            },
-            San::Castle(side) => pos.castling_moves(side).first().cloned().ok_or(SanError::IllegalSan),
+                legals
+                    .split_first()
+                    .map_or(Err(SanError::IllegalSan), |(m, others)| {
+                        if others.is_empty() {
+                            Ok(m.clone())
+                        } else {
+                            Err(SanError::AmbiguousSan)
+                        }
+                    })
+            }
+            San::Castle(side) => pos
+                .castling_moves(side)
+                .first()
+                .cloned()
+                .ok_or(SanError::IllegalSan),
             San::Put { role, to } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| matches!(*m, Move::Put { .. }));
                 legals.first().cloned().ok_or(SanError::IllegalSan)
-            },
+            }
             San::Null => Err(SanError::IllegalSan),
         }
     }
 
     pub fn disambiguate(m: &Move, moves: &MoveList) -> San {
         match *m {
-            Move::Normal { role: Role::Pawn, from, capture, to, promotion } =>
-                San::Normal {
-                    role: Role::Pawn,
-                    file: if capture.is_some() { Some(from.file()) } else { None },
-                    rank: None,
-                    capture: capture.is_some(),
-                    to,
-                    promotion
+            Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture,
+                to,
+                promotion,
+            } => San::Normal {
+                role: Role::Pawn,
+                file: if capture.is_some() {
+                    Some(from.file())
+                } else {
+                    None
                 },
-            Move::Normal { role, from, capture, to, promotion } => {
+                rank: None,
+                capture: capture.is_some(),
+                to,
+                promotion,
+            },
+            Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion,
+            } => {
                 // Disambiguate.
-                let (rank, file) = moves.iter().filter(|c| match *c {
-                    Move::Normal { role: r, to: t, promotion: p, .. } =>
-                        role == *r && to == *t && promotion == *p,
-                    _ => false,
-                }).fold((false, false), |(rank, file), c| match *c {
-                    Move::Normal { from: candidate, .. } =>
-                        if from == candidate {
-                            (rank, file)
-                        } else if from.rank() == candidate.rank() || from.file() != candidate.file() {
-                            (rank, true)
-                        } else {
-                            (true, file)
-                        },
-                    _ => (rank, file)
-                });
+                let (rank, file) = moves
+                    .iter()
+                    .filter(|c| match *c {
+                        Move::Normal {
+                            role: r,
+                            to: t,
+                            promotion: p,
+                            ..
+                        } => role == *r && to == *t && promotion == *p,
+                        _ => false,
+                    })
+                    .fold((false, false), |(rank, file), c| match *c {
+                        Move::Normal {
+                            from: candidate, ..
+                        } => {
+                            if from == candidate {
+                                (rank, file)
+                            } else if from.rank() == candidate.rank()
+                                || from.file() != candidate.file()
+                            {
+                                (rank, true)
+                            } else {
+                                (true, file)
+                            }
+                        }
+                        _ => (rank, file),
+                    });
 
                 San::Normal {
                     role,
@@ -297,12 +371,20 @@ impl San {
                     rank: if rank { Some(from.rank()) } else { None },
                     capture: capture.is_some(),
                     to,
-                    promotion
+                    promotion,
                 }
-            },
+            }
             Move::EnPassant { from, to, .. } => San::Normal {
-                role: Role::Pawn, file: Some(from.file()), rank: None, capture: true, to, promotion: None },
-            Move::Castle { rook, king } if rook.file() < king.file() => San::Castle(CastlingSide::QueenSide),
+                role: Role::Pawn,
+                file: Some(from.file()),
+                rank: None,
+                capture: true,
+                to,
+                promotion: None,
+            },
+            Move::Castle { rook, king } if rook.file() < king.file() => {
+                San::Castle(CastlingSide::QueenSide)
+            }
             Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
             Move::Put { role, to } => San::Put { role, to },
         }
@@ -364,38 +446,47 @@ impl San {
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {
-            San::Normal { role, file, rank, capture, to, promotion } => {
-                match *m {
-                    Move::Normal { role: r, from, capture: c, to: t, promotion: pr } =>
-                        role == r &&
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture == c.is_some() &&
-                        to == t &&
-                        promotion == pr,
-                    Move::EnPassant { from, to: t } =>
-                        role == Role::Pawn &&
-                        file.map_or(true, |f| f == from.file()) &&
-                        rank.map_or(true, |r| r == from.rank()) &&
-                        capture &&
-                        to == t &&
-                        promotion.is_none(),
-                    _ => false,
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            } => match *m {
+                Move::Normal {
+                    role: r,
+                    from,
+                    capture: c,
+                    to: t,
+                    promotion: pr,
+                } => {
+                    role == r
+                        && file.map_or(true, |f| f == from.file())
+                        && rank.map_or(true, |r| r == from.rank())
+                        && capture == c.is_some()
+                        && to == t
+                        && promotion == pr
                 }
+                Move::EnPassant { from, to: t } => {
+                    role == Role::Pawn
+                        && file.map_or(true, |f| f == from.file())
+                        && rank.map_or(true, |r| r == from.rank())
+                        && capture
+                        && to == t
+                        && promotion.is_none()
+                }
+                _ => false,
             },
             San::Castle(side) => m.castling_side().map_or(false, |s| side == s),
-            San::Put { role, to } => {
-                match *m {
-                    Move::Put { role: r, to: t } =>
-                        r == role && to == t,
-                    _ => false,
-                }
+            San::Put { role, to } => match *m {
+                Move::Put { role: r, to: t } => r == role && to == t,
+                _ => false,
             },
-            San::Null => false
+            San::Null => false,
         }
     }
 }
-
 
 impl FromStr for San {
     type Err = ParseSanError;
@@ -408,7 +499,14 @@ impl FromStr for San {
 impl fmt::Display for San {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            San::Normal { role, file, rank, capture, to, promotion } => {
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            } => {
                 if role != Role::Pawn {
                     write!(f, "{}", role.upper_char())?;
                 }
@@ -426,10 +524,13 @@ impl fmt::Display for San {
                     write!(f, "={}", promotion.upper_char())?;
                 }
                 Ok(())
-            },
+            }
             San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
             San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
-            San::Put { role: Role::Pawn, to } => write!(f, "@{}", to),
+            San::Put {
+                role: Role::Pawn,
+                to,
+            } => write!(f, "@{}", to),
             San::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
             San::Null => write!(f, "--"),
         }
@@ -492,7 +593,10 @@ impl SanPlus {
     pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
         San::from_ascii(san).map(|result| SanPlus {
             san: result,
-            suffix: san.last().cloned().and_then(|ch| Suffix::from_char(char::from(ch))),
+            suffix: san
+                .last()
+                .cloned()
+                .and_then(|ch| Suffix::from_char(char::from(ch))),
         })
     }
 
@@ -516,14 +620,12 @@ impl SanPlus {
 
     pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
         let moves = match *m {
-            Move::Normal { role, to, .. } | Move::Put { role, to } =>
-                pos.san_candidates(role, to),
-            Move::EnPassant { to, .. } =>
-                pos.san_candidates(Role::Pawn, to),
-            Move::Castle { king, rook } if king.file() < rook.file() =>
-                pos.castling_moves(CastlingSide::KingSide),
-            Move::Castle { .. } =>
-                pos.castling_moves(CastlingSide::QueenSide),
+            Move::Normal { role, to, .. } | Move::Put { role, to } => pos.san_candidates(role, to),
+            Move::EnPassant { to, .. } => pos.san_candidates(Role::Pawn, to),
+            Move::Castle { king, rook } if king.file() < rook.file() => {
+                pos.castling_moves(CastlingSide::KingSide)
+            }
+            Move::Castle { .. } => pos.castling_moves(CastlingSide::QueenSide),
         };
         SanPlus {
             san: San::disambiguate(m, &moves),
@@ -532,7 +634,7 @@ impl SanPlus {
                 Suffix::from_position(&pos)
             } else {
                 None
-            }
+            },
         }
     }
 }
@@ -562,12 +664,11 @@ mod tests {
 
     #[test]
     fn test_read_write() {
-        for san in &["a1", "a8", "h1", "h8", "e4", "b6", "e4=Q", "f1=N#",
-                     "hxg7", "bxc1", "axe4", "bxc1+", "bxa8=R+",
-                     "Nf3", "Ba5", "Qh8", "Kh1", "Qh1=K", "Ba5", "Bba5",
-                     "N2c4", "Red3", "Qh1=K", "d1=N", "@e4#",
-                     "K@b3", "Ba5", "Bba5",
-                     "Ra1a8", "--", "O-O", "O-O-O+"] {
+        for san in &[
+            "a1", "a8", "h1", "h8", "e4", "b6", "e4=Q", "f1=N#", "hxg7", "bxc1", "axe4", "bxc1+",
+            "bxa8=R+", "Nf3", "Ba5", "Qh8", "Kh1", "Qh1=K", "Ba5", "Bba5", "N2c4", "Red3", "Qh1=K",
+            "d1=N", "@e4#", "K@b3", "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+",
+        ] {
             let result = san.parse::<SanPlus>().expect("valid san").to_string();
             assert_eq!(*san, result, "read {} write {}", san, result);
         }

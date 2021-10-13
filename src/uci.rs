@@ -84,13 +84,13 @@
 //!
 //! [`Move`]: super::Move
 
+use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
-use std::error::Error;
 
+use crate::position::Position;
 use crate::square::{Rank, Square};
 use crate::types::{CastlingMode, CastlingSide, Move, Role};
-use crate::position::Position;
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug)]
@@ -142,14 +142,18 @@ impl FromStr for Uci {
 impl fmt::Display for Uci {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Uci::Normal { from, to, promotion: None } =>
-                write!(f, "{}{}", from, to),
-            Uci::Normal { from, to, promotion: Some(promotion) } =>
-                write!(f, "{}{}{}", from, to, promotion.char()),
-            Uci::Put { to, role } =>
-                write!(f, "{}@{}", role.upper_char(), to),
-            Uci::Null =>
-                f.write_str("0000"),
+            Uci::Normal {
+                from,
+                to,
+                promotion: None,
+            } => write!(f, "{}{}", from, to),
+            Uci::Normal {
+                from,
+                to,
+                promotion: Some(promotion),
+            } => write!(f, "{}{}{}", from, to, promotion.char()),
+            Uci::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
+            Uci::Null => f.write_str("0000"),
         }
     }
 }
@@ -191,17 +195,24 @@ impl Uci {
         let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciError)?;
 
         if uci[1] == b'@' {
-            Ok(Uci::Put { role: Role::from_char(char::from(uci[0])).ok_or(ParseUciError)?, to })
+            Ok(Uci::Put {
+                role: Role::from_char(char::from(uci[0])).ok_or(ParseUciError)?,
+                to,
+            })
         } else {
             let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciError)?;
             if uci.len() == 5 {
                 Ok(Uci::Normal {
                     from,
                     to,
-                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciError)?)
+                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciError)?),
                 })
             } else {
-                Ok(Uci::Normal { from, to, promotion: None })
+                Ok(Uci::Normal {
+                    from,
+                    to,
+                    promotion: None,
+                })
             }
         }
     }
@@ -237,7 +248,7 @@ impl Uci {
                     promotion: None,
                 }
             }
-            _ => Uci::from_chess960(m)
+            _ => Uci::from_chess960(m),
         }
     }
 
@@ -261,14 +272,27 @@ impl Uci {
     /// ```
     pub fn from_chess960(m: &Move) -> Uci {
         match *m {
-            Move::Normal { from, to, promotion, .. } =>
-                Uci::Normal { from, to, promotion },
-            Move::EnPassant { from, to, .. } =>
-                Uci::Normal { from, to, promotion: None },
-            Move::Castle { king, rook } =>
-                Uci::Normal { from: king, to: rook, promotion: None }, // Chess960-style
-            Move::Put { role, to } =>
-                Uci::Put { role, to },
+            Move::Normal {
+                from,
+                to,
+                promotion,
+                ..
+            } => Uci::Normal {
+                from,
+                to,
+                promotion,
+            },
+            Move::EnPassant { from, to, .. } => Uci::Normal {
+                from,
+                to,
+                promotion: None,
+            },
+            Move::Castle { king, rook } => Uci::Normal {
+                from: king,
+                to: rook,
+                promotion: None,
+            }, // Chess960-style
+            Move::Put { role, to } => Uci::Put { role, to },
         }
     }
 
@@ -290,34 +314,55 @@ impl Uci {
     /// [`Move`]: super::Move
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciError> {
         let candidate = match *self {
-            Uci::Normal { from, to, promotion } => {
+            Uci::Normal {
+                from,
+                to,
+                promotion,
+            } => {
                 let role = pos.board().role_at(from).ok_or(IllegalUciError)?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(IllegalUciError)
+                    return Err(IllegalUciError);
                 }
 
                 if role == Role::King && (pos.castling_rights() & pos.us()).contains(to) {
-                    Move::Castle { king: from, rook: to }
-                } else if role == Role::King &&
-                          from == pos.turn().fold(Square::E1, Square::E8) &&
-                          to.rank() == pos.turn().fold(Rank::First, Rank::Eighth) &&
-                          from.distance(to) == 2 {
-                    if from.file() < to.file() {
-                        Move::Castle { king: from, rook: pos.turn().fold(Square::H1, Square::H8) }
-                    } else {
-                        Move::Castle { king: from, rook: pos.turn().fold(Square::A1, Square::A8) }
+                    Move::Castle {
+                        king: from,
+                        rook: to,
                     }
-                } else if role == Role::Pawn &&
-                          from.file() != to.file() &&
-                          !pos.board().occupied().contains(to) {
+                } else if role == Role::King
+                    && from == pos.turn().fold(Square::E1, Square::E8)
+                    && to.rank() == pos.turn().fold(Rank::First, Rank::Eighth)
+                    && from.distance(to) == 2
+                {
+                    if from.file() < to.file() {
+                        Move::Castle {
+                            king: from,
+                            rook: pos.turn().fold(Square::H1, Square::H8),
+                        }
+                    } else {
+                        Move::Castle {
+                            king: from,
+                            rook: pos.turn().fold(Square::A1, Square::A8),
+                        }
+                    }
+                } else if role == Role::Pawn
+                    && from.file() != to.file()
+                    && !pos.board().occupied().contains(to)
+                {
                     Move::EnPassant { from, to }
                 } else {
-                    Move::Normal { role, from, capture: pos.board().role_at(to), to, promotion }
+                    Move::Normal {
+                        role,
+                        from,
+                        capture: pos.board().role_at(to),
+                        to,
+                        promotion,
+                    }
                 }
-            },
+            }
             Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(IllegalUciError)
+            Uci::Null => return Err(IllegalUciError),
         };
 
         if pos.is_legal(&candidate) {
@@ -338,21 +383,41 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::position::Chess;
     use crate::fen::{fen, Fen};
+    use crate::position::Chess;
 
     #[test]
     pub fn test_uci_to_en_passant() {
         let mut pos = Chess::default();
-        let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
+        let e4 = "e2e4"
+            .parse::<Uci>()
+            .expect("e4")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&e4);
-        let nc6 = "b8c6".parse::<Uci>().expect("Nc6").to_move(&pos).expect("legal");
+        let nc6 = "b8c6"
+            .parse::<Uci>()
+            .expect("Nc6")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&nc6);
-        let e5 = "e4e5".parse::<Uci>().expect("e5").to_move(&pos).expect("legal");
+        let e5 = "e4e5"
+            .parse::<Uci>()
+            .expect("e5")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&e5);
-        let d5 = "d7d5".parse::<Uci>().expect("d5").to_move(&pos).expect("legal");
+        let d5 = "d7d5"
+            .parse::<Uci>()
+            .expect("d5")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&d5);
-        let exd5 = "e5d6".parse::<Uci>().expect("exd6").to_move(&pos).expect("legal en passant");
+        let exd5 = "e5d6"
+            .parse::<Uci>()
+            .expect("exd6")
+            .to_move(&pos)
+            .expect("legal en passant");
         assert!(exd5.is_en_passant());
     }
 
@@ -362,46 +427,78 @@ mod tests {
         use crate::position::variant::Crazyhouse;
 
         let mut pos = Crazyhouse::default();
-        let e4 = "e2e4".parse::<Uci>().expect("e4").to_move(&pos).expect("legal");
+        let e4 = "e2e4"
+            .parse::<Uci>()
+            .expect("e4")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&e4);
-        let d5 = "d7d5".parse::<Uci>().expect("d5").to_move(&pos).expect("legal");
+        let d5 = "d7d5"
+            .parse::<Uci>()
+            .expect("d5")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&d5);
-        let exd5 = "e4d5".parse::<Uci>().expect("exd5").to_move(&pos).expect("legal");
+        let exd5 = "e4d5"
+            .parse::<Uci>()
+            .expect("exd5")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&exd5);
-        let qxd5 = "d8d5".parse::<Uci>().expect("Qxd5").to_move(&pos).expect("legal");
+        let qxd5 = "d8d5"
+            .parse::<Uci>()
+            .expect("Qxd5")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&qxd5);
-        let p_at_d7 = "P@d7".parse::<Uci>().expect("P@d7+").to_move(&pos).expect("legal");
+        let p_at_d7 = "P@d7"
+            .parse::<Uci>()
+            .expect("P@d7+")
+            .to_move(&pos)
+            .expect("legal");
         pos.play_unchecked(&p_at_d7);
         assert!(pos.is_check());
     }
 
     #[test]
     fn test_king_captures_ummoved_rook() {
-        let pos: Chess = "8/8/8/B2p3Q/2qPp1P1/b7/2P2PkP/4K2R b K - 0 1".parse::<Fen>()
+        let pos: Chess = "8/8/8/B2p3Q/2qPp1P1/b7/2P2PkP/4K2R b K - 0 1"
+            .parse::<Fen>()
             .expect("valid fen")
             .position(CastlingMode::Standard)
             .expect("valid position");
         let uci = "g2h1".parse::<Uci>().expect("valid uci");
         let m = uci.to_move(&pos).expect("legal uci");
-        assert_eq!(m, Move::Normal {
-            role: Role::King,
-            from: Square::G2,
-            capture: Some(Role::Rook),
-            to: Square::H1,
-            promotion: None,
-        });
+        assert_eq!(
+            m,
+            Move::Normal {
+                role: Role::King,
+                from: Square::G2,
+                capture: Some(Role::Rook),
+                to: Square::H1,
+                promotion: None,
+            }
+        );
     }
 
     #[test]
     fn test_uci_to_castles() {
-        let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1".parse::<Fen>()
+        let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"
+            .parse::<Fen>()
             .expect("valid fen")
             .position(CastlingMode::Chess960)
             .expect("valid position");
         for uci in &["f2f4", "d7d6", "f1g3", "c8g4", "g1f2", "e8d8", "e1g1"] {
-            let m = uci.parse::<Uci>().expect("valid uci").to_move(&pos).expect("legal");
+            let m = uci
+                .parse::<Uci>()
+                .expect("valid uci")
+                .to_move(&pos)
+                .expect("legal");
             pos.play_unchecked(&m);
         }
-        assert_eq!(fen(&pos), "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4");
+        assert_eq!(
+            fen(&pos),
+            "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
+        );
     }
 }

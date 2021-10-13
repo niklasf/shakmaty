@@ -20,10 +20,10 @@ use std::iter::FromIterator;
 
 use crate::attacks;
 use crate::bitboard::Bitboard;
-use crate::color::{Color, ByColor};
+use crate::color::{ByColor, Color};
+use crate::material::{Material, MaterialSide};
 use crate::square::{File, Rank, Square};
 use crate::types::{Piece, Role};
-use crate::material::{Material, MaterialSide};
 
 /// [`Piece`] positions on a board.
 ///
@@ -113,37 +113,63 @@ impl Board {
     }
 
     #[inline]
-    pub fn occupied(&self) -> Bitboard { self.occupied[0] }
+    pub fn occupied(&self) -> Bitboard {
+        self.occupied[0]
+    }
 
     #[inline]
-    pub fn pawns(&self)   -> Bitboard { self.occupied[Role::Pawn as usize] }
+    pub fn pawns(&self) -> Bitboard {
+        self.occupied[Role::Pawn as usize]
+    }
     #[inline]
-    pub fn knights(&self) -> Bitboard { self.occupied[Role::Knight as usize] }
+    pub fn knights(&self) -> Bitboard {
+        self.occupied[Role::Knight as usize]
+    }
     #[inline]
-    pub fn bishops(&self) -> Bitboard { self.occupied[Role::Bishop as usize] }
+    pub fn bishops(&self) -> Bitboard {
+        self.occupied[Role::Bishop as usize]
+    }
     #[inline]
-    pub fn rooks(&self)   -> Bitboard { self.occupied[Role::Rook as usize] }
+    pub fn rooks(&self) -> Bitboard {
+        self.occupied[Role::Rook as usize]
+    }
     #[inline]
-    pub fn queens(&self)  -> Bitboard { self.occupied[Role::Queen as usize] }
+    pub fn queens(&self) -> Bitboard {
+        self.occupied[Role::Queen as usize]
+    }
     #[inline]
-    pub fn kings(&self)   -> Bitboard { self.occupied[Role::King as usize] }
+    pub fn kings(&self) -> Bitboard {
+        self.occupied[Role::King as usize]
+    }
 
     #[inline]
-    pub fn white(&self) -> Bitboard { self.occupied_co.white }
+    pub fn white(&self) -> Bitboard {
+        self.occupied_co.white
+    }
     #[inline]
-    pub fn black(&self) -> Bitboard { self.occupied_co.black }
+    pub fn black(&self) -> Bitboard {
+        self.occupied_co.black
+    }
 
     /// Bishops, rooks and queens.
     #[inline]
-    pub fn sliders(&self) -> Bitboard { self.bishops() ^ self.rooks() ^ self.queens() }
+    pub fn sliders(&self) -> Bitboard {
+        self.bishops() ^ self.rooks() ^ self.queens()
+    }
     /// Pawns, knights and kings.
     #[inline]
-    pub fn steppers(&self) -> Bitboard { self.pawns() ^ self.knights() ^ self.kings() }
+    pub fn steppers(&self) -> Bitboard {
+        self.pawns() ^ self.knights() ^ self.kings()
+    }
 
     #[inline]
-    pub fn rooks_and_queens(&self) -> Bitboard { self.rooks() ^ self.queens() }
+    pub fn rooks_and_queens(&self) -> Bitboard {
+        self.rooks() ^ self.queens()
+    }
     #[inline]
-    pub fn bishops_and_queens(&self) -> Bitboard { self.bishops() ^ self.queens() }
+    pub fn bishops_and_queens(&self) -> Bitboard {
+        self.bishops() ^ self.queens()
+    }
 
     /// The (unique) king of the given side.
     #[inline]
@@ -254,12 +280,12 @@ impl Board {
 
     #[inline]
     pub fn attacks_to(&self, sq: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
-        self.by_color(attacker) & (
-            (attacks::rook_attacks(sq, occupied) & self.rooks_and_queens()) |
-            (attacks::bishop_attacks(sq, occupied) & self.bishops_and_queens()) |
-            (attacks::knight_attacks(sq) & self.knights()) |
-            (attacks::king_attacks(sq) & self.kings()) |
-            (attacks::pawn_attacks(!attacker, sq) & self.pawns()))
+        self.by_color(attacker)
+            & ((attacks::rook_attacks(sq, occupied) & self.rooks_and_queens())
+                | (attacks::bishop_attacks(sq, occupied) & self.bishops_and_queens())
+                | (attacks::knight_attacks(sq) & self.knights())
+                | (attacks::king_attacks(sq) & self.kings())
+                | (attacks::pawn_attacks(!attacker, sq) & self.pawns()))
     }
 
     pub fn pieces(&self) -> Pieces {
@@ -389,8 +415,12 @@ impl Iterator for Pieces {
 
 impl ExactSizeIterator for Pieces {
     fn len(&self) -> usize {
-        self.pawns.count() + self.knights.count() + self.bishops.count()
-            + self.rooks.count() + self.queens.count() + self.kings.count()
+        self.pawns.count()
+            + self.knights.count()
+            + self.bishops.count()
+            + self.rooks.count()
+            + self.queens.count()
+            + self.kings.count()
     }
 }
 
