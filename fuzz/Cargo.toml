@@ -7,11 +7,12 @@ edition = "2018"
 [package.metadata]
 cargo-fuzz = true
 
-[dependencies.shakmaty]
-path = ".."
+[dependencies]
+libfuzzer-sys = "0.4"
+shakmaty = { path = ".." }
 
-[dependencies.libfuzzer-sys]
-git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+[workspace]
+members = ["."] # Let fuzzing suite not interfere with workspaces
 
 [[bin]]
 name = "fen"
