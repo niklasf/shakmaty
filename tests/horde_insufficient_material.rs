@@ -3,9 +3,7 @@
 fn white_insufficient_material_in_horde() {
     use shakmaty::fen::Fen;
     use shakmaty::variant::Horde;
-    use shakmaty::Color;
-    use shakmaty::FromSetup;
-    use shakmaty::{CastlingMode, Position};
+    use shakmaty::{CastlingMode, Color, FromSetup, Position};
 
     use std::fs::File;
     use std::io::prelude::*;

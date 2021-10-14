@@ -16,10 +16,9 @@
 
 //! Sets of squares.
 
-use std::fmt;
 use std::fmt::Write;
 use std::iter::FromIterator;
-use std::ops;
+use std::{fmt, ops};
 
 use crate::color::Color;
 use crate::square::{File, Rank, Square};

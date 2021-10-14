@@ -15,8 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use shakmaty::fen::Fen;
-use shakmaty::perft;
-use shakmaty::{CastlingMode, Chess, FromSetup, Position, PositionError};
+use shakmaty::{perft, CastlingMode, Chess, FromSetup, Position, PositionError};
 
 use std::fs::File;
 use std::io::prelude::*;

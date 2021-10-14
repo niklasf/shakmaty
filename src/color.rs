@@ -15,14 +15,11 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::error::Error;
-use std::fmt;
-use std::mem;
-use std::ops;
 use std::str::FromStr;
+use std::{fmt, mem, ops};
 
 use crate::square::Rank;
-use crate::types::Piece;
-use crate::types::Role;
+use crate::types::{Piece, Role};
 
 /// `White` or `Black`.
 #[allow(missing_docs)]

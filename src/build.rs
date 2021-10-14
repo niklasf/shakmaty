@@ -17,12 +17,11 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 
-use std::env;
 use std::fmt::LowerHex;
 use std::fs::File;
-use std::io;
 use std::io::Write;
 use std::path::Path;
+use std::{env, io};
 
 mod bitboard;
 mod color;

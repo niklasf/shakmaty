@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::char;
 use std::fmt::{self, Write as _};
-use std::num;
+use std::{char, num};
 
 use crate::color::{ByColor, Color};
 use crate::square::{File, Square};

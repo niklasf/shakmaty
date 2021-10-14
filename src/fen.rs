@@ -70,13 +70,12 @@
 //! [`Board`]: super::Board
 //! [`Display`]: std::fmt::Display
 
-use std::char;
 use std::cmp::max;
 use std::convert::TryFrom;
 use std::error::Error;
-use std::fmt;
 use std::num::NonZeroU32;
 use std::str::FromStr;
+use std::{char, fmt};
 
 use crate::bitboard::Bitboard;
 use crate::board::Board;
