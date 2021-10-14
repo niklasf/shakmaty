@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use shakmaty::fen::Fen;
-use shakmaty::{perft, CastlingMode, Chess, FromSetup, Position, PositionError};
+use shakmaty::{fen::Fen, perft, CastlingMode, Chess, FromSetup, Position, PositionError};
 
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+};
 
 fn test_perft_file<P>(path: &str, node_limit: u64)
 where

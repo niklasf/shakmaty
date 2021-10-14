@@ -14,23 +14,29 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::error::Error;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::num::NonZeroU32;
+use std::{
+    error::Error,
+    fmt,
+    hash::{Hash, Hasher},
+    num::NonZeroU32,
+};
 
 use bitflags::bitflags;
 
-use crate::attacks;
-use crate::bitboard::Bitboard;
-use crate::board::Board;
-use crate::color::Color::{Black, White};
-use crate::color::{ByColor, Color};
-use crate::material::Material;
-use crate::movelist::MoveList;
-use crate::setup::{Castles, EpSquare, Setup, SwapTurn};
-use crate::square::{Rank, Square};
-use crate::types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role};
+use crate::{
+    attacks,
+    bitboard::Bitboard,
+    board::Board,
+    color::{
+        ByColor, Color,
+        Color::{Black, White},
+    },
+    material::Material,
+    movelist::MoveList,
+    setup::{Castles, EpSquare, Setup, SwapTurn},
+    square::{Rank, Square},
+    types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
+};
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]

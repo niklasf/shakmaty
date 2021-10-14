@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt;
-use std::fmt::Write;
-use std::iter::FromIterator;
+use std::{fmt, fmt::Write, iter::FromIterator};
 
-use crate::attacks;
-use crate::bitboard::Bitboard;
-use crate::color::{ByColor, Color};
-use crate::material::{Material, MaterialSide};
-use crate::square::{File, Rank, Square};
-use crate::types::{Piece, Role};
+use crate::{
+    attacks,
+    bitboard::Bitboard,
+    color::{ByColor, Color},
+    material::{Material, MaterialSide},
+    square::{File, Rank, Square},
+    types::{Piece, Role},
+};
 
 /// [`Piece`] positions on a board.
 ///

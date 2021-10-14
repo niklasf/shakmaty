@@ -17,11 +17,7 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 
-use std::fmt::LowerHex;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
-use std::{env, io};
+use std::{env, fmt::LowerHex, fs::File, io, io::Write, path::Path};
 
 mod bitboard;
 mod color;
@@ -30,9 +26,7 @@ mod square;
 mod types;
 mod util;
 
-use crate::bitboard::Bitboard;
-use crate::magics::Magic;
-use crate::square::Square;
+use crate::{bitboard::Bitboard, magics::Magic, square::Square};
 
 const ROOK_DELTAS: [i32; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i32; 4] = [9, 7, -9, -7];

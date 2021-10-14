@@ -99,15 +99,15 @@ pub mod zobrist;
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
-pub use crate::bitboard::Bitboard;
-pub use crate::board::{Board, Pieces};
-pub use crate::color::{ByColor, ByColorIter, Color, ParseColorError};
-pub use crate::material::{Material, MaterialSide, ParseMaterialError};
-pub use crate::movelist::MoveList;
-pub use crate::perft::perft;
-pub use crate::position::{
-    Chess, FromSetup, Outcome, PlayError, Position, PositionError, PositionErrorKinds,
+pub use crate::{
+    bitboard::Bitboard,
+    board::{Board, Pieces},
+    color::{ByColor, ByColorIter, Color, ParseColorError},
+    material::{Material, MaterialSide, ParseMaterialError},
+    movelist::MoveList,
+    perft::perft,
+    position::{Chess, FromSetup, Outcome, PlayError, Position, PositionError, PositionErrorKinds},
+    setup::{Castles, Setup},
+    square::{File, ParseSquareError, Rank, Square},
+    types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
 };
-pub use crate::setup::{Castles, Setup};
-pub use crate::square::{File, ParseSquareError, Rank, Square};
-pub use crate::types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role};

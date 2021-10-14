@@ -37,9 +37,7 @@ use crate::{
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
 };
-use std::cell::Cell;
-use std::num::NonZeroU32;
-use std::ops::BitXorAssign;
+use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 /// Integer type that can be returned as a Zobrist hash.
 pub trait ZobristValue: BitXorAssign + Default + Copy {
@@ -409,9 +407,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fen::Fen;
-    use crate::uci::Uci;
-    use crate::Chess;
+    use crate::{fen::Fen, uci::Uci, Chess};
 
     #[test]
     fn test_polyglot() {

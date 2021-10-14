@@ -14,15 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{Ord, Ordering, PartialOrd};
-use std::error::Error;
-use std::fmt;
-use std::iter::FromIterator;
-use std::ops::{Add, AddAssign, Sub, SubAssign};
-use std::str::FromStr;
+use std::{
+    cmp::{Ord, Ordering, PartialOrd},
+    error::Error,
+    fmt,
+    iter::FromIterator,
+    ops::{Add, AddAssign, Sub, SubAssign},
+    str::FromStr,
+};
 
-use crate::color::{ByColor, Color};
-use crate::types::{Piece, Role};
+use crate::{
+    color::{ByColor, Color},
+    types::{Piece, Role},
+};
 
 /// Error when parsing an invalid material key.
 #[derive(Clone, Debug)]

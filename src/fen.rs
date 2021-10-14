@@ -70,21 +70,18 @@
 //! [`Board`]: super::Board
 //! [`Display`]: std::fmt::Display
 
-use std::cmp::max;
-use std::convert::TryFrom;
-use std::error::Error;
-use std::num::NonZeroU32;
-use std::str::FromStr;
-use std::{char, fmt};
+use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, str::FromStr};
 
-use crate::bitboard::Bitboard;
-use crate::board::Board;
-use crate::color::{ByColor, Color};
-use crate::material::Material;
-use crate::position::{FromSetup, PositionError};
-use crate::setup::Setup;
-use crate::square::{File, Rank, Square};
-use crate::types::{CastlingMode, Piece, RemainingChecks};
+use crate::{
+    bitboard::Bitboard,
+    board::Board,
+    color::{ByColor, Color},
+    material::Material,
+    position::{FromSetup, PositionError},
+    setup::Setup,
+    square::{File, Rank, Square},
+    types::{CastlingMode, Piece, RemainingChecks},
+};
 
 /// FEN formatting options.
 #[derive(Default, Clone, Debug)]

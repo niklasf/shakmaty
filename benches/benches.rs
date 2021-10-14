@@ -1,8 +1,11 @@
 use iai::black_box;
 
-use shakmaty::fen::Fen;
-use shakmaty::san::{ParseSanError, San};
-use shakmaty::{perft, CastlingMode, Chess, Move, Position, Role, Square};
+use shakmaty::{
+    fen::Fen,
+    perft,
+    san::{ParseSanError, San},
+    CastlingMode, Chess, Move, Position, Role, Square,
+};
 
 fn bench_shallow_perft() {
     let pos = Chess::default();

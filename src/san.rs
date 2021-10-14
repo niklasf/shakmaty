@@ -69,14 +69,14 @@
 //! # Ok::<_, Box<dyn Error>>(())
 //! ```
 
-use crate::movelist::MoveList;
-use crate::position::{Outcome, Position};
-use crate::square::{File, Rank, Square};
-use crate::types::{CastlingSide, Move, Role};
+use crate::{
+    movelist::MoveList,
+    position::{Outcome, Position},
+    square::{File, Rank, Square},
+    types::{CastlingSide, Move, Role},
+};
 
-use std::error::Error;
-use std::fmt;
-use std::str::FromStr;
+use std::{error::Error, fmt, str::FromStr};
 
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Clone, Debug)]

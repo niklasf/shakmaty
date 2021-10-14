@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::error::Error;
-use std::str::FromStr;
-use std::{fmt, mem, ops};
+use std::{error::Error, fmt, mem, ops, str::FromStr};
 
-use crate::square::Rank;
-use crate::types::{Piece, Role};
+use crate::{
+    square::Rank,
+    types::{Piece, Role},
+};
 
 /// `White` or `Black`.
 #[allow(missing_docs)]

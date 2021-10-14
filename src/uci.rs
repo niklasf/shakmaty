@@ -84,13 +84,13 @@
 //!
 //! [`Move`]: super::Move
 
-use std::error::Error;
-use std::fmt;
-use std::str::FromStr;
+use std::{error::Error, fmt, str::FromStr};
 
-use crate::position::Position;
-use crate::square::{Rank, Square};
-use crate::types::{CastlingMode, CastlingSide, Move, Role};
+use crate::{
+    position::Position,
+    square::{Rank, Square},
+    types::{CastlingMode, CastlingSide, Move, Role},
+};
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug)]
@@ -383,8 +383,10 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fen::{fen, Fen};
-    use crate::position::Chess;
+    use crate::{
+        fen::{fen, Fen},
+        position::Chess,
+    };
 
     #[test]
     pub fn test_uci_to_en_passant() {

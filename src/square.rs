@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::max;
-use std::convert::TryInto;
-use std::error::Error;
-use std::fmt::{self, Write as _};
-use std::num::TryFromIntError;
-use std::ops::Sub;
-use std::str;
+use std::{
+    cmp::max,
+    convert::TryInto,
+    error::Error,
+    fmt::{self, Write as _},
+    num::TryFromIntError,
+    ops::Sub,
+    str,
+};
 
 use crate::util::overflow_error;
 

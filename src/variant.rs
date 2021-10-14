@@ -25,21 +25,23 @@
 
 use std::num::NonZeroU32;
 
-pub use crate::position::variant::{
-    Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck,
+pub use crate::position::{
+    variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
+    Chess,
 };
-pub use crate::position::Chess;
 
-use crate::bitboard::Bitboard;
-use crate::board::Board;
-use crate::color::{ByColor, Color};
-use crate::material::Material;
-use crate::movelist::MoveList;
-use crate::position::{FromSetup, Outcome, Position, PositionError};
-use crate::setup::{Castles, Setup, SwapTurn};
-use crate::square::Square;
-use crate::types::{CastlingMode, CastlingSide, Move, RemainingChecks, Role};
-use crate::zobrist::{ZobristHash, ZobristValue};
+use crate::{
+    bitboard::Bitboard,
+    board::Board,
+    color::{ByColor, Color},
+    material::Material,
+    movelist::MoveList,
+    position::{FromSetup, Outcome, Position, PositionError},
+    setup::{Castles, Setup, SwapTurn},
+    square::Square,
+    types::{CastlingMode, CastlingSide, Move, RemainingChecks, Role},
+    zobrist::{ZobristHash, ZobristValue},
+};
 
 /// Discriminant of [`VariantPosition`].
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]

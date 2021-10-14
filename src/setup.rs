@@ -16,13 +16,15 @@
 
 use std::num::NonZeroU32;
 
-use crate::attacks;
-use crate::bitboard::Bitboard;
-use crate::board::Board;
-use crate::color::{ByColor, Color};
-use crate::material::Material;
-use crate::square::{File, Rank, Square};
-use crate::types::{CastlingMode, CastlingSide, RemainingChecks, Role};
+use crate::{
+    attacks,
+    bitboard::Bitboard,
+    board::Board,
+    color::{ByColor, Color},
+    material::Material,
+    square::{File, Rank, Square},
+    types::{CastlingMode, CastlingSide, RemainingChecks, Role},
+};
 
 /// A not necessarily legal position.
 pub trait Setup {

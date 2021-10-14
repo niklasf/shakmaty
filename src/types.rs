@@ -14,12 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt::{self, Write as _};
-use std::{char, num};
+use std::{
+    char,
+    fmt::{self, Write as _},
+    num,
+};
 
-use crate::color::{ByColor, Color};
-use crate::square::{File, Square};
-use crate::util::overflow_error;
+use crate::{
+    color::{ByColor, Color},
+    square::{File, Square},
+    util::overflow_error,
+};
 
 pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
