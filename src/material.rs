@@ -274,7 +274,7 @@ impl Material {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.white.is_empty() && self.black.is_empty()
+        self.all(MaterialSide::is_empty)
     }
 
     pub fn count(&self) -> usize {
@@ -282,7 +282,7 @@ impl Material {
     }
 
     pub fn has_pawns(&self) -> bool {
-        self.white.has_pawns() || self.black.has_pawns()
+        self.any(MaterialSide::has_pawns)
     }
 
     pub fn from_ascii(s: &[u8]) -> Result<Material, ParseMaterialError> {
