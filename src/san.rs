@@ -51,16 +51,13 @@
 //! Back to a (possibly disambiguated) SAN:
 //!
 //! ```
-//! # use std::error::Error;
+//! # use shakmaty::{Chess, Position, Role, san::San};
 //! #
-//! # use shakmaty::{Chess, Position, Role};
-//! # use shakmaty::san::San;
 //! # let pos = Chess::default();
 //! # let san: San = "Nf3".parse()?;
 //! # let m = san.to_move(&pos)?;
 //! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 
 use std::{error::Error, fmt, str::FromStr};

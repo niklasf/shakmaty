@@ -36,11 +36,8 @@
 //! Converting to a legal move in the context of a position:
 //!
 //! ```
-//! # use std::error::Error;
-//! #
-//! # use shakmaty::Color::White;
-//! # use shakmaty::uci::Uci;
-//! use shakmaty::{Square, Chess, Setup, Position};
+//! # use shakmaty::{Square, uci::Uci};
+//! use shakmaty::{Color::White, Chess, Setup, Position};
 //!
 //! # let uci: Uci = "g1f3".parse()?;
 //! let mut pos = Chess::default();
@@ -48,15 +45,13 @@
 //!
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:
 //!
 //! ```
-//! # use shakmaty::{Square, Move, Role, Chess, Position};
-//! # use shakmaty::uci::Uci;
+//! # use shakmaty::{Square, Move, Role, Chess, Position, uci::Uci};
 //! #
 //! let pos = Chess::default();
 //!
