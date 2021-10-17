@@ -386,25 +386,23 @@ impl Iterator for Pieces {
     type Item = (Square, Piece);
 
     fn next(&mut self) -> Option<(Square, Piece)> {
-        if let Some(sq) = self.pawns.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).pawn())));
-        }
-        if let Some(sq) = self.knights.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).knight())));
-        }
-        if let Some(sq) = self.bishops.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).bishop())));
-        }
-        if let Some(sq) = self.rooks.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).rook())));
-        }
-        if let Some(sq) = self.queens.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).queen())));
-        }
-        if let Some(sq) = self.kings.pop_front() {
-            return Some((sq, (Color::from_white(self.white.contains(sq)).king())));
-        }
-        None
+        let (sq, role) = if let Some(sq) = self.pawns.pop_front() {
+            (sq, Role::Pawn)
+        } else if let Some(sq) = self.knights.pop_front() {
+            (sq, Role::Knight)
+        } else if let Some(sq) = self.bishops.pop_front() {
+            (sq, Role::Bishop)
+        } else if let Some(sq) = self.rooks.pop_front() {
+            (sq, Role::Rook)
+        } else if let Some(sq) = self.queens.pop_front() {
+            (sq, Role::Queen)
+        } else if let Some(sq) = self.kings.pop_front() {
+            (sq, Role::King)
+        } else {
+            return None;
+        };
+
+        Some((sq, role.of(Color::from_white(self.white.contains(sq)))))
     }
 
     fn count(self) -> usize {
