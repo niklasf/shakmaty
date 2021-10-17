@@ -21,10 +21,7 @@
 //! Parsing UCIs:
 //!
 //! ```
-//! # use std::error::Error;
-//! #
-//! # use shakmaty::Square;
-//! use shakmaty::uci::Uci;
+//! use shakmaty::{Square, uci::Uci};
 //!
 //! let uci: Uci = "g1f3".parse()?;
 //!
@@ -33,8 +30,7 @@
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -168,10 +164,7 @@ impl Uci {
     /// # Examples
     ///
     /// ```
-    /// # use std::error::Error;
-    /// #
-    /// use shakmaty::uci::Uci;
-    /// use shakmaty::Square;
+    /// use shakmaty::{Square, uci::Uci};
     ///
     /// let uci = Uci::from_ascii(b"e4e5")?;
     ///
@@ -180,8 +173,7 @@ impl Uci {
     ///     to: Square::E5,
     ///     promotion: None,
     /// });
-    /// #
-    /// # Ok::<_, Box<dyn Error>>(())
+    /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {
@@ -227,8 +219,7 @@ impl Uci {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::uci::Uci;
-    /// use shakmaty::{Move, Square};
+    /// use shakmaty::{Move, Square, uci::Uci};
     ///
     /// let m = Move::Castle {
     ///     king: Square::E8,
@@ -259,8 +250,7 @@ impl Uci {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::uci::Uci;
-    /// use shakmaty::{Move, Square};
+    /// use shakmaty::{Move, Square, uci::Uci};
     ///
     /// let m = Move::Castle {
     ///     king: Square::E8,

@@ -1,5 +1,4 @@
 use iai::black_box;
-
 use shakmaty::{
     fen::Fen,
     perft,

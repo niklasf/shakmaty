@@ -577,17 +577,14 @@ impl PartialEq for Chess {
 /// Note that positions with different [`CastlingMode`] may be equivalent.
 ///
 /// ```
-/// # use std::error::Error;
-/// use shakmaty::{CastlingMode, Chess};
-/// use shakmaty::fen::Fen;
+/// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
 /// let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
 /// let setup: Fen = fen.parse()?;
 /// let position: Chess = setup.position(CastlingMode::Standard)?;
 /// let position_960: Chess = setup.position(CastlingMode::Chess960)?;
 /// assert_eq!(position, position_960);
-/// #
-/// # Ok::<_, Box<dyn Error>>(())
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 impl Eq for Chess {}
 

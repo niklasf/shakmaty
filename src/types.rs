@@ -20,13 +20,12 @@ use std::{
     num,
 };
 
+pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::{
     color::{ByColor, Color},
     square::{File, Square},
     util::overflow_error,
 };
-
-pub use self::Role::{Bishop, King, Knight, Pawn, Queen, Rook};
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 ///
@@ -474,8 +473,9 @@ impl CastlingMode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::mem;
+
+    use super::*;
 
     #[test]
     fn test_role_order() {

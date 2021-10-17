@@ -1,12 +1,12 @@
 #[cfg(feature = "variant")]
 #[test]
 fn white_insufficient_material_in_horde() {
-    use shakmaty::{fen::Fen, variant::Horde, CastlingMode, Color, FromSetup, Position};
-
     use std::{
         fs::File,
         io::{prelude::*, BufReader},
     };
+
+    use shakmaty::{fen::Fen, variant::Horde, CastlingMode, Color, FromSetup, Position};
 
     fn assert_white_insufficient_material_in_horde<P>(
         fen: &str,

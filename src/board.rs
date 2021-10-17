@@ -34,8 +34,8 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// # use shakmaty::{Square, Board};
-/// # use shakmaty::Color::Black;
+/// use shakmaty::{Square, Board, Color::Black};
+///
 /// let board = Board::new();
 /// // r n b q k b n r
 /// // p p p p p p p p

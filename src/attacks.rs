@@ -19,8 +19,7 @@
 //! # Example
 //!
 //! ```
-//! # use shakmaty::{Rank, Square, Bitboard};
-//! use shakmaty::attacks;
+//! use shakmaty::{attacks, Rank, Square, Bitboard};
 //!
 //! let occupied = Bitboard::from(Rank::Sixth); // blocking pieces
 //! let attacks = attacks::bishop_attacks(Square::C2, occupied);
@@ -86,9 +85,8 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// # Example
 ///
 /// ```
-/// # use shakmaty::{Square};
-/// # use shakmaty::attacks;
-/// #
+/// use shakmaty::{attacks, Square};
+///
 /// let mask = attacks::rook_mask(Square::E8);
 /// // 0 1 1 1 0 1 1 0
 /// // . . . . 1 . . .
@@ -123,9 +121,8 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// # Example
 ///
 /// ```
-/// # use shakmaty::{Square};
-/// # use shakmaty::attacks;
-/// #
+/// use shakmaty::{attacks, Square};
+///
 /// let mask = attacks::bishop_mask(Square::D5);
 /// // 0 . . . . . 0 .
 /// // . 1 . . . 1 . .
@@ -167,9 +164,8 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// # Example
 ///
 /// ```
-/// # use shakmaty::attacks;
-/// # use shakmaty::Square;
-/// #
+/// use shakmaty::{attacks, Square};
+///
 /// let ray = attacks::ray(Square::E2, Square::G4);
 /// // . . . . . . . .
 /// // . . . . . . . .
@@ -191,9 +187,8 @@ pub fn ray(a: Square, b: Square) -> Bitboard {
 /// # Example
 ///
 /// ```
-/// # use shakmaty::attacks;
-/// # use shakmaty::Square;
-/// #
+/// use shakmaty::{attacks, Square};
+///
 /// let between = attacks::between(Square::B1, Square::B7);
 /// // . . . . . . . .
 /// // . 0 . . . . . .
@@ -215,9 +210,8 @@ pub fn between(a: Square, b: Square) -> Bitboard {
 /// # Example
 ///
 /// ```
-/// # use shakmaty::attacks;
-/// # use shakmaty::Square;
-/// #
+/// use shakmaty::{attacks, Square};
+///
 /// assert!(attacks::aligned(Square::A1, Square::B2, Square::C3));
 /// ```
 #[inline]

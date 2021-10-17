@@ -16,15 +16,16 @@
 
 //! Sets of squares.
 
-use crate::{
-    color::Color,
-    square::{File, Rank, Square},
-};
 use std::{
     fmt,
     fmt::Write,
     iter::{FromIterator, FusedIterator},
     ops,
+};
+
+use crate::{
+    color::Color,
+    square::{File, Rank, Square},
 };
 
 /// A set of [squares](super::Square) represented by a 64 bit

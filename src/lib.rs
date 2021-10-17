@@ -31,7 +31,6 @@
 //! Play moves:
 //!
 //! ```
-//! # use std::error::Error;
 //! # use shakmaty::{Chess, Position};
 //! use shakmaty::{Square, Move, Role};
 //! #
@@ -45,8 +44,7 @@
 //!     capture: None,
 //!     promotion: None,
 //! })?;
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Detect game end conditions:

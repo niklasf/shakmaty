@@ -21,24 +21,19 @@
 //! Parse and write SANs:
 //!
 //! ```
-//! # use std::error::Error;
-//! #
-//! use shakmaty::{Chess, Position};
-//! use shakmaty::san::San;
+//! use shakmaty::{Chess, Position, san::San};
 //!
 //! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Converting to a move:
 //!
 //! ```
-//! # use std::error::Error;
+//! # use shakmaty::{Chess, Position, san::San};
+//! use shakmaty::{Square, Role, Move};
 //! #
-//! # use shakmaty::{Square, Chess, Position, Role, Move};
-//! # use shakmaty::san::San;
 //! # let san: San = "Nf3".parse()?;
 //! let pos = Chess::default();
 //! let m = san.to_move(&pos)?;
@@ -50,8 +45,7 @@
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
@@ -69,14 +63,14 @@
 //! # Ok::<_, Box<dyn Error>>(())
 //! ```
 
+use std::{error::Error, fmt, str::FromStr};
+
 use crate::{
     movelist::MoveList,
     position::{Outcome, Position},
     square::{File, Rank, Square},
     types::{CastlingSide, Move, Role},
 };
-
-use std::{error::Error, fmt, str::FromStr};
 
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Clone, Debug)]
@@ -415,10 +409,7 @@ impl San {
     /// # Examples
     ///
     /// ```
-    /// # use std::error::Error;
-    /// #
-    /// use shakmaty::{Square, Role, Move};
-    /// use shakmaty::san::San;
+    /// use shakmaty::{Square, Role, Move, san::San};
     ///
     /// let m = Move::Normal {
     ///     role: Role::Knight,
@@ -441,8 +432,7 @@ impl San {
     /// // other file does not match
     /// let nef3 = San::from_ascii(b"Nef3")?;
     /// assert!(!nef3.matches(&m));
-    /// #
-    /// # Ok::<_, Box<dyn Error>>(())
+    /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {
@@ -659,8 +649,9 @@ impl fmt::Display for SanPlus {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::mem;
+
+    use super::*;
 
     #[test]
     fn test_read_write() {

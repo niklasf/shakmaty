@@ -29,7 +29,6 @@ pub use crate::position::{
     variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
     Chess,
 };
-
 use crate::{
     bitboard::Bitboard,
     board::Board,

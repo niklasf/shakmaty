@@ -25,19 +25,19 @@
 //! # Examples
 //!
 //! ```
-//! use shakmaty::Chess;
-//! use shakmaty::zobrist::ZobristHash;
+//! use shakmaty::{Chess, zobrist::ZobristHash};
 //!
 //! let pos = Chess::default();
 //! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
 //! ```
+
+use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
     Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
 };
-use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 /// Integer type that can be returned as a Zobrist hash.
 pub trait ZobristValue: BitXorAssign + Default + Copy {
@@ -195,9 +195,7 @@ mod variant {
 /// # Examples
 ///
 /// ```
-/// # use std::error::Error;
-/// use shakmaty::{Chess, Position, Move, Square, Role};
-/// use shakmaty::zobrist::Zobrist;
+/// use shakmaty::{Chess, Position, Move, Square, Role, zobrist::Zobrist};
 ///
 /// let pos: Zobrist<Chess, u64> = Zobrist::default();
 ///
@@ -216,8 +214,7 @@ mod variant {
 /// // Incrementally updated (or recomputed from scratch if incremental
 /// // updates not supported).
 /// assert_eq!(pos.zobrist_hash(), 0x823c9b50fd114196);
-/// #
-/// # Ok::<_, Box<dyn Error>>(())
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 #[derive(Debug, Clone)]
 pub struct Zobrist<P, V: ZobristValue> {
