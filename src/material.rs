@@ -105,14 +105,10 @@ impl MaterialSide {
             return Err(ParseMaterialError);
         }
 
-        let mut result = MaterialSide::new();
-
-        for &ch in s {
-            let role = Role::from_char(char::from(ch)).ok_or(ParseMaterialError)?;
-            *result.by_role_mut(role) += 1;
-        }
-
-        Ok(result)
+        s.into_iter()
+            .copied()
+            .map(|ch| Role::from_char(char::from(ch)).ok_or(ParseMaterialError))
+            .collect()
     }
 }
 
@@ -285,32 +281,68 @@ impl Material {
         self.any(MaterialSide::has_pawns)
     }
 
+    /// Parse material from notation like `KPPvKR`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseMaterialError`] if there are any unrecognized
+    /// characters, not exactly one `v` to separate white pieces from black
+    /// pieces, or more than 64 pieces.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Material;
+    ///
+    /// let material = Material::from_ascii(b"KPPvKR")?;
+    /// assert_eq!(material.white.kings, 1);
+    /// assert_eq!(material.white.pawns, 2);
+    /// assert_eq!(material.black.kings, 1);
+    /// assert_eq!(material.black.rooks, 1);
+    /// # Ok::<_, Box<dyn std::error::Error>>(())
+    /// ```
     pub fn from_ascii(s: &[u8]) -> Result<Material, ParseMaterialError> {
+        if s.len() > 64 + 1 {
+            return Err(ParseMaterialError);
+        }
+
         let mut parts = s.splitn(2, |ch| *ch == b'v');
 
         Ok(Material {
-            white: match parts.next() {
-                Some(w) => MaterialSide::from_ascii(w)?,
-                None => MaterialSide::new(),
-            },
-            black: match parts.next() {
-                Some(b) => MaterialSide::from_ascii(b)?,
-                None => MaterialSide::new(),
-            },
+            white: MaterialSide::from_ascii(parts.next().expect("split non-empty"))?,
+            black: MaterialSide::from_ascii(parts.next().ok_or(ParseMaterialError)?)?,
         })
     }
 
+    /// Parse material from notation like `KPPkr`, where white pieces are
+    /// uppercase characters and black pieces are lowercase characters.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ParseMaterialError`] if there are any unrecognized
+    /// characters, or more than 64 pieces.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Material;
+    ///
+    /// let material = Material::from_ascii_fen(b"KPPkr")?;
+    /// assert_eq!(material.white.kings, 1);
+    /// assert_eq!(material.white.pawns, 2);
+    /// assert_eq!(material.black.kings, 1);
+    /// assert_eq!(material.black.rooks, 1);
+    /// # Ok::<_, Box<dyn std::error::Error>>(())
+    /// ```
     pub fn from_ascii_fen(s: &[u8]) -> Result<Material, ParseMaterialError> {
         if s.len() > 64 {
             return Err(ParseMaterialError);
         }
 
-        let mut material = Material::new();
-        for &ch in s {
-            *material.by_piece_mut(Piece::from_char(char::from(ch)).ok_or(ParseMaterialError)?) +=
-                1;
-        }
-        Ok(material)
+        s.into_iter()
+            .copied()
+            .map(|ch| Piece::from_char(char::from(ch)).ok_or(ParseMaterialError))
+            .collect()
     }
 
     pub fn fen(&self) -> String {
