@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{error::Error, fmt, mem, ops, str::FromStr};
+use std::{error::Error, fmt, iter::FusedIterator, mem, ops, str::FromStr};
 
 use crate::{
     square::Rank,
@@ -373,4 +373,4 @@ impl<T> DoubleEndedIterator for ByColorIter<T> {
     }
 }
 
-impl<T> std::iter::FusedIterator for ByColorIter<T> {}
+impl<T> FusedIterator for ByColorIter<T> {}

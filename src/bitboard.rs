@@ -16,11 +16,15 @@
 
 //! Sets of squares.
 
-use std::{fmt, fmt::Write, iter::FromIterator, ops};
-
 use crate::{
     color::Color,
     square::{File, Rank, Square},
+};
+use std::{
+    fmt,
+    fmt::Write,
+    iter::{FromIterator, FusedIterator},
+    ops,
 };
 
 /// A set of [squares](super::Square) represented by a 64 bit
@@ -695,7 +699,7 @@ impl ExactSizeIterator for IntoIter {
     }
 }
 
-impl std::iter::FusedIterator for IntoIter {}
+impl FusedIterator for IntoIter {}
 
 impl DoubleEndedIterator for IntoIter {
     #[inline]
@@ -742,7 +746,7 @@ impl Iterator for CarryRippler {
     }
 }
 
-impl ::std::iter::FusedIterator for CarryRippler {}
+impl FusedIterator for CarryRippler {}
 
 #[cfg(test)]
 mod tests {

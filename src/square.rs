@@ -19,6 +19,7 @@ use std::{
     convert::TryInto,
     error::Error,
     fmt::{self, Write as _},
+    mem,
     num::TryFromIntError,
     ops::Sub,
     str,
@@ -126,7 +127,7 @@ impl File {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
-        unsafe { ::std::mem::transmute(index as u8) }
+        unsafe { mem::transmute(index as u8) }
     }
 
     #[inline]
@@ -242,7 +243,7 @@ impl Rank {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Rank {
         debug_assert!(index < 8);
-        unsafe { ::std::mem::transmute(index as u8) }
+        unsafe { mem::transmute(index as u8) }
     }
 
     #[inline]
@@ -374,7 +375,7 @@ impl Square {
     #[inline]
     pub unsafe fn new_unchecked(index: u32) -> Square {
         debug_assert!(index < 64);
-        unsafe { ::std::mem::transmute(index as u8) }
+        unsafe { mem::transmute(index as u8) }
     }
 
     /// Tries to get a square from file and rank.

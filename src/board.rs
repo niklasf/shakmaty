@@ -14,7 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{fmt, fmt::Write, iter::FromIterator};
+use std::{
+    fmt,
+    fmt::Write,
+    iter::{FromIterator, FusedIterator},
+};
 
 use crate::{
     attacks,
@@ -424,7 +428,7 @@ impl ExactSizeIterator for Pieces {
     }
 }
 
-impl ::std::iter::FusedIterator for Pieces {}
+impl FusedIterator for Pieces {}
 
 #[cfg(test)]
 mod tests {
