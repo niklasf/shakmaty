@@ -624,7 +624,7 @@ impl Setup for Chess {
 impl FromSetup for Chess {
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
         let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
-        PositionError { errors, pos }.strict()
+        PositionError { pos, errors }.strict()
     }
 }
 

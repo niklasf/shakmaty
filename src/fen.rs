@@ -159,8 +159,8 @@ impl FenOpts {
             if self.scid {
                 format!(
                     " +{}+{}",
-                    3u8.saturating_sub(u8::from(r.white)),
-                    3u8.saturating_sub(u8::from(r.black))
+                    3_u8.saturating_sub(u8::from(r.white)),
+                    3_u8.saturating_sub(u8::from(r.black))
                 )
             } else {
                 format!(" {}", r)
@@ -202,8 +202,8 @@ impl FenOpts {
                         .map_or("-".to_owned(), |sq| sq.to_string()),
                     setup.halfmoves(),
                     setup.fullmoves(),
-                    3u8.saturating_sub(u8::from(checks.white)),
-                    3u8.saturating_sub(u8::from(checks.black))
+                    3_u8.saturating_sub(u8::from(checks.white)),
+                    3_u8.saturating_sub(u8::from(checks.black))
                 )
             }
             _ => format!(
@@ -255,7 +255,7 @@ fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError>
     let mut rank = 7i8;
     let mut file = 0i8;
 
-    let mut iter = board_fen.iter().cloned().peekable();
+    let mut iter = board_fen.iter().copied().peekable();
 
     while let Some(ch) = iter.next() {
         if ch == b'/' && file == 8 {
@@ -298,8 +298,8 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
         (Some(b""), Some(white_given), Some(black_given)) => {
             // format: +0+0
             ByColor {
-                white: RemainingChecks(3u8.checked_sub(btoi::btou(white_given).ok()?)?),
-                black: RemainingChecks(3u8.checked_sub(btoi::btoi(black_given).ok()?)?),
+                white: RemainingChecks(3_u8.checked_sub(btoi::btou(white_given).ok()?)?),
+                black: RemainingChecks(3_u8.checked_sub(btoi::btoi(black_given).ok()?)?),
             }
         }
         (Some(white), Some(black), None) => {
@@ -355,7 +355,7 @@ impl Board {
                 }
 
                 if file == File::H && rank > Rank::First {
-                    fen.push('/')
+                    fen.push('/');
                 }
             }
         }
@@ -576,7 +576,7 @@ impl Fen {
         if let Some(fullmoves_part) = parts.next() {
             let fullmoves = btoi::btou_saturating(fullmoves_part)
                 .map_err(|_| ParseFenError::InvalidFullmoves)?;
-            result.fullmoves = NonZeroU32::new(max(fullmoves, 1)).unwrap();
+            result.fullmoves = NonZeroU32::new(max(fullmoves, 1)).expect("non-zero fullmoves");
         }
 
         let last_part = if let Some(checks_part) = parts.next() {

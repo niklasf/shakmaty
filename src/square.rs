@@ -634,9 +634,9 @@ impl Square {
     /// ```
     pub fn distance(self, other: Square) -> u32 {
         max(
-            (self.file() - other.file()).abs(),
-            (self.rank() - other.rank()).abs(),
-        ) as u32
+            (self.file() - other.file()).unsigned_abs(),
+            (self.rank() - other.rank()).unsigned_abs(),
+        )
     }
 }
 

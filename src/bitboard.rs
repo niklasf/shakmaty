@@ -426,7 +426,7 @@ impl Bitboard {
     pub const EMPTY: Bitboard = Bitboard(0);
 
     /// A bitboard containing all squares.
-    pub const FULL: Bitboard = Bitboard(!0u64);
+    pub const FULL: Bitboard = Bitboard(!0);
 
     /// All dark squares.
     pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
@@ -742,7 +742,7 @@ impl Iterator for CarryRippler {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, 1usize.checked_shl(self.bb.count_ones()))
+        (0, 1_usize.checked_shl(self.bb.count_ones()))
     }
 }
 

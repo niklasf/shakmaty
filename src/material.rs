@@ -337,7 +337,7 @@ impl fmt::Display for Material {
 
 impl Extend<Piece> for Material {
     fn extend<T: IntoIterator<Item = Piece>>(&mut self, iter: T) {
-        for piece in iter.into_iter().take(64usize.saturating_sub(self.count())) {
+        for piece in iter.into_iter().take(64_usize.saturating_sub(self.count())) {
             *self.by_piece_mut(piece) += 1;
         }
     }

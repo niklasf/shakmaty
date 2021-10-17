@@ -157,7 +157,7 @@ impl San {
                 to: Square::from_ascii(&san[2..]).map_err(|_| ParseSanError)?,
             })
         } else {
-            let mut chars = san.iter().cloned();
+            let mut chars = san.iter().copied();
 
             let (role, next) = {
                 let ch = chars.next().ok_or(ParseSanError)?;
@@ -595,7 +595,7 @@ impl SanPlus {
             san: result,
             suffix: san
                 .last()
-                .cloned()
+                .copied()
                 .and_then(|ch| Suffix::from_char(char::from(ch))),
         })
     }

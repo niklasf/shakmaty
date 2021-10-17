@@ -164,7 +164,7 @@ fn generate_basics<W: Write>(f: &mut W) -> io::Result<()> {
 }
 
 fn generate_sliding_attacks<W: Write>(f: &mut W) -> io::Result<()> {
-    let mut attacks = [Bitboard(0); 88772];
+    let mut attacks = vec![Bitboard(0); 88772];
 
     for sq in Square::ALL {
         init_magics(
