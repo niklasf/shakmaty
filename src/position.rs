@@ -3103,6 +3103,21 @@ mod tests {
 
     #[cfg(feature = "variant")]
     #[test]
+    fn test_atomic_exploded_king() {
+        use super::variant::Atomic;
+
+        let pos: Atomic = setup_fen("rn5r/pp4pp/2p3Nn/5p2/1b2P1PP/8/PPP2P2/R1B1KB1R b KQ - 0 9");
+
+        assert_eq!(
+            pos.outcome(),
+            Some(Outcome::Decisive {
+                winner: Color::White
+            })
+        );
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
     fn test_racing_kings_end() {
         use super::variant::RacingKings;
 
