@@ -9,7 +9,7 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
 keywords = ["chess", "lichess"]
 build = "src/build.rs"
-edition = "2018"
+edition = "2021"
 
 [features]
 default = []

@@ -333,7 +333,7 @@ impl Default for Board {
 
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for rank in IntoIterator::into_iter(Rank::ALL).rev() {
+        for rank in Rank::ALL.into_iter().rev() {
             for file in File::ALL {
                 let square = Square::from_coords(file, rank);
                 f.write_char(self.piece_at(square).map_or('.', Piece::char))?;

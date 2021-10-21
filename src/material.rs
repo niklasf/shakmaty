@@ -105,7 +105,7 @@ impl MaterialSide {
             return Err(ParseMaterialError);
         }
 
-        s.into_iter()
+        s.iter()
             .copied()
             .map(|ch| Role::from_char(char::from(ch)).ok_or(ParseMaterialError))
             .collect()
@@ -114,7 +114,7 @@ impl MaterialSide {
 
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for role in IntoIterator::into_iter(Role::ALL).rev() {
+        for role in Role::ALL.into_iter().rev() {
             f.write_str(
                 &role
                     .char()
@@ -339,7 +339,7 @@ impl Material {
             return Err(ParseMaterialError);
         }
 
-        s.into_iter()
+        s.iter()
             .copied()
             .map(|ch| Piece::from_char(char::from(ch)).ok_or(ParseMaterialError))
             .collect()

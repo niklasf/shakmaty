@@ -319,7 +319,7 @@ impl Board {
     pub fn board_fen(&self, promoted: Bitboard) -> String {
         let mut fen = String::with_capacity(15);
 
-        for rank in IntoIterator::into_iter(Rank::ALL).rev() {
+        for rank in Rank::ALL.into_iter().rev() {
             let mut empty = 0;
 
             for file in File::ALL {
