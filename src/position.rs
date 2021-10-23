@@ -1015,8 +1015,7 @@ pub(crate) mod variant {
 
         fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
             let attacker_kings = self.board().kings() & self.board().by_color(attacker);
-            if (attacker_kings.is_empty() || (attacks::king_attacks(square) & attacker_kings).any())
-            {
+            if attacker_kings.is_empty() || (attacks::king_attacks(square) & attacker_kings).any() {
                 Bitboard(0)
             } else {
                 self.board().attacks_to(square, attacker, occupied)
