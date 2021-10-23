@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        toolchain: ["stable", "beta", "nightly"]
+        toolchain: ["1.56.0", "nightly-2021-10-22"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
