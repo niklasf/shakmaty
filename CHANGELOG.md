@@ -1,8 +1,16 @@
 # Changelog for shakmaty
 
+## v0.20.2
+
+- Minimum supported Rust version is now 1.56.
+- Fixed `Atomic` position validation, where the remaining king is attacked, but
+  the other king has exploded.
+- Fixed `Material::from_ascii()`. Now requires `v` separator, and rejects
+  inputs with more than 64 pieces in total.
+
 ## v0.20.1
 
-- Fix signature of `ByColor::new_with()`. Technically semver breaking.
+- Fixed signature of `ByColor::new_with()`. Technically semver breaking.
 - Deprecated `Bitboard::ALL`. Use `Bitboard::FULL` instead.
 - Improved `Display` of `PositionError`.
 - Removed implementations of deprecated `Error::description()`.
