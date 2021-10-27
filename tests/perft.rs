@@ -90,7 +90,7 @@ gen_tests! {
 }
 
 #[cfg(feature = "variant")]
-use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings};
+use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings, ThreeCheck};
 #[cfg(feature = "variant")]
 gen_tests! {
     test_atomic,      Atomic,      "tests/atomic.perft",      1_000_000,
@@ -98,4 +98,5 @@ gen_tests! {
     test_crazyhouse,  Crazyhouse,  "tests/crazyhouse.perft",  1_000_000,
     test_racingkings, RacingKings, "tests/racingkings.perft", 1_000_000,
     test_horde,       Horde,       "tests/horde.perft",       1_000_000,
+    test_3check,      ThreeCheck,  "tests/3check.perft",      1_000_000,
 }
