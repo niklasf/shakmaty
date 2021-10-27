@@ -60,6 +60,16 @@ impl Outcome {
             Outcome::Draw => None,
         }
     }
+
+    pub fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+        Ok(match bytes {
+            b"1-0" => Outcome::Decisive { winner: White },
+            b"0-1" => Outcome::Decisive { winner: Black },
+            b"1/2-1/2" => Outcome::Draw,
+            b"*" => return Err(ParseOutcomeError::Unknown),
+            _ => return Err(ParseOutcomeError::Invalid),
+        })
+    }
 }
 
 impl fmt::Display for Outcome {
@@ -93,13 +103,7 @@ impl FromStr for Outcome {
     type Err = ParseOutcomeError;
 
     fn from_str(s: &str) -> Result<Outcome, ParseOutcomeError> {
-        Ok(match s {
-            "1-0" => Outcome::Decisive { winner: White },
-            "0-1" => Outcome::Decisive { winner: Black },
-            "1/2-1/2" => Outcome::Draw,
-            "*" => return Err(ParseOutcomeError::Unknown),
-            _ => return Err(ParseOutcomeError::Invalid),
-        })
+        Outcome::from_ascii(s.as_bytes())
     }
 }
 
