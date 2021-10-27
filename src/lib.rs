@@ -104,7 +104,10 @@ pub use crate::{
     material::{Material, MaterialSide, ParseMaterialError},
     movelist::MoveList,
     perft::perft,
-    position::{Chess, FromSetup, Outcome, PlayError, Position, PositionError, PositionErrorKinds},
+    position::{
+        Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
+        PositionErrorKinds,
+    },
     setup::{Castles, Setup},
     square::{File, ParseSquareError, Rank, Square},
     types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},

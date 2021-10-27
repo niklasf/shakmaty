@@ -19,6 +19,7 @@ use std::{
     fmt,
     hash::{Hash, Hasher},
     num::NonZeroU32,
+    str::FromStr,
 };
 
 use bitflags::bitflags;
@@ -67,6 +68,37 @@ impl fmt::Display for Outcome {
             Outcome::Decisive { winner: White } => "1-0",
             Outcome::Decisive { winner: Black } => "0-1",
             Outcome::Draw => "1/2-1/2",
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ParseOutcomeError {
+    Unknown,
+    Invalid,
+}
+
+impl fmt::Display for ParseOutcomeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match *self {
+            ParseOutcomeError::Unknown => "unknown outcome: *",
+            ParseOutcomeError::Invalid => "invalid outcome",
+        })
+    }
+}
+
+impl Error for ParseOutcomeError {}
+
+impl FromStr for Outcome {
+    type Err = ParseOutcomeError;
+
+    fn from_str(s: &str) -> Result<Outcome, ParseOutcomeError> {
+        Ok(match s {
+            "1-0" => Outcome::Decisive { winner: White },
+            "0-1" => Outcome::Decisive { winner: Black },
+            "1/2-1/2" => Outcome::Draw,
+            "*" => return Err(ParseOutcomeError::Unknown),
+            _ => return Err(ParseOutcomeError::Invalid),
         })
     }
 }
