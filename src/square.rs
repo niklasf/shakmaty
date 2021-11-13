@@ -81,11 +81,19 @@ macro_rules! unsafe_step_impl {
             }
 
             unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
-                unsafe { Self::new_unchecked(u32::from(start) + count as u32) }
+                // Safety: It is the callers responsibility to ensure
+                // start + count is in the range of Self.
+                debug_assert!(count < 64);
+                let count = count as u32;
+                unsafe { Self::new_unchecked(u32::from(start) + count) }
             }
 
             unsafe fn backward_unchecked(start: Self, count: usize) -> Self {
-                unsafe { Self::new_unchecked(u32::from(start) - count as u32) }
+                // Safety: It is the callers responsibility to ensure
+                // start - count is in the range of Self.
+                debug_assert!(count < 64);
+                let count = count as u32;
+                unsafe { Self::new_unchecked(u32::from(start) - count) }
             }
         }
     };
