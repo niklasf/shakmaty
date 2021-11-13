@@ -297,7 +297,7 @@ pub trait FromSetup: Sized {
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
 /// implementation. Extends [`Setup`].
 pub trait Position: Setup {
-    /// Generate all legal moves.
+    /// Generates all legal moves.
     fn legal_moves(&self) -> MoveList;
 
     /// Generates a subset of legal moves: All piece moves and drops of type
