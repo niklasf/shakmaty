@@ -141,6 +141,11 @@ impl Wdl {
         })
     }
 
+    /// Returns a number representing the sign of `self`.
+    ///
+    /// * `1` if `self > Wdl::Draw`
+    /// * `0` if `self == Wdl::Draw`
+    /// * `-1` if `self < Wdl::Draw`
     pub fn signum(self) -> i32 {
         i32::from(self).signum()
     }
@@ -277,6 +282,11 @@ impl Dtz {
         Dtz(new_dtz)
     }
 
+    /// Returns a number representing the sign of `self`.
+    ///
+    /// * `1` if `self > Dtz(0)`
+    /// * `0` if `self == Dtz(0)`
+    /// * `-1` if `self < Dtz(0)`
     pub fn signum(self) -> i32 {
         self.0.signum()
     }
