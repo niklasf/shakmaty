@@ -23,10 +23,7 @@
 //! # Example
 //!
 //! ```
-//! # use std::error::Error;
-//! #
-//! use shakmaty::{CastlingMode, Chess};
-//! use shakmaty::fen::Fen;
+//! use shakmaty::{CastlingMode, Chess, fen::Fen};
 //! use shakmaty_syzygy::{Tablebase, MaybeRounded, Wdl, Dtz, Syzygy};
 //!
 //! let mut tables = Tablebase::new();
@@ -41,8 +38,7 @@
 //!
 //! let dtz = tables.probe_dtz(&pos)?;
 //! assert!(matches!(dtz, MaybeRounded::Rounded(Dtz(-59))));
-//! #
-//! # Ok::<_, Box<dyn Error>>(())
+//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! # Errors
