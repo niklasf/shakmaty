@@ -31,7 +31,11 @@ pub trait MaterialSideExt {
 
 impl MaterialSideExt for MaterialSide {
     fn unique_roles(&self) -> u8 {
-        ROLES.iter().map(|&r| self.by_role(r)).filter(|&c| c == 1).sum()
+        ROLES
+            .iter()
+            .map(|&r| self.by_role(r))
+            .filter(|&c| c == 1)
+            .sum()
     }
 }
 
@@ -46,9 +50,12 @@ impl MaterialExt for Material {
     }
 
     fn min_like_man(&self) -> u8 {
-        ROLES.iter().map(|&r| self.white.by_role(r))
+        ROLES
+            .iter()
+            .map(|&r| self.white.by_role(r))
             .chain(ROLES.iter().map(|&r| self.black.by_role(r)))
             .filter(|&c| 2 <= c)
-            .min().unwrap_or(0)
+            .min()
+            .unwrap_or(0)
     }
 }

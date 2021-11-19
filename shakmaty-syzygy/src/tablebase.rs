@@ -14,22 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{max, Reverse};
-use std::fs;
-use std::io;
-use std::path::{Path, PathBuf};
-use std::str::FromStr;
+use std::{
+    cmp::{max, Reverse},
+    fs, io,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use arrayvec::ArrayVec;
 use once_cell::sync::OnceCell;
 use positioned_io::RandomAccessFile;
 use rustc_hash::FxHashMap;
-
 use shakmaty::{Material, Move, Position, Role};
 
-use crate::{AmbiguousWdl, errors::{ProbeResultExt as _, SyzygyError, SyzygyResult}};
-use crate::table::{DtzTable, WdlTable};
-use crate::types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl};
+use crate::{
+    errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
+    table::{DtzTable, WdlTable},
+    types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
+    AmbiguousWdl,
+};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -139,10 +142,16 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
-        if ext == S::TBW.ext || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext)) {
-            self.wdl.insert(material, (path.to_path_buf(), OnceCell::new()));
-        } else if ext == S::TBZ.ext || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext)) {
-            self.dtz.insert(material, (path.to_path_buf(), OnceCell::new()));
+        if ext == S::TBW.ext
+            || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext))
+        {
+            self.wdl
+                .insert(material, (path.to_path_buf(), OnceCell::new()));
+        } else if ext == S::TBZ.ext
+            || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext))
+        {
+            self.dtz
+                .insert(material, (path.to_path_buf(), OnceCell::new()));
         } else {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
@@ -152,8 +161,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self.wdl.get(key).or_else(|| self.wdl.get(&key.clone().into_flipped())) {
-            table.get_or_try_init(|| WdlTable::open(path, key)).ctx(Metric::Wdl, key)
+        if let Some(&(ref path, ref table)) = self
+            .wdl
+            .get(key)
+            .or_else(|| self.wdl.get(&key.clone().into_flipped()))
+        {
+            table
+                .get_or_try_init(|| WdlTable::open(path, key))
+                .ctx(Metric::Wdl, key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
@@ -163,8 +178,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self.dtz.get(key).or_else(|| self.dtz.get(&key.clone().into_flipped())) {
-            table.get_or_try_init(|| DtzTable::open(path, key)).ctx(Metric::Dtz, key)
+        if let Some(&(ref path, ref table)) = self
+            .dtz
+            .get(key)
+            .or_else(|| self.dtz.get(&key.clone().into_flipped()))
+        {
+            table
+                .get_or_try_init(|| DtzTable::open(path, key))
+                .ctx(Metric::Dtz, key)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
@@ -237,35 +258,61 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Build list of successor positions.
-        let with_after = pos.legal_moves().into_iter().map(|m| {
-            let mut after = pos.clone();
-            after.play_unchecked(&m);
-            WithAfter { m, after }
-        }).collect::<ArrayVec<_, 256>>();
+        let with_after = pos
+            .legal_moves()
+            .into_iter()
+            .map(|m| {
+                let mut after = pos.clone();
+                after.play_unchecked(&m);
+                WithAfter { m, after }
+            })
+            .collect::<ArrayVec<_, 256>>();
 
         // Determine WDL for each move.
-        let with_wdl = with_after.iter().map(|e| Ok(WithWdlEntry {
-            m: e.m.clone(),
-            entry: self.probe(&e.after)?,
-        })).collect::<SyzygyResult<ArrayVec<_, 256>>>()?;
+        let with_wdl = with_after
+            .iter()
+            .map(|e| {
+                Ok(WithWdlEntry {
+                    m: e.m.clone(),
+                    entry: self.probe(&e.after)?,
+                })
+            })
+            .collect::<SyzygyResult<ArrayVec<_, 256>>>()?;
 
         // Find best WDL.
-        let best_wdl = with_wdl.iter().map(|a| a.entry.wdl).min().unwrap_or(Wdl::Loss);
+        let best_wdl = with_wdl
+            .iter()
+            .map(|a| a.entry.wdl)
+            .min()
+            .unwrap_or(Wdl::Loss);
 
         // Select a DTZ-optimal move among the moves with best WDL.
-        itertools::process_results(with_wdl.iter().filter(|a| a.entry.wdl == best_wdl).map(|a| {
-            let dtz = a.entry.dtz()?;
-            Ok(WithDtz {
-                immediate_loss: dtz.ignore_rounding() == Dtz(-1) && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
-                zeroing: a.m.is_zeroing(),
-                m: a.m.clone(),
-                dtz,
-            })
-        }), |iter| iter.min_by_key(|m| (
-            Reverse(m.immediate_loss),
-            m.zeroing ^ (m.dtz.ignore_rounding() < Dtz(0)), // zeroing is good/bad if winning/losing
-            Reverse(m.dtz.ignore_rounding()),
-        )).map(|m| (m.m, m.dtz)))
+        itertools::process_results(
+            with_wdl
+                .iter()
+                .filter(|a| a.entry.wdl == best_wdl)
+                .map(|a| {
+                    let dtz = a.entry.dtz()?;
+                    Ok(WithDtz {
+                        immediate_loss: dtz.ignore_rounding() == Dtz(-1)
+                            && (a.entry.pos.is_checkmate()
+                                || a.entry.pos.variant_outcome().is_some()),
+                        zeroing: a.m.is_zeroing(),
+                        m: a.m.clone(),
+                        dtz,
+                    })
+                }),
+            |iter| {
+                iter.min_by_key(|m| {
+                    (
+                        Reverse(m.immediate_loss),
+                        m.zeroing ^ (m.dtz.ignore_rounding() < Dtz(0)), // zeroing is good/bad if winning/losing
+                        Reverse(m.dtz.ignore_rounding()),
+                    )
+                })
+                .map(|m| (m.m, m.dtz))
+            },
+        )
     }
 
     fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {
@@ -370,8 +417,12 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 tablebase: self,
                 pos,
                 wdl: best_capture,
-                state: if best_capture > Wdl::Draw { ProbeState::ZeroingBestMove } else { ProbeState::Normal },
-            })
+                state: if best_capture > Wdl::Draw {
+                    ProbeState::ZeroingBestMove
+                } else {
+                    ProbeState::Normal
+                },
+            });
         }
 
         // If the position would be stalemate without ep captures, then we are
@@ -382,7 +433,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 pos,
                 wdl: best_ep,
                 state: ProbeState::ZeroingBestMove,
-            })
+            });
         }
 
         Ok(WdlEntry {
@@ -412,11 +463,20 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         Ok(max(alpha, v))
     }
 
-    fn probe_compulsory_captures(&self, pos: &S, mut alpha: Wdl, beta: Wdl, threats: bool) -> SyzygyResult<(Wdl, ProbeState)> {
+    fn probe_compulsory_captures(
+        &self,
+        pos: &S,
+        mut alpha: Wdl,
+        beta: Wdl,
+        threats: bool,
+    ) -> SyzygyResult<(Wdl, ProbeState)> {
         assert!(S::CAPTURES_COMPULSORY);
 
         if let Some(outcome) = pos.variant_outcome() {
-            return Ok((Wdl::from_outcome(outcome, pos.turn()), ProbeState::ZeroingBestMove));
+            return Ok((
+                Wdl::from_outcome(outcome, pos.turn()),
+                ProbeState::ZeroingBestMove,
+            ));
         }
 
         // Explore compulsory captures in antichess variants.
@@ -460,7 +520,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if v > alpha {
             Ok((v, ProbeState::Normal))
         } else {
-            Ok((alpha, if threats_found { ProbeState::Threat } else { ProbeState::Normal }))
+            Ok((
+                alpha,
+                if threats_found {
+                    ProbeState::Threat
+                } else {
+                    ProbeState::Normal
+                },
+            ))
         }
     }
 
@@ -484,7 +551,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             }
         }
 
-        Ok(if captures.is_empty() { None } else { Some(alpha) })
+        Ok(if captures.is_empty() {
+            None
+        } else {
+            Some(alpha)
+        })
     }
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
@@ -504,7 +575,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &key))
     }
 
-    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<MaybeRounded<u32>>> {
+    fn probe_dtz_table(
+        &self,
+        pos: &S,
+        wdl: DecisiveWdl,
+    ) -> SyzygyResult<Option<MaybeRounded<u32>>> {
         // Get raw DTZ value from the appropriate table.
         let key = pos.board().material();
         self.dtz_table(&key)
@@ -598,10 +673,9 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use shakmaty::{fen::Fen, CastlingMode, Chess, Square};
 
-    use shakmaty::fen::Fen;
-    use shakmaty::{CastlingMode, Chess, Square};
+    use super::*;
 
     #[test]
     fn test_send_sync() {
@@ -615,7 +689,9 @@ mod tests {
     #[test]
     fn test_mating_best_move() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/chess").expect("read directory");
+        tables
+            .add_directory("tables/chess")
+            .expect("read directory");
 
         let pos: Chess = "5BrN/8/8/8/8/2k5/8/2K5 b - -"
             .parse::<Fen>()
@@ -623,19 +699,27 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("legal position");
 
-        assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
-            role: Role::Rook,
-            from: Square::G8,
-            capture: None,
-            to: Square::G1,
-            promotion: None,
-        }, MaybeRounded::Rounded(Dtz(-1)))))));
+        assert!(matches!(
+            tables.best_move(&pos),
+            Ok(Some((
+                Move::Normal {
+                    role: Role::Rook,
+                    from: Square::G8,
+                    capture: None,
+                    to: Square::G1,
+                    promotion: None,
+                },
+                MaybeRounded::Rounded(Dtz(-1))
+            )))
+        ));
     }
 
     #[test]
     fn test_black_escapes_via_underpromotion() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/chess").expect("read directory");
+        tables
+            .add_directory("tables/chess")
+            .expect("read directory");
 
         let pos: Chess = "8/6B1/8/8/B7/8/K1pk4/8 b - - 0 1"
             .parse::<Fen>()
@@ -643,20 +727,28 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("legal position");
 
-        assert!(matches!(tables.best_move(&pos), Ok(Some((Move::Normal {
-            role: Role::Pawn,
-            from: Square::C2,
-            to: Square::C1,
-            capture: None,
-            promotion: Some(Role::Knight),
-        }, MaybeRounded::Rounded(Dtz(109)))))));
+        assert!(matches!(
+            tables.best_move(&pos),
+            Ok(Some((
+                Move::Normal {
+                    role: Role::Pawn,
+                    from: Square::C2,
+                    to: Square::C1,
+                    capture: None,
+                    promotion: Some(Role::Knight),
+                },
+                MaybeRounded::Rounded(Dtz(109))
+            )))
+        ));
     }
 
     #[test]
     #[ignore]
     fn test_many_pawns() {
         let mut tables = Tablebase::new();
-        tables.add_directory("tables/chess").expect("read directory");
+        tables
+            .add_directory("tables/chess")
+            .expect("read directory");
 
         let pos: Chess = "3k4/5P2/8/8/4K3/2P3P1/PP6/8 w - - 0 1"
             .parse::<Fen>()
@@ -664,6 +756,9 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("legal position");
 
-        assert!(matches!(tables.probe_dtz(&pos), Ok(MaybeRounded::Precise(Dtz(1)))));
+        assert!(matches!(
+            tables.probe_dtz(&pos),
+            Ok(MaybeRounded::Precise(Dtz(1)))
+        ));
     }
 }

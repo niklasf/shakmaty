@@ -59,12 +59,10 @@
 //!   to debug the probing code. Currently requires nightly Rust.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.17.0")]
-
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
-
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 #![cfg_attr(feature = "backtrace", feature(backtrace))]
 
@@ -75,11 +73,12 @@ mod table;
 mod tablebase;
 mod types;
 
-pub use crate::errors::{ProbeError, SyzygyError};
-pub use crate::tablebase::Tablebase;
-pub use crate::types::{AmbiguousWdl, Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl};
-
 #[cfg(fuzzing)]
 pub use crate::table::{DtzTable, WdlTable};
 #[cfg(fuzzing)]
 pub use crate::types::DecisiveWdl;
+pub use crate::{
+    errors::{ProbeError, SyzygyError},
+    tablebase::Tablebase,
+    types::{AmbiguousWdl, Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl},
+};

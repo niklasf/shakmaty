@@ -1,11 +1,12 @@
-use std::error::Error;
-use std::path::PathBuf;
-use structopt::StructOpt;
+use std::{error::Error, path::PathBuf};
 
-use shakmaty::fen::{fen, Fen};
-use shakmaty::san::SanPlus;
-use shakmaty::{CastlingMode, Chess, Color, Position, Setup, Outcome};
-use shakmaty_syzygy::{Tablebase, MaybeRounded};
+use shakmaty::{
+    fen::{fen, Fen},
+    san::SanPlus,
+    CastlingMode, Chess, Color, Outcome, Position, Setup,
+};
+use shakmaty_syzygy::{MaybeRounded, Tablebase};
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -60,8 +61,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             force_movenumber = true;
         } else if pos.halfmoves() == 0 {
             movetext.push(match tablebase.probe_dtz(&pos)? {
-                MaybeRounded::Precise(dtz) => format!("{{ {} with DTZ {} }}", pos.board().material(), i32::from(dtz)),
-                MaybeRounded::Rounded(dtz) => format!("{{ {} with DTZ {} or {} }}", pos.board().material(), i32::from(dtz), i32::from(dtz.add_plies(1))),
+                MaybeRounded::Precise(dtz) => format!(
+                    "{{ {} with DTZ {} }}",
+                    pos.board().material(),
+                    i32::from(dtz)
+                ),
+                MaybeRounded::Rounded(dtz) => format!(
+                    "{{ {} with DTZ {} or {} }}",
+                    pos.board().material(),
+                    i32::from(dtz),
+                    i32::from(dtz.add_plies(1))
+                ),
             });
             force_movenumber = true;
         }
@@ -101,7 +111,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("[WDL \"{:?}\"]", wdl);
         match dtz {
             MaybeRounded::Precise(dtz) => println!("[DTZ \"{}\"]", i32::from(dtz)),
-            MaybeRounded::Rounded(dtz) => println!("[DTZ \"{} or {}\"]", i32::from(dtz), i32::from(dtz.add_plies(1))),
+            MaybeRounded::Rounded(dtz) => println!(
+                "[DTZ \"{} or {}\"]",
+                i32::from(dtz),
+                i32::from(dtz.add_plies(1))
+            ),
         }
         println!();
         println!("{}", movetext.join(" "));

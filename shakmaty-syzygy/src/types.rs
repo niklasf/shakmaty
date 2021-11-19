@@ -14,12 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt;
-use std::ops::Neg;
-use std::convert::TryFrom;
+use std::{convert::TryFrom, fmt, ops::Neg};
 
 use arrayvec::ArrayVec;
-
 use shakmaty::{Chess, Color, Outcome, Piece};
 
 /// File extension and magic header bytes of Syzygy tables.
@@ -56,8 +53,14 @@ pub trait Syzygy {
 }
 
 impl Syzygy for Chess {
-    const TBW: TableType = TableType { ext: "rtbw", magic: [0x71, 0xe8, 0x23, 0x5d] };
-    const TBZ: TableType = TableType { ext: "rtbz", magic: [0xd7, 0x66, 0x0c, 0xa5] };
+    const TBW: TableType = TableType {
+        ext: "rtbw",
+        magic: [0x71, 0xe8, 0x23, 0x5d],
+    };
+    const TBZ: TableType = TableType {
+        ext: "rtbz",
+        magic: [0xd7, 0x66, 0x0c, 0xa5],
+    };
 
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = false;
@@ -69,8 +72,14 @@ impl Syzygy for Chess {
 #[cfg(feature = "variant")]
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 impl Syzygy for shakmaty::variant::Atomic {
-    const TBW: TableType = TableType { ext: "atbw", magic: [0x55, 0x8d, 0xa4, 0x49] };
-    const TBZ: TableType = TableType { ext: "atbz", magic: [0x91, 0xa9, 0x5e, 0xeb] };
+    const TBW: TableType = TableType {
+        ext: "atbw",
+        magic: [0x55, 0x8d, 0xa4, 0x49],
+    };
+    const TBZ: TableType = TableType {
+        ext: "atbz",
+        magic: [0x91, 0xa9, 0x5e, 0xeb],
+    };
 
     const ONE_KING: bool = true;
     const CONNECTED_KINGS: bool = true;
@@ -421,7 +430,8 @@ impl AmbiguousWdl {
 
     /// Returns the uniquely corresponding [`Wdl`], or `None` if ambiguous.
     pub fn unambiguous(self) -> Option<Wdl> {
-        self.is_unambiguous().then(|| AmbiguousWdl::after_zeroing(self))
+        self.is_unambiguous()
+            .then(|| AmbiguousWdl::after_zeroing(self))
     }
 }
 
@@ -516,8 +526,14 @@ impl Dtz {
     pub fn add_plies_checked(self, plies: u32) -> Option<Dtz> {
         match self {
             Dtz(0) => Some(Dtz(0)),
-            Dtz(n) if n > 0 => i32::try_from(plies).ok().and_then(|plies| n.checked_add(plies)).map(Dtz),
-            Dtz(n) => i32::try_from(plies).ok().and_then(|plies| n.checked_sub(plies)).map(Dtz),
+            Dtz(n) if n > 0 => i32::try_from(plies)
+                .ok()
+                .and_then(|plies| n.checked_add(plies))
+                .map(Dtz),
+            Dtz(n) => i32::try_from(plies)
+                .ok()
+                .and_then(|plies| n.checked_sub(plies))
+                .map(Dtz),
         }
     }
 
@@ -527,8 +543,14 @@ impl Dtz {
     pub fn add_plies_saturating(self, plies: u32) -> Dtz {
         match self {
             Dtz(0) => Dtz(0),
-            Dtz(n) if n > 0 => i32::try_from(plies).ok().and_then(|plies| n.checked_add(plies)).map_or(Dtz(i32::MAX), Dtz),
-            Dtz(n) => i32::try_from(plies).ok().and_then(|plies| n.checked_sub(plies)).map_or(Dtz(i32::MIN), Dtz),
+            Dtz(n) if n > 0 => i32::try_from(plies)
+                .ok()
+                .and_then(|plies| n.checked_add(plies))
+                .map_or(Dtz(i32::MAX), Dtz),
+            Dtz(n) => i32::try_from(plies)
+                .ok()
+                .and_then(|plies| n.checked_sub(plies))
+                .map_or(Dtz(i32::MIN), Dtz),
         }
     }
 

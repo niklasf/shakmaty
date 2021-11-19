@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::io;
-use std::fmt;
-use std::error::Error;
+use std::{error::Error, fmt, io};
 
 use shakmaty::Material;
 
@@ -40,7 +38,7 @@ pub enum SyzygyError {
         #[allow(missing_docs)]
         metric: Metric,
         #[allow(missing_docs)]
-        material: Material
+        material: Material,
     },
     /// Probe failed.
     ProbeFailed {
@@ -56,14 +54,23 @@ pub enum SyzygyError {
 impl fmt::Display for SyzygyError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            SyzygyError::Castling =>
-                write!(f, "syzygy tables do not contain position with castling rights"),
-            SyzygyError::TooManyPieces =>
-                write!(f, "too many pieces"),
-            SyzygyError::MissingTable { metric, material } =>
-                write!(f, "required {} table not found: {}", metric, material),
-            SyzygyError::ProbeFailed { metric, material, error } =>
-                write!(f, "failed to probe {} table {}: {}", metric, material, error),
+            SyzygyError::Castling => write!(
+                f,
+                "syzygy tables do not contain position with castling rights"
+            ),
+            SyzygyError::TooManyPieces => write!(f, "too many pieces"),
+            SyzygyError::MissingTable { metric, material } => {
+                write!(f, "required {} table not found: {}", metric, material)
+            }
+            SyzygyError::ProbeFailed {
+                metric,
+                material,
+                error,
+            } => write!(
+                f,
+                "failed to probe {} table {}: {}",
+                metric, material, error
+            ),
         }
     }
 }
@@ -83,31 +90,28 @@ pub enum ProbeError {
     /// I/O error.
     Read {
         #[allow(missing_docs)]
-        error: io::Error
+        error: io::Error,
     },
     /// Table file has unexpected magic header bytes.
     Magic {
         #[allow(missing_docs)]
-        magic: [u8; 4]
+        magic: [u8; 4],
     },
     /// Corrupted table.
     CorruptedTable {
         #[allow(missing_docs)]
         #[cfg(feature = "backtrace")]
         #[cfg_attr(docs_rs, doc(cfg(feature = "backtrace")))]
-        backtrace: std::backtrace::Backtrace
+        backtrace: std::backtrace::Backtrace,
     },
 }
 
 impl fmt::Display for ProbeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ProbeError::Read { error } =>
-                write!(f, "i/o error reading table file: {}", error),
-            ProbeError::Magic { magic } =>
-                write!(f, "invalid magic header bytes: {:x?}", magic),
-            ProbeError::CorruptedTable { .. } =>
-                write!(f, "corrupted table"),
+            ProbeError::Read { error } => write!(f, "i/o error reading table file: {}", error),
+            ProbeError::Magic { magic } => write!(f, "invalid magic header bytes: {:x?}", magic),
+            ProbeError::CorruptedTable { .. } => write!(f, "corrupted table"),
         }
     }
 }
@@ -124,7 +128,7 @@ impl Error for ProbeError {
     fn backtrace(&self) -> Option<&std::backtrace::Backtrace> {
         match self {
             ProbeError::CorruptedTable { backtrace } => Some(backtrace),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -148,7 +152,7 @@ impl From<io::Error> for ProbeError {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => ProbeError::CorruptedTable {
                 #[cfg(feature = "backtrace")]
-                backtrace: std::backtrace::Backtrace::capture()
+                backtrace: std::backtrace::Backtrace::capture(),
             },
             _ => ProbeError::Read { error },
         }
@@ -160,9 +164,9 @@ macro_rules! throw {
     () => {
         return Err(crate::errors::ProbeError::CorruptedTable {
             #[cfg(feature = "backtrace")]
-            backtrace: ::std::backtrace::Backtrace::capture()
+            backtrace: ::std::backtrace::Backtrace::capture(),
         })
-    }
+    };
 }
 
 /// Unwrap an `Option` or return a `CorruptedTable` error.

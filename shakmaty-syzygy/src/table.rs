@@ -14,23 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::io;
-use std::fs;
-use std::iter::FromIterator;
-use std::marker::PhantomData;
-use std::path::Path;
+use std::{fs, io, iter::FromIterator, marker::PhantomData, path::Path};
 
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
-use byteorder::{BE, LE, ByteOrder as _, ReadBytesExt as _};
+use byteorder::{ByteOrder as _, ReadBytesExt as _, BE, LE};
 use itertools::Itertools as _;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
-
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
 
-use crate::errors::{ProbeError, ProbeResult};
-use crate::material::MaterialExt;
-use crate::types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
+use crate::{
+    errors::{ProbeError, ProbeResult},
+    material::MaterialExt,
+    types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES},
+};
 
 const fn binomial(mut n: u64, k: u64) -> u64 {
     if k > n {
@@ -102,6 +99,7 @@ bitflags! {
 const MAX_BLOCK_SIZE: usize = 1024;
 
 /// Maps squares into the a1-d1-d4 triangle.
+#[rustfmt::skip]
 const TRIANGLE: [u64; 64] = [
     6, 0, 1, 2, 2, 1, 0, 6,
     0, 7, 3, 4, 4, 3, 7, 0,
@@ -117,6 +115,7 @@ const TRIANGLE: [u64; 64] = [
 const INV_TRIANGLE: [usize; 10] = [1, 2, 3, 10, 11, 19, 0, 9, 18, 27];
 
 /// Maps the b1-h1-h7 triangle to `0..=27`.
+#[rustfmt::skip]
 const LOWER: [u64; 64] = [
     28,  0,  1,  2,  3,  4,  5,  6,
      0, 29,  7,  8,  9, 10, 11, 12,
@@ -129,6 +128,7 @@ const LOWER: [u64; 64] = [
 ];
 
 /// Used to initialize `Consts::mult_idx` and `Consts::mult_factor`.
+#[rustfmt::skip]
 const MULT_TWIST: [u64; 64] = [
     15, 63, 55, 47, 40, 48, 56, 12,
     62, 11, 39, 31, 24, 32,  8, 57,
@@ -145,6 +145,7 @@ const MULT_TWIST: [u64; 64] = [
 const Z0: u64 = u64::max_value();
 
 /// Encoding of all 461 configurations of two not-connected kings.
+#[rustfmt::skip]
 const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,   0,   1,   2,   3,   4,
      Z0,  Z0,  Z0,   5,   6,   7,   8,   9,
@@ -238,6 +239,7 @@ const KK_IDX: [[u64; 64]; 10] = [[
 ]];
 
 /// Encoding of a pair of identical pieces.
+#[rustfmt::skip]
 const PP_IDX: [[u64; 64]; 10] = [[
       0,  Z0,   1,   2,   3,   4,   5,   6,
       7,   8,   9,  10,  11,  12,  13,  14,
@@ -355,7 +357,11 @@ impl Consts {
             let mut j = 0;
             while j < 10 {
                 mult_idx[i][j] = s;
-                s += if i == 0 { 1 } else { binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64) };
+                s += if i == 0 {
+                    1
+                } else {
+                    binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64)
+                };
                 j += 1;
             }
             mult_factor[i] = s;
@@ -480,10 +486,14 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     }
 
     // The remaining identical pieces are grouped together.
-    result.extend(pieces.iter()
-        .skip(first_len)
-        .group_by(|p| *p)
-        .into_iter().map(|(_, g)| g.count()));
+    result.extend(
+        pieces
+            .iter()
+            .skip(first_len)
+            .group_by(|p| *p)
+            .into_iter()
+            .map(|(_, g)| g.count()),
+    );
 
     result
 }
@@ -558,15 +568,9 @@ impl GroupData {
 #[derive(Debug)]
 enum DtzMap {
     /// Normal 8-bit DTZ map.
-    Normal {
-        map_ptr: u64,
-        by_wdl: [u16; 4]
-    },
+    Normal { map_ptr: u64, by_wdl: [u16; 4] },
     /// Wide 16-bit DTZ map for very long endgames.
-    Wide {
-        map_ptr: u64,
-        by_wdl: [u16; 4]
-    },
+    Wide { map_ptr: u64, by_wdl: [u16; 4] },
 }
 
 impl DtzMap {
@@ -635,7 +639,11 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: TableTag, F: ReadAt>(raf: &F, mut ptr: u64, groups: GroupData) -> ProbeResult<(PairsData, u64)> {
+    pub fn parse<S: Syzygy, T: TableTag, F: ReadAt>(
+        raf: &F,
+        mut ptr: u64,
+        groups: GroupData,
+    ) -> ProbeResult<(PairsData, u64)> {
         let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
@@ -647,24 +655,27 @@ impl PairsData {
                 0
             };
 
-            return Ok((PairsData {
-                flags,
-                min_symlen: single_value,
-                groups,
-                base: Vec::new(),
-                block_lengths: 0,
-                block_length_size: 0,
-                block_size: 0,
-                blocks_num: 0,
-                btree: 0,
-                data: 0,
-                lowest_sym: 0,
-                span: 0,
-                sparse_index: 0,
-                sparse_index_size: 0,
-                symlen: Vec::new(),
-                dtz_map: None,
-            }, ptr + 2));
+            return Ok((
+                PairsData {
+                    flags,
+                    min_symlen: single_value,
+                    groups,
+                    base: Vec::new(),
+                    block_lengths: 0,
+                    block_length_size: 0,
+                    block_size: 0,
+                    blocks_num: 0,
+                    btree: 0,
+                    data: 0,
+                    lowest_sym: 0,
+                    span: 0,
+                    sparse_index: 0,
+                    sparse_index_size: 0,
+                    symlen: Vec::new(),
+                    dtz_map: None,
+                },
+                ptr + 2,
+            ));
         }
 
         // Read header.
@@ -695,9 +706,10 @@ impl PairsData {
         for i in (0..h - 1).rev() {
             let ptr = lowest_sym + i as u64 * 2;
 
-            base[i] = u!(u!(base[i + 1]
-                .checked_add(u64::from(raf.read_u16_at::<LE>(ptr)?)))
-                .checked_sub(u64::from(raf.read_u16_at::<LE>(ptr + 2)?))) / 2;
+            base[i] = u!(
+                u!(base[i + 1].checked_add(u64::from(raf.read_u16_at::<LE>(ptr)?)))
+                    .checked_sub(u64::from(raf.read_u16_at::<LE>(ptr + 2)?))
+            ) / 2;
 
             ensure!(base[i] * 2 >= base[i + 1]);
         }
@@ -714,40 +726,50 @@ impl PairsData {
         let mut symlen = vec![0; usize::from(sym)];
         let mut visited = vec![false; symlen.len()];
         for s in 0..sym {
-           read_symlen(raf, btree, &mut symlen, &mut visited, s, 16)?;
+            read_symlen(raf, btree, &mut symlen, &mut visited, s, 16)?;
         }
         ptr += symlen.len() as u64 * 3 + (symlen.len() as u64 & 1);
 
         // Result.
-        Ok((PairsData {
-            flags,
-            groups,
+        Ok((
+            PairsData {
+                flags,
+                groups,
 
-            block_size,
-            span,
-            blocks_num,
+                block_size,
+                span,
+                blocks_num,
 
-            btree,
-            min_symlen,
-            lowest_sym,
-            base,
-            symlen,
+                btree,
+                min_symlen,
+                lowest_sym,
+                base,
+                symlen,
 
-            sparse_index: 0, // to be initialized later
-            sparse_index_size,
+                sparse_index: 0, // to be initialized later
+                sparse_index_size,
 
-            block_lengths: 0, // to be initialized later
-            block_length_size,
+                block_lengths: 0, // to be initialized later
+                block_length_size,
 
-            data: 0, // to be initialized later
+                data: 0, // to be initialized later
 
-            dtz_map: None, // to be initialized later
-        }, ptr))
+                dtz_map: None, // to be initialized later
+            },
+            ptr,
+        ))
     }
 }
 
 /// Build the symlen table.
-fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &mut [bool], sym: u16, depth: u8) -> ProbeResult<()> {
+fn read_symlen<F: ReadAt>(
+    raf: &F,
+    btree: u64,
+    symlen: &mut Vec<u8>,
+    visited: &mut [bool],
+    sym: u16,
+    depth: u8,
+) -> ProbeResult<()> {
     if *u!(visited.get(usize::from(sym))) {
         return Ok(());
     }
@@ -764,9 +786,10 @@ fn read_symlen<F: ReadAt>(raf: &F, btree: u64, symlen: &mut Vec<u8>, visited: &m
         read_symlen(raf, btree, symlen, visited, left, depth)?;
         read_symlen(raf, btree, symlen, visited, right, depth)?;
 
-        symlen[usize::from(sym)] = u!(u!(symlen[usize::from(left)]
-            .checked_add(symlen[usize::from(right)]))
-            .checked_add(1))
+        symlen[usize::from(sym)] = u!(u!(
+            symlen[usize::from(left)].checked_add(symlen[usize::from(right)])
+        )
+        .checked_add(1))
     }
 
     visited[usize::from(sym)] = true;
@@ -813,10 +836,12 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         };
 
         let magic_header = read_magic_header(&raf)?;
-        if magic != magic_header &&
-           (material.has_pawns() || pawnless_magic.map_or(true, |m| m != magic_header))
+        if magic != magic_header
+            && (material.has_pawns() || pawnless_magic.map_or(true, |m| m != magic_header))
         {
-            return Err(ProbeError::Magic { magic: magic_header });
+            return Err(ProbeError::Magic {
+                magic: magic_header,
+            });
         }
 
         // Read layout flags.
@@ -831,29 +856,53 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         // Read group data.
         let pp = material.white.has_pawns() && material.black.has_pawns();
         let num_files = if has_pawns { 4 } else { 1 };
-        let num_sides = if T::METRIC == Metric::Wdl && !material.is_symmetric() { 2 } else { 1 };
+        let num_sides = if T::METRIC == Metric::Wdl && !material.is_symmetric() {
+            2
+        } else {
+            1
+        };
 
         let mut ptr = 5;
 
-        let files = (0..num_files).map(|file| {
-            let order = [
-                [raf.read_u8_at(ptr)? & 0xf, if pp { raf.read_u8_at(ptr + 1)? & 0xf } else { 0xf }],
-                [raf.read_u8_at(ptr)? >> 4, if pp { raf.read_u8_at(ptr + 1)? >> 4 } else { 0xf }],
-            ];
+        let files = (0..num_files)
+            .map(|file| {
+                let order = [
+                    [
+                        raf.read_u8_at(ptr)? & 0xf,
+                        if pp {
+                            raf.read_u8_at(ptr + 1)? & 0xf
+                        } else {
+                            0xf
+                        },
+                    ],
+                    [
+                        raf.read_u8_at(ptr)? >> 4,
+                        if pp {
+                            raf.read_u8_at(ptr + 1)? >> 4
+                        } else {
+                            0xf
+                        },
+                    ],
+                ];
 
-            ptr += 1 + if pp { 1 } else { 0 };
+                ptr += 1 + if pp { 1 } else { 0 };
 
-            let sides = [Color::White, Color::Black].iter().take(num_sides).map(|side| {
-                let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
-                let key = Material::from_iter(pieces.clone());
-                ensure!(key == material || key.into_flipped() == material);
-                GroupData::new::<S>(pieces, order[side.fold(0, 1)], file)
-            }).collect::<ProbeResult<ArrayVec<_, 2>>>()?;
+                let sides = [Color::White, Color::Black]
+                    .iter()
+                    .take(num_sides)
+                    .map(|side| {
+                        let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
+                        let key = Material::from_iter(pieces.clone());
+                        ensure!(key == material || key.into_flipped() == material);
+                        GroupData::new::<S>(pieces, order[side.fold(0, 1)], file)
+                    })
+                    .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
 
-            ptr += material.count() as u64;
+                ptr += material.count() as u64;
 
-            Ok(sides)
-        }).collect::<ProbeResult<ArrayVec<_, 4>>>()?;
+                Ok(sides)
+            })
+            .collect::<ProbeResult<ArrayVec<_, 4>>>()?;
 
         ptr += ptr & 1;
 
@@ -869,21 +918,30 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         }
 
         // Setup pairs.
-        let mut files = files.into_iter().map(|file| {
-            let sides = file.into_iter().map(|side| {
-                let (mut pairs, next_ptr) = PairsData::parse::<S, T, _>(&raf, ptr, side)?;
+        let mut files = files
+            .into_iter()
+            .map(|file| {
+                let sides = file
+                    .into_iter()
+                    .map(|side| {
+                        let (mut pairs, next_ptr) = PairsData::parse::<S, T, _>(&raf, ptr, side)?;
 
-                if T::METRIC == Metric::Dtz && S::CAPTURES_COMPULSORY && pairs.flags.contains(Flag::SINGLE_VALUE) {
-                    pairs.min_symlen = 1;
-                }
+                        if T::METRIC == Metric::Dtz
+                            && S::CAPTURES_COMPULSORY
+                            && pairs.flags.contains(Flag::SINGLE_VALUE)
+                        {
+                            pairs.min_symlen = 1;
+                        }
 
-                ptr = next_ptr;
+                        ptr = next_ptr;
 
-                Ok(pairs)
-            }).collect::<ProbeResult<ArrayVec<_, 2>>>()?;
+                        Ok(pairs)
+                    })
+                    .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
 
-            Ok(FileData { sides })
-        }).collect::<ProbeResult<ArrayVec<_, 4>>>()?;
+                Ok(FileData { sides })
+            })
+            .collect::<ProbeResult<ArrayVec<_, 4>>>()?;
 
         // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
@@ -958,7 +1016,10 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         ensure!(main_idx <= u64::from(u32::max_value()));
 
         let mut block = self.raf.read_u32_at::<LE>(d.sparse_index + 6 * main_idx)?;
-        let offset = i64::from(self.raf.read_u16_at::<LE>(d.sparse_index + 6 * main_idx + 4)?);
+        let offset = i64::from(
+            self.raf
+                .read_u16_at::<LE>(d.sparse_index + 6 * main_idx + 4)?,
+        );
 
         let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         lit_idx += offset;
@@ -966,10 +1027,16 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         // Now move forwards/backwards to find the correct block.
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
-            lit_idx += i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
+            lit_idx += i64::from(
+                self.raf
+                    .read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?,
+            ) + 1;
         }
         loop {
-            let block_length = i64::from(self.raf.read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?) + 1;
+            let block_length = i64::from(
+                self.raf
+                    .read_u16_at::<LE>(d.block_lengths + u64::from(block) * 2)?,
+            ) + 1;
             if lit_idx >= block_length {
                 lit_idx -= block_length;
                 block = u!(block.checked_add(1));
@@ -981,7 +1048,11 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         // Read block (and 4 bytes to prevent out of bounds read) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
         let block_buffer = &mut block_buffer[..(d.block_size as usize + 4)];
-        self.raf.read_exact_at(u!(d.data.checked_add(u64::from(block) * u64::from(d.block_size))), block_buffer)?;
+        self.raf.read_exact_at(
+            u!(d.data
+                .checked_add(u64::from(block) * u64::from(d.block_size))),
+            block_buffer,
+        )?;
         let mut cursor = io::Cursor::new(block_buffer);
 
         // Find sym, the Huffman symbol that encodes the value for idx.
@@ -1059,11 +1130,17 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
             let lead_pawns = pos.board().pawns() & pos.board().by_color(color);
             used.extend(lead_pawns);
-            squares.extend(lead_pawns.into_iter().map(|sq| if flip { sq.flip_vertical() } else { sq }));
+            squares.extend(
+                lead_pawns
+                    .into_iter()
+                    .map(|sq| if flip { sq.flip_vertical() } else { sq }),
+            );
 
             // Ensure squares[0] is the maximum with regard to map_pawns.
             for i in 1..squares.len() {
-                if CONSTS.map_pawns[usize::from(squares[0])] < CONSTS.map_pawns[usize::from(squares[i])] {
+                if CONSTS.map_pawns[usize::from(squares[0])]
+                    < CONSTS.map_pawns[usize::from(squares[i])]
+                {
                     squares.swap(0, i);
                 }
             }
@@ -1081,7 +1158,10 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         // DTZ tables store only one side to move. It is possible that we have
         // to check the other side (by doing a 1-ply search).
-        if T::METRIC == Metric::Dtz && side.flags.contains(Flag::STM) != bside && (!material.is_symmetric() || material.has_pawns()) {
+        if T::METRIC == Metric::Dtz
+            && side.flags.contains(Flag::STM) != bside
+            && (!material.is_symmetric() || material.has_pawns())
+        {
             return Ok(None);
         }
 
@@ -1110,7 +1190,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         let mut idx = if material.has_pawns() {
             let mut idx = CONSTS.lead_pawn_idx[lead_pawns_count][usize::from(squares[0])];
 
-            squares[1..lead_pawns_count].sort_unstable_by_key(|sq| CONSTS.map_pawns[usize::from(*sq)]);
+            squares[1..lead_pawns_count]
+                .sort_unstable_by_key(|sq| CONSTS.map_pawns[usize::from(*sq)]);
 
             for (i, &square) in squares.iter().enumerate().take(lead_pawns_count).skip(1) {
                 idx += binomial(CONSTS.map_pawns[usize::from(square)], i as u64);
@@ -1140,44 +1221,46 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
             if self.num_unique_pieces > 2 {
                 let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
-                let adjust2 = if squares[2] > squares[0] { 1 } else { 0 } +
-                              if squares[2] > squares[1] { 1 } else { 0 };
+                let adjust2 = if squares[2] > squares[0] { 1 } else { 0 }
+                    + if squares[2] > squares[1] { 1 } else { 0 };
 
                 if offdiag(squares[0]) {
-                    TRIANGLE[usize::from(squares[0])] * 63 * 62 +
-                    (u64::from(squares[1]) - adjust1) * 62 +
-                    (u64::from(squares[2]) - adjust2)
+                    TRIANGLE[usize::from(squares[0])] * 63 * 62
+                        + (u64::from(squares[1]) - adjust1) * 62
+                        + (u64::from(squares[2]) - adjust2)
                 } else if offdiag(squares[1]) {
-                    6 * 63 * 62 +
-                    squares[0].rank() as u64 * 28 * 62 +
-                    LOWER[usize::from(squares[1])] * 62 +
-                    u64::from(squares[2]) - adjust2
+                    6 * 63 * 62
+                        + squares[0].rank() as u64 * 28 * 62
+                        + LOWER[usize::from(squares[1])] * 62
+                        + u64::from(squares[2])
+                        - adjust2
                 } else if offdiag(squares[2]) {
-                    6 * 63 * 62 + 4 * 28 * 62 +
-                    squares[0].rank() as u64 * 7 * 28 +
-                    (squares[1].rank() as u64 - adjust1) * 28 +
-                    LOWER[usize::from(squares[2])]
+                    6 * 63 * 62
+                        + 4 * 28 * 62
+                        + squares[0].rank() as u64 * 7 * 28
+                        + (squares[1].rank() as u64 - adjust1) * 28
+                        + LOWER[usize::from(squares[2])]
                 } else {
-                    6 * 63 * 62 + 4 * 28 * 62 + 4 * 7 * 28 +
-                    squares[0].rank() as u64 * 7 * 6 +
-                    (squares[1].rank() as u64 - adjust1) * 6 +
-                    (squares[2].rank() as u64 - adjust2)
+                    6 * 63 * 62
+                        + 4 * 28 * 62
+                        + 4 * 7 * 28
+                        + squares[0].rank() as u64 * 7 * 6
+                        + (squares[1].rank() as u64 - adjust1) * 6
+                        + (squares[2].rank() as u64 - adjust2)
                 }
             } else if self.num_unique_pieces == 2 {
                 if S::CONNECTED_KINGS {
                     let adjust = if squares[1] > squares[0] { 1 } else { 0 };
 
                     if offdiag(squares[0]) {
-                        TRIANGLE[usize::from(squares[0])] * 63 +
-                        (u64::from(squares[1]) - adjust)
+                        TRIANGLE[usize::from(squares[0])] * 63 + (u64::from(squares[1]) - adjust)
                     } else if offdiag(squares[1]) {
-                        6 * 63 +
-                        squares[0].rank() as u64 * 28 +
-                        LOWER[usize::from(squares[1])]
+                        6 * 63 + squares[0].rank() as u64 * 28 + LOWER[usize::from(squares[1])]
                     } else {
-                        6 * 63 + 4 * 28 +
-                        squares[0].rank() as u64 * 7 +
-                        (squares[1].rank() as u64 - adjust)
+                        6 * 63
+                            + 4 * 28
+                            + squares[0].rank() as u64 * 7
+                            + (squares[1].rank() as u64 - adjust)
                     }
                 } else {
                     KK_IDX[TRIANGLE[usize::from(squares[0])] as usize][usize::from(squares[1])]
@@ -1199,14 +1282,18 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     }
                 }
 
-                if squares[0].rank().flip_diagonal() > squares[0].file() ||
-                   (!offdiag(squares[0]) && squares[1].rank().flip_diagonal() > squares[1].file()) {
+                if squares[0].rank().flip_diagonal() > squares[0].file()
+                    || (!offdiag(squares[0])
+                        && squares[1].rank().flip_diagonal() > squares[1].file())
+                {
                     for square in &mut squares {
                         *square = square.flip_diagonal();
                     }
                 }
 
-                if TEST45.contains(squares[1]) && TRIANGLE[usize::from(squares[0])] == TRIANGLE[usize::from(squares[1])] {
+                if TEST45.contains(squares[1])
+                    && TRIANGLE[usize::from(squares[0])] == TRIANGLE[usize::from(squares[1])]
+                {
                     squares.swap(0, 1);
 
                     for square in &mut squares {
@@ -1242,13 +1329,15 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
                 for i in 1..side.groups.lens[0] {
                     for j in (i + 1)..side.groups.lens[0] {
-                        if MULT_TWIST[usize::from(squares[i])] > MULT_TWIST[usize::from(squares[j])] {
+                        if MULT_TWIST[usize::from(squares[i])] > MULT_TWIST[usize::from(squares[j])]
+                        {
                             squares.swap(i, j);
                         }
                     }
                 }
 
-                let mut idx = CONSTS.mult_idx[side.groups.lens[0] - 1][TRIANGLE[usize::from(squares[0])] as usize];
+                let mut idx = CONSTS.mult_idx[side.groups.lens[0] - 1]
+                    [TRIANGLE[usize::from(squares[0])] as usize];
                 for i in 1..side.groups.lens[0] {
                     idx += binomial(MULT_TWIST[usize::from(squares[i])], i as u64);
                 }
@@ -1271,8 +1360,14 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             let mut n = 0;
 
             for (i, &group_square) in group_squares.iter().enumerate().take(lens) {
-                let adjust = prev_squares[..group_sq].iter().filter(|sq| group_square > **sq).count() as u64;
-                n += binomial(u64::from(group_square) - adjust - if remaining_pawns { 8 } else { 0 }, i as u64 + 1);
+                let adjust = prev_squares[..group_sq]
+                    .iter()
+                    .filter(|sq| group_square > **sq)
+                    .count() as u64;
+                n += binomial(
+                    u64::from(group_square) - adjust - if remaining_pawns { 8 } else { 0 },
+                    i as u64 + 1,
+                );
             }
 
             remaining_pawns = false;
@@ -1352,7 +1447,10 @@ impl<S: Position + Syzygy, F: ReadAt> WdlTable<S, F> {
 }
 
 impl<S: Position + Syzygy> WdlTable<S, RandomAccessFile> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<WdlTable<S, RandomAccessFile>> {
+    pub fn open<P: AsRef<Path>>(
+        path: P,
+        material: &Material,
+    ) -> ProbeResult<WdlTable<S, RandomAccessFile>> {
         WdlTable::new(open_table_file(path)?, material)
     }
 }
@@ -1374,7 +1472,10 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
 }
 
 impl<S: Position + Syzygy> DtzTable<S, RandomAccessFile> {
-    pub fn open<P: AsRef<Path>>(path: P, material: &Material) -> ProbeResult<DtzTable<S, RandomAccessFile>> {
+    pub fn open<P: AsRef<Path>>(
+        path: P,
+        material: &Material,
+    ) -> ProbeResult<DtzTable<S, RandomAccessFile>> {
         DtzTable::new(open_table_file(path)?, material)
     }
 }

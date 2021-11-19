@@ -1,15 +1,20 @@
-use shakmaty::fen::Fen;
-use shakmaty::{Chess, CastlingMode, Position, FromSetup};
+use shakmaty::{fen::Fen, CastlingMode, Chess, FromSetup, Position};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
 fn test_csv<S>(path: &str)
 where
-    S: Position + FromSetup + Syzygy + Clone
+    S: Position + FromSetup + Syzygy + Clone,
 {
     let mut tables = Tablebase::new();
-    tables.add_directory("tables/chess").expect("read directory");
-    tables.add_directory("tables/atomic").expect("read directory");
-    tables.add_directory("tables/antichess").expect("read directory");
+    tables
+        .add_directory("tables/chess")
+        .expect("read directory");
+    tables
+        .add_directory("tables/atomic")
+        .expect("read directory");
+    tables
+        .add_directory("tables/antichess")
+        .expect("read directory");
 
     let mut reader = csv::Reader::from_path(path).expect("reader");
 
@@ -17,16 +22,22 @@ where
         let record = line.expect("record");
 
         let fen: Fen = record
-            .get(0).expect("fen field")
-            .parse().expect("valid fen");
+            .get(0)
+            .expect("fen field")
+            .parse()
+            .expect("valid fen");
 
         let expected_wdl: i8 = record
-            .get(1).expect("wdl field")
-            .parse().expect("valid wdl");
+            .get(1)
+            .expect("wdl field")
+            .parse()
+            .expect("valid wdl");
 
         let expected_dtz: i32 = record
-            .get(2).expect("dtz field")
-            .parse().expect("valid dtz");
+            .get(2)
+            .expect("dtz field")
+            .parse()
+            .expect("valid dtz");
 
         let pos: S = fen.position(CastlingMode::Chess960).expect("legal");
 
