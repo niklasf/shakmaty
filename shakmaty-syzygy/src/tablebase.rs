@@ -181,35 +181,32 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`] for possible error
-    /// conditions.
+    /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
         self.probe(pos).map(|entry| entry.wdl())
     }
 
     /// Probe tables for the [`Dtz`] value of a position.
     ///
-    /// Min-maxing the DTZ of the available moves guarantees achieving the
-    /// optimal outcome under the 50-move rule.
-    ///
     /// Requires both WDL and DTZ tables.
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`] for possible error
-    /// conditions.
+    /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
         self.probe(pos).and_then(|entry| entry.dtz())
     }
 
     /// Select a DTZ-optimal move.
     ///
+    /// Following the DTZ mainline guarantees achieving the optimal outcome
+    /// under the 50-move rule.
+    ///
     /// Requires both WDL and DTZ tables.
     ///
     /// # Errors
     ///
-    /// See [`SyzygyError`] for possible error
-    /// conditions.
+    /// See [`SyzygyError`] for possible error conditions.
     pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
         struct WithAfter<S> {
             m: Move,
