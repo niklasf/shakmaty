@@ -37,13 +37,18 @@ pub enum SyzygyError {
     TooManyPieces,
     /// Missing table.
     MissingTable {
+        #[allow(missing_docs)]
         metric: Metric,
+        #[allow(missing_docs)]
         material: Material
     },
     /// Probe failed.
     ProbeFailed {
+        #[allow(missing_docs)]
         metric: Metric,
+        #[allow(missing_docs)]
         material: Material,
+        #[allow(missing_docs)]
         error: ProbeError,
     },
 }
@@ -76,11 +81,18 @@ impl Error for SyzygyError {
 #[derive(Debug)]
 pub enum ProbeError {
     /// I/O error.
-    Read { error: io::Error },
+    Read {
+        #[allow(missing_docs)]
+        error: io::Error
+    },
     /// Table file has unexpected magic header bytes.
-    Magic { magic: [u8; 4] },
+    Magic {
+        #[allow(missing_docs)]
+        magic: [u8; 4]
+    },
     /// Corrupted table.
     CorruptedTable {
+        #[allow(missing_docs)]
         #[cfg(feature = "backtrace")]
         #[cfg_attr(docs_rs, doc(cfg(feature = "backtrace")))]
         backtrace: std::backtrace::Backtrace

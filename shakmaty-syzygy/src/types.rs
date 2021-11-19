@@ -122,7 +122,9 @@ impl Syzygy for shakmaty::variant::Antichess {
 /// the outcome of the game.
 #[derive(Debug, Copy, Clone)]
 pub enum MaybeRounded<T> {
+    /// Inner value potentially affected by DTZ rounding.
     Rounded(T),
+    /// Inner value not affected by DTZ rounding.
     Precise(T),
 }
 
@@ -376,6 +378,11 @@ impl AmbiguousWdl {
         }
     }
 
+    /// Converts `dtz` to a WDL value. `MaybeRounded::Rounded(Dtz(100))`
+    /// and `MaybeRounded::Rounded(Dtz(-100))` are
+    /// [ambiguous due to DTZ rounding](MaybeRounded)
+    /// and will be mapped to [`AmbiguousWdl::MaybeWin`] and
+    /// [`AmbiguousWdl::MaybeLoss`] respectively.
     pub fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
         match dtz {
             MaybeRounded::Rounded(Dtz(100)) => AmbiguousWdl::MaybeWin,
@@ -384,10 +391,14 @@ impl AmbiguousWdl {
         }
     }
 
+    /// Shortcut for `AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))`.
     pub fn from_dtz_after_plies(dtz: MaybeRounded<Dtz>, plies: u32) -> AmbiguousWdl {
         AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))
     }
 
+    /// Get the unambiguous [`Wdl`], assuming that the value has been reached
+    /// directly after a capture or pawn move, or by following the tablebase
+    /// mainline from a capture or pawn move.
     pub fn after_zeroing(self) -> Wdl {
         match self {
             AmbiguousWdl::Loss | AmbiguousWdl::MaybeLoss => Wdl::Loss,
@@ -398,14 +409,17 @@ impl AmbiguousWdl {
         }
     }
 
+    /// Returns `true` if `self` does not uniquely correspond to a [`Wdl`].
     pub fn is_ambiguous(self) -> bool {
         matches!(self, AmbiguousWdl::MaybeWin | AmbiguousWdl::MaybeLoss)
     }
 
+    /// Returns `true` if `self` uniquely corresponds to a [`Wdl`].
     pub fn is_unambiguous(self) -> bool {
         !self.is_ambiguous()
     }
 
+    /// Returns the uniquely corresponding [`Wdl`], or `None` if ambiguous.
     pub fn unambiguous(self) -> Option<Wdl> {
         self.is_unambiguous().then(|| AmbiguousWdl::after_zeroing(self))
     }

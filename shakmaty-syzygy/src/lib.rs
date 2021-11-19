@@ -61,6 +61,7 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.17.0")]
 
 #![forbid(unsafe_code)]
+#![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
 
