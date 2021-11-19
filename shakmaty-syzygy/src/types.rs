@@ -339,6 +339,75 @@ impl Neg for DecisiveWdl {
 
 from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 
+/// WDL<sub>50</sub> derived from [`MaybeRounded<Dtz>`].
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum AmbiguousWdl {
+    /// Unconditional loss.
+    Loss,
+    /// Loss that can maybe be saved by the 50-move rule.
+    MaybeLoss,
+    /// Loss that can be saved by the 50-move rule.
+    BlessedLoss,
+    /// Unconditional draw.
+    Draw,
+    /// Win that can be frustrated by the 50-move rule.
+    CursedWin,
+    /// Win that can maybe be frustrated by the 50-move rule.
+    MaybeWin,
+    /// Unconditional win.
+    Win,
+}
+
+impl AmbiguousWdl {
+    pub fn signum(self) -> i32 {
+        match self {
+            AmbiguousWdl::Loss | AmbiguousWdl::MaybeLoss | AmbiguousWdl::BlessedLoss => -1,
+            AmbiguousWdl::Draw => 0,
+            _ => 1,
+        }
+    }
+
+    pub fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
+        match dtz {
+            MaybeRounded::Rounded(Dtz(100)) => AmbiguousWdl::MaybeWin,
+            MaybeRounded::Rounded(Dtz(-100)) => AmbiguousWdl::MaybeLoss,
+            MaybeRounded::Precise(dtz) | MaybeRounded::Rounded(dtz) => Wdl::from_dtz(dtz).into(),
+        }
+    }
+
+    pub fn from_dtz_after_plies(dtz: MaybeRounded<Dtz>, plies: u32) -> AmbiguousWdl {
+        AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))
+    }
+}
+
+impl Neg for AmbiguousWdl {
+    type Output = AmbiguousWdl;
+
+    fn neg(self) -> AmbiguousWdl {
+        match self {
+            AmbiguousWdl::Loss => AmbiguousWdl::Win,
+            AmbiguousWdl::MaybeLoss => AmbiguousWdl::MaybeWin,
+            AmbiguousWdl::BlessedLoss => AmbiguousWdl::CursedWin,
+            AmbiguousWdl::Draw => AmbiguousWdl::Draw,
+            AmbiguousWdl::CursedWin => AmbiguousWdl::BlessedLoss,
+            AmbiguousWdl::MaybeWin => AmbiguousWdl::MaybeLoss,
+            AmbiguousWdl::Win => AmbiguousWdl::Loss,
+        }
+    }
+}
+
+impl From<Wdl> for AmbiguousWdl {
+    fn from(wdl: Wdl) -> AmbiguousWdl {
+        match wdl {
+            Wdl::Loss => AmbiguousWdl::Loss,
+            Wdl::BlessedLoss => AmbiguousWdl::BlessedLoss,
+            Wdl::Draw => AmbiguousWdl::Draw,
+            Wdl::CursedWin => AmbiguousWdl::CursedWin,
+            Wdl::Win => AmbiguousWdl::Win,
+        }
+    }
+}
+
 /// DTZ<sub>50</sub>′′. Based on the distance to zeroing of the
 /// half-move clock.
 ///

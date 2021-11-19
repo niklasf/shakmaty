@@ -27,7 +27,7 @@ use rustc_hash::FxHashMap;
 
 use shakmaty::{Material, Move, Position, Role};
 
-use crate::errors::{ProbeResultExt as _, SyzygyError, SyzygyResult};
+use crate::{AmbiguousWdl, errors::{ProbeResultExt as _, SyzygyError, SyzygyResult}};
 use crate::table::{DtzTable, WdlTable};
 use crate::types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl};
 
@@ -173,17 +173,27 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    /// Probe tables for the [`Wdl`] value of a position.
-    ///
-    /// This indicates if the position is winning, lost or drawn with
-    /// or without the 50-move rule, assuming `pos` is reached directly after
-    /// a capture or pawn move.
+    /// Probe tables for the [`Wdl`] value of a position, assuming `pos`
+    /// is reached directly after a capture or pawn move.
     ///
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_wdl_after_zeroing(&self, pos: &S) -> SyzygyResult<Wdl> {
         self.probe(pos).map(|entry| entry.wdl_after_zeroing())
+    }
+
+    /// Probe tables for the WDL value of a position, considering also
+    /// the halfmove counter of `pos`. The result may be
+    /// [ambiguous due to DTZ rounding](MaybeRounded).
+    ///
+    /// # Errors
+    ///
+    /// See [`SyzygyError`] for possible error conditions.
+    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<AmbiguousWdl> {
+        self.probe(pos)
+            .and_then(|entry| entry.dtz())
+            .map(|dtz| AmbiguousWdl::from_dtz_after_plies(dtz, pos.halfmoves()))
     }
 
     /// Probe tables for the [`Dtz`] value of a position.

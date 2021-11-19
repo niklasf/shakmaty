@@ -76,7 +76,7 @@ mod types;
 
 pub use crate::errors::{ProbeError, SyzygyError};
 pub use crate::tablebase::Tablebase;
-pub use crate::types::{Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl};
+pub use crate::types::{AmbiguousWdl, Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl};
 
 #[cfg(fuzzing)]
 pub use crate::table::{DtzTable, WdlTable};
