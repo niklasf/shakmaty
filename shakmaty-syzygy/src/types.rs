@@ -91,7 +91,7 @@ impl Syzygy for shakmaty::variant::Antichess {
 /// WDL<sub>50</sub>. 5-valued evaluation of a position in the context of the
 /// 50-move drawing rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[repr(i8)]
+#[repr(i32)]
 pub enum Wdl {
     /// Unconditional loss.
     Loss = -2,
