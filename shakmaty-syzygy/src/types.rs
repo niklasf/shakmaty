@@ -127,13 +127,6 @@ impl<T> MaybeRounded<T> {
         }
     }
 
-    pub fn zip<U>(self, other: MaybeRounded<U>) -> MaybeRounded<(T, U)> {
-        match (self, other) {
-            (MaybeRounded::Precise(a), MaybeRounded::Precise(b)) => MaybeRounded::Precise((a, b)),
-            (a, b) => MaybeRounded::Rounded((a.ignore_rounding(), b.ignore_rounding())),
-        }
-    }
-
     pub fn precise(self) -> Option<T> {
         match self {
             MaybeRounded::Precise(v) => Some(v),
