@@ -400,9 +400,16 @@ impl AmbiguousWdl {
         }
     }
 
-    /// Shortcut for `AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))`.
-    pub fn from_dtz_after_plies(dtz: MaybeRounded<Dtz>, plies: u32) -> AmbiguousWdl {
-        AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))
+    /// Gets the WDL value for a position with the given `dtz` and `halfmoves`
+    /// counter.
+    ///
+    /// The value will always be unambiguous if `halfmoves == 0`.
+    pub fn from_dtz_and_halfmoves(dtz: MaybeRounded<Dtz>, halfmoves: u32) -> AmbiguousWdl {
+        if halfmoves == 0 {
+            AmbiguousWdl::from(Wdl::from_dtz_after_zeroing(dtz))
+        } else {
+            AmbiguousWdl::from_dtz(dtz.add_plies_saturating(halfmoves))
+        }
     }
 
     /// Get the unambiguous [`Wdl`], assuming that the value has been reached

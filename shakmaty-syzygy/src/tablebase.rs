@@ -209,13 +209,15 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// the halfmove counter of `pos`. The result may be
     /// [ambiguous due to DTZ rounding](MaybeRounded).
     ///
+    /// Requires both WDL and DTZ tables.
+    ///
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<AmbiguousWdl> {
         self.probe(pos)
             .and_then(|entry| entry.dtz())
-            .map(|dtz| AmbiguousWdl::from_dtz_after_plies(dtz, pos.halfmoves()))
+            .map(|dtz| AmbiguousWdl::from_dtz_and_halfmoves(dtz, pos.halfmoves()))
     }
 
     /// Probe tables for the [`Dtz`] value of a position.
