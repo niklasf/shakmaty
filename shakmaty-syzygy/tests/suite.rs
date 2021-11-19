@@ -32,7 +32,7 @@ where
 
         println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
 
-        match tables.probe_wdl(&pos) {
+        match tables.probe_wdl_after_zeroing(&pos) {
             Ok(wdl) => assert_eq!(i8::from(wdl), expected_wdl),
             Err(err) => panic!("probe wdl: {}", err),
         }

@@ -182,8 +182,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
-    pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<Wdl> {
-        self.probe(pos).map(|entry| entry.wdl())
+    pub fn probe_wdl_after_zeroing(&self, pos: &S) -> SyzygyResult<Wdl> {
+        self.probe(pos).map(|entry| entry.wdl_after_zeroing())
     }
 
     /// Probe tables for the [`Dtz`] value of a position.
@@ -511,7 +511,7 @@ struct WdlEntry<'a, S: Position + Clone + Syzygy> {
 }
 
 impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
-    fn wdl(&self) -> Wdl {
+    fn wdl_after_zeroing(&self) -> Wdl {
         self.wdl
     }
 
@@ -539,7 +539,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             for m in &pawn_advances {
                 let mut after = self.pos.clone();
                 after.play_unchecked(m);
-                let v = -self.tablebase.probe_wdl(&after)?;
+                let v = -self.tablebase.probe_wdl_after_zeroing(&after)?;
                 if v == wdl.into() {
                     return Ok(Dtz::before_zeroing(wdl.into()));
                 }

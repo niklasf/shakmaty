@@ -36,7 +36,7 @@
 //!     .parse::<Fen>()?
 //!     .position(CastlingMode::Standard)?;
 //!
-//! let wdl = tables.probe_wdl(&pos)?;
+//! let wdl = tables.probe_wdl_after_zeroing(&pos)?;
 //! assert_eq!(wdl, Wdl::Loss);
 //!
 //! let dtz = tables.probe_dtz(&pos)?;
