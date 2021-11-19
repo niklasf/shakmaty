@@ -515,12 +515,12 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         };
 
         if self.state == ProbeState::ZeroingBestMove || self.pos.us() == self.pos.our(Role::Pawn) {
-            return Ok(Dtz::before_zeroing(wdl));
+            return Ok(Dtz::before_zeroing(wdl.into()));
         }
 
         if self.state == ProbeState::Threat && wdl >= DecisiveWdl::CursedWin {
             // The position is a win or a cursed win by a threat move.
-            return Ok(Dtz::before_zeroing(wdl).add_plies(1));
+            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(1));
         }
 
         // If winning, check for a winning pawn move. No need to look at
@@ -534,7 +534,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
                 after.play_unchecked(m);
                 let v = -self.tablebase.probe_wdl(&after)?;
                 if v == wdl.into() {
-                    return Ok(Dtz::before_zeroing(wdl));
+                    return Ok(Dtz::before_zeroing(wdl.into()));
                 }
             }
         }
@@ -542,7 +542,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
         if let Some(Dtz(dtz)) = self.tablebase.probe_dtz_table(self.pos, wdl)? {
-            return Ok(Dtz::before_zeroing(wdl).add_plies(dtz));
+            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(dtz));
         }
 
         // We have to probe the other side of the table by doing
@@ -553,7 +553,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         let mut best = if wdl >= DecisiveWdl::CursedWin {
             None
         } else {
-            Some(Dtz::before_zeroing(wdl))
+            Some(Dtz::before_zeroing(wdl.into()))
         };
 
         for m in &moves {

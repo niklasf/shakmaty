@@ -264,8 +264,8 @@ impl Dtz {
     /// | Draw | 0 |
     /// | Cursed win | 101 |
     /// | Win | 1 |
-    pub fn before_zeroing<T: Into<Wdl>>(wdl: T) -> Dtz {
-        match wdl.into() {
+    pub fn before_zeroing(wdl: Wdl) -> Dtz {
+        match wdl {
             Wdl::Loss => Dtz(-1),
             Wdl::BlessedLoss => Dtz(-101),
             Wdl::Draw => Dtz(0),
