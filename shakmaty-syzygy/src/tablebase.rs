@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{max, min, Reverse};
+use std::cmp::{max, Reverse};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -559,7 +559,6 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         let mut moves = self.pos.legal_moves();
         moves.retain(|m| !m.is_zeroing());
 
-        // TODO: Check propagation of rounding.
         let mut best = if wdl >= DecisiveWdl::CursedWin {
             None
         } else {
@@ -575,8 +574,9 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             } else if v.ignore_rounding().signum() == wdl.signum() {
                 let v = v.map(|v| v.add_plies(1));
                 best = match best {
-                    Some(best) => Some(v.zip(best).map(|(v, best)| min(v, best))),
                     None => Some(v),
+                    Some(best) if v.ignore_rounding() < best.ignore_rounding() => Some(v),
+                    _ => best,
                 };
             }
         }
@@ -618,7 +618,7 @@ mod tests {
             capture: None,
             to: Square::G1,
             promotion: None,
-        }, Dtz(-1))))));
+        }, MaybeRounded::Rounded(Dtz(-1)))))));
     }
 
     #[test]
@@ -638,7 +638,7 @@ mod tests {
             to: Square::C1,
             capture: None,
             promotion: Some(Role::Knight),
-        }, Dtz(109))))));
+        }, MaybeRounded::Rounded(Dtz(109)))))));
     }
 
     #[test]
