@@ -32,7 +32,7 @@ use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Squ
 
 use crate::errors::{ProbeError, ProbeResult};
 use crate::material::MaterialExt;
-use crate::types::{DecisiveWdl, Dtz, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
+use crate::types::{DecisiveWdl, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
 
 trait TableTag {
     const METRIC: Metric;
@@ -1280,7 +1280,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         })
     }
 
-    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
+    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<u32>> {
         assert_eq!(T::METRIC, Metric::Dtz);
 
         let (side, idx) = match self.encode(pos)? {
@@ -1290,7 +1290,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         let res = self.decompress_pairs(side, idx)?;
 
-        let res = i32::from(match side.dtz_map {
+        let res = u32::from(match side.dtz_map {
             None => res,
             Some(ref map) => map.read(&self.raf, wdl, res)?,
         });
@@ -1301,7 +1301,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
         };
 
-        Ok(Some(Dtz(if stores_plies { res } else { 2 * res })))
+        Ok(Some(if stores_plies { res } else { 2 * res }))
     }
 }
 
@@ -1344,7 +1344,7 @@ impl<S: Position + Syzygy, F: ReadAt> DtzTable<S, F> {
         Table::new(raf, material).map(|table| DtzTable { table })
     }
 
-    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<Dtz>> {
+    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<u32>> {
         self.table.probe_dtz(pos, wdl)
     }
 }

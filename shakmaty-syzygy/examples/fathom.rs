@@ -25,7 +25,7 @@ fn real_wdl(tb: &Tablebase<Chess>, pos: &Chess, dtz: Dtz) -> Result<Wdl, SyzygyE
         return Ok(Wdl::from_outcome(outcome, pos.turn()));
     }
 
-    let halfmoves = min(101, pos.halfmoves()) as i32;
+    let halfmoves = min(101, pos.halfmoves());
     let before_zeroing = dtz.add_plies(halfmoves);
 
     if before_zeroing.0.abs() != 100 || halfmoves == 0 {

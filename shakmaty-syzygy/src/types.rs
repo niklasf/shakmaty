@@ -16,6 +16,7 @@
 
 use std::fmt;
 use std::ops::Neg;
+use std::convert::TryFrom;
 
 use arrayvec::ArrayVec;
 
@@ -255,7 +256,7 @@ from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 pub struct Dtz(pub i32);
 
 impl Dtz {
-    /// Converts `wdl` to a DTZ, given that the best move is zeroing.
+    /// Converts `wdl` to a `Dtz`, given that the best move is zeroing.
     ///
     /// | WDL | DTZ |
     /// | --- | --- |
@@ -274,12 +275,37 @@ impl Dtz {
         }
     }
 
-    /// Increases the absolute value by `plies`.
+    /// Increases the absolute non-zero value by `plies`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if overflow occurrs.
     #[must_use]
-    pub fn add_plies(self, plies: i32) -> Dtz {
-        let new_dtz = self.0.signum() * (self.0.abs() + plies);
-        debug_assert!(self.0.signum() == new_dtz.signum());
-        Dtz(new_dtz)
+    pub fn add_plies(self, plies: u32) -> Dtz {
+        self.checked_add_plies(plies).expect("dtz overflow")
+    }
+
+    /// Increases the absolute non-zero value by `plies`, returning `None`
+    /// if overflow occurred.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty_syzygy::Dtz;
+    ///
+    /// assert_eq!(Dtz(1).checked_add_plies(3), Some(Dtz(4)));
+    /// assert_eq!(Dtz(0).checked_add_plies(3), Some(Dtz(0)));
+    /// assert_eq!(Dtz(-1).checked_add_plies(3), Some(Dtz(-4)));
+    /// ```
+    #[must_use]
+    pub fn checked_add_plies(self, plies: u32) -> Option<Dtz> {
+        if self == Dtz(0) {
+            Some(Dtz(0))
+        } else if self > Dtz(0) {
+            i32::try_from(plies).ok().and_then(|plies| self.0.checked_add(plies)).map(Dtz)
+        } else {
+            i32::try_from(plies).ok().and_then(|plies| self.0.checked_sub(plies)).map(Dtz)
+        }
     }
 
     /// Returns a number representing the sign of `self`.

@@ -486,7 +486,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &key))
     }
 
-    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<Dtz>> {
+    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<u32>> {
         // Get raw DTZ value from the appropriate table.
         let key = pos.board().material();
         self.dtz_table(&key)
@@ -541,8 +541,8 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
-        if let Some(Dtz(dtz)) = self.tablebase.probe_dtz_table(self.pos, wdl)? {
-            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(dtz));
+        if let Some(plies) = self.tablebase.probe_dtz_table(self.pos, wdl)? {
+            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(plies));
         }
 
         // We have to probe the other side of the table by doing
