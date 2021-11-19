@@ -48,6 +48,7 @@ enum ProbeState {
 pub struct Tablebase<S: Position + Clone + Syzygy> {
     wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S, RandomAccessFile>>)>,
     dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S, RandomAccessFile>>)>,
+    max_pieces: usize,
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -62,7 +63,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         Tablebase {
             wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
             dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
+            max_pieces: 0,
         }
+    }
+
+    /// Returns the maximum number of pieces of any added table.
+    pub fn max_pieces(&self) -> usize {
+        self.max_pieces
     }
 
     /// Add all relevant tables from a directory.
@@ -122,7 +129,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             _ => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
         };
 
-        if material.count() > S::MAX_PIECES {
+        let pieces = material.count();
+
+        if pieces > S::MAX_PIECES {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
@@ -138,6 +147,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
+        self.max_pieces = max(self.max_pieces, pieces);
         Ok(())
     }
 
