@@ -221,7 +221,7 @@ impl Wdl {
     /// Since playing the tablebase mainline preserves the game theoretical
     /// outcome, this method may also be used on `dtz.add_plies(plies)`
     /// if the mainline has been followed for `plies` halfmoves since the last
-    /// capture or pawnmove.
+    /// capture or pawn move.
     pub fn from_dtz_after_zeroing(dtz: MaybeRounded<Dtz>) -> Wdl {
         Wdl::from_dtz(dtz.ignore_rounding())
     }
