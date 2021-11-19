@@ -19,7 +19,6 @@ harness = false
 arrayvec = "0.7"
 bitflags = "1"
 shakmaty = "0.20"
-num-integer = "0.1"
 byteorder = "1"
 itertools = "0.10"
 positioned-io = { package = "positioned-io-preview", version = "0.3" }

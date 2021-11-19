@@ -25,7 +25,6 @@ use bitflags::bitflags;
 use byteorder::{BE, LE, ByteOrder as _, ReadBytesExt as _};
 use itertools::Itertools as _;
 use once_cell::sync::Lazy;
-use num_integer::binomial;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
@@ -330,6 +329,23 @@ struct Consts {
     lead_pawns_size: [[u64; 4]; 6],
 }
 
+const fn binomial(mut n: u64, k: u64) -> u64 {
+    if k > n {
+        return 0;
+    }
+    if k > n - k {
+        return binomial(n, n - k);
+    }
+    let mut r = 1;
+    let mut d = 1;
+    while d <= k {
+        r = r * n / d;
+        n -= 1;
+        d += 1;
+    }
+    r
+}
+
 impl Consts {
     fn new() -> Consts {
         let mut mult_idx = [[0; 10]; 5];
@@ -511,11 +527,11 @@ impl GroupData {
             } else if k == order[1] {
                 // Remaining pawns.
                 factors[1] = idx;
-                idx *= binomial(48 - lens[0], lens[1]) as u64;
+                idx *= binomial(48 - lens[0] as u64, lens[1] as u64);
             } else {
                 // Remaining pieces.
                 factors[next] = idx;
-                idx *= binomial(free_squares, lens[next]) as u64;
+                idx *= binomial(free_squares as u64, lens[next] as u64);
                 free_squares -= lens[next];
                 next += 1;
             }
