@@ -380,7 +380,7 @@ impl Consts {
                         available_squares -= 1;
                         map_pawns[sq] = available_squares;
                         available_squares -= 1;
-                        map_pawns[sq ^ 0b000_111] = available_squares; // flip horizontal
+                        map_pawns[sq ^ 0x7] = available_squares; // flip horizontal
                     }
                     lead_pawn_idx[lead_pawns_cnt][sq] = idx;
                     idx += binomial(map_pawns[sq], lead_pawns_cnt as u64 - 1);

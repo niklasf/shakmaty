@@ -299,12 +299,10 @@ impl Dtz {
     /// ```
     #[must_use]
     pub fn checked_add_plies(self, plies: u32) -> Option<Dtz> {
-        if self == Dtz(0) {
-            Some(Dtz(0))
-        } else if self > Dtz(0) {
-            i32::try_from(plies).ok().and_then(|plies| self.0.checked_add(plies)).map(Dtz)
-        } else {
-            i32::try_from(plies).ok().and_then(|plies| self.0.checked_sub(plies)).map(Dtz)
+        match self {
+            Dtz(0) => Some(Dtz(0)),
+            Dtz(n) if n > 0 => i32::try_from(plies).ok().and_then(|plies| n.checked_add(plies)).map(Dtz),
+            Dtz(n) => i32::try_from(plies).ok().and_then(|plies| n.checked_sub(plies)).map(Dtz),
         }
     }
 
