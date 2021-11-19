@@ -14,9 +14,8 @@ Example: Usage
 --------------
 
 ```rust
-use shakmaty::{CastlingMode, Chess};
-use shakmaty::fen::Fen;
-use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
+use shakmaty::{CastlingMode, Chess, fen::Fen};
+use shakmaty_syzygy::{Tablebase, MaybeRounded, Wdl, Dtz, Syzygy};
 
 let mut tables = Tablebase::new();
 tables.add_directory("tables/chess")?;
@@ -25,11 +24,11 @@ let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
     .parse::<Fen>()?
     .position(CastlingMode::Standard)?;
 
-let wdl = tables.probe_wdl(&pos)?;
+let wdl = tables.probe_wdl_after_zeroing(&pos)?;
 assert_eq!(wdl, Wdl::Loss);
 
 let dtz = tables.probe_dtz(&pos)?;
-assert_eq!(dtz, Dtz(-59));
+assert!(matches!(dtz, MaybeRounded::Rounded(Dtz(-59))));
 ```
 
 Example: Command line tool
