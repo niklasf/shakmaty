@@ -170,20 +170,34 @@ impl Wdl {
         }
     }
 
-    /// Converts `dtz` to a `Wdl`.
+    /// Converts `dtz` to `Wdl`.
     ///
     /// In general the result would be
-    /// [ambiguous for `Dtz(100)` and `Dtz(-100)`](Dtz).
+    /// [ambiguous for `MaybeRounded::Rounded(Dtz(100))` and
+    /// `MaybeRounded::Rounded(Dtz(-100))`](Dtz).
     /// This conversion assumes that such values were given
     /// immediately after a capture or pawn move, in which case the outcome
     /// is an unconditional win or loss.
-    pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
-        match dtz.0 {
-            n if n < -100 => Wdl::BlessedLoss,
-            n if n < 0 => Wdl::Loss,
-            0 => Wdl::Draw,
-            n if n <= 100 => Wdl::Win,
-            _ => Wdl::CursedWin,
+    pub fn from_dtz_after_zeroing(dtz: MaybeRounded<Dtz>) -> Wdl {
+        Wdl::from_dtz(dtz.ignore_rounding())
+    }
+
+    /// Converts `dtz` to `Wdl`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty_syzygy::{Dtz, Wdl};
+    ///
+    /// assert_eq!(Wdl::from_dtz(Dtz(98).add_plies(3)), Wdl::CursedWin);
+    /// ```
+    pub fn from_dtz(dtz: Dtz) -> Wdl {
+        match dtz {
+            Dtz(n) if n < -100 => Wdl::BlessedLoss,
+            Dtz(n) if n < 0 => Wdl::Loss,
+            Dtz(0) => Wdl::Draw,
+            Dtz(n) if n <= 100 => Wdl::Win,
+            Dtz(_) => Wdl::CursedWin,
         }
     }
 

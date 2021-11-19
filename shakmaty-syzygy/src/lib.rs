@@ -27,7 +27,7 @@
 //! #
 //! use shakmaty::{CastlingMode, Chess};
 //! use shakmaty::fen::Fen;
-//! use shakmaty_syzygy::{Tablebase, Wdl, Dtz, Syzygy};
+//! use shakmaty_syzygy::{Tablebase, MaybeRounded, Wdl, Dtz, Syzygy};
 //!
 //! let mut tables = Tablebase::new();
 //! tables.add_directory("tables/chess")?;
@@ -40,7 +40,7 @@
 //! assert_eq!(wdl, Wdl::Loss);
 //!
 //! let dtz = tables.probe_dtz(&pos)?;
-//! assert_eq!(dtz, Dtz(-59));
+//! assert!(matches!(dtz, MaybeRounded::Rounded(Dtz(-59))));
 //! #
 //! # Ok::<_, Box<dyn Error>>(())
 //! ```
