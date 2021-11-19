@@ -103,6 +103,23 @@ impl Syzygy for shakmaty::variant::Antichess {
     const CAPTURES_COMPULSORY: bool = true;
 }
 
+/// A value that may be affected by DTZ rounding.
+///
+/// Rounded [`Dtz`] values may be off by one:
+///
+/// * `MaybeRounded::Rounded(Dtz(-n))` can mean a loss with a forced
+///   zeroing move in `n` or `n + 1` plies.
+/// * `MaybeRounded::Rounded(Dtz(n))` can mean a win with a forced
+///   zeroing move in `n` or `n + 1` plies.
+///
+/// This implies some primary tablebase lines may waste up to 1 ply.
+/// Rounding is never used for endgame phases where wasting a single ply
+/// would change the game theoretical outcome.
+///
+/// But users still need to be careful in positions that are nearly drawn
+/// under the 50-move rule! Carelessly wasting 1 more ply by not following
+/// the tablebase recommendation, for a total of 2 wasted plies, may change
+/// the outcome of the game.
 #[derive(Debug, Copy, Clone)]
 pub enum MaybeRounded<T> {
     Rounded(T),
@@ -138,6 +155,18 @@ impl<T> MaybeRounded<T> {
 impl MaybeRounded<Dtz> {
     pub fn signum(self) -> i32 {
         self.ignore_rounding().signum()
+    }
+
+    pub fn add_plies(self, plies: u32) -> MaybeRounded<Dtz> {
+        self.map(|dtz| dtz.add_plies(plies))
+    }
+
+    pub fn add_plies_checked(self, plies: u32) -> MaybeRounded<Option<Dtz>> {
+        self.map(|dtz| dtz.add_plies_checked(plies))
+    }
+
+    pub fn add_plies_saturating(self, plies: u32) -> MaybeRounded<Dtz> {
+        self.map(|dtz| dtz.add_plies_saturating(plies))
     }
 }
 
@@ -180,10 +209,15 @@ impl Wdl {
     ///
     /// In general the result would be
     /// [ambiguous for `MaybeRounded::Rounded(Dtz(100))` and
-    /// `MaybeRounded::Rounded(Dtz(-100))`](Dtz).
+    /// `MaybeRounded::Rounded(Dtz(-100))`](MaybeRounded).
     /// This conversion assumes that such values were given
-    /// immediately after a capture or pawn move, in which case the outcome
-    /// is an unconditional win or loss.
+    /// immediately after a capture or pawn move, in which case
+    /// the outcome is an unconditional win or loss.
+    ///
+    /// Since playing the tablebase mainline preserves the game theoretical
+    /// outcome, this method may also be used on `dtz.add_plies(plies)`
+    /// if the mainline has been followed for `plies` halfmoves since the last
+    /// capture or pawnmove.
     pub fn from_dtz_after_zeroing(dtz: MaybeRounded<Dtz>) -> Wdl {
         Wdl::from_dtz(dtz.ignore_rounding())
     }
@@ -301,25 +335,12 @@ impl Neg for DecisiveWdl {
 
 from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 
-/// DTZ<sub>50</sub>′′ with rounding. Based on the distance to zeroing of the
+/// DTZ<sub>50</sub>′′. Based on the distance to zeroing of the
 /// half-move clock.
 ///
 /// Zeroing the half-move clock while keeping the game theoretical result in
 /// hand guarantees making progress, so min-maxing `Dtz` values guarantees
 /// achieving the optimal outcome under the 50-move rule.
-///
-/// Can be off by one due to
-/// [rounding](http://www.talkchess.com/forum3/viewtopic.php?f=7&t=58488#p651293):
-/// `Dtz(-n)` can mean a loss in `n + 1` plies and
-/// `Dtz(n)` can mean a win in `n + 1` plies.
-/// This implies some primary tablebase lines may waste up to 1 ply.
-/// Rounding is never used for endgame phases where it would change the game
-/// theoretical outcome.
-///
-/// This means users need to be careful in positions that are nearly drawn
-/// under the 50-move rule! Carelessly wasting 1 more ply by not following the
-/// tablebase recommendation, for a total of 2 wasted plies, may change the
-/// outcome of the game.
 ///
 /// | DTZ | WDL | |
 /// | --- | --- | --- |
