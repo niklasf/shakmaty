@@ -63,6 +63,7 @@
 #![warn(missing_debug_implementations)]
 #![warn(rust_2018_idioms)]
 
+#![cfg_attr(docs_rs, feature(doc_cfg))]
 #![cfg_attr(feature = "backtrace", feature(backtrace))]
 
 #[macro_use]

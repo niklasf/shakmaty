@@ -82,6 +82,7 @@ pub enum ProbeError {
     /// Corrupted table.
     CorruptedTable {
         #[cfg(feature = "backtrace")]
+        #[cfg_attr(docs_rs, doc(cfg(feature = "backtrace")))]
         backtrace: std::backtrace::Backtrace
     },
 }
