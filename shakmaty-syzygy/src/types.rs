@@ -284,6 +284,16 @@ impl Dtz {
     /// # Panics
     ///
     /// Panics if overflow occurrs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty_syzygy::Dtz;
+    ///
+    /// assert_eq!(Dtz(1).add_plies(3), Dtz(4));
+    /// assert_eq!(Dtz(0).add_plies(3), Dtz(0));
+    /// assert_eq!(Dtz(-1).add_plies(3), Dtz(-4));
+    /// ```
     #[must_use]
     pub fn add_plies(self, plies: u32) -> Dtz {
         self.add_plies_checked(plies).expect("dtz overflow")
@@ -291,22 +301,23 @@ impl Dtz {
 
     /// Increases the absolute non-zero value by `plies`, returning `None`
     /// if overflow occurred.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use shakmaty_syzygy::Dtz;
-    ///
-    /// assert_eq!(Dtz(1).add_plies_checked(3), Some(Dtz(4)));
-    /// assert_eq!(Dtz(0).add_plies_checked(3), Some(Dtz(0)));
-    /// assert_eq!(Dtz(-1).add_plies_checked(3), Some(Dtz(-4)));
-    /// ```
     #[must_use]
     pub fn add_plies_checked(self, plies: u32) -> Option<Dtz> {
         match self {
             Dtz(0) => Some(Dtz(0)),
             Dtz(n) if n > 0 => i32::try_from(plies).ok().and_then(|plies| n.checked_add(plies)).map(Dtz),
             Dtz(n) => i32::try_from(plies).ok().and_then(|plies| n.checked_sub(plies)).map(Dtz),
+        }
+    }
+
+    /// Increases the absolute non-zero value by `plies`, saturating if
+    /// overflow occurred.
+    #[must_use]
+    pub fn add_plies_saturating(self, plies: u32) -> Dtz {
+        match self {
+            Dtz(0) => Dtz(0),
+            Dtz(n) if n > 0 => i32::try_from(plies).ok().and_then(|plies| n.checked_add(plies)).map_or(Dtz(i32::MAX), Dtz),
+            Dtz(n) => i32::try_from(plies).ok().and_then(|plies| n.checked_sub(plies)).map_or(Dtz(i32::MIN), Dtz),
         }
     }
 
