@@ -24,7 +24,6 @@ use arrayvec::ArrayVec;
 use bitflags::bitflags;
 use byteorder::{BE, LE, ByteOrder as _, ReadBytesExt as _};
 use itertools::Itertools as _;
-use once_cell::sync::Lazy;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 
 use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
@@ -32,6 +31,23 @@ use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Squ
 use crate::errors::{ProbeError, ProbeResult};
 use crate::material::MaterialExt;
 use crate::types::{DecisiveWdl, Metric, Pieces, Syzygy, Wdl, MAX_PIECES};
+
+const fn binomial(mut n: u64, k: u64) -> u64 {
+    if k > n {
+        return 0;
+    }
+    if k > n - k {
+        return binomial(n, n - k);
+    }
+    let mut r = 1;
+    let mut d = 1;
+    while d <= k {
+        r = r * n / d;
+        n -= 1;
+        d += 1;
+    }
+    r
+}
 
 trait TableTag {
     const METRIC: Metric;
@@ -317,8 +333,7 @@ const PP_IDX: [[u64; 64]; 10] = [[
 /// The a7-a5-c5 triangle.
 const TEST45: Bitboard = Bitboard(0x1_0307_0000_0000);
 
-// TODO: Compute at compile time and remove Lazy wrapper.
-const CONSTS: Lazy<Consts> = Lazy::new(Consts::new);
+const CONSTS: Consts = Consts::new();
 
 struct Consts {
     mult_idx: [[u64; 10]; 5],
@@ -329,35 +344,22 @@ struct Consts {
     lead_pawns_size: [[u64; 4]; 6],
 }
 
-const fn binomial(mut n: u64, k: u64) -> u64 {
-    if k > n {
-        return 0;
-    }
-    if k > n - k {
-        return binomial(n, n - k);
-    }
-    let mut r = 1;
-    let mut d = 1;
-    while d <= k {
-        r = r * n / d;
-        n -= 1;
-        d += 1;
-    }
-    r
-}
-
 impl Consts {
-    fn new() -> Consts {
+    const fn new() -> Consts {
         let mut mult_idx = [[0; 10]; 5];
         let mut mult_factor = [0; 5];
 
-        for i in 0..5 {
+        let mut i = 0;
+        while i < 5 {
             let mut s = 0;
-            for j in 0..10 {
+            let mut j = 0;
+            while j < 10 {
                 mult_idx[i][j] = s;
                 s += if i == 0 { 1 } else { binomial(MULT_TWIST[INV_TRIANGLE[j]], i as u64) };
+                j += 1;
             }
             mult_factor[i] = s;
+            i += 1;
         }
 
         let mut available_squares = 48;
@@ -366,24 +368,28 @@ impl Consts {
         let mut lead_pawn_idx = [[0; 64]; 6];
         let mut lead_pawns_size = [[0; 4]; 6];
 
-        for lead_pawns_cnt in 1..=5 {
-            for file in (0..4).map(File::new) {
+        let mut lead_pawns_cnt = 1;
+        while lead_pawns_cnt <= 5 {
+            let mut file = 0;
+            while file < 4 {
                 let mut idx = 0;
-
-                for rank in (1..7).map(Rank::new) {
-                    let sq = Square::from_coords(file, rank);
+                let mut rank = 1;
+                while rank < 7 {
+                    let sq = file + 8 * rank;
                     if lead_pawns_cnt == 1 {
                         available_squares -= 1;
-                        map_pawns[usize::from(sq)] = available_squares;
+                        map_pawns[sq] = available_squares;
                         available_squares -= 1;
-                        map_pawns[usize::from(sq.flip_horizontal())] = available_squares;
+                        map_pawns[sq ^ 0b000_111] = available_squares; // flip horizontal
                     }
-                    lead_pawn_idx[lead_pawns_cnt][usize::from(sq)] = idx;
-                    idx += binomial(map_pawns[usize::from(sq)], lead_pawns_cnt as u64 - 1);
+                    lead_pawn_idx[lead_pawns_cnt][sq] = idx;
+                    idx += binomial(map_pawns[sq], lead_pawns_cnt as u64 - 1);
+                    rank += 1;
                 }
-
-                lead_pawns_size[lead_pawns_cnt][usize::from(file)] = idx;
+                lead_pawns_size[lead_pawns_cnt][file] = idx;
+                file += 1;
             }
+            lead_pawns_cnt += 1;
         }
 
         Consts {
