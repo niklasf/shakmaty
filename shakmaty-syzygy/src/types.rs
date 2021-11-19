@@ -127,6 +127,7 @@ pub enum MaybeRounded<T> {
 }
 
 impl<T> MaybeRounded<T> {
+    /// Applies a function to the inner value.
     pub fn map<U, F>(self, f: F) -> MaybeRounded<U>
     where
         F: FnOnce(T) -> U,
@@ -137,6 +138,7 @@ impl<T> MaybeRounded<T> {
         }
     }
 
+    /// Gets the inner value.
     pub fn ignore_rounding(self) -> T {
         match self {
             MaybeRounded::Rounded(v) => v,
@@ -144,6 +146,7 @@ impl<T> MaybeRounded<T> {
         }
     }
 
+    /// Gets the inner value, or `None` if it was affected by DTZ rounding.
     pub fn precise(self) -> Option<T> {
         match self {
             MaybeRounded::Precise(v) => Some(v),
@@ -153,22 +156,27 @@ impl<T> MaybeRounded<T> {
 }
 
 impl MaybeRounded<Dtz> {
+    /// See [`Dtz::is_zero()`].
     pub fn is_zero(self) -> bool {
         self.ignore_rounding().is_zero()
     }
 
+    /// See [`Dtz::signum()`].
     pub fn signum(self) -> i32 {
         self.ignore_rounding().signum()
     }
 
+    /// See [`Dtz::add_plies()`].
     pub fn add_plies(self, plies: u32) -> MaybeRounded<Dtz> {
         self.map(|dtz| dtz.add_plies(plies))
     }
 
+    /// See [`Dtz::add_plies_checked()`].
     pub fn add_plies_checked(self, plies: u32) -> MaybeRounded<Option<Dtz>> {
         self.map(|dtz| dtz.add_plies_checked(plies))
     }
 
+    /// See [`Dtz::add_plies_saturating()`].
     pub fn add_plies_saturating(self, plies: u32) -> MaybeRounded<Dtz> {
         self.map(|dtz| dtz.add_plies_saturating(plies))
     }
@@ -359,6 +367,7 @@ pub enum AmbiguousWdl {
 }
 
 impl AmbiguousWdl {
+    /// See [`Wdl::signum()`].
     pub fn signum(self) -> i32 {
         match self {
             AmbiguousWdl::Loss | AmbiguousWdl::MaybeLoss | AmbiguousWdl::BlessedLoss => -1,
@@ -518,6 +527,7 @@ impl Dtz {
         self.0.signum()
     }
 
+    /// Returns `self == Dtz(0)`.
     pub fn is_zero(self) -> bool {
         self.0 == 0
     }
@@ -567,7 +577,9 @@ pub type Pieces = ArrayVec<Piece, MAX_PIECES>;
 /// Metric stored in a table: WDL or DTZ.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Metric {
+    /// WDL<sub>50</sub>.
     Wdl,
+    /// DTZ<sub>50</sub>′′, potentially [with rounding](MaybeRounded).
     Dtz,
 }
 
