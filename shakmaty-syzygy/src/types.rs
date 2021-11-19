@@ -80,15 +80,74 @@ impl Syzygy for shakmaty::variant::Atomic {
 #[cfg(feature = "variant")]
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 impl Syzygy for shakmaty::variant::Antichess {
-    const TBW: TableType = TableType { ext: "gtbw", magic: [0xbc, 0x55, 0xbc, 0x21] };
-    const TBZ: TableType = TableType { ext: "gtbz", magic: [0xd6, 0xf5, 0x1b, 0x50] };
+    const TBW: TableType = TableType {
+        ext: "gtbw",
+        magic: [0xbc, 0x55, 0xbc, 0x21],
+    };
+    const TBZ: TableType = TableType {
+        ext: "gtbz",
+        magic: [0xd6, 0xf5, 0x1b, 0x50],
+    };
 
-    const PAWNLESS_TBW: Option<TableType> = Some(TableType { ext: "stbw", magic: [0x7b, 0xf6, 0x93, 0x15] });
-    const PAWNLESS_TBZ: Option<TableType> = Some(TableType { ext: "stbz", magic: [0xe4, 0xcf, 0xe7, 0x23] });
+    const PAWNLESS_TBW: Option<TableType> = Some(TableType {
+        ext: "stbw",
+        magic: [0x7b, 0xf6, 0x93, 0x15],
+    });
+    const PAWNLESS_TBZ: Option<TableType> = Some(TableType {
+        ext: "stbz",
+        magic: [0xe4, 0xcf, 0xe7, 0x23],
+    });
 
     const ONE_KING: bool = false;
     const CONNECTED_KINGS: bool = true;
     const CAPTURES_COMPULSORY: bool = true;
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum MaybeRounded<T> {
+    Rounded(T),
+    Precise(T),
+}
+
+impl<T> MaybeRounded<T> {
+    pub fn map<U, F>(self, f: F) -> MaybeRounded<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            MaybeRounded::Rounded(v) => MaybeRounded::Rounded(f(v)),
+            MaybeRounded::Precise(v) => MaybeRounded::Precise(f(v)),
+        }
+    }
+
+    pub fn ignore_rounding(self) -> T {
+        match self {
+            MaybeRounded::Rounded(v) => v,
+            MaybeRounded::Precise(v) => v,
+        }
+    }
+
+    pub fn zip<U>(self, other: MaybeRounded<U>) -> MaybeRounded<(T, U)> {
+        match (self, other) {
+            (MaybeRounded::Precise(a), MaybeRounded::Precise(b)) => MaybeRounded::Precise((a, b)),
+            (a, b) => MaybeRounded::Rounded((a.ignore_rounding(), b.ignore_rounding())),
+        }
+    }
+
+    pub fn precise(self) -> Option<T> {
+        match self {
+            MaybeRounded::Precise(v) => Some(v),
+            _ => None,
+        }
+    }
+}
+
+impl<T: Neg> Neg for MaybeRounded<T> {
+    type Output = MaybeRounded<<T as Neg>::Output>;
+
+    fn neg(self) -> Self::Output {
+        self.map(|v| -v)
+    }
 }
 
 /// WDL<sub>50</sub>. 5-valued evaluation of a position in the context of the

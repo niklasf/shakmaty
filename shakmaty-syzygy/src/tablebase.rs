@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::{max, Reverse};
+use std::cmp::{max, min, Reverse};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -22,14 +22,14 @@ use std::str::FromStr;
 
 use arrayvec::ArrayVec;
 use once_cell::sync::OnceCell;
-use rustc_hash::FxHashMap;
 use positioned_io::RandomAccessFile;
+use rustc_hash::FxHashMap;
 
 use shakmaty::{Material, Move, Position, Role};
 
 use crate::errors::{ProbeResultExt as _, SyzygyError, SyzygyResult};
 use crate::table::{DtzTable, WdlTable};
-use crate::types::{DecisiveWdl, Dtz, Metric, Syzygy, Wdl};
+use crate::types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl};
 
 /// Additional probe information from a brief alpha-beta search.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -193,7 +193,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
-    pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<Dtz> {
+    pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<MaybeRounded<Dtz>> {
         self.probe(pos).and_then(|entry| entry.dtz())
     }
 
@@ -207,7 +207,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
-    pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, Dtz)>> {
+    pub fn best_move(&self, pos: &S) -> SyzygyResult<Option<(Move, MaybeRounded<Dtz>)>> {
         struct WithAfter<S> {
             m: Move,
             after: S,
@@ -222,7 +222,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             m: Move,
             immediate_loss: bool,
             zeroing: bool,
-            dtz: Dtz,
+            dtz: MaybeRounded<Dtz>,
         }
 
         // Build list of successor positions.
@@ -245,15 +245,15 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         itertools::process_results(with_wdl.iter().filter(|a| a.entry.wdl == best_wdl).map(|a| {
             let dtz = a.entry.dtz()?;
             Ok(WithDtz {
-                immediate_loss: dtz == Dtz(-1) && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
+                immediate_loss: dtz.ignore_rounding() == Dtz(-1) && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
                 zeroing: a.m.is_zeroing(),
                 m: a.m.clone(),
                 dtz,
             })
         }), |iter| iter.min_by_key(|m| (
             Reverse(m.immediate_loss),
-            m.zeroing ^ (m.dtz < Dtz(0)), // zeroing is good/bad if winning/losing
-            Reverse(m.dtz),
+            m.zeroing ^ (m.dtz.ignore_rounding() < Dtz(0)), // zeroing is good/bad if winning/losing
+            Reverse(m.dtz.ignore_rounding()),
         )).map(|m| (m.m, m.dtz)))
     }
 
@@ -493,7 +493,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &key))
     }
 
-    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<u32>> {
+    fn probe_dtz_table(&self, pos: &S, wdl: DecisiveWdl) -> SyzygyResult<Option<MaybeRounded<u32>>> {
         // Get raw DTZ value from the appropriate table.
         let key = pos.board().material();
         self.dtz_table(&key)
@@ -515,19 +515,21 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         self.wdl
     }
 
-    fn dtz(&self) -> SyzygyResult<Dtz> {
+    fn dtz(&self) -> SyzygyResult<MaybeRounded<Dtz>> {
         let wdl = match self.wdl.decisive() {
             Some(wdl) => wdl,
-            None => return Ok(Dtz(0)),
+            None => return Ok(MaybeRounded::Precise(Dtz(0))),
         };
 
         if self.state == ProbeState::ZeroingBestMove || self.pos.us() == self.pos.our(Role::Pawn) {
-            return Ok(Dtz::before_zeroing(wdl.into()));
+            return Ok(MaybeRounded::Precise(Dtz::before_zeroing(wdl.into())));
         }
 
         if self.state == ProbeState::Threat && wdl >= DecisiveWdl::CursedWin {
             // The position is a win or a cursed win by a threat move.
-            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(1));
+            return Ok(MaybeRounded::Precise(
+                Dtz::before_zeroing(wdl.into()).add_plies(1),
+            ));
         }
 
         // If winning, check for a winning pawn move. No need to look at
@@ -541,7 +543,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
                 after.play_unchecked(m);
                 let v = -self.tablebase.probe_wdl_after_zeroing(&after)?;
                 if v == wdl.into() {
-                    return Ok(Dtz::before_zeroing(wdl.into()));
+                    return Ok(MaybeRounded::Precise(Dtz::before_zeroing(wdl.into())));
                 }
             }
         }
@@ -549,7 +551,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         // At this point we know that the best move is not a capture. Probe the
         // table. DTZ tables store only one side to move.
         if let Some(plies) = self.tablebase.probe_dtz_table(self.pos, wdl)? {
-            return Ok(Dtz::before_zeroing(wdl.into()).add_plies(plies));
+            return Ok(plies.map(|plies| Dtz::before_zeroing(wdl.into()).add_plies(plies)));
         }
 
         // We have to probe the other side of the table by doing
@@ -557,23 +559,25 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
         let mut moves = self.pos.legal_moves();
         moves.retain(|m| !m.is_zeroing());
 
+        // TODO: Check propagation of rounding.
         let mut best = if wdl >= DecisiveWdl::CursedWin {
             None
         } else {
-            Some(Dtz::before_zeroing(wdl.into()))
+            Some(MaybeRounded::Precise(Dtz::before_zeroing(wdl.into())))
         };
 
         for m in &moves {
             let mut after = self.pos.clone();
             after.play_unchecked(m);
             let v = -self.tablebase.probe_dtz(&after)?;
-            if v == Dtz(1) && after.is_checkmate() {
-                best = Some(Dtz(1));
-            } else if v.signum() == wdl.signum() {
-                let v = v.add_plies(1);
-                if best.map_or(true, |best| v < best) {
-                    best = Some(v);
-                }
+            if v.ignore_rounding() == Dtz(1) && after.is_checkmate() {
+                best = Some(MaybeRounded::Precise(Dtz(1)));
+            } else if v.ignore_rounding().signum() == wdl.signum() {
+                let v = v.map(|v| v.add_plies(1));
+                best = match best {
+                    Some(best) => Some(v.zip(best).map(|(v, best)| min(v, best))),
+                    None => Some(v),
+                };
             }
         }
 
@@ -649,6 +653,6 @@ mod tests {
             .position(CastlingMode::Chess960)
             .expect("legal position");
 
-        assert!(matches!(tables.probe_dtz(&pos), Ok(Dtz(1))));
+        assert!(matches!(tables.probe_dtz(&pos), Ok(MaybeRounded::Precise(Dtz(1)))));
     }
 }

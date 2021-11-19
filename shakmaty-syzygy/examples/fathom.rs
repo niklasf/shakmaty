@@ -109,7 +109,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             movetext.push("{ Draw claimed }".to_owned());
             force_movenumber = true;
         } else if pos.halfmoves() == 0 {
-            let Dtz(dtz) = tablebase.probe_dtz(&pos)?;
+            let Dtz(dtz) = tablebase.probe_dtz(&pos)?.ignore_rounding();
             movetext.push(format!("{{ {} with DTZ {} }}", pos.board().material(), dtz));
             force_movenumber = true;
         }
@@ -145,7 +145,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("[FEN \"{}\"]", fen);
         println!("[Annotator \"shakmaty-syzygy\"]");
         println!("[WDL \"{:?}\"]", wdl);
-        println!("[DTZ \"{}\"]", dtz.0);
+        println!("[DTZ \"{}\"]", i32::from(dtz.ignore_rounding()));
         println!("[WinningMoves \"{}\"]", winning_sans.join(", "));
         println!("[DrawingMoves \"{}\"]", drawing_sans.join(", "));
         println!("[LosingMoves \"{}\"]", losing_sans.join(", "));

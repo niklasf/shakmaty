@@ -38,7 +38,7 @@ where
         }
 
         match tables.probe_dtz(&pos) {
-            Ok(dtz) => assert_eq!(i32::from(dtz), expected_dtz),
+            Ok(dtz) => assert_eq!(i32::from(dtz.ignore_rounding()), expected_dtz),
             Err(err) => panic!("probe dtz: {}", err),
         }
     }
