@@ -98,6 +98,7 @@ pub enum ProbeError {
         magic: [u8; 4],
     },
     /// Corrupted table.
+    #[cfg_attr(not(feature = "backtrace"), non_exhaustive)]
     CorruptedTable {
         #[allow(missing_docs)]
         #[cfg(feature = "backtrace")]
