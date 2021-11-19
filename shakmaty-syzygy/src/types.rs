@@ -349,9 +349,9 @@ pub enum Metric {
 
 impl fmt::Display for Metric {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            Metric::Wdl => f.write_str("wdl"),
-            Metric::Dtz => f.write_str("dtz"),
-        }
+        f.write_str(match *self {
+            Metric::Wdl => "wdl",
+            Metric::Dtz => "dtz",
+        })
     }
 }
