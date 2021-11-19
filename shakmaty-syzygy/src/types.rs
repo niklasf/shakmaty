@@ -93,7 +93,7 @@ impl Syzygy for shakmaty::variant::Antichess {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(i8)]
 pub enum Wdl {
-    /// Unconditional loss for the side to move.
+    /// Unconditional loss.
     Loss = -2,
     /// Loss that can be saved by the 50-move rule.
     BlessedLoss = -1,
