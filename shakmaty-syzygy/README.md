@@ -48,13 +48,9 @@ $ cargo run --example fathom -- --path tables/chess -- "3qk3/8/8/8/8/8/8/4K3 w -
 [Result "0-1"]
 [FEN "3qk3/8/8/8/8/8/8/4K3 w - - 0 1"]
 [Annotator "shakmaty-syzygy"]
-[WDL "Loss"]
-[DTZ "-16"]
-[WinningMoves ""]
-[DrawingMoves ""]
-[LosingMoves "Kf1, Ke2, Kf2"]
+[DTZ "-16 or -17"]
 
-{ KvKQ with DTZ -16 } 1. Ke2 Kd7 2. Kd1 Ke6+ 3. Kc1 Qd3 4. Kb2 Qd2+ 5. Ka1 Kd5 6. Kb1 Kc4 7. Ka1 Kb3 8. Kb1 Qd1# { Checkmate } 0-1
+{ KvKQ with DTZ -16 or -17 } 1. Ke2 Kd7 2. Kd1 Ke6+ 3. Kc1 Qd3 4. Kb2 Qd2+ 5. Ka1 Kd5 6. Kb1 Kc4 7. Ka1 Kb3 8. Kb1 Qd1# { Checkmate } 0-1
 ```
 
 Documentation

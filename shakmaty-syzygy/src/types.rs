@@ -153,6 +153,10 @@ impl<T> MaybeRounded<T> {
 }
 
 impl MaybeRounded<Dtz> {
+    pub fn is_zero(self) -> bool {
+        self.ignore_rounding().is_zero()
+    }
+
     pub fn signum(self) -> i32 {
         self.ignore_rounding().signum()
     }
@@ -421,6 +425,10 @@ impl Dtz {
     /// * `-1` if `self < Dtz(0)`
     pub fn signum(self) -> i32 {
         self.0.signum()
+    }
+
+    pub fn is_zero(self) -> bool {
+        self.0 == 0
     }
 }
 

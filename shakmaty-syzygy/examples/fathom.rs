@@ -1,12 +1,11 @@
-use std::cmp::min;
 use std::error::Error;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 use shakmaty::fen::{fen, Fen};
 use shakmaty::san::SanPlus;
-use shakmaty::{CastlingMode, Chess, Color, Position, Setup};
-use shakmaty_syzygy::{Dtz, SyzygyError, Tablebase, Wdl};
+use shakmaty::{CastlingMode, Chess, Color, Position, Setup, Outcome};
+use shakmaty_syzygy::{Tablebase, MaybeRounded};
 
 #[derive(Debug, StructOpt)]
 struct Opt {
@@ -18,32 +17,6 @@ struct Opt {
     test: bool,
     /// The position to probe
     fen: String,
-}
-
-fn real_wdl(tb: &Tablebase<Chess>, pos: &Chess, dtz: Dtz) -> Result<Wdl, SyzygyError> {
-    if let Some(outcome) = pos.outcome() {
-        return Ok(Wdl::from_outcome(outcome, pos.turn()));
-    }
-
-    let halfmoves = min(101, pos.halfmoves());
-    let before_zeroing = dtz.add_plies(halfmoves);
-
-    if before_zeroing.0.abs() != 100 || halfmoves == 0 {
-        // Unambiguous.
-        return Ok(Wdl::from_dtz_after_zeroing(before_zeroing));
-    }
-
-    if halfmoves == 1 && dtz.0.abs() == 99 {
-        // This could only be a cursed/blessed result if the real DTZ was
-        // 100 instead of 99. But tables with DTZ 100 will always
-        // store precise DTZ values, hence it could not have been 100.
-        return Ok(Wdl::from_dtz_after_zeroing(before_zeroing));
-    }
-
-    let best = tb.best_move(pos)?.expect("has moves");
-    let mut after = pos.clone();
-    after.play_unchecked(&best.0);
-    Ok(-real_wdl(tb, &after, best.1)?)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -59,32 +32,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let material = pos.board().material();
     let fen = fen(&pos);
     let dtz = tablebase.probe_dtz(&pos)?;
-    let wdl = real_wdl(&tablebase, &pos, dtz)?;
-
-    let result = match wdl {
-        Wdl::Loss => "0-1",
-        Wdl::Win => "1-0",
-        _ => "1/2-1/2",
-    };
-
-    let mut winning_sans = Vec::new();
-    let mut drawing_sans = Vec::new();
-    let mut losing_sans = Vec::new();
-    for m in pos.legal_moves() {
-        let san = SanPlus::from_move(pos.clone(), &m);
-        let mut after = pos.clone();
-        after.play_unchecked(&m);
-        let dtz_after = tablebase.probe_dtz(&after)?;
-        let list = match real_wdl(&tablebase, &after, dtz_after)? {
-            Wdl::Win => &mut losing_sans,
-            Wdl::Loss => &mut winning_sans,
-            _ => &mut drawing_sans,
-        };
-        list.push(san.to_string());
-    }
 
     let mut movetext = Vec::new();
-
     let mut force_movenumber = true;
 
     loop {
@@ -109,13 +58,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             movetext.push("{ Draw claimed }".to_owned());
             force_movenumber = true;
         } else if pos.halfmoves() == 0 {
-            let Dtz(dtz) = tablebase.probe_dtz(&pos)?.ignore_rounding();
-            movetext.push(format!("{{ {} with DTZ {} }}", pos.board().material(), dtz));
+            movetext.push(match tablebase.probe_dtz(&pos)? {
+                MaybeRounded::Precise(dtz) => format!("{{ {} with DTZ {} }}", pos.board().material(), i32::from(dtz)),
+                MaybeRounded::Rounded(dtz) => format!("{{ {} with DTZ {} or {} }}", pos.board().material(), i32::from(dtz), i32::from(dtz.add_plies(1))),
+            });
             force_movenumber = true;
         }
 
         let (bestmove, dtz) = tablebase.best_move(&pos)?.expect("has moves");
-        if dtz == Dtz(0) {
+        if dtz.is_zero() {
             movetext.push("{ Tablebase draw }".to_owned());
             break;
         }
@@ -130,7 +81,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         force_movenumber = false;
     }
 
-    movetext.push(result.to_owned());
+    let result = pos.outcome().unwrap_or(Outcome::Draw);
+
+    movetext.push(result.to_string());
 
     if opt.test {
         println!("{}", result);
@@ -144,11 +97,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("[Result \"{}\"]", result);
         println!("[FEN \"{}\"]", fen);
         println!("[Annotator \"shakmaty-syzygy\"]");
-        println!("[WDL \"{:?}\"]", wdl);
-        println!("[DTZ \"{}\"]", i32::from(dtz.ignore_rounding()));
-        println!("[WinningMoves \"{}\"]", winning_sans.join(", "));
-        println!("[DrawingMoves \"{}\"]", drawing_sans.join(", "));
-        println!("[LosingMoves \"{}\"]", losing_sans.join(", "));
+        match dtz {
+            MaybeRounded::Precise(dtz) => println!("[DTZ \"{}\"]", i32::from(dtz)),
+            MaybeRounded::Rounded(dtz) => println!("[DTZ \"{} or {}\"]", i32::from(dtz), i32::from(dtz.add_plies(1))),
+        }
         println!();
         println!("{}", movetext.join(" "));
         println!();
