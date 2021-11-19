@@ -341,7 +341,7 @@ pub const MAX_PIECES: usize = 7;
 pub type Pieces = ArrayVec<Piece, MAX_PIECES>;
 
 /// Metric stored in a table: WDL or DTZ.
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Metric {
     Wdl,
     Dtz,
