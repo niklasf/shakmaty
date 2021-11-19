@@ -363,7 +363,7 @@ from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 pub enum AmbiguousWdl {
     /// Unconditional loss.
     Loss,
-    /// Loss that can maybe be saved by the 50-move rule.
+    /// Ambiguous: Loss that can maybe be saved by the 50-move rule.
     MaybeLoss,
     /// Loss that can be saved by the 50-move rule.
     BlessedLoss,
@@ -371,7 +371,7 @@ pub enum AmbiguousWdl {
     Draw,
     /// Win that can be frustrated by the 50-move rule.
     CursedWin,
-    /// Win that can maybe be frustrated by the 50-move rule.
+    /// Ambiguous: Win that can maybe be frustrated by the 50-move rule.
     MaybeWin,
     /// Unconditional win.
     Win,
@@ -392,7 +392,7 @@ impl AmbiguousWdl {
     /// [ambiguous due to DTZ rounding](MaybeRounded)
     /// and will be mapped to [`AmbiguousWdl::MaybeWin`] and
     /// [`AmbiguousWdl::MaybeLoss`] respectively.
-    pub fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
+    pub(crate) fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
         match dtz {
             MaybeRounded::Rounded(Dtz(100)) => AmbiguousWdl::MaybeWin,
             MaybeRounded::Rounded(Dtz(-100)) => AmbiguousWdl::MaybeLoss,
