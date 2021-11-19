@@ -118,10 +118,10 @@ impl Wdl {
 
     /// Converts `dtz` to a `Wdl`.
     ///
-    /// Typically the result would be ambiguous for absolute DTZ values 100.
-    /// This conversion assumes that such values were given immediately after
-    /// a capture or pawn move, in which case the outcome is an unconditional
-    /// win or loss.
+    /// In general the result would be ambiguous for `Dtz(100)` and
+    /// `Dtz(-100)`. This conversion assumes that such values were given
+    /// immediately after a capture or pawn move, in which case the outcome
+    /// is an unconditional win or loss.
     pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
         match dtz.0 {
             n if n < -100 => Wdl::BlessedLoss,
