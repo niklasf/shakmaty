@@ -31,6 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let material = pos.board().material();
     let fen = fen(&pos);
+    let wdl = tablebase.probe_wdl(&pos)?;
     let dtz = tablebase.probe_dtz(&pos)?;
 
     let mut movetext = Vec::new();
@@ -97,6 +98,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("[Result \"{}\"]", result);
         println!("[FEN \"{}\"]", fen);
         println!("[Annotator \"shakmaty-syzygy\"]");
+        println!("[WDL \"{:?}\"]", wdl);
         match dtz {
             MaybeRounded::Precise(dtz) => println!("[DTZ \"{}\"]", i32::from(dtz)),
             MaybeRounded::Rounded(dtz) => println!("[DTZ \"{} or {}\"]", i32::from(dtz), i32::from(dtz.add_plies(1))),

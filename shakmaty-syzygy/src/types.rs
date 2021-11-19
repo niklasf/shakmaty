@@ -339,7 +339,7 @@ impl Neg for DecisiveWdl {
 
 from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 
-/// WDL<sub>50</sub> derived from [`MaybeRounded<Dtz>`].
+/// WDL<sub>50</sub> with [ambiguity due to DTZ rounding](MaybeRounded).
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum AmbiguousWdl {
     /// Unconditional loss.
@@ -377,6 +377,28 @@ impl AmbiguousWdl {
 
     pub fn from_dtz_after_plies(dtz: MaybeRounded<Dtz>, plies: u32) -> AmbiguousWdl {
         AmbiguousWdl::from_dtz(dtz.add_plies_saturating(plies))
+    }
+
+    pub fn after_zeroing(self) -> Wdl {
+        match self {
+            AmbiguousWdl::Loss | AmbiguousWdl::MaybeLoss => Wdl::Loss,
+            AmbiguousWdl::BlessedLoss => Wdl::BlessedLoss,
+            AmbiguousWdl::Draw => Wdl::Draw,
+            AmbiguousWdl::CursedWin => Wdl::CursedWin,
+            AmbiguousWdl::MaybeWin | AmbiguousWdl::Win => Wdl::Win,
+        }
+    }
+
+    pub fn is_ambiguous(self) -> bool {
+        matches!(self, AmbiguousWdl::MaybeWin | AmbiguousWdl::MaybeLoss)
+    }
+
+    pub fn is_unambiguous(self) -> bool {
+        !self.is_ambiguous()
+    }
+
+    pub fn unambiguous(self) -> Option<Wdl> {
+        self.is_unambiguous().then(|| AmbiguousWdl::after_zeroing(self))
     }
 }
 
