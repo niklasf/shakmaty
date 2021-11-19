@@ -545,7 +545,8 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             return Ok(Dtz::before_zeroing(wdl).add_plies(dtz));
         }
 
-        // We have to probe the other side by doing a 1-ply search.
+        // We have to probe the other side of the table by doing
+        // a 1-ply search.
         let mut moves = self.pos.legal_moves();
         moves.retain(|m| !m.is_zeroing());
 
@@ -561,12 +562,11 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             let v = -self.tablebase.probe_dtz(&after)?;
             if v == Dtz(1) && after.is_checkmate() {
                 best = Some(Dtz(1));
-            } else if wdl >= DecisiveWdl::CursedWin {
-                if v > Dtz(0) && best.map_or(true, |best| v + Dtz(1) < best) {
-                    best = Some(v + Dtz(1));
+            } else if v.signum() == wdl.signum() {
+                let v = v.add_plies(1);
+                if best.map_or(true, |best| v < best) {
+                    best = Some(v);
                 }
-            } else if best.map_or(true, |best| v - Dtz(1) < best) {
-                best = Some(v - Dtz(1));
             }
         }
 

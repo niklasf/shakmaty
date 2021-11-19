@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::fmt;
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::ops::Neg;
 
 use arrayvec::ArrayVec;
 
@@ -140,6 +140,10 @@ impl Wdl {
             Wdl::Win => DecisiveWdl::Win,
         })
     }
+
+    pub fn signum(self) -> i32 {
+        i32::from(self).signum()
+    }
 }
 
 impl Neg for Wdl {
@@ -183,6 +187,7 @@ from_wdl_impl! { Wdl, i8 i16 i32 i64 i128 isize }
 /// 4-valued evaluation of a decisive (not drawn) position in the context of
 /// the 50-move rule.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(i32)]
 pub enum DecisiveWdl {
     /// Unconditional loss for the side to move.
     Loss = -2,
@@ -192,6 +197,12 @@ pub enum DecisiveWdl {
     CursedWin = 1,
     /// Unconditional win.
     Win = 2,
+}
+
+impl DecisiveWdl {
+    pub fn signum(self) -> i32 {
+        i32::from(self).signum()
+    }
 }
 
 impl Neg for DecisiveWdl {
@@ -265,6 +276,10 @@ impl Dtz {
         debug_assert!(self.0.signum() == new_dtz.signum());
         Dtz(new_dtz)
     }
+
+    pub fn signum(self) -> i32 {
+        self.0.signum()
+    }
 }
 
 macro_rules! from_dtz_impl {
@@ -299,38 +314,6 @@ impl Neg for Dtz {
     #[inline]
     fn neg(self) -> Dtz {
         Dtz(-self.0)
-    }
-}
-
-impl Add for Dtz {
-    type Output = Dtz;
-
-    #[inline]
-    fn add(self, other: Dtz) -> Dtz {
-        Dtz(self.0 + other.0)
-    }
-}
-
-impl AddAssign for Dtz {
-    #[inline]
-    fn add_assign(&mut self, other: Dtz) {
-        self.0 += other.0;
-    }
-}
-
-impl Sub for Dtz {
-    type Output = Dtz;
-
-    #[inline]
-    fn sub(self, other: Dtz) -> Dtz {
-        Dtz(self.0 - other.0)
-    }
-}
-
-impl SubAssign for Dtz {
-    #[inline]
-    fn sub_assign(&mut self, other: Dtz) {
-        self.0 -= other.0;
     }
 }
 
