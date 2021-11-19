@@ -120,8 +120,9 @@ impl Wdl {
 
     /// Converts `dtz` to a `Wdl`.
     ///
-    /// In general the result would be ambiguous for `Dtz(100)` and
-    /// `Dtz(-100)`. This conversion assumes that such values were given
+    /// In general the result would be
+    /// [ambiguous for `Dtz(100)` and `Dtz(-100)`](Dtz).
+    /// This conversion assumes that such values were given
     /// immediately after a capture or pawn move, in which case the outcome
     /// is an unconditional win or loss.
     pub fn from_dtz_after_zeroing(dtz: Dtz) -> Wdl {
@@ -232,7 +233,8 @@ from_wdl_impl! { DecisiveWdl, i8 i16 i32 i64 i128 isize }
 /// half-move clock.
 ///
 /// Zeroing the half-move clock while keeping the game theoretical result in
-/// hand guarantees making progress.
+/// hand guarantees making progress, so min-maxing `Dtz` values guarantees
+/// achieving the optimal outcome under the 50-move rule.
 ///
 /// Can be off by one due to
 /// [rounding](http://www.talkchess.com/forum3/viewtopic.php?f=7&t=58488#p651293):
