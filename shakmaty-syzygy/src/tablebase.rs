@@ -571,7 +571,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             let v = -self.tablebase.probe_dtz(&after)?;
             if v.ignore_rounding() == Dtz(1) && after.is_checkmate() {
                 best = Some(MaybeRounded::Precise(Dtz(1)));
-            } else if v.ignore_rounding().signum() == wdl.signum() {
+            } else if v.signum() == wdl.signum() {
                 let v = v.map(|v| v.add_plies(1));
                 best = match best {
                     None => Some(v),

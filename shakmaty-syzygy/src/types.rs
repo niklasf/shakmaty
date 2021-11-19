@@ -135,6 +135,12 @@ impl<T> MaybeRounded<T> {
     }
 }
 
+impl MaybeRounded<Dtz> {
+    pub fn signum(self) -> i32 {
+        self.ignore_rounding().signum()
+    }
+}
+
 impl<T: Neg> Neg for MaybeRounded<T> {
     type Output = MaybeRounded<<T as Neg>::Output>;
 
