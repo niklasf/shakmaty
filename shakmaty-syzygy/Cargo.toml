@@ -23,7 +23,6 @@ num-integer = "0.1"
 byteorder = "1.3"
 itertools = "0.10"
 positioned-io = { package = "positioned-io-preview", version = "0.3" }
-lazy_static = "1.4"
 rustc-hash = "1.1"
 once_cell = "1.1"
 

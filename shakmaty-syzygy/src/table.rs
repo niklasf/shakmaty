@@ -24,7 +24,7 @@ use arrayvec::ArrayVec;
 use bitflags::bitflags;
 use byteorder::{BE, LE, ByteOrder as _, ReadBytesExt as _};
 use itertools::Itertools as _;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use num_integer::binomial;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 
@@ -318,10 +318,8 @@ const PP_IDX: [[u64; 64]; 10] = [[
 /// The a7-a5-c5 triangle.
 const TEST45: Bitboard = Bitboard(0x1_0307_0000_0000);
 
-lazy_static! {
-    // Ideally these would be compile time constants.
-    static ref CONSTS: Consts = Consts::new();
-}
+// TODO: Compute at compile time and remove Lazy wrapper.
+const CONSTS: Lazy<Consts> = Lazy::new(Consts::new);
 
 struct Consts {
     mult_idx: [[u64; 10]; 5],
