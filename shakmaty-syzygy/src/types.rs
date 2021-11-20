@@ -172,6 +172,16 @@ impl MaybeRounded<Dtz> {
         self.ignore_rounding().is_zero()
     }
 
+    /// See [`Dtz::is_positive()`].
+    pub fn is_positive(self) -> bool {
+        self.ignore_rounding().is_positive()
+    }
+
+    /// See [`Dtz::is_negative()`].
+    pub fn is_negative(self) -> bool {
+        self.ignore_rounding().is_negative()
+    }
+
     /// See [`Dtz::signum()`].
     pub fn signum(self) -> i32 {
         self.ignore_rounding().signum()
@@ -573,6 +583,16 @@ impl Dtz {
     /// Returns `self == Dtz(0)`.
     pub fn is_zero(self) -> bool {
         self.0 == 0
+    }
+
+    /// Returns `self > Dtz(0)`.
+    pub fn is_positive(self) -> bool {
+        self.0 > 0
+    }
+
+    /// Returns `self < Dtz(0)`.
+    pub fn is_negative(self) -> bool {
+        self.0 < 0
     }
 }
 
