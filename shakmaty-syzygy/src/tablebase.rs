@@ -195,8 +195,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     /// Probe tables for the [`Wdl`] value of a position, assuming `pos`
-    /// is reached directly after a capture or pawn move, or by following
-    /// the tablebase mainline from a capture or pawn move.
+    /// is reached directly after a capture or pawn move.
     ///
     /// # Errors
     ///
