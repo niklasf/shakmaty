@@ -307,7 +307,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 iter.min_by_key(|m| {
                     (
                         Reverse(m.immediate_loss),
-                        m.zeroing ^ (m.dtz.ignore_rounding() < Dtz(0)), // zeroing is good/bad if winning/losing
+                        m.zeroing ^ m.dtz.is_negative(), // zeroing is good/bad if winning/losing
                         Reverse(m.dtz.ignore_rounding()),
                     )
                 })
