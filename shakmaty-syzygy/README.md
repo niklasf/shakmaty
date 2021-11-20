@@ -60,6 +60,16 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - Introduce `MaybeRounded` and `AmbiguousWdl`, ensuring that DTZ rounding
+    is handled.
+  - Add `Tablebase::max_pieces()`.
+  - `Dtz::before_zeroing()` is no longer generic.
+  - `Dtz::add_plies()` now takes `u32`. Add checked and saturating versions.
+  - Fix `ProbeError::CorruptedTable` should be `#[non_exhaustive]` when
+    `backtrace` feature not enabled.
+  - Optimize initialization of internal constants, no longer depending on
+    on `lazy_static`.
 * 0.17.0
   - Update shakmaty to `0.20`.
 * 0.16.1
