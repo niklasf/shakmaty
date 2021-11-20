@@ -60,7 +60,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.18.0
   - Introduce `MaybeRounded` and `AmbiguousWdl`, ensuring that DTZ rounding
     is handled.
   - Add `Tablebase::max_pieces()`.

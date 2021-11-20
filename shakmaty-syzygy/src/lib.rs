@@ -54,7 +54,7 @@
 //!   This may be useful to identify issues with corrupted tablebase files or
 //!   to debug the probing code. Currently requires nightly Rust.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.17.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.18.0")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
