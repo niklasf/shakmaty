@@ -114,6 +114,8 @@ impl Syzygy for shakmaty::variant::Antichess {
 
 /// A value that may be affected by DTZ rounding.
 ///
+/// # DTZ
+///
 /// Rounded [`Dtz`] values may be off by one:
 ///
 /// * `MaybeRounded::Rounded(Dtz(-n))` can mean a loss with a forced
@@ -121,14 +123,29 @@ impl Syzygy for shakmaty::variant::Antichess {
 /// * `MaybeRounded::Rounded(Dtz(n))` can mean a win with a forced
 ///   zeroing move in `n` or `n + 1` plies.
 ///
-/// This implies some primary tablebase lines may waste up to 1 ply.
-/// Rounding is never used for endgame phases where wasting a single ply
-/// would change the game theoretical outcome.
+/// # WDL
 ///
-/// But users still need to be careful in positions that are nearly drawn
-/// under the 50-move rule! Carelessly wasting 1 more ply by not following
-/// the tablebase recommendation, for a total of 2 wasted plies, may change
-/// the outcome of the game.
+/// Because of that `MaybeRounded::Rounded(Dtz(100))` might correspond to
+/// [`Wdl::Win`] or [`Wdl::CursedWin`], and `MaybeRounded::Rounded(Dtz(-100))`
+/// might correspond to [`Wdl::Loss`] or [`Wdl::BlessedLoss`].
+///
+/// Rounding will never be used for endgame phases that are exactly on the
+/// edge of the 50-move rule (value ±100 directly after a capture or pawn
+/// move).
+///
+/// # Move selection
+///
+/// So some primary tablebase lines may waste up to 1 ply, but never more,
+/// and never for endgame phases where wasting 1 ply would change the
+/// game theoretical outcome.
+///
+/// Users need to be careful in positions that are nearly drawn
+/// under the 50-move rule! Afterall, carelessly wasting 1 more ply by not
+/// following the tablebase recommendation, for a total of 2 wasted plies,
+/// may change the outcome of the game.
+///
+/// For some background, see [this and the following posts on
+/// talkchess.com](http://www.talkchess.com/forum3/viewtopic.php?f=7&t=58488#p651293).
 #[derive(Debug, Copy, Clone)]
 pub enum MaybeRounded<T> {
     /// Inner value potentially affected by DTZ rounding.
