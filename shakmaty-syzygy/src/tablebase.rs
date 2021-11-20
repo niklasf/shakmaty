@@ -230,10 +230,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         self.probe(pos).and_then(|entry| entry.dtz())
     }
 
-    /// Select a [`Dtz`]-optimal move.
+    /// Get the recommended tablebase move.
     ///
-    /// Following the mainline starting from a capture or pawn move guarantees
-    /// achieving the optimal outcome under the 50-move rule.
+    /// Following the tablebase mainline *starting from a capture or pawn move*
+    /// guarantees achieving the optimal outcome under the 50-move rule.
+    ///
+    /// Otherwise (i.e. when not immediately following the tablebase mainline
+    /// after the capture that crosses into tablebase territory),
+    /// [some care needs to be taken due to DTZ rounding](MaybeRounded).
     ///
     /// Requires both WDL and DTZ tables.
     ///
