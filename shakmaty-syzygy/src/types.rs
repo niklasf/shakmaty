@@ -136,13 +136,13 @@ impl Syzygy for shakmaty::variant::Antichess {
 /// # Move selection
 ///
 /// So some primary tablebase lines may waste up to 1 ply, but never more,
-/// and never for endgame phases where wasting 1 ply would change the
-/// game theoretical outcome.
+/// and never for endgame phases (starting after a capture or pawn
+/// move) where wasting 1 ply would change the game theoretical outcome.
 ///
 /// Users need to be careful in positions that are nearly drawn
-/// under the 50-move rule! Afterall, carelessly wasting 1 more ply by not
+/// under the 50-move rule! Carelessly wasting 1 more ply by not
 /// following the tablebase recommendation, for a total of 2 wasted plies,
-/// may change the outcome of the game.
+/// may change the outcome of the game afterall.
 ///
 /// For some background, see [this and the following posts on
 /// talkchess.com](http://www.talkchess.com/forum3/viewtopic.php?f=7&t=58488#p651293).
