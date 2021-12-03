@@ -71,7 +71,7 @@ impl Bitboard {
     /// Like `rank()`, but from the point of view of `color`.
     #[inline]
     pub fn relative_rank(color: Color, rank: Rank) -> Bitboard {
-        Bitboard::rank(color.fold(rank, rank.flip_vertical()))
+        Bitboard::rank(color.fold_wb(rank, rank.flip_vertical()))
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.

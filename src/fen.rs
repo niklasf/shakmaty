@@ -118,15 +118,15 @@ impl FenOpts {
                     && Some(rook) == candidates.first()
                     && king.map_or(false, |k| rook < k)
                 {
-                    fen.push(color.fold('Q', 'q'));
+                    fen.push(color.fold_wb('Q', 'q'));
                 } else if !self.shredder
                     && Some(rook) == candidates.last()
                     && king.map_or(false, |k| k < rook)
                 {
-                    fen.push(color.fold('K', 'k'));
+                    fen.push(color.fold_wb('K', 'k'));
                 } else {
                     let file = rook.file();
-                    fen.push(color.fold(file.char().to_ascii_uppercase(), file.char()));
+                    fen.push(color.fold_wb(file.char().to_ascii_uppercase(), file.char()));
                 }
             }
         }

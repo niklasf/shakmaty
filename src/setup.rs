@@ -292,7 +292,7 @@ impl Castles {
             if let Some(king) = board.king_of(color) {
                 if king.file() == File::A
                     || king.file() == File::H
-                    || king.rank() != color.fold(Rank::First, Rank::Eighth)
+                    || king.rank() != color.fold_wb(Rank::First, Rank::Eighth)
                 {
                     continue;
                 }
@@ -438,11 +438,11 @@ impl EpSquare {
         }
 
         let fifth_rank_sq = ep_square
-            .offset(turn.fold(-8, 8))
+            .offset(turn.fold_wb(-8, 8))
             .expect("ep square is on sixth rank");
 
         let seventh_rank_sq = ep_square
-            .offset(turn.fold(8, -8))
+            .offset(turn.fold_wb(8, -8))
             .expect("ep square is on sixth rank");
 
         // The last move must have been a double pawn push. Check for the

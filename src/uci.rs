@@ -316,19 +316,19 @@ impl Uci {
                         rook: to,
                     }
                 } else if role == Role::King
-                    && from == pos.turn().fold(Square::E1, Square::E8)
-                    && to.rank() == pos.turn().fold(Rank::First, Rank::Eighth)
+                    && from == pos.turn().fold_wb(Square::E1, Square::E8)
+                    && to.rank() == pos.turn().fold_wb(Rank::First, Rank::Eighth)
                     && from.distance(to) == 2
                 {
                     if from.file() < to.file() {
                         Move::Castle {
                             king: from,
-                            rook: pos.turn().fold(Square::H1, Square::H8),
+                            rook: pos.turn().fold_wb(Square::H1, Square::H8),
                         }
                     } else {
                         Move::Castle {
                             king: from,
-                            rook: pos.turn().fold(Square::A1, Square::A8),
+                            rook: pos.turn().fold_wb(Square::A1, Square::A8),
                         }
                     }
                 } else if role == Role::Pawn

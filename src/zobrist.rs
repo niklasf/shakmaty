@@ -77,7 +77,7 @@ macro_rules! zobrist_value_impl {
 
             fn zobrist_for_remaining_checks(color: Color, RemainingChecks(remaining): RemainingChecks) -> $t {
                 if remaining < 3 {
-                    REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold(0, 3)] as $t
+                    REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $t
                 } else {
                     <$t>::default()
                 }

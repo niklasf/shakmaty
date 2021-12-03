@@ -56,8 +56,14 @@ impl Color {
         }
     }
 
+    #[deprecated = "use Color::fold_wb instead"]
     #[inline]
     pub fn fold<T>(self, white: T, black: T) -> T {
+        self.fold_wb(white, black)
+    }
+
+    #[inline]
+    pub fn fold_wb<T>(self, white: T, black: T) -> T {
         match self {
             Color::White => white,
             Color::Black => black,
@@ -75,11 +81,11 @@ impl Color {
 
     #[inline]
     pub fn backrank(self) -> Rank {
-        self.fold(Rank::First, Rank::Eighth)
+        self.fold_wb(Rank::First, Rank::Eighth)
     }
 
     pub fn char(self) -> char {
-        self.fold('w', 'b')
+        self.fold_wb('w', 'b')
     }
 
     #[inline]
@@ -116,7 +122,7 @@ impl ops::Not for Color {
 
     #[inline]
     fn not(self) -> Color {
-        self.fold(Color::Black, Color::White)
+        self.fold_wb(Color::Black, Color::White)
     }
 }
 
@@ -131,7 +137,7 @@ impl ops::BitXor<bool> for Color {
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.fold("white", "black"))
+        f.write_str(self.fold_wb("white", "black"))
     }
 }
 

@@ -2784,7 +2784,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         & !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
-        if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
+        if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
             moves.push(Move::Normal {
                 role: Role::Pawn,
                 from,
@@ -2796,13 +2796,13 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     }
 
     for to in single_moves & target & Bitboard::BACKRANKS {
-        if let Some(from) = to.offset(pos.turn().fold(-8, 8)) {
+        if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
             push_promotions(moves, from, to, None);
         }
     }
 
     for to in double_moves & target {
-        if let Some(from) = to.offset(pos.turn().fold(-16, 16)) {
+        if let Some(from) = to.offset(pos.turn().fold_wb(-16, 16)) {
             moves.push(Move::Normal {
                 role: Role::Pawn,
                 from,

@@ -197,7 +197,7 @@ pub struct Piece {
 
 impl Piece {
     pub fn char(self) -> char {
-        self.color.fold(self.role.upper_char(), self.role.char())
+        self.color.fold_wb(self.role.upper_char(), self.role.char())
     }
 
     pub fn from_char(ch: char) -> Option<Piece> {
