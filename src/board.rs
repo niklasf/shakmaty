@@ -324,11 +324,15 @@ impl Board {
         }
     }
 
-    #[inline]
-    fn apply_transform(&mut self, f: &dyn Fn(Bitboard) -> Bitboard) {
-        self.occupied_co.black = f(self.occupied_co.black);
+    fn transform<F>(&mut self, f: F)
+    where
+        F: Fn(Bitboard) -> Bitboard,
+    {
+        // In order to guarantee consistency, this method cannot be public
+        // for use with custom transformations.
         self.occupied_co.white = f(self.occupied_co.white);
-        self.occupied[0] = f(self.occupied[0]);
+        self.occupied_co.black = f(self.occupied_co.black);
+        self.occupied[0] = self.occupied_co.white | self.occupied_co.black;
         self.occupied[1] = f(self.occupied[1]);
         self.occupied[2] = f(self.occupied[2]);
         self.occupied[3] = f(self.occupied[3]);
@@ -338,45 +342,38 @@ impl Board {
     }
 
     /// Flip the board vertically, see [`Bitboard::flip_vertical`].
-    #[inline]
     pub fn flip_vertical(&mut self) {
-        self.apply_transform(&Bitboard::flip_vertical)
+        self.transform(Bitboard::flip_vertical)
     }
 
     /// Flip the board horizontally, see [`Bitboard::flip_horizontal`].
-    #[inline]
     pub fn flip_horizontal(&mut self) {
-        self.apply_transform(&Bitboard::flip_horizontal)
+        self.transform(Bitboard::flip_horizontal)
     }
 
     /// Flip the board diagonally, see [`Bitboard::flip_diagonal`].
-    #[inline]
     pub fn flip_diagonal(&mut self) {
-        self.apply_transform(&Bitboard::flip_diagonal)
+        self.transform(Bitboard::flip_diagonal)
     }
 
     /// Flip the board anti-diagonally, see [`Bitboard::flip_anti_diagonal`].
-    #[inline]
     pub fn flip_anti_diagonal(&mut self) {
-        self.apply_transform(&Bitboard::flip_anti_diagonal)
+        self.transform(Bitboard::flip_anti_diagonal)
     }
 
     /// Rotate the board 90° clockwise, see [`Bitboard::rotate_90`].
-    #[inline]
     pub fn rotate_90(&mut self) {
-        self.apply_transform(&Bitboard::rotate_90)
+        self.transform(Bitboard::rotate_90)
     }
 
     /// Rotate the board at 180°, see [`Bitboard::rotate_180`].
-    #[inline]
     pub fn rotate_180(&mut self) {
-        self.apply_transform(&Bitboard::rotate_180)
+        self.transform(Bitboard::rotate_180)
     }
 
     /// Rotate the board at 270° clockwise, see [`Bitboard::rotate_270`].
-    #[inline]
     pub fn rotate_270(&mut self) {
-        self.apply_transform(&Bitboard::rotate_270)
+        self.transform(Bitboard::rotate_270)
     }
 }
 
