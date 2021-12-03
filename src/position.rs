@@ -82,9 +82,12 @@ impl fmt::Display for Outcome {
     }
 }
 
+/// Error when parsing the outcome of a game.
 #[derive(Debug, Clone)]
 pub enum ParseOutcomeError {
+    /// Got `*`.
     Unknown,
+    /// Got a string other than `1-0`, `0-1`, `1/2-1/2`, or `*`.
     Invalid,
 }
 
