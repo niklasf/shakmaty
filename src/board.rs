@@ -323,6 +323,61 @@ impl Board {
             white: self.material_side(Color::White),
         }
     }
+
+    #[inline]
+    fn apply_transform(&mut self, f: &dyn Fn(Bitboard) -> Bitboard) {
+        self.occupied_co.black = f(self.occupied_co.black);
+        self.occupied_co.white = f(self.occupied_co.white);
+        self.occupied[0] = f(self.occupied[0]);
+        self.occupied[1] = f(self.occupied[1]);
+        self.occupied[2] = f(self.occupied[2]);
+        self.occupied[3] = f(self.occupied[3]);
+        self.occupied[4] = f(self.occupied[4]);
+        self.occupied[5] = f(self.occupied[5]);
+        self.occupied[6] = f(self.occupied[6]);
+    }
+
+    /// Flip the board vertically, see [`Bitboard::flip_vertical`].
+    #[inline]
+    pub fn flip_vertical(&mut self) {
+        self.apply_transform(&Bitboard::flip_vertical)
+    }
+
+    /// Flip the board horizontally, see [`Bitboard::flip_horizontal`].
+    #[inline]
+    pub fn flip_horizontal(&mut self) {
+        self.apply_transform(&Bitboard::flip_horizontal)
+    }
+
+    /// Flip the board diagonally, see [`Bitboard::flip_diagonal`].
+    #[inline]
+    pub fn flip_diagonal(&mut self) {
+        self.apply_transform(&Bitboard::flip_diagonal)
+    }
+
+    /// Flip the board anti-diagonally, see [`Bitboard::flip_anti_diagonal`].
+    #[inline]
+    pub fn flip_anti_diagonal(&mut self) {
+        self.apply_transform(&Bitboard::flip_anti_diagonal)
+    }
+
+    /// Rotate the board 90° clockwise, see [`Bitboard::rotate_90`].
+    #[inline]
+    pub fn rotate_90(&mut self) {
+        self.apply_transform(&Bitboard::rotate_90)
+    }
+
+    /// Rotate the board at 180°, see [`Bitboard::rotate_180`].
+    #[inline]
+    pub fn rotate_180(&mut self) {
+        self.apply_transform(&Bitboard::rotate_180)
+    }
+
+    /// Rotate the board at 270° clockwise, see [`Bitboard::rotate_270`].
+    #[inline]
+    pub fn rotate_270(&mut self) {
+        self.apply_transform(&Bitboard::rotate_270)
+    }
 }
 
 impl Default for Board {
@@ -451,5 +506,42 @@ mod tests {
     fn test_promoted() {
         let board: Board = "4k3/8/8/8/8/8/8/2q~1K3".parse().expect("valid fen");
         assert_eq!(board.piece_at(Square::C1), Some(Black.queen()));
+    }
+
+    #[test]
+    fn test_board_transformation() {
+        let board: Board = "1qrb4/1k2n3/1P2p3/1N1K4/1BQ5/1R1R4/1Q2B3/1K3N2"
+            .parse()
+            .expect("valid fen");
+        let compare_trans = |trans: &dyn Fn(&mut Board), fen: &str| {
+            let mut board_trans = board.clone();
+            trans(&mut board_trans);
+            assert_eq!(
+                board_trans,
+                Board::from_board_fen(fen.as_bytes()).expect("valid fen")
+            );
+        };
+        compare_trans(
+            &Board::flip_vertical,
+            "1K3N2/1Q2B3/1R1R4/1BQ5/1N1K4/1P2p3/1k2n3/1qrb4",
+        );
+        compare_trans(
+            &Board::flip_horizontal,
+            "4brq1/3n2k1/3p2P1/4K1N1/5QB1/4R1R1/3B2Q1/2N3K1",
+        );
+        compare_trans(
+            &Board::flip_diagonal,
+            "8/8/N7/1B3pn1/2R1K2b/3Q3r/KQRBNPkq/8",
+        );
+        compare_trans(
+            &Board::flip_anti_diagonal,
+            "8/qkPNBRQK/r3Q3/b2K1R2/1np3B1/7N/8/8",
+        );
+        compare_trans(&Board::rotate_90, "8/KQRBNPkq/3Q3r/2R1K2b/1B3pn1/N7/8/8");
+        compare_trans(
+            &Board::rotate_180,
+            "2N3K1/3B2Q1/4R1R1/5QB1/4K1N1/3p2P1/3n2k1/4brq1",
+        );
+        compare_trans(&Board::rotate_270, "8/8/7N/1np3B1/b2K1R2/r3Q3/qkPNBRQK/8");
     }
 }
