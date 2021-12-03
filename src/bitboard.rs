@@ -365,6 +365,10 @@ impl Bitboard {
         Bitboard(x)
     }
 
+    /// Rotate the bitboard 90 degrees clockwise.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use shakmaty::Bitboard;
     ///
@@ -384,6 +388,10 @@ impl Bitboard {
         self.flip_diagonal().flip_vertical()
     }
 
+    /// Rotate the bitboard 180 degrees.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use shakmaty::Bitboard;
     ///
@@ -404,6 +412,10 @@ impl Bitboard {
         Bitboard(self.0.reverse_bits())
     }
 
+    /// Rotate the bitboard 270 degrees clockwise.
+    ///
+    /// # Examples
+    ///
     /// ```
     /// use shakmaty::Bitboard;
     ///

@@ -576,7 +576,7 @@ impl Square {
         self.flip_diagonal().flip_vertical()
     }
 
-    /// Rotate 180 degrees clockwise.
+    /// Rotate 180 degrees.
     ///
     /// ```
     /// use shakmaty::Square;
