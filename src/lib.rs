@@ -68,7 +68,7 @@
 //! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
 //!   Requires nightly.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.20.2")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.20.3")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(feature = "step", feature(step_trait))]

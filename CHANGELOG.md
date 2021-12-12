@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.20.3
+
+- Implement `FromStr` for `Outcome`.
+- Add geometric transformation methods to `Board`.
+- Introduce `Color::fold_wb()` in favor of `Color::fold()`.
+
 ## v0.20.2
 
 - Minimum supported Rust version is now 1.56.
