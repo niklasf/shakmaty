@@ -457,7 +457,7 @@ fn parse_pieces<F: ReadAt>(raf: &F, ptr: u64, count: usize, side: Color) -> Prob
 
     let mut pieces = Pieces::new();
     for p in bytes {
-        pieces.push(u!(nibble_to_piece(side.fold(*p & 0xf, *p >> 4))));
+        pieces.push(u!(nibble_to_piece(side.fold_wb(*p & 0xf, *p >> 4))));
     }
 
     Ok(pieces)
@@ -894,7 +894,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                         let pieces = parse_pieces(&raf, ptr, material.count(), *side)?;
                         let key = Material::from_iter(pieces.clone());
                         ensure!(key == material || key.into_flipped() == material);
-                        GroupData::new::<S>(pieces, order[side.fold(0, 1)], file)
+                        GroupData::new::<S>(pieces, order[side.fold_wb(0, 1)], file)
                     })
                     .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
 
