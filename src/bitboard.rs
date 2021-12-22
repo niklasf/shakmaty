@@ -171,11 +171,29 @@ impl Bitboard {
         (self & other).is_empty()
     }
 
+    /// Tests if `self` is a subset of `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert!(Bitboard::DARK_SQUARES.is_subset(Bitboard::FULL));
+    /// ```
     #[inline]
     pub fn is_subset<T: Into<Bitboard>>(self, other: T) -> bool {
         (self & !other.into()).is_empty()
     }
 
+    /// Tests if `self` is a superset of `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert!(Bitboard::FULL.is_superset(Bitboard::LIGHT_SQUARES));
+    /// ```
     #[inline]
     pub fn is_superset<T: Into<Bitboard>>(self, other: T) -> bool {
         other.into().is_subset(self)
