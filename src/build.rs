@@ -102,7 +102,7 @@ fn dump_table<W: Write, T: LowerHex>(
 ) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
-    for row in table.iter() {
+    for row in table {
         write!(w, "[")?;
         for column in row {
             write!(w, "0x{:x}, ", column)?;
