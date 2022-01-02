@@ -212,6 +212,7 @@ impl<T> ByColor<T> {
         mem::swap(&mut self.white, &mut self.black);
     }
 
+    #[must_use]
     pub fn into_flipped(self) -> ByColor<T> {
         ByColor {
             white: self.black,
@@ -306,6 +307,7 @@ impl<T: PartialOrd> ByColor<T> {
         }
     }
 
+    #[must_use]
     pub fn into_normalized(mut self) -> ByColor<T> {
         self.normalize();
         self

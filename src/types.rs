@@ -508,6 +508,7 @@ impl RemainingChecks {
         self.0 == 0
     }
 
+    #[must_use]
     pub fn minus_one(self) -> RemainingChecks {
         RemainingChecks(self.0.saturating_sub(1))
     }
