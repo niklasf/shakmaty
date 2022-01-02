@@ -459,11 +459,14 @@ impl Fen {
         P::from_setup(self, mode)
     }
 
-    /// Parses a FEN.
+    /// Parses a FEN or EPD.
+    ///
+    /// FENs consist of parts separated by spaces. This parser also accepts
+    /// parts separated by underscores. Missing parts are filled with defaults.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseFenError`] if the input is not a valid FEN.
+    /// Returns [`ParseFenError`] if any part is syntactically invalid.
     ///
     /// # Example
     ///
@@ -475,7 +478,7 @@ impl Fen {
     /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
-        let mut parts = fen.split(|ch| *ch == b' ');
+        let mut parts = fen.split(|ch| *ch == b' ' || *ch == b'_');
         let mut result = Fen::empty();
 
         let board_part = parts.next().expect("splits have at least one part");
