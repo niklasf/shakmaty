@@ -66,7 +66,7 @@
 //!
 //! * `variant`: Enables `shakmaty::variant` module for all Lichess variants.
 //! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
-//!   Requires nightly.
+//!   Requires nightly Rust.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.20.3")]
 #![forbid(unsafe_op_in_unsafe_fn)]
