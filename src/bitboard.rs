@@ -84,12 +84,30 @@ impl Bitboard {
         }
     }
 
+    /// Tests if `self` is non-empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert!(Bitboard::BACKRANKS.any());
+    /// ```
     #[must_use]
     #[inline]
     pub fn any(self) -> bool {
         self.0 != 0
     }
 
+    /// Tests if `self` is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert!(Bitboard::EMPTY.is_empty());
+    /// ```
     #[inline]
     pub fn is_empty(self) -> bool {
         self.0 == 0
