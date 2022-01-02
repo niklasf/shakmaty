@@ -92,6 +92,8 @@ impl FenOpts {
 
     /// Decide if castling rights should be displayed in Shredder format,
     /// e.g. `HAha` instead of `KQkq`.
+    ///
+    /// Defaults to `false`.
     pub fn shredder(&mut self, shredder: bool) -> &mut FenOpts {
         self.shredder = shredder;
         self
@@ -99,6 +101,8 @@ impl FenOpts {
 
     /// Decide if Crazyhouse pockets and remaining check counters should use
     /// Scid-style, e.g. `/q` instead of `[q]` and `+0+0` instead of `3+3`.
+    ///
+    /// Defaults to `false`.
     pub fn scid(&mut self, scid: bool) -> &mut FenOpts {
         self.scid = scid;
         self
