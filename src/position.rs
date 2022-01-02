@@ -2782,9 +2782,8 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
 
     let double_moves = single_moves.relative_shift(pos.turn(), 8)
-        & !pos.board().occupied()
-        & (Bitboard::from(pos.turn().relative_rank(Rank::Third)) // Horde
-            | Bitboard::from(pos.turn().relative_rank(Rank::Fourth)));
+        & pos.turn().fold_wb(Bitboard::SOUTH, Bitboard::NORTH)
+        & !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {

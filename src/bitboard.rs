@@ -620,6 +620,74 @@ impl Bitboard {
     /// ```
     pub const CENTER: Bitboard = Bitboard(0x0000_0018_1800_0000);
 
+    /// The northern half of the board.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::NORTH;
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// ```
+    pub const NORTH: Bitboard = Bitboard(0xffff_ffff_0000_0000);
+
+    /// The southern half of the board.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::SOUTH;
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// ```
+    pub const SOUTH: Bitboard = Bitboard(0x0000_0000_ffff_ffff);
+
+    /// The western half of the board.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::WEST;
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// // 1 1 1 1 . . . .
+    /// ```
+    pub const WEST: Bitboard = Bitboard(0x0f0f_0f0f_0f0f_0f0f);
+
+    /// The eastern half of the board.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::EAST;
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// // . . . . 1 1 1 1
+    /// ```
+    pub const EAST: Bitboard = Bitboard(0xf0f0_f0f0_f0f0_f0f0);
+
     #[deprecated(since = "0.20.1", note = "Renamed to Bitboard::FULL for consistency")]
     pub const ALL: Bitboard = Bitboard::FULL;
 }
