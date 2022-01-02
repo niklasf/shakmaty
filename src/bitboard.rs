@@ -115,7 +115,7 @@ impl Bitboard {
 
     #[inline]
     pub fn contains(self, sq: Square) -> bool {
-        !(self & Bitboard::from_square(sq)).is_empty()
+        (self & Bitboard::from_square(sq)).any()
     }
 
     #[inline]
