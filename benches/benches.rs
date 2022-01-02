@@ -1,10 +1,5 @@
 use iai::black_box;
-use shakmaty::{
-    fen::Fen,
-    perft,
-    san::{ParseSanError, San},
-    CastlingMode, Chess, Move, Position, Role, Square,
-};
+use shakmaty::{fen::Fen, perft, san::San, CastlingMode, Chess, Move, Position, Role, Square};
 
 fn bench_shallow_perft() {
     let pos = Chess::default();
@@ -16,8 +11,8 @@ fn bench_deep_perft() {
     assert_eq!(perft(&pos, black_box(5)), 4_865_609);
 }
 
-fn bench_parse_san_move_complicated() -> Result<San, ParseSanError> {
-    San::from_ascii(black_box(b"bxc1=R+"))
+fn bench_parse_san_move_complicated() -> San {
+    San::from_ascii(black_box(b"bxc1=R+")).expect("valid san")
 }
 
 fn bench_generate_moves() {
