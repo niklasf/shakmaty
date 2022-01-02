@@ -80,7 +80,7 @@ fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], 
     }
 }
 
-fn dump_slice<W: Write, T: Clone + LowerHex>(
+fn dump_slice<W: Write, T: LowerHex>(
     w: &mut W,
     name: &str,
     tname: &str,
@@ -88,13 +88,13 @@ fn dump_slice<W: Write, T: Clone + LowerHex>(
 ) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
     write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
-    for v in slice.iter().cloned() {
+    for v in slice {
         write!(w, "0x{:x}, ", v)?;
     }
     writeln!(w, "];")
 }
 
-fn dump_table<W: Write, T: Clone + LowerHex>(
+fn dump_table<W: Write, T: LowerHex>(
     w: &mut W,
     name: &str,
     tname: &str,
@@ -104,7 +104,7 @@ fn dump_table<W: Write, T: Clone + LowerHex>(
     write!(w, "static {}: [[{}; 64]; 64] = [", name, tname)?;
     for row in table.iter() {
         write!(w, "[")?;
-        for column in row.iter().cloned() {
+        for column in row {
             write!(w, "0x{:x}, ", column)?;
         }
         write!(w, "], ")?;
