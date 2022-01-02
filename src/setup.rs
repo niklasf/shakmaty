@@ -297,8 +297,7 @@ impl Castles {
                     continue;
                 }
 
-                let side =
-                    rooks & board.by_color(color) & Bitboard::relative_rank(color, Rank::First);
+                let side = rooks & board.by_color(color) & color.backrank();
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rook_to = CastlingSide::QueenSide.rook_to(color);
@@ -354,7 +353,7 @@ impl Castles {
     }
 
     pub fn has_side(&self, color: Color) -> bool {
-        (self.mask & Bitboard::relative_rank(color, Rank::First)).any()
+        (self.mask & color.backrank()).any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {
@@ -367,8 +366,7 @@ impl Castles {
     }
 
     pub fn discard_side(&mut self, color: Color) {
-        self.mask
-            .discard(Bitboard::relative_rank(color, Rank::First));
+        self.mask.discard(color.backrank());
         self.rook[color as usize] = [None, None];
     }
 
@@ -433,7 +431,7 @@ impl EpSquare {
             None => return Ok(None),
         };
 
-        if !Bitboard::relative_rank(turn, Rank::Sixth).contains(ep_square) {
+        if ep_square.rank() != turn.relative_rank(Rank::Sixth) {
             return Err(());
         }
 

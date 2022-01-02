@@ -84,6 +84,14 @@ impl Color {
         self.fold_wb(Rank::First, Rank::Eighth)
     }
 
+    #[inline]
+    pub fn relative_rank(self, rank: Rank) -> Rank {
+        match self {
+            Color::White => rank,
+            Color::Black => rank.flip_vertical(),
+        }
+    }
+
     pub fn char(self) -> char {
         self.fold_wb('w', 'b')
     }

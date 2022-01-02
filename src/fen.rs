@@ -114,8 +114,7 @@ impl FenOpts {
         for color in Color::ALL {
             let king = board.king_of(color);
 
-            let candidates =
-                board.by_piece(color.rook()) & Bitboard::relative_rank(color, Rank::First);
+            let candidates = board.by_piece(color.rook()) & color.backrank();
 
             for rook in (candidates & castling_rights).into_iter().rev() {
                 if !self.shredder
@@ -528,8 +527,7 @@ impl Fen {
                 for &ch in castling_part {
                     let color = Color::from_white(ch < b'a'); // uppercase
 
-                    let candidates = Bitboard::relative_rank(color, Rank::First)
-                        & result.board.by_piece(color.rook());
+                    let candidates = result.board.by_piece(color.rook()) & color.backrank();
 
                     let flag = match ch | 32 {
                         b'k' => candidates.last(),

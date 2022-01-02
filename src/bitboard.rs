@@ -58,20 +58,33 @@ impl Bitboard {
 
     /// Returns the bitboard containing all squares of the given rank.
     #[inline]
-    pub fn rank(rank: Rank) -> Bitboard {
+    pub fn from_rank(rank: Rank) -> Bitboard {
         Bitboard(RANKS[usize::from(rank)])
+    }
+
+    #[deprecated(since = "0.20.2", note = "Renamed to Bitboard::from_rank()")]
+    #[inline]
+    pub fn rank(rank: Rank) -> Bitboard {
+        Bitboard::from_rank(rank)
     }
 
     /// Returns the bitboard containing all squares of the given file.
     #[inline]
-    pub fn file(file: File) -> Bitboard {
+    pub fn from_file(file: File) -> Bitboard {
         Bitboard(FILES[usize::from(file)])
     }
 
+    #[deprecated(since = "0.20.2", note = "Renamed to Bitboard::from_file()")]
+    #[inline]
+    pub fn file(file: File) -> Bitboard {
+        Bitboard::from_file(file)
+    }
+
     /// Like `rank()`, but from the point of view of `color`.
+    #[deprecated(since = "0.20.2", note = "Use color.relative_rank()")]
     #[inline]
     pub fn relative_rank(color: Color, rank: Rank) -> Bitboard {
-        Bitboard::rank(color.fold_wb(rank, rank.flip_vertical()))
+        Bitboard::from_rank(color.fold_wb(rank, rank.flip_vertical()))
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -692,14 +705,14 @@ impl From<Square> for Bitboard {
 impl From<Rank> for Bitboard {
     #[inline]
     fn from(rank: Rank) -> Bitboard {
-        Bitboard::rank(rank)
+        Bitboard::from_rank(rank)
     }
 }
 
 impl From<File> for Bitboard {
     #[inline]
     fn from(file: File) -> Bitboard {
-        Bitboard::file(file)
+        Bitboard::from_file(file)
     }
 }
 
@@ -950,7 +963,7 @@ mod tests {
 
     #[test]
     fn test_rank() {
-        assert_eq!(Bitboard::rank(Rank::Fourth), Bitboard(0xff00_0000));
+        assert_eq!(Bitboard::from_rank(Rank::Fourth), Bitboard(0xff00_0000));
     }
 
     #[test]

@@ -2759,7 +2759,7 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    let seventh = pos.our(Role::Pawn) & Bitboard::relative_rank(pos.turn(), Rank::Seventh);
+    let seventh = pos.our(Role::Pawn) & pos.turn().relative_rank(Rank::Seventh);
 
     for from in pos.our(Role::Pawn) & !seventh {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
@@ -2782,9 +2782,9 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
 
     let double_moves = single_moves.relative_shift(pos.turn(), 8)
-        & Bitboard::relative_rank(pos.turn(), Rank::Fourth)
-            .with(Bitboard::relative_rank(pos.turn(), Rank::Third))
-        & !pos.board().occupied();
+        & !pos.board().occupied()
+        & (Bitboard::from(pos.turn().relative_rank(Rank::Third)) // Horde
+            | Bitboard::from(pos.turn().relative_rank(Rank::Fourth)));
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
