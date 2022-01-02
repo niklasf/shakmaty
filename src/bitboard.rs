@@ -75,6 +75,23 @@ impl Bitboard {
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Color};
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.relative_shift(Color::Black, 8), Bitboard(0x001e_2222_120e_0a12));
+    /// // . . . . . . . .
+    /// // . 1 1 1 1 . . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 1 1 . . . .
+    /// // . 1 . 1 . . . .
+    /// // . 1 . . 1 . . .
+    /// ```
     #[must_use]
     #[inline]
     pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
