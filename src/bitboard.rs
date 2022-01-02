@@ -454,24 +454,122 @@ impl Bitboard {
     }
 
     /// An empty bitboard.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::EMPTY;
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// ```
     pub const EMPTY: Bitboard = Bitboard(0);
 
     /// A bitboard containing all squares.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::FULL;
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 1 1 1 1 1 1 1
+    /// ```
     pub const FULL: Bitboard = Bitboard(!0);
 
     /// All dark squares.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::DARK_SQUARES;
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// ```
     pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
 
     /// All light squares.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::LIGHT_SQUARES;
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// // 1 . 1 . 1 . 1 .
+    /// // . 1 . 1 . 1 . 1
+    /// ```
     pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa_55aa_55aa_55aa);
 
     /// The four corner squares.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::CORNERS;
+    /// // 1 . . . . . . 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 . . . . . . 1
+    /// ```
     pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
     /// The backranks.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::BACKRANKS;
+    /// // 1 1 1 1 1 1 1 1
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // 1 1 1 1 1 1 1 1
+    /// ```
     pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 
     /// The four center squares.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::CENTER;
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . 1 1 . . .
+    /// // . . . 1 1 . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// // . . . . . . . .
+    /// ```
     pub const CENTER: Bitboard = Bitboard(0x0000_0018_1800_0000);
 
     #[deprecated(since = "0.20.1", note = "Renamed to Bitboard::FULL for consistency")]
