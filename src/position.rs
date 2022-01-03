@@ -26,7 +26,7 @@ use bitflags::bitflags;
 
 use crate::{
     attacks,
-    bitboard::Bitboard,
+    bitboard::{Bitboard, Direction},
     board::Board,
     color::{
         ByColor, Color,
@@ -2759,44 +2759,45 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    let left = match pos.turn() {
-        Color::White => Bitboard((pos.our(Role::Pawn).0 & !0x101010101010101) << 7),
-        Color::Black => Bitboard((pos.our(Role::Pawn).0 & !0x101010101010101) >> 9),
-    };
-    let right = match pos.turn() {
-        Color::White => Bitboard((pos.our(Role::Pawn).0 & !0x8080808080808080) << 9),
-        Color::Black => Bitboard((pos.our(Role::Pawn).0 & !0x8080808080808080) >> 7),
-    };
+    #[inline(always)]
+    fn gen_pawn_captures<P: Position>(
+        pos: &P,
+        dir: Direction,
+        target: Bitboard,
+        moves: &mut MoveList,
+    ) {
+        for to in dir.translate(pos.our(Role::Pawn)) & pos.them() & target & !Bitboard::BACKRANKS {
+            if let Some(from) = to.offset(-dir.offset()) {
+                moves.push(Move::Normal {
+                    role: Role::Pawn,
+                    from,
+                    capture: pos.board().role_at(to),
+                    to,
+                    promotion: None,
+                });
+            }
+        }
 
-    for to in left & pos.them() & target & !Bitboard::BACKRANKS {
-        let from = to.offset(pos.turn().fold_wb(-7, 9)).unwrap();
-        moves.push(Move::Normal {
-            role: Role::Pawn,
-            from,
-            capture: pos.board().role_at(to),
-            to,
-            promotion: None,
-        });
+        for to in dir.translate(pos.our(Role::Pawn)) & pos.them() & target & Bitboard::BACKRANKS {
+            if let Some(from) = to.offset(-dir.offset()) {
+                push_promotions(moves, from, to, pos.board().role_at(to));
+            }
+        }
     }
-    for to in right & pos.them() & target & !Bitboard::BACKRANKS {
-        let from = to.offset(pos.turn().fold_wb(-9, 7)).unwrap();
-        moves.push(Move::Normal {
-            role: Role::Pawn,
-            from,
-            capture: pos.board().role_at(to),
-            to,
-            promotion: None,
-        });
-    }
-
-    for to in left & pos.them() & target & Bitboard::BACKRANKS {
-        let from = to.offset(pos.turn().fold_wb(-7, 9)).unwrap();
-        push_promotions(moves, from, to, pos.board().role_at(to));
-    }
-    for to in right & pos.them() & target & Bitboard::BACKRANKS {
-        let from = to.offset(pos.turn().fold_wb(-9, 7)).unwrap();
-        push_promotions(moves, from, to, pos.board().role_at(to));
-    }
+    gen_pawn_captures(
+        pos,
+        pos.turn()
+            .fold_wb(Direction::NorthWest, Direction::SouthWest),
+        target,
+        moves,
+    );
+    gen_pawn_captures(
+        pos,
+        pos.turn()
+            .fold_wb(Direction::NorthEast, Direction::SouthEast),
+        target,
+        moves,
+    );
 
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
 

@@ -725,6 +725,36 @@ static FILES: [u64; 8] = {
     masks
 };
 
+#[derive(Copy, Clone)]
+pub(crate) enum Direction {
+    NorthWest,
+    NorthEast,
+    SouthWest,
+    SouthEast,
+}
+
+impl Direction {
+    #[inline(always)]
+    pub fn offset(self) -> i32 {
+        match self {
+            Direction::NorthWest => 7,
+            Direction::SouthWest => -9,
+            Direction::NorthEast => 9,
+            Direction::SouthEast => -7,
+        }
+    }
+
+    #[inline(always)]
+    pub fn translate(self, bitboard: Bitboard) -> Bitboard {
+        Bitboard(match self {
+            Direction::NorthWest => (bitboard.0 & !FILES[0]) << 7,
+            Direction::SouthWest => (bitboard.0 & !FILES[0]) >> 9,
+            Direction::NorthEast => (bitboard.0 & !FILES[7]) << 9,
+            Direction::SouthEast => (bitboard.0 & !FILES[7]) >> 7,
+        })
+    }
+}
+
 impl fmt::Debug for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for rank in (0..8).map(Rank::new).rev() {
