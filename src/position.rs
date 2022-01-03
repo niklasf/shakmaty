@@ -2759,6 +2759,7 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+    // Generate captures.
     #[inline(always)]
     fn gen_pawn_captures<P: Position>(
         pos: &P,
@@ -2801,11 +2802,8 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         moves,
     );
 
+    // Generate single-step advances.
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
-
-    let double_moves = single_moves.relative_shift(pos.turn(), 8)
-        & pos.turn().fold_wb(Bitboard::SOUTH, Bitboard::NORTH)
-        & !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
         if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
@@ -2824,6 +2822,11 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
             push_promotions(moves, from, to, None);
         }
     }
+
+    // Generate double-step advances.
+    let double_moves = single_moves.relative_shift(pos.turn(), 8)
+        & pos.turn().fold_wb(Bitboard::SOUTH, Bitboard::NORTH)
+        & !pos.board().occupied();
 
     for to in double_moves & target {
         if let Some(from) = to.offset(pos.turn().fold_wb(-16, 16)) {
