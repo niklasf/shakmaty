@@ -62,7 +62,7 @@ impl Bitboard {
         Bitboard(RANKS[usize::from(rank)])
     }
 
-    #[deprecated(since = "0.20.2", note = "Renamed to Bitboard::from_rank()")]
+    #[deprecated(since = "0.20.4", note = "Renamed to Bitboard::from_rank()")]
     #[inline]
     pub fn rank(rank: Rank) -> Bitboard {
         Bitboard::from_rank(rank)
@@ -74,14 +74,14 @@ impl Bitboard {
         Bitboard(FILES[usize::from(file)])
     }
 
-    #[deprecated(since = "0.20.2", note = "Renamed to Bitboard::from_file()")]
+    #[deprecated(since = "0.20.4", note = "Renamed to Bitboard::from_file()")]
     #[inline]
     pub fn file(file: File) -> Bitboard {
         Bitboard::from_file(file)
     }
 
     /// Like `rank()`, but from the point of view of `color`.
-    #[deprecated(since = "0.20.2", note = "Use color.relative_rank()")]
+    #[deprecated(since = "0.20.4", note = "Use color.relative_rank()")]
     #[inline]
     pub fn relative_rank(color: Color, rank: Rank) -> Bitboard {
         Bitboard::from_rank(color.fold_wb(rank, rank.flip_vertical()))
