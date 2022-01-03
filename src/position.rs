@@ -2789,10 +2789,13 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         });
     }
 
-    for from in pos.our(Role::Pawn) & pos.turn().relative_rank(Rank::Seventh) {
-        for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            push_promotions(moves, from, to, pos.board().role_at(to));
-        }
+    for to in left & pos.them() & target & Bitboard::BACKRANKS {
+        let from = to.offset(pos.turn().fold_wb(-7, 9)).unwrap();
+        push_promotions(moves, from, to, pos.board().role_at(to));
+    }
+    for to in right & pos.them() & target & Bitboard::BACKRANKS {
+        let from = to.offset(pos.turn().fold_wb(-9, 7)).unwrap();
+        push_promotions(moves, from, to, pos.board().role_at(to));
     }
 
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
