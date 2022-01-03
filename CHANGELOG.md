@@ -1,5 +1,14 @@
 # Changelog for shakmaty
 
+## v0.20.4
+
+- Accept underscores in FENs.
+- Significantly optimize pawn capture generation (+10% perft speed).
+- Addded `Square::offset_unchecked()`.
+- Deprecated `Bitboard::rank()`. Use `Bitboard::from_rank()`.
+- Deprecated `Bitboard::file()`. Use `Bitboard::from_file()`.
+- Deprecated `Bitboard::relative_rank()`. Use `Color::relative_rank()`.
+
 ## v0.20.3
 
 - Implement `FromStr` for `Outcome`.
