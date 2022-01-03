@@ -2766,7 +2766,9 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         target: Bitboard,
         moves: &mut MoveList,
     ) {
-        for to in dir.translate(pos.our(Role::Pawn)) & pos.them() & target & !Bitboard::BACKRANKS {
+        let captures = dir.translate(pos.our(Role::Pawn)) & pos.them() & target;
+
+        for to in captures & !Bitboard::BACKRANKS {
             if let Some(from) = to.offset(-dir.offset()) {
                 moves.push(Move::Normal {
                     role: Role::Pawn,
@@ -2778,7 +2780,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
             }
         }
 
-        for to in dir.translate(pos.our(Role::Pawn)) & pos.them() & target & Bitboard::BACKRANKS {
+        for to in captures & Bitboard::BACKRANKS {
             if let Some(from) = to.offset(-dir.offset()) {
                 push_promotions(moves, from, to, pos.board().role_at(to));
             }
