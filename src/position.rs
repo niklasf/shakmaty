@@ -2817,34 +2817,15 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
 }
 
 fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
-    moves.push(Move::Normal {
-        role: Role::Pawn,
-        from,
-        capture,
-        to,
-        promotion: Some(Role::Queen),
-    });
-    moves.push(Move::Normal {
-        role: Role::Pawn,
-        from,
-        capture,
-        to,
-        promotion: Some(Role::Rook),
-    });
-    moves.push(Move::Normal {
-        role: Role::Pawn,
-        from,
-        capture,
-        to,
-        promotion: Some(Role::Bishop),
-    });
-    moves.push(Move::Normal {
-        role: Role::Pawn,
-        from,
-        capture,
-        to,
-        promotion: Some(Role::Knight),
-    });
+    for promotion in [Role::Queen, Role::Rook, Role::Bishop, Role::Knight] {
+        moves.push(Move::Normal {
+            role: Role::Pawn,
+            from,
+            capture,
+            to,
+            promotion: Some(promotion),
+        });
+    }
 }
 
 fn relevant_ep<P: Position>(EpSquare(ep_square): EpSquare, pos: &P) -> Option<Square> {
