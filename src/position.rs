@@ -2759,21 +2759,37 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-    let seventh = pos.our(Role::Pawn) & pos.turn().relative_rank(Rank::Seventh);
+    let left = match pos.turn() {
+        Color::White => Bitboard((pos.our(Role::Pawn).0 & !0x101010101010101) << 7),
+        Color::Black => Bitboard((pos.our(Role::Pawn).0 & !0x101010101010101) >> 9),
+    };
+    let right = match pos.turn() {
+        Color::White => Bitboard((pos.our(Role::Pawn).0 & !0x8080808080808080) << 9),
+        Color::Black => Bitboard((pos.our(Role::Pawn).0 & !0x8080808080808080) >> 7),
+    };
 
-    for from in pos.our(Role::Pawn) & !seventh {
-        for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
-            moves.push(Move::Normal {
-                role: Role::Pawn,
-                from,
-                capture: pos.board().role_at(to),
-                to,
-                promotion: None,
-            });
-        }
+    for to in left & pos.them() & target & !Bitboard::BACKRANKS {
+        let from = to.offset(pos.turn().fold_wb(-7, 9)).unwrap();
+        moves.push(Move::Normal {
+            role: Role::Pawn,
+            from,
+            capture: pos.board().role_at(to),
+            to,
+            promotion: None,
+        });
+    }
+    for to in right & pos.them() & target & !Bitboard::BACKRANKS {
+        let from = to.offset(pos.turn().fold_wb(-9, 7)).unwrap();
+        moves.push(Move::Normal {
+            role: Role::Pawn,
+            from,
+            capture: pos.board().role_at(to),
+            to,
+            promotion: None,
+        });
     }
 
-    for from in seventh {
+    for from in pos.our(Role::Pawn) & pos.turn().relative_rank(Rank::Seventh) {
         for to in attacks::pawn_attacks(pos.turn(), from) & pos.them() & target {
             push_promotions(moves, from, to, pos.board().role_at(to));
         }
