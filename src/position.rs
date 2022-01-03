@@ -2759,6 +2759,10 @@ impl Slider for QueenTag {
 }
 
 fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
+    // Safety of unchecked offset calculations: If we shift a set of squares
+    // by an offset, then the negated offset is valid for all resulting
+    // squares.
+
     // Generate captures.
     #[inline(always)]
     fn gen_pawn_captures<P: Position>(
@@ -2770,21 +2774,21 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         let captures = dir.translate(pos.our(Role::Pawn)) & pos.them() & target;
 
         for to in captures & !Bitboard::BACKRANKS {
-            if let Some(from) = to.offset(-dir.offset()) {
-                moves.push(Move::Normal {
-                    role: Role::Pawn,
-                    from,
-                    capture: pos.board().role_at(to),
-                    to,
-                    promotion: None,
-                });
-            }
+            // Safety: See above.
+            let from = unsafe { to.offset_unchecked(-dir.offset()) };
+            moves.push(Move::Normal {
+                role: Role::Pawn,
+                from,
+                capture: pos.board().role_at(to),
+                to,
+                promotion: None,
+            });
         }
 
         for to in captures & Bitboard::BACKRANKS {
-            if let Some(from) = to.offset(-dir.offset()) {
-                push_promotions(moves, from, to, pos.board().role_at(to));
-            }
+            // Safety: See above.
+            let from = unsafe { to.offset_unchecked(-dir.offset()) };
+            push_promotions(moves, from, to, pos.board().role_at(to));
         }
     }
     gen_pawn_captures(
@@ -2806,21 +2810,21 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     let single_moves = pos.our(Role::Pawn).relative_shift(pos.turn(), 8) & !pos.board().occupied();
 
     for to in single_moves & target & !Bitboard::BACKRANKS {
-        if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
-            moves.push(Move::Normal {
-                role: Role::Pawn,
-                from,
-                capture: None,
-                to,
-                promotion: None,
-            });
-        }
+        // Safety: See above.
+        let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-8, 8)) };
+        moves.push(Move::Normal {
+            role: Role::Pawn,
+            from,
+            capture: None,
+            to,
+            promotion: None,
+        });
     }
 
     for to in single_moves & target & Bitboard::BACKRANKS {
-        if let Some(from) = to.offset(pos.turn().fold_wb(-8, 8)) {
-            push_promotions(moves, from, to, None);
-        }
+        // Safety: See above.
+        let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-8, 8)) };
+        push_promotions(moves, from, to, None);
     }
 
     // Generate double-step advances.
@@ -2829,15 +2833,15 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
         & !pos.board().occupied();
 
     for to in double_moves & target {
-        if let Some(from) = to.offset(pos.turn().fold_wb(-16, 16)) {
-            moves.push(Move::Normal {
-                role: Role::Pawn,
-                from,
-                capture: None,
-                to,
-                promotion: None,
-            });
-        }
+        // Safety: See above.
+        let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-16, 16)) };
+        moves.push(Move::Normal {
+            role: Role::Pawn,
+            from,
+            capture: None,
+            to,
+            promotion: None,
+        });
     }
 }
 

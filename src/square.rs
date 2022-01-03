@@ -397,6 +397,8 @@ impl Square {
     /// ```
     #[inline]
     pub fn from_coords(file: File, rank: Rank) -> Square {
+        // Safety: Files and ranks are represented with 3 bits each, and all
+        // 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(file) | (u32::from(rank) << 3)) }
     }
 
@@ -499,6 +501,20 @@ impl Square {
             .and_then(|index| index.try_into().ok())
     }
 
+    /// Calculates the offset from a square index without checking for
+    /// overflow.
+    ///
+    /// # Safety
+    ///
+    /// It is the callers responsibility to ensure that `delta` is a valid
+    /// offset for `self`.
+    #[must_use]
+    #[inline]
+    pub unsafe fn offset_unchecked(self, delta: i32) -> Square {
+        debug_assert!(-64 < delta && delta < 64);
+        unsafe { Square::new_unchecked((i32::from(self) + delta) as u32) }
+    }
+
     /// Flip the square horizontally.
     ///
     /// ```
@@ -511,7 +527,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_horizontal(self) -> Square {
-        // This is safe because all 6 bit values are in the range 0..=63.
+        // Safety: All 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b000_111) }
     }
 
@@ -527,7 +543,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_vertical(self) -> Square {
-        // This is safe because all 6 bit values are in the range 0..=63.
+        // Safety: All 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_000) }
     }
 
@@ -543,8 +559,8 @@ impl Square {
     #[inline]
     pub fn flip_diagonal(self) -> Square {
         // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
-        // This is safe, because we are selecting 32 - 26 = 6 bits with the
-        // shift, and all 6 bits values are in the range 0..=63.
+        // Safety: We are selecting 32 - 26 = 6 bits with the shift, and all
+        // 6 bits values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self).wrapping_mul(0x2080_0000) >> 26) }
     }
 
@@ -588,7 +604,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn rotate_180(self) -> Square {
-        // This is safe because all 6 bit values are in the range 0..=63.
+        // Safety: All 6 bit values are in the range 0..=63.
         unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_111) }
     }
 
