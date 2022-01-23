@@ -83,11 +83,11 @@ fn init_magics(sq: Square, magic: &Magic, shift: u32, attacks: &mut [Bitboard], 
 fn dump_slice<W: Write, T: LowerHex>(
     w: &mut W,
     name: &str,
-    tname: &str,
+    table_name: &str,
     slice: &[T],
 ) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
-    write!(w, "static {}: [{}; {}] = [", name, tname, slice.len())?;
+    write!(w, "static {}: [{}; {}] = [", name, table_name, slice.len())?;
     for v in slice {
         write!(w, "0x{:x}, ", v)?;
     }

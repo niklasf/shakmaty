@@ -343,39 +343,39 @@ impl Board {
 
     /// Mirror the board vertically. See [`Bitboard::flip_vertical`].
     pub fn flip_vertical(&mut self) {
-        self.transform(Bitboard::flip_vertical)
+        self.transform(Bitboard::flip_vertical);
     }
 
     /// Mirror the board horizontally. See [`Bitboard::flip_horizontal`].
     pub fn flip_horizontal(&mut self) {
-        self.transform(Bitboard::flip_horizontal)
+        self.transform(Bitboard::flip_horizontal);
     }
 
     /// Mirror the board at the a1-h8 diagonal.
     /// See [`Bitboard::flip_diagonal`].
     pub fn flip_diagonal(&mut self) {
-        self.transform(Bitboard::flip_diagonal)
+        self.transform(Bitboard::flip_diagonal);
     }
 
     /// Mirror the board at the h1-a8 diagonal.
     /// See [`Bitboard::flip_anti_diagonal`].
     pub fn flip_anti_diagonal(&mut self) {
-        self.transform(Bitboard::flip_anti_diagonal)
+        self.transform(Bitboard::flip_anti_diagonal);
     }
 
     /// Rotate the board 90 degrees clockwise. See [`Bitboard::rotate_90`].
     pub fn rotate_90(&mut self) {
-        self.transform(Bitboard::rotate_90)
+        self.transform(Bitboard::rotate_90);
     }
 
     /// Rotate the board 180 degrees. See [`Bitboard::rotate_180`].
     pub fn rotate_180(&mut self) {
-        self.transform(Bitboard::rotate_180)
+        self.transform(Bitboard::rotate_180);
     }
 
     /// Rotate the board 270 degrees clockwise. See [`Bitboard::rotate_270`].
     pub fn rotate_270(&mut self) {
-        self.transform(Bitboard::rotate_270)
+        self.transform(Bitboard::rotate_270);
     }
 }
 
