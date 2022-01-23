@@ -527,22 +527,21 @@ impl Fen {
             Some(b"-") | None => (),
             Some(castling_part) => {
                 for &ch in castling_part {
-                    let color = Color::from_white(ch < b'a'); // uppercase
-
+                    let color = Color::from_white(ch.is_ascii_uppercase());
                     let candidates = result.board.by_piece(color.rook()) & color.backrank();
-
-                    let flag = match ch | 32 {
+                    let flag = match ch.to_ascii_lowercase() {
                         b'k' => candidates.last(),
                         b'q' => candidates.first(),
-                        file @ b'a'..=b'h' => {
-                            (candidates & File::new(u32::from(file as u8 - b'a'))).first()
-                        }
-                        _ => return Err(ParseFenError::InvalidCastling),
+                        file => File::from_char(file.into()).and_then(|f| (candidates & f).first()),
                     };
 
                     result
                         .castling_rights
                         .add(flag.ok_or(ParseFenError::InvalidCastling)?);
+
+                    if (result.castling_rights & color.backrank()).count() > 2 {
+                        return Err(ParseFenError::InvalidCastling);
+                    }
                 }
             }
         }
@@ -661,13 +660,19 @@ mod tests {
     #[test]
     fn test_invalid_fen() {
         assert!(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1"
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1" // syntax
                 .parse::<Fen>()
                 .is_err()
         );
 
         assert!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1" // double space
+                .parse::<Fen>()
+                .is_err()
+        );
+
+        assert!(
+            "4k2r/8/8/8/8/8/8/RR2K2R w KBQk - 0 1" // triple castling rights
                 .parse::<Fen>()
                 .is_err()
         );
