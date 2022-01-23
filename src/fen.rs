@@ -526,23 +526,30 @@ impl Fen {
         match parts.next() {
             Some(b"-") | None => (),
             Some(castling_part) => {
-                for &ch in castling_part {
-                    let color = Color::from_white(ch.is_ascii_uppercase());
-                    let candidates = result.board.by_color(color) & color.backrank();
-                    let rooks_and_kings = result.board.rooks() | result.board.kings();
-                    result.castling_rights.add(
-                        result.board().rooks()
-                            & match ch.to_ascii_lowercase() {
-                                b'k' => Bitboard::from_iter((candidates & rooks_and_kings).last()),
-                                b'q' => Bitboard::from_iter((candidates & rooks_and_kings).first()),
-                                file => {
-                                    let file = File::from_char(char::from(file))
-                                        .ok_or(ParseFenError::InvalidCastling)?;
-                                    candidates & file
-                                }
-                            },
-                    );
-                }
+                result.castling_rights = castling_part
+                    .into_iter()
+                    .map(|ch| {
+                        let color = Color::from_white(ch.is_ascii_uppercase());
+                        let rooks_and_kings = result.board.by_color(color)
+                            & (result.board.rooks() | result.board.kings())
+                            & color.backrank();
+                        Ok(match ch.to_ascii_lowercase() {
+                            b'k' => rooks_and_kings
+                                .last()
+                                .filter(|sq| result.board.rooks().contains(*sq))
+                                .unwrap_or(Square::from_coords(File::H, color.backrank())),
+                            b'q' => rooks_and_kings
+                                .first()
+                                .filter(|sq| result.board.rooks().contains(*sq))
+                                .unwrap_or(Square::from_coords(File::A, color.backrank())),
+                            file => Square::from_coords(
+                                File::from_char(char::from(file))
+                                    .ok_or(ParseFenError::InvalidCastling)?,
+                                color.backrank(),
+                            ),
+                        })
+                    })
+                    .collect::<Result<_, ParseFenError>>()?;
 
                 for color in Color::ALL {
                     if (result.castling_rights & color.backrank()).count() > 2 {
