@@ -477,8 +477,10 @@ impl Fen {
     /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
-        let mut parts = fen.split(|ch| *ch == b' ' || *ch == b'_');
         let mut result = Fen::empty();
+        let mut parts = fen
+            .split(|ch| *ch == b' ' || *ch == b'_')
+            .filter(|s| !s.is_empty());
 
         let board_part = parts.next().expect("splits have at least one part");
 
@@ -660,6 +662,12 @@ mod tests {
     fn test_invalid_fen() {
         assert!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1"
+                .parse::<Fen>()
+                .is_err()
+        );
+
+        assert!(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1" // double space
                 .parse::<Fen>()
                 .is_err()
         );
