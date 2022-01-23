@@ -528,17 +528,23 @@ impl Fen {
             Some(castling_part) => {
                 for &ch in castling_part {
                     let color = Color::from_white(ch.is_ascii_uppercase());
-                    let candidates = result.board.by_piece(color.rook()) & color.backrank();
-                    let flag = match ch.to_ascii_lowercase() {
-                        b'k' => candidates.last(),
-                        b'q' => candidates.first(),
-                        file => File::from_char(file.into()).and_then(|f| (candidates & f).first()),
-                    };
+                    let candidates = result.board.by_color(color) & color.backrank();
+                    let rooks_and_kings = result.board.rooks() | result.board.kings();
+                    result.castling_rights.add(
+                        result.board().rooks()
+                            & match ch.to_ascii_lowercase() {
+                                b'k' => Bitboard::from_iter((candidates & rooks_and_kings).last()),
+                                b'q' => Bitboard::from_iter((candidates & rooks_and_kings).first()),
+                                file => {
+                                    let file = File::from_char(char::from(file))
+                                        .ok_or(ParseFenError::InvalidCastling)?;
+                                    candidates & file
+                                }
+                            },
+                    );
+                }
 
-                    result
-                        .castling_rights
-                        .add(flag.ok_or(ParseFenError::InvalidCastling)?);
-
+                for color in Color::ALL {
                     if (result.castling_rights & color.backrank()).count() > 2 {
                         return Err(ParseFenError::InvalidCastling);
                     }
