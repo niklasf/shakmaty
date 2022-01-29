@@ -527,7 +527,7 @@ impl Fen {
             Some(b"-") | None => (),
             Some(castling_part) => {
                 result.castling_rights = castling_part
-                    .into_iter()
+                    .iter()
                     .map(|ch| {
                         let color = Color::from_white(ch.is_ascii_uppercase());
                         let rooks_and_kings = result.board.by_color(color)
@@ -537,11 +537,11 @@ impl Fen {
                             b'k' => rooks_and_kings
                                 .last()
                                 .filter(|sq| result.board.rooks().contains(*sq))
-                                .unwrap_or(Square::from_coords(File::H, color.backrank())),
+                                .unwrap_or_else(|| Square::from_coords(File::H, color.backrank())),
                             b'q' => rooks_and_kings
                                 .first()
                                 .filter(|sq| result.board.rooks().contains(*sq))
-                                .unwrap_or(Square::from_coords(File::A, color.backrank())),
+                                .unwrap_or_else(|| Square::from_coords(File::A, color.backrank())),
                             file => Square::from_coords(
                                 File::from_char(char::from(file))
                                     .ok_or(ParseFenError::InvalidCastling)?,
