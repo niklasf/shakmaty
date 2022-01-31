@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## v0.20.5
+
+- Accept duplicate spaces (and underscores) between FEN fields.
+- Let FEN parser record and accept syntactically correct impossible castling
+  rights. They will instead be rejected when setting up the position.
+- Let FEN parser reject more than two castling rights per side.
+
 ## v0.20.4
 
 - Accept underscores in FENs.
