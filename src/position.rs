@@ -2073,14 +2073,12 @@ pub(crate) mod variant {
 
             if (pos.board().kings() & pos.board.white()).is_empty() {
                 if pos.board().white().count() > 36
-                    || pos.board().black().count() > 16
-                    || (pos.board().black() & pos.board().pawns()).count() > 8
+                    || !is_standard_material(pos.board(), Color::Black)
                 {
                     errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
                 }
             } else if pos.board().black().count() > 36
-                || pos.board().white().count() > 16
-                || (pos.board().white() & pos.board().pawns()).count() > 8
+                || !is_standard_material(pos.board(), Color::White)
             {
                 errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
             }
@@ -2554,12 +2552,10 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
         errors |= PositionErrorKinds::TOO_MANY_KINGS;
     }
 
-    if pos.board().white().count() > 16
-        || pos.board().black().count() > 16
-        || (pos.board().pawns() & pos.board().white()).count() > 8
-        || (pos.board().pawns() & pos.board().black()).count() > 8
-    {
-        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+    for color in Color::ALL {
+        if !is_standard_material(pos.board(), color) {
+            errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+        }
     }
 
     if let Some(their_king) = pos.board().king_of(!pos.turn()) {
@@ -2595,6 +2591,20 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
     }
 
     errors
+}
+
+fn is_standard_material(board: &Board, color: Color) -> bool {
+    let our = board.by_color(color);
+    let promoted_pieces = (board.queens() & our).count().saturating_sub(1)
+        + (board.rooks() & our).count().saturating_sub(2)
+        + (board.knights() & our).count().saturating_sub(2)
+        + (board.bishops() & our & Bitboard::LIGHT_SQUARES)
+            .count()
+            .saturating_sub(1)
+        + (board.bishops() & our & Bitboard::DARK_SQUARES)
+            .count()
+            .saturating_sub(1);
+    (board.pawns() & our).count() + promoted_pieces <= 8
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
