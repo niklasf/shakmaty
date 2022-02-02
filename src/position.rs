@@ -2556,18 +2556,13 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
     }
 
     for color in Color::ALL {
-        if pos.board().king_of(color).is_none() {
+        let kings = pos.board().kings() & pos.board().by_color(color);
+        if kings.is_empty() {
             errors |= PositionErrorKinds::MISSING_KING;
+        } else if kings.more_than_one() {
+            errors |= PositionErrorKinds::TOO_MANY_KINGS;
         }
-    }
 
-    if (pos.board().kings() & pos.board().white()).more_than_one()
-        || (pos.board().kings() & pos.board().black()).more_than_one()
-    {
-        errors |= PositionErrorKinds::TOO_MANY_KINGS;
-    }
-
-    for color in Color::ALL {
         if !is_standard_material(pos.board(), color) {
             errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
         }
