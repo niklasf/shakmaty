@@ -1637,29 +1637,31 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::VARIANT;
             }
 
+            errors -= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+
             if promoted.count()
                 + chess.board().pawns().count()
                 + usize::from(pockets.white.pawns)
                 + usize::from(pockets.black.pawns)
-                <= 16
-                && (chess.board().knights() & !promoted).count()
+                > 16
+                || (chess.board().knights() & !promoted).count()
                     + usize::from(pockets.white.knights)
                     + usize::from(pockets.black.knights)
-                    <= 4
-                && (chess.board().bishops() & !promoted).count()
+                    > 4
+                || (chess.board().bishops() & !promoted).count()
                     + usize::from(pockets.white.bishops)
                     + usize::from(pockets.black.bishops)
-                    <= 4
-                && (chess.board().rooks() & !promoted).count()
+                    > 4
+                || (chess.board().rooks() & !promoted).count()
                     + usize::from(pockets.white.rooks)
                     + usize::from(pockets.black.rooks)
-                    <= 4
-                && (chess.board().queens() & !promoted).count()
+                    > 4
+                || (chess.board().queens() & !promoted).count()
                     + usize::from(pockets.white.queens)
                     + usize::from(pockets.black.queens)
-                    <= 2
+                    > 2
             {
-                errors -= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
             }
 
             PositionError {
