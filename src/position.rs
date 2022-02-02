@@ -150,15 +150,14 @@ bitflags! {
 
         /// Some castling rights are invalid.
         ///
-        /// Can be recovered by ignoring the
-        /// invalid castling rights using
+        /// Can be recovered by discarding the invalid castling rights using
         /// [`PositionError::ignore_invalid_castling_rights()`].
         const INVALID_CASTLING_RIGHTS = 1 << 4;
 
         /// The en passant square is on the wrong rank, not empty, or the
         /// allegedly pushed pawn is not present.
         ///
-        /// Can be recovered by ignoring the invalid en passant square using
+        /// Can be recovered by discarding the invalid en passant square using
         /// [`PositionError::ignore_invalid_ep_square()`].
         const INVALID_EP_SQUARE = 1 << 5;
 
@@ -170,12 +169,18 @@ bitflags! {
         ///
         /// Such a position cannot be reached by any sequence of legal moves.
         ///
-        /// Can be recovered by ignoring the situation using
-        /// [`PositionError::ignore_impossible_check()`].
+        /// This can be ignored using
+        /// [`PositionError::ignore_impossible_check()`], but note that other
+        /// programs may not work in such a situation.
         const IMPOSSIBLE_CHECK = 1 << 7;
 
         /// The material configuration cannot be reached with any sequence of
-        /// legal moves.
+        /// legal moves, because there is *too much* material.
+        ///
+        /// Distinguishes light-squared and dark-squared bishops,
+        /// pockets and promoted pieces in Crazyhouse, and pieces on the board.
+        /// Does not consider their positions. Does not consider missing pieces
+        /// in Crazyhouse.
         ///
         /// This can be ignored using
         /// [`PositionError::ignore_impossible_material()`], but note that
@@ -214,15 +219,13 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
     }
 
-    /// Get the position, even if the material configuration cannot be reached
-    /// with any sequence of legal moves. Note that other programs may not work
-    /// with too much material.
+    /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_MATERIAL`].
+    /// Note that other programs may not work with too much material.
     pub fn ignore_impossible_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_MATERIAL)
     }
 
-    /// Get the position, even if there are too many checkers, or the alignment
-    /// of checkers cannot be reached with any sequence of legal moves.
+    /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_CHECK`].
     /// Note that other programs may not work in such a situation.
     pub fn ignore_impossible_check(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_CHECK)
@@ -1624,25 +1627,37 @@ pub(crate) mod variant {
                 & chess.board().occupied()
                 & !chess.board().pawns()
                 & !chess.board.kings();
-
             let pockets = setup.pockets().cloned().unwrap_or_default();
-            if pockets
-                .count()
-                .saturating_add(chess.board().occupied().count())
-                > 64
-            {
-                errors |= PositionErrorKinds::VARIANT;
-            } else if pockets.white.kings > 0 || pockets.black.kings > 0 {
+
+            if pockets.white.kings > 0 || pockets.black.kings > 0 {
                 errors |= PositionErrorKinds::TOO_MANY_KINGS;
             }
 
-            if pockets
-                .count()
-                .saturating_add(chess.board().occupied().count())
-                <= 32
-                && usize::from(pockets.white.pawns.saturating_add(pockets.black.pawns))
-                    .saturating_add(chess.board().pawns().count())
-                    <= 16
+            if pockets.count() + chess.board().occupied().count() > 64 {
+                errors |= PositionErrorKinds::VARIANT;
+            }
+
+            if promoted.count()
+                + chess.board().pawns().count()
+                + usize::from(pockets.white.pawns)
+                + usize::from(pockets.black.pawns)
+                <= 16
+                && (chess.board().knights() & !promoted).count()
+                    + usize::from(pockets.white.knights)
+                    + usize::from(pockets.black.knights)
+                    <= 4
+                && (chess.board().bishops() & !promoted).count()
+                    + usize::from(pockets.white.bishops)
+                    + usize::from(pockets.black.bishops)
+                    <= 4
+                && (chess.board().rooks() & !promoted).count()
+                    + usize::from(pockets.white.rooks)
+                    + usize::from(pockets.black.rooks)
+                    <= 4
+                && (chess.board().queens() & !promoted).count()
+                    + usize::from(pockets.white.queens)
+                    + usize::from(pockets.black.queens)
+                    <= 2
             {
                 errors -= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
             }
