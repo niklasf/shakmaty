@@ -25,7 +25,7 @@ harness = false
 bench = false
 
 [dependencies]
-bitflags = "1"
+bitflags = "1.0.4"
 btoi = "0.4"
 arrayvec = "0.7"
 
