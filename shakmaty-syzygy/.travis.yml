@@ -16,6 +16,8 @@ before_install:
 test:
   - cargo test
   - cargo test --all-features
+  - [[ $(rustc --version) =~ "nightly" ]] && cargo test -Z minimal-versions
+  - [[ $(rustc --version) =~ "nightly" ]] && cargo test -Z minimal-versions --all-features
   - cargo doc
   - cargo doc --all-features
 
