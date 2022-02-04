@@ -482,7 +482,7 @@ impl Fen {
             .split(|ch| *ch == b' ' || *ch == b'_')
             .filter(|s| !s.is_empty());
 
-        let board_part = parts.next().expect("splits have at least one part");
+        let board_part = parts.next().ok_or(ParseFenError::InvalidFen)?;
 
         let (board_part, pocket_part) = if board_part.ends_with(b"]") {
             // format: ...[pocket]
@@ -672,22 +672,34 @@ mod tests {
 
     #[test]
     fn test_invalid_fen() {
-        assert!(
+        assert_eq!("".parse::<Fen>().unwrap_err(), ParseFenError::InvalidFen);
+
+        assert_eq!(
+            "8/8/8/8/8/8/8/8 w · - 0 1" // not ascii
+                .parse::<Fen>()
+                .unwrap_err(),
+            ParseFenError::InvalidCastling
+        );
+
+        assert_eq!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQQKBNR w cq - 0P1" // syntax
                 .parse::<Fen>()
-                .is_err()
+                .unwrap_err(),
+            ParseFenError::InvalidCastling
         );
 
-        assert!(
+        assert_eq!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w  - 0 1" // double space
                 .parse::<Fen>()
-                .is_err()
+                .unwrap_err(),
+            ParseFenError::InvalidEpSquare
         );
 
-        assert!(
+        assert_eq!(
             "4k2r/8/8/8/8/8/8/RR2K2R w KBQk - 0 1" // triple castling rights
                 .parse::<Fen>()
-                .is_err()
+                .unwrap_err(),
+            ParseFenError::InvalidCastling
         );
     }
 
@@ -752,13 +764,5 @@ mod tests {
         assert_eq!(fen.halfmoves, 1);
         assert_eq!(fen.fullmoves.get(), 2);
         assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
-    }
-
-    #[test]
-    fn test_non_ascii() {
-        // mind the dot in the castling part
-        let input = "8/8/8/8/8/8/8/8 w · - 0 1";
-        let error = input.parse::<Fen>().expect_err("invalid fen");
-        assert_eq!(error, ParseFenError::InvalidCastling);
     }
 }
