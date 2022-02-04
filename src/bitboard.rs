@@ -202,16 +202,25 @@ impl Bitboard {
         self.0 = 0;
     }
 
+    #[doc(alias = "union")]
     #[must_use]
     #[inline]
     pub fn with<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self | squares
     }
 
+    #[doc(alias = "difference")]
     #[must_use]
     #[inline]
     pub fn without<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self & !squares.into()
+    }
+
+    #[doc(alias = "symmetric_difference")]
+    #[must_use]
+    #[inline]
+    pub fn toggled<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
+        self ^ squares
     }
 
     #[inline]
@@ -279,6 +288,7 @@ impl Bitboard {
         }
     }
 
+    #[doc(alias = "len")]
     #[inline]
     pub fn count(self) -> usize {
         self.0.count_ones() as usize
@@ -289,6 +299,7 @@ impl Bitboard {
         self.0 & self.0.wrapping_sub(1) != 0
     }
 
+    /// Gets the only square in the set, if there is exactly one.
     #[inline]
     pub fn single_square(self) -> Option<Square> {
         if self.more_than_one() {
