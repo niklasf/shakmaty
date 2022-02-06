@@ -3276,4 +3276,13 @@ mod tests {
             None
         );
     }
+
+    #[test]
+    fn test_check_with_unrelated_ep_square() {
+        let fen: Fen = "rnbqk1nr/bb3p1p/1q2r3/2pPp3/3P4/7P/1PP1NpPP/R1BQKBNR w KQkq c6 0 1".parse().expect("valid fen");
+        let pos = fen.position::<Chess>(CastlingMode::Standard).expect("valid position");
+        assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
+        assert!(pos.en_passant_moves().is_empty());
+        assert_eq!(pos.legal_moves().len(), 2);
+    }
 }
