@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty"
-version = "0.20.6" # remember to update changelog and html_root_url
+version = "0.20.7" # remember to update changelog and html_root_url
 description = "Chess and chess variant rules and operations"
 repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"

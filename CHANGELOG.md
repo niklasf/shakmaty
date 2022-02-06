@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.20.7
+
+- Fix move generation and validation for invalid positions where check is
+  incompatible with the en passant square.
+- Add `Square::xor()`.
+
 ## v0.20.6
 
 - Fix parsing of empty string as `Fen`.
