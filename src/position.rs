@@ -2604,7 +2604,16 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EpSquare>) -> PositionErrorK
             // check by a single sliding piece.
             if a != b
                 || (a != ep_square.pawn_pushed_to()
-                    && !attacks::aligned(a, ep_square.pawn_pushed_from(), our_king))
+                    && pos
+                        .king_attackers(
+                            our_king,
+                            !pos.turn(),
+                            pos.board()
+                                .occupied()
+                                .without(ep_square.pawn_pushed_to())
+                                .with(ep_square.pawn_pushed_from()),
+                        )
+                        .any())
             {
                 errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
             }
