@@ -164,8 +164,9 @@ bitflags! {
         /// The player not to move is in check.
         const OPPOSITE_CHECK = 1 << 6;
 
-        /// There are impossibly many checkers, or two sliding checkers are
-        /// aligned.
+        /// There are impossibly many checkers, two sliding checkers are
+        /// aligned, or check is not possible because the last move was a
+        /// double pawn push.
         ///
         /// Such a position cannot be reached by any sequence of legal moves.
         ///
@@ -294,7 +295,13 @@ pub trait FromSetup: Sized {
     /// # Errors
     ///
     /// Returns [`PositionError`] if the setup does not meet basic validity
-    /// requirements. Meeting the requirements does not imply that the position
+    /// requirements.
+    ///
+    /// The requirements are chosen such that the position can be handled
+    /// correctly by shakmaty, as well as other common chess software
+    /// (in particular Stockfish and Lichess).
+    ///
+    /// Meeting the requirements does not imply that the position
     /// is actually reachable with a series of legal moves from the starting
     /// position.
     fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
@@ -570,7 +577,7 @@ impl Chess {
             fullmoves: setup.fullmoves(),
         };
 
-        errors |= validate(&pos);
+        errors |= validate(&pos, ep_square);
 
         (pos, errors)
     }
@@ -961,7 +968,14 @@ pub(crate) mod variant {
                 fullmoves: setup.fullmoves(),
             };
 
-            errors |= validate(&pos) - PositionErrorKinds::IMPOSSIBLE_CHECK;
+            errors |= validate(&pos);
+
+            if ep_square.is_none() {
+                // Other king moving away can cause many checks to be given
+                // at the same time. We do not check the details, or even that
+                // the other king really is close.
+                errors.remove(PositionErrorKinds::IMPOSSIBLE_CHECK);
+            }
 
             if (pos.them() & pos.board().kings()).any() {
                 // Our king just exploded. Game over, but valid position.
@@ -2546,7 +2560,7 @@ fn do_move(
     *turn = !color;
 }
 
-fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
+fn validate<P: Position>(pos: &P, ep_square: Option<EpSquare>) -> PositionErrorKinds {
     let mut errors = PositionErrorKinds::empty();
 
     if pos.board().occupied().is_empty() {
@@ -2579,25 +2593,26 @@ fn validate<P: Position>(pos: &P) -> PositionErrorKinds {
         }
     }
 
-    if let Some(our_king) = pos.board().king_of(pos.turn()) {
-        let checkers = pos.checkers();
-        match (checkers.first(), checkers.last()) {
-            (Some(a), Some(b))
-                if a != b && (checkers.count() > 2 || attacks::aligned(a, b, our_king)) =>
+    let checkers = pos.checkers();
+    if let (Some(a), Some(b), Some(our_king)) = (
+        checkers.first(),
+        checkers.last(),
+        pos.board().king_of(pos.turn()),
+    ) {
+        if let Some(ep_square) = ep_square {
+            // The pushed pawn must be the only checker, or it has uncovered
+            // check by a single sliding piece.
+            if a != b
+                || (a != ep_square.pawn_pushed_to()
+                    && !attacks::aligned(a, ep_square.pawn_pushed_from(), our_king))
             {
                 errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
             }
-            _ => (),
-        }
-
-        // Determining if there is a valid en passant square requires move
-        // generation. We know the king exists, so its fine to call it even
-        // before full validation.
-        if let Some(ep_suare) = pos.ep_square() {
-            for checker in checkers {
-                if attacks::aligned(our_king, ep_suare, checker) {
-                    errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
-                }
+        } else {
+            // There can be at most two checkers, and discovered checkers
+            // cannot be aligned.
+            if a != b && (checkers.count() > 2 || attacks::aligned(a, our_king, b)) {
+                errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
             }
         }
     }
@@ -3279,10 +3294,15 @@ mod tests {
 
     #[test]
     fn test_check_with_unrelated_ep_square() {
-        let fen: Fen = "rnbqk1nr/bb3p1p/1q2r3/2pPp3/3P4/7P/1PP1NpPP/R1BQKBNR w KQkq c6 0 1".parse().expect("valid fen");
-        let pos = fen.position::<Chess>(CastlingMode::Standard).expect("valid position");
-        assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
+        let fen: Fen = "rnbqk1nr/bb3p1p/1q2r3/2pPp3/3P4/7P/1PP1NpPP/R1BQKBNR w KQkq c6 0 1"
+            .parse()
+            .expect("valid fen");
+        let err = fen
+            .position::<Chess>(CastlingMode::Standard)
+            .expect_err("impossible check");
+        assert_eq!(err.kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
+        /* assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
         assert!(pos.en_passant_moves().is_empty());
-        assert_eq!(pos.legal_moves().len(), 2);
+        assert_eq!(pos.legal_moves().len(), 2); */
     }
 }
