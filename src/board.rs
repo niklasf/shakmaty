@@ -26,7 +26,7 @@ use crate::{
     color::{ByColor, Color},
     material::{Material, MaterialSide},
     square::{File, Rank, Square},
-    types::{Piece, Role},
+    types::{ByRole, Piece, Role},
 };
 
 /// [`Piece`] positions on a board.
@@ -50,109 +50,111 @@ use crate::{
 /// ```
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
-    occupied_co: ByColor<Bitboard>,
-    occupied: [Bitboard; 7], // all and pieces indexed by Role
+    roles: ByRole<Bitboard>,
+    colors: ByColor<Bitboard>,
+    occupied: Bitboard,
 }
 
 impl Board {
     pub fn new() -> Board {
         Board {
-            occupied_co: ByColor {
+            roles: ByRole {
+                pawn: Bitboard(0x00ff_0000_0000_ff00),
+                knight: Bitboard(0x4200_0000_0000_0042),
+                bishop: Bitboard(0x2400_0000_0000_0024),
+                rook: Bitboard(0x8100_0000_0000_0081),
+                queen: Bitboard(0x0800_0000_0000_0008),
+                king: Bitboard(0x1000_0000_0000_0010),
+            },
+            colors: ByColor {
                 black: Bitboard(0xffff_0000_0000_0000),
                 white: Bitboard(0xffff),
             },
-            occupied: [
-                Bitboard(0xffff_0000_0000_ffff),
-                Bitboard(0x00ff_0000_0000_ff00), // pawns
-                Bitboard(0x4200_0000_0000_0042), // knights
-                Bitboard(0x2400_0000_0000_0024), // bishops
-                Bitboard(0x8100_0000_0000_0081), // rooks
-                Bitboard(0x0800_0000_0000_0008), // queens
-                Bitboard(0x1000_0000_0000_0010), // kings
-            ],
+            occupied: Bitboard(0xffff_0000_0000_ffff),
         }
     }
 
     pub fn empty() -> Board {
         Board {
-            occupied_co: ByColor::default(),
-            occupied: [Bitboard(0); 7],
+            roles: ByRole::default(),
+            colors: ByColor::default(),
+            occupied: Bitboard::EMPTY,
         }
     }
 
     pub fn racing_kings() -> Board {
         Board {
-            occupied_co: ByColor {
+            roles: ByRole {
+                pawn: Bitboard(0x0000),
+                knight: Bitboard(0x1818),
+                bishop: Bitboard(0x2424),
+                rook: Bitboard(0x4242),
+                queen: Bitboard(0x0081),
+                king: Bitboard(0x8100),
+            },
+            colors: ByColor {
                 black: Bitboard(0x0f0f),
                 white: Bitboard(0xf0f0),
             },
-            occupied: [
-                Bitboard(0xffff),
-                Bitboard(0x0000), // pawns
-                Bitboard(0x1818), // knights
-                Bitboard(0x2424), // bishops
-                Bitboard(0x4242), // rooks
-                Bitboard(0x0081), // queens
-                Bitboard(0x8100), // kings
-            ],
+            occupied: Bitboard(0xffff),
         }
     }
 
     pub fn horde() -> Board {
         Board {
-            occupied_co: ByColor {
+            roles: ByRole {
+                pawn: Bitboard(0x00ff_0066_ffff_ffff),
+                knight: Bitboard(0x4200_0000_0000_0000),
+                bishop: Bitboard(0x2400_0000_0000_0000),
+                rook: Bitboard(0x8100_0000_0000_0000),
+                queen: Bitboard(0x0800_0000_0000_0000),
+                king: Bitboard(0x1000_0000_0000_0000),
+            },
+            colors: ByColor {
                 black: Bitboard(0xffff_0000_0000_0000),
                 white: Bitboard(0x0000_0066_ffff_ffff),
             },
-            occupied: [
-                Bitboard(0xffff_0066_ffff_ffff),
-                Bitboard(0x00ff_0066_ffff_ffff), // pawns
-                Bitboard(0x4200_0000_0000_0000), // knights
-                Bitboard(0x2400_0000_0000_0000), // bishops
-                Bitboard(0x8100_0000_0000_0000), // rooks
-                Bitboard(0x0800_0000_0000_0000), // queens
-                Bitboard(0x1000_0000_0000_0000), // kings
-            ],
+            occupied: Bitboard(0xffff_0066_ffff_ffff),
         }
     }
 
     #[inline]
     pub fn occupied(&self) -> Bitboard {
-        self.occupied[0]
+        self.occupied
     }
 
     #[inline]
     pub fn pawns(&self) -> Bitboard {
-        self.occupied[Role::Pawn as usize]
+        self.roles.pawn
     }
     #[inline]
     pub fn knights(&self) -> Bitboard {
-        self.occupied[Role::Knight as usize]
+        self.roles.knight
     }
     #[inline]
     pub fn bishops(&self) -> Bitboard {
-        self.occupied[Role::Bishop as usize]
+        self.roles.bishop
     }
     #[inline]
     pub fn rooks(&self) -> Bitboard {
-        self.occupied[Role::Rook as usize]
+        self.roles.rook
     }
     #[inline]
     pub fn queens(&self) -> Bitboard {
-        self.occupied[Role::Queen as usize]
+        self.roles.queen
     }
     #[inline]
     pub fn kings(&self) -> Bitboard {
-        self.occupied[Role::King as usize]
+        self.roles.king
     }
 
     #[inline]
     pub fn white(&self) -> Bitboard {
-        self.occupied_co.white
+        self.colors.white
     }
     #[inline]
     pub fn black(&self) -> Bitboard {
-        self.occupied_co.black
+        self.colors.black
     }
 
     /// Bishops, rooks and queens.
@@ -194,7 +196,7 @@ impl Board {
 
     #[inline]
     pub fn role_at(&self, sq: Square) -> Option<Role> {
-        if !self.occupied[0].contains(sq) {
+        if !self.occupied.contains(sq) {
             None // catch early
         } else if self.pawns().contains(sq) {
             Some(Role::Pawn)
@@ -223,52 +225,42 @@ impl Board {
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         let piece = self.piece_at(sq);
         if let Some(p) = piece {
-            self.occupied[0].toggle(sq);
-            self.by_color_mut(p.color).toggle(sq);
-            self.by_role_mut(p.role).toggle(sq);
+            self.roles.by_role_mut(p.role).toggle(sq);
+            self.colors.by_color_mut(p.color).toggle(sq);
+            self.occupied.toggle(sq);
         }
         piece
     }
 
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
-        self.occupied_co.black.discard(sq);
-        self.occupied_co.white.discard(sq);
-        self.occupied[0].discard(sq);
-        self.occupied[1].discard(sq);
-        self.occupied[2].discard(sq);
-        self.occupied[3].discard(sq);
-        self.occupied[4].discard(sq);
-        self.occupied[5].discard(sq);
-        self.occupied[6].discard(sq);
+        self.roles.pawn.discard(sq);
+        self.roles.knight.discard(sq);
+        self.roles.bishop.discard(sq);
+        self.roles.rook.discard(sq);
+        self.roles.queen.discard(sq);
+        self.roles.king.discard(sq);
+        self.colors.black.discard(sq);
+        self.colors.white.discard(sq);
+        self.occupied.discard(sq);
     }
 
     #[inline]
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
         self.discard_piece_at(sq);
-        self.occupied[0].toggle(sq);
-        self.by_color_mut(color).toggle(sq);
-        self.by_role_mut(role).toggle(sq);
+        self.roles.by_role_mut(role).toggle(sq);
+        self.colors.by_color_mut(color).toggle(sq);
+        self.occupied.toggle(sq);
     }
 
     #[inline]
     pub fn by_color(&self, color: Color) -> Bitboard {
-        *self.occupied_co.by_color(color)
-    }
-
-    #[inline]
-    fn by_color_mut(&mut self, color: Color) -> &mut Bitboard {
-        self.occupied_co.by_color_mut(color)
+        *self.colors.by_color(color)
     }
 
     #[inline]
     pub fn by_role(&self, role: Role) -> Bitboard {
-        self.occupied[role as usize]
-    }
-
-    #[inline]
-    fn by_role_mut(&mut self, role: Role) -> &mut Bitboard {
-        &mut self.occupied[role as usize]
+        *self.roles.by_role(role)
     }
 
     #[inline]
@@ -278,7 +270,7 @@ impl Board {
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
         self.piece_at(sq).map_or(Bitboard(0), |piece| {
-            attacks::attacks(sq, piece, self.occupied[0])
+            attacks::attacks(sq, piece, self.occupied)
         })
     }
 
@@ -330,15 +322,15 @@ impl Board {
     {
         // In order to guarantee consistency, this method cannot be public
         // for use with custom transformations.
-        self.occupied_co.white = f(self.occupied_co.white);
-        self.occupied_co.black = f(self.occupied_co.black);
-        self.occupied[0] = self.occupied_co.white | self.occupied_co.black;
-        self.occupied[1] = f(self.occupied[1]);
-        self.occupied[2] = f(self.occupied[2]);
-        self.occupied[3] = f(self.occupied[3]);
-        self.occupied[4] = f(self.occupied[4]);
-        self.occupied[5] = f(self.occupied[5]);
-        self.occupied[6] = f(self.occupied[6]);
+        self.roles.pawn = f(self.roles.pawn);
+        self.roles.knight = f(self.roles.knight);
+        self.roles.bishop = f(self.roles.bishop);
+        self.roles.rook = f(self.roles.rook);
+        self.roles.queen = f(self.roles.queen);
+        self.roles.king = f(self.roles.king);
+        self.colors.black = f(self.colors.black);
+        self.colors.white = f(self.colors.white);
+        self.occupied = self.colors.white | self.colors.black;
     }
 
     /// Mirror the board vertically. See [`Bitboard::flip_vertical`].

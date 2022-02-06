@@ -193,16 +193,16 @@ impl<T> ByColor<T> {
     pub fn by_color(&self, color: Color) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
-            &*(self as *const ByColor<T>).cast::<T>().offset(color as isize)
+            &*(self as *const ByColor<T>)
+                .cast::<T>()
+                .offset(color as isize)
         }
     }
 
     #[inline]
     pub fn by_color_mut(&mut self, color: Color) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize)
-        }
+        unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
     }
 
     #[inline]

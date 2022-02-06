@@ -187,6 +187,45 @@ macro_rules! try_role_from_int_impl {
 
 try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
+#[derive(Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[repr(C)]
+pub struct ByRole<T> {
+    pub pawn: T,
+    pub knight: T,
+    pub bishop: T,
+    pub rook: T,
+    pub queen: T,
+    pub king: T,
+}
+
+impl<T> ByRole<T> {
+    #[inline]
+    pub fn by_role(&self, role: Role) -> &T {
+        // Safety: Trivial offset into #[repr(C)] struct.
+        unsafe { &*(self as *const ByRole<T>).cast::<T>().offset(role as isize - 1) }
+    }
+
+    #[inline]
+    pub fn by_role_mut(&mut self, role: Role) -> &mut T {
+        // Safety: Trivial offset into #[repr(C)] struct.
+        unsafe { &mut *(self as *mut ByRole<T>).cast::<T>().offset(role as isize - 1) }
+    }
+
+    pub fn map<U, F>(self, mut f: F) -> ByRole<U>
+    where
+        F: FnMut(T) -> U,
+    {
+        ByRole {
+            pawn: f(self.pawn),
+            knight: f(self.knight),
+            bishop: f(self.bishop),
+            rook: f(self.rook),
+            queen: f(self.queen),
+            king: f(self.king),
+        }
+    }
+}
+
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
