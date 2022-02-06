@@ -34,9 +34,9 @@
 use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
-    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
-    Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
-    Setup, Square,
+    color::ByColor, Bitboard, Board, Castles, CastlingMode, CastlingSide, Chess, Color, File,
+    FromSetup, Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks,
+    Role, Setup, Square,
 };
 
 /// Integer type that can be returned as a Zobrist hash.

@@ -75,7 +75,7 @@
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 
 mod board;
-mod color;
+pub mod color;
 mod magics;
 mod material;
 mod movelist;
@@ -100,7 +100,7 @@ pub mod variant;
 pub use crate::{
     bitboard::Bitboard,
     board::{Board, Pieces},
-    color::{ByColor, ByColorIter, Color, ParseColorError},
+    color::Color,
     material::{Material, MaterialSide, ParseMaterialError},
     movelist::MoveList,
     perft::perft,
