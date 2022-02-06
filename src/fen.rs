@@ -18,11 +18,14 @@
 //!
 //! The parser is relaxed:
 //!
+//! * Supports X-FEN and Shredder-FEN for castling right notation.
+//!   Allows repeated castling rights and castling rights in any order.
+//! * Supports `[q]` and `/q` styles for Crazyhouse pockets.
+//! * Supports `3+3` and `+0+0` for remaining checks in Three-Check.
 //! * Accepts partial FENs and fills missing fields with the default values
 //!   of `8/8/8/8/8/8/8/8 w - - 0 1`.
-//! * Accepts multiple spaces between FEN fields.
-//! * Accepts underscores as separators between FEN fields.
-//! * Accepts repeated castling flags and castling flags in any order.
+//! * Accepts multiple spaces and underscores (`_`) as separators between
+//!   FEN fields.
 //! * Accepts `0` as fulllmove number and uses `1` instead.
 //!
 //! The writer intentionally deviates from the specification when formatting

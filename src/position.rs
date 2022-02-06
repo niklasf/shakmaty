@@ -322,6 +322,8 @@ pub trait Position {
     fn castles(&self) -> &Castles;
     /// Gets the en passant target square after a double pawn push,
     /// even if no en passant capture is actually possible.
+    ///
+    /// Also see [`Position::legal_ep_square()`].
     fn maybe_ep_square(&self) -> Option<Square>;
     /// Remaining checks in Three-Check.
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>>;
