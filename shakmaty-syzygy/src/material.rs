@@ -16,27 +16,12 @@
 
 use shakmaty::{Material, MaterialSide, Role};
 
-const ROLES: [Role; 6] = [
-    Role::King,
-    Role::Queen,
-    Role::Rook,
-    Role::Bishop,
-    Role::Knight,
-    Role::Pawn,
-];
-
-pub trait MaterialSideExt {
-    fn unique_roles(&self) -> u8;
-}
-
-impl MaterialSideExt for MaterialSide {
-    fn unique_roles(&self) -> u8 {
-        ROLES
-            .iter()
-            .map(|&r| self.by_role(r))
-            .filter(|&c| c == 1)
-            .sum()
-    }
+fn unique_roles(side: &MaterialSide) -> u8 {
+    Role::ALL
+        .iter()
+        .map(|&r| side.by_role(r))
+        .filter(|&c| c == 1)
+        .sum()
 }
 
 pub trait MaterialExt {
@@ -46,14 +31,14 @@ pub trait MaterialExt {
 
 impl MaterialExt for Material {
     fn unique_pieces(&self) -> u8 {
-        self.white.unique_roles() + self.black.unique_roles()
+        unique_roles(&self.white) + unique_roles(&self.black)
     }
 
     fn min_like_man(&self) -> u8 {
-        ROLES
+        Role::ALL
             .iter()
             .map(|&r| self.white.by_role(r))
-            .chain(ROLES.iter().map(|&r| self.black.by_role(r)))
+            .chain(Role::ALL.iter().map(|&r| self.black.by_role(r)))
             .filter(|&c| 2 <= c)
             .min()
             .unwrap_or(0)
