@@ -515,6 +515,15 @@ impl Square {
         unsafe { Square::new_unchecked((i32::from(self) + delta) as u32) }
     }
 
+    /// Return the bitwise XOR of the numeric square representations. For some
+    /// operands this is a useful geometric transformation.
+    #[must_use]
+    #[inline]
+    pub fn xor(self, other: Square) -> Square {
+        // Safety: 6 bit value XOR 6 bit value -> 6 bit value.
+        unsafe { Square::new_unchecked(u32::from(self) ^ u32::from(other)) }
+    }
+
     /// Flip the square horizontally.
     ///
     /// ```
@@ -527,8 +536,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_horizontal(self) -> Square {
-        // Safety: All 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self) ^ 0b000_111) }
+        self.xor(Square::H1)
     }
 
     /// Flip the square vertically.
@@ -543,8 +551,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_vertical(self) -> Square {
-        // Safety: All 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_000) }
+        self.xor(Square::A8)
     }
 
     /// Flip at the a1-h8 diagonal by swapping file and rank.
@@ -604,8 +611,7 @@ impl Square {
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
     pub fn rotate_180(self) -> Square {
-        // Safety: All 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self) ^ 0b111_111) }
+        self.xor(Square::H8)
     }
 
     /// Rotate 270 degrees clockwise.
