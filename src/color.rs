@@ -16,7 +16,7 @@
 
 //! White or black.
 
-use std::{error::Error, fmt, iter::FusedIterator, mem, ops, str::FromStr};
+use std::{array, error::Error, fmt, mem, ops, str::FromStr};
 
 use crate::{
     square::Rank,
@@ -296,12 +296,12 @@ impl<T> ByColor<T> {
         }
     }
 
-    pub fn iter(&self) -> ByColorIter<&T> {
-        self.as_ref().into_iter()
+    pub fn iter(&self) -> array::IntoIter<&T, 2> {
+        [&self.white, &self.black].into_iter()
     }
 
-    pub fn iter_mut(&mut self) -> ByColorIter<&mut T> {
-        self.as_mut().into_iter()
+    pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
+        [&mut self.white, &mut self.black].into_iter()
     }
 }
 
@@ -345,45 +345,9 @@ impl<T: Clone> ByColor<&T> {
 
 impl<T> IntoIterator for ByColor<T> {
     type Item = T;
-    type IntoIter = ByColorIter<T>;
+    type IntoIter = array::IntoIter<T, 2>;
 
-    fn into_iter(self) -> ByColorIter<T> {
-        ByColorIter {
-            inner: self.map(Some),
-        }
+    fn into_iter(self) -> Self::IntoIter {
+        [self.white, self.black].into_iter()
     }
 }
-
-/// Iterator over [`ByColor`].
-#[derive(Debug, Clone)]
-pub struct ByColorIter<T> {
-    inner: ByColor<Option<T>>,
-}
-
-impl<T> Iterator for ByColorIter<T> {
-    type Item = T;
-
-    fn next(&mut self) -> Option<T> {
-        self.inner.white.take().or_else(|| self.inner.black.take())
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        let len = self.len();
-        (len, Some(len))
-    }
-}
-
-impl<T> ExactSizeIterator for ByColorIter<T> {
-    fn len(&self) -> usize {
-        (if self.inner.white.is_some() { 1 } else { 0 })
-            + (if self.inner.black.is_some() { 1 } else { 0 })
-    }
-}
-
-impl<T> DoubleEndedIterator for ByColorIter<T> {
-    fn next_back(&mut self) -> Option<T> {
-        self.inner.black.take().or_else(|| self.inner.white.take())
-    }
-}
-
-impl<T> FusedIterator for ByColorIter<T> {}

@@ -202,13 +202,21 @@ impl<T> ByRole<T> {
     #[inline]
     pub fn by_role(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &*(self as *const ByRole<T>).cast::<T>().offset(role as isize - 1) }
+        unsafe {
+            &*(self as *const ByRole<T>)
+                .cast::<T>()
+                .offset(role as isize - 1)
+        }
     }
 
     #[inline]
     pub fn by_role_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &mut *(self as *mut ByRole<T>).cast::<T>().offset(role as isize - 1) }
+        unsafe {
+            &mut *(self as *mut ByRole<T>)
+                .cast::<T>()
+                .offset(role as isize - 1)
+        }
     }
 
     pub fn map<U, F>(self, mut f: F) -> ByRole<U>

@@ -110,5 +110,5 @@ pub use crate::{
     },
     setup::{Castles, Setup},
     square::{File, ParseSquareError, Rank, Square},
-    types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role, ByRole},
+    types::{ByRole, CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
 };
