@@ -160,38 +160,32 @@ impl Board {
     /// Bishops, rooks and queens.
     #[inline]
     pub fn sliders(&self) -> Bitboard {
-        self.bishops() ^ self.rooks() ^ self.queens()
+        self.roles.bishop ^ self.roles.rook ^ self.roles.queen
     }
     /// Pawns, knights and kings.
     #[inline]
     pub fn steppers(&self) -> Bitboard {
-        self.pawns() ^ self.knights() ^ self.kings()
+        self.roles.pawn ^ self.roles.knight ^ self.roles.king
     }
 
     #[inline]
     pub fn rooks_and_queens(&self) -> Bitboard {
-        self.rooks() ^ self.queens()
+        self.roles.rook ^ self.roles.queen
     }
     #[inline]
     pub fn bishops_and_queens(&self) -> Bitboard {
-        self.bishops() ^ self.queens()
+        self.roles.bishop ^ self.roles.queen
     }
 
     /// The (unique) king of the given side.
     #[inline]
     pub fn king_of(&self, color: Color) -> Option<Square> {
-        (self.kings() & self.by_color(color)).single_square()
+        (self.roles.king & self.by_color(color)).single_square()
     }
 
     #[inline]
     pub fn color_at(&self, sq: Square) -> Option<Color> {
-        if self.white().contains(sq) {
-            Some(Color::White)
-        } else if self.black().contains(sq) {
-            Some(Color::Black)
-        } else {
-            None
-        }
+        self.colors.find(|c| c.contains(sq))
     }
 
     #[inline]
@@ -206,7 +200,7 @@ impl Board {
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.role_at(sq).map(|role| Piece {
-            color: Color::from_white(self.white().contains(sq)),
+            color: Color::from_white(self.colors.white.contains(sq)),
             role,
         })
     }
@@ -224,14 +218,8 @@ impl Board {
 
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
-        self.roles.pawn.discard(sq);
-        self.roles.knight.discard(sq);
-        self.roles.bishop.discard(sq);
-        self.roles.rook.discard(sq);
-        self.roles.queen.discard(sq);
-        self.roles.king.discard(sq);
-        self.colors.black.discard(sq);
-        self.colors.white.discard(sq);
+        self.roles.transform(|r| r.discard(sq));
+        self.colors.transform(|c| c.discard(sq));
         self.occupied.discard(sq);
     }
 
@@ -269,20 +257,15 @@ impl Board {
         self.by_color(attacker)
             & ((attacks::rook_attacks(sq, occupied) & self.rooks_and_queens())
                 | (attacks::bishop_attacks(sq, occupied) & self.bishops_and_queens())
-                | (attacks::knight_attacks(sq) & self.knights())
-                | (attacks::king_attacks(sq) & self.kings())
-                | (attacks::pawn_attacks(!attacker, sq) & self.pawns()))
+                | (attacks::knight_attacks(sq) & self.roles.knight)
+                | (attacks::king_attacks(sq) & self.roles.king)
+                | (attacks::pawn_attacks(!attacker, sq) & self.roles.pawn))
     }
 
     pub fn pieces(&self) -> Pieces {
         Pieces {
-            pawns: self.pawns(),
-            knights: self.knights(),
-            bishops: self.bishops(),
-            rooks: self.rooks(),
-            queens: self.queens(),
-            kings: self.kings(),
-            white: self.white(),
+            roles: self.roles.clone(),
+            white: self.colors.white,
         }
     }
 
@@ -312,14 +295,8 @@ impl Board {
     {
         // In order to guarantee consistency, this method cannot be public
         // for use with custom transformations.
-        self.roles.pawn = f(self.roles.pawn);
-        self.roles.knight = f(self.roles.knight);
-        self.roles.bishop = f(self.roles.bishop);
-        self.roles.rook = f(self.roles.rook);
-        self.roles.queen = f(self.roles.queen);
-        self.roles.king = f(self.roles.king);
-        self.colors.black = f(self.colors.black);
-        self.colors.white = f(self.colors.white);
+        self.roles.transform(|r| *r = f(*r));
+        self.colors.transform(|c| *c = f(*c));
         self.occupied = self.colors.white | self.colors.black;
     }
 
@@ -403,12 +380,7 @@ impl FromIterator<(Square, Piece)> for Board {
 /// Iterator over the pieces of a [`Board`].
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Pieces {
-    pawns: Bitboard,
-    knights: Bitboard,
-    bishops: Bitboard,
-    rooks: Bitboard,
-    queens: Bitboard,
-    kings: Bitboard,
+    roles: ByRole<Bitboard>,
     white: Bitboard,
 }
 
@@ -422,17 +394,17 @@ impl Iterator for Pieces {
     type Item = (Square, Piece);
 
     fn next(&mut self) -> Option<(Square, Piece)> {
-        let (sq, role) = if let Some(sq) = self.pawns.pop_front() {
+        let (sq, role) = if let Some(sq) = self.roles.pawn.pop_front() {
             (sq, Role::Pawn)
-        } else if let Some(sq) = self.knights.pop_front() {
+        } else if let Some(sq) = self.roles.knight.pop_front() {
             (sq, Role::Knight)
-        } else if let Some(sq) = self.bishops.pop_front() {
+        } else if let Some(sq) = self.roles.bishop.pop_front() {
             (sq, Role::Bishop)
-        } else if let Some(sq) = self.rooks.pop_front() {
+        } else if let Some(sq) = self.roles.rook.pop_front() {
             (sq, Role::Rook)
-        } else if let Some(sq) = self.queens.pop_front() {
+        } else if let Some(sq) = self.roles.queen.pop_front() {
             (sq, Role::Queen)
-        } else if let Some(sq) = self.kings.pop_front() {
+        } else if let Some(sq) = self.roles.king.pop_front() {
             (sq, Role::King)
         } else {
             return None;
@@ -453,12 +425,7 @@ impl Iterator for Pieces {
 
 impl ExactSizeIterator for Pieces {
     fn len(&self) -> usize {
-        self.pawns.count()
-            + self.knights.count()
-            + self.bishops.count()
-            + self.rooks.count()
-            + self.queens.count()
-            + self.kings.count()
+        self.roles.iter().map(|r| r.count()).sum()
     }
 }
 

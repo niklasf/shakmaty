@@ -234,6 +234,19 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
+    pub fn transform<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T),
+    {
+        f(&mut self.pawn);
+        f(&mut self.knight);
+        f(&mut self.bishop);
+        f(&mut self.rook);
+        f(&mut self.queen);
+        f(&mut self.king);
+    }
+
+    #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByRole<U>
     where
         F: FnMut(T) -> U,
@@ -314,6 +327,14 @@ impl<T> ByRole<T> {
             queen: (self.queen, other.queen),
             king: (self.king, other.king),
         }
+    }
+
+    pub fn iter(&self) -> array::IntoIter<&T, 6> {
+        self.as_ref().into_iter()
+    }
+
+    pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 6> {
+        self.as_mut().into_iter()
     }
 }
 

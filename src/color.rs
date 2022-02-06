@@ -226,6 +226,15 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
+    pub fn transform<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&mut T),
+    {
+        f(&mut self.white);
+        f(&mut self.black);
+    }
+
+    #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByColor<U>
     where
         F: FnMut(T) -> U,
