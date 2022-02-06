@@ -34,7 +34,7 @@
 use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
-    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
+    EpSquare, Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
 };
@@ -258,7 +258,7 @@ impl<P: Default, V: ZobristValue> Default for Zobrist<P, V> {
 }
 
 impl<P: FromSetup + Position, V: ZobristValue> FromSetup for Zobrist<P, V> {
-    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
+    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
         match P::from_setup(setup, mode) {
             Ok(pos) => Ok(Zobrist::new(pos)),
             Err(err) => Err(PositionError {
@@ -269,7 +269,7 @@ impl<P: FromSetup + Position, V: ZobristValue> FromSetup for Zobrist<P, V> {
     }
 }
 
-impl<P: Setup, V: ZobristValue> Setup for Zobrist<P, V> {
+impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn board(&self) -> &Board {
         self.pos.board()
     }
@@ -282,10 +282,10 @@ impl<P: Setup, V: ZobristValue> Setup for Zobrist<P, V> {
     fn turn(&self) -> Color {
         self.pos.turn()
     }
-    fn castling_rights(&self) -> Bitboard {
-        self.pos.castling_rights()
+    fn castles(&self) -> &Castles {
+        self.pos.castles()
     }
-    fn ep_square(&self) -> Option<Square> {
+    fn ep_square(&self) -> Option<EpSquare> {
         self.pos.ep_square()
     }
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
@@ -297,9 +297,9 @@ impl<P: Setup, V: ZobristValue> Setup for Zobrist<P, V> {
     fn fullmoves(&self) -> NonZeroU32 {
         self.pos.fullmoves()
     }
-}
-
-impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
+    fn into_setup(self) -> Setup {
+        self.pos.into_setup()
+    }
     fn legal_moves(&self) -> MoveList {
         self.pos.legal_moves()
     }
@@ -323,9 +323,6 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     }
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.pos.king_attackers(square, attacker, occupied)
-    }
-    fn castles(&self) -> &Castles {
-        self.pos.castles()
     }
     fn is_variant_end(&self) -> bool {
         self.pos.is_variant_end()

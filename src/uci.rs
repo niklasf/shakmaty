@@ -310,7 +310,7 @@ impl Uci {
                     return Err(IllegalUciError);
                 }
 
-                if role == Role::King && (pos.castling_rights() & pos.us()).contains(to) {
+                if role == Role::King && (pos.castles().castling_rights() & pos.us()).contains(to) {
                     Move::Castle {
                         king: from,
                         rook: to,

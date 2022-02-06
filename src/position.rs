@@ -34,7 +34,7 @@ use crate::{
     },
     material::Material,
     movelist::MoveList,
-    setup::{Castles, EpSquare, Setup, SwapTurn},
+    setup::{Castles, EpSquare, Setup},
     square::{Rank, Square},
     types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
 };
@@ -304,12 +304,35 @@ pub trait FromSetup: Sized {
     /// Meeting the requirements does not imply that the position
     /// is actually reachable with a series of legal moves from the starting
     /// position.
-    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
+    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
 
 /// A legal chess or chess variant position. See [`Chess`] for a concrete
-/// implementation. Extends [`Setup`].
-pub trait Position: Setup {
+/// implementation.
+pub trait Position {
+    /// Piece positions on the board.
+    fn board(&self) -> &Board;
+    /// Positions of tracked promoted pieces. Used only for Crazyhouse.
+    fn promoted(&self) -> Bitboard;
+    /// Pockets in chess variants like Crazyhouse.
+    fn pockets(&self) -> Option<&Material>;
+    /// Side to move.
+    fn turn(&self) -> Color;
+    /// Castling paths and unmoved rooks.
+    fn castles(&self) -> &Castles;
+    /// En passant square.
+    fn ep_square(&self) -> Option<EpSquare>;
+    /// Remaining checks in Three-Check.
+    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>>;
+    /// Number of half-moves since the last
+    /// [capture or pawn move](super::Move::is_zeroing()).
+    fn halfmoves(&self) -> u32;
+    /// Move number. Starts at 1 and is increased after every black move.
+    fn fullmoves(&self) -> NonZeroU32;
+
+    /// Returns the current [`Setup`].
+    fn into_setup(self) -> Setup;
+
     /// Generates all legal moves.
     fn legal_moves(&self) -> MoveList;
 
@@ -370,8 +393,8 @@ pub trait Position: Setup {
             | Move::EnPassant { .. }
             | Move::Put { .. } => true,
             Move::Normal { role, from, to, .. } => {
-                self.castling_rights().contains(from)
-                    || self.castling_rights().contains(to)
+                self.castles().castling_rights().contains(from)
+                    || self.castles().castling_rights().contains(to)
                     || (role == Role::King && self.castles().has_side(self.turn()))
             }
         }) || self.ep_square().is_some()
@@ -381,9 +404,6 @@ pub trait Position: Setup {
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.board().attacks_to(square, attacker, occupied)
     }
-
-    /// Castling paths and unmoved rooks.
-    fn castles(&self) -> &Castles;
 
     /// Checks if the game is over due to a special variant end condition.
     ///
@@ -429,6 +449,27 @@ pub trait Position: Setup {
     // are never overwritten in implementations, but for simplicity of use
     // (especially around dyn) they are not moved to an extension trait.
 
+    /// Squares occupied by the side to move.
+    fn us(&self) -> Bitboard {
+        self.board().by_color(self.turn())
+    }
+
+    /// Squares occupied with the given piece type by the side to move.
+    fn our(&self, role: Role) -> Bitboard {
+        self.board().by_piece(role.of(self.turn()))
+    }
+
+    /// Squares occupied by the opponent of the side to move.
+    fn them(&self) -> Bitboard {
+        self.board().by_color(!self.turn())
+    }
+
+    /// Squares occupied with the given piece type by the opponent of the side
+    /// to move.
+    fn their(&self, role: Role) -> Bitboard {
+        self.board().by_piece(role.of(!self.turn()))
+    }
+
     /// Swap turns. This is sometimes called "playing a null move".
     ///
     /// # Errors
@@ -440,7 +481,9 @@ pub trait Position: Setup {
         Self: Sized + FromSetup,
     {
         let mode = self.castles().mode();
-        Self::from_setup(&SwapTurn(self), mode)
+        let mut setup = self.into_setup();
+        setup.swap_turn();
+        Self::from_setup(setup, mode)
     }
 
     /// Tests a move for legality.
@@ -547,12 +590,10 @@ impl Chess {
         pos.is_check()
     }
 
-    fn from_setup_unchecked(setup: &dyn Setup, mode: CastlingMode) -> (Chess, PositionErrorKinds) {
+    fn from_setup_unchecked(setup: Setup, mode: CastlingMode) -> (Chess, PositionErrorKinds) {
         let mut errors = PositionErrorKinds::empty();
-        let board = setup.board().clone();
-        let turn = setup.turn();
 
-        let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
+        let castles = match Castles::from_setup(&setup.board, setup.castling_rights, mode) {
             Ok(castles) => castles,
             Err(castles) => {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -560,7 +601,7 @@ impl Chess {
             }
         };
 
-        let ep_square = match EpSquare::from_setup(&board, turn, setup.ep_square()) {
+        let ep_square = match EpSquare::from_setup(&setup.board, setup.turn, setup.ep_square) {
             Ok(ep_square) => ep_square,
             Err(()) => {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
@@ -569,12 +610,12 @@ impl Chess {
         };
 
         let pos = Chess {
-            board,
-            turn,
+            board: setup.board,
+            turn: setup.turn,
             castles,
             ep_square,
-            halfmoves: setup.halfmoves(),
-            fullmoves: setup.fullmoves(),
+            halfmoves: setup.halfmoves,
+            fullmoves: setup.fullmoves,
         };
 
         errors |= validate(&pos, ep_square);
@@ -600,8 +641,8 @@ impl Hash for Chess {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.board.hash(state);
         self.turn.hash(state);
-        self.castling_rights().hash(state);
-        self.ep_square().hash(state);
+        self.castles.castling_rights().hash(state);
+        self.ep_square.hash(state);
         self.halfmoves.hash(state);
         self.fullmoves.hash(state);
     }
@@ -611,7 +652,7 @@ impl PartialEq for Chess {
     fn eq(&self, other: &Self) -> bool {
         self.board == other.board
             && self.turn == other.turn
-            && self.castling_rights() == other.castling_rights()
+            && self.castles.castling_rights() == other.castles.castling_rights()
             && self.ep_square() == other.ep_square()
             && self.halfmoves == other.halfmoves
             && self.fullmoves == other.fullmoves
@@ -637,12 +678,19 @@ impl PartialEq for Chess {
 /// ```
 impl Eq for Chess {}
 
-impl Setup for Chess {
+impl FromSetup for Chess {
+    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
+        let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
+        PositionError { pos, errors }.strict()
+    }
+}
+
+impl Position for Chess {
     fn board(&self) -> &Board {
         &self.board
     }
     fn promoted(&self) -> Bitboard {
-        Bitboard(0)
+        Bitboard::EMPTY
     }
     fn pockets(&self) -> Option<&Material> {
         None
@@ -650,10 +698,10 @@ impl Setup for Chess {
     fn turn(&self) -> Color {
         self.turn
     }
-    fn castling_rights(&self) -> Bitboard {
-        self.castles.castling_rights()
+    fn castles(&self) -> &Castles {
+        &self.castles
     }
-    fn ep_square(&self) -> Option<Square> {
+    fn ep_square(&self) -> Option<EpSquare> {
         self.ep_square.and_then(|ep| relevant_ep(ep, self))
     }
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
@@ -665,16 +713,20 @@ impl Setup for Chess {
     fn fullmoves(&self) -> NonZeroU32 {
         self.fullmoves
     }
-}
-
-impl FromSetup for Chess {
-    fn from_setup(setup: &dyn Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
-        let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
-        PositionError { pos, errors }.strict()
+    fn into_setup(self) -> Setup {
+        Setup {
+            board: self.board,
+            promoted: Bitboard::EMPTY,
+            pockets: None,
+            turn: self.turn,
+            castling_rights: self.castles.castling_rights(),
+            ep_square: self.ep_square.map(Square::from),
+            remaining_checks: None,
+            halfmoves: self.halfmoves,
+            fullmoves: self.fullmoves,
+        }
     }
-}
 
-impl Position for Chess {
     fn play_unchecked(&mut self, m: &Move) {
         do_move(
             &mut self.board,
@@ -686,10 +738,6 @@ impl Position for Chess {
             &mut self.fullmoves,
             m,
         );
-    }
-
-    fn castles(&self) -> &Castles {
-        &self.castles
     }
 
     fn legal_moves(&self) -> MoveList {
@@ -2903,7 +2951,7 @@ fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Opti
     }
 }
 
-fn relevant_ep<P: Position>(EpSquare(ep_square): EpSquare, pos: &P) -> Option<Square> {
+fn relevant_ep<P: Position>(ep_square: EpSquare, pos: &P) -> Option<EpSquare> {
     if pos.en_passant_moves().is_empty() {
         None
     } else {

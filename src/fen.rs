@@ -143,8 +143,8 @@ impl FenOpts {
 
     /// Create an EPD such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-    pub fn epd(&self, setup: &dyn Setup) -> String {
-        let pockets = setup.pockets().map_or("".to_owned(), |p| {
+    pub fn epd(&self, setup: &Setup) -> String {
+        let pockets = setup.pockets.as_ref().map_or("".to_owned(), |p| {
             if self.scid {
                 format!("/{}", p.fen())
             } else {
@@ -152,7 +152,7 @@ impl FenOpts {
             }
         });
 
-        let checks = setup.remaining_checks().map_or("".to_owned(), |r| {
+        let checks = setup.remaining_checks.as_ref().map_or("".to_owned(), |r| {
             if self.scid {
                 format!(
                     " +{}+{}",
@@ -164,16 +164,14 @@ impl FenOpts {
             }
         });
 
-        let board = setup.board();
-
         format!(
             "{}{} {} {} {}{}",
-            board.board_fen(setup.promoted()),
+            setup.board.board_fen(setup.promoted),
             pockets,
-            setup.turn().char(),
-            self.castling_fen(board, setup.castling_rights()),
+            setup.turn.char(),
+            self.castling_fen(&setup.board, setup.castling_rights),
             setup
-                .ep_square()
+                .ep_square
                 .map_or("-".to_owned(), |sq| sq.to_string()),
             checks
         )
@@ -181,24 +179,23 @@ impl FenOpts {
 
     /// Create a FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-    pub fn fen(&self, setup: &dyn Setup) -> String {
-        match setup.remaining_checks() {
-            Some(checks) if self.scid => {
-                let board = setup.board();
-
+    pub fn fen(&self, setup: &Setup) -> String {
+        match setup.remaining_checks {
+            Some(ref checks) if self.scid => {
                 format!(
                     "{}{} {} {} {} {} {} +{}+{}",
-                    board.board_fen(setup.promoted()),
+                    setup.board.board_fen(setup.promoted),
                     setup
-                        .pockets()
+                        .pockets
+                        .as_ref()
                         .map_or("".to_owned(), |p| format!("/{}", p.fen())),
-                    setup.turn().char(),
-                    self.castling_fen(board, setup.castling_rights()),
+                    setup.turn.char(),
+                    self.castling_fen(&setup.board, setup.castling_rights),
                     setup
-                        .ep_square()
+                        .ep_square
                         .map_or("-".to_owned(), |sq| sq.to_string()),
-                    setup.halfmoves(),
-                    setup.fullmoves(),
+                    setup.halfmoves,
+                    setup.fullmoves,
                     3_u8.saturating_sub(u8::from(checks.white)),
                     3_u8.saturating_sub(u8::from(checks.black))
                 )
@@ -206,8 +203,8 @@ impl FenOpts {
             _ => format!(
                 "{} {} {}",
                 self.epd(setup),
-                setup.halfmoves(),
-                setup.fullmoves()
+                setup.halfmoves,
+                setup.fullmoves
             ),
         }
     }
@@ -376,73 +373,13 @@ impl fmt::Display for Board {
 }
 
 /// A parsed FEN.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub struct Fen {
-    pub board: Board,
-    pub promoted: Bitboard,
-    pub pockets: Option<Material>,
-    pub turn: Color,
-    pub castling_rights: Bitboard,
-    pub ep_square: Option<Square>,
-    pub remaining_checks: Option<ByColor<RemainingChecks>>,
-    pub halfmoves: u32,
-    pub fullmoves: NonZeroU32,
-}
-
-impl Setup for Fen {
-    fn board(&self) -> &Board {
-        &self.board
-    }
-    fn promoted(&self) -> Bitboard {
-        self.promoted
-    }
-    fn pockets(&self) -> Option<&Material> {
-        self.pockets.as_ref()
-    }
-    fn turn(&self) -> Color {
-        self.turn
-    }
-    fn castling_rights(&self) -> Bitboard {
-        self.castling_rights
-    }
-    fn ep_square(&self) -> Option<Square> {
-        self.ep_square
-    }
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-        self.remaining_checks.as_ref()
-    }
-    fn halfmoves(&self) -> u32 {
-        self.halfmoves
-    }
-    fn fullmoves(&self) -> NonZeroU32 {
-        self.fullmoves
-    }
-}
-
-impl Default for Fen {
-    fn default() -> Fen {
-        Fen {
-            board: Board::default(),
-            promoted: Bitboard(0),
-            pockets: None,
-            turn: Color::White,
-            castling_rights: Bitboard::CORNERS,
-            ep_square: None,
-            remaining_checks: None,
-            halfmoves: 0,
-            fullmoves: NonZeroU32::new(1).unwrap(),
-        }
-    }
-}
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub struct Fen(pub Setup);
 
 impl Fen {
     /// The FEN of the empty position `8/8/8/8/8/8/8/8 w - - 0 1`.
     pub fn empty() -> Fen {
-        Fen {
-            board: Board::empty(),
-            castling_rights: Bitboard(0),
-            ..Fen::default()
-        }
+        Fen(Setup::empty())
     }
 
     /// Set up a [`Position`].
@@ -454,8 +391,8 @@ impl Fen {
     /// [`FromSetup`]: super::FromSetup
     /// [`Position`]: super::Position
     /// [`PositionError`]: super::PositionError
-    pub fn position<P: FromSetup>(&self, mode: CastlingMode) -> Result<P, PositionError<P>> {
-        P::from_setup(self, mode)
+    pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+        P::from_setup(self.0, mode)
     }
 
     /// Parses a FEN or EPD.
@@ -477,7 +414,7 @@ impl Fen {
     /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
-        let mut result = Fen::empty();
+        let mut result = Setup::empty();
         let mut parts = fen
             .split(|ch| *ch == b' ' || *ch == b'_')
             .filter(|s| !s.is_empty());
@@ -605,22 +542,20 @@ impl Fen {
         if last_part.is_some() {
             Err(ParseFenError::InvalidFen)
         } else {
-            Ok(result)
+            Ok(Fen(result))
         }
     }
+}
 
-    pub fn from_setup<S: Setup>(setup: &S) -> Fen {
-        Fen {
-            board: setup.board().clone(),
-            promoted: setup.promoted(),
-            pockets: setup.pockets().cloned(),
-            turn: setup.turn(),
-            castling_rights: setup.castling_rights(),
-            ep_square: setup.ep_square(),
-            remaining_checks: setup.remaining_checks().cloned(),
-            halfmoves: setup.halfmoves(),
-            fullmoves: setup.fullmoves(),
-        }
+impl From<Setup> for Fen {
+    fn from(setup: Setup) -> Fen {
+        Fen(setup)
+    }
+}
+
+impl From<Fen> for Setup {
+    fn from(fen: Fen) -> Setup {
+        fen.0
     }
 }
 
@@ -634,21 +569,21 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&FenOpts::default().fen(self))
+        f.write_str(&FenOpts::default().fen(&self.0))
     }
 }
 
 /// Create an EPD such as
 /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -` with default
 /// [`FenOpts`].
-pub fn epd(setup: &dyn Setup) -> String {
+pub fn epd(setup: &Setup) -> String {
     FenOpts::default().epd(setup)
 }
 
 /// Create a FEN such as
 /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1` with default
 /// [`FenOpts`].
-pub fn fen(setup: &dyn Setup) -> String {
+pub fn fen(setup: &Setup) -> String {
     FenOpts::default().fen(setup)
 }
 

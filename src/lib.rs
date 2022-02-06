@@ -108,7 +108,7 @@ pub use crate::{
         Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
         PositionErrorKinds,
     },
-    setup::{Castles, Setup},
+    setup::{EpSquare, Castles, Setup},
     square::{File, ParseSquareError, Rank, Square},
     types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
 };
