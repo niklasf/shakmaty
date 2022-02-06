@@ -270,7 +270,7 @@ impl Material {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.all(MaterialSide::is_empty)
+        self.iter().all(MaterialSide::is_empty)
     }
 
     pub fn count(&self) -> usize {
@@ -278,7 +278,7 @@ impl Material {
     }
 
     pub fn has_pawns(&self) -> bool {
-        self.any(MaterialSide::has_pawns)
+        self.iter().any(MaterialSide::has_pawns)
     }
 
     /// Parse material from notation like `KPPvKR`.
