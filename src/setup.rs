@@ -435,25 +435,29 @@ impl EpSquare {
             return Err(());
         }
 
-        let fifth_rank_sq = ep_square
-            .offset(turn.fold_wb(-8, 8))
-            .expect("ep square is on sixth rank");
-
-        let seventh_rank_sq = ep_square
-            .offset(turn.fold_wb(8, -8))
-            .expect("ep square is on sixth rank");
+        let maybe = EpSquare(ep_square);
 
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
-        if !((board.pawns() & board.by_color(!turn)).contains(fifth_rank_sq)) {
+        if !((board.pawns() & board.by_color(!turn)).contains(maybe.pawn_pushed_to())) {
             return Err(());
         }
 
-        if board.occupied().contains(ep_square) || board.occupied().contains(seventh_rank_sq) {
+        if board.occupied().contains(ep_square)
+            || board.occupied().contains(maybe.pawn_pushed_from())
+        {
             return Err(());
         }
 
         Ok(Some(EpSquare(ep_square)))
+    }
+
+    pub fn pawn_pushed_from(self) -> Square {
+        self.0.xor(Square::A4)
+    }
+
+    pub fn pawn_pushed_to(self) -> Square {
+        self.0.xor(Square::A2)
     }
 }
 
