@@ -297,11 +297,11 @@ impl<T> ByColor<T> {
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 2> {
-        [&self.white, &self.black].into_iter()
+        self.as_ref().into_iter()
     }
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
-        [&mut self.white, &mut self.black].into_iter()
+        self.as_mut().into_iter()
     }
 }
 
@@ -327,19 +327,13 @@ impl<T: PartialEq> ByColor<T> {
 
 impl<T: Copy> ByColor<&T> {
     pub fn copied(self) -> ByColor<T> {
-        ByColor {
-            black: *self.black,
-            white: *self.white,
-        }
+        self.map(|item| *item)
     }
 }
 
 impl<T: Clone> ByColor<&T> {
     pub fn cloned(self) -> ByColor<T> {
-        ByColor {
-            black: self.black.clone(),
-            white: self.white.clone(),
-        }
+        self.map(Clone::clone)
     }
 }
 

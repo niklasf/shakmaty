@@ -15,7 +15,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::{
-    char,
+    array, char,
     fmt::{self, Write as _},
     num,
 };
@@ -199,6 +199,20 @@ pub struct ByRole<T> {
 }
 
 impl<T> ByRole<T> {
+    pub fn new_with<F>(mut init: F) -> ByRole<T>
+    where
+        F: FnMut(Role) -> T,
+    {
+        ByRole {
+            pawn: init(Role::Pawn),
+            knight: init(Role::Knight),
+            bishop: init(Role::Bishop),
+            rook: init(Role::Rook),
+            queen: init(Role::Queen),
+            king: init(Role::King),
+        }
+    }
+
     #[inline]
     pub fn by_role(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
@@ -219,6 +233,7 @@ impl<T> ByRole<T> {
         }
     }
 
+    #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByRole<U>
     where
         F: FnMut(T) -> U,
@@ -231,6 +246,103 @@ impl<T> ByRole<T> {
             queen: f(self.queen),
             king: f(self.king),
         }
+    }
+
+    #[inline]
+    pub fn find<F>(&self, mut predicate: F) -> Option<Role>
+    where
+        F: FnMut(&T) -> bool,
+    {
+        if predicate(&self.pawn) {
+            Some(Role::Pawn)
+        } else if predicate(&self.knight) {
+            Some(Role::Knight)
+        } else if predicate(&self.bishop) {
+            Some(Role::Bishop)
+        } else if predicate(&self.rook) {
+            Some(Role::Rook)
+        } else if predicate(&self.queen) {
+            Some(Role::Queen)
+        } else if predicate(&self.king) {
+            Some(Role::King)
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    pub fn as_ref(&self) -> ByRole<&T> {
+        ByRole {
+            pawn: &self.pawn,
+            knight: &self.knight,
+            bishop: &self.bishop,
+            rook: &self.rook,
+            queen: &self.queen,
+            king: &self.king,
+        }
+    }
+
+    #[inline]
+    pub fn as_mut(&mut self) -> ByRole<&mut T> {
+        ByRole {
+            pawn: &mut self.pawn,
+            knight: &mut self.knight,
+            bishop: &mut self.bishop,
+            rook: &mut self.rook,
+            queen: &mut self.queen,
+            king: &mut self.king,
+        }
+    }
+
+    pub fn zip_role(self) -> ByRole<(Role, T)> {
+        ByRole {
+            pawn: (Role::Pawn, self.pawn),
+            knight: (Role::Knight, self.knight),
+            bishop: (Role::Bishop, self.bishop),
+            rook: (Role::Rook, self.rook),
+            queen: (Role::Queen, self.queen),
+            king: (Role::King, self.king),
+        }
+    }
+
+    pub fn zip<U>(self, other: ByRole<U>) -> ByRole<(T, U)> {
+        ByRole {
+            pawn: (self.pawn, other.pawn),
+            knight: (self.knight, other.knight),
+            bishop: (self.bishop, other.bishop),
+            rook: (self.rook, other.rook),
+            queen: (self.queen, other.queen),
+            king: (self.king, other.king),
+        }
+    }
+}
+
+impl<T: Copy> ByRole<&T> {
+    pub fn copied(self) -> ByRole<T> {
+        self.map(|item| *item)
+    }
+}
+
+impl<T: Clone> ByRole<&T> {
+    pub fn cloned(self) -> ByRole<T> {
+        self.map(Clone::clone)
+    }
+}
+
+impl<T> IntoIterator for ByRole<T> {
+    type Item = T;
+    type IntoIter = array::IntoIter<T, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        [
+            self.pawn,
+            self.knight,
+            self.bishop,
+            self.rook,
+            self.queen,
+            self.king,
+        ]
+        .into_iter()
     }
 }
 

@@ -198,18 +198,8 @@ impl Board {
     pub fn role_at(&self, sq: Square) -> Option<Role> {
         if !self.occupied.contains(sq) {
             None // catch early
-        } else if self.pawns().contains(sq) {
-            Some(Role::Pawn)
-        } else if self.knights().contains(sq) {
-            Some(Role::Knight)
-        } else if self.bishops().contains(sq) {
-            Some(Role::Bishop)
-        } else if self.rooks().contains(sq) {
-            Some(Role::Rook)
-        } else if self.queens().contains(sq) {
-            Some(Role::Queen)
         } else {
-            Some(Role::King)
+            self.roles.find(|r| r.contains(sq))
         }
     }
 
