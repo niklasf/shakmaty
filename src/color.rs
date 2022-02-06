@@ -171,9 +171,10 @@ impl FromStr for Color {
 
 /// Container with values for each [`Color`].
 #[derive(Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[repr(C)]
 pub struct ByColor<T> {
-    pub white: T,
     pub black: T,
+    pub white: T,
 }
 
 impl<T> ByColor<T> {
@@ -190,25 +191,25 @@ impl<T> ByColor<T> {
 
     #[inline]
     pub fn by_color(&self, color: Color) -> &T {
-        match color {
-            Color::White => &self.white,
-            Color::Black => &self.black,
+        // Safety: Trivial offset into #[repr(C)] struct.
+        unsafe {
+            &*(self as *const ByColor<T>).cast::<T>().offset(color as isize)
         }
     }
 
     #[inline]
     pub fn by_color_mut(&mut self, color: Color) -> &mut T {
-        match color {
-            Color::White => &mut self.white,
-            Color::Black => &mut self.black,
+        // Safety: Trivial offset into #[repr(C)] struct.
+        unsafe {
+            &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize)
         }
     }
 
     #[inline]
     pub fn into_color(self, color: Color) -> T {
         match color {
-            Color::White => self.white,
             Color::Black => self.black,
+            Color::White => self.white,
         }
     }
 
@@ -219,8 +220,8 @@ impl<T> ByColor<T> {
     #[must_use]
     pub fn into_flipped(self) -> ByColor<T> {
         ByColor {
-            white: self.black,
             black: self.white,
+            white: self.black,
         }
     }
 
@@ -268,30 +269,30 @@ impl<T> ByColor<T> {
     #[inline]
     pub fn as_ref(&self) -> ByColor<&T> {
         ByColor {
-            white: &self.white,
             black: &self.black,
+            white: &self.white,
         }
     }
 
     #[inline]
     pub fn as_mut(&mut self) -> ByColor<&mut T> {
         ByColor {
-            white: &mut self.white,
             black: &mut self.black,
+            white: &mut self.white,
         }
     }
 
     pub fn zip_color(self) -> ByColor<(Color, T)> {
         ByColor {
-            white: (Color::White, self.white),
             black: (Color::Black, self.black),
+            white: (Color::White, self.white),
         }
     }
 
     pub fn zip<U>(self, other: ByColor<U>) -> ByColor<(T, U)> {
         ByColor {
-            white: (self.white, other.white),
             black: (self.black, other.black),
+            white: (self.white, other.white),
         }
     }
 
@@ -327,8 +328,8 @@ impl<T: PartialEq> ByColor<T> {
 impl<T: Copy> ByColor<&T> {
     pub fn copied(self) -> ByColor<T> {
         ByColor {
-            white: *self.white,
             black: *self.black,
+            white: *self.white,
         }
     }
 }
@@ -336,8 +337,8 @@ impl<T: Copy> ByColor<&T> {
 impl<T: Clone> ByColor<&T> {
     pub fn cloned(self) -> ByColor<T> {
         ByColor {
-            white: self.white.clone(),
             black: self.black.clone(),
+            white: self.white.clone(),
         }
     }
 }
