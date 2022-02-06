@@ -607,6 +607,18 @@ impl<R: Read> BufferedReader<R> {
     pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
         Cursor::new(self.buffer).chain(self.inner)
     }
+
+    /// Returns whether the reader has another game to parse, but does not
+    /// actually parse it.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    pub fn has_more(&mut self) -> io::Result<bool> {
+        self.skip_bom()?;
+        self.skip_whitespace()?;
+        Ok(self.fill_buffer_and_peek()?.is_some())
+    }
 }
 
 impl<R: Read> ReadPgn for BufferedReader<R> {
