@@ -2952,16 +2952,18 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> 
             !blockers.contains(from) || attacks::aligned(from, to, king)
         }
         Move::EnPassant { from, to } => {
-            let mut occupied = pos.board().occupied();
-            occupied.toggle(from);
-            occupied.toggle(Square::from_coords(to.file(), from.rank())); // captured pawn
-            occupied.add(to);
-
-            (attacks::rook_attacks(king, occupied) & pos.them() & pos.board().rooks_and_queens())
-                .is_empty()
-                && (attacks::bishop_attacks(king, occupied)
-                    & pos.them()
-                    & pos.board().bishops_and_queens())
+            let capture = Square::from_coords(to.file(), from.rank());
+            pos.board()
+                .attacks_to(
+                    king,
+                    !pos.turn(),
+                    pos.board()
+                        .occupied()
+                        .toggled(from)
+                        .toggled(capture)
+                        .with(to),
+                )
+                .without(capture)
                 .is_empty()
         }
         _ => true,
@@ -3306,12 +3308,13 @@ mod tests {
         let fen: Fen = "rnbqk1nr/bb3p1p/1q2r3/2pPp3/3P4/7P/1PP1NpPP/R1BQKBNR w KQkq c6 0 1"
             .parse()
             .expect("valid fen");
-        let err = fen
+        let pos = fen
             .position::<Chess>(CastlingMode::Standard)
-            .expect_err("impossible check");
-        assert_eq!(err.kinds(), PositionErrorKinds::IMPOSSIBLE_CHECK);
-        /* assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
+            .expect_err("impossible check")
+            .ignore_impossible_check()
+            .expect("legal otherwise");
+        assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
         assert!(pos.en_passant_moves().is_empty());
-        assert_eq!(pos.legal_moves().len(), 2); */
+        assert_eq!(pos.legal_moves().len(), 2);
     }
 }
