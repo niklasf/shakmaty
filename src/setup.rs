@@ -161,10 +161,8 @@ impl Default for Castles {
 
 impl CastlingMode {
     pub fn detect(setup: &Setup) -> CastlingMode {
-        let standard = Castles::from_setup(&setup.board, setup.castling_rights, CastlingMode::Standard)
-            .unwrap_or_else(|c| c);
-        let chess960 = Castles::from_setup(&setup.board, setup.castling_rights, CastlingMode::Chess960)
-            .unwrap_or_else(|c| c);
+        let standard = Castles::from_setup(setup, CastlingMode::Standard).unwrap_or_else(|c| c);
+        let chess960 = Castles::from_setup(setup, CastlingMode::Chess960).unwrap_or_else(|c| c);
         CastlingMode::from_standard(standard.mask == chess960.mask)
     }
 }
@@ -179,17 +177,13 @@ impl Castles {
         }
     }
 
-    pub(crate) fn from_setup(
-        board: &Board,
-        castling_rights: Bitboard,
-        mode: CastlingMode,
-    ) -> Result<Castles, Castles> {
+    pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Castles, Castles> {
         let mut castles = Castles::empty(mode);
 
-        let rooks = castling_rights & board.rooks();
+        let rooks = setup.castling_rights & setup.board.rooks();
 
         for color in Color::ALL {
-            if let Some(king) = board.king_of(color) {
+            if let Some(king) = setup.board.king_of(color) {
                 if king.file() == File::A
                     || king.file() == File::H
                     || king.rank() != color.fold_wb(Rank::First, Rank::Eighth)
@@ -197,7 +191,7 @@ impl Castles {
                     continue;
                 }
 
-                let side = rooks & board.by_color(color) & color.backrank();
+                let side = rooks & setup.board.by_color(color) & color.backrank();
 
                 if let Some(a_side) = side.first().filter(|rook| rook.file() < king.file()) {
                     let rook_to = CastlingSide::QueenSide.rook_to(color);
@@ -233,7 +227,7 @@ impl Castles {
             }
         }
 
-        if castles.castling_rights() == castling_rights {
+        if castles.castling_rights() == setup.castling_rights {
             Ok(castles)
         } else {
             Err(castles)
@@ -313,44 +307,47 @@ impl Castles {
 
 /// En passant square on the third or sixth rank.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct EpSquare(pub Square);
+pub(crate) struct EnPassant(pub Square);
 
-impl From<EpSquare> for Square {
-    fn from(EpSquare(square): EpSquare) -> Square {
-        square
+impl From<EnPassant> for Square {
+    fn from(ep: EnPassant) -> Square {
+        ep.square()
     }
 }
 
-impl EpSquare {
-    pub(crate) fn from_setup(
-        board: &Board,
-        turn: Color,
-        ep_square: Option<Square>,
-    ) -> Result<Option<EpSquare>, ()> {
-        let ep_square = match ep_square {
+impl EnPassant {
+    pub fn from_setup(setup: &Setup) -> Result<Option<EnPassant>, ()> {
+        let ep_square = match setup.ep_square {
             Some(ep_square) => ep_square,
             None => return Ok(None),
         };
 
-        if ep_square.rank() != turn.relative_rank(Rank::Sixth) {
+        if ep_square.rank() != setup.turn.relative_rank(Rank::Sixth) {
             return Err(());
         }
 
-        let maybe = EpSquare(ep_square);
+        let maybe = EnPassant(ep_square);
 
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
-        if !((board.pawns() & board.by_color(!turn)).contains(maybe.pawn_pushed_to())) {
-            return Err(());
-        }
-
-        if board.occupied().contains(ep_square)
-            || board.occupied().contains(maybe.pawn_pushed_from())
+        if !((setup.board.pawns() & setup.board.by_color(!setup.turn))
+            .contains(maybe.pawn_pushed_to()))
         {
             return Err(());
         }
 
-        Ok(Some(EpSquare(ep_square)))
+        if setup.board.occupied().contains(ep_square)
+            || setup.board.occupied().contains(maybe.pawn_pushed_from())
+        {
+            return Err(());
+        }
+
+        Ok(Some(EnPassant(ep_square)))
+    }
+
+    #[inline]
+    pub fn square(self) -> Square {
+        self.0
     }
 
     pub fn pawn_pushed_from(self) -> Square {
@@ -359,9 +356,5 @@ impl EpSquare {
 
     pub fn pawn_pushed_to(self) -> Square {
         self.0.xor(Square::A2)
-    }
-
-    pub fn file(self) -> File {
-        self.0.file()
     }
 }

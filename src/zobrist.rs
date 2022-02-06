@@ -34,7 +34,7 @@
 use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
-    EpSquare, Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
+    Bitboard, Board, ByColor, Castles, CastlingMode, CastlingSide, Chess, Color, File, FromSetup,
     Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks, Role,
     Setup, Square,
 };
@@ -285,8 +285,8 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn castles(&self) -> &Castles {
         self.pos.castles()
     }
-    fn ep_square(&self) -> Option<EpSquare> {
-        self.pos.ep_square()
+    fn maybe_ep_square(&self) -> Option<Square> {
+        self.pos.maybe_ep_square()
     }
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
         self.pos.remaining_checks()
@@ -385,7 +385,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
         }
     }
 
-    if let Some(sq) = pos.ep_square() {
+    if let Some(sq) = pos.legal_ep_square() {
         zobrist ^= V::zobrist_for_en_passant_file(sq.file());
     }
 

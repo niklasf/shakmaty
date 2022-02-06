@@ -16,12 +16,20 @@
 
 //! Parse and write Forsyth-Edwards-Notation.
 //!
-//! # En passant only if fully legal
+//! The parser is relaxed:
 //!
-//! This implementation intentionally deviates from the specification in
-//! a backwards compatible way: [`Setup::ep_square()`]
-//! implemented for each [`Position`](crate::Position) omits en passant
-//! squares, unless there is a fully legal en passant capture.
+//! * Accepts partial FENs and fills missing fields with the default values
+//!   of `8/8/8/8/8/8/8/8 w - - 0 1`.
+//! * Accepts multiple spaces between FEN fields.
+//! * Accepts underscores as separators between FEN fields.
+//! * Accepts repeated castling flags and castling flags in any order.
+//! * Accepts `0` as fulllmove number and uses `1` instead.
+//!
+//! The writer intentionally deviates from the specification when formatting
+//! [`Position`] in the following backwards compatible way: En passant squares
+//! are included only if there is a fully legal en passant capture.
+//! [`Position::into_setup()`] also omits en passant squares, unless there
+//! is a fully legal en passant capture.
 //!
 //! # Examples
 //!
@@ -170,9 +178,7 @@ impl FenOpts {
             pockets,
             setup.turn.char(),
             self.castling_fen(&setup.board, setup.castling_rights),
-            setup
-                .ep_square
-                .map_or("-".to_owned(), |sq| sq.to_string()),
+            setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
             checks
         )
     }
@@ -191,9 +197,7 @@ impl FenOpts {
                         .map_or("".to_owned(), |p| format!("/{}", p.fen())),
                     setup.turn.char(),
                     self.castling_fen(&setup.board, setup.castling_rights),
-                    setup
-                        .ep_square
-                        .map_or("-".to_owned(), |sq| sq.to_string()),
+                    setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
                     setup.halfmoves,
                     setup.fullmoves,
                     3_u8.saturating_sub(u8::from(checks.white)),
