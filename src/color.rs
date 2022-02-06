@@ -56,12 +56,6 @@ impl Color {
         }
     }
 
-    #[deprecated = "use Color::fold_wb instead"]
-    #[inline]
-    pub fn fold<T>(self, white: T, black: T) -> T {
-        self.fold_wb(white, black)
-    }
-
     #[inline]
     pub fn fold_wb<T>(self, white: T, black: T) -> T {
         match self {
