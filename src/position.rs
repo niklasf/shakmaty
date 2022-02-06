@@ -968,7 +968,7 @@ pub(crate) mod variant {
                 fullmoves: setup.fullmoves(),
             };
 
-            errors |= validate(&pos);
+            errors |= validate(&pos, ep_square);
 
             if ep_square.is_none() {
                 // Other king moving away can cause many checks to be given
@@ -1234,7 +1234,7 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS
             }
 
-            errors |= validate(&pos)
+            errors |= validate(&pos, ep_square)
                 - PositionErrorKinds::MISSING_KING
                 - PositionErrorKinds::TOO_MANY_KINGS
                 - PositionErrorKinds::OPPOSITE_CHECK
@@ -1904,7 +1904,7 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::VARIANT;
             }
 
-            errors |= validate(&pos);
+            errors |= validate(&pos, None);
 
             PositionError { errors, pos }.strict()
         }
@@ -2097,7 +2097,7 @@ pub(crate) mod variant {
                 fullmoves: setup.fullmoves(),
             };
 
-            errors |= validate(&pos)
+            errors |= validate(&pos, ep_square)
                 - PositionErrorKinds::PAWNS_ON_BACKRANK
                 - PositionErrorKinds::MISSING_KING
                 - PositionErrorKinds::IMPOSSIBLE_MATERIAL;
