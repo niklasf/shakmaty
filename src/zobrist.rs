@@ -75,8 +75,8 @@ macro_rules! zobrist_value_impl {
                 EN_PASSANT_FILE_MASKS[usize::from(file)] as $t
             }
 
-            fn zobrist_for_remaining_checks(color: Color, RemainingChecks(remaining): RemainingChecks) -> $t {
-                if remaining < 3 {
+            fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
+                if remaining < RemainingChecks::default() {
                     REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $t
                 } else {
                     <$t>::default()

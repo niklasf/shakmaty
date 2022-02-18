@@ -293,15 +293,15 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
         (Some(b""), Some(white_given), Some(black_given)) => {
             // format: +0+0
             ByColor {
-                white: RemainingChecks(3_u8.checked_sub(btoi::btou(white_given).ok()?)?),
-                black: RemainingChecks(3_u8.checked_sub(btoi::btoi(black_given).ok()?)?),
+                white: RemainingChecks::new(3_u32.checked_sub(btoi::btou(white_given).ok()?)?),
+                black: RemainingChecks::new(3_u32.checked_sub(btoi::btoi(black_given).ok()?)?),
             }
         }
         (Some(white), Some(black), None) => {
             // format: 3+3
             ByColor {
-                white: RemainingChecks(btoi::btou(white).ok()?),
-                black: RemainingChecks(btoi::btou(black).ok()?),
+                white: RemainingChecks::try_from(btoi::btou::<u32>(white).ok()?).ok()?,
+                black: RemainingChecks::try_from(btoi::btou::<u32>(black).ok()?).ok()?,
             }
         }
         _ => return None,
@@ -715,8 +715,8 @@ mod tests {
         let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0";
         let fen: Fen = input.parse().expect("valid fen");
         let expected = ByColor {
-            white: RemainingChecks(3),
-            black: RemainingChecks(3),
+            white: RemainingChecks::new(3),
+            black: RemainingChecks::new(3),
         };
         assert_eq!(fen.remaining_checks, Some(expected));
         assert_eq!(fen.halfmoves, 1);

@@ -15,11 +15,13 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use std::fmt::{self, Write as _};
+use std::num;
 
 use crate::{
     color::{ByColor, Color},
     role::Role,
     square::{File, Square},
+    util::overflow_error,
 };
 
 /// A piece with [`Color`] and [`Role`].
@@ -346,7 +348,7 @@ mod tests {
 /// assert!(remaining_checks.white.is_zero());
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
-pub struct RemainingChecks(pub u8);
+pub struct RemainingChecks(u32);
 
 impl Default for RemainingChecks {
     fn default() -> RemainingChecks {
@@ -355,12 +357,22 @@ impl Default for RemainingChecks {
 }
 
 impl RemainingChecks {
+    /// Constructs a new [`RemainingChecks`] value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n > 3`.
+    pub fn new(n: u32) -> RemainingChecks {
+        assert!(n <= 3);
+        RemainingChecks(n)
+    }
+
     pub fn is_zero(self) -> bool {
         self.0 == 0
     }
 
     #[must_use]
-    pub fn saturating_sub(self, n: u8) -> RemainingChecks {
+    pub fn saturating_sub(self, n: u32) -> RemainingChecks {
         RemainingChecks(self.0.saturating_sub(n))
     }
 }
@@ -377,6 +389,26 @@ macro_rules! int_from_remaining_checks_impl {
 }
 
 int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+
+macro_rules! try_remaining_checks_from_int_impl {
+    ($($t:ty)+) => {
+        $(impl std::convert::TryFrom<$t> for RemainingChecks {
+            type Error = num::TryFromIntError;
+
+            #[inline]
+            fn try_from(value: $t) -> Result<RemainingChecks, Self::Error> {
+                let n = u32::try_from(value)?;
+                if n <= 3 {
+                    Ok(RemainingChecks::new(n))
+                } else {
+                    Err(overflow_error())
+                }
+            }
+        })+
+    }
+}
+
+try_remaining_checks_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
 impl fmt::Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
