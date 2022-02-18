@@ -218,12 +218,12 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn transform<F>(&mut self, mut f: F)
+    pub fn for_each<F>(self, mut f: F)
     where
-        F: FnMut(&mut T),
+        F: FnMut(T),
     {
-        f(&mut self.white);
-        f(&mut self.black);
+        f(self.white);
+        f(self.black);
     }
 
     #[inline]

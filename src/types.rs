@@ -235,16 +235,16 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn transform<F>(&mut self, mut f: F)
+    pub fn for_each<F>(self, mut f: F)
     where
-        F: FnMut(&mut T),
+        F: FnMut(T),
     {
-        f(&mut self.pawn);
-        f(&mut self.knight);
-        f(&mut self.bishop);
-        f(&mut self.rook);
-        f(&mut self.queen);
-        f(&mut self.king);
+        f(self.pawn);
+        f(self.knight);
+        f(self.bishop);
+        f(self.rook);
+        f(self.queen);
+        f(self.king);
     }
 
     #[inline]

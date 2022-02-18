@@ -222,8 +222,8 @@ impl Board {
 
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
-        self.by_role.transform(|r| r.discard(sq));
-        self.by_color.transform(|c| c.discard(sq));
+        self.by_role.as_mut().for_each(|r| r.discard(sq));
+        self.by_color.as_mut().for_each(|c| c.discard(sq));
         self.occupied.discard(sq);
     }
 
@@ -292,8 +292,8 @@ impl Board {
     {
         // In order to guarantee consistency, this method cannot be public
         // for use with custom transformations.
-        self.by_role.transform(|r| *r = f(*r));
-        self.by_color.transform(|c| *c = f(*c));
+        self.by_role.as_mut().for_each(|r| *r = f(*r));
+        self.by_color.as_mut().for_each(|c| *c = f(*c));
         self.occupied = self.by_color.white | self.by_color.black;
     }
 
