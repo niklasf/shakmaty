@@ -190,7 +190,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn by_color(&self, color: Color) -> &T {
+    pub fn get(&self, color: Color) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &*(self as *const ByColor<T>)
@@ -200,17 +200,9 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn by_color_mut(&mut self, color: Color) -> &mut T {
+    pub fn get_mut(&mut self, color: Color) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
-    }
-
-    #[inline]
-    pub fn into_color(self, color: Color) -> T {
-        match color {
-            Color::Black => self.black,
-            Color::White => self.white,
-        }
     }
 
     pub fn flip(&mut self) {

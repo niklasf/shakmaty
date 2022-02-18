@@ -53,7 +53,7 @@ use crate::{
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
     roles: ByRole<Bitboard>,
-    colors: ByColor<Bitboard>,
+    by_color: ByColor<Bitboard>,
     occupied: Bitboard,
 }
 
@@ -68,7 +68,7 @@ impl Board {
                 queen: Bitboard(0x0800_0000_0000_0008),
                 king: Bitboard(0x1000_0000_0000_0010),
             },
-            colors: ByColor {
+            by_color: ByColor {
                 black: Bitboard(0xffff_0000_0000_0000),
                 white: Bitboard(0xffff),
             },
@@ -79,7 +79,7 @@ impl Board {
     pub fn empty() -> Board {
         Board {
             roles: ByRole::default(),
-            colors: ByColor::default(),
+            by_color: ByColor::default(),
             occupied: Bitboard::EMPTY,
         }
     }
@@ -95,7 +95,7 @@ impl Board {
                 queen: Bitboard(0x0081),
                 king: Bitboard(0x8100),
             },
-            colors: ByColor {
+            by_color: ByColor {
                 black: Bitboard(0x0f0f),
                 white: Bitboard(0xf0f0),
             },
@@ -114,7 +114,7 @@ impl Board {
                 queen: Bitboard(0x0800_0000_0000_0000),
                 king: Bitboard(0x1000_0000_0000_0000),
             },
-            colors: ByColor {
+            by_color: ByColor {
                 black: Bitboard(0xffff_0000_0000_0000),
                 white: Bitboard(0x0000_0066_ffff_ffff),
             },
@@ -154,11 +154,11 @@ impl Board {
 
     #[inline]
     pub fn white(&self) -> Bitboard {
-        self.colors.white
+        self.by_color.white
     }
     #[inline]
     pub fn black(&self) -> Bitboard {
-        self.colors.black
+        self.by_color.black
     }
 
     /// Bishops, rooks and queens.
@@ -189,7 +189,7 @@ impl Board {
 
     #[inline]
     pub fn color_at(&self, sq: Square) -> Option<Color> {
-        self.colors.find(|c| c.contains(sq))
+        self.by_color.find(|c| c.contains(sq))
     }
 
     #[inline]
@@ -204,7 +204,7 @@ impl Board {
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
         self.role_at(sq).map(|role| Piece {
-            color: Color::from_white(self.colors.white.contains(sq)),
+            color: Color::from_white(self.by_color.white.contains(sq)),
             role,
         })
     }
@@ -214,7 +214,7 @@ impl Board {
         let piece = self.piece_at(sq);
         if let Some(p) = piece {
             self.roles.by_role_mut(p.role).toggle(sq);
-            self.colors.by_color_mut(p.color).toggle(sq);
+            self.by_color.get_mut(p.color).toggle(sq);
             self.occupied.toggle(sq);
         }
         piece
@@ -223,7 +223,7 @@ impl Board {
     #[inline]
     pub fn discard_piece_at(&mut self, sq: Square) {
         self.roles.transform(|r| r.discard(sq));
-        self.colors.transform(|c| c.discard(sq));
+        self.by_color.transform(|c| c.discard(sq));
         self.occupied.discard(sq);
     }
 
@@ -231,13 +231,13 @@ impl Board {
     pub fn set_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
         self.discard_piece_at(sq);
         self.roles.by_role_mut(role).toggle(sq);
-        self.colors.by_color_mut(color).toggle(sq);
+        self.by_color.get_mut(color).toggle(sq);
         self.occupied.toggle(sq);
     }
 
     #[inline]
     pub fn by_color(&self, color: Color) -> Bitboard {
-        *self.colors.by_color(color)
+        *self.by_color.get(color)
     }
 
     #[inline]
@@ -293,8 +293,8 @@ impl Board {
         // In order to guarantee consistency, this method cannot be public
         // for use with custom transformations.
         self.roles.transform(|r| *r = f(*r));
-        self.colors.transform(|c| *c = f(*c));
-        self.occupied = self.colors.white | self.colors.black;
+        self.by_color.transform(|c| *c = f(*c));
+        self.occupied = self.by_color.white | self.by_color.black;
     }
 
     /// Mirror the board vertically. See [`Bitboard::flip_vertical`].

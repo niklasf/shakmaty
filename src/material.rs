@@ -262,11 +262,11 @@ impl Material {
     }
 
     pub fn by_piece(&self, piece: Piece) -> u8 {
-        self.by_color(piece.color).by_role(piece.role)
+        self.get(piece.color).by_role(piece.role)
     }
 
     pub fn by_piece_mut(&mut self, piece: Piece) -> &mut u8 {
-        self.by_color_mut(piece.color).by_role_mut(piece.role)
+        self.get_mut(piece.color).by_role_mut(piece.role)
     }
 
     pub fn is_empty(&self) -> bool {
