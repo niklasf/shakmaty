@@ -68,7 +68,13 @@
 //! ```
 
 use std::{
-    char, cmp::max, convert::TryFrom, error::Error, fmt, fmt::Write as _, num::NonZeroU32,
+    char,
+    cmp::max,
+    convert::TryFrom,
+    error::Error,
+    fmt,
+    fmt::{Display, Write as _},
+    num::NonZeroU32,
     str::FromStr,
 };
 
@@ -135,12 +141,12 @@ fn fmt_epd(f: &mut fmt::Formatter<'_>, setup: &Setup) -> fmt::Result {
     fmt_castling(f, &setup.board, setup.castling_rights)?;
     f.write_char(' ')?;
     match setup.ep_square {
-        Some(ref ep_square) => fmt::Display::fmt(ep_square, f)?,
+        Some(ref ep_square) => Display::fmt(ep_square, f)?,
         None => f.write_char('-')?,
     }
     if let Some(ref remaining_checks) = setup.remaining_checks {
         f.write_char(' ')?;
-        fmt::Display::fmt(remaining_checks, f)?;
+        Display::fmt(remaining_checks, f)?;
     }
     Ok(())
 }
@@ -159,7 +165,7 @@ pub enum ParseFenError {
     InvalidFullmoves,
 }
 
-impl fmt::Display for ParseFenError {
+impl Display for ParseFenError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
             ParseFenError::InvalidFen => "invalid fen",
@@ -315,7 +321,7 @@ impl FromStr for Board {
     }
 }
 
-impl fmt::Display for Board {
+impl Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.board_fen(Bitboard(0)))
     }
@@ -525,7 +531,7 @@ impl FromStr for Fen {
     }
 }
 
-impl fmt::Display for Fen {
+impl Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt_epd(f, &self.0)?;
         write!(f, " {} {}", self.0.halfmoves, self.0.fullmoves)
@@ -586,7 +592,7 @@ impl FromStr for Epd {
     }
 }
 
-impl fmt::Display for Epd {
+impl Display for Epd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt_epd(f, &self.inner)
     }
