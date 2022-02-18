@@ -41,8 +41,8 @@ pub struct Setup {
     /// ```
     /// use shakmaty::{Bitboard, Setup};
     ///
-    /// let pos = Setup::default();
-    /// let rooks = pos.castling_rights();
+    /// let setup = Setup::default();
+    /// let rooks = setup.castling_rights;
     /// // 1 . . . . . . 1
     /// // . . . . . . . .
     /// // . . . . . . . .
@@ -71,8 +71,8 @@ pub struct Setup {
     /// ```
     /// use shakmaty::Setup;
     ///
-    /// let pos = Setup::default();
-    /// assert_eq!(pos.halfmoves(), 0);
+    /// let setup = Setup::default();
+    /// assert_eq!(setup.halfmoves, 0);
     /// ```
     pub halfmoves: u32,
 
@@ -85,8 +85,8 @@ pub struct Setup {
     /// ```
     /// use shakmaty::Setup;
     ///
-    /// let pos = Setup::default();
-    /// assert_eq!(pos.fullmoves().get(), 1);
+    /// let setup = Setup::default();
+    /// assert_eq!(setup.fullmoves.get(), 1);
     /// ```
     pub fullmoves: NonZeroU32,
 }

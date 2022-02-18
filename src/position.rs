@@ -306,11 +306,14 @@ pub trait FromSetup: Sized {
     /// # Examples
     ///
     /// ```
+    /// use shakmaty::{CastlingMode, Chess, FromSetup, Setup, PositionError};
+    ///
     /// let setup = Setup::default();
     ///
     /// let pos = Chess::from_setup(setup, CastlingMode::Standard)
-    ///     .or_else(PositionError::ignore_impossible_material())
-    ///     .or_else(PositionError::ignore_impossible_check())?;
+    ///     .or_else(PositionError::ignore_impossible_material)
+    ///     .or_else(PositionError::ignore_impossible_check)?;
+    /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
@@ -691,10 +694,9 @@ impl PartialEq for Chess {
 /// ```
 /// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
-/// let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
-/// let setup: Fen = fen.parse()?;
-/// let position: Chess = setup.position(CastlingMode::Standard)?;
-/// let position_960: Chess = setup.position(CastlingMode::Chess960)?;
+/// let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
+/// let position: Chess = fen.clone().position(CastlingMode::Standard)?;
+/// let position_960: Chess = fen.position(CastlingMode::Chess960)?;
 /// assert_eq!(position, position_960);
 /// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```

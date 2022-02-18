@@ -43,44 +43,29 @@
 //!
 //! # Examples
 //!
-//! [`fen::fen()`](fen()) and [`fen::epd()`](epd()) can produce a
-//! FEN for any [`Setup`].
+//! [`Fen`] and [`Epd`] implement [`Display`]:
 //!
 //! ```
-//! use shakmaty::{fen, Chess};
+//! use shakmaty::{fen::Epd, Chess};
 //!
 //! let pos = Chess::default();
 //!
-//! assert_eq!(fen::epd(&pos),
+//! assert_eq!(Epd::from(pos).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 //!
-//! [`Fen`] and [`Board`] also implement [`Display`]:
+//! They also implemnet [`FromStr`]:
 //!
 //! ```
-//! use shakmaty::fen::Fen;
+//! # use shakmaty::Chess;
+//! use shakmaty::{fen::Fen, CastlingMode, Position};
 //!
-//! let empty_fen = Fen::empty();
-//! assert_eq!(empty_fen.to_string(), "8/8/8/8/8/8/8/8 w - - 0 1");
-//! ```
+//! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
 //!
-//! Parsing FENs:
-//!
-//! ```
-//! # use shakmaty::{fen::Fen, Chess};
-//! use shakmaty::{CastlingMode, Position};
-//!
-//! let input = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
-//!
-//! let setup: Fen = input.parse()?;
-//! let position: Chess = setup.position(CastlingMode::Standard)?;
-//! assert!(position.is_checkmate());
+//! let pos: Chess = fen.position(CastlingMode::Standard)?;
+//! assert!(pos.is_checkmate());
 //! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
-//!
-//! [`Setup`]: super::Setup
-//! [`Board`]: super::Board
-//! [`Display`]: std::fmt::Display
 
 use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, str::FromStr};
 

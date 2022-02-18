@@ -339,9 +339,9 @@ mod tests {
 /// ```
 /// use shakmaty::{ByColor, RemainingChecks};
 ///
-/// let remaining_checks = ByColor::<RemainingChecks>::default();
-/// assert_eq!(remaining_checks.white, RemainingChecks(3));
-/// assert_eq!(remaining_checks.black, RemainingChecks(3));
+/// let mut remaining_checks = ByColor::<RemainingChecks>::default();
+/// assert_eq!(remaining_checks.white, RemainingChecks::new(3));
+/// assert_eq!(remaining_checks.black, RemainingChecks::new(3));
 ///
 /// for _ in 0..5 {
 ///     remaining_checks.white = remaining_checks.white.saturating_sub(1);
