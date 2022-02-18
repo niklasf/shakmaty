@@ -17,11 +17,7 @@
 //! Chess variants.
 //!
 //! These are games played with normal chess pieces but special rules.
-//! Every chess variant implements [`Setup`], [`FromSetup`] and [`Position`].
-//!
-//! [`Setup`]: super::Setup
-//! [`FromSetup`]: super::FromSetup
-//! [`Position`]: super::Position
+//! Every chess variant implements [`FromSetup`] and [`Position`].
 
 use std::num::NonZeroU32;
 
