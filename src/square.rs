@@ -338,7 +338,7 @@ impl fmt::Display for ParseSquareError {
 
 impl Error for ParseSquareError {}
 
-/// A square index.
+/// A square of the chessboard.
 #[rustfmt::skip]
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]

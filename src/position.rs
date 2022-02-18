@@ -453,7 +453,7 @@ pub trait Position {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls. Consider using
-    /// [`Position::play()`] instead.
+    /// [`Position::play()`] if you cannot guarantee legality.
     fn play_unchecked(&mut self, m: &Move);
 
     // Implementation note: Trait methods above this comment should be made
@@ -555,9 +555,11 @@ pub trait Position {
 
     /// Plays a move.
     ///
+    ///
     /// # Errors
     ///
-    /// Returns a [`PlayError`] if the move is not legal.
+    /// Returns a [`PlayError`] if the move is not legal. You can use
+    /// [`Position::play_unchecked()`] if you can guarantee legality.
     fn play(mut self, m: &Move) -> Result<Self, PlayError<Self>>
     where
         Self: Sized,
