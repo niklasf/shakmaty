@@ -206,10 +206,14 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::empty())
     }
 
+    /// Discards invalid castling rights to recover from
+    /// [`PositionErrorKinds::INVALID_CASTLING_RIGHTS`].
     pub fn ignore_invalid_castling_rights(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::INVALID_CASTLING_RIGHTS)
     }
 
+    /// Discards invalid en passant squares to recover from
+    /// [`PositionErrorKinds::INVALID_EP_SQUARE`].
     pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
     }
@@ -281,14 +285,14 @@ impl<P> fmt::Display for PositionError<P> {
 
 impl<P> Error for PositionError<P> {}
 
-/// Validate and set up an arbitrary position. All provided chess variants
+/// Validate and set up a playable [`Position`]. All provided chess variants
 /// support this.
 pub trait FromSetup: Sized {
-    /// Set up a position.
+    /// Set up a playable [`Position`].
     ///
     /// # Errors
     ///
-    /// Returns [`PositionError`] if the setup does not meet basic validity
+    /// Returns [`PositionError`] if the [`Setup`] does not meet basic validity
     /// requirements.
     ///
     /// The requirements are chosen such that the position can be handled
@@ -298,10 +302,20 @@ pub trait FromSetup: Sized {
     /// Meeting the requirements does not imply that the position
     /// is actually reachable with a series of legal moves from the starting
     /// position.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let setup = Setup::default();
+    ///
+    /// let pos = Chess::from_setup(setup, CastlingMode::Standard)
+    ///     .or_else(PositionError::ignore_impossible_material())
+    ///     .or_else(PositionError::ignore_impossible_check())?;
+    /// ```
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
 
-/// A legal chess or chess variant position. See [`Chess`] for a concrete
+/// A playable chess or chess variant position. See [`Chess`] for a concrete
 /// implementation.
 pub trait Position {
     /// Piece positions on the board.
