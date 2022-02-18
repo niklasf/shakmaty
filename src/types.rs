@@ -235,6 +235,18 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
+    pub fn into_role(self, role: Role) -> T {
+        match role {
+            Role::Pawn => self.pawn,
+            Role::Knight => self.knight,
+            Role::Bishop => self.bishop,
+            Role::Rook => self.rook,
+            Role::Queen => self.queen,
+            Role::King => self.king,
+        }
+    }
+
+    #[inline]
     pub fn transform<F>(&mut self, mut f: F)
     where
         F: FnMut(&mut T),
