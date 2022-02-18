@@ -84,6 +84,7 @@ impl Board {
         }
     }
 
+    #[cfg(feature = "variant")]
     pub fn racing_kings() -> Board {
         Board {
             roles: ByRole {
@@ -102,6 +103,7 @@ impl Board {
         }
     }
 
+    #[cfg(feature = "variant")]
     pub fn horde() -> Board {
         Board {
             roles: ByRole {
