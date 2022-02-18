@@ -32,11 +32,10 @@ use crate::{
         ByColor, Color,
         Color::{Black, White},
     },
-    material::Material,
     movelist::MoveList,
     setup::{Castles, EnPassant, Setup},
     square::{Rank, Square},
-    types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
+    types::{ByRole, CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
 };
 
 /// Outcome of a game.
@@ -315,7 +314,7 @@ pub trait Position {
     /// Positions of tracked promoted pieces. Used only for Crazyhouse.
     fn promoted(&self) -> Bitboard;
     /// Pockets in chess variants like Crazyhouse.
-    fn pockets(&self) -> Option<&Material>;
+    fn pockets(&self) -> Option<&ByColor<ByRole<u8>>>;
     /// Side to move.
     fn turn(&self) -> Color;
     /// Castling paths and unmoved rooks.
@@ -704,7 +703,7 @@ impl Position for Chess {
     fn promoted(&self) -> Bitboard {
         Bitboard::EMPTY
     }
-    fn pockets(&self) -> Option<&Material> {
+    fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         None
     }
     fn turn(&self) -> Color {

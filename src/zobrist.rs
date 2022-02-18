@@ -34,8 +34,8 @@
 use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
-    color::ByColor, Bitboard, Board, Castles, CastlingMode, CastlingSide, Chess, Color, File,
-    FromSetup, Material, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks,
+    color::ByColor, Bitboard, Board, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color,
+    File, FromSetup, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks,
     Role, Setup, Square,
 };
 
@@ -276,7 +276,7 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn promoted(&self) -> Bitboard {
         self.pos.promoted()
     }
-    fn pockets(&self) -> Option<&Material> {
+    fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         self.pos.pockets()
     }
     fn turn(&self) -> Color {
@@ -367,7 +367,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
     if let Some(pockets) = pos.pockets() {
         for (color, pocket) in pockets.as_ref().zip_color() {
             for role in Role::ALL {
-                zobrist ^= V::zobrist_for_pocket(color, role, pocket.by_role(role));
+                zobrist ^= V::zobrist_for_pocket(color, role, *pocket.get(role));
             }
         }
     }

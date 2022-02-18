@@ -81,11 +81,10 @@ use crate::{
     bitboard::Bitboard,
     board::Board,
     color::{ByColor, Color},
-    material::Material,
     position::{FromSetup, PositionError},
     setup::Setup,
     square::{File, Rank, Square},
-    types::{CastlingMode, Piece, RemainingChecks},
+    types::{ByRole, CastlingMode, Piece, RemainingChecks, Role},
 };
 
 /// FEN formatting options.
@@ -157,9 +156,9 @@ impl FenOpts {
     pub fn epd(&self, setup: &Setup) -> String {
         let pockets = setup.pockets.as_ref().map_or("".to_owned(), |p| {
             if self.scid {
-                format!("/{}", p.fen())
+                format!("/{}", pocket_fen(p))
             } else {
-                format!("[{}]", p.fen())
+                format!("[{}]", pocket_fen(p))
             }
         });
 
@@ -197,7 +196,7 @@ impl FenOpts {
                     setup
                         .pockets
                         .as_ref()
-                        .map_or("".to_owned(), |p| format!("/{}", p.fen())),
+                        .map_or("".to_owned(), |p| format!("/{}", pocket_fen(p))),
                     setup.turn.char(),
                     self.castling_fen(&setup.board, setup.castling_rights),
                     setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
@@ -312,6 +311,30 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
         }
         _ => return None,
     })
+}
+
+fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
+    if s.len() > 64 {
+        return None;
+    }
+    let mut result = ByColor::<ByRole<u8>>::default();
+    for ch in s {
+        *result.piece_mut(Piece::from_char(char::from(*ch))?) += 1;
+    }
+    Some(result)
+}
+
+fn pocket_fen(pockets: &ByColor<ByRole<u8>>) -> String {
+    let mut fen = String::new();
+    for color in Color::ALL {
+        for role in Role::ALL {
+            let piece = Piece { color, role };
+            for _ in 0..*pockets.piece(piece) {
+                fen.push(piece.char());
+            }
+        }
+    }
+    fen
 }
 
 impl Board {
@@ -456,9 +479,7 @@ impl Fen {
         result.promoted = promoted;
 
         if let Some(pocket_part) = pocket_part {
-            result.pockets = Some(
-                Material::from_ascii_fen(pocket_part).map_err(|_| ParseFenError::InvalidPocket)?,
-            );
+            result.pockets = Some(parse_pockets(pocket_part).ok_or(ParseFenError::InvalidPocket)?);
         }
 
         result.turn = match parts.next() {

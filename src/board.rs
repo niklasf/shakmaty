@@ -26,7 +26,6 @@ use crate::{
     attacks,
     bitboard::Bitboard,
     color::{ByColor, Color},
-    material::{Material, MaterialSide},
     square::{File, Rank, Square},
     types::{ByRole, Piece, Role},
 };
@@ -267,24 +266,15 @@ impl Board {
                 | (attacks::pawn_attacks(!attacker, sq) & self.by_role.pawn))
     }
 
-    pub fn material_side(&self, color: Color) -> MaterialSide {
+    pub fn material_side(&self, color: Color) -> ByRole<u8> {
         let side = self.by_color(color);
-
-        MaterialSide {
-            pawns: (self.pawns() & side).count() as u8,
-            knights: (self.knights() & side).count() as u8,
-            bishops: (self.bishops() & side).count() as u8,
-            rooks: (self.rooks() & side).count() as u8,
-            queens: (self.queens() & side).count() as u8,
-            kings: (self.kings() & side).count() as u8,
-        }
+        self.by_role
+            .as_ref()
+            .map(|pieces| (*pieces & side).count() as u8)
     }
 
-    pub fn material(&self) -> Material {
-        Material {
-            black: self.material_side(Color::Black),
-            white: self.material_side(Color::White),
-        }
+    pub fn material(&self) -> ByColor<ByRole<u8>> {
+        ByColor::new_with(|color| self.material_side(color))
     }
 
     fn transform<F>(&mut self, f: F)

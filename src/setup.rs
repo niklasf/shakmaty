@@ -21,9 +21,8 @@ use crate::{
     bitboard::Bitboard,
     board::Board,
     color::{ByColor, Color},
-    material::Material,
     square::{File, Rank, Square},
-    types::{CastlingMode, CastlingSide, RemainingChecks},
+    types::{ByRole, CastlingMode, CastlingSide, RemainingChecks},
 };
 
 /// A not necessarily legal position.
@@ -36,7 +35,7 @@ pub struct Setup {
     pub promoted: Bitboard,
 
     /// Pockets in chess variants like Crazyhouse.
-    pub pockets: Option<Material>,
+    pub pockets: Option<ByColor<ByRole<u8>>>,
 
     /// Side to move.
     pub turn: Color,

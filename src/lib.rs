@@ -76,7 +76,6 @@
 
 mod color;
 mod magics;
-mod material;
 mod movelist;
 mod perft;
 mod position;
@@ -101,7 +100,6 @@ pub use crate::{
     bitboard::Bitboard,
     board::Board,
     color::{ByColor, Color, ParseColorError},
-    material::{Material, MaterialSide, ParseMaterialError},
     movelist::MoveList,
     perft::perft,
     position::{

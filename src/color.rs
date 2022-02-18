@@ -20,7 +20,7 @@ use std::{array, error::Error, fmt, mem, ops, str::FromStr};
 
 use crate::{
     square::Rank,
-    types::{Piece, Role},
+    types::{ByRole, Piece, Role},
 };
 
 /// `White` or `Black`.
@@ -287,6 +287,16 @@ impl<T> ByColor<T> {
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
         self.as_mut().into_iter()
+    }
+}
+
+impl<T> ByColor<ByRole<T>> {
+    pub fn piece(&self, piece: Piece) -> &T {
+        self.get(piece.color).get(piece.role)
+    }
+
+    pub fn piece_mut(&mut self, piece: Piece) -> &mut T {
+        self.get_mut(piece.color).get_mut(piece.role)
     }
 }
 
