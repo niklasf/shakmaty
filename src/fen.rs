@@ -32,6 +32,9 @@
 //!
 //! # Writing
 //!
+//! Writes X-FEN with `[q]` style for Crazyhouse pockets and `3+3` style
+//! for remainig checks in Three-Check.
+//!
 //! The writer intentionally deviates from the specification when formatting
 //! [`Position`] in the following backwards compatible way: En passant squares
 //! are included only if there is a fully legal en passant capture.
