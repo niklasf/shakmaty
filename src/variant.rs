@@ -30,15 +30,15 @@ pub use crate::position::{
     Chess,
 };
 use crate::{
-    bitboard::Bitboard,
-    board::Board,
-    color::{ByColor, Color},
-    material::Material,
-    movelist::MoveList,
-    position::{FromSetup, Outcome, Position, PositionError},
-    setup::{Castles, Setup, SwapTurn},
-    square::Square,
-    types::{CastlingMode, CastlingSide, Move, RemainingChecks, Role},
+    Bitboard,
+    Board,
+    ByColor, Color,
+    MoveList,
+    FromSetup, Outcome, Position, PositionError,
+    Castles, Setup,
+    Square,
+    CastlingMode, CastlingSide, Move, RemainingChecks, Role,
+    ByRole,
     zobrist::{ZobristHash, ZobristValue},
 };
 
@@ -178,7 +178,7 @@ impl VariantPosition {
 
     pub fn from_setup(
         variant: Variant,
-        setup: &dyn Setup,
+        setup: Setup,
         mode: CastlingMode,
     ) -> Result<VariantPosition, PositionError<VariantPosition>> {
         fn wrap<F, P, U>(result: Result<P, PositionError<P>>, f: F) -> Result<U, PositionError<U>>
@@ -223,7 +223,10 @@ impl VariantPosition {
 
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();
-        VariantPosition::from_setup(self.variant(), &SwapTurn(self), mode)
+        let variant = self.variant();
+        let mut setup = self.into_setup();
+        setup.swap_turn();
+        VariantPosition::from_setup(variant, setup, mode)
     }
 
     pub fn variant(&self) -> Variant {
@@ -266,24 +269,24 @@ impl VariantPosition {
     }
 }
 
-impl Setup for VariantPosition {
+impl Position for VariantPosition {
     fn board(&self) -> &Board {
         self.borrow().board()
     }
     fn promoted(&self) -> Bitboard {
         self.borrow().promoted()
     }
-    fn pockets(&self) -> Option<&Material> {
+    fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         self.borrow().pockets()
     }
     fn turn(&self) -> Color {
         self.borrow().turn()
     }
-    fn castling_rights(&self) -> Bitboard {
-        self.borrow().castling_rights()
+    fn castles(&self) -> &Castles {
+        self.borrow().castles()
     }
-    fn ep_square(&self) -> Option<Square> {
-        self.borrow().ep_square()
+    fn maybe_ep_square(&self) -> Option<Square> {
+        self.borrow().maybe_ep_square()
     }
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
         self.borrow().remaining_checks()
@@ -294,9 +297,18 @@ impl Setup for VariantPosition {
     fn fullmoves(&self) -> NonZeroU32 {
         self.borrow().fullmoves()
     }
-}
-
-impl Position for VariantPosition {
+    fn into_setup(self) -> Setup {
+        match self {
+            VariantPosition::Chess(pos) => pos.into_setup(),
+            VariantPosition::Atomic(pos) => pos.into_setup(),
+            VariantPosition::Antichess(pos) => pos.into_setup(),
+            VariantPosition::KingOfTheHill(pos) => pos.into_setup(),
+            VariantPosition::ThreeCheck(pos) => pos.into_setup(),
+            VariantPosition::Horde(pos) => pos.into_setup(),
+            VariantPosition::RacingKings(pos) => pos.into_setup(),
+            VariantPosition::Crazyhouse(pos) => pos.into_setup(),
+        }
+    }
     fn legal_moves(&self) -> MoveList {
         self.borrow().legal_moves()
     }
@@ -320,9 +332,6 @@ impl Position for VariantPosition {
     }
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.borrow().king_attackers(square, attacker, occupied)
-    }
-    fn castles(&self) -> &Castles {
-        self.borrow().castles()
     }
     fn is_variant_end(&self) -> bool {
         self.borrow().is_variant_end()

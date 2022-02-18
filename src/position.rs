@@ -614,7 +614,7 @@ impl Chess {
         pos.is_check()
     }
 
-    fn from_setup_unchecked(setup: Setup, mode: CastlingMode) -> (Chess, PositionErrorKinds) {
+    fn from_setup_unchecked(setup: Setup, mode: CastlingMode) -> (Chess, Option<ByColor<ByRole<u8>>>, Option<ByColor<RemainingChecks>>, PositionErrorKinds) {
         let mut errors = PositionErrorKinds::empty();
 
         let castles = match Castles::from_setup(&setup, mode) {
@@ -644,7 +644,7 @@ impl Chess {
 
         errors |= validate(&pos, ep_square);
 
-        (pos, errors)
+        (pos, setup.pockets, setup.remaining_checks, errors)
     }
 }
 
@@ -704,7 +704,7 @@ impl Eq for Chess {}
 
 impl FromSetup for Chess {
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
-        let (pos, errors) = Chess::from_setup_unchecked(setup, mode);
+        let (pos, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
         PositionError { pos, errors }.strict()
     }
 }
@@ -950,7 +950,6 @@ impl Position for Chess {
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
     use super::*;
-    use crate::material::MaterialSide;
 
     /// An Atomic Chess position.
     #[derive(Clone, Debug)]
@@ -976,46 +975,14 @@ pub(crate) mod variant {
         }
     }
 
-    impl Setup for Atomic {
-        fn board(&self) -> &Board {
-            &self.board
-        }
-        fn promoted(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn pockets(&self) -> Option<&Material> {
-            None
-        }
-        fn turn(&self) -> Color {
-            self.turn
-        }
-        fn castling_rights(&self) -> Bitboard {
-            self.castles.castling_rights()
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.ep_square.and_then(|ep| relevant_ep(ep, self))
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            None
-        }
-        fn halfmoves(&self) -> u32 {
-            self.halfmoves
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.fullmoves
-        }
-    }
-
     impl FromSetup for Atomic {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<Atomic, PositionError<Atomic>> {
             let mut errors = PositionErrorKinds::empty();
-            let board = setup.board().clone();
-            let turn = setup.turn();
 
-            let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
+            let castles = match Castles::from_setup(&setup, mode) {
                 Ok(castles) => castles,
                 Err(castles) => {
                     errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -1023,7 +990,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let ep_square = match EnPassant::from_setup(&board, turn, setup.ep_square()) {
+            let ep_square = match EnPassant::from_setup(&setup) {
                 Ok(ep_square) => ep_square,
                 Err(()) => {
                     errors |= PositionErrorKinds::INVALID_EP_SQUARE;
@@ -1032,12 +999,12 @@ pub(crate) mod variant {
             };
 
             let pos = Atomic {
-                board,
-                turn,
+                board: setup.board,
+                turn: setup.turn,
                 castles,
                 ep_square,
-                halfmoves: setup.halfmoves(),
-                fullmoves: setup.fullmoves(),
+                halfmoves: setup.halfmoves,
+                fullmoves: setup.fullmoves,
             };
 
             errors |= validate(&pos, ep_square);
@@ -1059,8 +1026,45 @@ pub(crate) mod variant {
     }
 
     impl Position for Atomic {
+        fn board(&self) -> &Board {
+            &self.board
+        }
+        fn promoted(&self) -> Bitboard {
+            Bitboard::EMPTY
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            None
+        }
+        fn turn(&self) -> Color {
+            self.turn
+        }
         fn castles(&self) -> &Castles {
             &self.castles
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.ep_square.map(EnPassant::square)
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            None
+        }
+        fn halfmoves(&self) -> u32 {
+            self.halfmoves
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.fullmoves
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                ep_square: self.legal_ep_square(),
+                board: self.board,
+                promoted: Bitboard::EMPTY,
+                pockets: None,
+                turn: self.turn,
+                castling_rights: self.castles.castling_rights(),
+                remaining_checks: None,
+                halfmoves: self.halfmoves,
+                fullmoves: self.fullmoves,
+            }
         }
 
         fn play_unchecked(&mut self, m: &Move) {
@@ -1082,7 +1086,7 @@ pub(crate) mod variant {
                     ..
                 }
                 | Move::EnPassant { to, .. } => {
-                    self.board.remove_piece_at(to);
+                    self.board.discard_piece_at(to);
 
                     let explosion_radius =
                         attacks::king_attacks(to) & self.board().occupied() & !self.board.pawns();
@@ -1092,7 +1096,7 @@ pub(crate) mod variant {
                     }
 
                     for explosion in explosion_radius {
-                        self.board.remove_piece_at(explosion);
+                        self.board.discard_piece_at(explosion);
                         self.castles.discard_rook(explosion);
                     }
                 }
@@ -1246,46 +1250,14 @@ pub(crate) mod variant {
         }
     }
 
-    impl Setup for Antichess {
-        fn board(&self) -> &Board {
-            &self.board
-        }
-        fn promoted(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn pockets(&self) -> Option<&Material> {
-            None
-        }
-        fn turn(&self) -> Color {
-            self.turn
-        }
-        fn castling_rights(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.ep_square.and_then(|ep| relevant_ep(ep, self))
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            None
-        }
-        fn halfmoves(&self) -> u32 {
-            self.halfmoves
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.fullmoves
-        }
-    }
-
     impl FromSetup for Antichess {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<Antichess, PositionError<Antichess>> {
             let mut errors = PositionErrorKinds::empty();
-            let board = setup.board().clone();
-            let turn = setup.turn();
 
-            let ep_square = match EnPassant::from_setup(&board, turn, setup.ep_square()) {
+            let ep_square = match EnPassant::from_setup(&setup) {
                 Ok(ep_square) => ep_square,
                 Err(()) => {
                     errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -1294,15 +1266,15 @@ pub(crate) mod variant {
             };
 
             let pos = Antichess {
-                board,
-                turn,
+                board: setup.board,
+                turn: setup.turn,
                 castles: Castles::empty(mode),
                 ep_square,
-                halfmoves: setup.halfmoves(),
-                fullmoves: setup.fullmoves(),
+                halfmoves: setup.halfmoves,
+                fullmoves: setup.fullmoves,
             };
 
-            if setup.castling_rights().any() {
+            if setup.castling_rights.any() {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS
             }
 
@@ -1317,6 +1289,47 @@ pub(crate) mod variant {
     }
 
     impl Position for Antichess {
+        fn board(&self) -> &Board {
+            &self.board
+        }
+        fn promoted(&self) -> Bitboard {
+            Bitboard::EMPTY
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            None
+        }
+        fn turn(&self) -> Color {
+            self.turn
+        }
+        fn castles(&self) -> &Castles {
+            &self.castles
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.ep_square.map(EnPassant::square)
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            None
+        }
+        fn halfmoves(&self) -> u32 {
+            self.halfmoves
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.fullmoves
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                ep_square: self.legal_ep_square(),
+                board: self.board,
+                promoted: Bitboard::EMPTY,
+                pockets: None,
+                turn: self.turn,
+                castling_rights: self.castles.castling_rights(),
+                remaining_checks: None,
+                halfmoves: self.halfmoves,
+                fullmoves: self.fullmoves,
+            }
+        }
+
         fn play_unchecked(&mut self, m: &Move) {
             do_move(
                 &mut self.board,
@@ -1328,10 +1341,6 @@ pub(crate) mod variant {
                 &mut self.fullmoves,
                 m,
             );
-        }
-
-        fn castles(&self) -> &Castles {
-            &self.castles
         }
 
         fn en_passant_moves(&self) -> MoveList {
@@ -1408,24 +1417,38 @@ pub(crate) mod variant {
         chess: Chess,
     }
 
-    impl Setup for KingOfTheHill {
+    impl FromSetup for KingOfTheHill {
+        fn from_setup(
+            setup: Setup,
+            mode: CastlingMode,
+        ) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
+            let (chess, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
+            PositionError {
+                errors,
+                pos: KingOfTheHill { chess },
+            }
+            .strict()
+        }
+    }
+
+    impl Position for KingOfTheHill {
         fn board(&self) -> &Board {
             self.chess.board()
         }
         fn promoted(&self) -> Bitboard {
-            Bitboard(0)
+            Bitboard::EMPTY
         }
-        fn pockets(&self) -> Option<&Material> {
+        fn castles(&self) -> &Castles {
+            self.chess.castles()
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
         fn turn(&self) -> Color {
             self.chess.turn()
         }
-        fn castling_rights(&self) -> Bitboard {
-            self.chess.castling_rights()
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.chess.ep_square()
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.chess.maybe_ep_square()
         }
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
@@ -1436,29 +1459,12 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
         }
-    }
-
-    impl FromSetup for KingOfTheHill {
-        fn from_setup(
-            setup: &dyn Setup,
-            mode: CastlingMode,
-        ) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
-            let (chess, errors) = Chess::from_setup_unchecked(setup, mode);
-            PositionError {
-                errors,
-                pos: KingOfTheHill { chess },
-            }
-            .strict()
+        fn into_setup(self) -> Setup {
+            self.chess.into_setup()
         }
-    }
 
-    impl Position for KingOfTheHill {
         fn play_unchecked(&mut self, m: &Move) {
             self.chess.play_unchecked(m);
-        }
-
-        fn castles(&self) -> &Castles {
-            self.chess.castles()
         }
 
         fn legal_moves(&self) -> MoveList {
@@ -1519,45 +1525,15 @@ pub(crate) mod variant {
         remaining_checks: ByColor<RemainingChecks>,
     }
 
-    impl Setup for ThreeCheck {
-        fn board(&self) -> &Board {
-            self.chess.board()
-        }
-        fn promoted(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn pockets(&self) -> Option<&Material> {
-            None
-        }
-        fn turn(&self) -> Color {
-            self.chess.turn()
-        }
-        fn castling_rights(&self) -> Bitboard {
-            self.chess.castling_rights()
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.chess.ep_square()
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            Some(&self.remaining_checks)
-        }
-        fn halfmoves(&self) -> u32 {
-            self.chess.halfmoves()
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.chess.fullmoves
-        }
-    }
-
     impl FromSetup for ThreeCheck {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
-            let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
+            let (chess, _, remaining_checks, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
-            let remaining_checks = setup.remaining_checks().cloned().unwrap_or_default();
-            if remaining_checks.all(|remaining| remaining.is_zero()) {
+            let remaining_checks = remaining_checks.unwrap_or_default();
+            if remaining_checks.iter().all(|remaining| remaining.is_zero()) {
                 errors |= PositionErrorKinds::VARIANT;
             }
 
@@ -1573,17 +1549,47 @@ pub(crate) mod variant {
     }
 
     impl Position for ThreeCheck {
+        fn board(&self) -> &Board {
+            self.chess.board()
+        }
+        fn promoted(&self) -> Bitboard {
+            Bitboard::EMPTY
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            None
+        }
+        fn turn(&self) -> Color {
+            self.chess.turn()
+        }
+        fn castles(&self) -> &Castles {
+            self.chess.castles()
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.chess.maybe_ep_square()
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            Some(&self.remaining_checks)
+        }
+        fn halfmoves(&self) -> u32 {
+            self.chess.halfmoves()
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.chess.fullmoves
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                remaining_checks: Some(self.remaining_checks),
+                ..self.chess.into_setup()
+            }
+        }
+
         fn play_unchecked(&mut self, m: &Move) {
             let turn = self.chess.turn();
             self.chess.play_unchecked(m);
             if self.is_check() {
-                let checks = self.remaining_checks.by_color_mut(turn);
-                *checks = RemainingChecks::minus_one(*checks);
+                let checks = self.remaining_checks.get_mut(turn);
+                *checks = checks.saturating_sub(1);
             }
-        }
-
-        fn castles(&self) -> &Castles {
-            self.chess.castles()
         }
 
         fn legal_moves(&self) -> MoveList {
@@ -1628,7 +1634,7 @@ pub(crate) mod variant {
         }
 
         fn is_variant_end(&self) -> bool {
-            self.remaining_checks.any(|remaining| remaining.is_zero())
+            self.remaining_checks.iter().any(|remaining| remaining.is_zero())
         }
 
         fn variant_outcome(&self) -> Option<Outcome> {
@@ -1643,17 +1649,17 @@ pub(crate) mod variant {
     pub struct Crazyhouse {
         chess: Chess,
         promoted: Bitboard,
-        pockets: Material,
+        pockets: ByColor<ByRole<u8>>,
     }
 
     impl Crazyhouse {
-        fn our_pocket(&self) -> &MaterialSide {
-            self.pockets.by_color(self.turn())
+        fn our_pocket(&self) -> &ByRole<u8> {
+            self.pockets.get(self.turn())
         }
 
-        fn our_pocket_mut(&mut self) -> &mut MaterialSide {
+        fn our_pocket_mut(&mut self) -> &mut ByRole<u8> {
             let turn = self.turn();
-            self.pockets.by_color_mut(turn)
+            self.pockets.get_mut(turn)
         }
 
         fn legal_put_squares(&self) -> Bitboard {
@@ -1673,49 +1679,19 @@ pub(crate) mod variant {
         }
     }
 
-    impl Setup for Crazyhouse {
-        fn board(&self) -> &Board {
-            self.chess.board()
-        }
-        fn promoted(&self) -> Bitboard {
-            self.promoted
-        }
-        fn pockets(&self) -> Option<&Material> {
-            Some(&self.pockets)
-        }
-        fn turn(&self) -> Color {
-            self.chess.turn()
-        }
-        fn castling_rights(&self) -> Bitboard {
-            self.chess.castling_rights()
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.chess.ep_square()
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            None
-        }
-        fn halfmoves(&self) -> u32 {
-            self.chess.halfmoves()
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.chess.fullmoves()
-        }
-    }
-
     impl FromSetup for Crazyhouse {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
-            let (chess, mut errors) = Chess::from_setup_unchecked(setup, mode);
-            let promoted = setup.promoted()
-                & chess.board().occupied()
-                & !chess.board().pawns()
-                & !chess.board.kings();
-            let pockets = setup.pockets().cloned().unwrap_or_default();
+            let promoted = setup.promoted
+                & setup.board.occupied()
+                & !setup.board.pawns()
+                & !setup.board.kings();
+            let (chess, pockets, _, mut errors) = Chess::from_setup_unchecked(setup, mode);
+            let pockets = pockets.unwrap_or_default();
 
-            if pockets.white.kings > 0 || pockets.black.kings > 0 {
+            if pockets.white.king > 0 || pockets.black.king > 0 {
                 errors |= PositionErrorKinds::TOO_MANY_KINGS;
             }
 
@@ -1727,24 +1703,24 @@ pub(crate) mod variant {
 
             if promoted.count()
                 + chess.board().pawns().count()
-                + usize::from(pockets.white.pawns)
-                + usize::from(pockets.black.pawns)
+                + usize::from(pockets.white.pawn)
+                + usize::from(pockets.black.pawn)
                 > 16
                 || (chess.board().knights() & !promoted).count()
-                    + usize::from(pockets.white.knights)
-                    + usize::from(pockets.black.knights)
+                    + usize::from(pockets.white.knight)
+                    + usize::from(pockets.black.knight)
                     > 4
                 || (chess.board().bishops() & !promoted).count()
-                    + usize::from(pockets.white.bishops)
-                    + usize::from(pockets.black.bishops)
+                    + usize::from(pockets.white.bishop)
+                    + usize::from(pockets.black.bishop)
                     > 4
                 || (chess.board().rooks() & !promoted).count()
-                    + usize::from(pockets.white.rooks)
-                    + usize::from(pockets.black.rooks)
+                    + usize::from(pockets.white.rook)
+                    + usize::from(pockets.black.rook)
                     > 4
                 || (chess.board().queens() & !promoted).count()
-                    + usize::from(pockets.white.queens)
-                    + usize::from(pockets.black.queens)
+                    + usize::from(pockets.white.queen)
+                    + usize::from(pockets.black.queen)
                     > 2
             {
                 errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
@@ -1763,6 +1739,41 @@ pub(crate) mod variant {
     }
 
     impl Position for Crazyhouse {
+        fn board(&self) -> &Board {
+            self.chess.board()
+        }
+        fn promoted(&self) -> Bitboard {
+            self.promoted
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            Some(&self.pockets)
+        }
+        fn turn(&self) -> Color {
+            self.chess.turn()
+        }
+        fn castles(&self) -> &Castles {
+            self.chess.castles()
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.chess.maybe_ep_square()
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            None
+        }
+        fn halfmoves(&self) -> u32 {
+            self.chess.halfmoves()
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.chess.fullmoves()
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                promoted: self.promoted,
+                pockets: Some(self.pockets),
+                ..self.chess.into_setup()
+            }
+        }
+
         fn play_unchecked(&mut self, m: &Move) {
             match *m {
                 Move::Normal {
@@ -1776,13 +1787,13 @@ pub(crate) mod variant {
                         capture
                     };
 
-                    *self.our_pocket_mut().by_role_mut(capture) += 1;
+                    *self.our_pocket_mut().get_mut(capture) += 1;
                 }
                 Move::EnPassant { .. } => {
-                    self.our_pocket_mut().pawns += 1;
+                    self.our_pocket_mut().pawn += 1;
                 }
                 Move::Put { role, .. } => {
-                    *self.our_pocket_mut().by_role_mut(role) -= 1;
+                    *self.our_pocket_mut().get_mut(role) -= 1;
                 }
                 _ => {}
             }
@@ -1799,10 +1810,6 @@ pub(crate) mod variant {
             );
         }
 
-        fn castles(&self) -> &Castles {
-            self.chess.castles()
-        }
-
         fn legal_moves(&self) -> MoveList {
             let mut moves = self.chess.legal_moves();
 
@@ -1810,14 +1817,14 @@ pub(crate) mod variant {
             let targets = self.legal_put_squares();
 
             for to in targets {
-                for &role in &[Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
-                    if pocket.by_role(role) > 0 {
+                for role in [Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
+                    if *pocket.get(role) > 0 {
                         moves.push(Move::Put { role, to });
                     }
                 }
             }
 
-            if pocket.pawns > 0 {
+            if pocket.pawn > 0 {
                 for to in targets & !Bitboard::BACKRANKS {
                     moves.push(Move::Put {
                         role: Role::Pawn,
@@ -1840,7 +1847,7 @@ pub(crate) mod variant {
         fn san_candidates(&self, role: Role, to: Square) -> MoveList {
             let mut moves = self.chess.san_candidates(role, to);
 
-            if self.our_pocket().by_role(role) > 0
+            if *self.our_pocket().get(role) > 0
                 && self.legal_put_squares().contains(to)
                 && (role != Role::Pawn || !Bitboard::BACKRANKS.contains(to))
             {
@@ -1854,8 +1861,8 @@ pub(crate) mod variant {
             match *m {
                 Move::Castle { .. } => true,
                 Move::Normal { role, from, to, .. } => {
-                    self.castling_rights().contains(from)
-                        || self.castling_rights().contains(to)
+                    self.chess.castles.castling_rights().contains(from)
+                        || self.chess.castles.castling_rights().contains(to)
                         || (role == Role::King && self.chess.castles.has_side(self.turn()))
                 }
                 _ => false,
@@ -1870,12 +1877,12 @@ pub(crate) mod variant {
                 && self.promoted.is_empty()
                 && self.board().pawns().is_empty()
                 && self.board().rooks_and_queens().is_empty()
-                && self.pockets.white.pawns == 0
-                && self.pockets.black.pawns == 0
-                && self.pockets.white.rooks == 0
-                && self.pockets.black.rooks == 0
-                && self.pockets.white.queens == 0
-                && self.pockets.black.queens == 0
+                && self.pockets.white.pawn == 0
+                && self.pockets.black.pawn == 0
+                && self.pockets.white.rook == 0
+                && self.pockets.black.rook == 0
+                && self.pockets.white.queen == 0
+                && self.pockets.black.queen == 0
         }
 
         fn is_variant_end(&self) -> bool {
@@ -1908,61 +1915,30 @@ pub(crate) mod variant {
         }
     }
 
-    impl Setup for RacingKings {
-        fn board(&self) -> &Board {
-            &self.board
-        }
-        fn promoted(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn pockets(&self) -> Option<&Material> {
-            None
-        }
-        fn turn(&self) -> Color {
-            self.turn
-        }
-        fn castling_rights(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn ep_square(&self) -> Option<Square> {
-            None
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            None
-        }
-        fn halfmoves(&self) -> u32 {
-            self.halfmoves
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.fullmoves
-        }
-    }
-
     impl FromSetup for RacingKings {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<RacingKings, PositionError<RacingKings>> {
             let mut errors = PositionErrorKinds::empty();
 
-            if setup.castling_rights().any() {
+            if setup.castling_rights.any() {
                 errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
             }
 
-            let board = setup.board().clone();
-            if board.pawns().any() {
+            if setup.board.pawns().any() {
                 errors |= PositionErrorKinds::VARIANT;
             }
-            if setup.ep_square().is_some() {
+            if setup.ep_square.is_some() {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
             }
 
             let pos = RacingKings {
-                board,
-                turn: setup.turn(),
+                board: setup.board,
+                turn: setup.turn,
                 castles: Castles::empty(mode),
-                halfmoves: setup.halfmoves(),
-                fullmoves: setup.fullmoves(),
+                halfmoves: setup.halfmoves,
+                fullmoves: setup.fullmoves,
             };
 
             if pos.is_check() {
@@ -1983,6 +1959,47 @@ pub(crate) mod variant {
     }
 
     impl Position for RacingKings {
+        fn board(&self) -> &Board {
+            &self.board
+        }
+        fn promoted(&self) -> Bitboard {
+            Bitboard::EMPTY
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            None
+        }
+        fn turn(&self) -> Color {
+            self.turn
+        }
+        fn castles(&self) -> &Castles {
+            &self.castles
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            None
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            None
+        }
+        fn halfmoves(&self) -> u32 {
+            self.halfmoves
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.fullmoves
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                board: self.board,
+                promoted: Bitboard::EMPTY,
+                pockets: None,
+                turn: self.turn,
+                castling_rights: self.castles.castling_rights(),
+                ep_square: None,
+                remaining_checks: None,
+                halfmoves: self.halfmoves,
+                fullmoves: self.fullmoves,
+            }
+        }
+
         fn play_unchecked(&mut self, m: &Move) {
             do_move(
                 &mut self.board,
@@ -2026,10 +2043,6 @@ pub(crate) mod variant {
             });
 
             moves
-        }
-
-        fn castles(&self) -> &Castles {
-            &self.castles
         }
 
         fn has_insufficient_material(&self, _color: Color) -> bool {
@@ -2105,46 +2118,14 @@ pub(crate) mod variant {
         }
     }
 
-    impl Setup for Horde {
-        fn board(&self) -> &Board {
-            &self.board
-        }
-        fn promoted(&self) -> Bitboard {
-            Bitboard(0)
-        }
-        fn pockets(&self) -> Option<&Material> {
-            None
-        }
-        fn turn(&self) -> Color {
-            self.turn
-        }
-        fn castling_rights(&self) -> Bitboard {
-            self.castles.castling_rights()
-        }
-        fn ep_square(&self) -> Option<Square> {
-            self.ep_square.and_then(|ep| relevant_ep(ep, self))
-        }
-        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-            None
-        }
-        fn halfmoves(&self) -> u32 {
-            self.halfmoves
-        }
-        fn fullmoves(&self) -> NonZeroU32 {
-            self.fullmoves
-        }
-    }
-
     impl FromSetup for Horde {
         fn from_setup(
-            setup: &dyn Setup,
+            setup: Setup,
             mode: CastlingMode,
         ) -> Result<Horde, PositionError<Horde>> {
             let mut errors = PositionErrorKinds::empty();
-            let board = setup.board().clone();
-            let turn = setup.turn();
 
-            let castles = match Castles::from_setup(&board, setup.castling_rights(), mode) {
+            let castles = match Castles::from_setup(&setup, mode) {
                 Ok(castles) => castles,
                 Err(castles) => {
                     errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
@@ -2152,7 +2133,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let ep_square = match EnPassant::from_setup(&board, turn, setup.ep_square()) {
+            let ep_square = match EnPassant::from_setup(&setup) {
                 Ok(ep_square) => ep_square,
                 Err(()) => {
                     errors |= PositionErrorKinds::INVALID_EP_SQUARE;
@@ -2161,12 +2142,12 @@ pub(crate) mod variant {
             };
 
             let pos = Horde {
-                board,
-                turn,
+                board: setup.board,
+                turn: setup.turn,
                 castles,
                 ep_square,
-                halfmoves: setup.halfmoves(),
-                fullmoves: setup.fullmoves(),
+                halfmoves: setup.halfmoves,
+                fullmoves: setup.fullmoves,
             };
 
             errors |= validate(&pos, ep_square)
@@ -2207,6 +2188,47 @@ pub(crate) mod variant {
     }
 
     impl Position for Horde {
+        fn board(&self) -> &Board {
+            &self.board
+        }
+        fn promoted(&self) -> Bitboard {
+            Bitboard::EMPTY
+        }
+        fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
+            None
+        }
+        fn turn(&self) -> Color {
+            self.turn
+        }
+        fn castles(&self) -> &Castles {
+            &self.castles
+        }
+        fn maybe_ep_square(&self) -> Option<Square> {
+            self.ep_square.map(EnPassant::square)
+        }
+        fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
+            None
+        }
+        fn halfmoves(&self) -> u32 {
+            self.halfmoves
+        }
+        fn fullmoves(&self) -> NonZeroU32 {
+            self.fullmoves
+        }
+        fn into_setup(self) -> Setup {
+            Setup {
+                ep_square: self.legal_ep_square(),
+                board: self.board,
+                promoted: Bitboard::EMPTY,
+                pockets: None,
+                turn: self.turn,
+                castling_rights: self.castles.castling_rights(),
+                remaining_checks: None,
+                halfmoves: self.halfmoves,
+                fullmoves: self.fullmoves,
+            }
+        }
+
         fn play_unchecked(&mut self, m: &Move) {
             do_move(
                 &mut self.board,
@@ -2261,10 +2283,6 @@ pub(crate) mod variant {
             moves
         }
 
-        fn castles(&self) -> &Castles {
-            &self.castles
-        }
-
         fn is_variant_end(&self) -> bool {
             self.board().white().is_empty() || self.board().black().is_empty()
         }
@@ -2285,10 +2303,10 @@ pub(crate) mod variant {
                 (Bitboard::LIGHT_SQUARES & self.board.by_color(color) & self.board.bishops())
                     .count() as u8;
             let horde_bishop_co = || Color::from_white(horde_lightb >= 1);
-            let horde_num = horde.pawns
-                + horde.knights
-                + horde.rooks
-                + horde.queens
+            let horde_num = horde.pawn
+                + horde.knight
+                + horde.rook
+                + horde.queen
                 + if horde_darkb <= 2 { horde_darkb } else { 2 }
                 + if horde_lightb <= 2 { horde_lightb } else { 2 };
             // Two same color bishops suffice to cover all the light and dark squares
@@ -2331,12 +2349,12 @@ pub(crate) mod variant {
                 // Four or more white pieces can always deliver mate.
                 return false;
             }
-            if (horde.pawns >= 1 || horde.queens >= 1) && horde_num >= 2 {
+            if (horde.pawn >= 1 || horde.queen >= 1) && horde_num >= 2 {
                 // Pawns/queens are never insufficient material when paired with any other
                 // piece (a pawn promotes to a queen and delivers mate).
                 return false;
             }
-            if horde.rooks >= 1 && horde_num >= 2 {
+            if horde.rook >= 1 && horde_num >= 2 {
                 // A rook is insufficient material only when it is paired with a bishop
                 // against a lone king. The horde can mate in any other case.
                 // A rook on A1 and a bishop on C3 mate a king on B1 when there is a
@@ -2344,8 +2362,8 @@ pub(crate) mod variant {
                 // A rook on B8 and a bishop C3 mate a king on A1 when there is a friendly
                 // knight on A2.
                 if !(horde_num == 2
-                    && horde.rooks == 1
-                    && horde.bishops == 1
+                    && horde.rook == 1
+                    && horde.bishop == 1
                     && pieces_of_type_not(pieces_sameb_as(horde_bishop_co())) == 1)
                 {
                     return false;
@@ -2356,7 +2374,7 @@ pub(crate) mod variant {
                 if pieces_num == 1 {
                     // A lone piece cannot mate a lone king.
                     return true;
-                } else if horde.queens == 1 {
+                } else if horde.queen == 1 {
                     // The horde has a lone queen.
                     // A lone queen mates a king on A1 bounded by:
                     //  -- a pawn/rook on A2
@@ -2364,11 +2382,11 @@ pub(crate) mod variant {
                     // We ignore every other mating case, since it can be reduced to
                     // the two previous cases (e.g. a black pawn on A2 and a black
                     // bishop on B1).
-                    return !(pieces.pawns >= 1
-                        || pieces.rooks >= 1
+                    return !(pieces.pawn >= 1
+                        || pieces.rook >= 1
                         || pieces_lightb() >= 2
                         || pieces_darkb() >= 2);
-                } else if horde.pawns == 1 {
+                } else if horde.pawn == 1 {
                     // Promote the pawn to a queen or a knight and check whether white
                     // can mate.
                     let pawn_square = (self.board.pawns() & self.board.by_color(color))
@@ -2384,16 +2402,16 @@ pub(crate) mod variant {
                         .set_piece_at(pawn_square, color.knight());
                     return promote_to_queen.has_insufficient_material(color)
                         && promote_to_knight.has_insufficient_material(color);
-                } else if horde.rooks == 1 {
+                } else if horde.rook == 1 {
                     // A lone rook mates a king on A8 bounded by a pawn/rook on A7 and a
                     // pawn/knight on B7. We ignore every other case, since it can be
                     // reduced to the two previous cases.
                     // (e.g. three pawns on A7, B7, C7)
-                    return !(pieces.pawns >= 2
-                        || (pieces.rooks >= 1 && pieces.pawns >= 1)
-                        || (pieces.rooks >= 1 && pieces.knights >= 1)
-                        || (pieces.pawns >= 1 && pieces.knights >= 1));
-                } else if horde.bishops == 1 {
+                    return !(pieces.pawn >= 2
+                        || (pieces.rook >= 1 && pieces.pawn >= 1)
+                        || (pieces.rook >= 1 && pieces.knight >= 1)
+                        || (pieces.pawn >= 1 && pieces.knight >= 1));
+                } else if horde.bishop == 1 {
                     // The horde has a lone bishop.
                     return !(
                         // The king can be mated on A1 if there is a pawn/opposite-color-bishop
@@ -2408,10 +2426,10 @@ pub(crate) mod variant {
                         // a pawn/opposite-color-bishop on A4, a pawn/opposite-color-bishop on
                         // B3, a pawn/bishop/rook/queen on A2 and any other piece on B2.
                         pieces_oppositeb_of(horde_bishop_co()) >= 2
-                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.pawns >= 1)
-                            || pieces.pawns >= 2
+                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.pawn >= 1)
+                            || pieces.pawn >= 2
                     );
-                } else if horde.knights == 1 {
+                } else if horde.knight == 1 {
                     // The horde has a lone knight.
                     return !(
                         // The king on A1 can be smother mated by a knight on C2 if there is
@@ -2420,15 +2438,15 @@ pub(crate) mod variant {
                         // Moreover, when black has four or more pieces and two of them are
                         // pawns, black can promote their pawns and selfmate theirself.
                         pieces_num >= 4
-                            && (pieces.knights >= 2
-                                || pieces.pawns >= 2
-                                || (pieces.rooks >= 1 && pieces.knights >= 1)
-                                || (pieces.rooks >= 1 && pieces.bishops >= 1)
-                                || (pieces.knights >= 1 && pieces.bishops >= 1)
-                                || (pieces.rooks >= 1 && pieces.pawns >= 1)
-                                || (pieces.knights >= 1 && pieces.pawns >= 1)
-                                || (pieces.bishops >= 1 && pieces.pawns >= 1)
-                                || (has_bishop_pair(!color) && pieces.pawns >= 1))
+                            && (pieces.knight >= 2
+                                || pieces.pawn >= 2
+                                || (pieces.rook >= 1 && pieces.knight >= 1)
+                                || (pieces.rook >= 1 && pieces.bishop >= 1)
+                                || (pieces.knight >= 1 && pieces.bishop >= 1)
+                                || (pieces.rook >= 1 && pieces.pawn >= 1)
+                                || (pieces.knight >= 1 && pieces.pawn >= 1)
+                                || (pieces.bishop >= 1 && pieces.pawn >= 1)
+                                || (has_bishop_pair(!color) && pieces.pawn >= 1))
                             && if pieces_darkb() >= 2 {
                                 pieces_of_type_not(pieces_darkb()) >= 3
                             } else {
@@ -2447,27 +2465,27 @@ pub(crate) mod variant {
                 if pieces_num == 1 {
                     // Two minor pieces cannot mate a lone king.
                     return true;
-                } else if horde.knights == 2 {
+                } else if horde.knight == 2 {
                     // A king on A1 is mated by two knights, if it is obstructed by a
                     // pawn/bishop/knight on B2. On the other hand, if black only has
                     // major pieces it is a draw.
-                    return pieces.pawns + pieces.bishops + pieces.knights < 1;
+                    return pieces.pawn + pieces.bishop + pieces.knight < 1;
                 } else if has_bishop_pair(color) {
                     return !(
                         // A king on A1 obstructed by a pawn/bishop on A2 is mated
                         // by the bishop pair.
-                        pieces.pawns >= 1 || pieces.bishops >= 1 ||
+                        pieces.pawn >= 1 || pieces.bishop >= 1 ||
                             // A pawn/bishop/knight on B4, a pawn/bishop/rook/queen on
                             // A4 and the king on A3 enable Boden's mate by the bishop
                             // pair. In every other case white cannot win.
-                            ( pieces.knights >= 1 && pieces.rooks + pieces.queens >= 1 )
+                            ( pieces.knight >= 1 && pieces.rook + pieces.queen >= 1 )
                     );
-                } else if horde.bishops >= 1 && horde.knights >= 1 {
+                } else if horde.bishop >= 1 && horde.knight >= 1 {
                     // The horde has a bishop and a knight.
                     return !(
                         // A king on A1 obstructed by a pawn/opposite-color-bishop on
                         // A2 is mated by a knight on D2 and a bishop on C3.
-                        pieces.pawns >= 1 || pieces_oppositeb_of(horde_bishop_co()) >= 1 ||
+                        pieces.pawn >= 1 || pieces_oppositeb_of(horde_bishop_co()) >= 1 ||
                             // A king on A1 bounded by two friendly pieces on A2 and B1 is
                             // mated when the knight moves from D4 to C2 so that both the
                             // knight and the bishop deliver check.
@@ -2483,20 +2501,20 @@ pub(crate) mod variant {
                         // bishops on B2 and C3. This position is theoretically
                         // achievable even when black has two pawns or when they
                         // have a pawn and an opposite color bishop.
-                        (pieces.pawns >= 1 && pieces_oppositeb_of(horde_bishop_co()) >= 1)
-                            || (pieces.pawns >= 1 && pieces.knights >= 1)
-                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.knights >= 1)
+                        (pieces.pawn >= 1 && pieces_oppositeb_of(horde_bishop_co()) >= 1)
+                            || (pieces.pawn >= 1 && pieces.knight >= 1)
+                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.knight >= 1)
                             || (pieces_oppositeb_of(horde_bishop_co()) >= 2)
-                            || pieces.knights >= 2
-                            || pieces.pawns >= 2
+                            || pieces.knight >= 2
+                            || pieces.pawn >= 2
                         // In every other case, white can only draw.
                     );
                 }
             } else if horde_num == 3 {
                 // A king in the corner is mated by two knights and a bishop or three
                 // knights or the bishop pair and a knight/bishop.
-                if (horde.knights == 2 && horde.bishops == 1)
-                    || horde.knights == 3
+                if (horde.knight == 2 && horde.bishop == 1)
+                    || horde.knight == 3
                     || has_bishop_pair(color)
                 {
                     return false;
@@ -3237,7 +3255,7 @@ mod tests {
             .expect("Qxe2# is legal");
 
         assert_eq!(
-            pos.castling_rights(),
+            pos.castles().castling_rights(),
             Bitboard::from(Square::A8) | Bitboard::from(Square::H8)
         );
         assert_eq!(

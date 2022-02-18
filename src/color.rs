@@ -301,6 +301,13 @@ impl<T> ByColor<ByRole<T>> {
     }
 }
 
+#[cfg(feature = "variant")]
+impl ByColor<ByRole<u8>> {
+    pub(crate) fn count(&self) -> usize {
+        self.iter().map(|side| side.count()).sum()
+    }
+}
+
 impl<T: PartialOrd> ByColor<T> {
     pub fn normalize(&mut self) {
         if self.white < self.black {

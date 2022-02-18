@@ -337,6 +337,13 @@ impl<T> ByRole<T> {
     }
 }
 
+#[cfg(feature = "variant")]
+impl ByRole<u8> {
+    pub(crate) fn count(&self) -> usize {
+        self.iter().map(|c| usize::from(*c)).sum()
+    }
+}
+
 impl<T: Copy> ByRole<&T> {
     pub fn copied(self) -> ByRole<T> {
         self.map(|item| *item)
