@@ -16,6 +16,8 @@
 
 //! Parse and write Forsyth-Edwards-Notation.
 //!
+//! # Parsing
+//!
 //! The parser is relaxed:
 //!
 //! * Supports X-FEN and Shredder-FEN for castling right notation.
@@ -27,6 +29,8 @@
 //! * Accepts multiple spaces and underscores (`_`) as separators between
 //!   FEN fields.
 //! * Accepts `0` as fulllmove number and uses `1` instead.
+//!
+//! # Writing
 //!
 //! The writer intentionally deviates from the specification when formatting
 //! [`Position`] in the following backwards compatible way: En passant squares
@@ -79,136 +83,62 @@ use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, 
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
-    Rank, RemainingChecks, Role, Setup, Square,
+    Rank, RemainingChecks, Role, Setup, Square, Position,
 };
 
-/// FEN formatting options.
-#[derive(Default, Clone, Debug)]
-pub struct FenOpts {
-    shredder: bool,
-    scid: bool,
+fn castling_fen(board: &Board, castling_rights: Bitboard) -> String {
+    let mut fen = String::with_capacity(4);
+
+    for color in Color::ALL {
+        let king = board.king_of(color);
+
+        let candidates = board.by_piece(color.rook()) & color.backrank();
+
+        for rook in (candidates & castling_rights).into_iter().rev() {
+            if 
+                Some(rook) == candidates.first()
+                && king.map_or(false, |k| rook < k)
+            {
+                fen.push(color.fold_wb('Q', 'q'));
+            } else if 
+                Some(rook) == candidates.last()
+                && king.map_or(false, |k| k < rook)
+            {
+                fen.push(color.fold_wb('K', 'k'));
+            } else {
+                let file = rook.file();
+                fen.push(color.fold_wb(file.char().to_ascii_uppercase(), file.char()));
+            }
+        }
+    }
+
+    if fen.is_empty() {
+        fen.push('-');
+    }
+
+    fen
 }
 
-impl FenOpts {
-    /// Default X-FEN formatting.
-    pub fn new() -> FenOpts {
-        FenOpts::default()
-    }
+fn epd(setup: &Setup) -> String {
+    format!(
+        "{}{} {} {} {}{}",
+        setup.board.board_fen(setup.promoted),
+        setup
+            .pockets
+            .as_ref()
+            .map_or("".to_owned(), |p| format!("[{}]", pocket_fen(p))),
+        setup.turn.char(),
+        castling_fen(&setup.board, setup.castling_rights),
+        setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
+        setup
+            .remaining_checks
+            .as_ref()
+            .map_or("".to_owned(), |r| format!(" {}", r)),
+    )
+}
 
-    /// Decide if castling rights should be displayed in Shredder format,
-    /// e.g. `HAha` instead of `KQkq`.
-    ///
-    /// Defaults to `false`.
-    pub fn shredder(&mut self, shredder: bool) -> &mut FenOpts {
-        self.shredder = shredder;
-        self
-    }
-
-    /// Decide if Crazyhouse pockets and remaining check counters should use
-    /// Scid-style, e.g. `/q` instead of `[q]` and `+0+0` instead of `3+3`.
-    ///
-    /// Defaults to `false`.
-    pub fn scid(&mut self, scid: bool) -> &mut FenOpts {
-        self.scid = scid;
-        self
-    }
-
-    fn castling_fen(&self, board: &Board, castling_rights: Bitboard) -> String {
-        let mut fen = String::with_capacity(4);
-
-        for color in Color::ALL {
-            let king = board.king_of(color);
-
-            let candidates = board.by_piece(color.rook()) & color.backrank();
-
-            for rook in (candidates & castling_rights).into_iter().rev() {
-                if !self.shredder
-                    && Some(rook) == candidates.first()
-                    && king.map_or(false, |k| rook < k)
-                {
-                    fen.push(color.fold_wb('Q', 'q'));
-                } else if !self.shredder
-                    && Some(rook) == candidates.last()
-                    && king.map_or(false, |k| k < rook)
-                {
-                    fen.push(color.fold_wb('K', 'k'));
-                } else {
-                    let file = rook.file();
-                    fen.push(color.fold_wb(file.char().to_ascii_uppercase(), file.char()));
-                }
-            }
-        }
-
-        if fen.is_empty() {
-            fen.push('-');
-        }
-
-        fen
-    }
-
-    /// Create an EPD such as
-    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-    pub fn epd(&self, setup: &Setup) -> String {
-        let pockets = setup.pockets.as_ref().map_or("".to_owned(), |p| {
-            if self.scid {
-                format!("/{}", pocket_fen(p))
-            } else {
-                format!("[{}]", pocket_fen(p))
-            }
-        });
-
-        let checks = setup.remaining_checks.as_ref().map_or("".to_owned(), |r| {
-            if self.scid {
-                format!(
-                    " +{}+{}",
-                    3_u8.saturating_sub(u8::from(r.white)),
-                    3_u8.saturating_sub(u8::from(r.black))
-                )
-            } else {
-                format!(" {}", r)
-            }
-        });
-
-        format!(
-            "{}{} {} {} {}{}",
-            setup.board.board_fen(setup.promoted),
-            pockets,
-            setup.turn.char(),
-            self.castling_fen(&setup.board, setup.castling_rights),
-            setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
-            checks
-        )
-    }
-
-    /// Create a FEN such as
-    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
-    pub fn fen(&self, setup: &Setup) -> String {
-        match setup.remaining_checks {
-            Some(ref checks) if self.scid => {
-                format!(
-                    "{}{} {} {} {} {} {} +{}+{}",
-                    setup.board.board_fen(setup.promoted),
-                    setup
-                        .pockets
-                        .as_ref()
-                        .map_or("".to_owned(), |p| format!("/{}", pocket_fen(p))),
-                    setup.turn.char(),
-                    self.castling_fen(&setup.board, setup.castling_rights),
-                    setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
-                    setup.halfmoves,
-                    setup.fullmoves,
-                    3_u8.saturating_sub(u8::from(checks.white)),
-                    3_u8.saturating_sub(u8::from(checks.black))
-                )
-            }
-            _ => format!(
-                "{} {} {}",
-                self.epd(setup),
-                setup.halfmoves,
-                setup.fullmoves
-            ),
-        }
-    }
+fn fen(setup: &Setup) -> String {
+    format!("{} {} {}", epd(setup), setup.halfmoves, setup.fullmoves)
 }
 
 /// Errors that can occur when parsing a FEN.
@@ -397,7 +327,7 @@ impl fmt::Display for Board {
     }
 }
 
-/// A parsed FEN.
+/// A FEN like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Fen(pub Setup);
 
@@ -407,11 +337,16 @@ impl Fen {
         Fen(Setup::empty())
     }
 
+    pub fn into_inner(self) -> Setup {
+        self.0
+    }
+
     /// Set up a [`Position`].
     ///
     /// # Errors
     ///
-    /// Returns [`PositionError`] if the setup is not a legal position.
+    /// Returns [`PositionError`] if the setup does not meet basic validity
+    /// requirements.
     ///
     /// [`FromSetup`]: super::FromSetup
     /// [`Position`]: super::Position
@@ -576,6 +511,12 @@ impl From<Setup> for Fen {
     }
 }
 
+impl<P: Position> From<P> for Fen {
+    fn from(pos: P) -> Fen {
+        Fen::from(pos.into_setup())
+    }
+}
+
 impl From<Fen> for Setup {
     fn from(fen: Fen) -> Setup {
         fen.0
@@ -592,22 +533,66 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&FenOpts::default().fen(&self.0))
+        f.write_str(&fen(&self.0))
     }
 }
 
-/// Create an EPD such as
-/// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -` with default
-/// [`FenOpts`].
-pub fn epd(setup: &Setup) -> String {
-    FenOpts::default().epd(setup)
+/// An EPD like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub struct Epd {
+    inner: Setup,
 }
 
-/// Create a FEN such as
-/// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1` with default
-/// [`FenOpts`].
-pub fn fen(setup: &Setup) -> String {
-    FenOpts::default().fen(setup)
+impl Epd {
+    pub fn empty() -> Epd {
+        Epd { inner: Setup::empty() }
+    }
+
+    pub fn into_inner(self) -> Setup {
+        self.inner
+    }
+
+    pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+        P::from_setup(self.inner, mode)
+    }
+
+    pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
+        Ok(Epd::from(Fen::from_ascii(epd)?.into_inner()))
+    }
+}
+
+impl From<Setup> for Epd {
+    fn from(mut setup: Setup) -> Epd {
+        setup.halfmoves = 0;
+        setup.fullmoves = NonZeroU32::new(1).unwrap();
+        Epd { inner: setup }
+    }
+}
+
+impl<P: Position> From<P> for Epd {
+    fn from(pos: P) -> Epd {
+        Epd::from(pos.into_setup())
+    }
+}
+
+impl From<Epd> for Setup {
+    fn from(epd: Epd) -> Setup {
+        epd.inner
+    }
+}
+
+impl FromStr for Epd {
+    type Err = ParseFenError;
+
+    fn from_str(epd: &str) -> Result<Epd, ParseFenError> {
+        Epd::from_ascii(epd.as_bytes())
+    }
+}
+
+impl fmt::Display for Epd {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&epd(&self.inner))
+    }
 }
 
 #[cfg(test)]

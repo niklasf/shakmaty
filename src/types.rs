@@ -14,8 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::fmt::{self, Write as _};
-use std::num;
+use std::{
+    fmt::{self, Write as _},
+    num,
+};
 
 use crate::{
     color::{ByColor, Color},
