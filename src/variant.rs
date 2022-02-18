@@ -30,16 +30,9 @@ pub use crate::position::{
     Chess,
 };
 use crate::{
-    Bitboard,
-    Board,
-    ByColor, Color,
-    MoveList,
-    FromSetup, Outcome, Position, PositionError,
-    Castles, Setup,
-    Square,
-    CastlingMode, CastlingSide, Move, RemainingChecks, Role,
-    ByRole,
     zobrist::{ZobristHash, ZobristValue},
+    Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color, FromSetup, Move,
+    MoveList, Outcome, Position, PositionError, RemainingChecks, Role, Setup, Square,
 };
 
 /// Discriminant of [`VariantPosition`].

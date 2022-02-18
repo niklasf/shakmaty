@@ -614,7 +614,15 @@ impl Chess {
         pos.is_check()
     }
 
-    fn from_setup_unchecked(setup: Setup, mode: CastlingMode) -> (Chess, Option<ByColor<ByRole<u8>>>, Option<ByColor<RemainingChecks>>, PositionErrorKinds) {
+    fn from_setup_unchecked(
+        setup: Setup,
+        mode: CastlingMode,
+    ) -> (
+        Chess,
+        Option<ByColor<ByRole<u8>>>,
+        Option<ByColor<RemainingChecks>>,
+        PositionErrorKinds,
+    ) {
         let mut errors = PositionErrorKinds::empty();
 
         let castles = match Castles::from_setup(&setup, mode) {
@@ -976,10 +984,7 @@ pub(crate) mod variant {
     }
 
     impl FromSetup for Atomic {
-        fn from_setup(
-            setup: Setup,
-            mode: CastlingMode,
-        ) -> Result<Atomic, PositionError<Atomic>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
@@ -1634,7 +1639,9 @@ pub(crate) mod variant {
         }
 
         fn is_variant_end(&self) -> bool {
-            self.remaining_checks.iter().any(|remaining| remaining.is_zero())
+            self.remaining_checks
+                .iter()
+                .any(|remaining| remaining.is_zero())
         }
 
         fn variant_outcome(&self) -> Option<Outcome> {
@@ -2119,10 +2126,7 @@ pub(crate) mod variant {
     }
 
     impl FromSetup for Horde {
-        fn from_setup(
-            setup: Setup,
-            mode: CastlingMode,
-        ) -> Result<Horde, PositionError<Horde>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
