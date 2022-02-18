@@ -3043,7 +3043,7 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fen::{fen, Fen};
+    use crate::fen::Fen;
 
     struct _AssertObjectSafe(Box<dyn Position>);
 
@@ -3340,9 +3340,9 @@ mod tests {
             .expect("valid fen")
             .position(CastlingMode::Chess960)
             .expect("valid position");
-        let swapped_fen = fen(&pos.swap_turn().expect("swap turn"));
+        let swapped = pos.swap_turn().expect("swap turn");
         assert_eq!(
-            swapped_fen,
+            Fen::from(swapped).to_string(),
             "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3"
         );
     }
@@ -3350,17 +3350,14 @@ mod tests {
     #[test]
     fn test_invalid_ep_square() {
         let fen: Fen = "4k3/8/8/8/8/8/8/4K3 w - e3 0 1".parse().expect("valid fen");
+        let err = fen
+            .position::<Chess>(CastlingMode::Standard)
+            .expect_err("invalid ep square");
+        assert_eq!(err.kinds(), PositionErrorKinds::INVALID_EP_SQUARE);
         assert_eq!(
-            fen.position::<Chess>(CastlingMode::Standard)
-                .expect_err("invalid ep square")
-                .kinds(),
-            PositionErrorKinds::INVALID_EP_SQUARE
-        );
-        assert_eq!(
-            fen.position::<Chess>(CastlingMode::Standard)
-                .or_else(PositionError::ignore_invalid_ep_square)
+            err.ignore_invalid_ep_square()
                 .expect("now valid")
-                .ep_square(),
+                .maybe_ep_square(),
             None
         );
     }

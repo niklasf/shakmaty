@@ -85,8 +85,8 @@
 use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, str::FromStr};
 
 use crate::{
-    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
-    Rank, RemainingChecks, Role, Setup, Square, Position,
+    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, Position,
+    PositionError, Rank, RemainingChecks, Role, Setup, Square,
 };
 
 fn castling_fen(board: &Board, castling_rights: Bitboard) -> String {
@@ -98,15 +98,9 @@ fn castling_fen(board: &Board, castling_rights: Bitboard) -> String {
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
         for rook in (candidates & castling_rights).into_iter().rev() {
-            if 
-                Some(rook) == candidates.first()
-                && king.map_or(false, |k| rook < k)
-            {
+            if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                 fen.push(color.fold_wb('Q', 'q'));
-            } else if 
-                Some(rook) == candidates.last()
-                && king.map_or(false, |k| k < rook)
-            {
+            } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
                 fen.push(color.fold_wb('K', 'k'));
             } else {
                 let file = rook.file();
@@ -548,7 +542,9 @@ pub struct Epd {
 
 impl Epd {
     pub fn empty() -> Epd {
-        Epd { inner: Setup::empty() }
+        Epd {
+            inner: Setup::empty(),
+        }
     }
 
     pub fn into_inner(self) -> Setup {
@@ -607,13 +603,16 @@ mod tests {
     fn test_legal_ep_square() {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
-        assert_eq!(epd(&fen), original_epd);
+        assert_eq!(
+            Epd::from(fen.clone().into_inner()).to_string(),
+            original_epd
+        );
 
         // The en passant square is not actually legal.
         let pos: Chess = fen
             .position(CastlingMode::Standard)
             .expect("legal position");
-        assert_eq!(epd(&pos), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+        assert_eq!(Epd::from(pos).to_string(), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
     #[test]
@@ -651,64 +650,65 @@ mod tests {
 
     #[test]
     fn test_pockets() {
-        let fen: Fen = "8/8/8/8/8/8/8/8[Q]".parse().expect("valid fen");
+        let setup = "8/8/8/8/8/8/8/8[Q]"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_inner();
         assert_eq!(
-            fen.pockets()
-                .map_or(0, |p| p.by_piece(Color::White.queen())),
-            1
+            setup.pockets.map(|p| *p.piece(Color::White.queen())),
+            Some(1)
         );
     }
 
     #[test]
     fn test_lichess_promoted() {
-        let input = "rnbqk1nQ~/ppppp3/8/5p2/8/5N2/PPPPPPP1/RNBQKB1R/PPBR b KQq - 0 6";
-        let fen: Fen = input.parse().expect("valid fen");
-        assert_eq!(fen.promoted, Bitboard::from(Square::H8));
-        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
+        let setup = "rnbqk1nQ~/ppppp3/8/5p2/8/5N2/PPPPPPP1/RNBQKB1R/PPBR b KQq - 0 6"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_inner();
+        assert_eq!(setup.promoted, Bitboard::from(Square::H8));
     }
 
     #[test]
     fn test_lichess_pockets() {
-        let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1";
-        let fen: Fen = input.parse().expect("valid fen");
-        assert_eq!(fen.pockets().map(|p| p.is_empty()), Some(true));
-        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
-    }
-
-    #[test]
-    fn test_shredder_fen() {
-        let pos = Chess::default();
-        assert_eq!(
-            FenOpts::default().shredder(true).fen(&pos),
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1"
-        );
+        let setup = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_inner();
+        assert_eq!(setup.pockets, Some(Default::default()));
     }
 
     #[test]
     fn test_remaining_checks() {
-        let fen: Fen = "8/8/8/8/8/8/8/8 w - - 1+2 12 42"
-            .parse()
-            .expect("valid fen");
-        let expected = ByColor {
-            white: RemainingChecks(1),
-            black: RemainingChecks(2),
-        };
-        assert_eq!(fen.remaining_checks, Some(expected));
-        assert_eq!(fen.halfmoves, 12);
-        assert_eq!(fen.fullmoves.get(), 42);
+        let setup = "8/8/8/8/8/8/8/8 w - - 1+2 12 42"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_inner();
+        assert_eq!(
+            setup.remaining_checks,
+            Some(ByColor {
+                white: RemainingChecks::new(1),
+                black: RemainingChecks::new(2),
+            })
+        );
+        assert_eq!(setup.halfmoves, 12);
+        assert_eq!(setup.fullmoves.get(), 42);
     }
 
     #[test]
     fn test_lichess_remaining_checks() {
-        let input = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0";
-        let fen: Fen = input.parse().expect("valid fen");
-        let expected = ByColor {
-            white: RemainingChecks::new(3),
-            black: RemainingChecks::new(3),
-        };
-        assert_eq!(fen.remaining_checks, Some(expected));
-        assert_eq!(fen.halfmoves, 1);
-        assert_eq!(fen.fullmoves.get(), 2);
-        assert_eq!(FenOpts::default().scid(true).fen(&fen), input);
+        let setup = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_inner();
+        assert_eq!(
+            setup.remaining_checks,
+            Some(ByColor {
+                white: RemainingChecks::new(3),
+                black: RemainingChecks::new(3),
+            })
+        );
+        assert_eq!(setup.halfmoves, 1);
+        assert_eq!(setup.fullmoves.get(), 2);
     }
 }

@@ -458,7 +458,7 @@ mod tests {
             trans(&mut board_trans);
             assert_eq!(
                 board_trans,
-                Board::from_board_fen(fen.as_bytes()).expect("valid fen")
+                Board::from_ascii_board_fen(fen.as_bytes()).expect("valid fen")
             );
         };
         compare_trans(

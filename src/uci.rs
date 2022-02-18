@@ -364,10 +364,7 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        fen::{fen, Fen},
-        position::Chess,
-    };
+    use crate::{fen::Fen, position::Chess};
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -480,7 +477,7 @@ mod tests {
             pos.play_unchecked(&m);
         }
         assert_eq!(
-            fen(&pos),
+            Fen::from(pos).to_string(),
             "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
         );
     }
