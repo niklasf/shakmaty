@@ -19,8 +19,9 @@
 use std::{array, error::Error, fmt, mem, ops, str::FromStr};
 
 use crate::{
+    role::{ByRole, Role},
     square::Rank,
-    types::{ByRole, Piece, Role},
+    types::Piece,
 };
 
 /// `White` or `Black`.

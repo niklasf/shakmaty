@@ -22,13 +22,7 @@ use std::{
     iter::{FromIterator, FusedIterator},
 };
 
-use crate::{
-    attacks,
-    bitboard::Bitboard,
-    color::{ByColor, Color},
-    square::{File, Rank, Square},
-    types::{ByRole, Piece, Role},
-};
+use crate::{attacks, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 
 /// [`Piece`] positions on a board.
 ///

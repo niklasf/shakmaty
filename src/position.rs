@@ -27,15 +27,10 @@ use bitflags::bitflags;
 use crate::{
     attacks,
     bitboard::{Bitboard, Direction},
-    board::Board,
-    color::{
-        ByColor, Color,
-        Color::{Black, White},
-    },
-    movelist::MoveList,
     setup::{Castles, EnPassant, Setup},
-    square::{Rank, Square},
-    types::{ByRole, CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
+    Board, ByColor, ByRole, CastlingMode, CastlingSide, Color,
+    Color::{Black, White},
+    Move, MoveList, Piece, Rank, RemainingChecks, Role, Square,
 };
 
 /// Outcome of a game.

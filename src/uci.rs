@@ -77,11 +77,7 @@
 
 use std::{error::Error, fmt, str::FromStr};
 
-use crate::{
-    position::Position,
-    square::{Rank, Square},
-    types::{CastlingMode, CastlingSide, Move, Role},
-};
+use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 
 /// Error when parsing an invalid UCI.
 #[derive(Clone, Debug)]

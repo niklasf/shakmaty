@@ -79,6 +79,7 @@ mod magics;
 mod movelist;
 mod perft;
 mod position;
+mod role;
 mod setup;
 mod square;
 mod types;
@@ -106,7 +107,8 @@ pub use crate::{
         Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
         PositionErrorKinds,
     },
+    role::{ByRole, Role},
     setup::{Castles, Setup},
     square::{File, ParseSquareError, Rank, Square},
-    types::{ByRole, CastlingMode, CastlingSide, Move, Piece, RemainingChecks, Role},
+    types::{CastlingMode, CastlingSide, Move, Piece, RemainingChecks},
 };

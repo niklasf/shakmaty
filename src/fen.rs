@@ -78,13 +78,8 @@
 use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, str::FromStr};
 
 use crate::{
-    bitboard::Bitboard,
-    board::Board,
-    color::{ByColor, Color},
-    position::{FromSetup, PositionError},
-    setup::Setup,
-    square::{File, Rank, Square},
-    types::{ByRole, CastlingMode, Piece, RemainingChecks, Role},
+    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
+    Rank, RemainingChecks, Role, Setup, Square,
 };
 
 /// FEN formatting options.

@@ -62,12 +62,7 @@
 
 use std::{error::Error, fmt, str::FromStr};
 
-use crate::{
-    movelist::MoveList,
-    position::{Outcome, Position},
-    square::{File, Rank, Square},
-    types::{CastlingSide, Move, Role},
-};
+use crate::{CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square};
 
 /// Error when parsing a syntactially invalid SAN.
 #[derive(Clone, Debug)]

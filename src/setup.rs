@@ -17,12 +17,8 @@
 use std::num::NonZeroU32;
 
 use crate::{
-    attacks,
-    bitboard::Bitboard,
-    board::Board,
-    color::{ByColor, Color},
-    square::{File, Rank, Square},
-    types::{ByRole, CastlingMode, CastlingSide, RemainingChecks},
+    attacks, Bitboard, Board, ByColor, ByRole, CastlingMode, CastlingSide, Color, File, Rank,
+    RemainingChecks, Square,
 };
 
 /// A not necessarily legal position.
