@@ -331,6 +331,18 @@ impl Board {
     pub fn rotate_270(&mut self) {
         self.transform(Bitboard::rotate_270);
     }
+
+    pub fn pop_front(&mut self) -> Option<(Square, Piece)> {
+        self.occupied
+            .first()
+            .and_then(|sq| self.remove_piece_at(sq).map(|piece| (sq, piece)))
+    }
+
+    pub fn pop_back(&mut self) -> Option<(Square, Piece)> {
+        self.occupied
+            .last()
+            .and_then(|sq| self.remove_piece_at(sq).map(|piece| (sq, piece)))
+    }
 }
 
 impl Default for Board {
@@ -397,25 +409,7 @@ impl Iterator for IntoIter {
     type Item = (Square, Piece);
 
     fn next(&mut self) -> Option<(Square, Piece)> {
-        let (sq, role) = if let Some(sq) = self.inner.roles.pawn.pop_front() {
-            (sq, Role::Pawn)
-        } else if let Some(sq) = self.inner.roles.knight.pop_front() {
-            (sq, Role::Knight)
-        } else if let Some(sq) = self.inner.roles.bishop.pop_front() {
-            (sq, Role::Bishop)
-        } else if let Some(sq) = self.inner.roles.rook.pop_front() {
-            (sq, Role::Rook)
-        } else if let Some(sq) = self.inner.roles.queen.pop_front() {
-            (sq, Role::Queen)
-        } else if let Some(sq) = self.inner.roles.king.pop_front() {
-            (sq, Role::King)
-        } else {
-            return None;
-        };
-
-        let color = Color::from_white(self.inner.colors.white.contains(sq));
-        self.inner.discard_piece_at(sq);
-        Some((sq, Piece { color, role }))
+        self.inner.pop_front()
     }
 
     fn count(self) -> usize {
@@ -431,6 +425,12 @@ impl Iterator for IntoIter {
 impl ExactSizeIterator for IntoIter {
     fn len(&self) -> usize {
         self.inner.occupied.count()
+    }
+}
+
+impl DoubleEndedIterator for IntoIter {
+    fn next_back(&mut self) -> Option<(Square, Piece)> {
+        self.inner.pop_back()
     }
 }
 
