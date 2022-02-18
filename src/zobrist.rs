@@ -351,7 +351,7 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
 
 fn hash_board<V: ZobristValue>(board: &Board) -> V {
     let mut zobrist = V::default();
-    for (sq, piece) in board.pieces() {
+    for (sq, piece) in board.clone() {
         zobrist ^= V::zobrist_for_piece(sq, piece);
     }
     zobrist

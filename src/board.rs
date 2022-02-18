@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+//! Piece positions on a board.
+
 use std::{
     fmt,
     fmt::Write,
@@ -262,13 +264,6 @@ impl Board {
                 | (attacks::pawn_attacks(!attacker, sq) & self.roles.pawn))
     }
 
-    pub fn pieces(&self) -> Pieces {
-        Pieces {
-            roles: self.roles.clone(),
-            white: self.colors.white,
-        }
-    }
-
     pub fn material_side(&self, color: Color) -> MaterialSide {
         let side = self.by_color(color);
 
@@ -377,40 +372,50 @@ impl FromIterator<(Square, Piece)> for Board {
     }
 }
 
-/// Iterator over the pieces of a [`Board`].
-#[derive(Clone, Eq, PartialEq, Hash)]
-pub struct Pieces {
-    roles: ByRole<Bitboard>,
-    white: Bitboard,
-}
+impl IntoIterator for Board {
+    type IntoIter = IntoIter;
+    type Item = (Square, Piece);
 
-impl fmt::Debug for Pieces {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Pieces").finish()
+    fn into_iter(self) -> IntoIter {
+        IntoIter { inner: self }
     }
 }
 
-impl Iterator for Pieces {
+/// Iterator over the pieces of a [`Board`].
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub struct IntoIter {
+    inner: Board,
+}
+
+impl fmt::Debug for IntoIter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("IntoIter").finish_non_exhaustive()
+    }
+}
+
+impl Iterator for IntoIter {
     type Item = (Square, Piece);
 
     fn next(&mut self) -> Option<(Square, Piece)> {
-        let (sq, role) = if let Some(sq) = self.roles.pawn.pop_front() {
+        let (sq, role) = if let Some(sq) = self.inner.roles.pawn.pop_front() {
             (sq, Role::Pawn)
-        } else if let Some(sq) = self.roles.knight.pop_front() {
+        } else if let Some(sq) = self.inner.roles.knight.pop_front() {
             (sq, Role::Knight)
-        } else if let Some(sq) = self.roles.bishop.pop_front() {
+        } else if let Some(sq) = self.inner.roles.bishop.pop_front() {
             (sq, Role::Bishop)
-        } else if let Some(sq) = self.roles.rook.pop_front() {
+        } else if let Some(sq) = self.inner.roles.rook.pop_front() {
             (sq, Role::Rook)
-        } else if let Some(sq) = self.roles.queen.pop_front() {
+        } else if let Some(sq) = self.inner.roles.queen.pop_front() {
             (sq, Role::Queen)
-        } else if let Some(sq) = self.roles.king.pop_front() {
+        } else if let Some(sq) = self.inner.roles.king.pop_front() {
             (sq, Role::King)
         } else {
             return None;
         };
 
-        Some((sq, role.of(Color::from_white(self.white.contains(sq)))))
+        let color = Color::from_white(self.inner.colors.white.contains(sq));
+        self.inner.discard_piece_at(sq);
+        Some((sq, Piece { color, role }))
     }
 
     fn count(self) -> usize {
@@ -423,13 +428,13 @@ impl Iterator for Pieces {
     }
 }
 
-impl ExactSizeIterator for Pieces {
+impl ExactSizeIterator for IntoIter {
     fn len(&self) -> usize {
-        self.roles.iter().map(|r| r.count()).sum()
+        self.inner.occupied.count()
     }
 }
 
-impl FusedIterator for Pieces {}
+impl FusedIterator for IntoIter {}
 
 #[cfg(test)]
 mod tests {

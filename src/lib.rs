@@ -74,7 +74,6 @@
 #![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
 
-mod board;
 mod color;
 mod magics;
 mod material;
@@ -88,6 +87,7 @@ mod util;
 
 pub mod attacks;
 pub mod bitboard;
+pub mod board;
 pub mod fen;
 pub mod san;
 pub mod uci;
@@ -99,7 +99,7 @@ pub mod variant;
 
 pub use crate::{
     bitboard::Bitboard,
-    board::{Board, Pieces},
+    board::Board,
     color::{ByColor, Color, ParseColorError},
     material::{Material, MaterialSide, ParseMaterialError},
     movelist::MoveList,
