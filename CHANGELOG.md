@@ -26,7 +26,7 @@
 - Fix parsing of empty string as `Fen`.
 - Fix `PositionErrorKings::MISSING_KING` given for too many kings.
 - Fix minimum required `bitflags` version (`-Z minimal-versions`).
-- Tighten `PositionErrorKings::IMPOSSIBLE_MATERIAL`.
+- Tighten `PositionErrorKinds::IMPOSSIBLE_MATERIAL`.
 
 ## v0.20.5
 
