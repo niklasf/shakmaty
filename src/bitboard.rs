@@ -158,7 +158,7 @@ impl Bitboard {
     /// assert_eq!(bitboard.remove(Square::E4), true);
     /// assert_eq!(bitboard.remove(Square::E4), false);
     /// ```
-    #[must_use]
+    #[must_use = "use Bitboard::discard() if the return value is not required"]
     #[inline]
     pub fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {

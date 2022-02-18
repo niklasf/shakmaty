@@ -209,6 +209,7 @@ impl Board {
         })
     }
 
+    #[must_use = "use Board::discard_piece_at() if getting the removed piece is not required"]
     #[inline]
     pub fn remove_piece_at(&mut self, sq: Square) -> Option<Piece> {
         let piece = self.piece_at(sq);
