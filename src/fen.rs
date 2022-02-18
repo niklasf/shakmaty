@@ -333,7 +333,7 @@ fn pocket_fen(pockets: &ByColor<ByRole<u8>>) -> String {
 }
 
 impl Board {
-    pub fn from_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
+    pub fn from_ascii_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
         Ok(parse_board_fen(board_fen)?.0)
     }
 
@@ -387,7 +387,7 @@ impl FromStr for Board {
     type Err = ParseFenError;
 
     fn from_str(board_fen: &str) -> Result<Board, ParseFenError> {
-        Board::from_board_fen(board_fen.as_bytes())
+        Board::from_ascii_board_fen(board_fen.as_bytes())
     }
 }
 
