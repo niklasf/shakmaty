@@ -1,5 +1,20 @@
 # Changelog for shakmaty
 
+## Upcoming
+
+- Refactor `Setup`: It is now a struct instead of a trait.
+- Split `Position::ep_square()` into `Position::maybe_ep_square()` and
+  `Position::legal_ep_square()`.
+- Refactor `fen` module: It is now based on `Fen` and `Epd` wrappers for
+  `Setup` that implement `Display` and `FromStr`. More clearly describe
+  relaxed parser. Remove non-standard formatting options.
+- Introduce `ByRole`.
+- Tweak `ByColor` and make it iterable.
+- Implement `IntoIterator` for `Board`, remove `Board::pieces()`.
+- Remove `Material` and `MaterialSide`. Use `ByColor<ByRole<u8>>` instead.
+- Ensure `RemainingChecks` value is between 0 and 3.
+- Remove all deprecated methods.
+
 ## v0.20.7
 
 - Fix move generation and validation for invalid positions where check is
