@@ -67,15 +67,22 @@
 //! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 
-use std::{char, cmp::max, convert::TryFrom, error::Error, fmt, num::NonZeroU32, str::FromStr};
+use std::{
+    char, cmp::max, convert::TryFrom, error::Error, fmt, fmt::Write as _, num::NonZeroU32,
+    str::FromStr,
+};
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, Position,
     PositionError, Rank, RemainingChecks, Role, Setup, Square,
 };
 
-fn castling_fen(board: &Board, castling_rights: Bitboard) -> String {
-    let mut fen = String::with_capacity(4);
+fn fmt_castling(
+    f: &mut fmt::Formatter<'_>,
+    board: &Board,
+    castling_rights: Bitboard,
+) -> fmt::Result {
+    let mut empty = true;
 
     for color in Color::ALL {
         let king = board.king_of(color);
@@ -83,44 +90,59 @@ fn castling_fen(board: &Board, castling_rights: Bitboard) -> String {
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
         for rook in (candidates & castling_rights).into_iter().rev() {
-            if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
-                fen.push(color.fold_wb('Q', 'q'));
-            } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
-                fen.push(color.fold_wb('K', 'k'));
-            } else {
-                let file = rook.file();
-                fen.push(color.fold_wb(file.char().to_ascii_uppercase(), file.char()));
-            }
+            f.write_char(
+                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                    color.fold_wb('Q', 'q')
+                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                    color.fold_wb('K', 'k')
+                } else {
+                    let file = rook.file();
+                    color.fold_wb(file.char().to_ascii_uppercase(), file.char())
+                },
+            )?;
+            empty = false;
         }
     }
 
-    if fen.is_empty() {
-        fen.push('-');
+    if empty {
+        f.write_char('-')?;
     }
 
-    fen
+    Ok(())
 }
 
-fn epd(setup: &Setup) -> String {
-    format!(
-        "{}{} {} {} {}{}",
-        setup.board.board_fen(setup.promoted),
-        setup
-            .pockets
-            .as_ref()
-            .map_or("".to_owned(), |p| format!("[{}]", pocket_fen(p))),
-        setup.turn.char(),
-        castling_fen(&setup.board, setup.castling_rights),
-        setup.ep_square.map_or("-".to_owned(), |sq| sq.to_string()),
-        setup
-            .remaining_checks
-            .as_ref()
-            .map_or("".to_owned(), |r| format!(" {}", r)),
-    )
+fn fmt_pockets(f: &mut fmt::Formatter<'_>, pockets: &ByColor<ByRole<u8>>) -> fmt::Result {
+    f.write_char('[')?;
+    for color in Color::ALL {
+        for role in Role::ALL {
+            let piece = Piece { color, role };
+            for _ in 0..*pockets.piece(piece) {
+                f.write_char(piece.char())?;
+            }
+        }
+    }
+    f.write_char(']')
 }
 
-fn fen(setup: &Setup) -> String {
-    format!("{} {} {}", epd(setup), setup.halfmoves, setup.fullmoves)
+fn fmt_epd(f: &mut fmt::Formatter<'_>, setup: &Setup) -> fmt::Result {
+    f.write_str(&setup.board.board_fen(setup.promoted))?;
+    if let Some(ref pockets) = setup.pockets {
+        fmt_pockets(f, pockets)?;
+    }
+    f.write_char(' ')?;
+    f.write_char(setup.turn.char())?;
+    f.write_char(' ')?;
+    fmt_castling(f, &setup.board, setup.castling_rights)?;
+    f.write_char(' ')?;
+    match setup.ep_square {
+        Some(ref ep_square) => fmt::Display::fmt(ep_square, f)?,
+        None => f.write_char('-')?,
+    }
+    if let Some(ref remaining_checks) = setup.remaining_checks {
+        f.write_char(' ')?;
+        fmt::Display::fmt(remaining_checks, f)?;
+    }
+    Ok(())
 }
 
 /// Errors that can occur when parsing a FEN.
@@ -232,19 +254,6 @@ fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
         *result.piece_mut(Piece::from_char(char::from(*ch))?) += 1;
     }
     Some(result)
-}
-
-fn pocket_fen(pockets: &ByColor<ByRole<u8>>) -> String {
-    let mut fen = String::new();
-    for color in Color::ALL {
-        for role in Role::ALL {
-            let piece = Piece { color, role };
-            for _ in 0..*pockets.piece(piece) {
-                fen.push(piece.char());
-            }
-        }
-    }
-    fen
 }
 
 impl Board {
@@ -518,7 +527,8 @@ impl FromStr for Fen {
 
 impl fmt::Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&fen(&self.0))
+        fmt_epd(f, &self.0)?;
+        write!(f, " {} {}", self.0.halfmoves, self.0.fullmoves)
     }
 }
 
@@ -578,7 +588,7 @@ impl FromStr for Epd {
 
 impl fmt::Display for Epd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&epd(&self.inner))
+        fmt_epd(f, &self.inner)
     }
 }
 
