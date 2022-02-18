@@ -168,6 +168,9 @@ fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError>
         if ch == b'/' && file == 8 {
             file = 0;
             rank -= 1;
+            if rank < 0 {
+                return Err(ParseFenError::InvalidBoard);
+            }
         } else if (b'1'..=b'8').contains(&ch) {
             file += (ch - b'0') as i8;
             if file > 8 {

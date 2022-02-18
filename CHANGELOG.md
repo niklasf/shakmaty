@@ -13,6 +13,7 @@
 - Implement `IntoIterator` for `Board`, remove `Board::pieces()`.
 - Remove `Material` and `MaterialSide`. Use `ByColor<ByRole<u8>>` instead.
 - Ensure `RemainingChecks` value is between 0 and 3.
+- Fix integer overflow for invalid FEN that has too many ranks.
 - Remove all deprecated methods.
 
 ## v0.20.7
