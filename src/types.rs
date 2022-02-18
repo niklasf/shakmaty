@@ -215,7 +215,7 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn by_role(&self, role: Role) -> &T {
+    pub fn get(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &*(self as *const ByRole<T>)
@@ -225,24 +225,12 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn by_role_mut(&mut self, role: Role) -> &mut T {
+    pub fn get_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &mut *(self as *mut ByRole<T>)
                 .cast::<T>()
                 .offset(role as isize - 1)
-        }
-    }
-
-    #[inline]
-    pub fn into_role(self, role: Role) -> T {
-        match role {
-            Role::Pawn => self.pawn,
-            Role::Knight => self.knight,
-            Role::Bishop => self.bishop,
-            Role::Rook => self.rook,
-            Role::Queen => self.queen,
-            Role::King => self.king,
         }
     }
 
