@@ -187,6 +187,7 @@ macro_rules! try_role_from_int_impl {
 
 try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
+/// Container with values for each [`Role`].
 #[derive(Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByRole<T> {
