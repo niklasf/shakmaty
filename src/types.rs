@@ -675,6 +675,22 @@ mod tests {
 
 /// The number of checks the respective side needs to give in order to win
 /// (in a game of Three-Check).
+///
+/// # Examples
+///
+/// ```
+/// use shakmaty::{ByColor, RemainingChecks};
+///
+/// let remaining_checks = ByColor::<RemainingChecks>::default();
+/// assert_eq!(remaining_checks.white, RemainingChecks(3));
+/// assert_eq!(remaining_checks.black, RemainingChecks(3));
+///
+/// for _ in 0..5 {
+///     remaining_checks.white = remaining_checks.white.saturating_sub(1);
+/// }
+///
+/// assert!(remaining_checks.white.is_zero());
+/// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub struct RemainingChecks(pub u8);
 
@@ -690,8 +706,8 @@ impl RemainingChecks {
     }
 
     #[must_use]
-    pub fn minus_one(self) -> RemainingChecks {
-        RemainingChecks(self.0.saturating_sub(1))
+    pub fn saturating_sub(self, n: u8) -> RemainingChecks {
+        RemainingChecks(self.0.saturating_sub(n))
     }
 }
 
