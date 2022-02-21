@@ -334,7 +334,8 @@ pub trait Position {
     /// Gets the en passant target square after a double pawn push,
     /// even if no en passant capture is actually possible.
     ///
-    /// Also see [`Position::legal_ep_square()`].
+    /// Also see [`Position::pseudo_legal_ep_square()`] and
+    /// [`Position::legal_ep_square()`].
     fn maybe_ep_square(&self) -> Option<Square>;
     /// Remaining checks in Three-Check.
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>>;
@@ -498,10 +499,18 @@ pub trait Position {
         moves.contains(m)
     }
 
+    /// The en passant square, if it is the target of a pseudo-legal en passant
+    /// move.
+    fn pseudo_legal_ep_square(&self) -> Option<Square> {
+        self.maybe_ep_square().filter(|ep_square| {
+            (attacks::pawn_attacks(!self.turn(), *ep_square) & self.our(Role::Pawn)).any()
+        })
+    }
+
     /// The en passant square, if it really is the target of a legal en passant
     /// move.
     fn legal_ep_square(&self) -> Option<Square> {
-        self.maybe_ep_square()
+        self.pseudo_legal_ep_square()
             .filter(|_| !self.en_passant_moves().is_empty())
     }
 
