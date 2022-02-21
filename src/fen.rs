@@ -30,6 +30,19 @@
 //!   FEN fields.
 //! * Accepts `0` as fulllmove number and uses `1` instead.
 //!
+//! [`Fen`] and [`Epd`] implement [`FromStr`]:
+//!
+//! ```
+//! # use shakmaty::Chess;
+//! use shakmaty::{fen::Fen, CastlingMode, Position};
+//!
+//! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
+//!
+//! let pos: Chess = fen.position(CastlingMode::Standard)?;
+//! assert!(pos.is_checkmate());
+//! # Ok::<_, Box<dyn std::error::Error>>(())
+//! ```
+//!
 //! # Writing
 //!
 //! Writes X-FEN with `[q]` style for Crazyhouse pockets and `3+3` style
@@ -41,8 +54,6 @@
 //! [`Position::into_setup()`] also omits en passant squares, unless there
 //! is a fully legal en passant capture.
 //!
-//! # Examples
-//!
 //! [`Fen`] and [`Epd`] implement [`Display`]:
 //!
 //! ```
@@ -52,19 +63,6 @@
 //!
 //! assert_eq!(Epd::from(pos).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
-//! ```
-//!
-//! They also implemnet [`FromStr`]:
-//!
-//! ```
-//! # use shakmaty::Chess;
-//! use shakmaty::{fen::Fen, CastlingMode, Position};
-//!
-//! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
-//!
-//! let pos: Chess = fen.position(CastlingMode::Standard)?;
-//! assert!(pos.is_checkmate());
-//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 
 use std::{
