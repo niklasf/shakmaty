@@ -146,6 +146,12 @@ impl Variant {
     ];
 }
 
+impl Default for Variant {
+    fn default() -> Variant {
+        Variant::Chess
+    }
+}
+
 impl fmt::Display for Variant {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.aliases()[0])
