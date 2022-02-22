@@ -19,7 +19,7 @@
 //! These are games played with normal chess pieces but special rules.
 //! Every chess variant implements [`FromSetup`] and [`Position`].
 
-use std::num::NonZeroU32;
+use std::{error::Error, fmt, num::NonZeroU32, str};
 
 pub use crate::position::{
     variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
@@ -85,6 +85,78 @@ impl Variant {
 
     pub fn distinguishes_promoted(self) -> bool {
         self == Variant::Crazyhouse
+    }
+
+    fn aliases(self) -> &'static [&'static str] {
+        match self {
+            Variant::Chess => &[
+                "Standard",
+                "Chess",
+                "Classical",
+                "Normal",
+                "Illegal",
+                "From Position",
+            ],
+            Variant::Atomic => &["Atomic", "Atom", "Atomic chess"],
+            Variant::Antichess => &["Antichess", "Anti chess", "Anti"],
+            Variant::KingOfTheHill => &["King of the Hill", "KOTH", "kingofthehill"],
+            Variant::ThreeCheck => &[
+                "Three-check",
+                "Three check",
+                "Threecheck",
+                "Three check chess",
+                "3-check",
+                "3 check",
+                "3check",
+            ],
+            Variant::Crazyhouse => &["Crazyhouse", "Crazy House", "House", "ZH"],
+            Variant::RacingKings => &["Racing Kings", "Racing", "Race", "racingkings"],
+            Variant::Horde => &["Horde", "Horde chess"],
+        }
+    }
+
+    pub const ALL: [Variant; 8] = [
+        Variant::Chess,
+        Variant::Atomic,
+        Variant::Antichess,
+        Variant::KingOfTheHill,
+        Variant::ThreeCheck,
+        Variant::Crazyhouse,
+        Variant::RacingKings,
+        Variant::Horde,
+    ];
+}
+
+impl fmt::Display for Variant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.aliases()[0])
+    }
+}
+
+/// Error when parsing an unknown variant name.
+#[derive(Clone, Debug)]
+pub struct ParseVariantError;
+
+impl fmt::Display for ParseVariantError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("unknown variant")
+    }
+}
+
+impl Error for ParseVariantError {}
+
+impl str::FromStr for Variant {
+    type Err = ParseVariantError;
+
+    fn from_str(s: &str) -> Result<Variant, ParseVariantError> {
+        for variant in Variant::ALL {
+            for alias in variant.aliases() {
+                if s.eq_ignore_ascii_case(alias) {
+                    return Ok(variant);
+                }
+            }
+        }
+        Err(ParseVariantError)
     }
 }
 
