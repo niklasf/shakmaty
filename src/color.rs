@@ -34,11 +34,27 @@ pub enum Color {
 
 impl Color {
     pub fn from_char(ch: char) -> Option<Color> {
-        match ch {
-            'w' => Some(Color::White),
-            'b' => Some(Color::Black),
-            _ => None,
-        }
+        Some(match ch {
+            'w' => Color::White,
+            'b' => Color::Black,
+            _ => return None,
+        })
+    }
+
+    pub fn char(self) -> char {
+        self.fold_wb('w', 'b')
+    }
+
+    fn from_name(name: &str) -> Option<Color> {
+        Some(match name {
+            "white" => Color::White,
+            "black" => Color::Black,
+            _ => return None,
+        })
+    }
+
+    fn name(self) -> &'static str {
+        self.fold_wb("white", "black")
     }
 
     #[inline]
@@ -87,10 +103,6 @@ impl Color {
             Color::White => rank,
             Color::Black => rank.flip_vertical(),
         }
-    }
-
-    pub fn char(self) -> char {
-        self.fold_wb('w', 'b')
     }
 
     #[inline]
@@ -142,7 +154,7 @@ impl ops::BitXor<bool> for Color {
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.fold_wb("white", "black"))
+        f.write_str(self.name())
     }
 }
 
@@ -162,11 +174,7 @@ impl FromStr for Color {
     type Err = ParseColorError;
 
     fn from_str(s: &str) -> Result<Color, ParseColorError> {
-        Ok(match s {
-            "black" => Color::Black,
-            "white" => Color::White,
-            _ => return Err(ParseColorError),
-        })
+        Color::from_name(s).ok_or(ParseColorError)
     }
 }
 
