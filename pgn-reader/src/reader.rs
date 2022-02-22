@@ -14,17 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::cmp::min;
-use std::io::{self, Read, Chain, Cursor};
-use std::ptr;
+use std::{
+    cmp::min,
+    io::{self, Chain, Cursor, Read},
+    ptr,
+};
 
+use shakmaty::{
+    san::{San, SanPlus, Suffix},
+    CastlingSide, Color, Outcome,
+};
 use slice_deque::SliceDeque;
 
-use shakmaty::{Color, CastlingSide, Outcome};
-use shakmaty::san::{San, SanPlus, Suffix};
-
-use crate::types::{Nag, Skip, RawComment, RawHeader};
-use crate::visitor::{Visitor, SkipVisitor};
+use crate::{
+    types::{Nag, RawComment, RawHeader, Skip},
+    visitor::{SkipVisitor, Visitor},
+};
 
 const MIN_BUFFER_SIZE: usize = 8192;
 
@@ -97,11 +102,11 @@ trait ReadPgn {
             match ch {
                 b' ' | b'\t' | b'\r' | b'\n' => {
                     self.bump();
-                },
+                }
                 b'%' => {
                     self.bump();
                     self.skip_line()?;
-                },
+                }
                 _ => return Ok(()),
             }
         }
@@ -114,16 +119,16 @@ trait ReadPgn {
             match ch {
                 b' ' | b'\t' | b'\r' | b']' => {
                     self.bump();
-                },
+                }
                 b'%' => {
                     self.bump();
                     self.skip_line()?;
                     return Ok(());
-                },
+                }
                 b'\n' => {
                     self.bump();
                     return Ok(());
-                },
+                }
                 _ => {
                     return Ok(());
                 }
@@ -145,7 +150,7 @@ trait ReadPgn {
                             self.consume(eol + 1);
                             self.skip_ket()?;
                             continue;
-                        },
+                        }
                         None => {
                             self.consume_all();
                             self.skip_line()?;
@@ -174,7 +179,7 @@ trait ReadPgn {
                             Some(delta) => {
                                 // Skip escaped character.
                                 right_quote = min(right_quote + delta + 2, self.remaining());
-                            },
+                            }
                             None => {
                                 self.consume_all();
                                 self.skip_line()?;
@@ -183,10 +188,13 @@ trait ReadPgn {
                         }
                     };
 
-                    visitor.header(&self.buffer()[..space], RawHeader(&self.buffer()[value_start..right_quote]));
+                    visitor.header(
+                        &self.buffer()[..space],
+                        RawHeader(&self.buffer()[value_start..right_quote]),
+                    );
                     self.consume(consumed);
                     self.skip_ket()?;
-                },
+                }
                 b'%' => self.skip_line()?,
                 _ => return Ok(()),
             }
@@ -203,22 +211,20 @@ trait ReadPgn {
                 b'{' => {
                     self.skip_until(b'}')?;
                     self.bump();
-                },
+                }
                 b';' => {
                     self.skip_until(b'\n')?;
-                },
-                b'\n' => {
-                    match self.peek() {
-                        Some(b'%') => self.skip_until(b'\n')?,
-                        Some(b'\n') | Some(b'[') => break,
-                        Some(b'\r') => {
-                            self.bump();
-                            if let Some(b'\n') = self.peek() {
-                                break;
-                            }
+                }
+                b'\n' => match self.peek() {
+                    Some(b'%') => self.skip_until(b'\n')?,
+                    Some(b'\n') | Some(b'[') => break,
+                    Some(b'\r') => {
+                        self.bump();
+                        if let Some(b'\n') = self.peek() {
+                            break;
                         }
-                        _ => continue,
                     }
+                    _ => continue,
                 },
                 _ => {
                     if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer()) {
@@ -237,7 +243,8 @@ trait ReadPgn {
         let mut end = start;
         for &ch in &self.buffer()[start..] {
             match ch {
-                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$' | b';' | b'.' => break,
+                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$'
+                | b';' | b'.' => break,
                 _ => end += 1,
             }
         }
@@ -250,7 +257,8 @@ trait ReadPgn {
                 b'{' => {
                     self.bump();
 
-                    let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer()) {
+                    let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer())
+                    {
                         right_brace
                     } else {
                         self.consume_all();
@@ -261,7 +269,7 @@ trait ReadPgn {
 
                     visitor.comment(RawComment(&self.buffer()[..right_brace]));
                     self.consume(right_brace + 1);
-                },
+                }
                 b'\n' => {
                     self.bump();
 
@@ -269,28 +277,30 @@ trait ReadPgn {
                         Some(b'%') => {
                             self.bump();
                             self.skip_line()?;
-                        },
+                        }
                         Some(b'[') | Some(b'\n') => {
                             break;
-                        },
+                        }
                         Some(b'\r') => {
                             self.bump();
                             if self.peek() == Some(b'\n') {
                                 break;
                             }
-                        },
+                        }
                         _ => continue,
                     }
-                },
+                }
                 b';' => {
                     self.bump();
                     self.skip_until(b'\n')?;
-                },
+                }
                 b'1' => {
                     self.bump();
                     if self.buffer().starts_with(b"-0") {
                         self.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive { winner: Color::White }));
+                        visitor.outcome(Some(Outcome::Decisive {
+                            winner: Color::White,
+                        }));
                     } else if self.buffer().starts_with(b"/2-1/2") {
                         self.consume(6);
                         visitor.outcome(Some(Outcome::Draw));
@@ -298,12 +308,14 @@ trait ReadPgn {
                         let token_end = self.find_token_end(0);
                         self.consume(token_end);
                     }
-                },
+                }
                 b'0' => {
                     self.bump();
                     if self.buffer().starts_with(b"-1") {
                         self.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive { winner: Color::Black }));
+                        visitor.outcome(Some(Outcome::Decisive {
+                            winner: Color::Black,
+                        }));
                     } else if self.buffer().starts_with(b"-0") {
                         // Castling notation with zeros.
                         self.consume(2);
@@ -326,17 +338,17 @@ trait ReadPgn {
                         let token_end = self.find_token_end(0);
                         self.consume(token_end);
                     }
-                },
+                }
                 b'(' => {
                     self.bump();
                     if let Skip(true) = visitor.begin_variation() {
                         self.skip_variation()?;
                     }
-                },
+                }
                 b')' => {
                     self.bump();
                     visitor.end_variation();
-                },
+                }
                 b'$' => {
                     self.bump();
                     let token_end = self.find_token_end(0);
@@ -344,46 +356,46 @@ trait ReadPgn {
                         visitor.nag(Nag(nag));
                     }
                     self.consume(token_end);
-                },
+                }
                 b'!' => {
                     self.bump();
                     match self.peek() {
                         Some(b'!') => {
                             self.bump();
                             visitor.nag(Nag::BRILLIANT_MOVE);
-                        },
+                        }
                         Some(b'?') => {
                             self.bump();
                             visitor.nag(Nag::SPECULATIVE_MOVE);
-                        },
+                        }
                         _ => {
                             visitor.nag(Nag::GOOD_MOVE);
-                        },
+                        }
                     }
-                },
+                }
                 b'?' => {
                     self.bump();
                     match self.peek() {
                         Some(b'!') => {
                             self.bump();
                             visitor.nag(Nag::DUBIOUS_MOVE);
-                        },
+                        }
                         Some(b'?') => {
                             self.bump();
                             visitor.nag(Nag::BLUNDER);
-                        },
+                        }
                         _ => {
                             visitor.nag(Nag::MISTAKE);
-                        },
+                        }
                     }
-                },
+                }
                 b'*' => {
                     visitor.outcome(None);
                     self.bump();
-                },
+                }
                 b' ' | b'\t' | b'\r' | b'P' | b'.' => {
                     self.bump();
-                },
+                }
                 _ => {
                     let token_end = self.find_token_end(1);
                     if ch > b'9' || ch == b'-' {
@@ -407,7 +419,7 @@ trait ReadPgn {
                 b'(' => {
                     depth += 1;
                     self.bump();
-                },
+                }
                 b')' => {
                     if let Some(d) = depth.checked_sub(1) {
                         self.bump();
@@ -415,12 +427,12 @@ trait ReadPgn {
                     } else {
                         break;
                     }
-                },
+                }
                 b'{' => {
                     self.bump();
                     self.skip_until(b'}')?;
                     self.bump();
-                },
+                }
                 b';' => {
                     self.bump();
                     self.skip_until(b'\n')?;
@@ -430,22 +442,22 @@ trait ReadPgn {
                         Some(b'%') => {
                             self.consume(2);
                             self.skip_until(b'\n')?;
-                        },
+                        }
                         Some(b'[') | Some(b'\n') => {
                             // Do not consume the first or second line break.
                             break;
-                        },
+                        }
                         Some(b'\r') => {
                             // Do not consume the first or second line break.
                             if self.buffer().get(2).cloned() == Some(b'\n') {
                                 break;
                             }
-                        },
+                        }
                         _ => {
                             self.bump();
                         }
                     }
-                },
+                }
                 _ => {
                     self.bump();
                 }
@@ -586,7 +598,7 @@ impl<R: Read> BufferedReader<R> {
     /// * I/O error from the underlying reader.
     /// * Irrecoverable parser errors.
     pub fn read_all<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
-        while self.read_game(visitor)?.is_some() { }
+        while self.read_game(visitor)?.is_some() {}
         Ok(())
     }
 
@@ -656,7 +668,9 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     fn consume(&mut self, bytes: usize) {
         // This is unconditionally safe with a fully initialized buffer.
         debug_assert!(bytes <= MIN_BUFFER_SIZE * 2);
-        unsafe { self.buffer.inner.move_head(bytes as isize); }
+        unsafe {
+            self.buffer.inner.move_head(bytes as isize);
+        }
     }
 
     fn peek(&self) -> Option<u8> {
@@ -742,13 +756,16 @@ mod tests {
                 self.nags.push(nag);
             }
 
-            fn end_game(&mut self) { }
+            fn end_game(&mut self) {}
         }
 
         let mut collector = NagCollector { nags: Vec::new() };
         let mut reader = BufferedReader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
         reader.read_game(&mut collector)?;
-        assert_eq!(collector.nags, vec![Nag::GOOD_MOVE, Nag(71), Nag::BLUNDER, Nag::SPECULATIVE_MOVE]);
+        assert_eq!(
+            collector.nags,
+            vec![Nag::GOOD_MOVE, Nag(71), Nag::BLUNDER, Nag::SPECULATIVE_MOVE]
+        );
         Ok(())
     }
 
@@ -765,7 +782,7 @@ mod tests {
                 self.sans.push(san.san);
             }
 
-            fn end_game(&mut self) { }
+            fn end_game(&mut self) {}
         }
 
         let mut collector = SanCollector { sans: Vec::new() };

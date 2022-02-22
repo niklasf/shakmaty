@@ -1,14 +1,10 @@
 // Validates moves in PGNs.
 // Usage: cargo run --release --example validate -- [PGN]...
 
-use std::env;
-use std::fs::File;
-use std::io;
+use std::{env, fs::File, io};
 
-use shakmaty::{CastlingMode, Chess, Position};
-use shakmaty::fen::Fen;
-
-use pgn_reader::{Visitor, Skip, BufferedReader, RawHeader, SanPlus};
+use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
+use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 
 struct Validator {
     games: usize,
@@ -18,7 +14,11 @@ struct Validator {
 
 impl Validator {
     fn new() -> Validator {
-        Validator { games: 0, pos: Chess::default(), success: true }
+        Validator {
+            games: 0,
+            pos: Chess::default(),
+            success: true,
+        }
     }
 }
 
@@ -37,19 +37,25 @@ impl Visitor for Validator {
             let fen = match Fen::from_ascii(value.as_bytes()) {
                 Ok(fen) => fen,
                 Err(err) => {
-                    eprintln!("invalid fen header in game {}: {} ({:?})", self.games, err, value);
+                    eprintln!(
+                        "invalid fen header in game {}: {} ({:?})",
+                        self.games, err, value
+                    );
                     self.success = false;
                     return;
-                },
+                }
             };
 
             self.pos = match fen.into_position(CastlingMode::Chess960) {
                 Ok(pos) => pos,
                 Err(err) => {
-                    eprintln!("illegal fen header in game {}: {} ({:?})", self.games, err, value);
+                    eprintln!(
+                        "illegal fen header in game {}: {} ({:?})",
+                        self.games, err, value
+                    );
                     self.success = false;
                     return;
-                },
+                }
             };
         }
     }
@@ -69,7 +75,7 @@ impl Visitor for Validator {
                 Err(err) => {
                     eprintln!("error in game {}: {} {}", self.games, err, san_plus);
                     self.success = false;
-                },
+                }
             }
         }
     }

@@ -149,22 +149,20 @@
 //! }
 //! ```
 //!
-//! [`BufferedReader`]: struct.BufferedReader.html
-//! [`Visitor`]: trait.Visitor.html
 //! [Shakmaty]: ../shakmaty/index.html
 
 #![doc(html_root_url = "https://docs.rs/pgn-reader/0.20.0")]
-
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 
+mod reader;
 mod types;
 mod visitor;
-mod reader;
 
-pub use shakmaty::{Color, Role, CastlingSide, Outcome, Square, File, Rank};
-pub use shakmaty::san::{San, SanPlus};
-
-pub use types::{Skip, Nag, RawHeader, RawComment};
-pub use visitor::Visitor;
 pub use reader::{BufferedReader, IntoIter};
+pub use shakmaty::{
+    san::{San, SanPlus},
+    CastlingSide, Color, File, Outcome, Rank, Role, Square,
+};
+pub use types::{Nag, RawComment, RawHeader, Skip};
+pub use visitor::Visitor;

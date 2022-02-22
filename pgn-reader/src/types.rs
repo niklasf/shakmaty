@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::borrow::Cow;
-use std::error::Error;
-use std::fmt;
-use std::str::{self, FromStr, Utf8Error};
+use std::{
+    borrow::Cow,
+    error::Error,
+    fmt,
+    str::{self, FromStr, Utf8Error},
+};
 
 /// Tell the reader to skip over a game or variation.
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -61,7 +63,10 @@ impl Nag {
         } else if s == b"!?" {
             Ok(Nag::SPECULATIVE_MOVE)
         } else if s.len() > 1 && s[0] == b'$' {
-            btoi::btou(&s[1..]).ok().map(Nag).ok_or(InvalidNag { _priv: () })
+            btoi::btou(&s[1..])
+                .ok()
+                .map(Nag)
+                .ok_or(InvalidNag { _priv: () })
         } else {
             Err(InvalidNag { _priv: () })
         }
@@ -140,7 +145,7 @@ impl FromStr for Nag {
 /// > followed by a quote. A backslash inside a string is represented by
 /// > two adjacent backslashes.
 #[derive(Clone, Eq, PartialEq)]
-pub struct RawHeader<'a>(pub &'a[u8]);
+pub struct RawHeader<'a>(pub &'a [u8]);
 
 impl<'a> RawHeader<'a> {
     /// Returns the raw byte representation of the header value.

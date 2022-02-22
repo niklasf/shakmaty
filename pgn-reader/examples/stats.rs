@@ -1,11 +1,9 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
-use std::env;
-use std::io;
-use std::fs::File;
+use std::{env, fs::File, io};
 
-use pgn_reader::{BufferedReader, RawComment, RawHeader, Visitor, SanPlus, Nag, Outcome};
+use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawHeader, SanPlus, Visitor};
 
 #[derive(Debug, Default)]
 struct Stats {
