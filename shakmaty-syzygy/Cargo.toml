@@ -9,7 +9,7 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 exclude = ["tables/**/*.*tb*"]
-edition = "2018"
+edition = "2021"
 
 [[bench]]
 name = "benches"
