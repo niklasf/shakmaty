@@ -69,6 +69,8 @@ impl Variant {
         }
     }
 
+    /// Selects a variant based on the name used by the `UCI_Variant` option
+    /// of chess engines.
     pub fn from_uci(s: &str) -> Option<Variant> {
         Some(match s {
             "chess" => Variant::Chess,
@@ -81,6 +83,18 @@ impl Variant {
             "horde" => Variant::Horde,
             _ => return None,
         })
+    }
+
+    /// Selects a variant based on various commonly used names and aliases.
+    pub fn from_ascii(s: &[u8]) -> Result<Variant, ParseVariantError> {
+        for variant in Variant::ALL {
+            for alias in variant.aliases() {
+                if s.eq_ignore_ascii_case(alias.as_bytes()) {
+                    return Ok(variant);
+                }
+            }
+        }
+        Err(ParseVariantError)
     }
 
     pub fn distinguishes_promoted(self) -> bool {
@@ -149,14 +163,7 @@ impl str::FromStr for Variant {
     type Err = ParseVariantError;
 
     fn from_str(s: &str) -> Result<Variant, ParseVariantError> {
-        for variant in Variant::ALL {
-            for alias in variant.aliases() {
-                if s.eq_ignore_ascii_case(alias) {
-                    return Ok(variant);
-                }
-            }
-        }
-        Err(ParseVariantError)
+        Variant::from_ascii(s.as_bytes())
     }
 }
 
