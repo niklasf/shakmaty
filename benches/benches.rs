@@ -20,7 +20,7 @@ fn bench_generate_moves() {
     let pos: Chess = fen
         .parse::<Fen>()
         .expect("valid fen")
-        .position(CastlingMode::Chess960)
+        .into_position(CastlingMode::Chess960)
         .expect("legal position");
 
     assert_eq!(black_box(&pos).legal_moves().len(), 39);
@@ -31,7 +31,7 @@ fn bench_play_unchecked() -> Chess {
     let pos: Chess = fen
         .parse::<Fen>()
         .expect("valid fen")
-        .position(CastlingMode::Chess960)
+        .into_position(CastlingMode::Chess960)
         .expect("legal position");
 
     let m = Move::Normal {
@@ -52,7 +52,7 @@ fn bench_san_candidates() {
     let pos: Chess = fen
         .parse::<Fen>()
         .expect("valid fen")
-        .position(CastlingMode::Chess960)
+        .into_position(CastlingMode::Chess960)
         .expect("legal position");
 
     let moves = black_box(&pos).san_candidates(Role::Knight, Square::B5);
