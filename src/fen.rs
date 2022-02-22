@@ -70,9 +70,8 @@ use std::{
 };
 
 use crate::{
-    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
-    Rank, RemainingChecks, Role, Setup, Square, EnPassantMode,
-    Position,
+    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
+    Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
 };
 
 fn fmt_castling(
