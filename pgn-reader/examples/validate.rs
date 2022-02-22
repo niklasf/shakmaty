@@ -43,10 +43,10 @@ impl Visitor for Validator {
                 },
             };
 
-            self.pos = match fen.position(CastlingMode::Chess960) {
+            self.pos = match fen.into_position(CastlingMode::Chess960) {
                 Ok(pos) => pos,
                 Err(err) => {
-                    eprintln!("illegal fen header in game {}: {} ({})", self.games, err, fen);
+                    eprintln!("illegal fen header in game {}: {} ({:?})", self.games, err, value);
                     self.success = false;
                     return;
                 },

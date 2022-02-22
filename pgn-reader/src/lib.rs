@@ -113,7 +113,7 @@
 //!         // Support games from a non-standard starting position.
 //!         if key == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
-//!                 .and_then(|f| f.position(CastlingMode::Standard).ok());
+//!                 .and_then(|f| f.into_position(CastlingMode::Standard).ok());
 //!
 //!             if let Some(pos) = pos {
 //!                 self.pos = pos;

@@ -1,17 +1,18 @@
 [package]
 name = "pgn-reader-fuzz"
 version = "0.0.0"
-edition = "2018"
 publish = false
+edition = "2018"
 
 [package.metadata]
 cargo-fuzz = true
 
-[dependencies.pgn-reader]
-path = ".."
+[dependencies]
+libfuzzer-sys = "0.4"
+pgn-reader = { path = ".." }
 
-[dependencies.libfuzzer-sys]
-git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+[workspace]
+members = ["."] # Let fuzzing suite not interfere with workspaces
 
 [[bin]]
 name = "pgn"
