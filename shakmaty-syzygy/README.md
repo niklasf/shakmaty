@@ -60,6 +60,8 @@ Documentation
 Changelog
 ---------
 
+* 0.19.0
+  - Update shakmaty to `0.21`.
 * 0.18.0
   - Introduce `MaybeRounded` and `AmbiguousWdl`, ensuring that DTZ rounding
     is handled.
