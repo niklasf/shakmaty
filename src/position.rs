@@ -633,6 +633,7 @@ impl Chess {
         pos.is_check()
     }
 
+    #[allow(clippy::type_complexity)]
     fn from_setup_unchecked(
         setup: Setup,
         mode: CastlingMode,
@@ -2309,6 +2310,7 @@ pub(crate) mod variant {
             self.board().white().is_empty() || self.board().black().is_empty()
         }
 
+        #[allow(clippy::nonminimal_bool)]
         fn has_insufficient_material(&self, color: Color) -> bool {
             // The side with the king can always win by capturing the horde.
             if (self.board.by_color(color) & self.board.kings()).any() {
