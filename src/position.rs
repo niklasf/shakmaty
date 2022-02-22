@@ -331,8 +331,9 @@ pub trait Position {
     fn turn(&self) -> Color;
     /// Castling paths and unmoved rooks.
     fn castles(&self) -> &Castles;
-    /// Gets the en passant target square after a double pawn push,
-    /// even if no en passant capture is actually possible.
+    /// [Unconditionally](`EnPassantMode::Always`) gets the en passant target
+    /// square after a double pawn push, even if no en passant capture is
+    /// actually possible.
     ///
     /// Also see [`Position::pseudo_legal_ep_square()`] and
     /// [`Position::legal_ep_square()`].
@@ -345,8 +346,7 @@ pub trait Position {
     /// Move number. Starts at 1 and is increased after every black move.
     fn fullmoves(&self) -> NonZeroU32;
 
-    /// Converts the position to the current [`Setup`]. The en passant square
-    /// is only included if there is a legal en passant capture.
+    /// Converts the position to the current [`Setup`].
     fn into_setup(self, mode: EnPassantMode) -> Setup;
 
     /// Generates all legal moves.
@@ -499,15 +499,16 @@ pub trait Position {
         moves.contains(m)
     }
 
-    /// The en passant square, if it is the target of a pseudo-legal en passant
-    /// move.
+    /// The en passant square, if it is the target of a
+    /// [pseudo-legal](`EnPassantMode::PseudoLegal`) en passant move.
     fn pseudo_legal_ep_square(&self) -> Option<Square> {
         self.maybe_ep_square().filter(|ep_square| {
             (attacks::pawn_attacks(!self.turn(), *ep_square) & self.our(Role::Pawn)).any()
         })
     }
 
-    /// The en passant square, if it really is the target of a legal en passant
+    /// The en passant square, if it really is the target of a
+    /// [legal](`EnPassantMode::Legal`) en passant
     /// move.
     fn legal_ep_square(&self) -> Option<Square> {
         self.pseudo_legal_ep_square()

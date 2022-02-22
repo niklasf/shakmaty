@@ -316,10 +316,13 @@ pub enum EnPassantMode {
     /// Only if there is a fully legal en passant move.
     Legal,
     /// Only when a pawn has been advanced by two steps and there is an
-    /// enemy pawn next to it. Follows the X-FEN specification.
+    /// enemy pawn next to it.
+    ///
+    /// Follows the X-FEN specification.
     PseudoLegal,
-    /// Whenever a pawn has been advanced by two steps. Follows the FEN
-    /// specification.
+    /// Whenever a pawn has been advanced by two steps.
+    ///
+    /// Follows the FEN specification.
     Always,
 }
 
