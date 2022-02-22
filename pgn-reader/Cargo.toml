@@ -8,7 +8,7 @@ license = "GPL-3.0+"
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
 keywords = ["chess", "pgn"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 memchr = "2.2"
@@ -22,6 +22,3 @@ bzip2 = "0.4"
 xz2 = "0.1"
 flate2 = "1.0"
 lz4 = "1.23"
-
-[badges]
-travis-ci = { repository = "niklasf/rust-pgn-reader", branch = "master" }
