@@ -17,8 +17,8 @@
 use std::num::NonZeroU32;
 
 use crate::{
-    attacks, Bitboard, Board, ByColor, ByRole, CastlingMode, CastlingSide, Color, File, Rank,
-    RemainingChecks, Square,
+    attacks, Bitboard, Board, ByColor, ByRole, CastlingMode, CastlingSide, Color, File, FromSetup,
+    PositionError, Rank, RemainingChecks, Square,
 };
 
 /// A not necessarily legal position.
@@ -109,6 +109,10 @@ impl Setup {
     pub fn swap_turn(&mut self) {
         self.turn = !self.turn;
         self.ep_square = None;
+    }
+
+    pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+        P::from_setup(self, mode)
     }
 }
 
