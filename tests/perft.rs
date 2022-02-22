@@ -43,7 +43,7 @@ where
                     .expect("missing epd")
                     .parse::<Fen>()
                     .expect("invalid fen")
-                    .position(CastlingMode::Chess960)
+                    .into_position(CastlingMode::Chess960)
                     .or_else(PositionError::ignore_impossible_check)
                     .expect("illegal fen");
             }

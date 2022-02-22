@@ -448,7 +448,7 @@ mod tests {
             let pos: Chess = fen
                 .parse::<Fen>()
                 .expect("valid fen")
-                .position(CastlingMode::Standard)
+                .into_position(CastlingMode::Standard)
                 .expect("legal position");
 
             assert_eq!(pos.zobrist_hash::<u64>(), expected, "{}", fen);

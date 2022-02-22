@@ -722,8 +722,8 @@ impl PartialEq for Chess {
 /// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
 /// let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
-/// let position: Chess = fen.clone().position(CastlingMode::Standard)?;
-/// let position_960: Chess = fen.position(CastlingMode::Chess960)?;
+/// let position: Chess = fen.clone().into_position(CastlingMode::Standard)?;
+/// let position_960: Chess = fen.into_position(CastlingMode::Chess960)?;
 /// assert_eq!(position, position_960);
 /// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
@@ -3094,7 +3094,7 @@ mod tests {
     fn setup_fen<T: Position + FromSetup>(fen: &str) -> T {
         fen.parse::<Fen>()
             .expect("valid fen")
-            .position::<T>(CastlingMode::Chess960)
+            .into_position::<T>(CastlingMode::Chess960)
             .expect("legal position")
     }
 
@@ -3355,7 +3355,7 @@ mod tests {
         let res = "2Nq4/2K5/1b6/8/7R/3k4/7P/8 w - - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position::<Chess>(CastlingMode::Chess960);
+            .into_position::<Chess>(CastlingMode::Chess960);
         assert_eq!(
             res.expect_err("impossible check").kinds(),
             PositionErrorKinds::IMPOSSIBLE_CHECK
@@ -3364,13 +3364,13 @@ mod tests {
         let _ = "8/8/5k2/p1q5/PP1rp1P1/3P1N2/2RK1r2/5nN1 w - - 0 3"
             .parse::<Fen>()
             .expect("valid fen")
-            .position::<Chess>(CastlingMode::Standard)
+            .into_position::<Chess>(CastlingMode::Standard)
             .expect("checkers aligned with opponent king not relevant");
 
         let res = "8/8/8/1k6/3Pp3/8/8/4KQ2 b - d3 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position::<Chess>(CastlingMode::Standard);
+            .into_position::<Chess>(CastlingMode::Standard);
         assert_eq!(
             res.expect_err("impossible check due to ep square").kinds(),
             PositionErrorKinds::IMPOSSIBLE_CHECK
@@ -3382,7 +3382,7 @@ mod tests {
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("valid position");
         let swapped = pos.swap_turn().expect("swap turn");
         assert_eq!(
@@ -3395,7 +3395,7 @@ mod tests {
     fn test_invalid_ep_square() {
         let fen: Fen = "4k3/8/8/8/8/8/8/4K3 w - e3 0 1".parse().expect("valid fen");
         let err = fen
-            .position::<Chess>(CastlingMode::Standard)
+            .into_position::<Chess>(CastlingMode::Standard)
             .expect_err("invalid ep square");
         assert_eq!(err.kinds(), PositionErrorKinds::INVALID_EP_SQUARE);
         assert_eq!(
@@ -3412,7 +3412,7 @@ mod tests {
             .parse()
             .expect("valid fen");
         let pos = fen
-            .position::<Chess>(CastlingMode::Standard)
+            .into_position::<Chess>(CastlingMode::Standard)
             .expect_err("impossible check")
             .ignore_impossible_check()
             .expect("legal otherwise");

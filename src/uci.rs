@@ -445,7 +445,7 @@ mod tests {
         let pos: Chess = "8/8/8/B2p3Q/2qPp1P1/b7/2P2PkP/4K2R b K - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Standard)
+            .into_position(CastlingMode::Standard)
             .expect("valid position");
         let uci = "g2h1".parse::<Uci>().expect("valid uci");
         let m = uci.to_move(&pos).expect("legal uci");
@@ -466,7 +466,7 @@ mod tests {
         let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("valid position");
         for uci in &["f2f4", "d7d6", "f1g3", "c8g4", "g1f2", "e8d8", "e1g1"] {
             let m = uci
@@ -477,7 +477,7 @@ mod tests {
             pos.play_unchecked(&m);
         }
         assert_eq!(
-            Fen::from(pos.into_setup(EnPassantMode::Legal)).to_string(),
+            Fen::from_position(pos, EnPassantMode::Legal).to_string(),
             "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
         );
     }

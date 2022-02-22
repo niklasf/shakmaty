@@ -37,7 +37,7 @@
 //!
 //! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
 //!
-//! let pos: Chess = fen.position(CastlingMode::Standard)?;
+//! let pos: Chess = fen.into_position(CastlingMode::Standard)?;
 //! assert!(pos.is_checkmate());
 //! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
@@ -54,7 +54,7 @@
 //!
 //! let pos = Chess::default();
 //!
-//! assert_eq!(Epd::from(pos.into_setup(EnPassantMode::Legal)).to_string(),
+//! assert_eq!(Epd::from_position(pos, EnPassantMode::Legal).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
@@ -71,7 +71,8 @@ use std::{
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
-    Rank, RemainingChecks, Role, Setup, Square,
+    Rank, RemainingChecks, Role, Setup, Square, EnPassantMode,
+    Position,
 };
 
 fn fmt_castling(
@@ -328,22 +329,8 @@ impl Fen {
         Fen(Setup::empty())
     }
 
-    pub fn into_setup(self) -> Setup {
-        self.0
-    }
-
-    /// Set up a [`Position`].
-    ///
-    /// # Errors
-    ///
-    /// Returns [`PositionError`] if the setup does not meet basic validity
-    /// requirements.
-    ///
-    /// [`FromSetup`]: super::FromSetup
-    /// [`Position`]: super::Position
-    /// [`PositionError`]: super::PositionError
-    pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
-        P::from_setup(self.0, mode)
+    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Fen {
+        Fen(pos.into_setup(mode))
     }
 
     /// Parses a FEN or EPD.
@@ -494,6 +481,20 @@ impl Fen {
             Ok(Fen(result))
         }
     }
+
+    pub fn into_setup(self) -> Setup {
+        self.0
+    }
+
+    /// Set up a [`Position`]. See [`FromSetup`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PositionError`] if the setup does not meet basic validity
+    /// requirements.
+    pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+        P::from_setup(self.0, mode)
+    }
 }
 
 impl From<Setup> for Fen {
@@ -536,16 +537,20 @@ impl Epd {
         }
     }
 
+    pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
+        Ok(Epd::from(Fen::from_ascii(epd)?.into_setup()))
+    }
+
+    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Epd {
+        Epd::from(pos.into_setup(mode))
+    }
+
     pub fn into_setup(self) -> Setup {
         self.inner
     }
 
-    pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
+    pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.inner, mode)
-    }
-
-    pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
-        Ok(Epd::from(Fen::from_ascii(epd)?.into_setup()))
     }
 }
 
@@ -593,14 +598,14 @@ mod tests {
 
         // The en passant square is not actually legal.
         let pos: Chess = fen
-            .position(CastlingMode::Standard)
+            .into_position(CastlingMode::Standard)
             .expect("legal position");
         assert_eq!(pos.maybe_ep_square(), Some(Square::D3));
         assert_eq!(pos.pseudo_legal_ep_square(), Some(Square::D3));
         assert_eq!(pos.legal_ep_square(), None);
 
         assert_eq!(
-            Epd::from(pos.into_setup(EnPassantMode::Legal)).to_string(),
+            Epd::from_position(pos, EnPassantMode::Legal).to_string(),
             "4k3/8/8/8/3Pp3/8/8/3KR3 b - -"
         );
     }

@@ -18,7 +18,7 @@ fn white_insufficient_material_in_horde() {
         let pos: P = fen
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("valid position");
 
         let has_insufficient_material = pos.has_insufficient_material(Color::White);
