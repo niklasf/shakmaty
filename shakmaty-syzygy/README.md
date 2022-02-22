@@ -22,7 +22,7 @@ tables.add_directory("tables/chess")?;
 
 let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
     .parse::<Fen>()?
-    .position(CastlingMode::Standard)?;
+    .into_position(CastlingMode::Standard)?;
 
 let wdl = tables.probe_wdl_after_zeroing(&pos)?;
 assert_eq!(wdl, Wdl::Loss);
