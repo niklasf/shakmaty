@@ -526,15 +526,11 @@ impl Display for Fen {
 
 /// An EPD like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct Epd {
-    inner: Setup,
-}
+pub struct Epd(Setup);
 
 impl Epd {
     pub fn empty() -> Epd {
-        Epd {
-            inner: Setup::empty(),
-        }
+        Epd(Setup::empty())
     }
 
     pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
@@ -546,11 +542,11 @@ impl Epd {
     }
 
     pub fn into_setup(self) -> Setup {
-        self.inner
+        self.0
     }
 
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
-        P::from_setup(self.inner, mode)
+        P::from_setup(self.into_setup(), mode)
     }
 }
 
@@ -558,13 +554,13 @@ impl From<Setup> for Epd {
     fn from(mut setup: Setup) -> Epd {
         setup.halfmoves = 0;
         setup.fullmoves = NonZeroU32::new(1).unwrap();
-        Epd { inner: setup }
+        Epd(setup)
     }
 }
 
 impl From<Epd> for Setup {
-    fn from(epd: Epd) -> Setup {
-        epd.inner
+    fn from(Epd(setup): Epd) -> Setup {
+        setup
     }
 }
 
@@ -578,7 +574,7 @@ impl FromStr for Epd {
 
 impl Display for Epd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt_epd(f, &self.inner)
+        fmt_epd(f, &self.0)
     }
 }
 
