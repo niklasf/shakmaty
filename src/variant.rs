@@ -27,8 +27,9 @@ pub use crate::position::{
 };
 use crate::{
     zobrist::{ZobristHash, ZobristValue},
-    Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color, FromSetup, Move,
-    MoveList, Outcome, Position, PositionError, RemainingChecks, Role, Setup, Square,
+    Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color, EnPassantMode,
+    FromSetup, Move, MoveList, Outcome, Position, PositionError, RemainingChecks, Role, Setup,
+    Square,
 };
 
 /// Discriminant of [`VariantPosition`].
@@ -213,7 +214,7 @@ impl VariantPosition {
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();
         let variant = self.variant();
-        let mut setup = self.into_setup();
+        let mut setup = self.into_setup(EnPassantMode::Always);
         setup.swap_turn();
         VariantPosition::from_setup(variant, setup, mode)
     }
@@ -286,16 +287,16 @@ impl Position for VariantPosition {
     fn fullmoves(&self) -> NonZeroU32 {
         self.borrow().fullmoves()
     }
-    fn into_setup(self) -> Setup {
+    fn into_setup(self, mode: EnPassantMode) -> Setup {
         match self {
-            VariantPosition::Chess(pos) => pos.into_setup(),
-            VariantPosition::Atomic(pos) => pos.into_setup(),
-            VariantPosition::Antichess(pos) => pos.into_setup(),
-            VariantPosition::KingOfTheHill(pos) => pos.into_setup(),
-            VariantPosition::ThreeCheck(pos) => pos.into_setup(),
-            VariantPosition::Horde(pos) => pos.into_setup(),
-            VariantPosition::RacingKings(pos) => pos.into_setup(),
-            VariantPosition::Crazyhouse(pos) => pos.into_setup(),
+            VariantPosition::Chess(pos) => pos.into_setup(mode),
+            VariantPosition::Atomic(pos) => pos.into_setup(mode),
+            VariantPosition::Antichess(pos) => pos.into_setup(mode),
+            VariantPosition::KingOfTheHill(pos) => pos.into_setup(mode),
+            VariantPosition::ThreeCheck(pos) => pos.into_setup(mode),
+            VariantPosition::Horde(pos) => pos.into_setup(mode),
+            VariantPosition::RacingKings(pos) => pos.into_setup(mode),
+            VariantPosition::Crazyhouse(pos) => pos.into_setup(mode),
         }
     }
     fn legal_moves(&self) -> MoveList {

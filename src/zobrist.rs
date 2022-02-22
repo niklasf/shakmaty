@@ -35,8 +35,8 @@ use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
     color::ByColor, Bitboard, Board, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color,
-    File, FromSetup, Move, MoveList, Outcome, Piece, Position, PositionError, RemainingChecks,
-    Role, Setup, Square,
+    EnPassantMode, File, FromSetup, Move, MoveList, Outcome, Piece, Position, PositionError,
+    RemainingChecks, Role, Setup, Square,
 };
 
 /// Integer type that can be returned as a Zobrist hash.
@@ -297,8 +297,8 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn fullmoves(&self) -> NonZeroU32 {
         self.pos.fullmoves()
     }
-    fn into_setup(self) -> Setup {
-        self.pos.into_setup()
+    fn into_setup(self, mode: EnPassantMode) -> Setup {
+        self.pos.into_setup(mode)
     }
     fn legal_moves(&self) -> MoveList {
         self.pos.legal_moves()

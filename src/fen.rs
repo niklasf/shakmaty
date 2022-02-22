@@ -33,8 +33,7 @@
 //! [`Fen`] and [`Epd`] implement [`FromStr`]:
 //!
 //! ```
-//! # use shakmaty::Chess;
-//! use shakmaty::{fen::Fen, CastlingMode, Position};
+//! use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 //!
 //! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
 //!
@@ -48,20 +47,14 @@
 //! Writes X-FEN with `[q]` style for Crazyhouse pockets and `3+3` style
 //! for remainig checks in Three-Check.
 //!
-//! The writer intentionally deviates from the specification when formatting
-//! [`Position`] in the following backwards compatible way: En passant squares
-//! are included only if there is a fully legal en passant capture.
-//! [`Position::into_setup()`] also omits en passant squares, unless there
-//! is a fully legal en passant capture.
-//!
 //! [`Fen`] and [`Epd`] implement [`Display`]:
 //!
 //! ```
-//! use shakmaty::{fen::Epd, Chess};
+//! use shakmaty::{fen::Epd, EnPassantMode, Chess, Position};
 //!
 //! let pos = Chess::default();
 //!
-//! assert_eq!(Epd::from(pos).to_string(),
+//! assert_eq!(Epd::from(pos.into_setup(EnPassantMode::Legal)).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
@@ -77,8 +70,8 @@ use std::{
 };
 
 use crate::{
-    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, Position,
-    PositionError, Rank, RemainingChecks, Role, Setup, Square,
+    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, File, FromSetup, Piece, PositionError,
+    Rank, RemainingChecks, Role, Setup, Square,
 };
 
 fn fmt_castling(
@@ -509,12 +502,6 @@ impl From<Setup> for Fen {
     }
 }
 
-impl<P: Position> From<P> for Fen {
-    fn from(pos: P) -> Fen {
-        Fen::from(pos.into_setup())
-    }
-}
-
 impl From<Fen> for Setup {
     fn from(fen: Fen) -> Setup {
         fen.0
@@ -570,12 +557,6 @@ impl From<Setup> for Epd {
     }
 }
 
-impl<P: Position> From<P> for Epd {
-    fn from(pos: P) -> Epd {
-        Epd::from(pos.into_setup())
-    }
-}
-
 impl From<Epd> for Setup {
     fn from(epd: Epd) -> Setup {
         epd.inner
@@ -599,7 +580,7 @@ impl Display for Epd {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::position::Chess;
+    use crate::{Chess, EnPassantMode, Position};
 
     #[test]
     fn test_legal_ep_square() {
@@ -618,7 +599,10 @@ mod tests {
         assert_eq!(pos.pseudo_legal_ep_square(), Some(Square::D3));
         assert_eq!(pos.legal_ep_square(), None);
 
-        assert_eq!(Epd::from(pos).to_string(), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
+        assert_eq!(
+            Epd::from(pos.into_setup(EnPassantMode::Legal)).to_string(),
+            "4k3/8/8/8/3Pp3/8/8/3KR3 b - -"
+        );
     }
 
     #[test]

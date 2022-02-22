@@ -30,7 +30,7 @@ use crate::{
     setup::{Castles, EnPassant, Setup},
     Board, ByColor, ByRole, CastlingMode, CastlingSide, Color,
     Color::{Black, White},
-    Move, MoveList, Piece, Rank, RemainingChecks, Role, Square,
+    EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Square,
 };
 
 /// Outcome of a game.
@@ -347,7 +347,7 @@ pub trait Position {
 
     /// Converts the position to the current [`Setup`]. The en passant square
     /// is only included if there is a legal en passant capture.
-    fn into_setup(self) -> Setup;
+    fn into_setup(self, mode: EnPassantMode) -> Setup;
 
     /// Generates all legal moves.
     fn legal_moves(&self) -> MoveList;
@@ -514,6 +514,15 @@ pub trait Position {
             .filter(|_| !self.en_passant_moves().is_empty())
     }
 
+    /// The en passant square.
+    fn ep_square(&self, mode: EnPassantMode) -> Option<Square> {
+        match mode {
+            EnPassantMode::Always => self.maybe_ep_square(),
+            EnPassantMode::PseudoLegal => self.pseudo_legal_ep_square(),
+            EnPassantMode::Legal => self.legal_ep_square(),
+        }
+    }
+
     /// Bitboard of pieces giving check.
     fn checkers(&self) -> Bitboard {
         self.our(Role::King).first().map_or(Bitboard(0), |king| {
@@ -598,7 +607,7 @@ pub trait Position {
         Self: Sized + FromSetup,
     {
         let mode = self.castles().mode();
-        let mut setup = self.into_setup();
+        let mut setup = self.into_setup(EnPassantMode::Always);
         setup.swap_turn();
         Self::from_setup(setup, mode)
     }
@@ -707,7 +716,6 @@ impl PartialEq for Chess {
 ///
 /// # Example
 ///
-///
 /// ```
 /// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
@@ -754,9 +762,9 @@ impl Position for Chess {
     fn fullmoves(&self) -> NonZeroU32 {
         self.fullmoves
     }
-    fn into_setup(self) -> Setup {
+    fn into_setup(self, mode: EnPassantMode) -> Setup {
         Setup {
-            ep_square: self.legal_ep_square(),
+            ep_square: self.ep_square(mode),
             board: self.board,
             promoted: Bitboard::EMPTY,
             pockets: None,
@@ -1067,9 +1075,9 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
-                ep_square: self.legal_ep_square(),
+                ep_square: self.ep_square(mode),
                 board: self.board,
                 promoted: Bitboard::EMPTY,
                 pockets: None,
@@ -1330,9 +1338,9 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
-                ep_square: self.legal_ep_square(),
+                ep_square: self.ep_square(mode),
                 board: self.board,
                 promoted: Bitboard::EMPTY,
                 pockets: None,
@@ -1473,8 +1481,8 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
         }
-        fn into_setup(self) -> Setup {
-            self.chess.into_setup()
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
+            self.chess.into_setup(mode)
         }
 
         fn play_unchecked(&mut self, m: &Move) {
@@ -1590,10 +1598,10 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 remaining_checks: Some(self.remaining_checks),
-                ..self.chess.into_setup()
+                ..self.chess.into_setup(mode)
             }
         }
 
@@ -1782,11 +1790,11 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 promoted: self.promoted,
                 pockets: Some(self.pockets),
-                ..self.chess.into_setup()
+                ..self.chess.into_setup(mode)
             }
         }
 
@@ -2002,7 +2010,7 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, _mode: EnPassantMode) -> Setup {
             Setup {
                 board: self.board,
                 promoted: Bitboard::EMPTY,
@@ -2228,9 +2236,9 @@ pub(crate) mod variant {
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
-        fn into_setup(self) -> Setup {
+        fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
-                ep_square: self.legal_ep_square(),
+                ep_square: self.ep_square(mode),
                 board: self.board,
                 promoted: Bitboard::EMPTY,
                 pockets: None,
@@ -3375,7 +3383,7 @@ mod tests {
             .expect("valid position");
         let swapped = pos.swap_turn().expect("swap turn");
         assert_eq!(
-            Fen::from(swapped).to_string(),
+            Fen::from(swapped.into_setup(EnPassantMode::Always)).to_string(),
             "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3"
         );
     }
