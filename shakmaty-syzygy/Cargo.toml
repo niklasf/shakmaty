@@ -18,7 +18,7 @@ harness = false
 [dependencies]
 arrayvec = "0.7"
 bitflags = "1.0.4"
-shakmaty = "0.20.3"
+shakmaty = "0.21.0"
 byteorder = "1"
 itertools = "0.10"
 positioned-io = { package = "positioned-io-preview", version = "0.3.1" }

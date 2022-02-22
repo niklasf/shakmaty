@@ -18,17 +18,17 @@ use std::{
     cmp::{max, Reverse},
     fs, io,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use arrayvec::ArrayVec;
 use once_cell::sync::OnceCell;
 use positioned_io::RandomAccessFile;
 use rustc_hash::FxHashMap;
-use shakmaty::{Material, Move, Position, Role};
+use shakmaty::{Move, Position, Role};
 
 use crate::{
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
+    material::Material,
     table::{DtzTable, WdlTable},
     types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
     AmbiguousWdl,
@@ -138,7 +138,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
-        if material.white.count() < 1 || material.black.count() < 1 {
+        if material.by_color.white.count() < 1 || material.by_color.black.count() < 1 {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
@@ -168,7 +168,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         {
             table
                 .get_or_try_init(|| WdlTable::open(path, key))
-                .ctx(Metric::Wdl, key)
+                .ctx(Metric::Wdl, key.to_owned())
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
@@ -185,7 +185,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         {
             table
                 .get_or_try_init(|| DtzTable::open(path, key))
-                .ctx(Metric::Dtz, key)
+                .ctx(Metric::Dtz, key.to_owned())
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
@@ -452,7 +452,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     fn probe_ab_no_ep(&self, pos: &S, mut alpha: Wdl, beta: Wdl) -> SyzygyResult<Wdl> {
         // Use alpha-beta to recursively resolve captures. This is only called
         // for positions without ep rights.
-        assert!(pos.ep_square().is_none());
+        assert!(pos.maybe_ep_square().is_none());
 
         for m in pos.capture_moves() {
             let mut after = pos.clone();
@@ -575,9 +575,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Get raw WDL value from the appropriate table.
-        let key = pos.board().material();
+        let key = Material::from_board(pos.board());
         self.wdl_table(&key)
-            .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &key))
+            .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, key))
     }
 
     fn probe_dtz_table(
@@ -586,9 +586,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         wdl: DecisiveWdl,
     ) -> SyzygyResult<Option<MaybeRounded<u32>>> {
         // Get raw DTZ value from the appropriate table.
-        let key = pos.board().material();
+        let key = Material::from_board(pos.board());
         self.dtz_table(&key)
-            .and_then(|table| table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &key))
+            .and_then(|table| table.probe_dtz(pos, wdl).ctx(Metric::Dtz, key))
     }
 }
 
@@ -672,7 +672,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             }
         }
 
-        (|| Ok(u!(best)))().ctx(Metric::Dtz, &self.pos.board().material())
+        (|| Ok(u!(best)))().ctx(Metric::Dtz, Material::from_board(self.pos.board()))
     }
 }
 
@@ -701,7 +701,7 @@ mod tests {
         let pos: Chess = "5BrN/8/8/8/8/2k5/8/2K5 b - -"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(
@@ -729,7 +729,7 @@ mod tests {
         let pos: Chess = "8/6B1/8/8/B7/8/K1pk4/8 b - - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(
@@ -758,7 +758,7 @@ mod tests {
         let pos: Chess = "3k4/5P2/8/8/4K3/2P3P1/PP6/8 w - - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .position(CastlingMode::Chess960)
+            .into_position(CastlingMode::Chess960)
             .expect("legal position");
 
         assert!(matches!(

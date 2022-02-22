@@ -31,7 +31,7 @@
 //!
 //! let pos: Chess = "8/8/8/8/B7/N7/K2k4/8 b - - 0 1"
 //!     .parse::<Fen>()?
-//!     .position(CastlingMode::Standard)?;
+//!     .into_position(CastlingMode::Standard)?;
 //!
 //! let wdl = tables.probe_wdl_after_zeroing(&pos)?;
 //! assert_eq!(wdl, Wdl::Loss);
@@ -75,6 +75,7 @@ pub use crate::table::{DtzTable, WdlTable};
 pub use crate::types::DecisiveWdl;
 pub use crate::{
     errors::{ProbeError, SyzygyError},
+    material::Material,
     tablebase::Tablebase,
     types::{AmbiguousWdl, Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl},
 };

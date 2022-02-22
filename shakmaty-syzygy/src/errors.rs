@@ -16,9 +16,7 @@
 
 use std::{error::Error, fmt, io};
 
-use shakmaty::Material;
-
-use crate::types::Metric;
+use crate::{material::Material, types::Metric};
 
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
 
@@ -135,14 +133,14 @@ impl Error for ProbeError {
 }
 
 pub trait ProbeResultExt<T> {
-    fn ctx(self, metric: Metric, material: &Material) -> SyzygyResult<T>;
+    fn ctx(self, metric: Metric, material: Material) -> SyzygyResult<T>;
 }
 
 impl<T> ProbeResultExt<T> for ProbeResult<T> {
-    fn ctx(self, metric: Metric, material: &Material) -> SyzygyResult<T> {
+    fn ctx(self, metric: Metric, material: Material) -> SyzygyResult<T> {
         self.map_err(|error| SyzygyError::ProbeFailed {
             metric,
-            material: material.clone().into_normalized(),
+            material: material.into_normalized(),
             error,
         })
     }

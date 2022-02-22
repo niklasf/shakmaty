@@ -39,7 +39,10 @@ where
             .parse()
             .expect("valid dtz");
 
-        let pos: S = fen.position(CastlingMode::Chess960).expect("legal");
+        let pos: S = fen
+            .clone()
+            .into_position(CastlingMode::Chess960)
+            .expect("legal");
 
         println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
 

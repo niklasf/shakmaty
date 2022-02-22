@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{fs, io, iter::FromIterator, marker::PhantomData, path::Path};
+use std::{fs, io, marker::PhantomData, path::Path};
 
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
 use byteorder::{ByteOrder as _, ReadBytesExt as _, BE, LE};
 use itertools::Itertools as _;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
-use shakmaty::{Bitboard, Color, File, Material, Piece, Position, Rank, Role, Square};
+use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 
 use crate::{
     errors::{ProbeError, ProbeResult},
-    material::MaterialExt,
+    material::Material,
     types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES},
 };
 
@@ -516,7 +516,7 @@ impl GroupData {
         let lens = group_pieces(&pieces);
 
         // Compute a factor for each group.
-        let pp = material.white.has_pawns() && material.black.has_pawns();
+        let pp = material.by_color.white.has_pawns() && material.by_color.black.has_pawns();
         let mut factors = ArrayVec::from([0; MAX_PIECES + 1]);
         factors.truncate(lens.len() + 1);
         let mut free_squares = 64 - lens[0] - if pp { lens[1] } else { 0 };
@@ -826,8 +826,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     pub fn new(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
         let material = material.clone();
         assert!(material.count() <= MAX_PIECES);
-        assert!(material.white.count() >= 1);
-        assert!(material.black.count() >= 1);
+        assert!(material.by_color.white.count() >= 1);
+        assert!(material.by_color.black.count() >= 1);
 
         // Check magic.
         let (magic, pawnless_magic) = match T::METRIC {
@@ -854,7 +854,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         ensure!(split != material.is_symmetric());
 
         // Read group data.
-        let pp = material.white.has_pawns() && material.black.has_pawns();
+        let pp = material.by_color.white.has_pawns() && material.by_color.black.has_pawns();
         let num_files = if has_pawns { 4 } else { 1 };
         let num_sides = if T::METRIC == Metric::Wdl && !material.is_symmetric() {
             2
@@ -1109,7 +1109,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Given a position, determine the unique (modulo symmetries) index into
     /// the corresponding subtable.
     fn encode(&self, pos: &S) -> ProbeResult<Option<(&PairsData, u64)>> {
-        let key = pos.board().material();
+        let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
         assert!(key == material || key == material.clone().into_flipped());
 
@@ -1349,7 +1349,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         idx *= side.groups.factors[0];
 
         // Encode remaining pawns.
-        let mut remaining_pawns = material.white.has_pawns() && material.black.has_pawns();
+        let mut remaining_pawns =
+            material.by_color.white.has_pawns() && material.by_color.black.has_pawns();
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
         for lens in side.groups.lens.iter().cloned().skip(1) {

@@ -1,11 +1,9 @@
 use std::{error::Error, path::PathBuf};
 
 use shakmaty::{
-    fen::{fen, Fen},
-    san::SanPlus,
-    CastlingMode, Chess, Color, Outcome, Position, Setup,
+    fen::Fen, san::SanPlus, CastlingMode, Chess, Color, EnPassantMode, Outcome, Position,
 };
-use shakmaty_syzygy::{MaybeRounded, Tablebase};
+use shakmaty_syzygy::{Material, MaybeRounded, Tablebase};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -17,7 +15,7 @@ struct Opt {
     #[structopt(long = "test")]
     test: bool,
     /// The position to probe
-    fen: String,
+    fen: Fen,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -28,10 +26,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         tablebase.add_directory(path)?;
     }
 
-    let mut pos: Chess = opt.fen.parse::<Fen>()?.position(CastlingMode::Chess960)?;
+    let mut pos: Chess = opt.fen.into_position(CastlingMode::Chess960)?;
+    let fen = Fen::from_position(pos.clone(), EnPassantMode::Legal);
 
-    let material = pos.board().material();
-    let fen = fen(&pos);
+    let material = Material::from_board(pos.board());
     let wdl = tablebase.probe_wdl(&pos)?;
     let dtz = tablebase.probe_dtz(&pos)?;
 
@@ -63,12 +61,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             movetext.push(match tablebase.probe_dtz(&pos)? {
                 MaybeRounded::Precise(dtz) => format!(
                     "{{ {} with DTZ {} }}",
-                    pos.board().material(),
+                    Material::from_board(pos.board()),
                     i32::from(dtz)
                 ),
                 MaybeRounded::Rounded(dtz) => format!(
                     "{{ {} with DTZ {} or {} }}",
-                    pos.board().material(),
+                    Material::from_board(pos.board()),
                     i32::from(dtz),
                     i32::from(dtz.add_plies(1))
                 ),
