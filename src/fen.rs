@@ -335,7 +335,7 @@ impl Fen {
         Fen(Setup::empty())
     }
 
-    pub fn into_inner(self) -> Setup {
+    pub fn into_setup(self) -> Setup {
         self.0
     }
 
@@ -549,7 +549,7 @@ impl Epd {
         }
     }
 
-    pub fn into_inner(self) -> Setup {
+    pub fn into_setup(self) -> Setup {
         self.inner
     }
 
@@ -558,7 +558,7 @@ impl Epd {
     }
 
     pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
-        Ok(Epd::from(Fen::from_ascii(epd)?.into_inner()))
+        Ok(Epd::from(Fen::from_ascii(epd)?.into_setup()))
     }
 }
 
@@ -606,7 +606,7 @@ mod tests {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
         assert_eq!(
-            Epd::from(fen.clone().into_inner()).to_string(),
+            Epd::from(fen.clone().into_setup()).to_string(),
             original_epd
         );
 
@@ -659,7 +659,7 @@ mod tests {
         let setup = "8/8/8/8/8/8/8/8[Q]"
             .parse::<Fen>()
             .expect("valid fen")
-            .into_inner();
+            .into_setup();
         assert_eq!(
             setup.pockets.map(|p| *p.piece(Color::White.queen())),
             Some(1)
@@ -671,7 +671,7 @@ mod tests {
         let setup = "rnbqk1nQ~/ppppp3/8/5p2/8/5N2/PPPPPPP1/RNBQKB1R/PPBR b KQq - 0 6"
             .parse::<Fen>()
             .expect("valid fen")
-            .into_inner();
+            .into_setup();
         assert_eq!(setup.promoted, Bitboard::from(Square::H8));
     }
 
@@ -680,7 +680,7 @@ mod tests {
         let setup = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/ w KQkq - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
-            .into_inner();
+            .into_setup();
         assert_eq!(setup.pockets, Some(Default::default()));
     }
 
@@ -689,7 +689,7 @@ mod tests {
         let setup = "8/8/8/8/8/8/8/8 w - - 1+2 12 42"
             .parse::<Fen>()
             .expect("valid fen")
-            .into_inner();
+            .into_setup();
         assert_eq!(
             setup.remaining_checks,
             Some(ByColor {
@@ -706,7 +706,7 @@ mod tests {
         let setup = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 1 2 +0+0"
             .parse::<Fen>()
             .expect("valid fen")
-            .into_inner();
+            .into_setup();
         assert_eq!(
             setup.remaining_checks,
             Some(ByColor {
