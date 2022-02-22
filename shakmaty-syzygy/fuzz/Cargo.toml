@@ -8,9 +8,9 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-shakmaty = "0.19"
+shakmaty = "0.21"
 shakmaty-syzygy = { path = ".." }
-libfuzzer-sys = { git = "https://github.com/rust-fuzz/libfuzzer-sys.git" }
+libfuzzer-sys = "0.4"
 
 [[bin]]
 name = "pawnful"
