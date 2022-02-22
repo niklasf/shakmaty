@@ -110,6 +110,11 @@ impl Variant {
                 "Normal",
                 "Illegal",
                 "From Position",
+                "Chess960",
+                "Chess 960",
+                "fischerandom", // Cute Chess
+                "fischerrandom",
+                "fischer random",
             ],
             Variant::Atomic => &["Atomic", "Atom", "Atomic chess"],
             Variant::Antichess => &["Antichess", "Anti chess", "Anti"],
