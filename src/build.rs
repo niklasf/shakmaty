@@ -14,6 +14,7 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(feature = "step", feature(step_trait))]
+#![cfg_attr(docs_rs, feature(doc_cfg))]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![allow(dead_code)]
 

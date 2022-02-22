@@ -78,6 +78,7 @@ impl Board {
     }
 
     #[cfg(feature = "variant")]
+    #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
     pub fn racing_kings() -> Board {
         Board {
             by_role: ByRole {
@@ -97,6 +98,7 @@ impl Board {
     }
 
     #[cfg(feature = "variant")]
+    #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
     pub fn horde() -> Board {
         Board {
             by_role: ByRole {
