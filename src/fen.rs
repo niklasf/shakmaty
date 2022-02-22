@@ -614,6 +614,10 @@ mod tests {
         let pos: Chess = fen
             .position(CastlingMode::Standard)
             .expect("legal position");
+        assert_eq!(pos.maybe_ep_square(), Some(Square::D3));
+        assert_eq!(pos.pseudo_legal_ep_square(), Some(Square::D3));
+        assert_eq!(pos.legal_ep_square(), None);
+
         assert_eq!(Epd::from(pos).to_string(), "4k3/8/8/8/3Pp3/8/8/3KR3 b - -");
     }
 
