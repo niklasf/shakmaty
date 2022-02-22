@@ -709,7 +709,7 @@ impl PartialEq for Chess {
     }
 }
 
-/// Equivalent to comparing [`Position::into_setup()`].
+/// Equivalent to comparing `Position::into_setup(EnPassantMode::Legal)`.
 ///
 /// Positions with different [`CastlingMode`] may be equivalent. En passant
 /// squares are considered only if there is a legal en passant capture.
