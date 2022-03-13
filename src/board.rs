@@ -176,7 +176,7 @@ impl Board {
         self.by_role.bishop ^ self.by_role.queen
     }
 
-    /// The (unique) king of the given side.
+    /// The (unique!) king of the given side, if any.
     #[inline]
     pub fn king_of(&self, color: Color) -> Option<Square> {
         (self.by_role.king & self.by_color(color)).single_square()
