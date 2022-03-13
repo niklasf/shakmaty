@@ -328,10 +328,6 @@ impl Fen {
         Fen(Setup::empty())
     }
 
-    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Fen {
-        Fen(pos.into_setup(mode))
-    }
-
     /// Parses a FEN or EPD.
     ///
     /// FENs consist of parts separated by spaces. This parser also accepts
@@ -481,6 +477,14 @@ impl Fen {
         }
     }
 
+    pub fn from_setup(setup: Setup) -> Fen {
+        Fen(setup)
+    }
+
+    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Fen {
+        Fen(pos.into_setup(mode))
+    }
+
     pub fn into_setup(self) -> Setup {
         self.0
     }
@@ -498,13 +502,13 @@ impl Fen {
 
 impl From<Setup> for Fen {
     fn from(setup: Setup) -> Fen {
-        Fen(setup)
+        Fen::from_setup(setup)
     }
 }
 
 impl From<Fen> for Setup {
     fn from(fen: Fen) -> Setup {
-        fen.0
+        fen.into_setup()
     }
 }
 
@@ -533,11 +537,17 @@ impl Epd {
     }
 
     pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
-        Ok(Epd::from(Fen::from_ascii(epd)?.into_setup()))
+        Ok(Epd::from_setup(Fen::from_ascii(epd)?.into_setup()))
+    }
+
+    pub fn from_setup(mut setup: Setup) -> Epd {
+        setup.halfmoves = 0;
+        setup.fullmoves = NonZeroU32::new(1).unwrap();
+        Epd(setup)
     }
 
     pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Epd {
-        Epd::from(pos.into_setup(mode))
+        Epd::from_setup(pos.into_setup(mode))
     }
 
     pub fn into_setup(self) -> Setup {
@@ -550,16 +560,14 @@ impl Epd {
 }
 
 impl From<Setup> for Epd {
-    fn from(mut setup: Setup) -> Epd {
-        setup.halfmoves = 0;
-        setup.fullmoves = NonZeroU32::new(1).unwrap();
-        Epd(setup)
+    fn from(setup: Setup) -> Epd {
+        Epd::from_setup(setup)
     }
 }
 
 impl From<Epd> for Setup {
-    fn from(Epd(setup): Epd) -> Setup {
-        setup
+    fn from(epd: Epd) -> Setup {
+        epd.into_setup()
     }
 }
 
