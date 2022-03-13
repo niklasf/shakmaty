@@ -86,6 +86,7 @@ impl Bitboard {
     /// // . 1 . 1 . . . .
     /// // . 1 . . 1 . . .
     /// ```
+    #[deprecated]
     #[must_use]
     #[inline]
     pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
@@ -93,6 +94,42 @@ impl Bitboard {
             Color::White => Bitboard(self.0 << shift),
             Color::Black => Bitboard(self.0 >> shift),
         }
+    }
+
+    /// Silently overflowing bitwise shift with a signed offset, `<<` for
+    /// positive values and `>>` for negative values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.shift(-8), Bitboard(0x001e_2222_120e_0a12));
+    /// // . . . . . . . .
+    /// // . 1 1 1 1 . . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 1 1 . . . .
+    /// // . 1 . 1 . . . .
+    /// // . 1 . . 1 . . .
+    ///
+    /// assert_eq!(bitboard.shift(64), Bitboard(0));
+    /// assert_eq!(bitboard.shift(i32::MIN), Bitboard(0));
+    /// ```
+    #[must_use]
+    #[inline]
+    pub fn shift(self, offset: i32) -> Bitboard {
+        Bitboard(if offset > 63 {
+            0
+        } else if offset >= 0 {
+            self.0 << offset
+        } else if offset >= -63 {
+            self.0 >> -offset
+        } else {
+            0
+        })
     }
 
     /// Tests if `self` is non-empty.
