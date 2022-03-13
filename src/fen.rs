@@ -24,8 +24,8 @@
 //!   Allows repeated castling rights and castling rights in any order.
 //! * Supports `[q]` and `/q` styles for Crazyhouse pockets.
 //! * Supports `3+3` and `+0+0` for remaining checks in Three-Check.
-//! * Accepts partial FENs and fills missing fields with the default values
-//!   of `8/8/8/8/8/8/8/8 w - - 0 1`.
+//! * Accepts missing FEN fields (except the board) and fills them with
+//!   default values of `8/8/8/8/8/8/8/8 w - - 0 1`.
 //! * Accepts multiple spaces and underscores (`_`) as separators between
 //!   FEN fields.
 //! * Accepts `0` as fulllmove number and uses `1` instead.
