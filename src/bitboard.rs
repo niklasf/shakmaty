@@ -86,7 +86,7 @@ impl Bitboard {
     /// // . 1 . 1 . . . .
     /// // . 1 . . 1 . . .
     /// ```
-    #[deprecated]
+    #[deprecated = "use Bitboard::shift() or manual shifts for clearer semantics"]
     #[must_use]
     #[inline]
     pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
@@ -167,16 +167,19 @@ impl Bitboard {
         (self & Bitboard::from_square(sq)).any()
     }
 
+    /// Adds `squares`.
     #[inline]
     pub fn add<T: Into<Bitboard>>(&mut self, squares: T) {
         *self |= squares;
     }
 
+    /// Toggles `squares`.
     #[inline]
     pub fn toggle<T: Into<Bitboard>>(&mut self, squares: T) {
         *self ^= squares;
     }
 
+    /// Discards `squares`.
     #[inline]
     pub fn discard<T: Into<Bitboard>>(&mut self, squares: T) {
         *self &= !squares.into();
@@ -207,20 +210,23 @@ impl Bitboard {
         }
     }
 
+    /// Conditionally adds or discards `square`.
     #[inline]
-    pub fn set(&mut self, sq: Square, v: bool) {
+    pub fn set(&mut self, square: Square, v: bool) {
         if v {
-            self.add(sq);
+            self.add(square);
         } else {
-            self.discard(sq);
+            self.discard(square);
         }
     }
 
+    /// Clears all squares.
     #[inline]
     pub fn clear(&mut self) {
         self.0 = 0;
     }
 
+    /// Returns the union of `self` and `squares`. Equivalent to bitwise `|`.
     #[doc(alias = "union")]
     #[must_use]
     #[inline]
@@ -228,6 +234,7 @@ impl Bitboard {
         self | squares
     }
 
+    /// Returns `self` without `squares` (set difference).
     #[doc(alias = "difference")]
     #[must_use]
     #[inline]
@@ -235,6 +242,8 @@ impl Bitboard {
         self & !squares.into()
     }
 
+    /// Returns all squares that are in `self` or `squares` but not in both
+    /// (symmetric set difference). Equivalent to bitwise `^`.
     #[doc(alias = "symmetric_difference")]
     #[must_use]
     #[inline]
@@ -242,6 +251,7 @@ impl Bitboard {
         self ^ squares
     }
 
+    /// Tests if `self` and `other` are disjoint.
     #[inline]
     pub fn is_disjoint<T: Into<Bitboard>>(self, other: T) -> bool {
         (self & other).is_empty()
@@ -275,6 +285,7 @@ impl Bitboard {
         other.into().is_subset(self)
     }
 
+    /// Removes and returns the first square, if any.
     #[must_use = "use Bitboard::discard_first() if return value is not needed"]
     #[inline]
     pub fn pop_front(&mut self) -> Option<Square> {
@@ -283,6 +294,7 @@ impl Bitboard {
         square
     }
 
+    /// Returns the first square, if any.
     #[inline]
     pub fn first(self) -> Option<Square> {
         if self.is_empty() {
@@ -292,11 +304,13 @@ impl Bitboard {
         }
     }
 
+    /// Discards the first square.
     #[inline]
     pub fn discard_first(&mut self) {
         self.0 &= self.0.wrapping_sub(1);
     }
 
+    /// Returns `self` without the first square.
     #[inline]
     pub fn without_first(self) -> Bitboard {
         let mut bb = self;
@@ -304,6 +318,7 @@ impl Bitboard {
         bb
     }
 
+    /// Removes and returns the last square, if any.
     #[inline]
     pub fn pop_back(&mut self) -> Option<Square> {
         let square = self.last();
@@ -311,6 +326,7 @@ impl Bitboard {
         square
     }
 
+    /// Returns the last square.
     #[inline]
     pub fn last(self) -> Option<Square> {
         if self.is_empty() {
@@ -320,18 +336,37 @@ impl Bitboard {
         }
     }
 
+    /// Returns the number of squares in `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert_eq!(Bitboard::CORNERS.count(), 4);
+    /// ```
     #[doc(alias = "len")]
     #[inline]
     pub fn count(self) -> usize {
         self.0.count_ones() as usize
     }
 
+    /// Tests if there is more than one square in `self`.
     #[inline]
     pub fn more_than_one(self) -> bool {
         self.without_first().any()
     }
 
     /// Gets the only square in the set, if there is exactly one.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Square, Rank};
+    ///
+    /// assert_eq!(Bitboard::from(Square::H5).single_square(), Some(Square::H5));
+    /// assert_eq!(Bitboard::from(Rank::First).single_square(), None);
+    /// ```
     #[inline]
     pub fn single_square(self) -> Option<Square> {
         if self.more_than_one() {
@@ -342,6 +377,16 @@ impl Bitboard {
     }
 
     /// An iterator over the subsets of this bitboard.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// for subset in Bitboard::CENTER.carry_rippler() {
+    ///     assert!(subset.is_subset(Bitboard::CENTER));
+    /// }
+    /// ```
     #[inline]
     pub fn carry_rippler(self) -> CarryRippler {
         CarryRippler {
@@ -1024,6 +1069,8 @@ impl DoubleEndedIterator for IntoIter {
 }
 
 /// Iterator over the subsets of a [`Bitboard`].
+///
+/// See [`Bitboard::carry_rippler()`].
 #[derive(Debug, Clone)]
 pub struct CarryRippler {
     bb: u64,
