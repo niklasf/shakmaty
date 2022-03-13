@@ -124,6 +124,7 @@ impl Bitboard {
         self.0 == 0
     }
 
+    /// Tests if `self` contains the given square.
     #[inline]
     pub fn contains(self, sq: Square) -> bool {
         (self & Bitboard::from_square(sq)).any()
@@ -237,10 +238,11 @@ impl Bitboard {
         other.into().is_subset(self)
     }
 
+    #[must_use = "use Bitboard::discard_first() if return value is not needed"]
     #[inline]
     pub fn pop_front(&mut self) -> Option<Square> {
         let square = self.first();
-        self.0 &= self.0.wrapping_sub(1);
+        self.discard_first();
         square
     }
 
@@ -251,6 +253,18 @@ impl Bitboard {
         } else {
             Some(Square::new(self.0.trailing_zeros()))
         }
+    }
+
+    #[inline]
+    pub fn discard_first(&mut self) {
+        self.0 &= self.0.wrapping_sub(1);
+    }
+
+    #[inline]
+    pub fn without_first(self) -> Bitboard {
+        let mut bb = self;
+        bb.discard_first();
+        bb
     }
 
     #[inline]
@@ -277,7 +291,7 @@ impl Bitboard {
 
     #[inline]
     pub fn more_than_one(self) -> bool {
-        self.0 & self.0.wrapping_sub(1) != 0
+        self.without_first().any()
     }
 
     /// Gets the only square in the set, if there is exactly one.
