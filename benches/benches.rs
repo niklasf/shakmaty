@@ -5,12 +5,22 @@ use shakmaty::{
 
 fn bench_shallow_perft() {
     let pos = Chess::default();
-    assert_eq!(perft(&pos, black_box(4)), 197_281);
+    assert_eq!(black_box(perft(black_box(&pos), 4)), 197_281);
 }
 
 fn bench_deep_perft() {
     let pos = Chess::default();
-    assert_eq!(perft(&pos, black_box(5)), 4_865_609);
+    assert_eq!(perft(black_box(&pos), 5), 4_865_609);
+}
+
+fn bench_kiwipete() {
+    let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
+    let pos: Chess = fen
+        .parse::<Fen>()
+        .expect("valid fen")
+        .into_position(CastlingMode::Standard)
+        .expect("legal position");
+    assert_eq!(perft(black_box(&pos), 4), 4_085_603);
 }
 
 fn bench_parse_san_move_complicated() {
@@ -100,6 +110,7 @@ fn bench_play_sans() -> Chess {
 iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
+    bench_kiwipete,
     bench_parse_san_move_complicated,
     bench_generate_moves,
     bench_play_unchecked,
