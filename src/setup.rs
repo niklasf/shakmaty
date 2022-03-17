@@ -244,7 +244,12 @@ impl Castles {
         self.rook(color, side).is_some()
     }
 
+    #[deprecated = "renamed to Castles::has_color()"]
     pub fn has_side(&self, color: Color) -> bool {
+        self.has_color(color)
+    }
+
+    pub fn has_color(&self, color: Color) -> bool {
         (self.mask & color.backrank()).any()
     }
 
@@ -266,7 +271,7 @@ impl Castles {
         }
     }
 
-    #[deprecated = "use Castles::discard_color()"]
+    #[deprecated = "renamed to Castles::discard_color()"]
     pub fn discard_side(&mut self, color: Color) {
         self.discard_color(color);
     }

@@ -411,7 +411,7 @@ pub trait Position {
             Move::Normal { role, from, to, .. } => {
                 self.castles().castling_rights().contains(from)
                     || self.castles().castling_rights().contains(to)
-                    || (role == Role::King && self.castles().has_side(self.turn()))
+                    || (role == Role::King && self.castles().has_color(self.turn()))
             }
         }) || self.legal_ep_square().is_some()
     }
