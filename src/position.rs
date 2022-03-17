@@ -2628,7 +2628,7 @@ fn do_move(
             }
 
             if role == Role::King {
-                castles.discard_side(color);
+                castles.discard_color(color);
             } else if role == Role::Rook {
                 castles.discard_rook(from);
             }
@@ -2655,7 +2655,7 @@ fn do_move(
                 Square::from_coords(side.king_to_file(), king.rank()),
                 color.king(),
             );
-            castles.discard_side(color);
+            castles.discard_color(color);
         }
         Move::EnPassant { from, to } => {
             board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn

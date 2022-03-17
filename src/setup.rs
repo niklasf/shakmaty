@@ -266,7 +266,12 @@ impl Castles {
         }
     }
 
+    #[deprecated = "use Castles::discard_color()"]
     pub fn discard_side(&mut self, color: Color) {
+        self.discard_color(color);
+    }
+
+    pub fn discard_color(&mut self, color: Color) {
         self.mask.discard(color.backrank());
         *self.rook.get_mut(color) = [None, None];
     }
