@@ -130,8 +130,8 @@ impl Default for Setup {
 #[derive(Clone, Debug)]
 pub struct Castles {
     mask: Bitboard,
-    rook: [[Option<Square>; 2]; 2],
-    path: [[Bitboard; 2]; 2],
+    rook: ByColor<[Option<Square>; 2]>,
+    path: ByColor<[Bitboard; 2]>,
     mode: CastlingMode,
 }
 
@@ -140,20 +140,20 @@ impl Default for Castles {
         Castles {
             mode: CastlingMode::Standard,
             mask: Bitboard::CORNERS,
-            rook: [
-                [Some(Square::H8), Some(Square::A8)], // black
-                [Some(Square::H1), Some(Square::A1)], // white
-            ],
-            path: [
-                [
+            rook: ByColor {
+                black: [Some(Square::H8), Some(Square::A8)],
+                white: [Some(Square::H1), Some(Square::A1)],
+            },
+            path: ByColor {
+                black: [
                     Bitboard(0x6000_0000_0000_0000),
                     Bitboard(0x0e00_0000_0000_0000),
                 ],
-                [
+                white: [
                     Bitboard(0x0000_0000_0000_0060),
                     Bitboard(0x0000_0000_0000_000e),
                 ],
-            ],
+            },
         }
     }
 }
@@ -171,8 +171,8 @@ impl Castles {
         Castles {
             mode,
             mask: Bitboard(0),
-            rook: [[None; 2]; 2],
-            path: [[Bitboard(0); 2]; 2],
+            rook: ByColor::default(),
+            path: ByColor::default(),
         }
     }
 
@@ -198,9 +198,9 @@ impl Castles {
                     let chess960 = king.file() != File::E || a_side.file() != File::A;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(a_side);
-                        castles.rook[color as usize][CastlingSide::QueenSide as usize] =
+                        castles.rook.get_mut(color)[CastlingSide::QueenSide as usize] =
                             Some(a_side);
-                        castles.path[color as usize][CastlingSide::QueenSide as usize] =
+                        castles.path.get_mut(color)[CastlingSide::QueenSide as usize] =
                             (attacks::between(a_side, rook_to).with(rook_to)
                                 | attacks::between(king, king_to).with(king_to))
                             .without(king)
@@ -214,9 +214,8 @@ impl Castles {
                     let chess960 = king.file() != File::E || h_side.file() != File::H;
                     if !chess960 || mode.is_chess960() {
                         castles.mask.add(h_side);
-                        castles.rook[color as usize][CastlingSide::KingSide as usize] =
-                            Some(h_side);
-                        castles.path[color as usize][CastlingSide::KingSide as usize] =
+                        castles.rook.get_mut(color)[CastlingSide::KingSide as usize] = Some(h_side);
+                        castles.path.get_mut(color)[CastlingSide::KingSide as usize] =
                             (attacks::between(h_side, rook_to).with(rook_to)
                                 | attacks::between(king, king_to).with(king_to))
                             .without(king)
@@ -251,21 +250,21 @@ impl Castles {
 
     pub fn discard_rook(&mut self, square: Square) {
         if self.mask.remove(square) {
-            self.rook[0][0] = self.rook[0][0].filter(|sq| *sq != square);
-            self.rook[0][1] = self.rook[0][1].filter(|sq| *sq != square);
-            self.rook[1][0] = self.rook[1][0].filter(|sq| *sq != square);
-            self.rook[1][1] = self.rook[1][1].filter(|sq| *sq != square);
+            self.rook.as_mut().for_each(|rook| {
+                rook[0] = rook[0].filter(|sq| *sq != square);
+                rook[1] = rook[1].filter(|sq| *sq != square);
+            });
         }
     }
 
     pub fn discard_side(&mut self, color: Color) {
         self.mask.discard(color.backrank());
-        self.rook[color as usize] = [None, None];
+        *self.rook.get_mut(color) = [None, None];
     }
 
     #[inline]
     pub fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
-        self.rook[color as usize][side as usize]
+        self.rook.get(color)[side as usize]
     }
 
     /// Gets the squares that need to be empty so that castling is possible
@@ -291,7 +290,7 @@ impl Castles {
     /// ```
     #[inline]
     pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
-        self.path[color as usize][side as usize]
+        self.path.get(color)[side as usize]
     }
 
     #[inline]
