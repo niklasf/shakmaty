@@ -485,6 +485,10 @@ impl Fen {
         Fen(pos.into_setup(mode))
     }
 
+    pub fn as_setup(&self) -> &Setup {
+        &self.0
+    }
+
     pub fn into_setup(self) -> Setup {
         self.0
     }
@@ -548,6 +552,10 @@ impl Epd {
 
     pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Epd {
         Epd::from_setup(pos.into_setup(mode))
+    }
+
+    pub fn as_setup(&self) -> &Setup {
+        &self.0
     }
 
     pub fn into_setup(self) -> Setup {
