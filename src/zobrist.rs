@@ -110,8 +110,8 @@ pub trait ZobristHash {
     ///
     /// Warning: Zobrist hashes have good collision resistance, but can be
     /// forged efficiently. In this implementation, impossible positions with
-    /// more than 3 remaining checks in Three-check and more than standard
-    /// material in Crazyhouse pockets are particularly prone to collisions.
+    /// more than standard material in Crazyhouse pockets are particularly
+    /// prone to collisions.
     fn zobrist_hash<V: ZobristValue>(&self) -> V;
 
     /// Prepares an incremental update of the Zobrist hash before playing move
