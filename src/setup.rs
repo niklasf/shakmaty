@@ -250,20 +250,18 @@ impl Castles {
 
     pub fn discard_rook(&mut self, square: Square) {
         if square <= Square::H1 {
-            if self.mask.remove(square) {
-                if self.rook.white[0] == Some(square) {
-                    self.rook.white[0] = None;
-                } else {
-                    self.rook.white[1] = None;
-                }
+            self.mask.discard(square);
+            if self.rook.white[0] == Some(square) {
+                self.rook.white[0] = None;
+            } else if self.rook.white[1] == Some(square) {
+                self.rook.white[1] = None;
             }
         } else if square >= Square::A8 {
-            if self.mask.remove(square) {
-                if self.rook.black[0] == Some(square) {
-                    self.rook.black[0] = None;
-                } else {
-                    self.rook.black[1] = None;
-                }
+            self.mask.discard(square);
+            if self.rook.black[0] == Some(square) {
+                self.rook.black[0] = None;
+            } else if self.rook.black[1] == Some(square) {
+                self.rook.black[1] = None;
             }
         }
     }
