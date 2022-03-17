@@ -1,7 +1,5 @@
 use iai::black_box;
-use shakmaty::{
-    fen::Fen, perft, san::San, CastlingMode, Chess, File, Move, Position, Role, Square,
-};
+use shakmaty::{fen::Fen, perft, san::San, CastlingMode, Chess, Move, Position, Role, Square};
 
 fn bench_shallow_perft() {
     let pos = Chess::default();
@@ -21,20 +19,6 @@ fn bench_kiwipete() {
         .into_position(CastlingMode::Standard)
         .expect("legal position");
     assert_eq!(perft(black_box(&pos), 4), 4_085_603);
-}
-
-fn bench_parse_san_move_complicated() {
-    assert_eq!(
-        black_box(San::from_ascii(black_box(b"bxc1=R+")).expect("valid san")),
-        San::Normal {
-            role: Role::Pawn,
-            file: Some(File::B),
-            rank: None,
-            capture: true,
-            to: Square::C1,
-            promotion: Some(Role::Rook),
-        }
-    );
 }
 
 fn bench_generate_moves() {
@@ -111,7 +95,6 @@ iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
     bench_kiwipete,
-    bench_parse_san_move_complicated,
     bench_generate_moves,
     bench_play_unchecked,
     bench_san_candidates,
