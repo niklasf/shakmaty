@@ -144,7 +144,7 @@ const MULT_TWIST: [u64; 64] = [
 /// overflow in debug mode.
 const Z0: u64 = u64::max_value();
 
-/// Encoding of all 461 configurations of two not-connected kings.
+/// Encoding of all 462 configurations of two not-connected kings.
 #[rustfmt::skip]
 const KK_IDX: [[u64; 64]; 10] = [[
      Z0,  Z0,  Z0,   0,   1,   2,   3,   4,
