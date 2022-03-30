@@ -188,6 +188,7 @@ bitflags! {
 }
 
 /// Error when trying to create a [`Position`] from an illegal [`Setup`].
+#[derive(Clone)]
 pub struct PositionError<P> {
     pub(crate) pos: P,
     pub(crate) errors: PositionErrorKinds,
