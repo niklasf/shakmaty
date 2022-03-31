@@ -1,5 +1,14 @@
 # Changelog for shakmaty
 
+## v0.21.1
+
+- Rename `Castles::discard_side()` to `discard_color()` and
+  `Castles::has_side()` to `has_color()`.
+- Add `Bitboard::without_first()`.
+- Add `Bitboard::shift()`.
+- Add `{Fen,Epd}::from_setup()` and `{Fen,Epd}::as_setup()`.
+- Implement `Clone` for `PositionError` if possible.
+
 ## v0.21.0
 
 - Refactor `Setup`: It is now a struct instead of a trait.
