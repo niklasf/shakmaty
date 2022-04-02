@@ -1117,7 +1117,7 @@ pub(crate) mod variant {
                         attacks::king_attacks(to) & self.board().occupied() & !self.board.pawns();
 
                     if (explosion_radius & self.board().kings() & self.us()).any() {
-                        self.castles.discard_side(self.turn());
+                        self.castles.discard_color(self.turn());
                     }
 
                     for explosion in explosion_radius {
@@ -1890,7 +1890,7 @@ pub(crate) mod variant {
                 Move::Normal { role, from, to, .. } => {
                     self.chess.castles.castling_rights().contains(from)
                         || self.chess.castles.castling_rights().contains(to)
-                        || (role == Role::King && self.chess.castles.has_side(self.turn()))
+                        || (role == Role::King && self.chess.castles.has_color(self.turn()))
                 }
                 _ => false,
             }
@@ -2132,7 +2132,7 @@ pub(crate) mod variant {
     impl Default for Horde {
         fn default() -> Horde {
             let mut castles = Castles::default();
-            castles.discard_side(White);
+            castles.discard_color(White);
 
             Horde {
                 board: Board::horde(),
