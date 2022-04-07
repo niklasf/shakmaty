@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{array, num};
+use std::{array, convert::identity, num};
 
 use crate::{color::Color, types::Piece, util::overflow_error};
 
@@ -306,17 +306,6 @@ impl<T> ByRole<T> {
         }
     }
 
-    pub fn zip_role(self) -> ByRole<(Role, T)> {
-        ByRole {
-            pawn: (Role::Pawn, self.pawn),
-            knight: (Role::Knight, self.knight),
-            bishop: (Role::Bishop, self.bishop),
-            rook: (Role::Rook, self.rook),
-            queen: (Role::Queen, self.queen),
-            king: (Role::King, self.king),
-        }
-    }
-
     pub fn zip<U>(self, other: ByRole<U>) -> ByRole<(T, U)> {
         ByRole {
             pawn: (self.pawn, other.pawn),
@@ -326,6 +315,10 @@ impl<T> ByRole<T> {
             queen: (self.queen, other.queen),
             king: (self.king, other.king),
         }
+    }
+
+    pub fn zip_role(self) -> ByRole<(Role, T)> {
+        ByRole::new_with(identity).zip(self)
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 6> {

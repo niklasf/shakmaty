@@ -16,7 +16,7 @@
 
 //! White or black.
 
-use std::{array, error::Error, fmt, mem, ops, str::FromStr};
+use std::{array, convert::identity, error::Error, fmt, mem, ops, str::FromStr};
 
 use crate::{
     role::{ByRole, Role},
@@ -276,18 +276,15 @@ impl<T> ByColor<T> {
         }
     }
 
-    pub fn zip_color(self) -> ByColor<(Color, T)> {
-        ByColor {
-            black: (Color::Black, self.black),
-            white: (Color::White, self.white),
-        }
-    }
-
     pub fn zip<U>(self, other: ByColor<U>) -> ByColor<(T, U)> {
         ByColor {
             black: (self.black, other.black),
             white: (self.white, other.white),
         }
+    }
+
+    pub fn zip_color(self) -> ByColor<(Color, T)> {
+        ByColor::new_with(identity).zip(self)
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 2> {
