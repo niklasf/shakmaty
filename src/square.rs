@@ -166,6 +166,11 @@ impl File {
             .and_then(|index| index.try_into().ok())
     }
 
+    #[inline]
+    pub fn distance(self, other: File) -> u32 {
+        u32::from(self).abs_diff(u32::from(other))
+    }
+
     #[must_use]
     #[inline]
     pub fn flip_horizontal(self) -> File {
@@ -275,6 +280,11 @@ impl Rank {
         i32::from(self)
             .checked_add(delta)
             .and_then(|index| index.try_into().ok())
+    }
+
+    #[inline]
+    pub fn distance(self, other: Rank) -> u32 {
+        u32::from(self).abs_diff(u32::from(other))
     }
 
     #[must_use]
@@ -665,8 +675,8 @@ impl Square {
     /// ```
     pub fn distance(self, other: Square) -> u32 {
         max(
-            (self.file() - other.file()).unsigned_abs(),
-            (self.rank() - other.rank()).unsigned_abs(),
+            self.file().distance(other.file()),
+            self.rank().distance(other.rank()),
         )
     }
 }

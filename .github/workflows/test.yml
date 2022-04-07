@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        toolchain: ["1.56.0", "stable", "beta", "nightly"]
+        toolchain: ["1.60.0", "stable", "beta", "nightly"]
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
