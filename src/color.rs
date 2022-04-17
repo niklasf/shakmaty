@@ -179,7 +179,7 @@ impl FromStr for Color {
 }
 
 /// Container with values for each [`Color`].
-#[derive(Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByColor<T> {
     pub black: T,
