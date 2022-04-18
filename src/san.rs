@@ -644,6 +644,13 @@ mod tests {
     use std::mem;
 
     use super::*;
+    use crate::{fen::Fen, CastlingMode, Chess};
+
+    #[test]
+    fn test_size() {
+        assert!(mem::size_of::<San>() <= 8);
+        assert!(mem::size_of::<SanPlus>() <= 8);
+    }
 
     #[test]
     fn test_read_write() {
@@ -658,8 +665,21 @@ mod tests {
     }
 
     #[test]
-    fn test_size() {
-        assert!(mem::size_of::<San>() <= 8);
-        assert!(mem::size_of::<SanPlus>() <= 8);
+    fn test_pawn_capture_without_file() {
+        let san = "f6".parse::<San>().expect("valid san");
+
+        let pos = "4k3/8/5p2/4P3/8/8/8/4K3 w -"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_position::<Chess>(CastlingMode::Standard)
+            .expect("legal fen");
+        assert_eq!(san.to_move(&pos), Err(SanError::IllegalSan));
+
+        let pos = "4k3/8/8/4Pp2/8/8/8/4K3 w - f6"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_position::<Chess>(CastlingMode::Standard)
+            .expect("legal fen");
+        assert_eq!(san.to_move(&pos), Err(SanError::IllegalSan));
     }
 }
