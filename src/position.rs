@@ -2179,32 +2179,29 @@ pub(crate) mod variant {
                 - PositionErrorKinds::MISSING_KING
                 - PositionErrorKinds::IMPOSSIBLE_MATERIAL;
 
-            if (pos.board().kings() & pos.board.white()).is_empty() {
-                if pos.board().white().count() > 36
-                    || !is_standard_material(pos.board(), Color::Black)
-                {
-                    errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
-                }
-            } else if pos.board().black().count() > 36
-                || !is_standard_material(pos.board(), Color::White)
-            {
-                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
-            }
-
-            if (pos.board().pawns() & pos.board().white() & Rank::Eighth).any()
-                || (pos.board().pawns() & pos.board().black() & Rank::First).any()
-            {
-                errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
-            }
-
             if pos.board().kings().is_empty() {
                 errors |= PositionErrorKinds::MISSING_KING;
+            } else if pos.board().kings().more_than_one() {
+                errors |= PositionErrorKinds::TOO_MANY_KINGS;
             }
 
-            if (pos.board().kings() & pos.board().white()).any()
-                && (pos.board().kings() & pos.board().black()).any()
-            {
-                errors |= PositionErrorKinds::VARIANT;
+            for color in Color::ALL {
+                let us = pos.board.by_color(color);
+                if (pos.board().kings() & us).any() {
+                    if !is_standard_material(pos.board(), color) {
+                        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                    }
+                    if (pos.board().pawns() & us & Bitboard::BACKRANKS).any() {
+                        errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
+                    }
+                } else {
+                    if us.count() > 36 {
+                        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                    }
+                    if (pos.board().pawns() & us & (!color).backrank()).any() {
+                        errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
+                    }
+                }
             }
 
             PositionError { errors, pos }.strict()
