@@ -1956,6 +1956,16 @@ pub(crate) mod variant {
             if setup.board.pawns().any() {
                 errors |= PositionErrorKinds::VARIANT;
             }
+            for color in Color::ALL {
+                let us = setup.board.by_color(color);
+                if (setup.board.knights() & us).count() > 2
+                    || (setup.board.bishops() & us).count() > 2
+                    || (setup.board.rooks() & us).count() > 2
+                    || (setup.board.queens() & us).more_than_one()
+                {
+                    errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                }
+            }
             if setup.ep_square.is_some() {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
             }
