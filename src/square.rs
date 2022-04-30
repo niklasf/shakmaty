@@ -381,7 +381,7 @@ impl Square {
     /// assert_eq!(Square::new(63), Square::H8);
     /// ```
     #[inline]
-    pub fn new(index: u32) -> Square {
+    pub const fn new(index: u32) -> Square {
         assert!(index < 64);
         unsafe { Square::new_unchecked(index) }
     }
@@ -392,7 +392,7 @@ impl Square {
     ///
     /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
-    pub unsafe fn new_unchecked(index: u32) -> Square {
+    pub const unsafe fn new_unchecked(index: u32) -> Square {
         debug_assert!(index < 64);
         unsafe { mem::transmute(index as u8) }
     }

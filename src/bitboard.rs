@@ -52,20 +52,20 @@ pub struct Bitboard(pub u64);
 impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
-    pub fn from_square(sq: Square) -> Bitboard {
-        Bitboard(SQUARES[usize::from(sq)])
+    pub const fn from_square(sq: Square) -> Bitboard {
+        Bitboard(SQUARES[sq as usize])
     }
 
     /// Returns the bitboard containing all squares of the given rank.
     #[inline]
-    pub fn from_rank(rank: Rank) -> Bitboard {
-        Bitboard(RANKS[usize::from(rank)])
+    pub const fn from_rank(rank: Rank) -> Bitboard {
+        Bitboard(RANKS[rank as usize])
     }
 
     /// Returns the bitboard containing all squares of the given file.
     #[inline]
-    pub fn from_file(file: File) -> Bitboard {
-        Bitboard(FILES[usize::from(file)])
+    pub const fn from_file(file: File) -> Bitboard {
+        Bitboard(FILES[file as usize])
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -120,7 +120,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub fn shift(self, offset: i32) -> Bitboard {
+    pub const fn shift(self, offset: i32) -> Bitboard {
         Bitboard(if offset > 63 {
             0
         } else if offset >= 0 {
@@ -143,7 +143,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub fn any(self) -> bool {
+    pub const fn any(self) -> bool {
         self.0 != 0
     }
 
@@ -157,7 +157,7 @@ impl Bitboard {
     /// assert!(Bitboard::EMPTY.is_empty());
     /// ```
     #[inline]
-    pub fn is_empty(self) -> bool {
+    pub const fn is_empty(self) -> bool {
         self.0 == 0
     }
 
@@ -328,7 +328,7 @@ impl Bitboard {
 
     /// Returns the last square.
     #[inline]
-    pub fn last(self) -> Option<Square> {
+    pub const fn last(self) -> Option<Square> {
         if self.is_empty() {
             None
         } else {
@@ -347,7 +347,7 @@ impl Bitboard {
     /// ```
     #[doc(alias = "len")]
     #[inline]
-    pub fn count(self) -> usize {
+    pub const fn count(self) -> usize {
         self.0.count_ones() as usize
     }
 
@@ -416,7 +416,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_vertical(self) -> Bitboard {
+    pub const fn flip_vertical(self) -> Bitboard {
         Bitboard(self.0.swap_bytes())
     }
 
@@ -439,7 +439,7 @@ impl Bitboard {
     /// // . . 1 . . . 1 .
     /// ```
     #[must_use]
-    pub fn flip_horizontal(self) -> Bitboard {
+    pub const fn flip_horizontal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Horizontal
         let k1 = 0x5555_5555_5555_5555;
         let k2 = 0x3333_3333_3333_3333;
@@ -470,7 +470,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub fn flip_diagonal(self) -> Bitboard {
+    pub const fn flip_diagonal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal
         let k1 = 0x5500_5500_5500_5500;
         let k2 = 0x3333_0000_3333_0000;
@@ -504,7 +504,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub fn flip_anti_diagonal(self) -> Bitboard {
+    pub const fn flip_anti_diagonal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Anti-Diagonal
         let k1 = 0xaa00_aa00_aa00_aa00;
         let k2 = 0xcccc_0000_cccc_0000;
@@ -538,7 +538,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub fn rotate_90(self) -> Bitboard {
+    pub const fn rotate_90(self) -> Bitboard {
         self.flip_diagonal().flip_vertical()
     }
 
@@ -562,7 +562,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_180(self) -> Bitboard {
+    pub const fn rotate_180(self) -> Bitboard {
         Bitboard(self.0.reverse_bits())
     }
 
@@ -585,7 +585,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub fn rotate_270(self) -> Bitboard {
+    pub const fn rotate_270(self) -> Bitboard {
         self.flip_vertical().flip_diagonal()
     }
 
@@ -778,7 +778,7 @@ impl Bitboard {
 }
 
 /// Square masks.
-static SQUARES: [u64; 64] = {
+const SQUARES: [u64; 64] = {
     let mut masks = [0; 64];
     let mut i = 0;
     while i < 64 {
@@ -789,7 +789,7 @@ static SQUARES: [u64; 64] = {
 };
 
 /// Rank masks.
-static RANKS: [u64; 8] = {
+const RANKS: [u64; 8] = {
     let mut masks = [0; 8];
     let mut i = 0;
     while i < 8 {
@@ -800,7 +800,7 @@ static RANKS: [u64; 8] = {
 };
 
 /// File masks.
-static FILES: [u64; 8] = {
+const FILES: [u64; 8] = {
     let mut masks = [0; 8];
     let mut i = 0;
     while i < 8 {
