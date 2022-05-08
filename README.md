@@ -35,7 +35,7 @@ A Rust library for chess move generation
 - Detect game end conditions: `pos.is_checkmate()`, `pos.is_stalemate()`,
   `pos.is_insufficient_material()`, `pos.outcome()`.
 
-- Read and write FENs, SANs and UCIs.
+- Read and write FEN, SAN and UCI notation.
 
 - Supports all Lichess variants: Standard chess, Chess960, Antichess, Atomic,
   King of the Hill, Three-Check, Crazyhouse, Racing Kings and Horde. Provides
