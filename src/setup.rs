@@ -38,6 +38,8 @@ pub struct Setup {
 
     /// Castling rights in terms of corresponding rook positions.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use shakmaty::{Bitboard, Setup};
     ///
@@ -287,7 +289,8 @@ impl Castles {
     }
 
     /// Gets the squares that need to be empty so that castling is possible
-    /// on the given side.
+    /// on the given side, assuming the player still has the required
+    /// castling rigths.
     ///
     /// # Examples
     ///
@@ -312,6 +315,7 @@ impl Castles {
         self.path.get(color)[side as usize]
     }
 
+    /// Castling rigths in terms of corresponding rook positions.
     #[inline]
     pub fn castling_rights(&self) -> Bitboard {
         self.mask
