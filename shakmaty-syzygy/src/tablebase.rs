@@ -122,15 +122,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
-        let (stem, ext) = match (path.file_stem().and_then(|s| s.to_str()), path.extension()) {
-            (Some(stem), Some(ext)) => (stem, ext),
-            _ => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
-        };
+        let (stem, ext) = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .zip(path.extension())
+            .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))?;
 
-        let material = match Material::from_str(stem) {
-            Ok(material) => material,
-            _ => return Err(io::Error::from(io::ErrorKind::InvalidInput)),
-        };
+        let material =
+            Material::from_str(stem).map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))?;
 
         let pieces = material.count();
 
