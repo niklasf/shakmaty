@@ -145,16 +145,14 @@ impl San {
         } else {
             let mut chars = san.iter().copied();
 
-            let (role, next) = {
-                let ch = chars.next().ok_or(ParseSanError)?;
-                if ch >= b'a' {
-                    (Role::Pawn, ch)
-                } else {
-                    (
-                        Role::from_char(char::from(ch)).ok_or(ParseSanError)?,
-                        chars.next().ok_or(ParseSanError)?,
-                    )
-                }
+            let ch = chars.next().ok_or(ParseSanError)?;
+            let (role, next) = if ch.is_ascii_uppercase() {
+                (
+                    Role::from_char(char::from(ch)).ok_or(ParseSanError)?,
+                    chars.next().ok_or(ParseSanError)?,
+                )
+            } else {
+                (Role::Pawn, ch)
             };
 
             let (file, next) = if let Some(file) = File::from_char(char::from(next)) {
@@ -681,5 +679,22 @@ mod tests {
             .into_position::<Chess>(CastlingMode::Standard)
             .expect("legal fen");
         assert_eq!(san.to_move(&pos), Err(SanError::IllegalSan));
+    }
+
+    #[test]
+    fn test_lax_pawn_move_san_roundtrip() {
+        let san = "6h8".parse::<San>().expect("kinda valid san");
+        assert_eq!(
+            san,
+            San::Normal {
+                role: Role::Pawn,
+                file: None,
+                rank: Some(Rank::Sixth),
+                capture: false,
+                to: Square::H8,
+                promotion: None,
+            }
+        );
+        assert_eq!(san.to_string(), "6h8");
     }
 }
