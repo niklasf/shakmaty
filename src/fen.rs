@@ -21,7 +21,10 @@
 //! The parser is relaxed:
 //!
 //! * Supports X-FEN and Shredder-FEN for castling right notation.
-//!   Allows repeated castling rights and castling rights in any order.
+//!   - Ignores repeated castling rights.
+//!   - Allows castling rights in any order.
+//!   - Allows castling rights without matching rooks (treating `Q` and `K` as
+//!     `A` and `H` respectively).
 //! * Supports `[q]` and `/q` styles for Crazyhouse pockets.
 //! * Supports `3+3` and `+0+0` for remaining checks in Three-Check.
 //! * Accepts missing FEN fields (except the board) and fills them with
@@ -57,6 +60,8 @@
 //! assert_eq!(Epd::from_position(pos, EnPassantMode::Legal).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
+//!
+//! Roundtripping `Fen` and `Epd` by writing and reparsing preserves equality.
 
 use std::{
     char,
@@ -86,7 +91,7 @@ fn fmt_castling(
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
-        for rook in (candidates & castling_rights).into_iter().rev() {
+        for rook in (castling_rights & color.backrank()).into_iter().rev() {
             f.write_char(
                 if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                     color.fold_wb('Q', 'q')
@@ -716,5 +721,22 @@ mod tests {
         );
         assert_eq!(setup.halfmoves, 1);
         assert_eq!(setup.fullmoves.get(), 2);
+    }
+
+    #[test]
+    fn test_castling_right_without_rook() {
+        let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+        assert_eq!(
+            setup.castling_rights,
+            Bitboard::from_iter([Square::A1, Square::H1])
+        );
+
+        assert_eq!(
+            Fen(setup).to_string(),
+            "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA - 0 1"
+        );
     }
 }
