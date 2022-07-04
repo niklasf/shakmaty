@@ -1,5 +1,16 @@
 # Changelog for shakmaty
 
+## v0.21.2
+
+- Fix castling rights without matching rooks failing FEN/EPD parser roundtrip.
+- Fix pawn moves like `P6h8` failing SAN parser roundtrip.
+- More precisely document FEN/EPD parser and writer.
+- More strictly validate pawns on backrank in `Horde`.
+- More strictly validate impossible material in `RacingKings`.
+- Add `{Rank,File}::distance()`.
+- Implement `Copy` for `ByRole` and `ByColor` when possible.
+- Constify most `Bitboard` functions.
+
 ## v0.21.1
 
 - Rename `Castles::discard_side()` to `discard_color()` and
@@ -7,7 +18,7 @@
 - Add `Bitboard::without_first()`.
 - Add `Bitboard::shift()`.
 - Add `{Fen,Epd}::from_setup()` and `{Fen,Epd}::as_setup()`.
-- Implement `Clone` for `PositionError` if possible.
+- Implement `Clone` for `PositionError` when possible.
 
 ## v0.21.0
 
