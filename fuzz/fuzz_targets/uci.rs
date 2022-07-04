@@ -4,5 +4,8 @@ use libfuzzer_sys::fuzz_target;
 use shakmaty::uci::Uci;
 
 fuzz_target!(|data: &[u8]| {
-    let _ = Uci::from_ascii(data);
+    if let Ok(uci) = Uci::from_ascii(data) {
+        let roundtripped = Uci::from_ascii(uci.to_string().as_bytes()).expect("roundtrip");
+        assert_eq!(uci, roundtripped);
+    }
 });
