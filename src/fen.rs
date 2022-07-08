@@ -60,8 +60,6 @@
 //! assert_eq!(Epd::from_position(pos, EnPassantMode::Legal).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
-//!
-//! Roundtripping `Fen` and `Epd` by writing and reparsing preserves equality.
 
 use std::{
     char,
