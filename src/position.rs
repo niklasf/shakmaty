@@ -558,7 +558,7 @@ pub trait Position {
     /// [insufficient material](Position::is_insufficient_material) or
     /// [variant end](Position::is_variant_end).
     fn is_game_over(&self) -> bool {
-        self.legal_moves().is_empty() || self.is_insufficient_material()
+        self.is_variant_end() || self.legal_moves().is_empty() || self.is_insufficient_material()
     }
 
     /// The outcome of the game, or `None` if the game is not over.
