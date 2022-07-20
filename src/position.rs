@@ -564,11 +564,16 @@ pub trait Position {
     /// The outcome of the game, or `None` if the game is not over.
     fn outcome(&self) -> Option<Outcome> {
         self.variant_outcome().or_else(|| {
-            if self.is_checkmate() {
-                Some(Outcome::Decisive {
-                    winner: !self.turn(),
-                })
-            } else if self.is_insufficient_material() || self.is_stalemate() {
+            if self.legal_moves().is_empty() {
+                if !self.checkers().is_empty() {
+                    Some(Outcome::Decisive {
+                        winner: !self.turn(),
+                    })
+                } else {
+                    // stalemate
+                    Some(Outcome::Draw)
+                }
+            } else if self.is_insufficient_material() {
                 Some(Outcome::Draw)
             } else {
                 None
@@ -3164,6 +3169,25 @@ mod tests {
         assert_insufficient_material::<Chess>("5K2/8/8/1B6/8/k7/6b1/8 w - - 0 39", true, true);
         assert_insufficient_material::<Chess>("8/8/8/4k3/5b2/3K4/8/2B5 w - - 0 33", true, true);
         assert_insufficient_material::<Chess>("3b4/8/8/6b1/8/8/R7/K1k5 w - - 0 1", false, true);
+    }
+
+    #[test]
+    fn test_outcome() {
+        for (fen, outcome) in [
+            (
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                None,
+            ),
+            ("2k5/8/8/8/8/8/8/3KB3 w - - 0 1", Some(Outcome::Draw)),
+            ("8/8/8/8/8/Q1K5/8/1k6 b - - 0 1", Some(Outcome::Draw)),
+            (
+                "8/8/8/8/8/Q7/2K5/k7 b - - 0 1",
+                Some(Outcome::Decisive { winner: White }),
+            ),
+        ] {
+            let pos: Chess = setup_fen(fen);
+            assert_eq!(pos.outcome(), outcome);
+        }
     }
 
     #[test]
