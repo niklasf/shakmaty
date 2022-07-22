@@ -565,14 +565,13 @@ pub trait Position {
     fn outcome(&self) -> Option<Outcome> {
         self.variant_outcome().or_else(|| {
             if self.legal_moves().is_empty() {
-                if !self.checkers().is_empty() {
-                    Some(Outcome::Decisive {
+                Some(if self.is_check() {
+                    Outcome::Decisive {
                         winner: !self.turn(),
-                    })
+                    }
                 } else {
-                    // stalemate
-                    Some(Outcome::Draw)
-                }
+                    Outcome::Draw // Stalemate
+                })
             } else if self.is_insufficient_material() {
                 Some(Outcome::Draw)
             } else {
