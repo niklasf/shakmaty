@@ -467,28 +467,28 @@ pub trait Position {
     // (especially around dyn) they are not moved to an extension trait.
 
     /// Squares occupied by the side to move.
-    fn us(&self) -> Bitboard {
+    fn us(&self) -> Bitboard /* FINAL */ {
         self.board().by_color(self.turn())
     }
 
     /// Squares occupied with the given piece type by the side to move.
-    fn our(&self, role: Role) -> Bitboard {
+    fn our(&self, role: Role) -> Bitboard /* FINAL */ {
         self.board().by_piece(role.of(self.turn()))
     }
 
     /// Squares occupied by the opponent of the side to move.
-    fn them(&self) -> Bitboard {
+    fn them(&self) -> Bitboard /* FINAL */ {
         self.board().by_color(!self.turn())
     }
 
     /// Squares occupied with the given piece type by the opponent of the side
     /// to move.
-    fn their(&self, role: Role) -> Bitboard {
+    fn their(&self, role: Role) -> Bitboard /* FINAL */ {
         self.board().by_piece(role.of(!self.turn()))
     }
 
     /// Tests a move for legality.
-    fn is_legal(&self, m: &Move) -> bool {
+    fn is_legal(&self, m: &Move) -> bool /* FINAL */ {
         let moves = match *m {
             Move::Normal { role, to, .. } | Move::Put { role, to } => self.san_candidates(role, to),
             Move::EnPassant { to, .. } => self.san_candidates(Role::Pawn, to),
@@ -502,7 +502,7 @@ pub trait Position {
 
     /// The en passant square, if it is the target of a
     /// [pseudo-legal](`EnPassantMode::PseudoLegal`) en passant move.
-    fn pseudo_legal_ep_square(&self) -> Option<Square> {
+    fn pseudo_legal_ep_square(&self) -> Option<Square> /* FINAL */ {
         self.maybe_ep_square().filter(|ep_square| {
             (attacks::pawn_attacks(!self.turn(), *ep_square) & self.our(Role::Pawn)).any()
         })
@@ -511,13 +511,13 @@ pub trait Position {
     /// The en passant square, if it really is the target of a
     /// [legal](`EnPassantMode::Legal`) en passant
     /// move.
-    fn legal_ep_square(&self) -> Option<Square> {
+    fn legal_ep_square(&self) -> Option<Square> /* FINAL */ {
         self.pseudo_legal_ep_square()
             .filter(|_| !self.en_passant_moves().is_empty())
     }
 
     /// The en passant square.
-    fn ep_square(&self, mode: EnPassantMode) -> Option<Square> {
+    fn ep_square(&self, mode: EnPassantMode) -> Option<Square> /* FINAL */ {
         match mode {
             EnPassantMode::Always => self.maybe_ep_square(),
             EnPassantMode::PseudoLegal => self.pseudo_legal_ep_square(),
@@ -526,30 +526,30 @@ pub trait Position {
     }
 
     /// Bitboard of pieces giving check.
-    fn checkers(&self) -> Bitboard {
+    fn checkers(&self) -> Bitboard /* FINAL */ {
         self.our(Role::King).first().map_or(Bitboard(0), |king| {
             self.king_attackers(king, !self.turn(), self.board().occupied())
         })
     }
 
     /// Tests if the king is in check.
-    fn is_check(&self) -> bool {
+    fn is_check(&self) -> bool /* FINAL */ {
         self.checkers().any()
     }
 
     /// Tests for checkmate.
-    fn is_checkmate(&self) -> bool {
+    fn is_checkmate(&self) -> bool /* FINAL */ {
         !self.checkers().is_empty() && self.legal_moves().is_empty()
     }
 
     /// Tests for stalemate.
-    fn is_stalemate(&self) -> bool {
+    fn is_stalemate(&self) -> bool /* FINAL */ {
         self.checkers().is_empty() && !self.is_variant_end() && self.legal_moves().is_empty()
     }
 
     /// Tests if both sides
     /// [have insufficient winning material](Position::has_insufficient_material).
-    fn is_insufficient_material(&self) -> bool {
+    fn is_insufficient_material(&self) -> bool /* FINAL */ {
         self.has_insufficient_material(White) && self.has_insufficient_material(Black)
     }
 
@@ -557,12 +557,12 @@ pub trait Position {
     /// [stalemate](Position::is_stalemate()),
     /// [insufficient material](Position::is_insufficient_material) or
     /// [variant end](Position::is_variant_end).
-    fn is_game_over(&self) -> bool {
+    fn is_game_over(&self) -> bool /* FINAL */ {
         self.is_variant_end() || self.legal_moves().is_empty() || self.is_insufficient_material()
     }
 
     /// The outcome of the game, or `None` if the game is not over.
-    fn outcome(&self) -> Option<Outcome> {
+    fn outcome(&self) -> Option<Outcome> /* FINAL */ {
         self.variant_outcome().or_else(|| {
             if self.legal_moves().is_empty() {
                 Some(if self.is_check() {
