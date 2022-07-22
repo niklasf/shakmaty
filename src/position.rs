@@ -441,11 +441,11 @@ pub trait Position {
     /// sequence of moves.
     ///
     /// The current implementation can be summarized as follows: Looking
-    /// only at the material configuration, taking into account if bishops
-    /// are positioned on dark or light squares, but not concrete piece
-    /// positions, is there a position with the same material configuration
-    /// where `color` can win with a series of legal moves. If not, then
-    /// `color` has insufficient winning material.
+    /// only at the material configuration, taking into account color
+    /// complexes of bishops and knights, but not concrete piece positions,
+    /// is there a position with the same material configuration where `color`
+    /// can win with a series of legal moves. If not, then `color` has
+    /// insufficient winning material.
     fn has_insufficient_material(&self, color: Color) -> bool;
 
     /// Tests special variant winning, losing and drawing conditions.
@@ -1410,9 +1410,13 @@ pub(crate) mod variant {
         }
 
         fn has_insufficient_material(&self, color: Color) -> bool {
-            // In a position with only bishops, check if all our bishops can be
-            // captured.
-            if self.board.occupied() == self.board.bishops() {
+            if self.board.by_color(color).is_empty() {
+                false
+            } else if self.board.by_color(!color).is_empty() {
+                true
+            } else if self.board.occupied() == self.board.bishops() {
+                // In a position with only bishops, check if all our bishops
+                // can be captured.
                 let we_some_on_light = (self.board.by_color(color) & Bitboard::LIGHT_SQUARES).any();
                 let we_some_on_dark = (self.board.by_color(color) & Bitboard::DARK_SQUARES).any();
                 let they_all_on_dark =
@@ -1420,6 +1424,19 @@ pub(crate) mod variant {
                 let they_all_on_light =
                     (self.board.by_color(!color) & Bitboard::DARK_SQUARES).is_empty();
                 (we_some_on_light && they_all_on_dark) || (we_some_on_dark && they_all_on_light)
+            } else if self.board.occupied() == self.board.knights() {
+                match (
+                    self.board.white().single_square(),
+                    self.board.black().single_square(),
+                ) {
+                    (Some(white_single_knight), Some(black_single_knight)) => {
+                        self.turn
+                            == color
+                                ^ white_single_knight.is_light()
+                                ^ black_single_knight.is_dark()
+                    }
+                    _ => false,
+                }
             } else {
                 false
             }
@@ -3357,6 +3374,45 @@ mod tests {
                 winner: Color::White
             })
         );
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_antichess_insufficient_material() {
+        use super::variant::Antichess;
+
+        for (fen, possible_winner) in [
+            // https://lichess.org/aWVWduVV
+            ("8/8/8/1n2N3/8/8/8/8 w - - 0 32", Color::Black),
+            ("8/3N4/8/1n6/8/8/8/8 b - - 1 32", Color::Black),
+            // https://lichess.org/EzRIcUxc
+            ("8/8/8/8/2N5/8/8/n7 w - - 0 30", Color::Black),
+            ("8/8/8/4N3/8/8/8/n7 b - - 1 30", Color::Black),
+            ("8/8/8/4N3/8/8/2n5/8 w - - 2 31", Color::Black),
+            ("8/8/6N1/8/8/8/2n5/8 b - - 3 31", Color::Black),
+            ("8/8/6N1/8/8/4n3/8/8 w - - 4 32", Color::Black),
+            ("5N2/8/8/8/8/4n3/8/8 b - - 5 32", Color::Black),
+            ("5N2/8/8/5n2/8/8/8/8 w - - 6 33", Color::Black),
+            // https://lichess.org/te3cf1wG
+            ("6n1/8/8/4N3/8/8/8/8 b - - 0 27", Color::White),
+            ("8/8/5n2/4N3/8/8/8/8 w - - 1 28", Color::White),
+            ("8/3N4/5n2/8/8/8/8/8 b - - 2 28", Color::White),
+            ("8/3n4/8/8/8/8/8/8 w - - 0 29", Color::White),
+        ] {
+            let pos = fen
+                .parse::<Fen>()
+                .expect("valid fen")
+                .into_position::<Antichess>(CastlingMode::Standard)
+                .expect("legal position");
+            assert!(
+                !pos.has_insufficient_material(possible_winner),
+                "{possible_winner} can win {fen}"
+            );
+            assert!(
+                pos.has_insufficient_material(!possible_winner),
+                "{possible_winner} can not win {fen}"
+            );
+        }
     }
 
     #[test]
