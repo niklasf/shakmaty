@@ -85,7 +85,7 @@ fn fmt_castling(
     let mut empty = true;
 
     for color in Color::ALL {
-        let king = board.king_of(color);
+        let king = board.king_of(color).filter(|k| k.rank() == color.backrank());
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
