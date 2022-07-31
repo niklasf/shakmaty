@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.21.3
+
+- Optimize `Position::outcome()`.
+- Detect Antichess insufficient material with only two knights.
+- Fix off-backrank king influencing invalid castling notation in FEN.
+
 ## v0.21.2
 
 - Fix castling rights without matching rooks failing FEN/EPD parser roundtrip.
