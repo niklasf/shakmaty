@@ -1,6 +1,6 @@
 use bencher::{benchmark_group, benchmark_main, black_box, Bencher};
 use shakmaty::{fen::Fen, CastlingMode, Chess};
-use shakmaty_syzygy::{Tablebase, Wdl};
+use shakmaty_syzygy::{AmbiguousWdl, Tablebase};
 
 fn bench_add_directory(bench: &mut Bencher) {
     bench.iter(|| {
@@ -20,13 +20,13 @@ fn bench_probe_wdl(bench: &mut Bencher) {
     let pos = "2q5/6NR/8/8/8/8/5k2/K6Q b - - 0 1"
         .parse::<Fen>()
         .expect("valid fen")
-        .position::<Chess>(CastlingMode::Chess960)
+        .into_position::<Chess>(CastlingMode::Chess960)
         .expect("legal position");
 
     bench.iter(|| {
         assert!(matches!(
             tb.probe_wdl(black_box(&pos)),
-            Ok(Wdl::BlessedLoss)
+            Ok(AmbiguousWdl::BlessedLoss)
         ));
     });
 }
