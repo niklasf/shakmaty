@@ -419,7 +419,7 @@ impl AmbiguousWdl {
     /// [ambiguous due to DTZ rounding](MaybeRounded)
     /// and will be mapped to [`AmbiguousWdl::MaybeWin`] and
     /// [`AmbiguousWdl::MaybeLoss`] respectively.
-    pub(crate) fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
+    pub fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
         match dtz {
             MaybeRounded::Rounded(Dtz(100)) => AmbiguousWdl::MaybeWin,
             MaybeRounded::Rounded(Dtz(-100)) => AmbiguousWdl::MaybeLoss,
