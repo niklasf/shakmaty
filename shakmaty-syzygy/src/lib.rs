@@ -49,17 +49,12 @@
 //! # Cargo features
 //!
 //! * `variant`: Enables support for Antichess and Atomic chess.
-//! * `backtrace`: Provides a `backtrace` field on
-//!   [`ProbeError::CorruptedTable`].
-//!   This may be useful to identify issues with corrupted tablebase files or
-//!   to debug the probing code. Currently requires nightly Rust.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.19.0")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
-#![cfg_attr(feature = "backtrace", feature(backtrace))]
 
 #[macro_use]
 mod errors;

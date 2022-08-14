@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{error::Error, fmt, io};
+use std::{backtrace::Backtrace, error::Error, fmt, io};
 
 use crate::{material::Material, types::Metric};
 
@@ -96,12 +96,9 @@ pub enum ProbeError {
         magic: [u8; 4],
     },
     /// Corrupted table.
-    #[cfg_attr(not(feature = "backtrace"), non_exhaustive)]
     CorruptedTable {
         #[allow(missing_docs)]
-        #[cfg(feature = "backtrace")]
-        #[cfg_attr(docs_rs, doc(cfg(feature = "backtrace")))]
-        backtrace: std::backtrace::Backtrace,
+        backtrace: Backtrace,
     },
 }
 
@@ -110,7 +107,7 @@ impl fmt::Display for ProbeError {
         match self {
             ProbeError::Read { error } => write!(f, "i/o error reading table file: {}", error),
             ProbeError::Magic { magic } => write!(f, "invalid magic header bytes: {:x?}", magic),
-            ProbeError::CorruptedTable { .. } => write!(f, "corrupted table"),
+            ProbeError::CorruptedTable { backtrace } => write!(f, "corrupted table: {}", backtrace),
         }
     }
 }
@@ -119,14 +116,6 @@ impl Error for ProbeError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             ProbeError::Read { error } => Some(error),
-            _ => None,
-        }
-    }
-
-    #[cfg(feature = "backtrace")]
-    fn backtrace(&self) -> Option<&std::backtrace::Backtrace> {
-        match self {
-            ProbeError::CorruptedTable { backtrace } => Some(backtrace),
             _ => None,
         }
     }
@@ -150,8 +139,7 @@ impl From<io::Error> for ProbeError {
     fn from(error: io::Error) -> ProbeError {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => ProbeError::CorruptedTable {
-                #[cfg(feature = "backtrace")]
-                backtrace: std::backtrace::Backtrace::capture(),
+                backtrace: Backtrace::capture(),
             },
             _ => ProbeError::Read { error },
         }
@@ -162,7 +150,6 @@ impl From<io::Error> for ProbeError {
 macro_rules! throw {
     () => {
         return Err(crate::errors::ProbeError::CorruptedTable {
-            #[cfg(feature = "backtrace")]
             backtrace: ::std::backtrace::Backtrace::capture(),
         })
     };

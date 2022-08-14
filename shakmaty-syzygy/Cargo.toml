@@ -33,7 +33,7 @@ structopt = "0.3"
 [features]
 default = []
 variant = ["shakmaty/variant"]
-backtrace = []
+backtrace = [] # kept for bc only
 
 [package.metadata.docs.rs]
 all-features = true
