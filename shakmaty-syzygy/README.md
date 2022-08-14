@@ -60,6 +60,10 @@ Documentation
 Changelog
 ---------
 
+* 0.19.1
+  - Add `AmbiguousWdl::from_dtz()`.
+  - Remove `backtrace` feature. `Backtrace` is now stable and always provided
+    on `ProbeError::CorruptedTable`.
 * 0.19.0
   - Update shakmaty to `0.21`.
 * 0.18.0
