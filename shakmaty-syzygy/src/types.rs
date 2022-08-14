@@ -414,29 +414,20 @@ impl AmbiguousWdl {
         }
     }
 
-    /// Converts `dtz` to a WDL value. `MaybeRounded::Rounded(Dtz(100))`
-    /// and `MaybeRounded::Rounded(Dtz(-100))` are
-    /// [ambiguous due to DTZ rounding](MaybeRounded)
-    /// and will be mapped to [`AmbiguousWdl::MaybeWin`] and
-    /// [`AmbiguousWdl::MaybeLoss`] respectively.
-    pub fn from_dtz(dtz: MaybeRounded<Dtz>) -> AmbiguousWdl {
-        match dtz {
-            MaybeRounded::Rounded(Dtz(100)) => AmbiguousWdl::MaybeWin,
-            MaybeRounded::Rounded(Dtz(-100)) => AmbiguousWdl::MaybeLoss,
-            MaybeRounded::Precise(dtz) | MaybeRounded::Rounded(dtz) => Wdl::from_dtz(dtz).into(),
-        }
-    }
-
     /// Gets the WDL value for a position with the given `dtz` and `halfmoves`
     /// counter.
     ///
     /// The value will always be unambiguous if `halfmoves == 0`.
     pub fn from_dtz_and_halfmoves(dtz: MaybeRounded<Dtz>, halfmoves: u32) -> AmbiguousWdl {
-        if halfmoves == 0 {
-            AmbiguousWdl::from(Wdl::from_dtz_after_zeroing(dtz))
+        AmbiguousWdl::from(if halfmoves == 0 {
+            Wdl::from_dtz_after_zeroing(dtz)
         } else {
-            AmbiguousWdl::from_dtz(dtz.add_plies_saturating(halfmoves))
-        }
+            match dtz.add_plies_saturating(halfmoves) {
+                MaybeRounded::Rounded(Dtz(100)) => return AmbiguousWdl::MaybeWin,
+                MaybeRounded::Rounded(Dtz(-100)) => return AmbiguousWdl::MaybeLoss,
+                MaybeRounded::Precise(dtz) | MaybeRounded::Rounded(dtz) => Wdl::from_dtz(dtz),
+            }
+        })
     }
 
     /// Get the unambiguous [`Wdl`], assuming that the value has been reached
