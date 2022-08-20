@@ -77,6 +77,26 @@ impl Board {
         }
     }
 
+    /// Creates a board from bitboard constituents.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitboards are inconsistent.
+    pub fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
+        let mut occupied = Bitboard::EMPTY;
+        by_role.for_each(|role| {
+            assert!(occupied.is_disjoint(role), "by_role not disjoint");
+            occupied |= role;
+        });
+        assert!(by_color.black.is_disjoint(by_color.white), "by_color not disjoint");
+        assert_eq!(occupied, by_color.black | by_color.white, "by_role does not match by_color");
+        Board { by_role, by_color, occupied }
+    }
+
+    pub fn into_bitboards(self) -> (ByRole<Bitboard>, ByColor<Bitboard>) {
+        (self.by_role, self.by_color)
+    }
+
     #[cfg(feature = "variant")]
     #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
     pub fn racing_kings() -> Board {
@@ -485,5 +505,11 @@ mod tests {
             "2N3K1/3B2Q1/4R1R1/5QB1/4K1N1/3p2P1/3n2k1/4brq1",
         );
         compare_trans(&Board::rotate_270, "8/8/7N/1np3B1/b2K1R2/r3Q3/qkPNBRQK/8");
+    }
+
+    #[test]
+    fn test_from_bitboards() {
+        let (by_role, by_color) = Board::default().into_bitboards();
+        assert_eq!(Board::default(), Board::from_bitboards(by_role, by_color));
     }
 }
