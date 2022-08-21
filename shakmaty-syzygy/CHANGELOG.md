@@ -1,5 +1,9 @@
 # Changelog for shakmaty-syzygy
 
+## v0.19.1
+
+*yanked*
+
 ## v0.19.0
 
 - Update shakmaty to `0.21`.
