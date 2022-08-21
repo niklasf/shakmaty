@@ -1,5 +1,9 @@
 # Changelog for shakmaty
 
+## v0.21.4
+
+- Add `Board::from_bitboards()` and `Board::into_bitboards()`.
+
 ## v0.21.3
 
 - Optimize `Position::outcome()`.
