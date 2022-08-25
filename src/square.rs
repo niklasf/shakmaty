@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{
+use core::{
     cmp::max,
     convert::TryInto,
-    error::Error,
     fmt::{self, Write as _},
     mem,
     num::TryFromIntError,
@@ -41,7 +40,7 @@ macro_rules! from_repr_u8_impl {
 
 macro_rules! try_from_int_impl {
     ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
-        $(impl std::convert::TryFrom<$t> for $type {
+        $(impl core::convert::TryFrom<$t> for $type {
             type Error = TryFromIntError;
 
             #[inline]
@@ -68,14 +67,14 @@ macro_rules! unsafe_step_impl {
             }
 
             fn forward_checked(start: Self, count: usize) -> Option<Self> {
-                use std::convert::TryFrom as _;
+                use core::convert::TryFrom as _;
                 i32::try_from(count)
                     .ok()
                     .and_then(|count| start.offset(count))
             }
 
             fn backward_checked(start: Self, count: usize) -> Option<Self> {
-                use std::convert::TryFrom as _;
+                use core::convert::TryFrom as _;
                 i32::try_from(count)
                     .ok()
                     .and_then(|count| start.offset(-count))
@@ -84,7 +83,7 @@ macro_rules! unsafe_step_impl {
             unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
                 // Safety: It is the callers responsibility to ensure
                 // start + count is in the range of Self.
-                debug_assert!(count < 64);
+                core::debug_assert!(count < 64);
                 let count = count as u32;
                 unsafe { Self::new_unchecked(u32::from(start) + count) }
             }
@@ -92,7 +91,7 @@ macro_rules! unsafe_step_impl {
             unsafe fn backward_unchecked(start: Self, count: usize) -> Self {
                 // Safety: It is the callers responsibility to ensure
                 // start - count is in the range of Self.
-                debug_assert!(count < 64);
+                core::debug_assert!(count < 64);
                 let count = count as u32;
                 unsafe { Self::new_unchecked(u32::from(start) - count) }
             }
@@ -347,7 +346,8 @@ impl fmt::Display for ParseSquareError {
     }
 }
 
-impl Error for ParseSquareError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSquareError {}
 
 /// A square of the chessboard.
 #[rustfmt::skip]

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{
+use core::{
     fmt::{self, Write as _},
     num,
 };
@@ -328,7 +328,7 @@ pub enum EnPassantMode {
 
 #[cfg(test)]
 mod tests {
-    use std::mem;
+    use core::mem;
 
     use super::*;
 
@@ -410,7 +410,7 @@ int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
 macro_rules! try_remaining_checks_from_int_impl {
     ($($t:ty)+) => {
-        $(impl std::convert::TryFrom<$t> for RemainingChecks {
+        $(impl core::convert::TryFrom<$t> for RemainingChecks {
             type Error = num::TryFromIntError;
 
             #[inline]

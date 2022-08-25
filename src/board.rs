@@ -16,7 +16,7 @@
 
 //! Piece positions on a board.
 
-use std::{
+use core::{
     fmt,
     fmt::Write,
     iter::{FromIterator, FusedIterator},

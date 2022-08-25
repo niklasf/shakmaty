@@ -31,7 +31,7 @@
 //! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
 //! ```
 
-use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
+use core::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
     color::ByColor, Bitboard, Board, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color,

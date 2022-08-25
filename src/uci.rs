@@ -75,7 +75,7 @@
 //!
 //! [`Move`]: super::Move
 
-use std::{error::Error, fmt, str::FromStr};
+use core::{fmt, str::FromStr};
 
 use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 
@@ -89,7 +89,8 @@ impl fmt::Display for ParseUciError {
     }
 }
 
-impl Error for ParseUciError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseUciError {}
 
 /// Error when UCI is illegal.
 #[derive(Clone, Debug)]
@@ -101,7 +102,8 @@ impl fmt::Display for IllegalUciError {
     }
 }
 
-impl Error for IllegalUciError {}
+#[cfg(feature = "std")]
+impl std::error::Error for IllegalUciError {}
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
@@ -363,6 +365,9 @@ impl Move {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+
     use super::*;
     use crate::{fen::Fen, Chess, EnPassantMode};
 
@@ -461,6 +466,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_uci_to_castles() {
         let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"

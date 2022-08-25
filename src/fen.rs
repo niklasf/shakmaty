@@ -61,16 +61,18 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
-use std::{
+use core::{
     char,
     cmp::max,
     convert::TryFrom,
-    error::Error,
     fmt,
     fmt::{Display, Write as _},
     num::NonZeroU32,
     str::FromStr,
 };
+
+#[cfg(feature = "alloc")]
+use alloc::string::{String, ToString};
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
@@ -175,7 +177,8 @@ impl Display for ParseFenError {
     }
 }
 
-impl Error for ParseFenError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseFenError {}
 
 fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
     let mut promoted = Bitboard(0);
@@ -628,6 +631,7 @@ mod tests {
     use super::*;
     use crate::{Chess, EnPassantMode, Position};
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_legal_ep_square() {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
@@ -748,6 +752,7 @@ mod tests {
         assert_eq!(setup.fullmoves.get(), 2);
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_castling_right_without_rook() {
         let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"

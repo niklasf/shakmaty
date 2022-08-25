@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{convert::TryFrom as _, num::TryFromIntError};
+use core::{convert::TryFrom as _, num::TryFromIntError};
 
 pub(crate) fn overflow_error() -> TryFromIntError {
     // This is a hack to construct TryFromIntError despite its private

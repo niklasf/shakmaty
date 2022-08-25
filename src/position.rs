@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{
-    error::Error,
+use core::{
     fmt,
     hash::{Hash, Hasher},
     num::NonZeroU32,
@@ -94,7 +93,8 @@ impl fmt::Display for ParseOutcomeError {
     }
 }
 
-impl Error for ParseOutcomeError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
@@ -124,7 +124,8 @@ impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     }
 }
 
-impl<P: fmt::Debug> Error for PlayError<P> {}
+#[cfg(feature = "std")]
+impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
@@ -284,7 +285,8 @@ impl<P> fmt::Display for PositionError<P> {
     }
 }
 
-impl<P> Error for PositionError<P> {}
+#[cfg(feature = "std")]
+impl<P> std::error::Error for PositionError<P> {}
 
 /// Validate and set up a playable [`Position`]. All provided chess variants
 /// support this.
@@ -3116,10 +3118,14 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+
     use super::*;
     use crate::fen::Fen;
 
-    struct _AssertObjectSafe(Box<dyn Position>);
+    #[cfg(feature = "alloc")]
+    struct _AssertObjectSafe(alloc::boxed::Box<dyn Position>);
 
     fn setup_fen<T: Position + FromSetup>(fen: &str) -> T {
         fen.parse::<Fen>()
@@ -3465,6 +3471,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_swap_turn() {
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"

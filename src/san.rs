@@ -60,7 +60,7 @@
 //! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 
-use std::{error::Error, fmt, str::FromStr};
+use core::{fmt, str::FromStr};
 
 use crate::{CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square};
 
@@ -74,7 +74,8 @@ impl fmt::Display for ParseSanError {
     }
 }
 
-impl Error for ParseSanError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSanError {}
 
 /// `IllegalSan` or `AmbiguousSan`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,7 +95,8 @@ impl fmt::Display for SanError {
     }
 }
 
-impl Error for SanError {}
+#[cfg(feature = "std")]
+impl std::error::Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -639,7 +641,9 @@ impl fmt::Display for SanPlus {
 
 #[cfg(test)]
 mod tests {
-    use std::mem;
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    use core::mem;
 
     use super::*;
     use crate::{fen::Fen, CastlingMode, Chess};
@@ -650,6 +654,7 @@ mod tests {
         assert!(mem::size_of::<SanPlus>() <= 8);
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_read_write() {
         for san in &[
@@ -681,6 +686,7 @@ mod tests {
         assert_eq!(san.to_move(&pos), Err(SanError::IllegalSan));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_lax_pawn_move_san_roundtrip() {
         let san = "6h8".parse::<San>().expect("kinda valid san");
