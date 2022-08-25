@@ -64,6 +64,11 @@
 //!
 //! # Feature flags
 //!
+//! * `alloc`: Enables APIs which require the [`alloc`] crate (e.g. FEN string rendering).
+//! * `std`: Implements the [`std::error::Error`] trait for various errors in the crate.
+//!   Implies the `alloc` feature (since [`std`] depends on [`alloc`] anyway). Enabled by
+//!   default for convenience. For `no_std` environments, this must be disabled with
+//!   `default-features = false`.
 //! * `variant`: Enables `shakmaty::variant` module for all Lichess variants.
 //! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
 //!   Requires nightly Rust.
