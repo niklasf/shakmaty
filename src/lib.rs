@@ -97,7 +97,7 @@ pub mod zobrist;
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
-pub use crate::{
+pub use {
     bitboard::Bitboard,
     board::Board,
     color::{ByColor, Color, ParseColorError},
