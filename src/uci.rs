@@ -23,14 +23,13 @@
 //! ```
 //! use shakmaty::{Square, uci::Uci};
 //!
-//! let uci: Uci = "g1f3".parse()?;
+//! let uci: Uci = "g1f3".parse().unwrap();
 //!
 //! assert_eq!(uci, Uci::Normal {
 //!     from: Square::G1,
 //!     to: Square::F3,
 //!     promotion: None,
-//! });
-//! # Ok::<_, Box<dyn std::error::Error>>(())
+//! })
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -39,13 +38,12 @@
 //! # use shakmaty::{Square, uci::Uci};
 //! use shakmaty::{Color::White, Chess, Setup, Position};
 //!
-//! # let uci: Uci = "g1f3".parse()?;
+//! # let uci: Uci = "g1f3".parse().unwrap();
 //! let mut pos = Chess::default();
-//! let m = uci.to_move(&pos)?;
+//! let m = uci.to_move(&pos).unwrap();
 //!
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
-//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:
@@ -159,14 +157,13 @@ impl Uci {
     /// ```
     /// use shakmaty::{Square, uci::Uci};
     ///
-    /// let uci = Uci::from_ascii(b"e4e5")?;
+    /// let uci = Uci::from_ascii(b"e4e5").unwrap();
     ///
     /// assert_eq!(uci, Uci::Normal {
     ///     from: Square::E4,
     ///     to: Square::E5,
     ///     promotion: None,
     /// });
-    /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {

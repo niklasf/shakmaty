@@ -427,10 +427,8 @@ impl Square {
     /// #
     /// use shakmaty::Square;
     ///
-    /// let sq = Square::from_ascii(b"a5")?;
+    /// let sq = Square::from_ascii(b"a5").unwrap();
     /// assert_eq!(sq, Square::A5);
-    /// #
-    /// # Ok::<_, Box<dyn Error>>(())
     /// ```
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {

@@ -23,9 +23,8 @@
 //! ```
 //! use shakmaty::{Chess, Position, san::San};
 //!
-//! let san: San = "Nf3".parse()?;
+//! let san: San = "Nf3".parse().unwrap();
 //! assert_eq!(san.to_string(), "Nf3");
-//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Converting to a move:
@@ -34,9 +33,9 @@
 //! # use shakmaty::{Chess, Position, san::San};
 //! use shakmaty::{Square, Role, Move};
 //! #
-//! # let san: San = "Nf3".parse()?;
+//! # let san: San = "Nf3".parse().unwrap();
 //! let pos = Chess::default();
-//! let m = san.to_move(&pos)?;
+//! let m = san.to_move(&pos).unwrap();
 //!
 //! assert_eq!(m, Move::Normal {
 //!     role: Role::Knight,
@@ -45,7 +44,6 @@
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
-//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
@@ -54,10 +52,9 @@
 //! # use shakmaty::{Chess, Position, Role, san::San};
 //! #
 //! # let pos = Chess::default();
-//! # let san: San = "Nf3".parse()?;
-//! # let m = san.to_move(&pos)?;
+//! # let san: San = "Nf3".parse().unwrap();
+//! # let m = san.to_move(&pos).unwrap();
 //! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
-//! # Ok::<_, Box<dyn std::error::Error>>(())
 //! ```
 
 use core::{fmt, str::FromStr};
@@ -411,20 +408,19 @@ impl San {
     ///     promotion: None,
     /// };
     ///
-    /// let nf3 = San::from_ascii(b"Nf3")?;
+    /// let nf3 = San::from_ascii(b"Nf3").unwrap();
     /// assert!(nf3.matches(&m));
     ///
-    /// let ng1f3 = San::from_ascii(b"Ng1f3")?;
+    /// let ng1f3 = San::from_ascii(b"Ng1f3").unwrap();
     /// assert!(ng1f3.matches(&m));
     ///
     /// // capture does not match
-    /// let nxf3 = San::from_ascii(b"Nxf3")?;
+    /// let nxf3 = San::from_ascii(b"Nxf3").unwrap();
     /// assert!(!nxf3.matches(&m));
     ///
     /// // other file does not match
-    /// let nef3 = San::from_ascii(b"Nef3")?;
+    /// let nef3 = San::from_ascii(b"Nef3").unwrap();
     /// assert!(!nef3.matches(&m));
-    /// # Ok::<_, Box<dyn std::error::Error>>(())
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {
