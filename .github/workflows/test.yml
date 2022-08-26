@@ -23,6 +23,19 @@ jobs:
         docs:
           - ""
           - "--features variant"
+        include:
+          - toolchain: "nightly"
+            features: "--features step"
+          - toolchain: "nightly"
+            features: "--features alloc,step"
+          - toolchain: "nightly"
+            features: "--features std,step"
+          - toolchain: "nightly"
+            features: "--features step,variant"
+          - toolchain: "nightly"
+            features: "--features alloc,step,variant"
+          - toolchain: "nightly"
+            features: "--features std,step,variant"
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
