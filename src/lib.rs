@@ -37,14 +37,13 @@
 //! # let pos = Chess::default();
 //!
 //! // 1. e4
-//! const MOVE: Move = Move::Normal {
+//! let pos = pos.play(&Move::Normal {
 //!     role: Role::Pawn,
 //!     from: Square::E2,
 //!     to: Square::E4,
 //!     capture: None,
 //!     promotion: None,
-//! };
-//! let pos = pos.play(&MOVE).unwrap();
+//! }).unwrap();
 //! ```
 //!
 //! Detect game end conditions:

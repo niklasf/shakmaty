@@ -728,8 +728,9 @@ impl PartialEq for Chess {
 /// ```
 /// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
-/// const FEN: &str = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
-/// let fen: Fen = FEN.parse().unwrap();
+/// let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"
+///     .parse::<Fen>()
+///     .unwrap();
 /// let position: Chess = fen.clone().into_position(CastlingMode::Standard).unwrap();
 /// let position_960: Chess = fen.into_position(CastlingMode::Chess960).unwrap();
 /// assert_eq!(position, position_960);

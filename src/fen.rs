@@ -38,8 +38,9 @@
 //! ```
 //! use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 //!
-//! const FEN: &str =  "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4";
-//! let fen: Fen = FEN.parse().unwrap();
+//! let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"
+//!     .parse::<Fen>()
+//!     .unwrap();
 //! let pos: Chess = fen.into_position(CastlingMode::Standard).unwrap();
 //! assert!(pos.is_checkmate());
 //! ```
@@ -374,8 +375,7 @@ impl Fen {
     /// ```
     /// use shakmaty::fen::Fen;
     ///
-    /// const FEN: &[u8] = b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    /// let fen = Fen::from_ascii(FEN).unwrap();
+    /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
     /// assert_eq!(fen, Fen::default());
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
