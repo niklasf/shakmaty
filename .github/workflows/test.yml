@@ -20,6 +20,9 @@ jobs:
           - "--features alloc,variant"
           - "--features std"
           - "--features std,variant"
+        docs:
+          - ""
+          - "--features variant"
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -36,7 +39,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --no-default-features ${{ matrix.features }}
+          args: ${{ matrix.docs }}
       - uses: actions-rs/cargo@v1
         with:
           command: bench
