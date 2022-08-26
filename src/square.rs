@@ -423,12 +423,10 @@ impl Square {
     /// # Example
     ///
     /// ```
-    /// # use std::error::Error;
-    /// #
     /// use shakmaty::Square;
-    ///
-    /// let sq = Square::from_ascii(b"a5").unwrap();
+    /// let sq = Square::from_ascii(b"a5")?;
     /// assert_eq!(sq, Square::A5);
+    /// # Ok::<_, shakmaty::ParseSquareError>(())
     /// ```
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {

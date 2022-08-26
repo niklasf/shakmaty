@@ -375,8 +375,9 @@ impl Fen {
     /// ```
     /// use shakmaty::fen::Fen;
     ///
-    /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
+    /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
     /// assert_eq!(fen, Fen::default());
+    /// # Ok::<_, shakmaty::fen::ParseFenError>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
         let mut result = Setup::empty();

@@ -23,8 +23,9 @@
 //! ```
 //! use shakmaty::{Chess, Position, san::San};
 //!
-//! let san: San = "Nf3".parse().unwrap();
+//! let san: San = "Nf3".parse()?;
 //! assert_eq!(san.to_string(), "Nf3");
+//! # Ok::<_, shakmaty::san::ParseSanError>(())
 //! ```
 //!
 //! Converting to a move:
@@ -408,19 +409,21 @@ impl San {
     ///     promotion: None,
     /// };
     ///
-    /// let nf3 = San::from_ascii(b"Nf3").unwrap();
+    /// let nf3 = San::from_ascii(b"Nf3")?;
     /// assert!(nf3.matches(&m));
     ///
-    /// let ng1f3 = San::from_ascii(b"Ng1f3").unwrap();
+    /// let ng1f3 = San::from_ascii(b"Ng1f3")?;
     /// assert!(ng1f3.matches(&m));
     ///
     /// // capture does not match
-    /// let nxf3 = San::from_ascii(b"Nxf3").unwrap();
+    /// let nxf3 = San::from_ascii(b"Nxf3")?;
     /// assert!(!nxf3.matches(&m));
     ///
     /// // other file does not match
-    /// let nef3 = San::from_ascii(b"Nef3").unwrap();
+    /// let nef3 = San::from_ascii(b"Nef3")?;
     /// assert!(!nef3.matches(&m));
+    ///
+    /// # Ok::<_, shakmaty::san::ParseSanError>(())
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {

@@ -23,13 +23,15 @@
 //! ```
 //! use shakmaty::{Square, uci::Uci};
 //!
-//! let uci: Uci = "g1f3".parse().unwrap();
+//! let uci: Uci = "g1f3".parse()?;
 //!
 //! assert_eq!(uci, Uci::Normal {
 //!     from: Square::G1,
 //!     to: Square::F3,
 //!     promotion: None,
-//! })
+//! });
+//!
+//! # Ok::<_, shakmaty::uci::ParseUciError>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
@@ -157,13 +159,15 @@ impl Uci {
     /// ```
     /// use shakmaty::{Square, uci::Uci};
     ///
-    /// let uci = Uci::from_ascii(b"e4e5").unwrap();
+    /// let uci = Uci::from_ascii(b"e4e5")?;
     ///
     /// assert_eq!(uci, Uci::Normal {
     ///     from: Square::E4,
     ///     to: Square::E5,
     ///     promotion: None,
     /// });
+    ///
+    /// # Ok::<_, shakmaty::uci::ParseUciError>(())
     /// ```
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {

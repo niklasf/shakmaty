@@ -43,7 +43,8 @@
 //!     to: Square::E4,
 //!     capture: None,
 //!     promotion: None,
-//! }).unwrap();
+//! })?;
+//! # Ok::<_, shakmaty::PlayError<_>>(())
 //! ```
 //!
 //! Detect game end conditions:

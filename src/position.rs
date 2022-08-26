@@ -315,8 +315,10 @@ pub trait FromSetup: Sized {
     ///
     /// let pos = Chess::from_setup(setup, CastlingMode::Standard)
     ///     .or_else(PositionError::ignore_impossible_material)
-    ///     .or_else(PositionError::ignore_impossible_check)
-    ///     .unwrap();
+    ///
+    ///     .or_else(PositionError::ignore_impossible_check)?;
+    ///
+    /// # Ok::<_, PositionError<_>>(())
     /// ```
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
