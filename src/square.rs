@@ -61,7 +61,7 @@ macro_rules! unsafe_step_impl {
     ($type:ty) => {
         #[cfg(feature = "step")]
         #[cfg_attr(docs_rs, doc(cfg(feature = "step")))]
-        impl std::iter::Step for $type {
+        impl core::iter::Step for $type {
             fn steps_between(start: &Self, end: &Self) -> Option<usize> {
                 usize::from(*end).checked_sub(usize::from(*start))
             }
