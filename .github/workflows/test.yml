@@ -22,7 +22,9 @@ jobs:
           - "--features std,variant"
         docs:
           - ""
+          - "--features step"
           - "--features variant"
+          - "--features step,variant"
         include:
           - toolchain: "nightly"
             features: "--features step"
@@ -51,11 +53,20 @@ jobs:
           args: --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
-          command: doc
-          args: ${{ matrix.docs }}
+          command: bench
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
       - uses: actions-rs/cargo@v1
         with:
-          command: bench
+          command: doc
+          args: ${{ matrix.docs }}
   semver:
     runs-on: ubuntu-latest
     steps:
