@@ -3121,9 +3121,6 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
-
     use super::*;
     use crate::fen::Fen;
 
@@ -3477,6 +3474,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_swap_turn() {
+        use alloc::string::ToString;
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"
             .parse::<Fen>()
             .expect("valid fen")

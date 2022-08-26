@@ -87,7 +87,9 @@ fn fmt_castling(
     let mut empty = true;
 
     for color in Color::ALL {
-        let king = board.king_of(color).filter(|k| k.rank() == color.backrank());
+        let king = board
+            .king_of(color)
+            .filter(|k| k.rank() == color.backrank());
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
@@ -629,7 +631,6 @@ impl Display for Epd {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Chess, EnPassantMode, Position};
 
     #[cfg(feature = "alloc")]
     #[test]
@@ -642,7 +643,7 @@ mod tests {
         );
 
         // The en passant square is not actually legal.
-        let pos: Chess = fen
+        let pos: crate::Chess = fen
             .into_position(CastlingMode::Standard)
             .expect("legal position");
         assert_eq!(pos.maybe_ep_square(), Some(Square::D3));

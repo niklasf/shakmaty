@@ -366,11 +366,8 @@ impl Move {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "alloc")]
-    use alloc::string::ToString;
-
     use super::*;
-    use crate::{fen::Fen, Chess, EnPassantMode};
+    use crate::{fen::Fen, Chess};
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -470,6 +467,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_uci_to_castles() {
+        use alloc::string::ToString;
         let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
@@ -484,7 +482,7 @@ mod tests {
             pos.play_unchecked(&m);
         }
         assert_eq!(
-            Fen::from_position(pos, EnPassantMode::Legal).to_string(),
+            Fen::from_position(pos, crate::EnPassantMode::Legal).to_string(),
             "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
         );
     }
