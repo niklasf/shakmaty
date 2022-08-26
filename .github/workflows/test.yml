@@ -17,15 +17,13 @@ jobs:
           - ""
           - "--features variant"
           - "--features alloc"
-          - "--features alloc,variant"
           - "--features std"
+          - "--features alloc,variant"
           - "--features std,variant"
-        docs:
-          - ""
-          - "--features step"
-          - "--features variant"
-          - "--features step,variant"
         include:
+          - semver: ""
+          - toolchain: "nightly"
+            semver: "-Z minimal-versions"
           - toolchain: "nightly"
             features: "--features step"
           - toolchain: "nightly"
@@ -50,11 +48,18 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-default-features ${{ matrix.features }}
+          args: ${{ matrix.semver }} --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
           command: bench
   docs:
+    strategy:
+      matrix:
+        docs:
+          - ""
+          - "--features step"
+          - "--features variant"
+          - "--features step,variant"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -67,16 +72,3 @@ jobs:
         with:
           command: doc
           args: ${{ matrix.docs }}
-  semver:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -Z minimal-versions --no-default-features ${{ matrix.features }}
