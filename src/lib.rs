@@ -55,7 +55,7 @@
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
 //! assert!(!pos.is_insufficient_material());
-//! assert!(pos.outcome().is_none()); // no winner yet
+//! assert_eq!(pos.outcome(), None); // no winner yet
 //! ```
 //!
 //! Also supports [FEN](fen), [SAN](san) and
