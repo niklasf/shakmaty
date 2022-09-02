@@ -40,25 +40,25 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    pub const fn from_winner(winner: Option<Color>) -> Outcome {
+    pub const fn from_winner(winner: Option<Color>) -> Self {
         match winner {
-            Some(winner) => Outcome::Decisive { winner },
-            None => Outcome::Draw,
+            Some(winner) => Self::Decisive { winner },
+            None => Self::Draw,
         }
     }
 
     pub const fn winner(self) -> Option<Color> {
         match self {
-            Outcome::Decisive { winner } => Some(winner),
-            Outcome::Draw => None,
+            Self::Decisive { winner } => Some(winner),
+            Self::Draw => None,
         }
     }
 
-    pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOutcomeError> {
         Ok(match bytes {
-            b"1-0" => Outcome::Decisive { winner: White },
-            b"0-1" => Outcome::Decisive { winner: Black },
-            b"1/2-1/2" => Outcome::Draw,
+            b"1-0" => Self::Decisive { winner: White },
+            b"0-1" => Self::Decisive { winner: Black },
+            b"1/2-1/2" => Self::Draw,
             b"*" => return Err(ParseOutcomeError::Unknown),
             _ => return Err(ParseOutcomeError::Invalid),
         })
@@ -68,9 +68,9 @@ impl Outcome {
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            Outcome::Decisive { winner: White } => "1-0",
-            Outcome::Decisive { winner: Black } => "0-1",
-            Outcome::Draw => "1/2-1/2",
+            Self::Decisive { winner: White } => "1-0",
+            Self::Decisive { winner: Black } => "0-1",
+            Self::Draw => "1/2-1/2",
         })
     }
 }
@@ -87,8 +87,8 @@ pub enum ParseOutcomeError {
 impl fmt::Display for ParseOutcomeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            ParseOutcomeError::Unknown => "unknown outcome: *",
-            ParseOutcomeError::Invalid => "invalid outcome",
+            Self::Unknown => "unknown outcome: *",
+            Self::Invalid => "invalid outcome",
         })
     }
 }
@@ -99,8 +99,8 @@ impl std::error::Error for ParseOutcomeError {}
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
 
-    fn from_str(s: &str) -> Result<Outcome, ParseOutcomeError> {
-        Outcome::from_ascii(s.as_bytes())
+    fn from_str(s: &str) -> Result<Self, ParseOutcomeError> {
+        Self::from_ascii(s.as_bytes())
     }
 }
 
@@ -199,7 +199,7 @@ impl<P> PositionError<P> {
     fn ignore(mut self, ignore: PositionErrorKinds) -> Result<P, Self> {
         self.errors -= ignore;
         match self {
-            PositionError { pos, errors } if errors.is_empty() => Ok(pos),
+            Self { pos, errors } if errors.is_empty() => Ok(pos),
             _ => Err(self),
         }
     }
@@ -647,7 +647,7 @@ impl Chess {
         setup: Setup,
         mode: CastlingMode,
     ) -> (
-        Chess,
+        Self,
         Option<ByColor<ByRole<u8>>>,
         Option<ByColor<RemainingChecks>>,
         PositionErrorKinds,
@@ -670,7 +670,7 @@ impl Chess {
             }
         };
 
-        let pos = Chess {
+        let pos = Self {
             board: setup.board,
             turn: setup.turn,
             castles,
@@ -685,8 +685,8 @@ impl Chess {
     }
 
     /// Initial position of any regular chess game.
-    pub const fn new() -> Chess {
-        Chess {
+    pub const fn new() -> Self {
+        Self {
             board: Board::new(),
             turn: White,
             castles: Castles::new(),
@@ -701,8 +701,8 @@ impl Chess {
 }
 
 impl Default for Chess {
-    fn default() -> Chess {
-        Chess::new()
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -752,8 +752,8 @@ impl PartialEq for Chess {
 impl Eq for Chess {}
 
 impl FromSetup for Chess {
-    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
-        let (pos, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
+    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
+        let (pos, _, _, errors) = Self::from_setup_unchecked(setup, mode);
         PositionError { pos, errors }.strict()
     }
 }
@@ -1037,13 +1037,13 @@ pub(crate) mod variant {
     }
 
     impl Default for Atomic {
-        fn default() -> Atomic {
+        fn default() -> Self {
             Self::new()
         }
     }
 
     impl FromSetup for Atomic {
-        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
@@ -1062,7 +1062,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Atomic {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles,
@@ -1327,7 +1327,7 @@ pub(crate) mod variant {
     }
 
     impl Default for Antichess {
-        fn default() -> Antichess {
+        fn default() -> Self {
             Self::new()
         }
     }
@@ -1336,7 +1336,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<Antichess, PositionError<Antichess>> {
+        ) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let ep_square = match EnPassant::from_setup(&setup) {
@@ -1347,7 +1347,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Antichess {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles: Castles::empty(mode),
@@ -1526,7 +1526,7 @@ pub(crate) mod variant {
     }
 
     impl KingOfTheHill {
-        pub const fn new() -> KingOfTheHill {
+        pub const fn new() -> Self {
             Self {
                 chess: Chess::new(),
             }
@@ -1537,11 +1537,11 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
+        ) -> Result<Self, PositionError<Self>> {
             let (chess, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
             PositionError {
                 errors,
-                pos: KingOfTheHill { chess },
+                pos: Self { chess },
             }
             .strict()
         }
@@ -1651,7 +1651,7 @@ pub(crate) mod variant {
     }
 
     impl ThreeCheck {
-        pub const fn new() -> ThreeCheck {
+        pub const fn new() -> Self {
             Self {
                 chess: Chess::new(),
                 remaining_checks: ByColor {
@@ -1666,7 +1666,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
+        ) -> Result<Self, PositionError<Self>> {
             let (chess, _, remaining_checks, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
             let remaining_checks = remaining_checks.unwrap_or_default();
@@ -1676,7 +1676,7 @@ pub(crate) mod variant {
 
             PositionError {
                 errors,
-                pos: ThreeCheck {
+                pos: Self {
                     chess,
                     remaining_checks,
                 },
@@ -1801,7 +1801,7 @@ pub(crate) mod variant {
     }
 
     impl Crazyhouse {
-        pub const fn new() -> Crazyhouse {
+        pub const fn new() -> Self {
             Self {
                 chess: Chess::new(),
                 promoted: Bitboard::EMPTY,
@@ -1856,7 +1856,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
+        ) -> Result<Self, PositionError<Self>> {
             let promoted = setup.promoted
                 & setup.board.occupied()
                 & !setup.board.pawns()
@@ -1901,7 +1901,7 @@ pub(crate) mod variant {
 
             PositionError {
                 errors,
-                pos: Crazyhouse {
+                pos: Self {
                     chess,
                     promoted,
                     pockets,
@@ -2086,8 +2086,8 @@ pub(crate) mod variant {
     }
 
     impl RacingKings {
-        pub const fn new() -> RacingKings {
-            RacingKings {
+        pub const fn new() -> Self {
+            Self {
                 board: Board::racing_kings(),
                 turn: White,
                 castles: Castles::empty(CastlingMode::Standard),
@@ -2101,8 +2101,8 @@ pub(crate) mod variant {
     }
 
     impl Default for RacingKings {
-        fn default() -> RacingKings {
-            RacingKings::new()
+        fn default() -> Self {
+            Self::new()
         }
     }
 
@@ -2110,7 +2110,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<RacingKings, PositionError<RacingKings>> {
+        ) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             if setup.castling_rights.any() {
@@ -2136,7 +2136,7 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
             }
 
-            let pos = RacingKings {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles: Castles::empty(mode),
@@ -2315,11 +2315,11 @@ pub(crate) mod variant {
     }
 
     impl Default for Horde {
-        fn default() -> Horde {
+        fn default() -> Self {
             let mut castles = Castles::default();
             castles.discard_color(White);
 
-            Horde {
+            Self {
                 board: Board::horde(),
                 turn: White,
                 castles,
@@ -2331,7 +2331,7 @@ pub(crate) mod variant {
     }
 
     impl FromSetup for Horde {
-        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
@@ -2350,7 +2350,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Horde {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles,

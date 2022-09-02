@@ -33,10 +33,10 @@ pub enum Color {
 }
 
 impl Color {
-    pub const fn from_char(ch: char) -> Option<Color> {
+    pub const fn from_char(ch: char) -> Option<Self> {
         Some(match ch {
-            'w' => Color::White,
-            'b' => Color::Black,
+            'w' => Self::White,
+            'b' => Self::Black,
             _ => return None,
         })
     }
@@ -45,10 +45,10 @@ impl Color {
         self.fold_wb('w', 'b')
     }
 
-    fn from_name(name: &str) -> Option<Color> {
+    fn from_name(name: &str) -> Option<Self> {
         Some(match name {
-            "white" => Color::White,
-            "black" => Color::Black,
+            "white" => Self::White,
+            "black" => Self::Black,
             _ => return None,
         })
     }
@@ -61,42 +61,42 @@ impl Color {
     }
 
     #[inline]
-    pub const fn from_white(white: bool) -> Color {
+    pub const fn from_white(white: bool) -> Self {
         if white {
-            Color::White
+            Self::White
         } else {
-            Color::Black
+            Self::Black
         }
     }
 
     #[inline]
-    pub const fn from_black(black: bool) -> Color {
+    pub const fn from_black(black: bool) -> Self {
         if black {
-            Color::Black
+            Self::Black
         } else {
-            Color::White
+            Self::White
         }
     }
 
     #[inline]
     pub fn fold_wb<T>(self, white: T, black: T) -> T {
         match self {
-            Color::White => white,
-            Color::Black => black,
+            Self::White => white,
+            Self::Black => black,
         }
     }
 
     #[inline]
     pub const fn is_white(self) -> bool {
-        matches!(self, Color::White)
+        matches!(self, Self::White)
     }
     #[inline]
     pub const fn is_black(self) -> bool {
-        matches!(self, Color::Black)
+        matches!(self, Self::Black)
     }
 
     /// Same as the NOT (`!`) operator, but usable in `const` contexts.
-    pub const fn other(self) -> Color {
+    pub const fn other(self) -> Self {
         match self {
             Self::White => Self::Black,
             Self::Black => Self::White,
@@ -114,8 +114,8 @@ impl Color {
     #[inline]
     pub fn relative_rank(self, rank: Rank) -> Rank {
         match self {
-            Color::White => rank,
-            Color::Black => rank.flip_vertical(),
+            Self::White => rank,
+            Self::Black => rank.flip_vertical(),
         }
     }
 
@@ -150,24 +150,24 @@ impl Color {
     }
 
     /// `White` and `Black`, in this order.
-    pub const ALL: [Color; 2] = [Color::White, Color::Black];
+    pub const ALL: [Self; 2] = [Self::White, Self::Black];
 }
 
 impl ops::Not for Color {
-    type Output = Color;
+    type Output = Self;
 
     #[inline]
-    fn not(self) -> Color {
-        self.fold_wb(Color::Black, Color::White)
+    fn not(self) -> Self::Output {
+        self.fold_wb(Self::Black, Self::White)
     }
 }
 
 impl ops::BitXor<bool> for Color {
-    type Output = Color;
+    type Output = Self;
 
     #[inline]
-    fn bitxor(self, flip: bool) -> Color {
-        Color::from_white(self.is_white() ^ flip)
+    fn bitxor(self, flip: bool) -> Self::Output {
+        Self::from_white(self.is_white() ^ flip)
     }
 }
 
@@ -193,8 +193,8 @@ impl std::error::Error for ParseColorError {}
 impl FromStr for Color {
     type Err = ParseColorError;
 
-    fn from_str(s: &str) -> Result<Color, ParseColorError> {
-        Color::from_name(s).ok_or(ParseColorError)
+    fn from_str(s: &str) -> Result<Self, ParseColorError> {
+        Self::from_name(s).ok_or(ParseColorError)
     }
 }
 
@@ -208,11 +208,11 @@ pub struct ByColor<T> {
 
 impl<T> ByColor<T> {
     #[inline]
-    pub fn new_with<F>(mut init: F) -> ByColor<T>
+    pub fn new_with<F>(mut init: F) -> Self
     where
         F: FnMut(Color) -> T,
     {
-        ByColor {
+        Self {
             white: init(Color::White),
             black: init(Color::Black),
         }
@@ -221,17 +221,13 @@ impl<T> ByColor<T> {
     #[inline]
     pub const fn get(&self, color: Color) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &*(self as *const ByColor<T>)
-                .cast::<T>()
-                .offset(color as isize)
-        }
+        unsafe { &*(self as *const Self).cast::<T>().offset(color as isize) }
     }
 
     #[inline]
     pub fn get_mut(&mut self, color: Color) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
+        unsafe { &mut *(self as *mut Self).cast::<T>().offset(color as isize) }
     }
 
     pub fn flip(&mut self) {
@@ -239,8 +235,8 @@ impl<T> ByColor<T> {
     }
 
     #[must_use]
-    pub fn into_flipped(self) -> ByColor<T> {
-        ByColor {
+    pub fn into_flipped(self) -> Self {
+        Self {
             black: self.white,
             white: self.black,
         }
@@ -341,7 +337,7 @@ impl<T: PartialOrd> ByColor<T> {
     }
 
     #[must_use]
-    pub fn into_normalized(mut self) -> ByColor<T> {
+    pub fn into_normalized(mut self) -> Self {
         self.normalize();
         self
     }

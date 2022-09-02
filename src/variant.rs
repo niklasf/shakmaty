@@ -58,52 +58,52 @@ impl Variant {
     /// of chess engines.
     pub const fn uci(self) -> &'static str {
         match self {
-            Variant::Chess => "chess",
-            Variant::Atomic => "atomic",
-            Variant::Antichess => "antichess",
-            Variant::KingOfTheHill => "kingofthehill",
-            Variant::ThreeCheck => "3check",
-            Variant::Crazyhouse => "crazyhouse",
-            Variant::RacingKings => "racingkings",
-            Variant::Horde => "horde",
+            Self::Chess => "chess",
+            Self::Atomic => "atomic",
+            Self::Antichess => "antichess",
+            Self::KingOfTheHill => "kingofthehill",
+            Self::ThreeCheck => "3check",
+            Self::Crazyhouse => "crazyhouse",
+            Self::RacingKings => "racingkings",
+            Self::Horde => "horde",
         }
     }
 
     /// Selects a variant based on the name used by the `UCI_Variant` option
     /// of chess engines.
-    pub fn from_uci(s: &str) -> Option<Variant> {
+    pub fn from_uci(s: &str) -> Option<Self> {
         Some(match s {
-            "chess" => Variant::Chess,
-            "atomic" => Variant::Atomic,
-            "antichess" => Variant::Antichess,
-            "kingofthehill" => Variant::KingOfTheHill,
-            "3check" => Variant::ThreeCheck,
-            "crazyhouse" => Variant::Crazyhouse,
-            "racingkings" => Variant::RacingKings,
-            "horde" => Variant::Horde,
+            "chess" => Self::Chess,
+            "atomic" => Self::Atomic,
+            "antichess" => Self::Antichess,
+            "kingofthehill" => Self::KingOfTheHill,
+            "3check" => Self::ThreeCheck,
+            "crazyhouse" => Self::Crazyhouse,
+            "racingkings" => Self::RacingKings,
+            "horde" => Self::Horde,
             _ => return None,
         })
     }
 
     pub fn distinguishes_promoted(self) -> bool {
-        matches!(self, Variant::Crazyhouse)
+        matches!(self, Self::Crazyhouse)
     }
 
-    pub const ALL: [Variant; 8] = [
-        Variant::Chess,
-        Variant::Atomic,
-        Variant::Antichess,
-        Variant::KingOfTheHill,
-        Variant::ThreeCheck,
-        Variant::Crazyhouse,
-        Variant::RacingKings,
-        Variant::Horde,
+    pub const ALL: [Self; 8] = [
+        Self::Chess,
+        Self::Atomic,
+        Self::Antichess,
+        Self::KingOfTheHill,
+        Self::ThreeCheck,
+        Self::Crazyhouse,
+        Self::RacingKings,
+        Self::Horde,
     ];
 }
 
 impl Default for Variant {
-    fn default() -> Variant {
-        Variant::Chess
+    fn default() -> Self {
+        Self::Chess
     }
 }
 
@@ -122,55 +122,55 @@ pub enum VariantPosition {
 }
 
 impl From<Chess> for VariantPosition {
-    fn from(pos: Chess) -> VariantPosition {
-        VariantPosition::Chess(pos)
+    fn from(pos: Chess) -> Self {
+        Self::Chess(pos)
     }
 }
 
 impl From<Atomic> for VariantPosition {
-    fn from(pos: Atomic) -> VariantPosition {
-        VariantPosition::Atomic(pos)
+    fn from(pos: Atomic) -> Self {
+        Self::Atomic(pos)
     }
 }
 
 impl From<Antichess> for VariantPosition {
-    fn from(pos: Antichess) -> VariantPosition {
-        VariantPosition::Antichess(pos)
+    fn from(pos: Antichess) -> Self {
+        Self::Antichess(pos)
     }
 }
 
 impl From<KingOfTheHill> for VariantPosition {
-    fn from(pos: KingOfTheHill) -> VariantPosition {
-        VariantPosition::KingOfTheHill(pos)
+    fn from(pos: KingOfTheHill) -> Self {
+        Self::KingOfTheHill(pos)
     }
 }
 
 impl From<ThreeCheck> for VariantPosition {
-    fn from(pos: ThreeCheck) -> VariantPosition {
-        VariantPosition::ThreeCheck(pos)
+    fn from(pos: ThreeCheck) -> Self {
+        Self::ThreeCheck(pos)
     }
 }
 
 impl From<Crazyhouse> for VariantPosition {
-    fn from(pos: Crazyhouse) -> VariantPosition {
-        VariantPosition::Crazyhouse(pos)
+    fn from(pos: Crazyhouse) -> Self {
+        Self::Crazyhouse(pos)
     }
 }
 
 impl From<RacingKings> for VariantPosition {
-    fn from(pos: RacingKings) -> VariantPosition {
-        VariantPosition::RacingKings(pos)
+    fn from(pos: RacingKings) -> Self {
+        Self::RacingKings(pos)
     }
 }
 
 impl From<Horde> for VariantPosition {
-    fn from(pos: Horde) -> VariantPosition {
-        VariantPosition::Horde(pos)
+    fn from(pos: Horde) -> Self {
+        Self::Horde(pos)
     }
 }
 
 impl VariantPosition {
-    pub fn new(variant: Variant) -> VariantPosition {
+    pub fn new(variant: Variant) -> Self {
         match variant {
             Variant::Chess => Chess::default().into(),
             Variant::Atomic => Atomic::default().into(),
@@ -187,7 +187,7 @@ impl VariantPosition {
         variant: Variant,
         setup: Setup,
         mode: CastlingMode,
-    ) -> Result<VariantPosition, PositionError<VariantPosition>> {
+    ) -> Result<Self, PositionError<Self>> {
         fn wrap<F, P, U>(result: Result<P, PositionError<P>>, f: F) -> Result<U, PositionError<U>>
         where
             F: FnOnce(P) -> U,
@@ -228,50 +228,50 @@ impl VariantPosition {
         }
     }
 
-    pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
+    pub fn swap_turn(self) -> Result<Self, PositionError<Self>> {
         let mode = self.castles().mode();
         let variant = self.variant();
         let mut setup = self.into_setup(EnPassantMode::Always);
         setup.swap_turn();
-        VariantPosition::from_setup(variant, setup, mode)
+        Self::from_setup(variant, setup, mode)
     }
 
     pub fn variant(&self) -> Variant {
         match self {
-            VariantPosition::Chess(_) => Variant::Chess,
-            VariantPosition::Atomic(_) => Variant::Atomic,
-            VariantPosition::Antichess(_) => Variant::Antichess,
-            VariantPosition::KingOfTheHill(_) => Variant::KingOfTheHill,
-            VariantPosition::ThreeCheck(_) => Variant::ThreeCheck,
-            VariantPosition::Crazyhouse(_) => Variant::Crazyhouse,
-            VariantPosition::RacingKings(_) => Variant::RacingKings,
-            VariantPosition::Horde(_) => Variant::Horde,
+            Self::Chess(_) => Variant::Chess,
+            Self::Atomic(_) => Variant::Atomic,
+            Self::Antichess(_) => Variant::Antichess,
+            Self::KingOfTheHill(_) => Variant::KingOfTheHill,
+            Self::ThreeCheck(_) => Variant::ThreeCheck,
+            Self::Crazyhouse(_) => Variant::Crazyhouse,
+            Self::RacingKings(_) => Variant::RacingKings,
+            Self::Horde(_) => Variant::Horde,
         }
     }
 
     fn borrow(&self) -> &dyn Position {
         match *self {
-            VariantPosition::Chess(ref pos) => pos,
-            VariantPosition::Atomic(ref pos) => pos,
-            VariantPosition::Antichess(ref pos) => pos,
-            VariantPosition::KingOfTheHill(ref pos) => pos,
-            VariantPosition::ThreeCheck(ref pos) => pos,
-            VariantPosition::Crazyhouse(ref pos) => pos,
-            VariantPosition::RacingKings(ref pos) => pos,
-            VariantPosition::Horde(ref pos) => pos,
+            Self::Chess(ref pos) => pos,
+            Self::Atomic(ref pos) => pos,
+            Self::Antichess(ref pos) => pos,
+            Self::KingOfTheHill(ref pos) => pos,
+            Self::ThreeCheck(ref pos) => pos,
+            Self::Crazyhouse(ref pos) => pos,
+            Self::RacingKings(ref pos) => pos,
+            Self::Horde(ref pos) => pos,
         }
     }
 
     fn borrow_mut(&mut self) -> &mut dyn Position {
         match *self {
-            VariantPosition::Chess(ref mut pos) => pos,
-            VariantPosition::Atomic(ref mut pos) => pos,
-            VariantPosition::Antichess(ref mut pos) => pos,
-            VariantPosition::KingOfTheHill(ref mut pos) => pos,
-            VariantPosition::ThreeCheck(ref mut pos) => pos,
-            VariantPosition::Crazyhouse(ref mut pos) => pos,
-            VariantPosition::RacingKings(ref mut pos) => pos,
-            VariantPosition::Horde(ref mut pos) => pos,
+            Self::Chess(ref mut pos) => pos,
+            Self::Atomic(ref mut pos) => pos,
+            Self::Antichess(ref mut pos) => pos,
+            Self::KingOfTheHill(ref mut pos) => pos,
+            Self::ThreeCheck(ref mut pos) => pos,
+            Self::Crazyhouse(ref mut pos) => pos,
+            Self::RacingKings(ref mut pos) => pos,
+            Self::Horde(ref mut pos) => pos,
         }
     }
 }
@@ -315,14 +315,14 @@ impl Position for VariantPosition {
 
     fn into_setup(self, mode: EnPassantMode) -> Setup {
         match self {
-            VariantPosition::Chess(pos) => pos.into_setup(mode),
-            VariantPosition::Atomic(pos) => pos.into_setup(mode),
-            VariantPosition::Antichess(pos) => pos.into_setup(mode),
-            VariantPosition::KingOfTheHill(pos) => pos.into_setup(mode),
-            VariantPosition::ThreeCheck(pos) => pos.into_setup(mode),
-            VariantPosition::Horde(pos) => pos.into_setup(mode),
-            VariantPosition::RacingKings(pos) => pos.into_setup(mode),
-            VariantPosition::Crazyhouse(pos) => pos.into_setup(mode),
+            Self::Chess(pos) => pos.into_setup(mode),
+            Self::Atomic(pos) => pos.into_setup(mode),
+            Self::Antichess(pos) => pos.into_setup(mode),
+            Self::KingOfTheHill(pos) => pos.into_setup(mode),
+            Self::ThreeCheck(pos) => pos.into_setup(mode),
+            Self::Horde(pos) => pos.into_setup(mode),
+            Self::RacingKings(pos) => pos.into_setup(mode),
+            Self::Crazyhouse(pos) => pos.into_setup(mode),
         }
     }
     fn legal_moves(&self) -> MoveList {
@@ -377,14 +377,14 @@ impl Position for VariantPosition {
 impl ZobristHash for VariantPosition {
     fn zobrist_hash<V: ZobristValue>(&self) -> V {
         match self {
-            VariantPosition::Chess(pos) => pos.zobrist_hash(),
-            VariantPosition::Atomic(pos) => pos.zobrist_hash(),
-            VariantPosition::Antichess(pos) => pos.zobrist_hash(),
-            VariantPosition::KingOfTheHill(pos) => pos.zobrist_hash(),
-            VariantPosition::ThreeCheck(pos) => pos.zobrist_hash(),
-            VariantPosition::Crazyhouse(pos) => pos.zobrist_hash(),
-            VariantPosition::RacingKings(pos) => pos.zobrist_hash(),
-            VariantPosition::Horde(pos) => pos.zobrist_hash(),
+            Self::Chess(pos) => pos.zobrist_hash(),
+            Self::Atomic(pos) => pos.zobrist_hash(),
+            Self::Antichess(pos) => pos.zobrist_hash(),
+            Self::KingOfTheHill(pos) => pos.zobrist_hash(),
+            Self::ThreeCheck(pos) => pos.zobrist_hash(),
+            Self::Crazyhouse(pos) => pos.zobrist_hash(),
+            Self::RacingKings(pos) => pos.zobrist_hash(),
+            Self::Horde(pos) => pos.zobrist_hash(),
         }
     }
 
@@ -394,16 +394,16 @@ impl ZobristHash for VariantPosition {
         m: &Move,
     ) -> Option<V> {
         match self {
-            VariantPosition::Chess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::Atomic(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::Antichess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::KingOfTheHill(pos) => {
+            Self::Chess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::Atomic(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::Antichess(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::KingOfTheHill(pos) => {
                 pos.prepare_incremental_zobrist_hash(previous, m)
             }
-            VariantPosition::ThreeCheck(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::Crazyhouse(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::RacingKings(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
-            VariantPosition::Horde(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::ThreeCheck(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::Crazyhouse(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::RacingKings(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
+            Self::Horde(pos) => pos.prepare_incremental_zobrist_hash(previous, m),
         }
     }
 
@@ -413,24 +413,24 @@ impl ZobristHash for VariantPosition {
         m: &Move,
     ) -> Option<V> {
         match self {
-            VariantPosition::Chess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::Atomic(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
-            VariantPosition::Antichess(pos) => {
+            Self::Chess(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            Self::Atomic(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            Self::Antichess(pos) => {
                 pos.finalize_incremental_zobrist_hash(intermediate, m)
             }
-            VariantPosition::KingOfTheHill(pos) => {
+            Self::KingOfTheHill(pos) => {
                 pos.finalize_incremental_zobrist_hash(intermediate, m)
             }
-            VariantPosition::ThreeCheck(pos) => {
+            Self::ThreeCheck(pos) => {
                 pos.finalize_incremental_zobrist_hash(intermediate, m)
             }
-            VariantPosition::Crazyhouse(pos) => {
+            Self::Crazyhouse(pos) => {
                 pos.finalize_incremental_zobrist_hash(intermediate, m)
             }
-            VariantPosition::RacingKings(pos) => {
+            Self::RacingKings(pos) => {
                 pos.finalize_incremental_zobrist_hash(intermediate, m)
             }
-            VariantPosition::Horde(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
+            Self::Horde(pos) => pos.finalize_incremental_zobrist_hash(intermediate, m),
         }
     }
 }

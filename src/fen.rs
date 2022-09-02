@@ -170,15 +170,15 @@ pub enum ParseFenError {
 impl Display for ParseFenError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            ParseFenError::InvalidFen => "invalid fen",
-            ParseFenError::InvalidBoard => "invalid board part in fen",
-            ParseFenError::InvalidPocket => "invalid pocket in fen",
-            ParseFenError::InvalidTurn => "invalid turn part in fen",
-            ParseFenError::InvalidCastling => "invalid castling part in fen",
-            ParseFenError::InvalidEpSquare => "invalid ep square in fen",
-            ParseFenError::InvalidRemainingChecks => "invalid remaining checks in fen",
-            ParseFenError::InvalidHalfmoveClock => "invalid halfmove clock in fen",
-            ParseFenError::InvalidFullmoves => "invalid fullmove part in fen",
+            Self::InvalidFen => "invalid fen",
+            Self::InvalidBoard => "invalid board part in fen",
+            Self::InvalidPocket => "invalid pocket in fen",
+            Self::InvalidTurn => "invalid turn part in fen",
+            Self::InvalidCastling => "invalid castling part in fen",
+            Self::InvalidEpSquare => "invalid ep square in fen",
+            Self::InvalidRemainingChecks => "invalid remaining checks in fen",
+            Self::InvalidHalfmoveClock => "invalid halfmove clock in fen",
+            Self::InvalidFullmoves => "invalid fullmove part in fen",
         })
     }
 }
@@ -266,7 +266,7 @@ fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
 }
 
 impl Board {
-    pub fn from_ascii_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
+    pub fn from_ascii_board_fen(board_fen: &[u8]) -> Result<Self, ParseFenError> {
         Ok(parse_board_fen(board_fen)?.0)
     }
 
@@ -298,8 +298,8 @@ impl Board {
 impl FromStr for Board {
     type Err = ParseFenError;
 
-    fn from_str(board_fen: &str) -> Result<Board, ParseFenError> {
-        Board::from_ascii_board_fen(board_fen.as_bytes())
+    fn from_str(board_fen: &str) -> Result<Self, ParseFenError> {
+        Self::from_ascii_board_fen(board_fen.as_bytes())
     }
 }
 
@@ -363,8 +363,8 @@ pub struct Fen(pub Setup);
 
 impl Fen {
     /// The FEN of the empty position `8/8/8/8/8/8/8/8 w - - 0 1`.
-    pub const fn empty() -> Fen {
-        Fen(Setup::empty())
+    pub const fn empty() -> Self {
+        Self(Setup::empty())
     }
 
     /// Parses a FEN or EPD.
@@ -385,7 +385,7 @@ impl Fen {
     /// assert_eq!(fen, Fen::default());
     /// # Ok::<_, shakmaty::fen::ParseFenError>(())
     /// ```
-    pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
+    pub fn from_ascii(fen: &[u8]) -> Result<Self, ParseFenError> {
         let mut result = Setup::empty();
         let mut parts = fen
             .split(|ch| *ch == b' ' || *ch == b'_')
@@ -512,16 +512,16 @@ impl Fen {
         if last_part.is_some() {
             Err(ParseFenError::InvalidFen)
         } else {
-            Ok(Fen(result))
+            Ok(Self(result))
         }
     }
 
-    pub const fn from_setup(setup: Setup) -> Fen {
-        Fen(setup)
+    pub const fn from_setup(setup: Setup) -> Self {
+        Self(setup)
     }
 
-    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Fen {
-        Fen(pos.into_setup(mode))
+    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Self {
+        Self(pos.into_setup(mode))
     }
 
     pub const fn as_setup(&self) -> &Setup {
@@ -544,13 +544,13 @@ impl Fen {
 }
 
 impl From<Setup> for Fen {
-    fn from(setup: Setup) -> Fen {
-        Fen::from_setup(setup)
+    fn from(setup: Setup) -> Self {
+        Self::from_setup(setup)
     }
 }
 
 impl From<Fen> for Setup {
-    fn from(fen: Fen) -> Setup {
+    fn from(fen: Fen) -> Self {
         fen.into_setup()
     }
 }
@@ -558,8 +558,8 @@ impl From<Fen> for Setup {
 impl FromStr for Fen {
     type Err = ParseFenError;
 
-    fn from_str(fen: &str) -> Result<Fen, ParseFenError> {
-        Fen::from_ascii(fen.as_bytes())
+    fn from_str(fen: &str) -> Result<Self, ParseFenError> {
+        Self::from_ascii(fen.as_bytes())
     }
 }
 
@@ -575,25 +575,25 @@ impl Display for Fen {
 pub struct Epd(Setup);
 
 impl Epd {
-    pub const fn empty() -> Epd {
-        Epd(Setup::empty())
+    pub const fn empty() -> Self {
+        Self(Setup::empty())
     }
 
-    pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
-        Ok(Epd::from_setup(Fen::from_ascii(epd)?.into_setup()))
+    pub fn from_ascii(epd: &[u8]) -> Result<Self, ParseFenError> {
+        Ok(Self::from_setup(Fen::from_ascii(epd)?.into_setup()))
     }
 
-    pub const fn from_setup(mut setup: Setup) -> Epd {
+    pub const fn from_setup(mut setup: Setup) -> Self {
         setup.halfmoves = 0;
         setup.fullmoves = match NonZeroU32::new(1) {
             Some(num) => num,
             _ => unreachable!(),
         };
-        Epd(setup)
+        Self(setup)
     }
 
-    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Epd {
-        Epd::from_setup(pos.into_setup(mode))
+    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Self {
+        Self::from_setup(pos.into_setup(mode))
     }
 
     pub const fn as_setup(&self) -> &Setup {
@@ -610,13 +610,13 @@ impl Epd {
 }
 
 impl From<Setup> for Epd {
-    fn from(setup: Setup) -> Epd {
-        Epd::from_setup(setup)
+    fn from(setup: Setup) -> Self {
+        Self::from_setup(setup)
     }
 }
 
 impl From<Epd> for Setup {
-    fn from(epd: Epd) -> Setup {
+    fn from(epd: Epd) -> Self {
         epd.into_setup()
     }
 }
@@ -624,8 +624,8 @@ impl From<Epd> for Setup {
 impl FromStr for Epd {
     type Err = ParseFenError;
 
-    fn from_str(epd: &str) -> Result<Epd, ParseFenError> {
-        Epd::from_ascii(epd.as_bytes())
+    fn from_str(epd: &str) -> Result<Self, ParseFenError> {
+        Self::from_ascii(epd.as_bytes())
     }
 }
 

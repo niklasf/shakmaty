@@ -95,8 +95,8 @@ pub struct Setup {
 
 impl Setup {
     /// Plain, empty board. No pieces. White to play.
-    pub const fn empty() -> Setup {
-        Setup {
+    pub const fn empty() -> Self {
+        Self {
             board: Board::empty(),
             pockets: None,
             promoted: Bitboard::EMPTY,
@@ -113,11 +113,11 @@ impl Setup {
     }
 
     /// Default board setup.
-    pub const fn initial() -> Setup {
-        Setup {
+    pub const fn initial() -> Self {
+        Self {
             board: Board::new(),
             castling_rights: Bitboard::CORNERS,
-            ..Setup::empty()
+            ..Self::empty()
         }
     }
 
@@ -132,8 +132,8 @@ impl Setup {
 }
 
 impl Default for Setup {
-    fn default() -> Setup {
-        Setup::initial()
+    fn default() -> Self {
+        Self::initial()
     }
 }
 
@@ -147,8 +147,8 @@ pub struct Castles {
 }
 
 impl Castles {
-    pub const fn new() -> Castles {
-        Castles {
+    pub const fn new() -> Self {
+        Self {
             mode: CastlingMode::Standard,
             mask: Bitboard::CORNERS,
             rook: ByColor {
@@ -171,22 +171,22 @@ impl Castles {
 
 impl Default for Castles {
     fn default() -> Self {
-        Castles::new()
+        Self::new()
     }
 }
 
 impl CastlingMode {
-    pub fn detect(setup: &Setup) -> CastlingMode {
+    pub fn detect(setup: &Setup) -> Self {
         use core::convert::identity;
-        let standard = Castles::from_setup(setup, CastlingMode::Standard).unwrap_or_else(identity);
-        let chess960 = Castles::from_setup(setup, CastlingMode::Chess960).unwrap_or_else(identity);
-        CastlingMode::from_standard(standard.mask == chess960.mask)
+        let standard = Castles::from_setup(setup, Self::Standard).unwrap_or_else(identity);
+        let chess960 = Castles::from_setup(setup, Self::Chess960).unwrap_or_else(identity);
+        Self::from_standard(standard.mask == chess960.mask)
     }
 }
 
 impl Castles {
-    pub const fn empty(mode: CastlingMode) -> Castles {
-        Castles {
+    pub const fn empty(mode: CastlingMode) -> Self {
+        Self {
             mode,
             mask: Bitboard(0),
             rook: ByColor {
@@ -200,8 +200,8 @@ impl Castles {
         }
     }
 
-    pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Castles, Castles> {
-        let mut castles = Castles::empty(mode);
+    pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Self, Self> {
+        let mut castles = Self::empty(mode);
         let rooks = setup.castling_rights & setup.board.rooks();
 
         for color in Color::ALL {
@@ -273,7 +273,9 @@ impl Castles {
     }
 
     pub const fn has_color(&self, color: Color) -> bool {
-        self.mask.intersect(Bitboard::from_rank(color.backrank())).any()
+        self.mask
+            .intersect(Bitboard::from_rank(color.backrank()))
+            .any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {
@@ -352,13 +354,13 @@ impl Castles {
 pub(crate) struct EnPassant(pub Square);
 
 impl From<EnPassant> for Square {
-    fn from(ep: EnPassant) -> Square {
+    fn from(ep: EnPassant) -> Self {
         ep.square()
     }
 }
 
 impl EnPassant {
-    pub fn from_setup(setup: &Setup) -> Result<Option<EnPassant>, ()> {
+    pub fn from_setup(setup: &Setup) -> Result<Option<Self>, ()> {
         let ep_square = match setup.ep_square {
             Some(ep_square) => ep_square,
             None => return Ok(None),
@@ -368,7 +370,7 @@ impl EnPassant {
             return Err(());
         }
 
-        let maybe = EnPassant(ep_square);
+        let maybe = Self(ep_square);
 
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
@@ -384,7 +386,7 @@ impl EnPassant {
             return Err(());
         }
 
-        Ok(Some(EnPassant(ep_square)))
+        Ok(Some(Self(ep_square)))
     }
 
     #[inline]
