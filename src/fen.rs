@@ -39,10 +39,14 @@
 //! use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 //!
 //! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
-//!
 //! let pos: Chess = fen.into_position(CastlingMode::Standard)?;
 //! assert!(pos.is_checkmate());
-//! # Ok::<_, Box<dyn std::error::Error>>(())
+//!
+//! # use shakmaty::{fen::ParseFenError, PositionError};
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<ParseFenError> for CommonError { fn from(_: ParseFenError) -> Self { Self } }
+//! # impl<P> From<PositionError<P>> for CommonError { fn from(_: PositionError<P>) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 //!
 //! # Writing
@@ -61,16 +65,18 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
-use std::{
+use core::{
     char,
     cmp::max,
     convert::TryFrom,
-    error::Error,
     fmt,
     fmt::{Display, Write as _},
     num::NonZeroU32,
     str::FromStr,
 };
+
+#[cfg(feature = "alloc")]
+use alloc::string::{String, ToString};
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
@@ -85,7 +91,9 @@ fn fmt_castling(
     let mut empty = true;
 
     for color in Color::ALL {
-        let king = board.king_of(color).filter(|k| k.rank() == color.backrank());
+        let king = board
+            .king_of(color)
+            .filter(|k| k.rank() == color.backrank());
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
@@ -125,7 +133,7 @@ fn fmt_pockets(f: &mut fmt::Formatter<'_>, pockets: &ByColor<ByRole<u8>>) -> fmt
 }
 
 fn fmt_epd(f: &mut fmt::Formatter<'_>, setup: &Setup) -> fmt::Result {
-    f.write_str(&setup.board.board_fen(setup.promoted))?;
+    setup.board.display_with_promotions(setup.promoted).fmt(f)?;
     if let Some(ref pockets) = setup.pockets {
         fmt_pockets(f, pockets)?;
     }
@@ -175,7 +183,8 @@ impl Display for ParseFenError {
     }
 }
 
-impl Error for ParseFenError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseFenError {}
 
 fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
     let mut promoted = Bitboard(0);
@@ -265,45 +274,24 @@ impl Board {
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
     ///
     /// Promoted pieces are marked like `Q~`.
-    pub fn board_fen(&self, promoted: Bitboard) -> String {
-        let mut fen = String::with_capacity(15);
-
-        for rank in Rank::ALL.into_iter().rev() {
-            let mut empty = 0;
-
-            for file in File::ALL {
-                let square = Square::from_coords(file, rank);
-
-                empty = self.piece_at(square).map_or_else(
-                    || empty + 1,
-                    |piece| {
-                        if empty > 0 {
-                            fen.push(
-                                char::from_digit(empty, 10)
-                                    .expect("at most 8 empty squares on a rank"),
-                            );
-                        }
-                        fen.push(piece.char());
-                        if promoted.contains(square) {
-                            fen.push('~');
-                        }
-                        0
-                    },
-                );
-
-                if file == File::H && empty > 0 {
-                    fen.push(
-                        char::from_digit(empty, 10).expect("at most 8 empty squares on a rank"),
-                    );
-                }
-
-                if file == File::H && rank > Rank::First {
-                    fen.push('/');
-                }
-            }
+    ///
+    /// Returns a `struct` that implements [`Display`].
+    pub fn display_with_promotions(&self, promoted: Bitboard) -> BoardDisplayer<'_> {
+        BoardDisplayer {
+            board: self,
+            promoted,
         }
+    }
 
-        fen
+    /// Same as [`display_with_promotions`]. However, note that this is the old way of
+    /// generating the board FEN string. Please prefer the newer [`display_with_promotions`],
+    /// which notably does not allocate a new string for each invocation.
+    ///
+    /// [`display_with_promotions`]: Board#method.display_with_promotions
+    #[cfg(feature = "alloc")]
+    #[deprecated = "prefer the more generic `display_with_promotions` method"]
+    pub fn board_fen(&self, promoted: Bitboard) -> String {
+        self.display_with_promotions(promoted).to_string()
     }
 }
 
@@ -317,7 +305,55 @@ impl FromStr for Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.board_fen(Bitboard(0)))
+        self.display_with_promotions(Bitboard(0)).fmt(f)
+    }
+}
+
+/// Helper `struct` that implements [`Display`] for [`Board`],
+/// but takes into account promoted pieces (if any). See the
+/// [`display_with_promotions`] for more information.
+///
+/// [`display_with_promotions`]: Board#method.display_with_promotions
+#[derive(Debug)]
+pub struct BoardDisplayer<'b> {
+    board: &'b Board,
+    promoted: Bitboard,
+}
+
+impl<'b> Display for BoardDisplayer<'b> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for rank in Rank::ALL.into_iter().rev() {
+            let mut empty = 0;
+
+            for file in File::ALL {
+                let square = Square::from_coords(file, rank);
+
+                empty = if let Some(piece) = self.board.piece_at(square) {
+                    if empty > 0 {
+                        let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
+                        f.write_char(ch)?;
+                    }
+                    f.write_char(piece.char())?;
+                    if self.promoted.contains(square) {
+                        f.write_char('~')?;
+                    }
+                    0
+                } else {
+                    empty + 1
+                };
+
+                if file == File::H && empty > 0 {
+                    let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
+                    f.write_char(ch)?;
+                }
+
+                if file == File::H && rank > Rank::First {
+                    f.write_char('/')?;
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -347,7 +383,7 @@ impl Fen {
     ///
     /// let fen = Fen::from_ascii(b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")?;
     /// assert_eq!(fen, Fen::default());
-    /// # Ok::<_, Box<dyn std::error::Error>>(())
+    /// # Ok::<_, shakmaty::fen::ParseFenError>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
         let mut result = Setup::empty();
@@ -599,8 +635,8 @@ impl Display for Epd {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Chess, EnPassantMode, Position};
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_legal_ep_square() {
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
@@ -611,7 +647,7 @@ mod tests {
         );
 
         // The en passant square is not actually legal.
-        let pos: Chess = fen
+        let pos: crate::Chess = fen
             .into_position(CastlingMode::Standard)
             .expect("legal position");
         assert_eq!(pos.maybe_ep_square(), Some(Square::D3));
@@ -721,6 +757,7 @@ mod tests {
         assert_eq!(setup.fullmoves.get(), 2);
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_castling_right_without_rook() {
         let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"

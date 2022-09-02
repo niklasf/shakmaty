@@ -31,7 +31,7 @@
 //! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
 //! ```
 
-use std::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
+use core::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
 
 use crate::{
     color::ByColor, Bitboard, Board, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color,
@@ -214,7 +214,8 @@ mod variant {
 /// // Incrementally updated (or recomputed from scratch if incremental
 /// // updates not supported).
 /// assert_eq!(pos.zobrist_hash(), 0x823c9b50fd114196);
-/// # Ok::<_, Box<dyn std::error::Error>>(())
+///
+/// # Ok::<_, shakmaty::PlayError<_>>(())
 /// ```
 #[derive(Debug, Clone)]
 pub struct Zobrist<P, V: ZobristValue> {

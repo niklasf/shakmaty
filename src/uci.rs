@@ -30,13 +30,14 @@
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
-//! # Ok::<_, Box<dyn std::error::Error>>(())
+//!
+//! # Ok::<_, shakmaty::uci::ParseUciError>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
 //!
 //! ```
-//! # use shakmaty::{Square, uci::Uci};
+//! # use shakmaty::{Square, uci::{IllegalUciError, ParseUciError, Uci}};
 //! use shakmaty::{Color::White, Chess, Setup, Position};
 //!
 //! # let uci: Uci = "g1f3".parse()?;
@@ -45,7 +46,11 @@
 //!
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
-//! # Ok::<_, Box<dyn std::error::Error>>(())
+//!
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<IllegalUciError> for CommonError { fn from(_: IllegalUciError) -> Self { Self } }
+//! # impl From<ParseUciError> for CommonError { fn from(_: ParseUciError) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:
@@ -75,7 +80,7 @@
 //!
 //! [`Move`]: super::Move
 
-use std::{error::Error, fmt, str::FromStr};
+use core::{fmt, str::FromStr};
 
 use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 
@@ -89,7 +94,8 @@ impl fmt::Display for ParseUciError {
     }
 }
 
-impl Error for ParseUciError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseUciError {}
 
 /// Error when UCI is illegal.
 #[derive(Clone, Debug)]
@@ -101,7 +107,8 @@ impl fmt::Display for IllegalUciError {
     }
 }
 
-impl Error for IllegalUciError {}
+#[cfg(feature = "std")]
+impl std::error::Error for IllegalUciError {}
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
@@ -164,7 +171,8 @@ impl Uci {
     ///     to: Square::E5,
     ///     promotion: None,
     /// });
-    /// # Ok::<_, Box<dyn std::error::Error>>(())
+    ///
+    /// # Ok::<_, shakmaty::uci::ParseUciError>(())
     /// ```
     pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {
@@ -364,7 +372,7 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fen::Fen, Chess, EnPassantMode};
+    use crate::{fen::Fen, Chess};
 
     #[test]
     pub fn test_uci_to_en_passant() {
@@ -461,8 +469,10 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_uci_to_castles() {
+        use alloc::string::ToString;
         let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
@@ -477,7 +487,7 @@ mod tests {
             pos.play_unchecked(&m);
         }
         assert_eq!(
-            Fen::from_position(pos, EnPassantMode::Legal).to_string(),
+            Fen::from_position(pos, crate::EnPassantMode::Legal).to_string(),
             "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
         );
     }

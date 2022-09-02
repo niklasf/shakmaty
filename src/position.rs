@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{
-    error::Error,
+use core::{
     fmt,
     hash::{Hash, Hasher},
     num::NonZeroU32,
@@ -94,7 +93,8 @@ impl fmt::Display for ParseOutcomeError {
     }
 }
 
-impl Error for ParseOutcomeError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
@@ -124,7 +124,8 @@ impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     }
 }
 
-impl<P: fmt::Debug> Error for PlayError<P> {}
+#[cfg(feature = "std")]
+impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
@@ -284,7 +285,8 @@ impl<P> fmt::Display for PositionError<P> {
     }
 }
 
-impl<P> Error for PositionError<P> {}
+#[cfg(feature = "std")]
+impl<P> std::error::Error for PositionError<P> {}
 
 /// Validate and set up a playable [`Position`]. All provided chess variants
 /// support this.
@@ -313,8 +315,10 @@ pub trait FromSetup: Sized {
     ///
     /// let pos = Chess::from_setup(setup, CastlingMode::Standard)
     ///     .or_else(PositionError::ignore_impossible_material)
+    ///
     ///     .or_else(PositionError::ignore_impossible_check)?;
-    /// # Ok::<_, Box<dyn std::error::Error>>(())
+    ///
+    /// # Ok::<_, PositionError<_>>(())
     /// ```
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
@@ -730,7 +734,12 @@ impl PartialEq for Chess {
 /// let position: Chess = fen.clone().into_position(CastlingMode::Standard)?;
 /// let position_960: Chess = fen.into_position(CastlingMode::Chess960)?;
 /// assert_eq!(position, position_960);
-/// # Ok::<_, Box<dyn std::error::Error>>(())
+///
+/// # use shakmaty::{fen::ParseFenError, PositionError};
+/// # #[derive(Debug)] struct CommonError;
+/// # impl From<ParseFenError> for CommonError { fn from(_: ParseFenError) -> Self { Self } }
+/// # impl<P> From<PositionError<P>> for CommonError { fn from(_: PositionError<P>) -> Self { Self } }
+/// # Ok::<_, CommonError>(())
 /// ```
 impl Eq for Chess {}
 
@@ -3119,7 +3128,8 @@ mod tests {
     use super::*;
     use crate::fen::Fen;
 
-    struct _AssertObjectSafe(Box<dyn Position>);
+    #[cfg(feature = "alloc")]
+    struct _AssertObjectSafe(alloc::boxed::Box<dyn Position>);
 
     fn setup_fen<T: Position + FromSetup>(fen: &str) -> T {
         fen.parse::<Fen>()
@@ -3465,8 +3475,10 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_swap_turn() {
+        use alloc::string::ToString;
         let pos: Chess = "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3"
             .parse::<Fen>()
             .expect("valid fen")

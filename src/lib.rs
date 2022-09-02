@@ -44,7 +44,7 @@
 //!     capture: None,
 //!     promotion: None,
 //! })?;
-//! # Ok::<_, Box<dyn std::error::Error>>(())
+//! # Ok::<_, shakmaty::PlayError<_>>(())
 //! ```
 //!
 //! Detect game end conditions:
@@ -55,7 +55,6 @@
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
 //! assert!(!pos.is_insufficient_material());
-//!
 //! assert_eq!(pos.outcome(), None); // no winner yet
 //! ```
 //!
@@ -64,15 +63,27 @@
 //!
 //! # Feature flags
 //!
+//! * `alloc`: Enables APIs which require the [`alloc`] crate (e.g. FEN string rendering).
+//! * `std`: Implements the [`std::error::Error`] trait for various errors in the crate.
+//!   Implies the `alloc` feature (since [`std`] depends on [`alloc`] anyway). Enabled by
+//!   default for convenience. For `no_std` environments, this must be disabled with
+//!   `default-features = false`.
 //! * `variant`: Enables `shakmaty::variant` module for all Lichess variants.
 //! * `step`: Implements [`std::iter::Step`] for `Square`, `File`, and `Rank`.
 //!   Requires nightly Rust.
 
+#![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.21.4")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_cfg))]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 mod color;
 mod magics;
@@ -97,7 +108,7 @@ pub mod zobrist;
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
-pub use crate::{
+pub use {
     bitboard::Bitboard,
     board::Board,
     color::{ByColor, Color, ParseColorError},

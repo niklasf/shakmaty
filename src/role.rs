@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{array, convert::identity, num};
+use core::{array, convert::identity, num};
 
 use crate::{color::Color, types::Piece, util::overflow_error};
 
@@ -164,7 +164,7 @@ nonzero_int_from_role_impl! {
 
 macro_rules! try_role_from_int_impl {
     ($($t:ty)+) => {
-        $(impl std::convert::TryFrom<$t> for Role {
+        $(impl core::convert::TryFrom<$t> for Role {
             type Error = num::TryFromIntError;
 
             #[inline]

@@ -1,12 +1,39 @@
 name: Test
 
-on: [push, pull_request]
+on:
+  - push
+  - pull_request
 
 jobs:
   test:
     strategy:
       matrix:
-        toolchain: ["1.60.0", "stable", "beta", "nightly"]
+        toolchain:
+          - "1.60.0"
+          - "stable"
+          - "beta"
+          - "nightly"
+        features:
+          - ""
+          - "--features variant"
+          - "--features alloc"
+          - "--features std"
+          - "--features alloc,variant"
+          - "--features std,variant"
+        include:
+          - toolchain: "nightly"
+            features: "--features step"
+          - toolchain: "nightly"
+            features: "--features alloc,step"
+          - toolchain: "nightly"
+            features: "--features std,step"
+          - toolchain: "nightly"
+            features: "--features step,variant"
+          - toolchain: "nightly"
+            features: "--features alloc,step,variant"
+          - toolchain: "nightly"
+            features: "--features std,step,variant"
+          - toolchain: "nightly"
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -19,21 +46,46 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features variant
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --features variant
+          args: --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
           command: bench
+  docs:
+    strategy:
+      matrix:
+        docs:
+          - ""
+          - "--features step"
+          - "--features variant"
+          - "--features step,variant"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: ${{ matrix.docs }}
   semver:
+    strategy:
+      matrix:
+        features:
+          - ""
+          - "--features variant"
+          - "--features alloc"
+          - "--features std"
+          - "--features alloc,variant"
+          - "--features std,variant"
+          - "--features step"
+          - "--features alloc,step"
+          - "--features std,step"
+          - "--features step,variant"
+          - "--features alloc,step,variant"
+          - "--features std,step,variant"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,8 +97,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -Z minimal-versions
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -Z minimal-versions --features variant
+          args: -Z minimal-versions ${{ matrix.features }}

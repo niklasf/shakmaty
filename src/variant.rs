@@ -19,7 +19,7 @@
 //! These are games played with normal chess pieces but special rules.
 //! Every chess variant implements [`FromSetup`] and [`Position`].
 
-use std::{num::NonZeroU32, str};
+use core::{num::NonZeroU32, str};
 
 pub use crate::position::{
     variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},

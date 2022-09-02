@@ -16,7 +16,7 @@
 
 //! White or black.
 
-use std::{array, convert::identity, error::Error, fmt, mem, ops, str::FromStr};
+use core::{array, convert::identity, fmt, mem, ops, str::FromStr};
 
 use crate::{
     role::{ByRole, Role},
@@ -168,7 +168,8 @@ impl fmt::Display for ParseColorError {
     }
 }
 
-impl Error for ParseColorError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseColorError {}
 
 impl FromStr for Color {
     type Err = ParseColorError;

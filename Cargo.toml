@@ -13,7 +13,9 @@ edition = "2021"
 rust-version = "1.60"
 
 [features]
-default = []
+default = ["std"]
+alloc = []
+std = ["alloc"]
 step = []
 variant = []
 
@@ -27,7 +29,7 @@ bench = false
 [dependencies]
 bitflags = "1.0.4"
 btoi = "0.4"
-arrayvec = "0.7"
+arrayvec = { version = "0.7", default-features = false }
 
 [dev-dependencies]
 iai = "0.1"

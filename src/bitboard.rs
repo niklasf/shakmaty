@@ -16,7 +16,7 @@
 
 //! Sets of squares.
 
-use std::{
+use core::{
     fmt,
     fmt::Write,
     iter::{FromIterator, FusedIterator},
@@ -1112,15 +1112,18 @@ impl FusedIterator for CarryRippler {}
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::format;
+
     use super::*;
 
     #[test]
     fn test_more_than_one() {
-        assert_eq!(Bitboard(0).more_than_one(), false);
-        assert_eq!(Bitboard(1).more_than_one(), false);
-        assert_eq!(Bitboard(2).more_than_one(), false);
-        assert_eq!(Bitboard(3).more_than_one(), true);
-        assert_eq!(Bitboard::FULL.more_than_one(), true);
+        assert!(!Bitboard(0).more_than_one());
+        assert!(!Bitboard(1).more_than_one());
+        assert!(!Bitboard(2).more_than_one());
+        assert!(Bitboard(3).more_than_one());
+        assert!(Bitboard::FULL.more_than_one());
     }
 
     #[test]
@@ -1160,21 +1163,25 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_upper_hex() {
         assert_eq!(format!("{:#0X}", Bitboard(42)), format!("{:#0X}", 42));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_lower_hex() {
         assert_eq!(format!("{:#0x}", Bitboard(42)), format!("{:#0x}", 42));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_octal() {
         assert_eq!(format!("{:#0o}", Bitboard(42)), format!("{:#0o}", 42));
     }
 
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_binary() {
         assert_eq!(format!("{:#0b}", Bitboard(42)), format!("{:#0b}", 42));

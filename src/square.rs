@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::{
+use core::{
     cmp::max,
     convert::TryInto,
-    error::Error,
     fmt::{self, Write as _},
     mem,
     num::TryFromIntError,
@@ -41,7 +40,7 @@ macro_rules! from_repr_u8_impl {
 
 macro_rules! try_from_int_impl {
     ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
-        $(impl std::convert::TryFrom<$t> for $type {
+        $(impl core::convert::TryFrom<$t> for $type {
             type Error = TryFromIntError;
 
             #[inline]
@@ -62,20 +61,20 @@ macro_rules! unsafe_step_impl {
     ($type:ty) => {
         #[cfg(feature = "step")]
         #[cfg_attr(docs_rs, doc(cfg(feature = "step")))]
-        impl std::iter::Step for $type {
+        impl core::iter::Step for $type {
             fn steps_between(start: &Self, end: &Self) -> Option<usize> {
                 usize::from(*end).checked_sub(usize::from(*start))
             }
 
             fn forward_checked(start: Self, count: usize) -> Option<Self> {
-                use std::convert::TryFrom as _;
+                use core::convert::TryFrom as _;
                 i32::try_from(count)
                     .ok()
                     .and_then(|count| start.offset(count))
             }
 
             fn backward_checked(start: Self, count: usize) -> Option<Self> {
-                use std::convert::TryFrom as _;
+                use core::convert::TryFrom as _;
                 i32::try_from(count)
                     .ok()
                     .and_then(|count| start.offset(-count))
@@ -84,7 +83,7 @@ macro_rules! unsafe_step_impl {
             unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
                 // Safety: It is the callers responsibility to ensure
                 // start + count is in the range of Self.
-                debug_assert!(count < 64);
+                core::debug_assert!(count < 64);
                 let count = count as u32;
                 unsafe { Self::new_unchecked(u32::from(start) + count) }
             }
@@ -92,7 +91,7 @@ macro_rules! unsafe_step_impl {
             unsafe fn backward_unchecked(start: Self, count: usize) -> Self {
                 // Safety: It is the callers responsibility to ensure
                 // start - count is in the range of Self.
-                debug_assert!(count < 64);
+                core::debug_assert!(count < 64);
                 let count = count as u32;
                 unsafe { Self::new_unchecked(u32::from(start) - count) }
             }
@@ -347,7 +346,8 @@ impl fmt::Display for ParseSquareError {
     }
 }
 
-impl Error for ParseSquareError {}
+#[cfg(feature = "std")]
+impl std::error::Error for ParseSquareError {}
 
 /// A square of the chessboard.
 #[rustfmt::skip]
@@ -423,14 +423,10 @@ impl Square {
     /// # Example
     ///
     /// ```
-    /// # use std::error::Error;
-    /// #
     /// use shakmaty::Square;
-    ///
     /// let sq = Square::from_ascii(b"a5")?;
     /// assert_eq!(sq, Square::A5);
-    /// #
-    /// # Ok::<_, Box<dyn Error>>(())
+    /// # Ok::<_, shakmaty::ParseSquareError>(())
     /// ```
     #[inline]
     pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
