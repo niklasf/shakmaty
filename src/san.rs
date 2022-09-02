@@ -31,12 +31,12 @@
 //! Converting to a move:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position, san::San};
+//! # use shakmaty::{Chess, Position, san::{ParseSanError, San, SanError}};
 //! use shakmaty::{Square, Role, Move};
 //! #
-//! # let san: San = "Nf3".parse().unwrap();
+//! # let san: San = "Nf3".parse()?;
 //! let pos = Chess::default();
-//! let m = san.to_move(&pos).unwrap();
+//! let m = san.to_move(&pos)?;
 //!
 //! assert_eq!(m, Move::Normal {
 //!     role: Role::Knight,
@@ -45,17 +45,27 @@
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
+//!
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<ParseSanError> for CommonError { fn from(_: ParseSanError) -> Self { Self } }
+//! # impl From<SanError> for CommonError { fn from(_: SanError) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 //!
 //! Back to a (possibly disambiguated) SAN:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position, Role, san::San};
+//! # use shakmaty::{Chess, Position, Role, san::{ParseSanError, San, SanError}};
 //! #
 //! # let pos = Chess::default();
-//! # let san: San = "Nf3".parse().unwrap();
-//! # let m = san.to_move(&pos).unwrap();
+//! # let san: San = "Nf3".parse()?;
+//! # let m = san.to_move(&pos)?;
 //! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
+//!
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<ParseSanError> for CommonError { fn from(_: ParseSanError) -> Self { Self } }
+//! # impl From<SanError> for CommonError { fn from(_: SanError) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 
 use core::{fmt, str::FromStr};

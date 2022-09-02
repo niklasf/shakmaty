@@ -37,15 +37,20 @@
 //! Converting to a legal move in the context of a position:
 //!
 //! ```
-//! # use shakmaty::{Square, uci::Uci};
+//! # use shakmaty::{Square, uci::{IllegalUciError, ParseUciError, Uci}};
 //! use shakmaty::{Color::White, Chess, Setup, Position};
 //!
-//! # let uci: Uci = "g1f3".parse().unwrap();
+//! # let uci: Uci = "g1f3".parse()?;
 //! let mut pos = Chess::default();
-//! let m = uci.to_move(&pos).unwrap();
+//! let m = uci.to_move(&pos)?;
 //!
 //! pos.play_unchecked(&m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
+//!
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<IllegalUciError> for CommonError { fn from(_: IllegalUciError) -> Self { Self } }
+//! # impl From<ParseUciError> for CommonError { fn from(_: ParseUciError) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 //!
 //! Converting from [`Move`] to [`Uci`]:

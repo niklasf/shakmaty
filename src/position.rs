@@ -730,12 +730,16 @@ impl PartialEq for Chess {
 /// ```
 /// use shakmaty::{CastlingMode, Chess, fen::Fen};
 ///
-/// let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"
-///     .parse::<Fen>()
-///     .unwrap();
-/// let position: Chess = fen.clone().into_position(CastlingMode::Standard).unwrap();
-/// let position_960: Chess = fen.into_position(CastlingMode::Chess960).unwrap();
+/// let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
+/// let position: Chess = fen.clone().into_position(CastlingMode::Standard)?;
+/// let position_960: Chess = fen.into_position(CastlingMode::Chess960)?;
 /// assert_eq!(position, position_960);
+///
+/// # use shakmaty::{fen::ParseFenError, PositionError};
+/// # #[derive(Debug)] struct CommonError;
+/// # impl From<ParseFenError> for CommonError { fn from(_: ParseFenError) -> Self { Self } }
+/// # impl<P> From<PositionError<P>> for CommonError { fn from(_: PositionError<P>) -> Self { Self } }
+/// # Ok::<_, CommonError>(())
 /// ```
 impl Eq for Chess {}
 

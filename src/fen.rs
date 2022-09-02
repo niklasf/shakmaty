@@ -38,11 +38,15 @@
 //! ```
 //! use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 //!
-//! let fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4"
-//!     .parse::<Fen>()
-//!     .unwrap();
-//! let pos: Chess = fen.into_position(CastlingMode::Standard).unwrap();
+//! let fen: Fen = "r1bqkbnr/ppp2Qpp/2np4/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4".parse()?;
+//! let pos: Chess = fen.into_position(CastlingMode::Standard)?;
 //! assert!(pos.is_checkmate());
+//!
+//! # use shakmaty::{fen::ParseFenError, PositionError};
+//! # #[derive(Debug)] struct CommonError;
+//! # impl From<ParseFenError> for CommonError { fn from(_: ParseFenError) -> Self { Self } }
+//! # impl<P> From<PositionError<P>> for CommonError { fn from(_: PositionError<P>) -> Self { Self } }
+//! # Ok::<_, CommonError>(())
 //! ```
 //!
 //! # Writing
