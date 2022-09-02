@@ -56,7 +56,7 @@ pub enum Variant {
 impl Variant {
     /// Gets the name of the variant, as expected by the `UCI_Variant` option
     /// of chess engines.
-    pub fn uci(self) -> &'static str {
+    pub const fn uci(self) -> &'static str {
         match self {
             Variant::Chess => "chess",
             Variant::Atomic => "atomic",
@@ -86,7 +86,7 @@ impl Variant {
     }
 
     pub fn distinguishes_promoted(self) -> bool {
-        self == Variant::Crazyhouse
+        matches!(self, Variant::Crazyhouse)
     }
 
     pub const ALL: [Variant; 8] = [
@@ -280,30 +280,39 @@ impl Position for VariantPosition {
     fn board(&self) -> &Board {
         self.borrow().board()
     }
+
     fn promoted(&self) -> Bitboard {
         self.borrow().promoted()
     }
+
     fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         self.borrow().pockets()
     }
+
     fn turn(&self) -> Color {
         self.borrow().turn()
     }
+
     fn castles(&self) -> &Castles {
         self.borrow().castles()
     }
+
     fn maybe_ep_square(&self) -> Option<Square> {
         self.borrow().maybe_ep_square()
     }
+
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
         self.borrow().remaining_checks()
     }
+
     fn halfmoves(&self) -> u32 {
         self.borrow().halfmoves()
     }
+
     fn fullmoves(&self) -> NonZeroU32 {
         self.borrow().fullmoves()
     }
+
     fn into_setup(self, mode: EnPassantMode) -> Setup {
         match self {
             VariantPosition::Chess(pos) => pos.into_setup(mode),
@@ -319,36 +328,47 @@ impl Position for VariantPosition {
     fn legal_moves(&self) -> MoveList {
         self.borrow().legal_moves()
     }
+
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
         self.borrow().san_candidates(role, to)
     }
+
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
         self.borrow().castling_moves(side)
     }
+
     fn en_passant_moves(&self) -> MoveList {
         self.borrow().en_passant_moves()
     }
+
     fn capture_moves(&self) -> MoveList {
         self.borrow().capture_moves()
     }
+
     fn promotion_moves(&self) -> MoveList {
         self.borrow().promotion_moves()
     }
+
     fn is_irreversible(&self, m: &Move) -> bool {
         self.borrow().is_irreversible(m)
     }
+
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.borrow().king_attackers(square, attacker, occupied)
     }
+
     fn is_variant_end(&self) -> bool {
         self.borrow().is_variant_end()
     }
+
     fn has_insufficient_material(&self, color: Color) -> bool {
         self.borrow().has_insufficient_material(color)
     }
+
     fn variant_outcome(&self) -> Option<Outcome> {
         self.borrow().variant_outcome()
     }
+
     fn play_unchecked(&mut self, m: &Move) {
         self.borrow_mut().play_unchecked(m)
     }

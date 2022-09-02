@@ -536,14 +536,14 @@ pub enum Suffix {
 }
 
 impl Suffix {
-    pub fn char(self) -> char {
+    pub const fn char(self) -> char {
         match self {
             Suffix::Check => '+',
             Suffix::Checkmate => '#',
         }
     }
 
-    pub fn from_char(ch: char) -> Option<Suffix> {
+    pub const fn from_char(ch: char) -> Option<Suffix> {
         match ch {
             '+' => Some(Suffix::Check),
             '#' => Some(Suffix::Checkmate),

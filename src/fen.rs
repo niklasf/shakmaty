@@ -276,7 +276,7 @@ impl Board {
     /// Promoted pieces are marked like `Q~`.
     ///
     /// Returns a `struct` that implements [`Display`].
-    pub fn display_with_promotions(&self, promoted: Bitboard) -> BoardDisplayer<'_> {
+    pub const fn display_with_promotions(&self, promoted: Bitboard) -> BoardDisplayer<'_> {
         BoardDisplayer {
             board: self,
             promoted,
@@ -363,7 +363,7 @@ pub struct Fen(pub Setup);
 
 impl Fen {
     /// The FEN of the empty position `8/8/8/8/8/8/8/8 w - - 0 1`.
-    pub fn empty() -> Fen {
+    pub const fn empty() -> Fen {
         Fen(Setup::empty())
     }
 
@@ -516,7 +516,7 @@ impl Fen {
         }
     }
 
-    pub fn from_setup(setup: Setup) -> Fen {
+    pub const fn from_setup(setup: Setup) -> Fen {
         Fen(setup)
     }
 
@@ -524,11 +524,11 @@ impl Fen {
         Fen(pos.into_setup(mode))
     }
 
-    pub fn as_setup(&self) -> &Setup {
+    pub const fn as_setup(&self) -> &Setup {
         &self.0
     }
 
-    pub fn into_setup(self) -> Setup {
+    pub const fn into_setup(self) -> Setup {
         self.0
     }
 
@@ -575,7 +575,7 @@ impl Display for Fen {
 pub struct Epd(Setup);
 
 impl Epd {
-    pub fn empty() -> Epd {
+    pub const fn empty() -> Epd {
         Epd(Setup::empty())
     }
 
@@ -583,9 +583,12 @@ impl Epd {
         Ok(Epd::from_setup(Fen::from_ascii(epd)?.into_setup()))
     }
 
-    pub fn from_setup(mut setup: Setup) -> Epd {
+    pub const fn from_setup(mut setup: Setup) -> Epd {
         setup.halfmoves = 0;
-        setup.fullmoves = NonZeroU32::new(1).unwrap();
+        setup.fullmoves = match NonZeroU32::new(1) {
+            Some(num) => num,
+            _ => unreachable!(),
+        };
         Epd(setup)
     }
 
@@ -593,11 +596,11 @@ impl Epd {
         Epd::from_setup(pos.into_setup(mode))
     }
 
-    pub fn as_setup(&self) -> &Setup {
+    pub const fn as_setup(&self) -> &Setup {
         &self.0
     }
 
-    pub fn into_setup(self) -> Setup {
+    pub const fn into_setup(self) -> Setup {
         self.0
     }
 

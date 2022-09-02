@@ -121,7 +121,7 @@ impl File {
     ///
     /// Panics if the index is not in the range `0..=7`.
     #[inline]
-    pub fn new(index: u32) -> File {
+    pub const fn new(index: u32) -> File {
         assert!(index < 8);
         unsafe { File::new_unchecked(index) }
     }
@@ -133,7 +133,7 @@ impl File {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn new_unchecked(index: u32) -> File {
+    pub const unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
         unsafe { mem::transmute(index as u8) }
     }

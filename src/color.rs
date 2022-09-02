@@ -33,7 +33,7 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn from_char(ch: char) -> Option<Color> {
+    pub const fn from_char(ch: char) -> Option<Color> {
         Some(match ch {
             'w' => Color::White,
             'b' => Color::Black,
@@ -53,12 +53,15 @@ impl Color {
         })
     }
 
-    fn name(self) -> &'static str {
-        self.fold_wb("white", "black")
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Black => "black",
+            Self::White => "white",
+        }
     }
 
     #[inline]
-    pub fn from_white(white: bool) -> Color {
+    pub const fn from_white(white: bool) -> Color {
         if white {
             Color::White
         } else {
@@ -67,7 +70,7 @@ impl Color {
     }
 
     #[inline]
-    pub fn from_black(black: bool) -> Color {
+    pub const fn from_black(black: bool) -> Color {
         if black {
             Color::Black
         } else {
@@ -84,17 +87,28 @@ impl Color {
     }
 
     #[inline]
-    pub fn is_white(self) -> bool {
-        self == Color::White
+    pub const fn is_white(self) -> bool {
+        matches!(self, Color::White)
     }
     #[inline]
-    pub fn is_black(self) -> bool {
-        self == Color::Black
+    pub const fn is_black(self) -> bool {
+        matches!(self, Color::Black)
+    }
+
+    /// Same as the NOT (`!`) operator, but usable in `const` contexts.
+    pub const fn other(self) -> Color {
+        match self {
+            Self::White => Self::Black,
+            Self::Black => Self::White,
+        }
     }
 
     #[inline]
-    pub fn backrank(self) -> Rank {
-        self.fold_wb(Rank::First, Rank::Eighth)
+    pub const fn backrank(self) -> Rank {
+        match self {
+            Self::White => Rank::First,
+            Self::Black => Rank::Eighth,
+        }
     }
 
     #[inline]
@@ -106,27 +120,32 @@ impl Color {
     }
 
     #[inline]
-    pub fn pawn(self) -> Piece {
+    pub const fn pawn(self) -> Piece {
         Role::Pawn.of(self)
     }
+
     #[inline]
-    pub fn knight(self) -> Piece {
+    pub const fn knight(self) -> Piece {
         Role::Knight.of(self)
     }
+
     #[inline]
-    pub fn bishop(self) -> Piece {
+    pub const fn bishop(self) -> Piece {
         Role::Bishop.of(self)
     }
+
     #[inline]
-    pub fn rook(self) -> Piece {
+    pub const fn rook(self) -> Piece {
         Role::Rook.of(self)
     }
+
     #[inline]
-    pub fn queen(self) -> Piece {
+    pub const fn queen(self) -> Piece {
         Role::Queen.of(self)
     }
+
     #[inline]
-    pub fn king(self) -> Piece {
+    pub const fn king(self) -> Piece {
         Role::King.of(self)
     }
 
@@ -200,7 +219,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn get(&self, color: Color) -> &T {
+    pub const fn get(&self, color: Color) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &*(self as *const ByColor<T>)
@@ -262,7 +281,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn as_ref(&self) -> ByColor<&T> {
+    pub const fn as_ref(&self) -> ByColor<&T> {
         ByColor {
             black: &self.black,
             white: &self.white,
@@ -298,7 +317,7 @@ impl<T> ByColor<T> {
 }
 
 impl<T> ByColor<ByRole<T>> {
-    pub fn piece(&self, piece: Piece) -> &T {
+    pub const fn piece(&self, piece: Piece) -> &T {
         self.get(piece.color).get(piece.role)
     }
 

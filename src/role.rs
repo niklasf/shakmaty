@@ -53,7 +53,7 @@ impl Role {
     ///
     /// assert_eq!(Role::from_char('X'), None);
     /// ```
-    pub fn from_char(ch: char) -> Option<Role> {
+    pub const fn from_char(ch: char) -> Option<Role> {
         match ch {
             'P' | 'p' => Some(Role::Pawn),
             'N' | 'n' => Some(Role::Knight),
@@ -75,7 +75,7 @@ impl Role {
     /// assert_eq!(Role::King.of(Color::Black), Color::Black.king());
     /// ```
     #[inline]
-    pub fn of(self, color: Color) -> Piece {
+    pub const fn of(self, color: Color) -> Piece {
         Piece { color, role: self }
     }
 
@@ -88,7 +88,7 @@ impl Role {
     ///
     /// assert_eq!(Role::Rook.char(), 'r');
     /// ```
-    pub fn char(self) -> char {
+    pub const fn char(self) -> char {
         match self {
             Role::Pawn => 'p',
             Role::Knight => 'n',
@@ -108,7 +108,7 @@ impl Role {
     ///
     /// assert_eq!(Role::Rook.upper_char(), 'R');
     /// ```
-    pub fn upper_char(self) -> char {
+    pub const fn upper_char(self) -> char {
         match self {
             Role::Pawn => 'P',
             Role::Knight => 'N',
@@ -213,7 +213,7 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn get(&self, role: Role) -> &T {
+    pub const fn get(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &*(self as *const ByRole<T>)
@@ -283,7 +283,7 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn as_ref(&self) -> ByRole<&T> {
+    pub const fn as_ref(&self) -> ByRole<&T> {
         ByRole {
             pawn: &self.pawn,
             knight: &self.knight,

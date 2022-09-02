@@ -89,7 +89,7 @@ impl Bitboard {
     #[deprecated = "use Bitboard::shift() or manual shifts for clearer semantics"]
     #[must_use]
     #[inline]
-    pub fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
+    pub const fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
         match color {
             Color::White => Bitboard(self.0 << shift),
             Color::Black => Bitboard(self.0 >> shift),
@@ -163,8 +163,8 @@ impl Bitboard {
 
     /// Tests if `self` contains the given square.
     #[inline]
-    pub fn contains(self, sq: Square) -> bool {
-        (self & Bitboard::from_square(sq)).any()
+    pub const fn contains(self, sq: Square) -> bool {
+        self.intersect(Self::from_square(sq)).any()
     }
 
     /// Adds `squares`.
@@ -226,12 +226,22 @@ impl Bitboard {
         self.0 = 0;
     }
 
+    /// Returns the intersection of `self` and `squares`. Equivalent to bitwise `&`.
+    pub const fn intersect(self, squares: Bitboard) -> Bitboard {
+        Self(self.0 & squares.0)
+    }
+
     /// Returns the union of `self` and `squares`. Equivalent to bitwise `|`.
     #[doc(alias = "union")]
     #[must_use]
     #[inline]
     pub fn with<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
-        self | squares
+        self.with_const(squares.into())
+    }
+
+    /// Same as the `with` method, but usable in `const` contexts.
+    pub const fn with_const(self, squares: Bitboard) -> Bitboard {
+        Self(self.0 | squares.0)
     }
 
     /// Returns `self` without `squares` (set difference).
@@ -239,7 +249,12 @@ impl Bitboard {
     #[must_use]
     #[inline]
     pub fn without<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
-        self & !squares.into()
+        self.without_const(squares.into())
+    }
+
+    /// Same as the `without` method, but usable in `const` contexts.
+    pub const fn without_const(self, squares: Bitboard) -> Bitboard {
+        Self(self.0 & !squares.0)
     }
 
     /// Returns all squares that are in `self` or `squares` but not in both
@@ -248,13 +263,23 @@ impl Bitboard {
     #[must_use]
     #[inline]
     pub fn toggled<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
-        self ^ squares
+        self.toggled_const(squares.into())
+    }
+
+    /// Same as the `toggled` method, but usable in `const` contexts.
+    pub const fn toggled_const(self, squares: Bitboard) -> Bitboard {
+        Self(self.0 ^ squares.0)
     }
 
     /// Tests if `self` and `other` are disjoint.
     #[inline]
     pub fn is_disjoint<T: Into<Bitboard>>(self, other: T) -> bool {
-        (self & other).is_empty()
+        self.is_disjoint_const(other.into())
+    }
+
+    /// Same as the `is_disjoint` method, but usable in `const` contexts.
+    pub const fn is_disjoint_const(self, other: Bitboard) -> bool {
+        Self(self.0 & other.0).is_empty()
     }
 
     /// Tests if `self` is a subset of `other`.
@@ -268,7 +293,12 @@ impl Bitboard {
     /// ```
     #[inline]
     pub fn is_subset<T: Into<Bitboard>>(self, other: T) -> bool {
-        (self & !other.into()).is_empty()
+        self.is_subset_const(other.into())
+    }
+
+    /// Same as the `is_subset` method, but usable in `const` contexts.
+    pub const fn is_subset_const(self, other: Bitboard) -> bool {
+        self.without_const(other).is_empty()
     }
 
     /// Tests if `self` is a superset of `other`.
@@ -282,7 +312,12 @@ impl Bitboard {
     /// ```
     #[inline]
     pub fn is_superset<T: Into<Bitboard>>(self, other: T) -> bool {
-        other.into().is_subset(self)
+        self.is_superset_const(other.into())
+    }
+
+    /// Same as the `is_superset` method, but usable in `const` contexts.
+    pub const fn is_superset_const(self, other: Bitboard) -> bool {
+        other.is_subset_const(self)
     }
 
     /// Removes and returns the first square, if any.
@@ -296,7 +331,7 @@ impl Bitboard {
 
     /// Returns the first square, if any.
     #[inline]
-    pub fn first(self) -> Option<Square> {
+    pub const fn first(self) -> Option<Square> {
         if self.is_empty() {
             None
         } else {
@@ -307,15 +342,14 @@ impl Bitboard {
     /// Discards the first square.
     #[inline]
     pub fn discard_first(&mut self) {
-        self.0 &= self.0.wrapping_sub(1);
+        *self = (*self).without_first();
     }
 
     /// Returns `self` without the first square.
     #[inline]
-    pub fn without_first(self) -> Bitboard {
-        let mut bb = self;
-        bb.discard_first();
-        bb
+    pub const fn without_first(self) -> Bitboard {
+        let Self(mask) = self;
+        Self(mask & mask.wrapping_sub(1))
     }
 
     /// Removes and returns the last square, if any.
@@ -353,7 +387,7 @@ impl Bitboard {
 
     /// Tests if there is more than one square in `self`.
     #[inline]
-    pub fn more_than_one(self) -> bool {
+    pub const fn more_than_one(self) -> bool {
         self.without_first().any()
     }
 
@@ -368,7 +402,7 @@ impl Bitboard {
     /// assert_eq!(Bitboard::from(Rank::First).single_square(), None);
     /// ```
     #[inline]
-    pub fn single_square(self) -> Option<Square> {
+    pub const fn single_square(self) -> Option<Square> {
         if self.more_than_one() {
             None
         } else {
@@ -388,7 +422,7 @@ impl Bitboard {
     /// }
     /// ```
     #[inline]
-    pub fn carry_rippler(self) -> CarryRippler {
+    pub const fn carry_rippler(self) -> CarryRippler {
         CarryRippler {
             bb: self.0,
             subset: 0,
@@ -417,7 +451,7 @@ impl Bitboard {
     #[must_use]
     #[inline]
     pub const fn flip_vertical(self) -> Bitboard {
-        Bitboard(self.0.swap_bytes())
+        Self(self.0.swap_bytes())
     }
 
     /// Mirror the bitboard horizontally.
@@ -820,7 +854,7 @@ pub(crate) enum Direction {
 
 impl Direction {
     #[inline(always)]
-    pub fn offset(self) -> i32 {
+    pub const fn offset(self) -> i32 {
         match self {
             Direction::NorthWest => 7,
             Direction::SouthWest => -9,
@@ -830,7 +864,7 @@ impl Direction {
     }
 
     #[inline(always)]
-    pub fn translate(self, bitboard: Bitboard) -> Bitboard {
+    pub const fn translate(self, bitboard: Bitboard) -> Bitboard {
         Bitboard(match self {
             Direction::NorthWest => (bitboard.0 & !FILES[0]) << 7,
             Direction::SouthWest => (bitboard.0 & !FILES[0]) >> 9,

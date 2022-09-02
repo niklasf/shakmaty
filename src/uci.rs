@@ -259,7 +259,7 @@ impl Uci {
     /// let uci = Uci::from_chess960(&m);
     /// assert_eq!(uci.to_string(), "e8h8");
     /// ```
-    pub fn from_chess960(m: &Move) -> Uci {
+    pub const fn from_chess960(m: &Move) -> Uci {
         match *m {
             Move::Normal {
                 from,
