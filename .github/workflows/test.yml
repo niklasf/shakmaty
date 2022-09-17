@@ -41,7 +41,6 @@ jobs:
         with:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
-          components: clippy
           override: true
       - uses: actions-rs/cargo@v1
         with:
