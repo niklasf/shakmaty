@@ -42,6 +42,7 @@ jobs:
         with:
           profile: minimal
           toolchain: ${{ matrix.toolchain }}
+          components: clippy
           override: true
       - uses: actions-rs/cargo@v1
         with:
@@ -49,9 +50,13 @@ jobs:
           args: --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
-          command: bench
+          command: doc
           args: --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
-          command: doc
+          command: bench
+          args: --no-default-features ${{ matrix.features }}
+      - uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           args: --no-default-features ${{ matrix.features }}
