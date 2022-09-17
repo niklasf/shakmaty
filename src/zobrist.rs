@@ -53,48 +53,48 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
 macro_rules! zobrist_value_impl {
     ($($t:ty)+) => {
         $(impl ZobristValue for $t {
-            fn zobrist_for_piece(square: Square, piece: Piece) -> Self {
+            fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
                 let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
-                PIECE_MASKS[64 * piece_idx + usize::from(square)] as Self
+                PIECE_MASKS[64 * piece_idx + usize::from(square)] as $t
             }
 
-            fn zobrist_for_white_turn() -> Self {
-                WHITE_TURN_MASK as Self
+            fn zobrist_for_white_turn() -> $t {
+                WHITE_TURN_MASK as $t
             }
 
-            fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> Self {
+            fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> $t {
                 CASTLING_RIGHT_MASKS[match (color, side) {
                     (Color::White, CastlingSide::KingSide) => 0,
                     (Color::White, CastlingSide::QueenSide) => 1,
                     (Color::Black, CastlingSide::KingSide) => 2,
                     (Color::Black, CastlingSide::QueenSide) => 3,
-                }] as Self
+                }] as $t
             }
 
-            fn zobrist_for_en_passant_file(file: File) -> Self {
-                EN_PASSANT_FILE_MASKS[usize::from(file)] as Self
+            fn zobrist_for_en_passant_file(file: File) -> $t {
+                EN_PASSANT_FILE_MASKS[usize::from(file)] as $t
             }
 
-            fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> Self {
+            fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
                 if remaining < RemainingChecks::default() {
-                    REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as Self
+                    REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $t
                 } else {
-                    Self::default()
+                    <$t>::default()
                 }
             }
 
-            fn zobrist_for_promoted(square: Square) -> Self {
-                PROMOTED_MASKS[usize::from(square)] as Self
+            fn zobrist_for_promoted(square: Square) -> $t {
+                PROMOTED_MASKS[usize::from(square)] as $t
             }
 
-            fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> Self {
+            fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
                 if 0 < pieces && pieces <= 16 {
                     let color_idx = color as usize;
                     let role_idx = usize::from(role) - 1;
                     let pieces_idx = usize::from(pieces) - 1;
-                    POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as Self
+                    POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as $t
                 } else {
-                    Self::default()
+                    <$t>::default()
                 }
             }
         })+
@@ -224,8 +224,8 @@ pub struct Zobrist<P, V: ZobristValue> {
 }
 
 impl<P, V: ZobristValue> Zobrist<P, V> {
-    pub fn new(pos: P) -> Self {
-        Self {
+    pub fn new(pos: P) -> Zobrist<P, V> {
+        Zobrist {
             pos,
             zobrist: Cell::new(None),
         }
@@ -253,7 +253,7 @@ impl<P: ZobristHash, V: ZobristValue> Zobrist<P, V> {
 }
 
 impl<P: Default, V: ZobristValue> Default for Zobrist<P, V> {
-    fn default() -> Self {
+    fn default() -> Zobrist<P, V> {
         Self::new(P::default())
     }
 }
@@ -261,9 +261,9 @@ impl<P: Default, V: ZobristValue> Default for Zobrist<P, V> {
 impl<P: FromSetup + Position, V: ZobristValue> FromSetup for Zobrist<P, V> {
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
         match P::from_setup(setup, mode) {
-            Ok(pos) => Ok(Self::new(pos)),
+            Ok(pos) => Ok(Zobrist::new(pos)),
             Err(err) => Err(PositionError {
-                pos: Self::new(err.pos),
+                pos: Zobrist::new(err.pos),
                 errors: err.errors,
             }),
         }
@@ -274,83 +274,63 @@ impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
     fn board(&self) -> &Board {
         self.pos.board()
     }
-
     fn promoted(&self) -> Bitboard {
         self.pos.promoted()
     }
-
     fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         self.pos.pockets()
     }
-
     fn turn(&self) -> Color {
         self.pos.turn()
     }
-
     fn castles(&self) -> &Castles {
         self.pos.castles()
     }
-
     fn maybe_ep_square(&self) -> Option<Square> {
         self.pos.maybe_ep_square()
     }
-
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
         self.pos.remaining_checks()
     }
-
     fn halfmoves(&self) -> u32 {
         self.pos.halfmoves()
     }
-
     fn fullmoves(&self) -> NonZeroU32 {
         self.pos.fullmoves()
     }
-
     fn into_setup(self, mode: EnPassantMode) -> Setup {
         self.pos.into_setup(mode)
     }
-
     fn legal_moves(&self) -> MoveList {
         self.pos.legal_moves()
     }
-
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
         self.pos.san_candidates(role, to)
     }
-
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
         self.pos.castling_moves(side)
     }
-
     fn en_passant_moves(&self) -> MoveList {
         self.pos.en_passant_moves()
     }
-
     fn capture_moves(&self) -> MoveList {
         self.pos.capture_moves()
     }
-
     fn promotion_moves(&self) -> MoveList {
         self.pos.promotion_moves()
     }
-
     fn is_irreversible(&self, m: &Move) -> bool {
         self.pos.is_irreversible(m)
     }
-
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
         self.pos.king_attackers(square, attacker, occupied)
     }
-
     fn is_variant_end(&self) -> bool {
         self.pos.is_variant_end()
     }
-
     fn has_insufficient_material(&self, color: Color) -> bool {
         self.pos.has_insufficient_material(color)
     }
-
     fn variant_outcome(&self) -> Option<Outcome> {
         self.pos.variant_outcome()
     }

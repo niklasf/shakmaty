@@ -53,14 +53,14 @@ impl Role {
     ///
     /// assert_eq!(Role::from_char('X'), None);
     /// ```
-    pub const fn from_char(ch: char) -> Option<Self> {
+    pub const fn from_char(ch: char) -> Option<Role> {
         match ch {
-            'P' | 'p' => Some(Self::Pawn),
-            'N' | 'n' => Some(Self::Knight),
-            'B' | 'b' => Some(Self::Bishop),
-            'R' | 'r' => Some(Self::Rook),
-            'Q' | 'q' => Some(Self::Queen),
-            'K' | 'k' => Some(Self::King),
+            'P' | 'p' => Some(Role::Pawn),
+            'N' | 'n' => Some(Role::Knight),
+            'B' | 'b' => Some(Role::Bishop),
+            'R' | 'r' => Some(Role::Rook),
+            'Q' | 'q' => Some(Role::Queen),
+            'K' | 'k' => Some(Role::King),
             _ => None,
         }
     }
@@ -90,12 +90,12 @@ impl Role {
     /// ```
     pub const fn char(self) -> char {
         match self {
-            Self::Pawn => 'p',
-            Self::Knight => 'n',
-            Self::Bishop => 'b',
-            Self::Rook => 'r',
-            Self::Queen => 'q',
-            Self::King => 'k',
+            Role::Pawn => 'p',
+            Role::Knight => 'n',
+            Role::Bishop => 'b',
+            Role::Rook => 'r',
+            Role::Queen => 'q',
+            Role::King => 'k',
         }
     }
 
@@ -110,23 +110,23 @@ impl Role {
     /// ```
     pub const fn upper_char(self) -> char {
         match self {
-            Self::Pawn => 'P',
-            Self::Knight => 'N',
-            Self::Bishop => 'B',
-            Self::Rook => 'R',
-            Self::Queen => 'Q',
-            Self::King => 'K',
+            Role::Pawn => 'P',
+            Role::Knight => 'N',
+            Role::Bishop => 'B',
+            Role::Rook => 'R',
+            Role::Queen => 'Q',
+            Role::King => 'K',
         }
     }
 
     /// `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, and `King`, in this order.
-    pub const ALL: [Self; 6] = [
-        Self::Pawn,
-        Self::Knight,
-        Self::Bishop,
-        Self::Rook,
-        Self::Queen,
-        Self::King,
+    pub const ALL: [Role; 6] = [
+        Role::Pawn,
+        Role::Knight,
+        Role::Bishop,
+        Role::Rook,
+        Role::Queen,
+        Role::King,
     ];
 }
 
@@ -134,8 +134,8 @@ macro_rules! int_from_role_impl {
     ($($t:ty)+) => {
         $(impl From<Role> for $t {
             #[inline]
-            fn from(role: Role) -> Self {
-                role as Self
+            fn from(role: Role) -> $t {
+                role as $t
             }
         })+
     }
@@ -147,8 +147,8 @@ macro_rules! nonzero_int_from_role_impl {
     ($($t:ty)+) => {
         $(impl From<Role> for $t {
             #[inline]
-            fn from(role: Role) -> Self {
-                Self::new(role.into()).expect("nonzero role discriminant")
+            fn from(role: Role) -> $t {
+                <$t>::new(role.into()).expect("nonzero role discriminant")
             }
         })+
     }
@@ -168,14 +168,14 @@ macro_rules! try_role_from_int_impl {
             type Error = num::TryFromIntError;
 
             #[inline]
-            fn try_from(value: $t) -> Result<Self, Self::Error> {
+            fn try_from(value: $t) -> Result<Role, Self::Error> {
                 Ok(match value {
-                    1 => Self::Pawn,
-                    2 => Self::Knight,
-                    3 => Self::Bishop,
-                    4 => Self::Rook,
-                    5 => Self::Queen,
-                    6 => Self::King,
+                    1 => Role::Pawn,
+                    2 => Role::Knight,
+                    3 => Role::Bishop,
+                    4 => Role::Rook,
+                    5 => Role::Queen,
+                    6 => Role::King,
                     _ => return Err(overflow_error()),
                 })
             }
@@ -198,11 +198,11 @@ pub struct ByRole<T> {
 }
 
 impl<T> ByRole<T> {
-    pub fn new_with<F>(mut init: F) -> Self
+    pub fn new_with<F>(mut init: F) -> ByRole<T>
     where
         F: FnMut(Role) -> T,
     {
-        Self {
+        ByRole {
             pawn: init(Role::Pawn),
             knight: init(Role::Knight),
             bishop: init(Role::Bishop),
@@ -215,13 +215,21 @@ impl<T> ByRole<T> {
     #[inline]
     pub const fn get(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &*(self as *const Self).cast::<T>().offset(role as isize - 1) }
+        unsafe {
+            &*(self as *const ByRole<T>)
+                .cast::<T>()
+                .offset(role as isize - 1)
+        }
     }
 
     #[inline]
     pub fn get_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &mut *(self as *mut Self).cast::<T>().offset(role as isize - 1) }
+        unsafe {
+            &mut *(self as *mut ByRole<T>)
+                .cast::<T>()
+                .offset(role as isize - 1)
+        }
     }
 
     #[inline]

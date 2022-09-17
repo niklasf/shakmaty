@@ -97,8 +97,8 @@ pub enum SanError {
 impl fmt::Display for SanError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            Self::IllegalSan => "illegal san",
-            Self::AmbiguousSan => "ambiguous san",
+            SanError::IllegalSan => "illegal san",
+            SanError::AmbiguousSan => "ambiguous san",
         })
     }
 }
@@ -131,24 +131,24 @@ impl San {
     /// # Errors
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    pub fn from_ascii(mut san: &[u8]) -> Result<Self, ParseSanError> {
+    pub fn from_ascii(mut san: &[u8]) -> Result<San, ParseSanError> {
         if san.ends_with(b"#") || san.ends_with(b"+") {
             san = &san[0..(san.len() - 1)];
         }
 
         if san == b"--" {
-            Ok(Self::Null)
+            Ok(San::Null)
         } else if san == b"O-O" {
-            Ok(Self::Castle(CastlingSide::KingSide))
+            Ok(San::Castle(CastlingSide::KingSide))
         } else if san == b"O-O-O" {
-            Ok(Self::Castle(CastlingSide::QueenSide))
+            Ok(San::Castle(CastlingSide::QueenSide))
         } else if san.len() == 3 && san[0] == b'@' {
-            Ok(Self::Put {
+            Ok(San::Put {
                 role: Role::Pawn,
                 to: Square::from_ascii(&san[1..]).map_err(|_| ParseSanError)?,
             })
         } else if san.len() == 4 && san[1] == b'@' {
-            Ok(Self::Put {
+            Ok(San::Put {
                 role: Role::from_char(char::from(san[0])).ok_or(ParseSanError)?,
                 to: Square::from_ascii(&san[2..]).map_err(|_| ParseSanError)?,
             })
@@ -221,7 +221,7 @@ impl San {
                 None => None,
             };
 
-            Ok(Self::Normal {
+            Ok(San::Normal {
                 role,
                 file,
                 rank,
@@ -233,13 +233,13 @@ impl San {
     }
 
     /// Converts a move to Standard Algebraic Notation.
-    pub fn from_move<P: Position>(pos: &P, m: &Move) -> Self {
+    pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
         let legals = match *m {
             Move::Normal { role, to, .. } if role != Role::Pawn => pos.san_candidates(role, to),
             _ => MoveList::new(),
         };
 
-        Self::disambiguate(m, &legals)
+        San::disambiguate(m, &legals)
     }
 
     /// Tries to convert the `San` to a legal move in the context of a
@@ -250,7 +250,7 @@ impl San {
     /// Returns [`SanError`] if there is no unique matching legal move.
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
         match *self {
-            Self::Normal {
+            San::Normal {
                 role,
                 file,
                 rank,
@@ -289,21 +289,21 @@ impl San {
                         }
                     })
             }
-            Self::Castle(side) => pos
+            San::Castle(side) => pos
                 .castling_moves(side)
                 .first()
                 .cloned()
                 .ok_or(SanError::IllegalSan),
-            Self::Put { role, to } => {
+            San::Put { role, to } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| matches!(*m, Move::Put { .. }));
                 legals.first().cloned().ok_or(SanError::IllegalSan)
             }
-            Self::Null => Err(SanError::IllegalSan),
+            San::Null => Err(SanError::IllegalSan),
         }
     }
 
-    pub fn disambiguate(m: &Move, moves: &MoveList) -> Self {
+    pub fn disambiguate(m: &Move, moves: &MoveList) -> San {
         match *m {
             Move::Normal {
                 role: Role::Pawn,
@@ -311,7 +311,7 @@ impl San {
                 capture,
                 to,
                 promotion,
-            } => Self::Normal {
+            } => San::Normal {
                 role: Role::Pawn,
                 file: if capture.is_some() {
                     Some(from.file())
@@ -359,7 +359,7 @@ impl San {
                         _ => (rank, file),
                     });
 
-                Self::Normal {
+                San::Normal {
                     role,
                     file: if file { Some(from.file()) } else { None },
                     rank: if rank { Some(from.rank()) } else { None },
@@ -368,7 +368,7 @@ impl San {
                     promotion,
                 }
             }
-            Move::EnPassant { from, to, .. } => Self::Normal {
+            Move::EnPassant { from, to, .. } => San::Normal {
                 role: Role::Pawn,
                 file: Some(from.file()),
                 rank: None,
@@ -377,10 +377,10 @@ impl San {
                 promotion: None,
             },
             Move::Castle { rook, king } if rook.file() < king.file() => {
-                Self::Castle(CastlingSide::QueenSide)
+                San::Castle(CastlingSide::QueenSide)
             }
-            Move::Castle { .. } => Self::Castle(CastlingSide::KingSide),
-            Move::Put { role, to } => Self::Put { role, to },
+            Move::Castle { .. } => San::Castle(CastlingSide::KingSide),
+            Move::Put { role, to } => San::Put { role, to },
         }
     }
 
@@ -437,7 +437,7 @@ impl San {
     /// ```
     pub fn matches(&self, m: &Move) -> bool {
         match *self {
-            Self::Normal {
+            San::Normal {
                 role,
                 file,
                 rank,
@@ -469,12 +469,12 @@ impl San {
                 }
                 _ => false,
             },
-            Self::Castle(side) => m.castling_side().map_or(false, |s| side == s),
-            Self::Put { role, to } => match *m {
+            San::Castle(side) => m.castling_side().map_or(false, |s| side == s),
+            San::Put { role, to } => match *m {
                 Move::Put { role: r, to: t } => r == role && to == t,
                 _ => false,
             },
-            Self::Null => false,
+            San::Null => false,
         }
     }
 }
@@ -482,15 +482,15 @@ impl San {
 impl FromStr for San {
     type Err = ParseSanError;
 
-    fn from_str(san: &str) -> Result<Self, ParseSanError> {
-        Self::from_ascii(san.as_bytes())
+    fn from_str(san: &str) -> Result<San, ParseSanError> {
+        San::from_ascii(san.as_bytes())
     }
 }
 
 impl fmt::Display for San {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Self::Normal {
+            San::Normal {
                 role,
                 file,
                 rank,
@@ -516,14 +516,14 @@ impl fmt::Display for San {
                 }
                 Ok(())
             }
-            Self::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
-            Self::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
-            Self::Put {
+            San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
+            San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
+            San::Put {
                 role: Role::Pawn,
                 to,
             } => write!(f, "@{}", to),
-            Self::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
-            Self::Null => write!(f, "--"),
+            San::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
+            San::Null => write!(f, "--"),
         }
     }
 }
@@ -538,24 +538,24 @@ pub enum Suffix {
 impl Suffix {
     pub const fn char(self) -> char {
         match self {
-            Self::Check => '+',
-            Self::Checkmate => '#',
+            Suffix::Check => '+',
+            Suffix::Checkmate => '#',
         }
     }
 
-    pub const fn from_char(ch: char) -> Option<Self> {
+    pub const fn from_char(ch: char) -> Option<Suffix> {
         match ch {
-            '+' => Some(Self::Check),
-            '#' => Some(Self::Checkmate),
+            '+' => Some(Suffix::Check),
+            '#' => Some(Suffix::Checkmate),
             _ => None,
         }
     }
 
-    pub fn from_position<P: Position>(pos: &P) -> Option<Self> {
+    pub fn from_position<P: Position>(pos: &P) -> Option<Suffix> {
         if matches!(pos.outcome(), Some(Outcome::Decisive { .. })) {
-            Some(Self::Checkmate)
+            Some(Suffix::Checkmate)
         } else if pos.checkers().any() {
-            Some(Self::Check)
+            Some(Suffix::Check)
         } else {
             None
         }
@@ -581,8 +581,8 @@ impl SanPlus {
     /// # Errors
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    pub fn from_ascii(san: &[u8]) -> Result<Self, ParseSanError> {
-        San::from_ascii(san).map(|result| Self {
+    pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
+        San::from_ascii(san).map(|result| SanPlus {
             san: result,
             suffix: san
                 .last()
@@ -600,16 +600,16 @@ impl SanPlus {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls.
-    pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: &Move) -> Self {
+    pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: &Move) -> SanPlus {
         let san = San::from_move(pos, m);
         pos.play_unchecked(m);
-        Self {
+        SanPlus {
             san,
             suffix: Suffix::from_position(pos),
         }
     }
 
-    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> Self {
+    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
         let moves = match *m {
             Move::Normal { role, to, .. } | Move::Put { role, to } => pos.san_candidates(role, to),
             Move::EnPassant { to, .. } => pos.san_candidates(Role::Pawn, to),
@@ -618,7 +618,7 @@ impl SanPlus {
             }
             Move::Castle { .. } => pos.castling_moves(CastlingSide::QueenSide),
         };
-        Self {
+        SanPlus {
             san: San::disambiguate(m, &moves),
             suffix: if moves.contains(m) {
                 pos.play_unchecked(m);
@@ -633,8 +633,8 @@ impl SanPlus {
 impl FromStr for SanPlus {
     type Err = ParseSanError;
 
-    fn from_str(san: &str) -> Result<Self, ParseSanError> {
-        Self::from_ascii(san.as_bytes())
+    fn from_str(san: &str) -> Result<SanPlus, ParseSanError> {
+        SanPlus::from_ascii(san.as_bytes())
     }
 }
 

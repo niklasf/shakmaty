@@ -52,20 +52,20 @@ pub struct Bitboard(pub u64);
 impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
-    pub const fn from_square(sq: Square) -> Self {
-        Self(SQUARES[sq as usize])
+    pub const fn from_square(sq: Square) -> Bitboard {
+        Bitboard(SQUARES[sq as usize])
     }
 
     /// Returns the bitboard containing all squares of the given rank.
     #[inline]
-    pub const fn from_rank(rank: Rank) -> Self {
-        Self(RANKS[rank as usize])
+    pub const fn from_rank(rank: Rank) -> Bitboard {
+        Bitboard(RANKS[rank as usize])
     }
 
     /// Returns the bitboard containing all squares of the given file.
     #[inline]
-    pub const fn from_file(file: File) -> Self {
-        Self(FILES[file as usize])
+    pub const fn from_file(file: File) -> Bitboard {
+        Bitboard(FILES[file as usize])
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -89,11 +89,11 @@ impl Bitboard {
     #[deprecated = "use Bitboard::shift() or manual shifts for clearer semantics"]
     #[must_use]
     #[inline]
-    pub const fn relative_shift(self, color: Color, shift: u32) -> Self {
-        Self(match color {
-            Color::White => self.0 << shift,
-            Color::Black => self.0 >> shift,
-        })
+    pub const fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
+        match color {
+            Color::White => Bitboard(self.0 << shift),
+            Color::Black => Bitboard(self.0 >> shift),
+        }
     }
 
     /// Silently overflowing bitwise shift with a signed offset, `<<` for
@@ -120,8 +120,8 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn shift(self, offset: i32) -> Self {
-        Self(if offset > 63 {
+    pub const fn shift(self, offset: i32) -> Bitboard {
+        Bitboard(if offset > 63 {
             0
         } else if offset >= 0 {
             self.0 << offset
@@ -169,19 +169,19 @@ impl Bitboard {
 
     /// Adds `squares`.
     #[inline]
-    pub fn add<T: Into<Self>>(&mut self, squares: T) {
+    pub fn add<T: Into<Bitboard>>(&mut self, squares: T) {
         *self |= squares;
     }
 
     /// Toggles `squares`.
     #[inline]
-    pub fn toggle<T: Into<Self>>(&mut self, squares: T) {
+    pub fn toggle<T: Into<Bitboard>>(&mut self, squares: T) {
         *self ^= squares;
     }
 
     /// Discards `squares`.
     #[inline]
-    pub fn discard<T: Into<Self>>(&mut self, squares: T) {
+    pub fn discard<T: Into<Bitboard>>(&mut self, squares: T) {
         *self &= !squares.into();
     }
 
@@ -227,7 +227,7 @@ impl Bitboard {
     }
 
     /// Returns the intersection of `self` and `squares`. Equivalent to bitwise `&`.
-    pub const fn intersect(self, squares: Self) -> Self {
+    pub const fn intersect(self, squares: Bitboard) -> Bitboard {
         Self(self.0 & squares.0)
     }
 
@@ -235,12 +235,12 @@ impl Bitboard {
     #[doc(alias = "union")]
     #[must_use]
     #[inline]
-    pub fn with<T: Into<Self>>(self, squares: T) -> Self {
+    pub fn with<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self.with_const(squares.into())
     }
 
     /// Same as the `with` method, but usable in `const` contexts.
-    pub const fn with_const(self, squares: Self) -> Self {
+    pub const fn with_const(self, squares: Bitboard) -> Bitboard {
         Self(self.0 | squares.0)
     }
 
@@ -248,12 +248,12 @@ impl Bitboard {
     #[doc(alias = "difference")]
     #[must_use]
     #[inline]
-    pub fn without<T: Into<Self>>(self, squares: T) -> Self {
+    pub fn without<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self.without_const(squares.into())
     }
 
     /// Same as the `without` method, but usable in `const` contexts.
-    pub const fn without_const(self, squares: Self) -> Self {
+    pub const fn without_const(self, squares: Bitboard) -> Bitboard {
         Self(self.0 & !squares.0)
     }
 
@@ -262,23 +262,23 @@ impl Bitboard {
     #[doc(alias = "symmetric_difference")]
     #[must_use]
     #[inline]
-    pub fn toggled<T: Into<Self>>(self, squares: T) -> Self {
+    pub fn toggled<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
         self.toggled_const(squares.into())
     }
 
     /// Same as the `toggled` method, but usable in `const` contexts.
-    pub const fn toggled_const(self, squares: Self) -> Self {
+    pub const fn toggled_const(self, squares: Bitboard) -> Bitboard {
         Self(self.0 ^ squares.0)
     }
 
     /// Tests if `self` and `other` are disjoint.
     #[inline]
-    pub fn is_disjoint<T: Into<Self>>(self, other: T) -> bool {
+    pub fn is_disjoint<T: Into<Bitboard>>(self, other: T) -> bool {
         self.is_disjoint_const(other.into())
     }
 
     /// Same as the `is_disjoint` method, but usable in `const` contexts.
-    pub const fn is_disjoint_const(self, other: Self) -> bool {
+    pub const fn is_disjoint_const(self, other: Bitboard) -> bool {
         Self(self.0 & other.0).is_empty()
     }
 
@@ -292,12 +292,12 @@ impl Bitboard {
     /// assert!(Bitboard::DARK_SQUARES.is_subset(Bitboard::FULL));
     /// ```
     #[inline]
-    pub fn is_subset<T: Into<Self>>(self, other: T) -> bool {
+    pub fn is_subset<T: Into<Bitboard>>(self, other: T) -> bool {
         self.is_subset_const(other.into())
     }
 
     /// Same as the `is_subset` method, but usable in `const` contexts.
-    pub const fn is_subset_const(self, other: Self) -> bool {
+    pub const fn is_subset_const(self, other: Bitboard) -> bool {
         self.without_const(other).is_empty()
     }
 
@@ -311,12 +311,12 @@ impl Bitboard {
     /// assert!(Bitboard::FULL.is_superset(Bitboard::LIGHT_SQUARES));
     /// ```
     #[inline]
-    pub fn is_superset<T: Into<Self>>(self, other: T) -> bool {
+    pub fn is_superset<T: Into<Bitboard>>(self, other: T) -> bool {
         self.is_superset_const(other.into())
     }
 
     /// Same as the `is_superset` method, but usable in `const` contexts.
-    pub const fn is_superset_const(self, other: Self) -> bool {
+    pub const fn is_superset_const(self, other: Bitboard) -> bool {
         other.is_subset_const(self)
     }
 
@@ -347,7 +347,7 @@ impl Bitboard {
 
     /// Returns `self` without the first square.
     #[inline]
-    pub const fn without_first(self) -> Self {
+    pub const fn without_first(self) -> Bitboard {
         let Self(mask) = self;
         Self(mask & mask.wrapping_sub(1))
     }
@@ -356,7 +356,7 @@ impl Bitboard {
     #[inline]
     pub fn pop_back(&mut self) -> Option<Square> {
         let square = self.last();
-        *self ^= Self::from_iter(square);
+        *self ^= Bitboard::from_iter(square);
         square
     }
 
@@ -450,7 +450,7 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn flip_vertical(self) -> Self {
+    pub const fn flip_vertical(self) -> Bitboard {
         Self(self.0.swap_bytes())
     }
 
@@ -473,7 +473,7 @@ impl Bitboard {
     /// // . . 1 . . . 1 .
     /// ```
     #[must_use]
-    pub const fn flip_horizontal(self) -> Self {
+    pub const fn flip_horizontal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Horizontal
         let k1 = 0x5555_5555_5555_5555;
         let k2 = 0x3333_3333_3333_3333;
@@ -482,7 +482,7 @@ impl Bitboard {
         let x = ((x >> 1) & k1) | ((x & k1) << 1);
         let x = ((x >> 2) & k2) | ((x & k2) << 2);
         let x = ((x >> 4) & k4) | ((x & k4) << 4);
-        Self(x)
+        Bitboard(x)
     }
 
     /// Mirror the bitboard at the a1-h8 diagonal.
@@ -504,7 +504,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub const fn flip_diagonal(self) -> Self {
+    pub const fn flip_diagonal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal
         let k1 = 0x5500_5500_5500_5500;
         let k2 = 0x3333_0000_3333_0000;
@@ -516,7 +516,7 @@ impl Bitboard {
         x ^= t ^ (t >> 14);
         let t = k1 & (x ^ (x << 7));
         x ^= t ^ (t >> 7);
-        Self(x)
+        Bitboard(x)
     }
 
     /// Mirror the bitboard at the h1-a8 diagonal.
@@ -538,7 +538,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub const fn flip_anti_diagonal(self) -> Self {
+    pub const fn flip_anti_diagonal(self) -> Bitboard {
         // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Anti-Diagonal
         let k1 = 0xaa00_aa00_aa00_aa00;
         let k2 = 0xcccc_0000_cccc_0000;
@@ -550,7 +550,7 @@ impl Bitboard {
         x ^= t ^ (t >> 18);
         let t = k1 & (x ^ (x << 9));
         x ^= t ^ (t >> 9);
-        Self(x)
+        Bitboard(x)
     }
 
     /// Rotate the bitboard 90 degrees clockwise.
@@ -572,7 +572,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub const fn rotate_90(self) -> Self {
+    pub const fn rotate_90(self) -> Bitboard {
         self.flip_diagonal().flip_vertical()
     }
 
@@ -596,8 +596,8 @@ impl Bitboard {
     /// ```
     #[must_use]
     #[inline]
-    pub const fn rotate_180(self) -> Self {
-        Self(self.0.reverse_bits())
+    pub const fn rotate_180(self) -> Bitboard {
+        Bitboard(self.0.reverse_bits())
     }
 
     /// Rotate the bitboard 270 degrees clockwise.
@@ -619,7 +619,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// ```
     #[must_use]
-    pub const fn rotate_270(self) -> Self {
+    pub const fn rotate_270(self) -> Bitboard {
         self.flip_vertical().flip_diagonal()
     }
 
@@ -638,7 +638,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // . . . . . . . .
     /// ```
-    pub const EMPTY: Self = Self(0);
+    pub const EMPTY: Bitboard = Bitboard(0);
 
     /// A bitboard containing all squares.
     ///
@@ -655,7 +655,7 @@ impl Bitboard {
     /// // 1 1 1 1 1 1 1 1
     /// // 1 1 1 1 1 1 1 1
     /// ```
-    pub const FULL: Self = Self(!0);
+    pub const FULL: Bitboard = Bitboard(!0);
 
     /// All dark squares.
     ///
@@ -672,7 +672,7 @@ impl Bitboard {
     /// // . 1 . 1 . 1 . 1
     /// // 1 . 1 . 1 . 1 .
     /// ```
-    pub const DARK_SQUARES: Self = Self(0xaa55_aa55_aa55_aa55);
+    pub const DARK_SQUARES: Bitboard = Bitboard(0xaa55_aa55_aa55_aa55);
 
     /// All light squares.
     ///
@@ -689,7 +689,7 @@ impl Bitboard {
     /// // 1 . 1 . 1 . 1 .
     /// // . 1 . 1 . 1 . 1
     /// ```
-    pub const LIGHT_SQUARES: Self = Self(0x55aa_55aa_55aa_55aa);
+    pub const LIGHT_SQUARES: Bitboard = Bitboard(0x55aa_55aa_55aa_55aa);
 
     /// The four corner squares.
     ///
@@ -706,7 +706,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // 1 . . . . . . 1
     /// ```
-    pub const CORNERS: Self = Self(0x8100_0000_0000_0081);
+    pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
     /// The backranks.
     ///
@@ -723,7 +723,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // 1 1 1 1 1 1 1 1
     /// ```
-    pub const BACKRANKS: Self = Self(0xff00_0000_0000_00ff);
+    pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 
     /// The four center squares.
     ///
@@ -740,7 +740,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // . . . . . . . .
     /// ```
-    pub const CENTER: Self = Self(0x0000_0018_1800_0000);
+    pub const CENTER: Bitboard = Bitboard(0x0000_0018_1800_0000);
 
     /// The northern half of the board.
     ///
@@ -757,7 +757,7 @@ impl Bitboard {
     /// // . . . . . . . .
     /// // . . . . . . . .
     /// ```
-    pub const NORTH: Self = Self(0xffff_ffff_0000_0000);
+    pub const NORTH: Bitboard = Bitboard(0xffff_ffff_0000_0000);
 
     /// The southern half of the board.
     ///
@@ -774,7 +774,7 @@ impl Bitboard {
     /// // 1 1 1 1 1 1 1 1
     /// // 1 1 1 1 1 1 1 1
     /// ```
-    pub const SOUTH: Self = Self(0x0000_0000_ffff_ffff);
+    pub const SOUTH: Bitboard = Bitboard(0x0000_0000_ffff_ffff);
 
     /// The western half of the board.
     ///
@@ -791,7 +791,7 @@ impl Bitboard {
     /// // 1 1 1 1 . . . .
     /// // 1 1 1 1 . . . .
     /// ```
-    pub const WEST: Self = Self(0x0f0f_0f0f_0f0f_0f0f);
+    pub const WEST: Bitboard = Bitboard(0x0f0f_0f0f_0f0f_0f0f);
 
     /// The eastern half of the board.
     ///
@@ -808,7 +808,7 @@ impl Bitboard {
     /// // . . . . 1 1 1 1
     /// // . . . . 1 1 1 1
     /// ```
-    pub const EAST: Self = Self(0xf0f0_f0f0_f0f0_f0f0);
+    pub const EAST: Bitboard = Bitboard(0xf0f0_f0f0_f0f0_f0f0);
 }
 
 /// Square masks.
@@ -856,20 +856,20 @@ impl Direction {
     #[inline(always)]
     pub const fn offset(self) -> i32 {
         match self {
-            Self::NorthWest => 7,
-            Self::SouthWest => -9,
-            Self::NorthEast => 9,
-            Self::SouthEast => -7,
+            Direction::NorthWest => 7,
+            Direction::SouthWest => -9,
+            Direction::NorthEast => 9,
+            Direction::SouthEast => -7,
         }
     }
 
     #[inline(always)]
     pub const fn translate(self, bitboard: Bitboard) -> Bitboard {
         Bitboard(match self {
-            Self::NorthWest => (bitboard.0 & !FILES[0]) << 7,
-            Self::SouthWest => (bitboard.0 & !FILES[0]) >> 9,
-            Self::NorthEast => (bitboard.0 & !FILES[7]) << 9,
-            Self::SouthEast => (bitboard.0 & !FILES[7]) >> 7,
+            Direction::NorthWest => (bitboard.0 & !FILES[0]) << 7,
+            Direction::SouthWest => (bitboard.0 & !FILES[0]) >> 9,
+            Direction::NorthEast => (bitboard.0 & !FILES[7]) << 9,
+            Direction::SouthEast => (bitboard.0 & !FILES[7]) >> 7,
         })
     }
 }
@@ -914,117 +914,117 @@ impl fmt::Binary for Bitboard {
 
 impl From<Square> for Bitboard {
     #[inline]
-    fn from(sq: Square) -> Self {
-        Self::from_square(sq)
+    fn from(sq: Square) -> Bitboard {
+        Bitboard::from_square(sq)
     }
 }
 
 impl From<Rank> for Bitboard {
     #[inline]
-    fn from(rank: Rank) -> Self {
-        Self::from_rank(rank)
+    fn from(rank: Rank) -> Bitboard {
+        Bitboard::from_rank(rank)
     }
 }
 
 impl From<File> for Bitboard {
     #[inline]
-    fn from(file: File) -> Self {
-        Self::from_file(file)
+    fn from(file: File) -> Bitboard {
+        Bitboard::from_file(file)
     }
 }
 
 impl From<u64> for Bitboard {
     #[inline]
-    fn from(bb: u64) -> Self {
-        Self(bb)
+    fn from(bb: u64) -> Bitboard {
+        Bitboard(bb)
     }
 }
 
 impl From<Bitboard> for u64 {
     #[inline]
-    fn from(bb: Bitboard) -> Self {
+    fn from(bb: Bitboard) -> u64 {
         bb.0
     }
 }
 
 impl<T> ops::BitAnd<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
-    type Output = Self;
+    type Output = Bitboard;
 
     #[inline]
-    fn bitand(self, rhs: T) -> Self {
-        let Self(rhs) = rhs.into();
-        Self(self.0 & rhs)
+    fn bitand(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
+        Bitboard(self.0 & rhs)
     }
 }
 
 impl<T> ops::BitAndAssign<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitand_assign(&mut self, rhs: T) {
-        let Self(rhs) = rhs.into();
+        let Bitboard(rhs) = rhs.into();
         self.0 &= rhs;
     }
 }
 
 impl<T> ops::BitOr<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
-    type Output = Self;
+    type Output = Bitboard;
 
     #[inline]
-    fn bitor(self, rhs: T) -> Self {
-        let Self(rhs) = rhs.into();
-        Self(self.0 | rhs)
+    fn bitor(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
+        Bitboard(self.0 | rhs)
     }
 }
 
 impl<T> ops::BitOrAssign<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitor_assign(&mut self, rhs: T) {
-        let Self(rhs) = rhs.into();
+        let Bitboard(rhs) = rhs.into();
         self.0 |= rhs;
     }
 }
 
 impl<T> ops::BitXor<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
-    type Output = Self;
+    type Output = Bitboard;
 
     #[inline]
-    fn bitxor(self, rhs: T) -> Self {
-        let Self(rhs) = rhs.into();
-        Self(self.0 ^ rhs)
+    fn bitxor(self, rhs: T) -> Bitboard {
+        let Bitboard(rhs) = rhs.into();
+        Bitboard(self.0 ^ rhs)
     }
 }
 
 impl<T> ops::BitXorAssign<T> for Bitboard
 where
-    T: Into<Self>,
+    T: Into<Bitboard>,
 {
     #[inline]
     fn bitxor_assign(&mut self, rhs: T) {
-        let Self(rhs) = rhs.into();
+        let Bitboard(rhs) = rhs.into();
         self.0 ^= rhs;
     }
 }
 
 impl ops::Not for Bitboard {
-    type Output = Self;
+    type Output = Bitboard;
 
     #[inline]
-    fn not(self) -> Self {
-        Self(!self.0)
+    fn not(self) -> Bitboard {
+        Bitboard(!self.0)
     }
 }
 
@@ -1033,7 +1033,7 @@ impl FromIterator<Square> for Bitboard {
     where
         T: IntoIterator<Item = Square>,
     {
-        let mut result = Self(0);
+        let mut result = Bitboard(0);
         result.extend(iter);
         result
     }

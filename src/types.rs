@@ -39,7 +39,7 @@ impl Piece {
         self.color.fold_wb(self.role.upper_char(), self.role.char())
     }
 
-    pub fn from_char(ch: char) -> Option<Self> {
+    pub fn from_char(ch: char) -> Option<Piece> {
         Role::from_char(ch).map(|role| role.of(Color::from_white(32 & ch as u8 == 0)))
     }
 }
@@ -73,18 +73,18 @@ impl Move {
     /// Gets the role of the moved piece.
     pub const fn role(&self) -> Role {
         match *self {
-            Self::Normal { role, .. } | Self::Put { role, .. } => role,
-            Self::EnPassant { .. } => Role::Pawn,
-            Self::Castle { .. } => Role::King,
+            Move::Normal { role, .. } | Move::Put { role, .. } => role,
+            Move::EnPassant { .. } => Role::Pawn,
+            Move::Castle { .. } => Role::King,
         }
     }
 
     /// Gets the origin square or `None` for drops.
     pub const fn from(&self) -> Option<Square> {
         match *self {
-            Self::Normal { from, .. } | Self::EnPassant { from, .. } => Some(from),
-            Self::Castle { king, .. } => Some(king),
-            Self::Put { .. } => None,
+            Move::Normal { from, .. } | Move::EnPassant { from, .. } => Some(from),
+            Move::Castle { king, .. } => Some(king),
+            Move::Put { .. } => None,
         }
     }
 
@@ -92,16 +92,16 @@ impl Move {
     /// rook square.
     pub const fn to(&self) -> Square {
         match *self {
-            Self::Normal { to, .. } | Self::EnPassant { to, .. } | Self::Put { to, .. } => to,
-            Self::Castle { rook, .. } => rook,
+            Move::Normal { to, .. } | Move::EnPassant { to, .. } | Move::Put { to, .. } => to,
+            Move::Castle { rook, .. } => rook,
         }
     }
 
     /// Gets the role of the captured piece or `None`.
     pub const fn capture(&self) -> Option<Role> {
         match *self {
-            Self::Normal { capture, .. } => capture,
-            Self::EnPassant { .. } => Some(Role::Pawn),
+            Move::Normal { capture, .. } => capture,
+            Move::EnPassant { .. } => Some(Role::Pawn),
             _ => None,
         }
     }
@@ -110,30 +110,30 @@ impl Move {
     pub const fn is_capture(&self) -> bool {
         matches!(
             *self,
-            Self::Normal {
+            Move::Normal {
                 capture: Some(_),
                 ..
-            } | Self::EnPassant { .. }
+            } | Move::EnPassant { .. }
         )
     }
 
     /// Checks if the move is en passant.
     pub const fn is_en_passant(&self) -> bool {
-        matches!(*self, Self::EnPassant { .. })
+        matches!(*self, Move::EnPassant { .. })
     }
 
     /// Checks if the move zeros the half-move clock.
     pub const fn is_zeroing(&self) -> bool {
         matches!(
             *self,
-            Self::Normal {
+            Move::Normal {
                 role: Role::Pawn,
                 ..
-            } | Self::Normal {
+            } | Move::Normal {
                 capture: Some(_),
                 ..
-            } | Self::EnPassant { .. }
-                | Self::Put {
+            } | Move::EnPassant { .. }
+                | Move::Put {
                     role: Role::Pawn,
                     ..
                 }
@@ -143,21 +143,21 @@ impl Move {
     /// Gets the castling side.
     pub fn castling_side(&self) -> Option<CastlingSide> {
         match *self {
-            Self::Castle { king, rook } if king < rook => Some(CastlingSide::KingSide),
-            Self::Castle { .. } => Some(CastlingSide::QueenSide),
+            Move::Castle { king, rook } if king < rook => Some(CastlingSide::KingSide),
+            Move::Castle { .. } => Some(CastlingSide::QueenSide),
             _ => None,
         }
     }
 
     /// Checks if the move is a castling move.
     pub const fn is_castle(&self) -> bool {
-        matches!(*self, Self::Castle { .. })
+        matches!(*self, Move::Castle { .. })
     }
 
     /// Gets the promotion role.
     pub const fn promotion(&self) -> Option<Role> {
         match *self {
-            Self::Normal { promotion, .. } => promotion,
+            Move::Normal { promotion, .. } => promotion,
             _ => None,
         }
     }
@@ -166,7 +166,7 @@ impl Move {
     pub const fn is_promotion(&self) -> bool {
         matches!(
             *self,
-            Self::Normal {
+            Move::Normal {
                 promotion: Some(_),
                 ..
             }
@@ -177,7 +177,7 @@ impl Move {
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Self::Normal {
+            Move::Normal {
                 role,
                 from,
                 capture,
@@ -202,11 +202,11 @@ impl fmt::Display for Move {
 
                 Ok(())
             }
-            Self::EnPassant { from, to, .. } => {
+            Move::EnPassant { from, to, .. } => {
                 write!(f, "{}x{}", from, to)
             }
-            Self::Castle { king, rook } => f.write_str(if king < rook { "O-O" } else { "O-O-O" }),
-            Self::Put { role, to } => {
+            Move::Castle { king, rook } => f.write_str(if king < rook { "O-O" } else { "O-O-O" }),
+            Move::Put { role, to } => {
                 if role != Role::Pawn {
                     f.write_char(role.upper_char())?;
                 }
@@ -226,8 +226,8 @@ pub enum CastlingSide {
 impl CastlingSide {
     pub const fn is_queen_side(self) -> bool {
         match self {
-            Self::KingSide => false,
-            Self::QueenSide => true,
+            CastlingSide::KingSide => false,
+            CastlingSide::QueenSide => true,
         }
     }
 
@@ -235,33 +235,33 @@ impl CastlingSide {
         !self.is_queen_side()
     }
 
-    pub const fn from_queen_side(queen_side: bool) -> Self {
+    pub const fn from_queen_side(queen_side: bool) -> CastlingSide {
         if queen_side {
-            Self::QueenSide
+            CastlingSide::QueenSide
         } else {
-            Self::KingSide
+            CastlingSide::KingSide
         }
     }
 
-    pub const fn from_king_side(king_side: bool) -> Self {
+    pub const fn from_king_side(king_side: bool) -> CastlingSide {
         if king_side {
-            Self::KingSide
+            CastlingSide::KingSide
         } else {
-            Self::QueenSide
+            CastlingSide::QueenSide
         }
     }
 
     pub const fn king_to_file(self) -> File {
         match self {
-            Self::KingSide => File::G,
-            Self::QueenSide => File::C,
+            CastlingSide::KingSide => File::G,
+            CastlingSide::QueenSide => File::C,
         }
     }
 
     pub const fn rook_to_file(self) -> File {
         match self {
-            Self::KingSide => File::F,
-            Self::QueenSide => File::D,
+            CastlingSide::KingSide => File::F,
+            CastlingSide::QueenSide => File::D,
         }
     }
 
@@ -274,7 +274,7 @@ impl CastlingSide {
     }
 
     /// `KingSide` and `QueenSide`, in this order.
-    pub const ALL: [Self; 2] = [Self::KingSide, Self::QueenSide];
+    pub const ALL: [CastlingSide; 2] = [CastlingSide::KingSide, CastlingSide::QueenSide];
 }
 
 /// `Standard` or `Chess960`.
@@ -285,28 +285,28 @@ pub enum CastlingMode {
 }
 
 impl CastlingMode {
-    pub const fn from_standard(standard: bool) -> Self {
+    pub const fn from_standard(standard: bool) -> CastlingMode {
         if standard {
-            Self::Standard
+            CastlingMode::Standard
         } else {
-            Self::Chess960
+            CastlingMode::Chess960
         }
     }
 
-    pub const fn from_chess960(chess960: bool) -> Self {
+    pub const fn from_chess960(chess960: bool) -> CastlingMode {
         if chess960 {
-            Self::Chess960
+            CastlingMode::Chess960
         } else {
-            Self::Standard
+            CastlingMode::Standard
         }
     }
 
     pub const fn is_standard(self) -> bool {
-        matches!(self, Self::Standard)
+        matches!(self, CastlingMode::Standard)
     }
 
     pub const fn is_chess960(self) -> bool {
-        matches!(self, Self::Chess960)
+        matches!(self, CastlingMode::Chess960)
     }
 }
 
@@ -369,8 +369,8 @@ mod tests {
 pub struct RemainingChecks(u32);
 
 impl Default for RemainingChecks {
-    fn default() -> Self {
-        Self(3)
+    fn default() -> RemainingChecks {
+        RemainingChecks(3)
     }
 }
 
@@ -380,9 +380,9 @@ impl RemainingChecks {
     /// # Panics
     ///
     /// Panics if `n > 3`.
-    pub const fn new(n: u32) -> Self {
+    pub const fn new(n: u32) -> RemainingChecks {
         assert!(n <= 3);
-        Self(n)
+        RemainingChecks(n)
     }
 
     pub const fn is_zero(self) -> bool {
@@ -390,8 +390,8 @@ impl RemainingChecks {
     }
 
     #[must_use]
-    pub const fn saturating_sub(self, n: u32) -> Self {
-        Self(self.0.saturating_sub(n))
+    pub const fn saturating_sub(self, n: u32) -> RemainingChecks {
+        RemainingChecks(self.0.saturating_sub(n))
     }
 }
 
@@ -399,8 +399,8 @@ macro_rules! int_from_remaining_checks_impl {
     ($($t:ty)+) => {
         $(impl From<RemainingChecks> for $t {
             #[inline]
-            fn from(RemainingChecks(checks): RemainingChecks) -> Self {
-                checks as Self
+            fn from(RemainingChecks(checks): RemainingChecks) -> $t {
+                checks as $t
             }
         })+
     }
@@ -414,10 +414,10 @@ macro_rules! try_remaining_checks_from_int_impl {
             type Error = num::TryFromIntError;
 
             #[inline]
-            fn try_from(value: $t) -> Result<Self, Self::Error> {
+            fn try_from(value: $t) -> Result<RemainingChecks, Self::Error> {
                 let n = u32::try_from(value)?;
                 if n <= 3 {
-                    Ok(Self::new(n))
+                    Ok(RemainingChecks::new(n))
                 } else {
                     Err(overflow_error())
                 }

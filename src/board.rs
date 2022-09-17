@@ -51,8 +51,8 @@ pub struct Board {
 }
 
 impl Board {
-    pub const fn new() -> Self {
-        Self {
+    pub const fn new() -> Board {
+        Board {
             by_role: ByRole {
                 pawn: Bitboard(0x00ff_0000_0000_ff00),
                 knight: Bitboard(0x4200_0000_0000_0042),
@@ -69,8 +69,8 @@ impl Board {
         }
     }
 
-    pub const fn empty() -> Self {
-        Self {
+    pub const fn empty() -> Board {
+        Board {
             by_role: ByRole {
                 pawn: Bitboard::EMPTY,
                 knight: Bitboard::EMPTY,
@@ -92,7 +92,7 @@ impl Board {
     /// # Panics
     ///
     /// Panics if the bitboards are inconsistent.
-    pub fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Self {
+    pub fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
         let mut occupied = Bitboard::EMPTY;
         by_role.for_each(|role| {
             assert!(occupied.is_disjoint(role), "by_role not disjoint");
@@ -107,7 +107,7 @@ impl Board {
             by_color.black | by_color.white,
             "by_role does not match by_color"
         );
-        Self {
+        Board {
             by_role,
             by_color,
             occupied,
@@ -120,8 +120,8 @@ impl Board {
 
     #[cfg(feature = "variant")]
     #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
-    pub const fn racing_kings() -> Self {
-        Self {
+    pub const fn racing_kings() -> Board {
+        Board {
             by_role: ByRole {
                 pawn: Bitboard(0x0000),
                 knight: Bitboard(0x1818),
@@ -140,8 +140,8 @@ impl Board {
 
     #[cfg(feature = "variant")]
     #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
-    pub const fn horde() -> Self {
-        Self {
+    pub const fn horde() -> Board {
+        Board {
             by_role: ByRole {
                 pawn: Bitboard(0x00ff_0066_ffff_ffff),
                 knight: Bitboard(0x4200_0000_0000_0000),
@@ -206,21 +206,14 @@ impl Board {
     /// Bishops, rooks and queens.
     #[inline]
     pub const fn sliders(&self) -> Bitboard {
-        let ByRole {
-            bishop,
-            rook,
-            queen,
-            ..
-        } = self.by_role;
+        let ByRole { bishop, rook, queen, .. } = self.by_role;
         bishop.toggled_const(rook).toggled_const(queen)
     }
 
     /// Pawns, knights and kings.
     #[inline]
     pub const fn steppers(&self) -> Bitboard {
-        let ByRole {
-            pawn, knight, king, ..
-        } = self.by_role;
+        let ByRole { pawn, knight, king, .. } = self.by_role;
         pawn.toggled_const(knight).toggled_const(king)
     }
 
@@ -238,10 +231,7 @@ impl Board {
     /// The (unique!) king of the given side, if any.
     #[inline]
     pub const fn king_of(&self, color: Color) -> Option<Square> {
-        self.by_role
-            .king
-            .intersect(self.by_color(color))
-            .single_square()
+        self.by_role.king.intersect(self.by_color(color)).single_square()
     }
 
     #[inline]
@@ -305,8 +295,7 @@ impl Board {
 
     #[inline]
     pub const fn by_piece(&self, piece: Piece) -> Bitboard {
-        self.by_color(piece.color)
-            .intersect(self.by_role(piece.role))
+        self.by_color(piece.color).intersect(self.by_role(piece.role))
     }
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {
@@ -399,7 +388,7 @@ impl Board {
 
 impl Default for Board {
     fn default() -> Self {
-        Self::new()
+        Board::new()
     }
 }
 
@@ -430,7 +419,7 @@ impl FromIterator<(Square, Piece)> for Board {
     where
         T: IntoIterator<Item = (Square, Piece)>,
     {
-        let mut board = Self::empty();
+        let mut board = Board::empty();
         board.extend(iter);
         board
     }
