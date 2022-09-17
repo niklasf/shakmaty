@@ -387,7 +387,7 @@ impl Board {
 }
 
 impl Default for Board {
-    fn default() -> Self {
+    fn default() -> Board {
         Board::new()
     }
 }
@@ -415,7 +415,7 @@ impl Extend<(Square, Piece)> for Board {
 }
 
 impl FromIterator<(Square, Piece)> for Board {
-    fn from_iter<T>(iter: T) -> Self
+    fn from_iter<T>(iter: T) -> Board
     where
         T: IntoIterator<Item = (Square, Piece)>,
     {

@@ -718,7 +718,7 @@ impl Hash for Chess {
 }
 
 impl PartialEq for Chess {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, other: &Chess) -> bool {
         self.board == other.board
             && self.turn == other.turn
             && self.castles.castling_rights() == other.castles.castling_rights()
@@ -1021,8 +1021,8 @@ pub(crate) mod variant {
     }
 
     impl Atomic {
-        pub const fn new() -> Self {
-            Self {
+        pub const fn new() -> Atomic {
+            Atomic {
                 board: Board::new(),
                 turn: White,
                 castles: Castles::new(),
@@ -1038,7 +1038,7 @@ pub(crate) mod variant {
 
     impl Default for Atomic {
         fn default() -> Atomic {
-            Self::new()
+            Atomic::new()
         }
     }
 
@@ -1311,8 +1311,8 @@ pub(crate) mod variant {
     }
 
     impl Antichess {
-        pub const fn new() -> Self {
-            Self {
+        pub const fn new() -> Antichess {
+            Antichess {
                 board: Board::new(),
                 turn: White,
                 castles: Castles::empty(CastlingMode::Standard),
@@ -1328,7 +1328,7 @@ pub(crate) mod variant {
 
     impl Default for Antichess {
         fn default() -> Antichess {
-            Self::new()
+            Antichess::new()
         }
     }
 
@@ -1527,7 +1527,7 @@ pub(crate) mod variant {
 
     impl KingOfTheHill {
         pub const fn new() -> KingOfTheHill {
-            Self {
+            KingOfTheHill {
                 chess: Chess::new(),
             }
         }
@@ -1652,7 +1652,7 @@ pub(crate) mod variant {
 
     impl ThreeCheck {
         pub const fn new() -> ThreeCheck {
-            Self {
+            ThreeCheck {
                 chess: Chess::new(),
                 remaining_checks: ByColor {
                     black: RemainingChecks::new(3),
@@ -1802,7 +1802,7 @@ pub(crate) mod variant {
 
     impl Crazyhouse {
         pub const fn new() -> Crazyhouse {
-            Self {
+            Crazyhouse {
                 chess: Chess::new(),
                 promoted: Bitboard::EMPTY,
                 pockets: ByColor {

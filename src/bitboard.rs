@@ -164,7 +164,7 @@ impl Bitboard {
     /// Tests if `self` contains the given square.
     #[inline]
     pub const fn contains(self, sq: Square) -> bool {
-        self.intersect(Self::from_square(sq)).any()
+        self.intersect(Bitboard::from_square(sq)).any()
     }
 
     /// Adds `squares`.
@@ -228,7 +228,7 @@ impl Bitboard {
 
     /// Returns the intersection of `self` and `squares`. Equivalent to bitwise `&`.
     pub const fn intersect(self, squares: Bitboard) -> Bitboard {
-        Self(self.0 & squares.0)
+        Bitboard(self.0 & squares.0)
     }
 
     /// Returns the union of `self` and `squares`. Equivalent to bitwise `|`.
@@ -241,7 +241,7 @@ impl Bitboard {
 
     /// Same as the `with` method, but usable in `const` contexts.
     pub const fn with_const(self, squares: Bitboard) -> Bitboard {
-        Self(self.0 | squares.0)
+        Bitboard(self.0 | squares.0)
     }
 
     /// Returns `self` without `squares` (set difference).
@@ -254,7 +254,7 @@ impl Bitboard {
 
     /// Same as the `without` method, but usable in `const` contexts.
     pub const fn without_const(self, squares: Bitboard) -> Bitboard {
-        Self(self.0 & !squares.0)
+        Bitboard(self.0 & !squares.0)
     }
 
     /// Returns all squares that are in `self` or `squares` but not in both
@@ -268,7 +268,7 @@ impl Bitboard {
 
     /// Same as the `toggled` method, but usable in `const` contexts.
     pub const fn toggled_const(self, squares: Bitboard) -> Bitboard {
-        Self(self.0 ^ squares.0)
+        Bitboard(self.0 ^ squares.0)
     }
 
     /// Tests if `self` and `other` are disjoint.
@@ -279,7 +279,7 @@ impl Bitboard {
 
     /// Same as the `is_disjoint` method, but usable in `const` contexts.
     pub const fn is_disjoint_const(self, other: Bitboard) -> bool {
-        Self(self.0 & other.0).is_empty()
+        Bitboard(self.0 & other.0).is_empty()
     }
 
     /// Tests if `self` is a subset of `other`.
@@ -348,8 +348,8 @@ impl Bitboard {
     /// Returns `self` without the first square.
     #[inline]
     pub const fn without_first(self) -> Bitboard {
-        let Self(mask) = self;
-        Self(mask & mask.wrapping_sub(1))
+        let Bitboard(mask) = self;
+        Bitboard(mask & mask.wrapping_sub(1))
     }
 
     /// Removes and returns the last square, if any.
@@ -451,7 +451,7 @@ impl Bitboard {
     #[must_use]
     #[inline]
     pub const fn flip_vertical(self) -> Bitboard {
-        Self(self.0.swap_bytes())
+        Bitboard(self.0.swap_bytes())
     }
 
     /// Mirror the bitboard horizontally.
@@ -1029,7 +1029,7 @@ impl ops::Not for Bitboard {
 }
 
 impl FromIterator<Square> for Bitboard {
-    fn from_iter<T>(iter: T) -> Self
+    fn from_iter<T>(iter: T) -> Bitboard
     where
         T: IntoIterator<Item = Square>,
     {

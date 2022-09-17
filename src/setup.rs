@@ -170,7 +170,7 @@ impl Castles {
 }
 
 impl Default for Castles {
-    fn default() -> Self {
+    fn default() -> Castles {
         Castles::new()
     }
 }

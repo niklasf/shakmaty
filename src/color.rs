@@ -55,8 +55,8 @@ impl Color {
 
     const fn name(self) -> &'static str {
         match self {
-            Self::Black => "black",
-            Self::White => "white",
+            Color::Black => "black",
+            Color::White => "white",
         }
     }
 
@@ -98,16 +98,16 @@ impl Color {
     /// Same as the NOT (`!`) operator, but usable in `const` contexts.
     pub const fn other(self) -> Color {
         match self {
-            Self::White => Self::Black,
-            Self::Black => Self::White,
+            Color::White => Color::Black,
+            Color::Black => Color::White,
         }
     }
 
     #[inline]
     pub const fn backrank(self) -> Rank {
         match self {
-            Self::White => Rank::First,
-            Self::Black => Rank::Eighth,
+            Color::White => Rank::First,
+            Color::Black => Rank::Eighth,
         }
     }
 
