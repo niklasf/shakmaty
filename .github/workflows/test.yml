@@ -70,31 +70,3 @@ jobs:
         with:
           command: doc
           args: ${{ matrix.docs }}
-  semver:
-    strategy:
-      matrix:
-        features:
-          - ""
-          - "--features variant"
-          - "--features alloc"
-          - "--features std"
-          - "--features alloc,variant"
-          - "--features std,variant"
-          - "--features step"
-          - "--features alloc,step"
-          - "--features std,step"
-          - "--features step,variant"
-          - "--features alloc,step,variant"
-          - "--features std,step,variant"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: -Z minimal-versions ${{ matrix.features }}
