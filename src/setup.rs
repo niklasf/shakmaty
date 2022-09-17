@@ -273,7 +273,9 @@ impl Castles {
     }
 
     pub const fn has_color(&self, color: Color) -> bool {
-        self.mask.intersect(Bitboard::from_rank(color.backrank())).any()
+        self.mask
+            .intersect(Bitboard::from_rank(color.backrank()))
+            .any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {

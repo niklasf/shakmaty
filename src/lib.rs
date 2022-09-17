@@ -113,18 +113,16 @@ pub mod zobrist;
 #[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
-pub use {
-    bitboard::Bitboard,
-    board::Board,
-    color::{ByColor, Color, ParseColorError},
-    movelist::MoveList,
-    perft::perft,
-    position::{
-        Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
-        PositionErrorKinds,
-    },
-    role::{ByRole, Role},
-    setup::{Castles, Setup},
-    square::{File, ParseSquareError, Rank, Square},
-    types::{CastlingMode, CastlingSide, EnPassantMode, Move, Piece, RemainingChecks},
+pub use bitboard::Bitboard;
+pub use board::Board;
+pub use color::{ByColor, Color, ParseColorError};
+pub use movelist::MoveList;
+pub use perft::perft;
+pub use position::{
+    Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
+    PositionErrorKinds,
 };
+pub use role::{ByRole, Role};
+pub use setup::{Castles, Setup};
+pub use square::{File, ParseSquareError, Rank, Square};
+pub use types::{CastlingMode, CastlingSide, EnPassantMode, Move, Piece, RemainingChecks};

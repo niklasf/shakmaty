@@ -206,14 +206,21 @@ impl Board {
     /// Bishops, rooks and queens.
     #[inline]
     pub const fn sliders(&self) -> Bitboard {
-        let ByRole { bishop, rook, queen, .. } = self.by_role;
+        let ByRole {
+            bishop,
+            rook,
+            queen,
+            ..
+        } = self.by_role;
         bishop.toggled_const(rook).toggled_const(queen)
     }
 
     /// Pawns, knights and kings.
     #[inline]
     pub const fn steppers(&self) -> Bitboard {
-        let ByRole { pawn, knight, king, .. } = self.by_role;
+        let ByRole {
+            pawn, knight, king, ..
+        } = self.by_role;
         pawn.toggled_const(knight).toggled_const(king)
     }
 
@@ -231,7 +238,10 @@ impl Board {
     /// The (unique!) king of the given side, if any.
     #[inline]
     pub const fn king_of(&self, color: Color) -> Option<Square> {
-        self.by_role.king.intersect(self.by_color(color)).single_square()
+        self.by_role
+            .king
+            .intersect(self.by_color(color))
+            .single_square()
     }
 
     #[inline]
@@ -295,7 +305,8 @@ impl Board {
 
     #[inline]
     pub const fn by_piece(&self, piece: Piece) -> Bitboard {
-        self.by_color(piece.color).intersect(self.by_role(piece.role))
+        self.by_color(piece.color)
+            .intersect(self.by_role(piece.role))
     }
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {

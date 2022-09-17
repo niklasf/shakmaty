@@ -65,6 +65,8 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
+#[cfg(feature = "alloc")]
+use alloc::string::{String, ToString};
 use core::{
     char,
     cmp::max,
@@ -74,9 +76,6 @@ use core::{
     num::NonZeroU32,
     str::FromStr,
 };
-
-#[cfg(feature = "alloc")]
-use alloc::string::{String, ToString};
 
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
