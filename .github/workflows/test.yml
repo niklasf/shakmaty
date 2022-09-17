@@ -50,23 +50,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: bench
-  docs:
-    strategy:
-      matrix:
-        docs:
-          - ""
-          - "--features step"
-          - "--features variant"
-          - "--features step,variant"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
+          args: --no-default-features ${{ matrix.features }}
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: ${{ matrix.docs }}
+          args: --no-default-features ${{ matrix.features }}
