@@ -94,8 +94,9 @@ pub struct Setup {
 }
 
 impl Setup {
-    pub fn empty() -> Setup {
-        Setup {
+    /// Plain, empty board. No pieces. White to play.
+    pub const fn empty() -> Self {
+        Self {
             board: Board::empty(),
             pockets: None,
             promoted: Bitboard::EMPTY,
@@ -104,7 +105,19 @@ impl Setup {
             ep_square: None,
             remaining_checks: None,
             halfmoves: 0,
-            fullmoves: NonZeroU32::new(1).unwrap(),
+            fullmoves: match NonZeroU32::new(1) {
+                Some(num) => num,
+                _ => unreachable!(),
+            },
+        }
+    }
+
+    /// Default board setup.
+    pub const fn initial() -> Self {
+        Self {
+            board: Board::new(),
+            castling_rights: Bitboard::CORNERS,
+            ..Self::empty()
         }
     }
 
@@ -119,12 +132,8 @@ impl Setup {
 }
 
 impl Default for Setup {
-    fn default() -> Setup {
-        Setup {
-            board: Board::default(),
-            castling_rights: Bitboard::CORNERS,
-            ..Setup::empty()
-        }
+    fn default() -> Self {
+        Self::initial()
     }
 }
 
@@ -137,9 +146,9 @@ pub struct Castles {
     mode: CastlingMode,
 }
 
-impl Default for Castles {
-    fn default() -> Castles {
-        Castles {
+impl Castles {
+    pub const fn new() -> Self {
+        Self {
             mode: CastlingMode::Standard,
             mask: Bitboard::CORNERS,
             rook: ByColor {
@@ -160,27 +169,39 @@ impl Default for Castles {
     }
 }
 
+impl Default for Castles {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CastlingMode {
-    pub fn detect(setup: &Setup) -> CastlingMode {
-        let standard = Castles::from_setup(setup, CastlingMode::Standard).unwrap_or_else(|c| c);
-        let chess960 = Castles::from_setup(setup, CastlingMode::Chess960).unwrap_or_else(|c| c);
-        CastlingMode::from_standard(standard.mask == chess960.mask)
+    pub fn detect(setup: &Setup) -> Self {
+        use core::convert::identity;
+        let standard = Castles::from_setup(setup, Self::Standard).unwrap_or_else(identity);
+        let chess960 = Castles::from_setup(setup, Self::Chess960).unwrap_or_else(identity);
+        Self::from_standard(standard.mask == chess960.mask)
     }
 }
 
 impl Castles {
-    pub fn empty(mode: CastlingMode) -> Castles {
-        Castles {
+    pub const fn empty(mode: CastlingMode) -> Self {
+        Self {
             mode,
             mask: Bitboard(0),
-            rook: ByColor::default(),
-            path: ByColor::default(),
+            rook: ByColor {
+                black: [None; 2],
+                white: [None; 2],
+            },
+            path: ByColor {
+                black: [Bitboard::EMPTY; 2],
+                white: [Bitboard::EMPTY; 2],
+            },
         }
     }
 
-    pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Castles, Castles> {
-        let mut castles = Castles::empty(mode);
-
+    pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Self, Self> {
+        let mut castles = Self::empty(mode);
         let rooks = setup.castling_rights & setup.board.rooks();
 
         for color in Color::ALL {
@@ -234,11 +255,11 @@ impl Castles {
         }
     }
 
-    pub fn any(&self) -> bool {
+    pub const fn any(&self) -> bool {
         self.mask.any()
     }
 
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.mask.is_empty()
     }
 
@@ -247,12 +268,14 @@ impl Castles {
     }
 
     #[deprecated = "renamed to Castles::has_color()"]
-    pub fn has_side(&self, color: Color) -> bool {
+    pub const fn has_side(&self, color: Color) -> bool {
         self.has_color(color)
     }
 
-    pub fn has_color(&self, color: Color) -> bool {
-        (self.mask & color.backrank()).any()
+    pub const fn has_color(&self, color: Color) -> bool {
+        self.mask
+            .intersect(Bitboard::from_rank(color.backrank()))
+            .any()
     }
 
     pub fn discard_rook(&mut self, square: Square) {
@@ -284,7 +307,7 @@ impl Castles {
     }
 
     #[inline]
-    pub fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
+    pub const fn rook(&self, color: Color, side: CastlingSide) -> Option<Square> {
         self.rook.get(color)[side as usize]
     }
 
@@ -311,17 +334,17 @@ impl Castles {
     /// assert_eq!(path, Bitboard::from(Square::B1) | Bitboard::from(Square::C1) | Bitboard::from(Square::D1));
     /// ```
     #[inline]
-    pub fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
+    pub const fn path(&self, color: Color, side: CastlingSide) -> Bitboard {
         self.path.get(color)[side as usize]
     }
 
     /// Castling rigths in terms of corresponding rook positions.
     #[inline]
-    pub fn castling_rights(&self) -> Bitboard {
+    pub const fn castling_rights(&self) -> Bitboard {
         self.mask
     }
 
-    pub fn mode(&self) -> CastlingMode {
+    pub const fn mode(&self) -> CastlingMode {
         self.mode
     }
 }
@@ -331,13 +354,13 @@ impl Castles {
 pub(crate) struct EnPassant(pub Square);
 
 impl From<EnPassant> for Square {
-    fn from(ep: EnPassant) -> Square {
+    fn from(ep: EnPassant) -> Self {
         ep.square()
     }
 }
 
 impl EnPassant {
-    pub fn from_setup(setup: &Setup) -> Result<Option<EnPassant>, ()> {
+    pub fn from_setup(setup: &Setup) -> Result<Option<Self>, ()> {
         let ep_square = match setup.ep_square {
             Some(ep_square) => ep_square,
             None => return Ok(None),
@@ -347,7 +370,7 @@ impl EnPassant {
             return Err(());
         }
 
-        let maybe = EnPassant(ep_square);
+        let maybe = Self(ep_square);
 
         // The last move must have been a double pawn push. Check for the
         // presence of that pawn.
@@ -363,11 +386,11 @@ impl EnPassant {
             return Err(());
         }
 
-        Ok(Some(EnPassant(ep_square)))
+        Ok(Some(Self(ep_square)))
     }
 
     #[inline]
-    pub fn square(self) -> Square {
+    pub const fn square(self) -> Square {
         self.0
     }
 

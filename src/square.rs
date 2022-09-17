@@ -31,8 +31,8 @@ macro_rules! from_repr_u8_impl {
         $(impl From<$from> for $t {
             #[inline]
             #[allow(clippy::cast_lossless)]
-            fn from(value: $from) -> $t {
-                value as u8 as $t
+            fn from(value: $from) -> Self {
+                value as u8 as Self
             }
         })+
     }
@@ -46,9 +46,9 @@ macro_rules! try_from_int_impl {
             #[inline]
             #[allow(unused_comparisons)]
             #[allow(clippy::cast_lossless)]
-            fn try_from(value: $t) -> Result<$type, Self::Error> {
+            fn try_from(value: $t) -> Result<Self, Self::Error> {
                 if ($lower..$upper).contains(&value) {
-                    Ok(<$type>::new(value as u32))
+                    Ok(Self::new(value as u32))
                 } else {
                     Err(overflow_error())
                 }
@@ -121,9 +121,9 @@ impl File {
     ///
     /// Panics if the index is not in the range `0..=7`.
     #[inline]
-    pub fn new(index: u32) -> File {
+    pub const fn new(index: u32) -> Self {
         assert!(index < 8);
-        unsafe { File::new_unchecked(index) }
+        unsafe { Self::new_unchecked(index) }
     }
 
     /// Gets a `File` from an integer index.
@@ -133,15 +133,15 @@ impl File {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn new_unchecked(index: u32) -> File {
+    pub const unsafe fn new_unchecked(index: u32) -> Self {
         debug_assert!(index < 8);
         unsafe { mem::transmute(index as u8) }
     }
 
     #[inline]
-    pub fn from_char(ch: char) -> Option<File> {
+    pub fn from_char(ch: char) -> Option<Self> {
         if ('a'..='h').contains(&ch) {
-            Some(File::new(u32::from(ch as u8 - b'a')))
+            Some(Self::new(u32::from(ch as u8 - b'a')))
         } else {
             None
         }
@@ -159,21 +159,21 @@ impl File {
 
     #[must_use]
     #[inline]
-    pub fn offset(self, delta: i32) -> Option<File> {
+    pub fn offset(self, delta: i32) -> Option<Self> {
         i32::from(self)
             .checked_add(delta)
             .and_then(|index| index.try_into().ok())
     }
 
     #[inline]
-    pub fn distance(self, other: File) -> u32 {
+    pub fn distance(self, other: Self) -> u32 {
         u32::from(self).abs_diff(u32::from(other))
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_horizontal(self) -> File {
-        File::new(7 - u32::from(self))
+    pub fn flip_horizontal(self) -> Self {
+        Self::new(7 - u32::from(self))
     }
 
     #[must_use]
@@ -189,15 +189,15 @@ impl File {
     }
 
     /// `A`, ..., `H`.
-    pub const ALL: [File; 8] = [
-        File::A,
-        File::B,
-        File::C,
-        File::D,
-        File::E,
-        File::F,
-        File::G,
-        File::H,
+    pub const ALL: [Self; 8] = [
+        Self::A,
+        Self::B,
+        Self::C,
+        Self::D,
+        Self::E,
+        Self::F,
+        Self::G,
+        Self::H,
     ];
 }
 
@@ -205,7 +205,7 @@ impl Sub for File {
     type Output = i32;
 
     #[inline]
-    fn sub(self, other: File) -> i32 {
+    fn sub(self, other: Self) -> i32 {
         i32::from(self) - i32::from(other)
     }
 }
@@ -242,9 +242,9 @@ impl Rank {
     ///
     /// Panics if the index is not in the range `0..=7`.
     #[inline]
-    pub fn new(index: u32) -> Rank {
+    pub fn new(index: u32) -> Self {
         assert!(index < 8);
-        unsafe { Rank::new_unchecked(index) }
+        unsafe { Self::new_unchecked(index) }
     }
 
     /// Gets a `Rank` from an integer index.
@@ -254,15 +254,15 @@ impl Rank {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn new_unchecked(index: u32) -> Rank {
+    pub unsafe fn new_unchecked(index: u32) -> Self {
         debug_assert!(index < 8);
         unsafe { mem::transmute(index as u8) }
     }
 
     #[inline]
-    pub fn from_char(ch: char) -> Option<Rank> {
+    pub fn from_char(ch: char) -> Option<Self> {
         if ('1'..='8').contains(&ch) {
-            Some(Rank::new(u32::from(ch as u8 - b'1')))
+            Some(Self::new(u32::from(ch as u8 - b'1')))
         } else {
             None
         }
@@ -275,21 +275,21 @@ impl Rank {
 
     #[must_use]
     #[inline]
-    pub fn offset(self, delta: i32) -> Option<Rank> {
+    pub fn offset(self, delta: i32) -> Option<Self> {
         i32::from(self)
             .checked_add(delta)
             .and_then(|index| index.try_into().ok())
     }
 
     #[inline]
-    pub fn distance(self, other: Rank) -> u32 {
+    pub fn distance(self, other: Self) -> u32 {
         u32::from(self).abs_diff(u32::from(other))
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_vertical(self) -> Rank {
-        Rank::new(7 - u32::from(self))
+    pub fn flip_vertical(self) -> Self {
+        Self::new(7 - u32::from(self))
     }
 
     #[must_use]
@@ -305,15 +305,15 @@ impl Rank {
     }
 
     /// `First`, ..., `Eighth`.
-    pub const ALL: [Rank; 8] = [
-        Rank::First,
-        Rank::Second,
-        Rank::Third,
-        Rank::Fourth,
-        Rank::Fifth,
-        Rank::Sixth,
-        Rank::Seventh,
-        Rank::Eighth,
+    pub const ALL: [Self; 8] = [
+        Self::First,
+        Self::Second,
+        Self::Third,
+        Self::Fourth,
+        Self::Fifth,
+        Self::Sixth,
+        Self::Seventh,
+        Self::Eighth,
     ];
 }
 
@@ -321,7 +321,7 @@ impl Sub for Rank {
     type Output = i32;
 
     #[inline]
-    fn sub(self, other: Rank) -> i32 {
+    fn sub(self, other: Self) -> i32 {
         i32::from(self) - i32::from(other)
     }
 }
@@ -381,9 +381,9 @@ impl Square {
     /// assert_eq!(Square::new(63), Square::H8);
     /// ```
     #[inline]
-    pub const fn new(index: u32) -> Square {
+    pub const fn new(index: u32) -> Self {
         assert!(index < 64);
-        unsafe { Square::new_unchecked(index) }
+        unsafe { Self::new_unchecked(index) }
     }
 
     /// Gets a `Square` from an integer index.
@@ -392,7 +392,7 @@ impl Square {
     ///
     /// It is the callers responsibility to ensure it is in the range `0..=63`.
     #[inline]
-    pub const unsafe fn new_unchecked(index: u32) -> Square {
+    pub const unsafe fn new_unchecked(index: u32) -> Self {
         debug_assert!(index < 64);
         unsafe { mem::transmute(index as u8) }
     }
@@ -407,10 +407,10 @@ impl Square {
     /// assert_eq!(Square::from_coords(File::A, Rank::First), Square::A1);
     /// ```
     #[inline]
-    pub fn from_coords(file: File, rank: Rank) -> Square {
+    pub fn from_coords(file: File, rank: Rank) -> Self {
         // Safety: Files and ranks are represented with 3 bits each, and all
         // 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(file) | (u32::from(rank) << 3)) }
+        unsafe { Self::new_unchecked(u32::from(file) | (u32::from(rank) << 3)) }
     }
 
     /// Parses a square name.
@@ -429,13 +429,13 @@ impl Square {
     /// # Ok::<_, shakmaty::ParseSquareError>(())
     /// ```
     #[inline]
-    pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
+    pub fn from_ascii(s: &[u8]) -> Result<Self, ParseSquareError> {
         if s.len() == 2 {
             match (
                 File::from_char(char::from(s[0])),
                 Rank::from_char(char::from(s[1])),
             ) {
-                (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
+                (Some(file), Some(rank)) => Ok(Self::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
             }
         } else {
@@ -502,7 +502,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn offset(self, delta: i32) -> Option<Square> {
+    pub fn offset(self, delta: i32) -> Option<Self> {
         i32::from(self)
             .checked_add(delta)
             .and_then(|index| index.try_into().ok())
@@ -517,18 +517,18 @@ impl Square {
     /// offset for `self`.
     #[must_use]
     #[inline]
-    pub unsafe fn offset_unchecked(self, delta: i32) -> Square {
+    pub unsafe fn offset_unchecked(self, delta: i32) -> Self {
         debug_assert!(-64 < delta && delta < 64);
-        unsafe { Square::new_unchecked((i32::from(self) + delta) as u32) }
+        unsafe { Self::new_unchecked((i32::from(self) + delta) as u32) }
     }
 
     /// Return the bitwise XOR of the numeric square representations. For some
     /// operands this is a useful geometric transformation.
     #[must_use]
     #[inline]
-    pub fn xor(self, other: Square) -> Square {
+    pub fn xor(self, other: Self) -> Self {
         // Safety: 6 bit value XOR 6 bit value -> 6 bit value.
-        unsafe { Square::new_unchecked(u32::from(self) ^ u32::from(other)) }
+        unsafe { Self::new_unchecked(u32::from(self) ^ u32::from(other)) }
     }
 
     /// Flip the square horizontally.
@@ -542,8 +542,8 @@ impl Square {
     #[must_use]
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
-    pub fn flip_horizontal(self) -> Square {
-        self.xor(Square::H1)
+    pub fn flip_horizontal(self) -> Self {
+        self.xor(Self::H1)
     }
 
     /// Flip the square vertically.
@@ -557,8 +557,8 @@ impl Square {
     #[must_use]
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
-    pub fn flip_vertical(self) -> Square {
-        self.xor(Square::A8)
+    pub fn flip_vertical(self) -> Self {
+        self.xor(Self::A8)
     }
 
     /// Flip at the a1-h8 diagonal by swapping file and rank.
@@ -571,11 +571,11 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_diagonal(self) -> Square {
+    pub fn flip_diagonal(self) -> Self {
         // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
         // Safety: We are selecting 32 - 26 = 6 bits with the shift, and all
         // 6 bits values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self).wrapping_mul(0x2080_0000) >> 26) }
+        unsafe { Self::new_unchecked(u32::from(self).wrapping_mul(0x2080_0000) >> 26) }
     }
 
     /// Flip at the h1-a8 diagonal.
@@ -588,7 +588,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_anti_diagonal(self) -> Square {
+    pub fn flip_anti_diagonal(self) -> Self {
         self.flip_diagonal().rotate_180()
     }
 
@@ -602,7 +602,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_90(self) -> Square {
+    pub fn rotate_90(self) -> Self {
         self.flip_diagonal().flip_vertical()
     }
 
@@ -617,8 +617,8 @@ impl Square {
     #[must_use]
     #[inline]
     #[allow(clippy::unusual_byte_groupings)]
-    pub fn rotate_180(self) -> Square {
-        self.xor(Square::H8)
+    pub fn rotate_180(self) -> Self {
+        self.xor(Self::H8)
     }
 
     /// Rotate 270 degrees clockwise.
@@ -631,7 +631,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_270(self) -> Square {
+    pub fn rotate_270(self) -> Self {
         self.flip_diagonal().flip_horizontal()
     }
 
@@ -669,7 +669,7 @@ impl Square {
     ///
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
-    pub fn distance(self, other: Square) -> u32 {
+    pub fn distance(self, other: Self) -> u32 {
         max(
             self.file().distance(other.file()),
             self.rank().distance(other.rank()),
@@ -682,7 +682,7 @@ mod all_squares {
     impl Square {
         /// `A1`, `B1`, ..., `G8`, `H8`.
         #[rustfmt::skip]
-        pub const ALL: [Square; 64] = [
+        pub const ALL: [Self; 64] = [
             A1, B1, C1, D1, E1, F1, G1, H1,
             A2, B2, C2, D2, E2, F2, G2, H2,
             A3, B3, C3, D3, E3, F3, G3, H3,
@@ -703,23 +703,23 @@ impl Sub for Square {
     type Output = i32;
 
     #[inline]
-    fn sub(self, other: Square) -> i32 {
+    fn sub(self, other: Self) -> i32 {
         i32::from(self) - i32::from(other)
     }
 }
 
 impl From<(File, Rank)> for Square {
     #[inline]
-    fn from((file, rank): (File, Rank)) -> Square {
-        Square::from_coords(file, rank)
+    fn from((file, rank): (File, Rank)) -> Self {
+        Self::from_coords(file, rank)
     }
 }
 
 impl str::FromStr for Square {
     type Err = ParseSquareError;
 
-    fn from_str(s: &str) -> Result<Square, ParseSquareError> {
-        Square::from_ascii(s.as_bytes())
+    fn from_str(s: &str) -> Result<Self, ParseSquareError> {
+        Self::from_ascii(s.as_bytes())
     }
 }
 

@@ -128,26 +128,26 @@ pub enum Uci {
 impl FromStr for Uci {
     type Err = ParseUciError;
 
-    fn from_str(uci: &str) -> Result<Uci, ParseUciError> {
-        Uci::from_ascii(uci.as_bytes())
+    fn from_str(uci: &str) -> Result<Self, ParseUciError> {
+        Self::from_ascii(uci.as_bytes())
     }
 }
 
 impl fmt::Display for Uci {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Uci::Normal {
+            Self::Normal {
                 from,
                 to,
                 promotion: None,
             } => write!(f, "{}{}", from, to),
-            Uci::Normal {
+            Self::Normal {
                 from,
                 to,
                 promotion: Some(promotion),
             } => write!(f, "{}{}{}", from, to, promotion.char()),
-            Uci::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
-            Uci::Null => f.write_str("0000"),
+            Self::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
+            Self::Null => f.write_str("0000"),
         }
     }
 }
@@ -174,38 +174,38 @@ impl Uci {
     ///
     /// # Ok::<_, shakmaty::uci::ParseUciError>(())
     /// ```
-    pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
+    pub fn from_ascii(uci: &[u8]) -> Result<Self, ParseUciError> {
         if uci.len() != 4 && uci.len() != 5 {
             return Err(ParseUciError);
         }
 
         if uci == b"0000" {
-            return Ok(Uci::Null);
+            return Ok(Self::Null);
         }
 
         let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciError)?;
 
-        if uci[1] == b'@' {
-            Ok(Uci::Put {
+        Ok(if uci[1] == b'@' {
+            Self::Put {
                 role: Role::from_char(char::from(uci[0])).ok_or(ParseUciError)?,
                 to,
-            })
+            }
         } else {
             let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciError)?;
             if uci.len() == 5 {
-                Ok(Uci::Normal {
+                Self::Normal {
                     from,
                     to,
                     promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciError)?),
-                })
+                }
             } else {
-                Ok(Uci::Normal {
+                Self::Normal {
                     from,
                     to,
                     promotion: None,
-                })
+                }
             }
-        }
+        })
     }
 
     /// Converts a move to UCI notation. Castling moves are represented as
@@ -228,17 +228,17 @@ impl Uci {
     /// let uci = Uci::from_standard(&m);
     /// assert_eq!(uci.to_string(), "e8g8");
     /// ```
-    pub fn from_standard(m: &Move) -> Uci {
+    pub fn from_standard(m: &Move) -> Self {
         match *m {
             Move::Castle { king, rook } => {
                 let side = CastlingSide::from_king_side(king < rook);
-                Uci::Normal {
+                Self::Normal {
                     from: king,
                     to: Square::from_coords(side.king_to_file(), king.rank()),
                     promotion: None,
                 }
             }
-            _ => Uci::from_chess960(m),
+            _ => Self::from_chess960(m),
         }
     }
 
@@ -259,37 +259,37 @@ impl Uci {
     /// let uci = Uci::from_chess960(&m);
     /// assert_eq!(uci.to_string(), "e8h8");
     /// ```
-    pub fn from_chess960(m: &Move) -> Uci {
+    pub const fn from_chess960(m: &Move) -> Self {
         match *m {
             Move::Normal {
                 from,
                 to,
                 promotion,
                 ..
-            } => Uci::Normal {
+            } => Self::Normal {
                 from,
                 to,
                 promotion,
             },
-            Move::EnPassant { from, to, .. } => Uci::Normal {
+            Move::EnPassant { from, to, .. } => Self::Normal {
                 from,
                 to,
                 promotion: None,
             },
-            Move::Castle { king, rook } => Uci::Normal {
+            Move::Castle { king, rook } => Self::Normal {
                 from: king,
                 to: rook,
                 promotion: None,
             }, // Chess960-style
-            Move::Put { role, to } => Uci::Put { role, to },
+            Move::Put { role, to } => Self::Put { role, to },
         }
     }
 
     /// See [`Uci::from_standard()`] or [`Uci::from_chess960()`].
-    pub fn from_move(m: &Move, mode: CastlingMode) -> Uci {
+    pub fn from_move(m: &Move, mode: CastlingMode) -> Self {
         match mode {
-            CastlingMode::Standard => Uci::from_standard(m),
-            CastlingMode::Chess960 => Uci::from_chess960(m),
+            CastlingMode::Standard => Self::from_standard(m),
+            CastlingMode::Chess960 => Self::from_chess960(m),
         }
     }
 
@@ -303,7 +303,7 @@ impl Uci {
     /// [`Move`]: super::Move
     pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciError> {
         let candidate = match *self {
-            Uci::Normal {
+            Self::Normal {
                 from,
                 to,
                 promotion,
@@ -350,8 +350,8 @@ impl Uci {
                     }
                 }
             }
-            Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(IllegalUciError),
+            Self::Put { role, to } => Move::Put { role, to },
+            Self::Null => return Err(IllegalUciError),
         };
 
         if pos.is_legal(&candidate) {

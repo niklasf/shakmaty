@@ -33,10 +33,10 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn from_char(ch: char) -> Option<Color> {
+    pub const fn from_char(ch: char) -> Option<Self> {
         Some(match ch {
-            'w' => Color::White,
-            'b' => Color::Black,
+            'w' => Self::White,
+            'b' => Self::Black,
             _ => return None,
         })
     }
@@ -45,110 +45,129 @@ impl Color {
         self.fold_wb('w', 'b')
     }
 
-    fn from_name(name: &str) -> Option<Color> {
+    fn from_name(name: &str) -> Option<Self> {
         Some(match name {
-            "white" => Color::White,
-            "black" => Color::Black,
+            "white" => Self::White,
+            "black" => Self::Black,
             _ => return None,
         })
     }
 
-    fn name(self) -> &'static str {
-        self.fold_wb("white", "black")
-    }
-
-    #[inline]
-    pub fn from_white(white: bool) -> Color {
-        if white {
-            Color::White
-        } else {
-            Color::Black
+    const fn name(self) -> &'static str {
+        match self {
+            Self::Black => "black",
+            Self::White => "white",
         }
     }
 
     #[inline]
-    pub fn from_black(black: bool) -> Color {
-        if black {
-            Color::Black
+    pub const fn from_white(white: bool) -> Self {
+        if white {
+            Self::White
         } else {
-            Color::White
+            Self::Black
+        }
+    }
+
+    #[inline]
+    pub const fn from_black(black: bool) -> Self {
+        if black {
+            Self::Black
+        } else {
+            Self::White
         }
     }
 
     #[inline]
     pub fn fold_wb<T>(self, white: T, black: T) -> T {
         match self {
-            Color::White => white,
-            Color::Black => black,
+            Self::White => white,
+            Self::Black => black,
         }
     }
 
     #[inline]
-    pub fn is_white(self) -> bool {
-        self == Color::White
+    pub const fn is_white(self) -> bool {
+        matches!(self, Self::White)
     }
     #[inline]
-    pub fn is_black(self) -> bool {
-        self == Color::Black
+    pub const fn is_black(self) -> bool {
+        matches!(self, Self::Black)
+    }
+
+    /// Same as the NOT (`!`) operator, but usable in `const` contexts.
+    pub const fn other(self) -> Self {
+        match self {
+            Self::White => Self::Black,
+            Self::Black => Self::White,
+        }
     }
 
     #[inline]
-    pub fn backrank(self) -> Rank {
-        self.fold_wb(Rank::First, Rank::Eighth)
+    pub const fn backrank(self) -> Rank {
+        match self {
+            Self::White => Rank::First,
+            Self::Black => Rank::Eighth,
+        }
     }
 
     #[inline]
     pub fn relative_rank(self, rank: Rank) -> Rank {
         match self {
-            Color::White => rank,
-            Color::Black => rank.flip_vertical(),
+            Self::White => rank,
+            Self::Black => rank.flip_vertical(),
         }
     }
 
     #[inline]
-    pub fn pawn(self) -> Piece {
+    pub const fn pawn(self) -> Piece {
         Role::Pawn.of(self)
     }
+
     #[inline]
-    pub fn knight(self) -> Piece {
+    pub const fn knight(self) -> Piece {
         Role::Knight.of(self)
     }
+
     #[inline]
-    pub fn bishop(self) -> Piece {
+    pub const fn bishop(self) -> Piece {
         Role::Bishop.of(self)
     }
+
     #[inline]
-    pub fn rook(self) -> Piece {
+    pub const fn rook(self) -> Piece {
         Role::Rook.of(self)
     }
+
     #[inline]
-    pub fn queen(self) -> Piece {
+    pub const fn queen(self) -> Piece {
         Role::Queen.of(self)
     }
+
     #[inline]
-    pub fn king(self) -> Piece {
+    pub const fn king(self) -> Piece {
         Role::King.of(self)
     }
 
     /// `White` and `Black`, in this order.
-    pub const ALL: [Color; 2] = [Color::White, Color::Black];
+    pub const ALL: [Self; 2] = [Self::White, Self::Black];
 }
 
 impl ops::Not for Color {
-    type Output = Color;
+    type Output = Self;
 
     #[inline]
-    fn not(self) -> Color {
-        self.fold_wb(Color::Black, Color::White)
+    fn not(self) -> Self::Output {
+        self.fold_wb(Self::Black, Self::White)
     }
 }
 
 impl ops::BitXor<bool> for Color {
-    type Output = Color;
+    type Output = Self;
 
     #[inline]
-    fn bitxor(self, flip: bool) -> Color {
-        Color::from_white(self.is_white() ^ flip)
+    fn bitxor(self, flip: bool) -> Self::Output {
+        Self::from_white(self.is_white() ^ flip)
     }
 }
 
@@ -174,8 +193,8 @@ impl std::error::Error for ParseColorError {}
 impl FromStr for Color {
     type Err = ParseColorError;
 
-    fn from_str(s: &str) -> Result<Color, ParseColorError> {
-        Color::from_name(s).ok_or(ParseColorError)
+    fn from_str(s: &str) -> Result<Self, ParseColorError> {
+        Self::from_name(s).ok_or(ParseColorError)
     }
 }
 
@@ -189,30 +208,26 @@ pub struct ByColor<T> {
 
 impl<T> ByColor<T> {
     #[inline]
-    pub fn new_with<F>(mut init: F) -> ByColor<T>
+    pub fn new_with<F>(mut init: F) -> Self
     where
         F: FnMut(Color) -> T,
     {
-        ByColor {
+        Self {
             white: init(Color::White),
             black: init(Color::Black),
         }
     }
 
     #[inline]
-    pub fn get(&self, color: Color) -> &T {
+    pub const fn get(&self, color: Color) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &*(self as *const ByColor<T>)
-                .cast::<T>()
-                .offset(color as isize)
-        }
+        unsafe { &*(self as *const Self).cast::<T>().offset(color as isize) }
     }
 
     #[inline]
     pub fn get_mut(&mut self, color: Color) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
+        unsafe { &mut *(self as *mut Self).cast::<T>().offset(color as isize) }
     }
 
     pub fn flip(&mut self) {
@@ -220,8 +235,8 @@ impl<T> ByColor<T> {
     }
 
     #[must_use]
-    pub fn into_flipped(self) -> ByColor<T> {
-        ByColor {
+    pub fn into_flipped(self) -> Self {
+        Self {
             black: self.white,
             white: self.black,
         }
@@ -262,7 +277,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn as_ref(&self) -> ByColor<&T> {
+    pub const fn as_ref(&self) -> ByColor<&T> {
         ByColor {
             black: &self.black,
             white: &self.white,
@@ -298,7 +313,7 @@ impl<T> ByColor<T> {
 }
 
 impl<T> ByColor<ByRole<T>> {
-    pub fn piece(&self, piece: Piece) -> &T {
+    pub const fn piece(&self, piece: Piece) -> &T {
         self.get(piece.color).get(piece.role)
     }
 
@@ -322,7 +337,7 @@ impl<T: PartialOrd> ByColor<T> {
     }
 
     #[must_use]
-    pub fn into_normalized(mut self) -> ByColor<T> {
+    pub fn into_normalized(mut self) -> Self {
         self.normalize();
         self
     }

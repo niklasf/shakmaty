@@ -40,25 +40,25 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    pub fn from_winner(winner: Option<Color>) -> Outcome {
+    pub const fn from_winner(winner: Option<Color>) -> Self {
         match winner {
-            Some(winner) => Outcome::Decisive { winner },
-            None => Outcome::Draw,
+            Some(winner) => Self::Decisive { winner },
+            None => Self::Draw,
         }
     }
 
-    pub fn winner(self) -> Option<Color> {
+    pub const fn winner(self) -> Option<Color> {
         match self {
-            Outcome::Decisive { winner } => Some(winner),
-            Outcome::Draw => None,
+            Self::Decisive { winner } => Some(winner),
+            Self::Draw => None,
         }
     }
 
-    pub fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOutcomeError> {
         Ok(match bytes {
-            b"1-0" => Outcome::Decisive { winner: White },
-            b"0-1" => Outcome::Decisive { winner: Black },
-            b"1/2-1/2" => Outcome::Draw,
+            b"1-0" => Self::Decisive { winner: White },
+            b"0-1" => Self::Decisive { winner: Black },
+            b"1/2-1/2" => Self::Draw,
             b"*" => return Err(ParseOutcomeError::Unknown),
             _ => return Err(ParseOutcomeError::Invalid),
         })
@@ -68,9 +68,9 @@ impl Outcome {
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            Outcome::Decisive { winner: White } => "1-0",
-            Outcome::Decisive { winner: Black } => "0-1",
-            Outcome::Draw => "1/2-1/2",
+            Self::Decisive { winner: White } => "1-0",
+            Self::Decisive { winner: Black } => "0-1",
+            Self::Draw => "1/2-1/2",
         })
     }
 }
@@ -87,8 +87,8 @@ pub enum ParseOutcomeError {
 impl fmt::Display for ParseOutcomeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            ParseOutcomeError::Unknown => "unknown outcome: *",
-            ParseOutcomeError::Invalid => "invalid outcome",
+            Self::Unknown => "unknown outcome: *",
+            Self::Invalid => "invalid outcome",
         })
     }
 }
@@ -99,8 +99,8 @@ impl std::error::Error for ParseOutcomeError {}
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
 
-    fn from_str(s: &str) -> Result<Outcome, ParseOutcomeError> {
-        Outcome::from_ascii(s.as_bytes())
+    fn from_str(s: &str) -> Result<Self, ParseOutcomeError> {
+        Self::from_ascii(s.as_bytes())
     }
 }
 
@@ -199,7 +199,7 @@ impl<P> PositionError<P> {
     fn ignore(mut self, ignore: PositionErrorKinds) -> Result<P, Self> {
         self.errors -= ignore;
         match self {
-            PositionError { pos, errors } if errors.is_empty() => Ok(pos),
+            Self { pos, errors } if errors.is_empty() => Ok(pos),
             _ => Err(self),
         }
     }
@@ -647,7 +647,7 @@ impl Chess {
         setup: Setup,
         mode: CastlingMode,
     ) -> (
-        Chess,
+        Self,
         Option<ByColor<ByRole<u8>>>,
         Option<ByColor<RemainingChecks>>,
         PositionErrorKinds,
@@ -670,7 +670,7 @@ impl Chess {
             }
         };
 
-        let pos = Chess {
+        let pos = Self {
             board: setup.board,
             turn: setup.turn,
             castles,
@@ -683,18 +683,26 @@ impl Chess {
 
         (pos, setup.pockets, setup.remaining_checks, errors)
     }
+
+    /// Initial position of any regular chess game.
+    pub const fn new() -> Self {
+        Self {
+            board: Board::new(),
+            turn: White,
+            castles: Castles::new(),
+            ep_square: None,
+            halfmoves: 0,
+            fullmoves: match NonZeroU32::new(1) {
+                Some(num) => num,
+                _ => unreachable!(),
+            },
+        }
+    }
 }
 
 impl Default for Chess {
-    fn default() -> Chess {
-        Chess {
-            board: Board::default(),
-            turn: White,
-            castles: Castles::default(),
-            ep_square: None,
-            halfmoves: 0,
-            fullmoves: NonZeroU32::new(1).unwrap(),
-        }
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -744,8 +752,8 @@ impl PartialEq for Chess {
 impl Eq for Chess {}
 
 impl FromSetup for Chess {
-    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
-        let (pos, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
+    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
+        let (pos, _, _, errors) = Self::from_setup_unchecked(setup, mode);
         PositionError { pos, errors }.strict()
     }
 }
@@ -754,30 +762,39 @@ impl Position for Chess {
     fn board(&self) -> &Board {
         &self.board
     }
+
     fn promoted(&self) -> Bitboard {
         Bitboard::EMPTY
     }
+
     fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
         None
     }
+
     fn turn(&self) -> Color {
         self.turn
     }
+
     fn castles(&self) -> &Castles {
         &self.castles
     }
+
     fn maybe_ep_square(&self) -> Option<Square> {
         self.ep_square.map(EnPassant::square)
     }
+
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
         None
     }
+
     fn halfmoves(&self) -> u32 {
         self.halfmoves
     }
+
     fn fullmoves(&self) -> NonZeroU32 {
         self.fullmoves
     }
+
     fn into_setup(self, mode: EnPassantMode) -> Setup {
         Setup {
             ep_square: self.ep_square(mode),
@@ -1003,21 +1020,30 @@ pub(crate) mod variant {
         fullmoves: NonZeroU32,
     }
 
-    impl Default for Atomic {
-        fn default() -> Atomic {
-            Atomic {
-                board: Board::default(),
+    impl Atomic {
+        pub const fn new() -> Self {
+            Self {
+                board: Board::new(),
                 turn: White,
-                castles: Castles::default(),
+                castles: Castles::new(),
                 ep_square: None,
                 halfmoves: 0,
-                fullmoves: NonZeroU32::new(1).unwrap(),
+                fullmoves: match NonZeroU32::new(1) {
+                    Some(num) => num,
+                    _ => unreachable!(),
+                },
             }
         }
     }
 
+    impl Default for Atomic {
+        fn default() -> Self {
+            Self::new()
+        }
+    }
+
     impl FromSetup for Atomic {
-        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
@@ -1036,7 +1062,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Atomic {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles,
@@ -1067,30 +1093,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             &self.board
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.turn
         }
+
         fn castles(&self) -> &Castles {
             &self.castles
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.ep_square.map(EnPassant::square)
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.halfmoves
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 ep_square: self.ep_square(mode),
@@ -1275,16 +1310,25 @@ pub(crate) mod variant {
         fullmoves: NonZeroU32,
     }
 
-    impl Default for Antichess {
-        fn default() -> Antichess {
-            Antichess {
-                board: Board::default(),
+    impl Antichess {
+        pub const fn new() -> Self {
+            Self {
+                board: Board::new(),
                 turn: White,
                 castles: Castles::empty(CastlingMode::Standard),
                 ep_square: None,
                 halfmoves: 0,
-                fullmoves: NonZeroU32::new(1).unwrap(),
+                fullmoves: match NonZeroU32::new(1) {
+                    Some(num) => num,
+                    _ => unreachable!(),
+                },
             }
+        }
+    }
+
+    impl Default for Antichess {
+        fn default() -> Self {
+            Self::new()
         }
     }
 
@@ -1292,7 +1336,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<Antichess, PositionError<Antichess>> {
+        ) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let ep_square = match EnPassant::from_setup(&setup) {
@@ -1303,7 +1347,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Antichess {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles: Castles::empty(mode),
@@ -1330,30 +1374,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             &self.board
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.turn
         }
+
         fn castles(&self) -> &Castles {
             &self.castles
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.ep_square.map(EnPassant::square)
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.halfmoves
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 ep_square: self.ep_square(mode),
@@ -1472,15 +1525,23 @@ pub(crate) mod variant {
         chess: Chess,
     }
 
+    impl KingOfTheHill {
+        pub const fn new() -> Self {
+            Self {
+                chess: Chess::new(),
+            }
+        }
+    }
+
     impl FromSetup for KingOfTheHill {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
+        ) -> Result<Self, PositionError<Self>> {
             let (chess, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
             PositionError {
                 errors,
-                pos: KingOfTheHill { chess },
+                pos: Self { chess },
             }
             .strict()
         }
@@ -1490,30 +1551,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             self.chess.board()
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn castles(&self) -> &Castles {
             self.chess.castles()
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.chess.turn()
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.chess.maybe_ep_square()
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.chess.halfmoves()
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             self.chess.into_setup(mode)
         }
@@ -1580,11 +1650,23 @@ pub(crate) mod variant {
         remaining_checks: ByColor<RemainingChecks>,
     }
 
+    impl ThreeCheck {
+        pub const fn new() -> Self {
+            Self {
+                chess: Chess::new(),
+                remaining_checks: ByColor {
+                    black: RemainingChecks::new(3),
+                    white: RemainingChecks::new(3),
+                },
+            }
+        }
+    }
+
     impl FromSetup for ThreeCheck {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
+        ) -> Result<Self, PositionError<Self>> {
             let (chess, _, remaining_checks, mut errors) = Chess::from_setup_unchecked(setup, mode);
 
             let remaining_checks = remaining_checks.unwrap_or_default();
@@ -1594,7 +1676,7 @@ pub(crate) mod variant {
 
             PositionError {
                 errors,
-                pos: ThreeCheck {
+                pos: Self {
                     chess,
                     remaining_checks,
                 },
@@ -1607,30 +1689,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             self.chess.board()
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.chess.turn()
         }
+
         fn castles(&self) -> &Castles {
             self.chess.castles()
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.chess.maybe_ep_square()
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             Some(&self.remaining_checks)
         }
+
         fn halfmoves(&self) -> u32 {
             self.chess.halfmoves()
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 remaining_checks: Some(self.remaining_checks),
@@ -1710,6 +1801,31 @@ pub(crate) mod variant {
     }
 
     impl Crazyhouse {
+        pub const fn new() -> Self {
+            Self {
+                chess: Chess::new(),
+                promoted: Bitboard::EMPTY,
+                pockets: ByColor {
+                    black: ByRole {
+                        pawn: 0,
+                        knight: 0,
+                        bishop: 0,
+                        rook: 0,
+                        queen: 0,
+                        king: 0,
+                    },
+                    white: ByRole {
+                        pawn: 0,
+                        knight: 0,
+                        bishop: 0,
+                        rook: 0,
+                        queen: 0,
+                        king: 0,
+                    },
+                },
+            }
+        }
+
         fn our_pocket(&self) -> &ByRole<u8> {
             self.pockets.get(self.turn())
         }
@@ -1740,7 +1856,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<Crazyhouse, PositionError<Crazyhouse>> {
+        ) -> Result<Self, PositionError<Self>> {
             let promoted = setup.promoted
                 & setup.board.occupied()
                 & !setup.board.pawns()
@@ -1785,7 +1901,7 @@ pub(crate) mod variant {
 
             PositionError {
                 errors,
-                pos: Crazyhouse {
+                pos: Self {
                     chess,
                     promoted,
                     pockets,
@@ -1799,30 +1915,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             self.chess.board()
         }
+
         fn promoted(&self) -> Bitboard {
             self.promoted
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             Some(&self.pockets)
         }
+
         fn turn(&self) -> Color {
             self.chess.turn()
         }
+
         fn castles(&self) -> &Castles {
             self.chess.castles()
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.chess.maybe_ep_square()
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.chess.halfmoves()
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 promoted: self.promoted,
@@ -1960,15 +2085,24 @@ pub(crate) mod variant {
         fullmoves: NonZeroU32,
     }
 
-    impl Default for RacingKings {
-        fn default() -> RacingKings {
-            RacingKings {
+    impl RacingKings {
+        pub const fn new() -> Self {
+            Self {
                 board: Board::racing_kings(),
                 turn: White,
                 castles: Castles::empty(CastlingMode::Standard),
                 halfmoves: 0,
-                fullmoves: NonZeroU32::new(1).unwrap(),
+                fullmoves: match NonZeroU32::new(1) {
+                    Some(num) => num,
+                    _ => unreachable!(),
+                },
             }
+        }
+    }
+
+    impl Default for RacingKings {
+        fn default() -> Self {
+            Self::new()
         }
     }
 
@@ -1976,7 +2110,7 @@ pub(crate) mod variant {
         fn from_setup(
             setup: Setup,
             mode: CastlingMode,
-        ) -> Result<RacingKings, PositionError<RacingKings>> {
+        ) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             if setup.castling_rights.any() {
@@ -1986,6 +2120,7 @@ pub(crate) mod variant {
             if setup.board.pawns().any() {
                 errors |= PositionErrorKinds::VARIANT;
             }
+
             for color in Color::ALL {
                 let us = setup.board.by_color(color);
                 if (setup.board.knights() & us).count() > 2
@@ -1996,11 +2131,12 @@ pub(crate) mod variant {
                     errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
                 }
             }
+
             if setup.ep_square.is_some() {
                 errors |= PositionErrorKinds::INVALID_EP_SQUARE;
             }
 
-            let pos = RacingKings {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles: Castles::empty(mode),
@@ -2029,30 +2165,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             &self.board
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.turn
         }
+
         fn castles(&self) -> &Castles {
             &self.castles
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             None
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.halfmoves
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
+
         fn into_setup(self, _mode: EnPassantMode) -> Setup {
             Setup {
                 board: self.board,
@@ -2170,11 +2315,11 @@ pub(crate) mod variant {
     }
 
     impl Default for Horde {
-        fn default() -> Horde {
+        fn default() -> Self {
             let mut castles = Castles::default();
             castles.discard_color(White);
 
-            Horde {
+            Self {
                 board: Board::horde(),
                 turn: White,
                 castles,
@@ -2186,7 +2331,7 @@ pub(crate) mod variant {
     }
 
     impl FromSetup for Horde {
-        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
+        fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
             let mut errors = PositionErrorKinds::empty();
 
             let castles = match Castles::from_setup(&setup, mode) {
@@ -2205,7 +2350,7 @@ pub(crate) mod variant {
                 }
             };
 
-            let pos = Horde {
+            let pos = Self {
                 board: setup.board,
                 turn: setup.turn,
                 castles,
@@ -2252,30 +2397,39 @@ pub(crate) mod variant {
         fn board(&self) -> &Board {
             &self.board
         }
+
         fn promoted(&self) -> Bitboard {
             Bitboard::EMPTY
         }
+
         fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
             None
         }
+
         fn turn(&self) -> Color {
             self.turn
         }
+
         fn castles(&self) -> &Castles {
             &self.castles
         }
+
         fn maybe_ep_square(&self) -> Option<Square> {
             self.ep_square.map(EnPassant::square)
         }
+
         fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
             None
         }
+
         fn halfmoves(&self) -> u32 {
             self.halfmoves
         }
+
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
         }
+
         fn into_setup(self, mode: EnPassantMode) -> Setup {
             Setup {
                 ep_square: self.ep_square(mode),
@@ -2781,18 +2935,24 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
     errors
 }
 
-fn is_standard_material(board: &Board, color: Color) -> bool {
+const fn is_standard_material(board: &Board, color: Color) -> bool {
     let our = board.by_color(color);
-    let promoted_pieces = (board.queens() & our).count().saturating_sub(1)
-        + (board.rooks() & our).count().saturating_sub(2)
-        + (board.knights() & our).count().saturating_sub(2)
-        + (board.bishops() & our & Bitboard::LIGHT_SQUARES)
+    let promoted_pieces = board.queens().intersect(our).count().saturating_sub(1)
+        + board.rooks().intersect(our).count().saturating_sub(2)
+        + board.knights().intersect(our).count().saturating_sub(2)
+        + board
+            .bishops()
+            .intersect(our)
+            .intersect(Bitboard::LIGHT_SQUARES)
             .count()
             .saturating_sub(1)
-        + (board.bishops() & our & Bitboard::DARK_SQUARES)
+        + board
+            .bishops()
+            .intersect(our)
+            .intersect(Bitboard::DARK_SQUARES)
             .count()
             .saturating_sub(1);
-    (board.pawns() & our).count() + promoted_pieces <= 8
+    board.pawns().intersect(our).count() + promoted_pieces <= 8
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
