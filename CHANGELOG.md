@@ -1,5 +1,13 @@
 # Changelog for shakmaty
 
+## v0.22.0
+
+- Let `Board::board_fen()` return struct that implements `Display` instead of
+  `String`.
+- Introduce `alloc` and `std` features, which can be disabled for `#![no_std]`
+  support.
+- Make many methods `const`.
+
 ## v0.21.4
 
 - Add `Board::from_bitboards()` and `Board::into_bitboards()`.
