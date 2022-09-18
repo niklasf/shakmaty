@@ -65,7 +65,6 @@
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
-#[cfg(feature = "alloc")]
 use core::{
     char,
     cmp::max,

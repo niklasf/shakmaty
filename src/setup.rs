@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use core::num::NonZeroU32;
+use core::{convert::identity, num::NonZeroU32};
 
 use crate::{
     attacks, Bitboard, Board, ByColor, ByRole, CastlingMode, CastlingSide, Color, File, FromSetup,
@@ -177,7 +177,6 @@ impl Default for Castles {
 
 impl CastlingMode {
     pub fn detect(setup: &Setup) -> CastlingMode {
-        use core::convert::identity;
         let standard = Castles::from_setup(setup, CastlingMode::Standard).unwrap_or_else(identity);
         let chess960 = Castles::from_setup(setup, CastlingMode::Chess960).unwrap_or_else(identity);
         CastlingMode::from_standard(standard.mask == chess960.mask)

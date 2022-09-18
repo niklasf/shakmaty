@@ -472,7 +472,7 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_uci_to_castles() {
-        use alloc::string::ToString;
+        use alloc::string::ToString as _;
         let mut pos: Chess = "nbqrknbr/pppppppp/8/8/8/8/PPPPPPPP/NBQRKNBR w KQkq - 0 1"
             .parse::<Fen>()
             .expect("valid fen")
