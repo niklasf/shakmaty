@@ -27,12 +27,12 @@ harness = false
 bench = false
 
 [dependencies]
-bitflags = "1.0"
+bitflags = "1.0.4"
 btoi = "0.4"
 arrayvec = { version = "0.7", default-features = false }
 
 [dev-dependencies]
-iai = "0.1.1"
+iai = "0.1"
 
 [package.metadata.docs.rs]
 all-features = true
