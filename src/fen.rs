@@ -627,6 +627,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_legal_ep_square() {
+        use alloc::string::ToString as _;
+
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
         assert_eq!(
@@ -748,6 +750,8 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_castling_right_without_rook() {
+        use alloc::string::ToString as _;
+
         let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
             .parse::<Fen>()
             .expect("valid fen")
