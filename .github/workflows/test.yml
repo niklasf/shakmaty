@@ -12,7 +12,7 @@ jobs:
           - "1.61.0"
           - "stable"
           - "nightly"
-        features:
+        flags:
           - ""
           - "--features variant"
           - "--features alloc"
@@ -21,18 +21,21 @@ jobs:
           - "--features std,variant"
         include:
           - toolchain: "nightly"
-            features: "--features step"
+            flags: ""
           - toolchain: "nightly"
-            features: "--features alloc,step"
+            flags: "--features step"
           - toolchain: "nightly"
-            features: "--features std,step"
+            flags: "--features alloc,step"
           - toolchain: "nightly"
-            features: "--features step,variant"
+            flags: "--features std,step"
           - toolchain: "nightly"
-            features: "--features alloc,step,variant"
+            flags: "--features step,variant"
           - toolchain: "nightly"
-            features: "--features std,step,variant"
+            flags: "--features alloc,step,variant"
           - toolchain: "nightly"
+            flags: "--features std,step,variant"
+          - toolchain: "nightly"
+            flags: "-Z minimal-versions --all-features"
     runs-on: ubuntu-latest
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
@@ -45,12 +48,12 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-default-features ${{ matrix.features }}
+          args: --no-default-features ${{ matrix.flags }}
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --no-default-features ${{ matrix.features }}
+          args: --no-default-features ${{ matrix.flags }}
       - uses: actions-rs/cargo@v1
         with:
           command: bench
-          args: --no-default-features ${{ matrix.features }}
+          args: --no-default-features ${{ matrix.flags }}
