@@ -82,7 +82,7 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(feature = "step", feature(step_trait))]
-#![cfg_attr(docs_rs, feature(doc_cfg))]
+#![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -110,7 +110,6 @@ pub mod uci;
 pub mod zobrist;
 
 #[cfg(feature = "variant")]
-#[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 pub mod variant;
 
 pub use bitboard::Bitboard;
