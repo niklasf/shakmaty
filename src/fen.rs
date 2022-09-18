@@ -66,7 +66,6 @@
 //! ```
 
 #[cfg(feature = "alloc")]
-use alloc::string::{String, ToString};
 use core::{
     char,
     cmp::max,
@@ -132,7 +131,7 @@ fn fmt_pockets(f: &mut fmt::Formatter<'_>, pockets: &ByColor<ByRole<u8>>) -> fmt
 }
 
 fn fmt_epd(f: &mut fmt::Formatter<'_>, setup: &Setup) -> fmt::Result {
-    setup.board.display_with_promotions(setup.promoted).fmt(f)?;
+    setup.board.board_fen(setup.promoted).fmt(f)?;
     if let Some(ref pockets) = setup.pockets {
         fmt_pockets(f, pockets)?;
     }
@@ -274,23 +273,12 @@ impl Board {
     ///
     /// Promoted pieces are marked like `Q~`.
     ///
-    /// Returns a `struct` that implements [`Display`].
-    pub const fn display_with_promotions(&self, promoted: Bitboard) -> BoardDisplayer<'_> {
-        BoardDisplayer {
+    /// Returns a [`BoardFen`] which implements [`Display`].
+    pub const fn board_fen(&self, promoted: Bitboard) -> BoardFen<'_> {
+        BoardFen {
             board: self,
             promoted,
         }
-    }
-
-    /// Same as [`display_with_promotions`]. However, note that this is the old way of
-    /// generating the board FEN string. Please prefer the newer [`display_with_promotions`],
-    /// which notably does not allocate a new string for each invocation.
-    ///
-    /// [`display_with_promotions`]: Board#method.display_with_promotions
-    #[cfg(feature = "alloc")]
-    #[deprecated = "prefer the more generic `display_with_promotions` method"]
-    pub fn board_fen(&self, promoted: Bitboard) -> String {
-        self.display_with_promotions(promoted).to_string()
     }
 }
 
@@ -304,22 +292,21 @@ impl FromStr for Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.display_with_promotions(Bitboard(0)).fmt(f)
+        self.board_fen(Bitboard(0)).fmt(f)
     }
 }
 
-/// Helper `struct` that implements [`Display`] for [`Board`],
-/// but takes into account promoted pieces (if any). See the
-/// [`display_with_promotions`] for more information.
+/// Displays a board with notation like
+/// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
 ///
-/// [`display_with_promotions`]: Board#method.display_with_promotions
+/// See [`Board::board_fen`].
 #[derive(Debug)]
-pub struct BoardDisplayer<'b> {
+pub struct BoardFen<'b> {
     board: &'b Board,
     promoted: Bitboard,
 }
 
-impl<'b> Display for BoardDisplayer<'b> {
+impl<'b> Display for BoardFen<'b> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for rank in Rank::ALL.into_iter().rev() {
             let mut empty = 0;
