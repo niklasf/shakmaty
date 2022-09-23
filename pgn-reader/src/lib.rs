@@ -151,7 +151,7 @@
 //!
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![doc(html_root_url = "https://docs.rs/pgn-reader/0.20.0")]
+#![doc(html_root_url = "https://docs.rs/pgn-reader/0.21.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 
