@@ -627,16 +627,14 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
 
     fn fill_buffer_and_peek(&mut self) -> io::Result<Option<u8>> {
         while self.buffer.inner.available_data() < MIN_BUFFER_SIZE {
-            unsafe {
-                let remainder = self.buffer.inner.space();
-                let size = self.inner.read(remainder)?;
+            let remainder = self.buffer.inner.space();
+            let size = self.inner.read(remainder)?;
 
-                if size == 0 {
-                    break;
-                }
-
-                self.buffer.inner.fill(size);
+            if size == 0 {
+                break;
             }
+
+            self.buffer.inner.fill(size);
         }
 
         Ok(self.buffer.inner.data().get(0).cloned())
