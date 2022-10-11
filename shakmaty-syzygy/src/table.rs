@@ -66,6 +66,7 @@ impl TableTag for DtzTag {
 
 bitflags! {
     /// Table layout flags.
+    #[derive(Debug)]
     struct Layout: u8 {
         /// Two sided table for non-symmetrical material configuration.
         const SPLIT = 1;
@@ -76,6 +77,7 @@ bitflags! {
 
 bitflags! {
     /// Subtable format flags.
+    #[derive(Debug)]
     struct Flag: u8 {
         /// DTZ table stores black to move.
         const STM = 1;
