@@ -1,5 +1,13 @@
 # Changelog for shakmaty-syzygy
 
+## v0.20.0
+
+- Update shakmaty to `0.22`.
+- Remove the `backtrace` feature. `ProbeError::CorruptedTable` now always
+  captures a backtrace when the `RUST_BACKTRACE` or `RUST_LIB_BACKTRACE`
+  environment variables are set.
+- Fix compilation on 32-bit Unix systems.
+
 ## v0.19.1
 
 *yanked*

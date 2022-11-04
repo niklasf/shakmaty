@@ -1,5 +1,5 @@
 // This file is part of the shakmaty-syzygy library.
-// Copyright (C) 2017-2021 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2022 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@
 //!
 //! * `variant`: Enables support for Antichess and Atomic chess.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.19.1")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.20.0")]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
