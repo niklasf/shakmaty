@@ -8,7 +8,7 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-shakmaty = "0.21"
+shakmaty = "0.22"
 shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = "0.4"
 
