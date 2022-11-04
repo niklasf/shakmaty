@@ -1,25 +1,25 @@
 use std::{error::Error, path::PathBuf};
 
+use clap::{builder::PathBufValueParser, Parser};
 use shakmaty::{
     fen::Fen, san::SanPlus, CastlingMode, Chess, Color, EnPassantMode, Outcome, Position,
 };
 use shakmaty_syzygy::{Material, MaybeRounded, Tablebase};
-use structopt::StructOpt;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Opt {
     /// Tablebase diretories
-    #[structopt(long = "path", parse(from_os_str))]
+    #[arg(long = "path", value_parser = PathBufValueParser::new())]
     path: Vec<PathBuf>,
     /// Prints the result only
-    #[structopt(long = "test")]
+    #[arg(long = "test")]
     test: bool,
     /// The position to probe
     fen: Fen,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let mut tablebase = Tablebase::new();
     for path in opt.path {
