@@ -651,10 +651,9 @@ impl PairsData {
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::METRIC == Metric::Wdl {
                 raf.read_u8_at(ptr + 1)?
-            } else if S::CAPTURES_COMPULSORY {
-                1 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
             } else {
-                0
+                // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
+                u8::from(S::CAPTURES_COMPULSORY)
             };
 
             return Ok((
@@ -887,7 +886,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                     ],
                 ];
 
-                ptr += 1 + if pp { 1 } else { 0 };
+                ptr += 1 + u64::from(pp);
 
                 let sides = [Color::White, Color::Black]
                     .iter()
@@ -1222,9 +1221,9 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             }
 
             if self.num_unique_pieces > 2 {
-                let adjust1 = if squares[1] > squares[0] { 1 } else { 0 };
-                let adjust2 = if squares[2] > squares[0] { 1 } else { 0 }
-                    + if squares[2] > squares[1] { 1 } else { 0 };
+                let adjust1 = u64::from(squares[1] > squares[0]);
+                let adjust2 =
+                    u64::from(squares[2] > squares[0]) + u64::from(squares[2] > squares[1]);
 
                 if offdiag(squares[0]) {
                     TRIANGLE[usize::from(squares[0])] * 63 * 62
@@ -1252,7 +1251,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 }
             } else if self.num_unique_pieces == 2 {
                 if S::CONNECTED_KINGS {
-                    let adjust = if squares[1] > squares[0] { 1 } else { 0 };
+                    let adjust = u64::from(squares[1] > squares[0]);
 
                     if offdiag(squares[0]) {
                         TRIANGLE[usize::from(squares[0])] * 63 + (u64::from(squares[1]) - adjust)
