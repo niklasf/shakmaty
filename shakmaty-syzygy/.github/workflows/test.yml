@@ -26,3 +26,12 @@ jobs:
         with:
           command: test
           args: --features variant
+      - uses: actions-rs/cargo@v1
+        with:
+          command: bench
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --manifest-path fuzz/Cargo.toml
+        env:
+          RUSTFLAGS: --cfg fuzzing
