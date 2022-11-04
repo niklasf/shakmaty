@@ -54,7 +54,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
-#![cfg_attr(docs_rs, feature(doc_cfg))]
+#![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 
 #[macro_use]
 mod errors;

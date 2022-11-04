@@ -70,7 +70,6 @@ impl Syzygy for Chess {
 }
 
 #[cfg(feature = "variant")]
-#[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 impl Syzygy for shakmaty::variant::Atomic {
     const TBW: TableType = TableType {
         ext: "atbw",
@@ -87,7 +86,6 @@ impl Syzygy for shakmaty::variant::Atomic {
 }
 
 #[cfg(feature = "variant")]
-#[cfg_attr(docs_rs, doc(cfg(feature = "variant")))]
 impl Syzygy for shakmaty::variant::Antichess {
     const TBW: TableType = TableType {
         ext: "gtbw",
