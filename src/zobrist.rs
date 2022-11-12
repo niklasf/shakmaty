@@ -40,12 +40,13 @@
 //! assert_eq!(pos.zobrist_hash::<Zobrist64>(), Zobrist64(0x463b96181691fc9c));
 //! ```
 
-use core::ops::{BitXor, BitXorAssign};
-use core::fmt;
-
-use crate::{
-    Board, CastlingSide, Color, File, Piece, Position, RemainingChecks, Role, Square,
+use core::{
+    fmt,
+    hash::{Hash, Hasher},
+    ops::{BitXor, BitXorAssign},
 };
+
+use crate::{Board, CastlingSide, Color, File, Piece, Position, RemainingChecks, Role, Square};
 
 /// Integer type that can be returned as a Zobrist hash.
 pub trait ZobristValue: BitXorAssign + Default + Copy {
@@ -60,7 +61,7 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
 
 macro_rules! zobrist_value_impl {
     ($t:ident, $proxy:ty, $bits:literal) => {
-        #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
+        #[derive(Default, Copy, Clone, Eq, PartialEq)]
         #[doc = "A [`ZobristValue`] with "]
         #[doc = stringify!($bits)]
         #[doc = " bits."]
@@ -169,7 +170,10 @@ macro_rules! zobrist_value_impl {
 
             fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
                 if remaining < RemainingChecks::default() {
-                    $t(REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $proxy)
+                    $t(
+                        REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)]
+                            as $proxy,
+                    )
                 } else {
                     <$t>::default()
                 }
@@ -190,7 +194,7 @@ macro_rules! zobrist_value_impl {
                 }
             }
         }
-    }
+    };
 }
 
 zobrist_value_impl! { Zobrist8, u8, 8 }
@@ -198,6 +202,47 @@ zobrist_value_impl! { Zobrist16, u16, 16 }
 zobrist_value_impl! { Zobrist32, u32, 32 }
 zobrist_value_impl! { Zobrist64, u64, 64 }
 zobrist_value_impl! { Zobrist128, u128, 128 }
+
+impl Hash for Zobrist128 {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        state.write_u64(self.0 as u64) // Truncating!
+    }
+}
+impl Hash for Zobrist64 {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        state.write_u64(self.0)
+    }
+}
+impl Hash for Zobrist32 {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        state.write_u32(self.0)
+    }
+}
+impl Hash for Zobrist16 {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        state.write_u16(self.0)
+    }
+}
+impl Hash for Zobrist8 {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        state.write_u8(self.0)
+    }
+}
 
 impl From<Zobrist128> for Zobrist64 {
     fn from(value: Zobrist128) -> Zobrist64 {
@@ -318,7 +363,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fen::Fen, Chess, CastlingMode};
+    use crate::{fen::Fen, CastlingMode, Chess};
 
     #[test]
     fn test_polyglot() {
