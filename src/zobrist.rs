@@ -34,13 +34,14 @@
 //! # Examples
 //!
 //! ```
-//! use shakmaty::{Chess, zobrist::ZobristHash};
+//! use shakmaty::{Chess, zobrist::{Zobrist64, ZobristHash}};
 //!
 //! let pos = Chess::default();
-//! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
+//! assert_eq!(pos.zobrist_hash::<Zobrist64>(), Zobrist64(0x463b96181691fc9c));
 //! ```
 
-use core::ops::BitXorAssign;
+use core::ops::{BitXor, BitXorAssign};
+use core::fmt;
 
 use crate::{
     Board, CastlingSide, Color, File, Piece, Position, RemainingChecks, Role, Square,
@@ -58,40 +59,126 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
 }
 
 macro_rules! zobrist_value_impl {
-    ($($t:ty)+) => {
-        $(impl ZobristValue for $t {
+    ($t:ident, $proxy:ty, $bits:literal) => {
+        #[derive(Default, Copy, Clone, Eq, PartialEq, Hash)]
+        #[doc = "A [`ZobristValue`] with "]
+        #[doc = stringify!($bits)]
+        #[doc = " bits."]
+        pub struct $t(pub $proxy);
+
+        impl BitXor for $t {
+            type Output = $t;
+
+            #[inline]
+            fn bitxor(self, other: $t) -> $t {
+                $t(self.0 ^ other.0)
+            }
+        }
+
+        impl BitXor<&$t> for $t {
+            type Output = $t;
+
+            #[inline]
+            fn bitxor(self, other: &$t) -> $t {
+                $t(self.0 ^ other.0)
+            }
+        }
+
+        impl BitXor<&$t> for &$t {
+            type Output = $t;
+
+            #[inline]
+            fn bitxor(self, other: &$t) -> $t {
+                $t(self.0 ^ other.0)
+            }
+        }
+
+        impl BitXor<$t> for &$t {
+            type Output = $t;
+
+            #[inline]
+            fn bitxor(self, other: $t) -> $t {
+                $t(self.0 ^ other.0)
+            }
+        }
+
+        impl BitXorAssign for $t {
+            #[inline]
+            fn bitxor_assign(&mut self, rhs: $t) {
+                self.0 ^= rhs.0;
+            }
+        }
+
+        impl BitXorAssign<&$t> for $t {
+            #[inline]
+            fn bitxor_assign(&mut self, rhs: &$t) {
+                self.0 ^= rhs.0;
+            }
+        }
+
+        impl fmt::Debug for $t {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                write!(f, concat!(stringify!($t), "({:#x})"), self.0)
+            }
+        }
+
+        impl fmt::UpperHex for $t {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::UpperHex::fmt(&self.0, f)
+            }
+        }
+
+        impl fmt::LowerHex for $t {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::LowerHex::fmt(&self.0, f)
+            }
+        }
+
+        impl fmt::Octal for $t {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Octal::fmt(&self.0, f)
+            }
+        }
+
+        impl fmt::Binary for $t {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Binary::fmt(&self.0, f)
+            }
+        }
+
+        impl ZobristValue for $t {
             fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
                 let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
-                PIECE_MASKS[64 * piece_idx + usize::from(square)] as $t
+                $t(PIECE_MASKS[64 * piece_idx + usize::from(square)] as $proxy)
             }
 
             fn zobrist_for_white_turn() -> $t {
-                WHITE_TURN_MASK as $t
+                $t(WHITE_TURN_MASK as $proxy)
             }
 
             fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> $t {
-                CASTLING_RIGHT_MASKS[match (color, side) {
+                $t(CASTLING_RIGHT_MASKS[match (color, side) {
                     (Color::White, CastlingSide::KingSide) => 0,
                     (Color::White, CastlingSide::QueenSide) => 1,
                     (Color::Black, CastlingSide::KingSide) => 2,
                     (Color::Black, CastlingSide::QueenSide) => 3,
-                }] as $t
+                }] as $proxy)
             }
 
             fn zobrist_for_en_passant_file(file: File) -> $t {
-                EN_PASSANT_FILE_MASKS[usize::from(file)] as $t
+                $t(EN_PASSANT_FILE_MASKS[usize::from(file)] as $proxy)
             }
 
             fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
                 if remaining < RemainingChecks::default() {
-                    REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $t
+                    $t(REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)] as $proxy)
                 } else {
                     <$t>::default()
                 }
             }
 
             fn zobrist_for_promoted(square: Square) -> $t {
-                PROMOTED_MASKS[usize::from(square)] as $t
+                $t(PROMOTED_MASKS[usize::from(square)] as $proxy)
             }
 
             fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
@@ -99,16 +186,20 @@ macro_rules! zobrist_value_impl {
                     let color_idx = color as usize;
                     let role_idx = usize::from(role) - 1;
                     let pieces_idx = usize::from(pieces) - 1;
-                    POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as $t
+                    $t(POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as $proxy)
                 } else {
                     <$t>::default()
                 }
             }
-        })+
+        }
     }
 }
 
-zobrist_value_impl! { u8 u16 u32 u64 u128 }
+zobrist_value_impl! { Zobrist8, u8, 8 }
+zobrist_value_impl! { Zobrist16, u16, 16 }
+zobrist_value_impl! { Zobrist32, u32, 32 }
+zobrist_value_impl! { Zobrist64, u64, 64 }
+zobrist_value_impl! { Zobrist128, u128, 128 }
 
 /// Supports Zobrist hashing.
 pub trait ZobristHash {
@@ -182,39 +273,39 @@ mod tests {
         let reference_values = [
             (
                 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                0x463b96181691fc9c,
+                Zobrist64(0x463b96181691fc9c),
             ),
             (
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                0x823c9b50fd114196,
+                Zobrist64(0x823c9b50fd114196),
             ),
             (
                 "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
-                0x0756b94461c50fb0,
+                Zobrist64(0x0756b94461c50fb0),
             ),
             (
                 "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2",
-                0x662fafb965db29d4,
+                Zobrist64(0x662fafb965db29d4),
             ),
             (
                 "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3",
-                0x22a48b5a8e47ff78,
+                Zobrist64(0x22a48b5a8e47ff78),
             ),
             (
                 "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPPKPPP/RNBQ1BNR b kq - 1 3",
-                0x652a607ca3f242c1,
+                Zobrist64(0x652a607ca3f242c1),
             ),
             (
                 "rnbq1bnr/ppp1pkpp/8/3pPp2/8/8/PPPPKPPP/RNBQ1BNR w - - 2 4",
-                0x00fdd303c946bdd9,
+                Zobrist64(0x00fdd303c946bdd9),
             ),
             (
                 "rnbqkbnr/p1pppppp/8/8/PpP4P/8/1P1PPPP1/RNBQKBNR b KQkq c3 0 3",
-                0x3c8123ea7b067637,
+                Zobrist64(0x3c8123ea7b067637),
             ),
             (
                 "rnbqkbnr/p1pppppp/8/8/P6P/R1p5/1P1PPPP1/1NBQKBNR b Kkq - 1 4",
-                0x5c3f9b829b279560,
+                Zobrist64(0x5c3f9b829b279560),
             ),
         ];
 
@@ -225,7 +316,7 @@ mod tests {
                 .into_position(CastlingMode::Standard)
                 .expect("legal position");
 
-            assert_eq!(pos.zobrist_hash::<u64>(), expected, "{}", fen);
+            assert_eq!(pos.zobrist_hash::<Zobrist64>(), expected, "{}", fen);
         }
     }
 
@@ -233,7 +324,7 @@ mod tests {
     #[test]
     fn test_variants_not_distinguished() {
         // Useful when indexing a table of opening names by Zorbist hash.
-        let chess: u128 = Chess::default().zobrist_hash();
+        let chess: Zobrist128 = Chess::default().zobrist_hash();
         let crazyhouse = crate::variant::Crazyhouse::default().zobrist_hash();
         let three_check = crate::variant::ThreeCheck::default().zobrist_hash();
         let king_of_the_hill = crate::variant::KingOfTheHill::default().zobrist_hash();
@@ -247,12 +338,12 @@ mod tests {
         // 8/8/8/7k/8/8/3K4/8[ppppppppppppppppnnnnbbbbrrrrqq] w - - 0 54
         for color in Color::ALL {
             assert_ne!(
-                u64::zobrist_for_pocket(color, Role::Pawn, 16),
-                u64::zobrist_for_pocket(color, Role::Pawn, 15)
+                Zobrist64::zobrist_for_pocket(color, Role::Pawn, 16),
+                Zobrist64::zobrist_for_pocket(color, Role::Pawn, 15)
             );
             assert_ne!(
-                u64::zobrist_for_pocket(color, Role::Queen, 2),
-                u64::zobrist_for_pocket(color, Role::Queen, 1)
+                Zobrist64::zobrist_for_pocket(color, Role::Queen, 2),
+                Zobrist64::zobrist_for_pocket(color, Role::Queen, 1)
             );
         }
     }
