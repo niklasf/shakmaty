@@ -78,7 +78,7 @@
 //!   for [`Square`], [`File`], and [`Rank`]. Requires nightly Rust.
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
-//!   for Zobrist values.
+//!   for sensible types.
 
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.22.0")]
@@ -128,3 +128,18 @@ pub use role::{ByRole, Role};
 pub use setup::{Castles, Setup};
 pub use square::{File, ParseSquareError, Rank, Square};
 pub use types::{CastlingMode, CastlingSide, EnPassantMode, Move, Piece, RemainingChecks};
+
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for File {}
+
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for Rank {}
+
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for Square {}
+
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for Role {}
+
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for Color {}

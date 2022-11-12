@@ -144,6 +144,9 @@ impl FromStr for Variant {
     }
 }
 
+#[cfg(feature = "nohash-hasher")]
+impl nohash_hasher::IsEnabled for Variant {}
+
 /// Dynamically dispatched chess variant [`Position`].
 #[allow(missing_docs)]
 #[derive(Debug, Clone)]

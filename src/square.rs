@@ -750,4 +750,14 @@ mod tests {
             }
         }
     }
+
+    #[cfg(feature = "nohash-hasher")]
+    #[test]
+    fn test_nohash_hasher() {
+        use core::hash::{Hash, Hasher};
+
+        let mut hasher = nohash_hasher::NoHashHasher::<Square>::default();
+        Square::H1.hash(&mut hasher);
+        assert_eq!(hasher.finish(), 7);
+    }
 }

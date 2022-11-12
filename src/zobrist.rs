@@ -454,7 +454,7 @@ mod tests {
 
     #[cfg(feature = "nohash-hasher")]
     #[test]
-    fn test_nohash_zobrist_hasher() {
+    fn test_nohash_hasher() {
         let mut hasher = nohash_hasher::NoHashHasher::<Zobrist128>::default();
         Zobrist128(128).hash(&mut hasher);
         assert_eq!(hasher.finish(), 128);
