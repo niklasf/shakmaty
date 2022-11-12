@@ -117,7 +117,7 @@ fn main() -> io::Result<()> {
     // generate attacks.rs
     let out_dir = env::var("OUT_DIR").expect("got OUT_DIR");
     let attacks_path = Path::new(&out_dir).join("attacks.rs");
-    let mut f = File::create(&attacks_path).expect("created attacks.rs");
+    let mut f = File::create(attacks_path).expect("created attacks.rs");
     generate_basics(&mut f)?;
     generate_sliding_attacks(&mut f)
 }

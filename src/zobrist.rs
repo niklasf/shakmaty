@@ -63,11 +63,17 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
 
 macro_rules! zobrist_value_impl {
     ($t:ident, $proxy:ty, $bits:literal) => {
-        #[derive(Default, Copy, Clone, Eq, PartialEq)]
+        #[derive(Default, Copy, Clone, Eq)]
         #[doc = "A [`ZobristValue`] with "]
         #[doc = stringify!($bits)]
         #[doc = " bits."]
         pub struct $t(pub $proxy);
+
+        impl PartialEq for $t {
+            fn eq(&self, other: &$t) -> bool {
+                self.0 == other.0
+            }
+        }
 
         impl From<$proxy> for $t {
             fn from(value: $proxy) -> $t {
