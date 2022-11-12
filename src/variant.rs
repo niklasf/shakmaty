@@ -19,7 +19,7 @@
 //! These are games played with normal chess pieces but special rules.
 //! Every chess variant implements [`FromSetup`] and [`Position`].
 
-use core::{num::NonZeroU32, str};
+use core::{fmt, num::NonZeroU32, str, str::FromStr};
 
 pub use crate::position::{
     variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
@@ -103,6 +103,44 @@ impl Variant {
 impl Default for Variant {
     fn default() -> Variant {
         Variant::Chess
+    }
+}
+
+impl fmt::Display for Variant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.uci())
+    }
+}
+
+/// Error when parsing an unknown variant name.
+#[derive(Clone, Debug)]
+pub struct ParseVariantError;
+
+impl fmt::Display for ParseVariantError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("unknown variant")
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for ParseVariantError {}
+
+impl FromStr for Variant {
+    type Err = ParseVariantError;
+
+    fn from_str(s: &str) -> Result<Variant, ParseVariantError> {
+        Ok(match s {
+            "chess" | "standard" | "chess960" | "fromPosition" | "Standard" | "Chess960"
+            | "From Position" => Variant::Chess,
+            "atomic" | "Atomic" => Variant::Atomic,
+            "antichess" | "Antichess" => Variant::Antichess,
+            "kingofthehill" | "kingOfTheHill" | "King of the Hill" => Variant::KingOfTheHill,
+            "3check" | "threeCheck" | "Three-check" => Variant::ThreeCheck,
+            "crazyhouse" | "Crazyhouse" => Variant::Crazyhouse,
+            "racingkings" | "racingKings" | "Racing Kings" => Variant::RacingKings,
+            "horde" | "Horde" => Variant::Horde,
+            _ => return Err(ParseVariantError),
+        })
     }
 }
 
