@@ -22,6 +22,15 @@
 //! hash values is considered a semver breaking change and will be noted in the
 //! changelog.
 //!
+//! # Warning: Forged collisions
+//!
+//! Zobrist hashes have good collision resistance, but can be
+//! forged efficiently.
+//!
+//! Additionally, in this implementation, impossible positions with
+//! more than standard material in Crazyhouse pockets are particularly
+//! prone to collisions.
+//!
 //! # Examples
 //!
 //! ```
@@ -103,13 +112,8 @@ zobrist_value_impl! { u8 u16 u32 u64 u128 }
 
 /// Supports Zobrist hashing.
 pub trait ZobristHash {
-    /// Computes the Zobrist hash of the position from scratch. Hash includes
-    /// the position, except halfmove clock and fullmove number.
-    ///
-    /// Warning: Zobrist hashes have good collision resistance, but can be
-    /// forged efficiently. In this implementation, impossible positions with
-    /// more than standard material in Crazyhouse pockets are particularly
-    /// prone to collisions.
+    /// Computes the Zobrist hash of the position from scratch. The hash
+    /// includes the position, except halfmove clock and fullmove number.
     fn zobrist_hash<V: ZobristValue>(&self) -> V;
 }
 
