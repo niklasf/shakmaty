@@ -31,12 +31,10 @@
 //! assert_eq!(pos.zobrist_hash::<u64>(), 0x463b96181691fc9c);
 //! ```
 
-use core::{cell::Cell, num::NonZeroU32, ops::BitXorAssign};
+use core::ops::BitXorAssign;
 
 use crate::{
-    color::ByColor, Bitboard, Board, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color,
-    EnPassantMode, File, FromSetup, Move, MoveList, Outcome, Piece, Position, PositionError,
-    RemainingChecks, Role, Setup, Square,
+    Board, CastlingSide, Color, File, Piece, Position, RemainingChecks, Role, Square,
 };
 
 /// Integer type that can be returned as a Zobrist hash.
@@ -113,240 +111,11 @@ pub trait ZobristHash {
     /// more than standard material in Crazyhouse pockets are particularly
     /// prone to collisions.
     fn zobrist_hash<V: ZobristValue>(&self) -> V;
-
-    /// Prepares an incremental update of the Zobrist hash before playing move
-    /// `m` in `self`. Returns a new intermediate Zobrist hash, or `None`
-    /// if incremental updating is not supported.
-    fn prepare_incremental_zobrist_hash<V: ZobristValue>(
-        &self,
-        _previous: V,
-        _m: &Move,
-    ) -> Option<V> {
-        None
-    }
-
-    /// Finalizes an incremental update of the Zobrist hash after playing move
-    /// `m` in `self`. Returns the new Zobrist hash, or `None` if incremental
-    /// updating is not supported.
-    fn finalize_incremental_zobrist_hash<V: ZobristValue>(
-        &self,
-        _intermediate: V,
-        _m: &Move,
-    ) -> Option<V> {
-        None
-    }
 }
 
-impl ZobristHash for Chess {
+impl<P: Position> ZobristHash for P {
     fn zobrist_hash<V: ZobristValue>(&self) -> V {
         hash_position(self)
-    }
-}
-
-#[cfg(feature = "variant")]
-mod variant {
-    use super::*;
-
-    impl ZobristHash for crate::variant::Antichess {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::Atomic {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::Crazyhouse {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::Horde {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::KingOfTheHill {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::RacingKings {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-
-    impl ZobristHash for crate::variant::ThreeCheck {
-        fn zobrist_hash<V: ZobristValue>(&self) -> V {
-            hash_position(self)
-        }
-    }
-}
-
-/// A wrapper for [`Position`] that maintains an incremental Zobrist hash.
-///
-/// # Examples
-///
-/// ```
-/// use shakmaty::{Chess, Position, Move, Square, Role, zobrist::Zobrist};
-///
-/// let pos: Zobrist<Chess, u64> = Zobrist::default();
-///
-/// assert_eq!(pos.zobrist_hash(), 0x463b96181691fc9c);
-/// assert_eq!(pos.zobrist_hash(), 0x463b96181691fc9c); // cached
-///
-/// // 1. e4
-/// let pos = pos.play(&Move::Normal {
-///     role: Role::Pawn,
-///     from: Square::E2,
-///     to: Square::E4,
-///     capture: None,
-///     promotion: None,
-/// })?;
-///
-/// // Incrementally updated (or recomputed from scratch if incremental
-/// // updates not supported).
-/// assert_eq!(pos.zobrist_hash(), 0x823c9b50fd114196);
-///
-/// # Ok::<_, shakmaty::PlayError<_>>(())
-/// ```
-#[derive(Debug, Clone)]
-pub struct Zobrist<P, V: ZobristValue> {
-    pos: P,
-    zobrist: Cell<Option<V>>,
-}
-
-impl<P, V: ZobristValue> Zobrist<P, V> {
-    pub fn new(pos: P) -> Zobrist<P, V> {
-        Zobrist {
-            pos,
-            zobrist: Cell::new(None),
-        }
-    }
-
-    pub fn into_inner(self) -> P {
-        self.pos
-    }
-
-    pub fn as_inner(&self) -> &P {
-        &self.pos
-    }
-}
-
-impl<P: ZobristHash, V: ZobristValue> Zobrist<P, V> {
-    pub fn zobrist_hash(&self) -> V {
-        if let Some(zobrist) = self.zobrist.get() {
-            zobrist
-        } else {
-            let zobrist = self.pos.zobrist_hash();
-            self.zobrist.set(Some(zobrist));
-            zobrist
-        }
-    }
-}
-
-impl<P: Default, V: ZobristValue> Default for Zobrist<P, V> {
-    fn default() -> Zobrist<P, V> {
-        Self::new(P::default())
-    }
-}
-
-impl<P: FromSetup + Position, V: ZobristValue> FromSetup for Zobrist<P, V> {
-    fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>> {
-        match P::from_setup(setup, mode) {
-            Ok(pos) => Ok(Zobrist::new(pos)),
-            Err(err) => Err(PositionError {
-                pos: Zobrist::new(err.pos),
-                errors: err.errors,
-            }),
-        }
-    }
-}
-
-impl<P: Position + ZobristHash, V: ZobristValue> Position for Zobrist<P, V> {
-    fn board(&self) -> &Board {
-        self.pos.board()
-    }
-    fn promoted(&self) -> Bitboard {
-        self.pos.promoted()
-    }
-    fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
-        self.pos.pockets()
-    }
-    fn turn(&self) -> Color {
-        self.pos.turn()
-    }
-    fn castles(&self) -> &Castles {
-        self.pos.castles()
-    }
-    fn maybe_ep_square(&self) -> Option<Square> {
-        self.pos.maybe_ep_square()
-    }
-    fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-        self.pos.remaining_checks()
-    }
-    fn halfmoves(&self) -> u32 {
-        self.pos.halfmoves()
-    }
-    fn fullmoves(&self) -> NonZeroU32 {
-        self.pos.fullmoves()
-    }
-    fn into_setup(self, mode: EnPassantMode) -> Setup {
-        self.pos.into_setup(mode)
-    }
-    fn legal_moves(&self) -> MoveList {
-        self.pos.legal_moves()
-    }
-    fn san_candidates(&self, role: Role, to: Square) -> MoveList {
-        self.pos.san_candidates(role, to)
-    }
-    fn castling_moves(&self, side: CastlingSide) -> MoveList {
-        self.pos.castling_moves(side)
-    }
-    fn en_passant_moves(&self) -> MoveList {
-        self.pos.en_passant_moves()
-    }
-    fn capture_moves(&self) -> MoveList {
-        self.pos.capture_moves()
-    }
-    fn promotion_moves(&self) -> MoveList {
-        self.pos.promotion_moves()
-    }
-    fn is_irreversible(&self, m: &Move) -> bool {
-        self.pos.is_irreversible(m)
-    }
-    fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
-        self.pos.king_attackers(square, attacker, occupied)
-    }
-    fn is_variant_end(&self) -> bool {
-        self.pos.is_variant_end()
-    }
-    fn has_insufficient_material(&self, color: Color) -> bool {
-        self.pos.has_insufficient_material(color)
-    }
-    fn variant_outcome(&self) -> Option<Outcome> {
-        self.pos.variant_outcome()
-    }
-
-    fn play_unchecked(&mut self, m: &Move) {
-        self.zobrist.set(
-            self.zobrist
-                .get()
-                .and_then(|value| self.pos.prepare_incremental_zobrist_hash(value, m)),
-        );
-        self.pos.play_unchecked(m);
-        self.zobrist.set(
-            self.zobrist
-                .get()
-                .and_then(|value| self.pos.finalize_incremental_zobrist_hash(value, m)),
-        );
     }
 }
 
@@ -402,7 +171,7 @@ fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fen::Fen, uci::Uci, Chess};
+    use crate::{fen::Fen, Chess, CastlingMode};
 
     #[test]
     fn test_polyglot() {
@@ -453,37 +222,6 @@ mod tests {
                 .expect("legal position");
 
             assert_eq!(pos.zobrist_hash::<u64>(), expected, "{}", fen);
-        }
-    }
-
-    #[test]
-    fn test_incremental() {
-        let moves = [
-            "e2e4", "e7e5", "g2g3", "g8f6", "f1g2", "f8c5", "g1e2", "h7h5", "h2h3", "h5h4", "g3g4",
-            "d7d5", "e4d5", "f6d5", "d2d4", "e5d4", "e2d4", "b8c6", "d4b3", "c5f2", "e1f2", "c8e6",
-            "h1e1", "e8g8", "b1d2", "c6e5", "d2f3", "e5f3", "g2f3", "c7c6", "c2c3", "f7f5", "g4g5",
-            "d8d6", "e1g1", "d6h2", "g1g2", "h2h3", "b3d4", "a8e8", "c1d2", "f5f4", "d1h1", "h3h1",
-            "a1h1", "h4h3", "g2g1", "e6c8", "f3g4", "d5e3", "g4c8", "e8c8", "h1h3", "e3d5", "g5g6",
-            "d5e7", "h3h4", "f8f6", "h4g4", "c8f8", "g4g5", "b7b6", "d4f3", "f8d8", "d2c1", "d8d6",
-            "g1e1", "e7g6", "g5h5", "g6f8", "h5e5", "d6e6", "e5e6", "f6e6", "e1e6", "f8e6", "f3d4",
-            "e6d4", "c3d4", "g7g5", "f2f3", "g8f7", "c1f4", "f7g6", "f4d6", "a7a6", "d4d5", "b6b5",
-            "d5c6", "g6f5", "c6c7", "g5g4", "f3g3", "f5e6", "c7c8q", "e6d6", "c8a6", "d6c5",
-            "a6a5", "c5c4", "b2b3", "c4c5", "a5a8", "c5b4", "a8g2", "b4a3", "g3g4", "b5b4", "g2e4",
-            "a3b2", "a2a4",
-        ];
-
-        let mut pos: Zobrist<Chess, u128> = Zobrist::default();
-
-        for uci in moves {
-            let m = uci
-                .parse::<Uci>()
-                .expect("valid uci")
-                .to_move(&pos)
-                .expect("legal uci");
-
-            pos.play_unchecked(&m);
-
-            assert_eq!(pos.zobrist_hash(), pos.clone().into_inner().zobrist_hash());
         }
     }
 
