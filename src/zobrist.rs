@@ -34,10 +34,10 @@
 //! # Examples
 //!
 //! ```
-//! use shakmaty::{Chess, zobrist::{Zobrist64, ZobristHash}};
+//! use shakmaty::{Chess, EnPassantMode, zobrist::{Zobrist64, ZobristHash}};
 //!
 //! let pos = Chess::default();
-//! assert_eq!(pos.zobrist_hash::<Zobrist64>(), Zobrist64(0x463b96181691fc9c));
+//! assert_eq!(pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal), Zobrist64(0x463b96181691fc9c));
 //! ```
 
 use core::{
@@ -46,7 +46,9 @@ use core::{
     ops::{BitXor, BitXorAssign},
 };
 
-use crate::{Board, CastlingSide, Color, File, Piece, Position, RemainingChecks, Role, Square};
+use crate::{
+    Board, CastlingSide, Color, EnPassantMode, File, Piece, Position, RemainingChecks, Role, Square,
+};
 
 /// Integer type that can be returned as a Zobrist hash.
 pub trait ZobristValue: BitXorAssign + Default + Copy {
@@ -302,12 +304,49 @@ impl From<Zobrist16> for Zobrist8 {
 pub trait ZobristHash {
     /// Computes the Zobrist hash of the position from scratch. The hash
     /// includes the position, except halfmove clock and fullmove number.
-    fn zobrist_hash<V: ZobristValue>(&self) -> V;
+    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V;
 }
 
 impl<P: Position> ZobristHash for P {
-    fn zobrist_hash<V: ZobristValue>(&self) -> V {
-        hash_position(self)
+    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V {
+        let mut zobrist = hash_board(self.board());
+
+        for sq in self.promoted() {
+            zobrist ^= V::zobrist_for_promoted(sq);
+        }
+
+        if let Some(pockets) = self.pockets() {
+            for (color, pocket) in pockets.as_ref().zip_color() {
+                for role in Role::ALL {
+                    zobrist ^= V::zobrist_for_pocket(color, role, *pocket.get(role));
+                }
+            }
+        }
+
+        if self.turn() == Color::White {
+            zobrist ^= V::zobrist_for_white_turn();
+        }
+
+        let castles = self.castles();
+        for color in Color::ALL {
+            for side in CastlingSide::ALL {
+                if castles.has(color, side) {
+                    zobrist ^= V::zobrist_for_castling_right(color, side);
+                }
+            }
+        }
+
+        if let Some(sq) = self.ep_square(mode) {
+            zobrist ^= V::zobrist_for_en_passant_file(sq.file());
+        }
+
+        if let Some(remaining_checks) = self.remaining_checks() {
+            for (color, remaining) in remaining_checks.as_ref().zip_color() {
+                zobrist ^= V::zobrist_for_remaining_checks(color, *remaining);
+            }
+        }
+
+        zobrist
     }
 }
 
@@ -316,47 +355,6 @@ fn hash_board<V: ZobristValue>(board: &Board) -> V {
     for (sq, piece) in board.clone() {
         zobrist ^= V::zobrist_for_piece(sq, piece);
     }
-    zobrist
-}
-
-fn hash_position<P: Position, V: ZobristValue>(pos: &P) -> V {
-    let mut zobrist = hash_board(pos.board());
-
-    for sq in pos.promoted() {
-        zobrist ^= V::zobrist_for_promoted(sq);
-    }
-
-    if let Some(pockets) = pos.pockets() {
-        for (color, pocket) in pockets.as_ref().zip_color() {
-            for role in Role::ALL {
-                zobrist ^= V::zobrist_for_pocket(color, role, *pocket.get(role));
-            }
-        }
-    }
-
-    if pos.turn() == Color::White {
-        zobrist ^= V::zobrist_for_white_turn();
-    }
-
-    let castles = pos.castles();
-    for color in Color::ALL {
-        for side in CastlingSide::ALL {
-            if castles.has(color, side) {
-                zobrist ^= V::zobrist_for_castling_right(color, side);
-            }
-        }
-    }
-
-    if let Some(sq) = pos.legal_ep_square() {
-        zobrist ^= V::zobrist_for_en_passant_file(sq.file());
-    }
-
-    if let Some(remaining_checks) = pos.remaining_checks() {
-        for (color, remaining) in remaining_checks.as_ref().zip_color() {
-            zobrist ^= V::zobrist_for_remaining_checks(color, *remaining);
-        }
-    }
-
     zobrist
 }
 
@@ -413,7 +411,12 @@ mod tests {
                 .into_position(CastlingMode::Standard)
                 .expect("legal position");
 
-            assert_eq!(pos.zobrist_hash::<Zobrist64>(), expected, "{}", fen);
+            assert_eq!(
+                pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal),
+                expected,
+                "{}",
+                fen
+            );
         }
     }
 
@@ -421,10 +424,11 @@ mod tests {
     #[test]
     fn test_variants_not_distinguished() {
         // Useful when indexing a table of opening names by Zorbist hash.
-        let chess: Zobrist128 = Chess::default().zobrist_hash();
-        let crazyhouse = crate::variant::Crazyhouse::default().zobrist_hash();
-        let three_check = crate::variant::ThreeCheck::default().zobrist_hash();
-        let king_of_the_hill = crate::variant::KingOfTheHill::default().zobrist_hash();
+        let chess: Zobrist128 = Chess::default().zobrist_hash(EnPassantMode::Legal);
+        let crazyhouse = crate::variant::Crazyhouse::default().zobrist_hash(EnPassantMode::Legal);
+        let three_check = crate::variant::ThreeCheck::default().zobrist_hash(EnPassantMode::Legal);
+        let king_of_the_hill =
+            crate::variant::KingOfTheHill::default().zobrist_hash(EnPassantMode::Legal);
         assert_eq!(chess, crazyhouse);
         assert_eq!(chess, three_check);
         assert_eq!(chess, king_of_the_hill);
