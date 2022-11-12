@@ -19,6 +19,7 @@ jobs:
           - "--features std"
           - "--features alloc,variant"
           - "--features std,variant"
+          - "--features nohash-hasher,variant"
         include:
           - toolchain: "nightly"
             flags: "--features step,variant"

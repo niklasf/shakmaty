@@ -451,6 +451,30 @@ mod tests {
             );
         }
     }
+
+    #[cfg(feature = "nohash-hasher")]
+    #[test]
+    fn test_nohash_zobrist_hasher() {
+        let mut hasher = nohash_hasher::NoHashHasher::<Zobrist128>::default();
+        Zobrist128(128).hash(&mut hasher);
+        assert_eq!(hasher.finish(), 128);
+
+        let mut hasher = nohash_hasher::NoHashHasher::<Zobrist64>::default();
+        Zobrist64(64).hash(&mut hasher);
+        assert_eq!(hasher.finish(), 64);
+
+        let mut hasher = nohash_hasher::NoHashHasher::<Zobrist32>::default();
+        Zobrist32(32).hash(&mut hasher);
+        assert_eq!(hasher.finish(), 32);
+
+        let mut hasher = nohash_hasher::NoHashHasher::<Zobrist16>::default();
+        Zobrist16(16).hash(&mut hasher);
+        assert_eq!(hasher.finish(), 16);
+
+        let mut hasher = nohash_hasher::NoHashHasher::<Zobrist8>::default();
+        Zobrist8(8).hash(&mut hasher);
+        assert_eq!(hasher.finish(), 8);
+    }
 }
 
 const PIECE_MASKS: [u128; 64 * 6 * 2] = [
