@@ -66,49 +66,51 @@ macro_rules! zobrist_value_impl {
         #[doc = " bits."]
         pub struct $t(pub $proxy);
 
+        impl From<$proxy> for $t {
+            fn from(value: $proxy) -> $t {
+                $t(value)
+            }
+        }
+        impl From<$t> for $proxy {
+            fn from(value: $t) -> $proxy {
+                value.0
+            }
+        }
+
         impl BitXor for $t {
             type Output = $t;
-
             #[inline]
             fn bitxor(self, other: $t) -> $t {
                 $t(self.0 ^ other.0)
             }
         }
-
         impl BitXor<&$t> for $t {
             type Output = $t;
-
             #[inline]
             fn bitxor(self, other: &$t) -> $t {
                 $t(self.0 ^ other.0)
             }
         }
-
         impl BitXor<&$t> for &$t {
             type Output = $t;
-
             #[inline]
             fn bitxor(self, other: &$t) -> $t {
                 $t(self.0 ^ other.0)
             }
         }
-
         impl BitXor<$t> for &$t {
             type Output = $t;
-
             #[inline]
             fn bitxor(self, other: $t) -> $t {
                 $t(self.0 ^ other.0)
             }
         }
-
         impl BitXorAssign for $t {
             #[inline]
             fn bitxor_assign(&mut self, rhs: $t) {
                 self.0 ^= rhs.0;
             }
         }
-
         impl BitXorAssign<&$t> for $t {
             #[inline]
             fn bitxor_assign(&mut self, rhs: &$t) {
@@ -121,25 +123,21 @@ macro_rules! zobrist_value_impl {
                 write!(f, concat!(stringify!($t), "({:#x})"), self.0)
             }
         }
-
         impl fmt::UpperHex for $t {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::UpperHex::fmt(&self.0, f)
             }
         }
-
         impl fmt::LowerHex for $t {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::LowerHex::fmt(&self.0, f)
             }
         }
-
         impl fmt::Octal for $t {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Octal::fmt(&self.0, f)
             }
         }
-
         impl fmt::Binary for $t {
             fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                 fmt::Binary::fmt(&self.0, f)
@@ -200,6 +198,60 @@ zobrist_value_impl! { Zobrist16, u16, 16 }
 zobrist_value_impl! { Zobrist32, u32, 32 }
 zobrist_value_impl! { Zobrist64, u64, 64 }
 zobrist_value_impl! { Zobrist128, u128, 128 }
+
+impl From<Zobrist128> for Zobrist64 {
+    fn from(value: Zobrist128) -> Zobrist64 {
+        Zobrist64(value.0 as u64)
+    }
+}
+impl From<Zobrist128> for Zobrist32 {
+    fn from(value: Zobrist128) -> Zobrist32 {
+        Zobrist32(value.0 as u32)
+    }
+}
+impl From<Zobrist128> for Zobrist16 {
+    fn from(value: Zobrist128) -> Zobrist16 {
+        Zobrist16(value.0 as u16)
+    }
+}
+impl From<Zobrist128> for Zobrist8 {
+    fn from(value: Zobrist128) -> Zobrist8 {
+        Zobrist8(value.0 as u8)
+    }
+}
+
+impl From<Zobrist64> for Zobrist32 {
+    fn from(value: Zobrist64) -> Zobrist32 {
+        Zobrist32(value.0 as u32)
+    }
+}
+impl From<Zobrist64> for Zobrist16 {
+    fn from(value: Zobrist64) -> Zobrist16 {
+        Zobrist16(value.0 as u16)
+    }
+}
+impl From<Zobrist64> for Zobrist8 {
+    fn from(value: Zobrist64) -> Zobrist8 {
+        Zobrist8(value.0 as u8)
+    }
+}
+
+impl From<Zobrist32> for Zobrist16 {
+    fn from(value: Zobrist32) -> Zobrist16 {
+        Zobrist16(value.0 as u16)
+    }
+}
+impl From<Zobrist32> for Zobrist8 {
+    fn from(value: Zobrist32) -> Zobrist8 {
+        Zobrist8(value.0 as u8)
+    }
+}
+
+impl From<Zobrist16> for Zobrist8 {
+    fn from(value: Zobrist16) -> Zobrist8 {
+        Zobrist8(value.0 as u8)
+    }
+}
 
 /// Supports Zobrist hashing.
 pub trait ZobristHash {
