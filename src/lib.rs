@@ -76,6 +76,9 @@
 //! * `step`: Implements
 //!   [`std::iter::Step`](https://doc.rust-lang.org/nightly/std/iter/trait.Step.html)
 //!   for [`Square`], [`File`], and [`Rank`]. Requires nightly Rust.
+//! * `nohash-hasher`: Implements
+//!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
+//!   for Zobrist values.
 
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.22.0")]

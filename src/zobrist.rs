@@ -196,6 +196,9 @@ macro_rules! zobrist_value_impl {
                 }
             }
         }
+
+        #[cfg(feature = "nohash-hasher")]
+        impl nohash_hasher::IsEnabled for $t {}
     };
 }
 
