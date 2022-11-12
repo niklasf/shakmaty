@@ -84,7 +84,7 @@ impl Variant {
         })
     }
 
-    pub fn distinguishes_promoted(self) -> bool {
+    pub const fn distinguishes_promoted(self) -> bool {
         matches!(self, Variant::Crazyhouse)
     }
 
