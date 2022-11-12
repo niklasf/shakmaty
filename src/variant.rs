@@ -70,8 +70,8 @@ impl Variant {
 
     /// Selects a variant based on the name used by the `UCI_Variant` option
     /// of chess engines.
-    pub fn from_uci(s: &str) -> Option<Variant> {
-        Some(match s {
+    pub fn from_uci(s: &str) -> Result<Variant, ParseVariantError> {
+        Ok(match s {
             "chess" => Variant::Chess,
             "atomic" => Variant::Atomic,
             "antichess" => Variant::Antichess,
@@ -80,7 +80,7 @@ impl Variant {
             "crazyhouse" => Variant::Crazyhouse,
             "racingkings" => Variant::RacingKings,
             "horde" => Variant::Horde,
-            _ => return None,
+            _ => return Err(ParseVariantError),
         })
     }
 
