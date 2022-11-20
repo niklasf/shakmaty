@@ -32,9 +32,10 @@ use crate::{
 };
 
 /// Discriminant of [`VariantPosition`].
-#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, Copy, Default)]
 pub enum Variant {
     /// See [`Chess`].
+    #[default]
     Chess,
     /// See [`Atomic`].
     Atomic,
@@ -98,12 +99,6 @@ impl Variant {
         Variant::RacingKings,
         Variant::Horde,
     ];
-}
-
-impl Default for Variant {
-    fn default() -> Variant {
-        Variant::Chess
-    }
 }
 
 impl fmt::Display for Variant {
