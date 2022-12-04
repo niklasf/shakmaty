@@ -1,5 +1,15 @@
 # Changelog for shakmaty
 
+## v0.23.0
+
+- Add optional `nohash-hasher` feature.
+- Implement `Display` and `FromStr` for `Variant`.
+- `Variant::from_uci()` now returns `Result` instead of `Option`.
+- Make `Variant::distinguishes_promoted()` `const`.
+- Introduce `Zobrist{8,16,32,64,128}` types for Zobrist hash values.
+- Consider `EnPassantMode` for Zobrist hashing.
+- Removed API for incremental Zobrist hashing which was never implemented.
+
 ## v0.22.0
 
 - Let `Board::board_fen()` return struct that implements `Display` instead of
