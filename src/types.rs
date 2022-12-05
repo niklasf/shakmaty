@@ -202,15 +202,13 @@ impl fmt::Display for Move {
 
                 Ok(())
             }
-            Move::EnPassant { from, to, .. } => {
-                write!(f, "{}x{}", from, to)
-            }
+            Move::EnPassant { from, to, .. } => write!(f, "{from}x{to}"),
             Move::Castle { king, rook } => f.write_str(if king < rook { "O-O" } else { "O-O-O" }),
             Move::Put { role, to } => {
                 if role != Role::Pawn {
                     f.write_char(role.upper_char())?;
                 }
-                write!(f, "@{}", to)
+                write!(f, "@{to}")
             }
         }
     }

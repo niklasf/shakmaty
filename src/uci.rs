@@ -140,7 +140,7 @@ impl fmt::Display for Uci {
                 from,
                 to,
                 promotion: None,
-            } => write!(f, "{}{}", from, to),
+            } => write!(f, "{from}{to}"),
             Uci::Normal {
                 from,
                 to,

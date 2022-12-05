@@ -510,7 +510,7 @@ impl fmt::Display for San {
                 if capture {
                     write!(f, "x")?;
                 }
-                write!(f, "{}", to)?;
+                write!(f, "{to}")?;
                 if let Some(promotion) = promotion {
                     write!(f, "={}", promotion.upper_char())?;
                 }
@@ -521,7 +521,7 @@ impl fmt::Display for San {
             San::Put {
                 role: Role::Pawn,
                 to,
-            } => write!(f, "@{}", to),
+            } => write!(f, "@{to}"),
             San::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
             San::Null => write!(f, "--"),
         }
@@ -642,7 +642,7 @@ impl fmt::Display for SanPlus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.san)?;
         if let Some(suffix) = self.suffix {
-            write!(f, "{}", suffix)?;
+            write!(f, "{suffix}")?;
         }
         Ok(())
     }
