@@ -1,5 +1,9 @@
 # Changelog for shakmaty-syzygy
 
+## v0.21.0
+
+- Update shakmaty to `0.23`.
+
 ## v0.20.0
 
 - Update shakmaty to `0.22`.
