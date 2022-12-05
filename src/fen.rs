@@ -389,7 +389,7 @@ impl Fen {
         } else if let Some(split_point) = board_part
             .iter()
             .enumerate()
-            .filter_map(|(idx, ch)| (*ch == b'/').then(|| idx))
+            .filter_map(|(idx, ch)| (*ch == b'/').then_some(idx))
             .nth(7)
         {
             // format: .../pocket
