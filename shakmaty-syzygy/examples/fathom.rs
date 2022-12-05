@@ -95,18 +95,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     movetext.push(result.to_string());
 
     if opt.test {
-        println!("{}", result);
+        println!("{result}");
     } else {
-        println!("[Event \"{}\"]", material);
+        println!("[Event \"{material}\"]");
         println!("[Site \"\"]");
         println!("[Date \"????.??.??\"]");
         println!("[Round \"-\"]");
         println!("[White \"Syzygy\"]");
         println!("[Black \"Syzygy\"]");
-        println!("[Result \"{}\"]", result);
-        println!("[FEN \"{}\"]", fen);
+        println!("[Result \"{result}\"]");
+        println!("[FEN \"{fen}\"]");
         println!("[Annotator \"shakmaty-syzygy\"]");
-        println!("[WDL \"{:?}\"]", wdl);
+        println!("[WDL \"{wdl:?}\"]");
         match dtz {
             MaybeRounded::Precise(dtz) => println!("[DTZ \"{}\"]", i32::from(dtz)),
             MaybeRounded::Rounded(dtz) => println!(

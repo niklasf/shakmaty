@@ -58,17 +58,13 @@ impl fmt::Display for SyzygyError {
             ),
             SyzygyError::TooManyPieces => write!(f, "too many pieces"),
             SyzygyError::MissingTable { metric, material } => {
-                write!(f, "required {} table not found: {}", metric, material)
+                write!(f, "required {metric} table not found: {material}")
             }
             SyzygyError::ProbeFailed {
                 metric,
                 material,
                 error,
-            } => write!(
-                f,
-                "failed to probe {} table {}: {}",
-                metric, material, error
-            ),
+            } => write!(f, "failed to probe {metric} table {material}: {error}"),
         }
     }
 }
@@ -105,9 +101,9 @@ pub enum ProbeError {
 impl fmt::Display for ProbeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ProbeError::Read { error } => write!(f, "i/o error reading table file: {}", error),
-            ProbeError::Magic { magic } => write!(f, "invalid magic header bytes: {:x?}", magic),
-            ProbeError::CorruptedTable { backtrace } => write!(f, "corrupted table: {}", backtrace),
+            ProbeError::Read { error } => write!(f, "i/o error reading table file: {error}"),
+            ProbeError::Magic { magic } => write!(f, "invalid magic header bytes: {magic:x?}"),
+            ProbeError::CorruptedTable { backtrace } => write!(f, "corrupted table: {backtrace}"),
         }
     }
 }
