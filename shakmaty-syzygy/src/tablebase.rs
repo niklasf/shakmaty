@@ -160,7 +160,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self
+        if let Some((path, table)) = self
             .wdl
             .get(key)
             .or_else(|| self.wdl.get(&key.clone().into_flipped()))
@@ -177,7 +177,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, RandomAccessFile>> {
-        if let Some(&(ref path, ref table)) = self
+        if let Some((path, table)) = self
             .dtz
             .get(key)
             .or_else(|| self.dtz.get(&key.clone().into_flipped()))
