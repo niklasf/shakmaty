@@ -58,7 +58,9 @@ fn main() -> Result<(), io::Error> {
     for arg in env::args().skip(1) {
         let file = File::open(&arg).expect("fopen");
 
-        let uncompressed: Box<dyn io::Read> = if arg.ends_with(".bz2") {
+        let uncompressed: Box<dyn io::Read> = if arg.ends_with(".zst") {
+            Box::new(zstd::Decoder::new(file)?)
+        } else if arg.ends_with(".bz2") {
             Box::new(bzip2::read::MultiBzDecoder::new(file))
         } else if arg.ends_with(".xz") {
             Box::new(xz2::read::XzDecoder::new(file))
