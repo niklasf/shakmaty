@@ -17,7 +17,6 @@
 use std::{
     cmp::min,
     io::{self, Chain, Cursor, Read},
-    ptr,
 };
 
 use shakmaty::{
@@ -551,12 +550,10 @@ impl<R: Read> BufferedReader<R> {
     /// # }
     /// ```
     pub fn new(inner: R) -> BufferedReader<R> {
-        let mut reader = BufferedReader {
+        BufferedReader {
             inner,
             buffer: Buffer::new(),
-        };
-
-        reader
+        }
     }
 
     /// Read a single game, if any, and returns the result produced by the
