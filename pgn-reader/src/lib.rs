@@ -1,5 +1,5 @@
 // This file is part of the pgn-reader library.
-// Copyright (C) 2017-2018 Niklas Fiekas <niklas.fiekas@backscattering.de>
+// Copyright (C) 2017-2022 Niklas Fiekas <niklas.fiekas@backscattering.de>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@
 //!
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![doc(html_root_url = "https://docs.rs/pgn-reader/0.21.0")]
+#![doc(html_root_url = "https://docs.rs/pgn-reader/0.22.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 
