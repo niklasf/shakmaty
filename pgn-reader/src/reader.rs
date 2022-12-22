@@ -49,7 +49,7 @@ trait ReadPgn {
     fn invalid_data() -> Self::Err;
 
     fn peek(&self) -> Option<u8> {
-        self.buffer().get(0).cloned()
+        self.buffer().first().cloned()
     }
 
     fn bump(&mut self) -> Option<u8> {
@@ -634,7 +634,7 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
             self.buffer.inner.fill(size);
         }
 
-        Ok(self.buffer.inner.data().get(0).cloned())
+        Ok(self.buffer.inner.data().first().cloned())
     }
 
     fn invalid_data() -> io::Error {
@@ -650,7 +650,7 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
     }
 
     fn peek(&self) -> Option<u8> {
-        self.buffer.inner.data().get(0).cloned()
+        self.buffer.inner.data().first().cloned()
     }
 }
 
