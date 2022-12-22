@@ -156,6 +156,12 @@ pub enum VariantPosition {
     Horde(Horde),
 }
 
+impl Default for VariantPosition {
+    fn default() -> VariantPosition {
+        VariantPosition::new(Variant::default())
+    }
+}
+
 impl From<Chess> for VariantPosition {
     fn from(pos: Chess) -> VariantPosition {
         VariantPosition::Chess(pos)
