@@ -85,6 +85,22 @@ impl Variant {
         })
     }
 
+    /// Selects a variant based on its name or known alias.
+    pub fn from_ascii(s: &[u8]) -> Result<Variant, ParseVariantError> {
+        Ok(match s {
+            b"chess" | b"standard" | b"chess960" | b"fromPosition" | b"Standard" | b"Chess960"
+            | b"From Position" => Variant::Chess,
+            b"atomic" | b"Atomic" => Variant::Atomic,
+            b"antichess" | b"Antichess" => Variant::Antichess,
+            b"kingofthehill" | b"kingOfTheHill" | b"King of the Hill" => Variant::KingOfTheHill,
+            b"3check" | b"threeCheck" | b"Three-check" => Variant::ThreeCheck,
+            b"crazyhouse" | b"Crazyhouse" => Variant::Crazyhouse,
+            b"racingkings" | b"racingKings" | b"Racing Kings" => Variant::RacingKings,
+            b"horde" | b"Horde" => Variant::Horde,
+            _ => return Err(ParseVariantError),
+        })
+    }
+
     pub const fn distinguishes_promoted(self) -> bool {
         matches!(self, Variant::Crazyhouse)
     }
@@ -124,18 +140,7 @@ impl FromStr for Variant {
     type Err = ParseVariantError;
 
     fn from_str(s: &str) -> Result<Variant, ParseVariantError> {
-        Ok(match s {
-            "chess" | "standard" | "chess960" | "fromPosition" | "Standard" | "Chess960"
-            | "From Position" => Variant::Chess,
-            "atomic" | "Atomic" => Variant::Atomic,
-            "antichess" | "Antichess" => Variant::Antichess,
-            "kingofthehill" | "kingOfTheHill" | "King of the Hill" => Variant::KingOfTheHill,
-            "3check" | "threeCheck" | "Three-check" => Variant::ThreeCheck,
-            "crazyhouse" | "Crazyhouse" => Variant::Crazyhouse,
-            "racingkings" | "racingKings" | "Racing Kings" => Variant::RacingKings,
-            "horde" | "Horde" => Variant::Horde,
-            _ => return Err(ParseVariantError),
-        })
+        Variant::from_ascii(s.as_bytes())
     }
 }
 
