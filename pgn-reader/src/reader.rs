@@ -23,8 +23,8 @@ use shakmaty::{
     san::{San, SanPlus, Suffix},
     CastlingSide, Color, Outcome,
 };
-// use slice_deque::SliceDeque;
 
+// use slice_deque::SliceDeque;
 use crate::{
     types::{Nag, RawComment, RawHeader, Skip},
     visitor::{SkipVisitor, Visitor},

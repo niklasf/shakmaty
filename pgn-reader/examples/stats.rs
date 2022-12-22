@@ -56,7 +56,7 @@ impl Visitor for Stats {
 
 fn main() -> Result<(), io::Error> {
     for arg in env::args().skip(1) {
-        let file = File::open(&arg).expect("fopen");
+        let file = File::open(&arg)?;
 
         let uncompressed: Box<dyn io::Read> = if arg.ends_with(".zst") {
             Box::new(zstd::Decoder::new(file)?)
