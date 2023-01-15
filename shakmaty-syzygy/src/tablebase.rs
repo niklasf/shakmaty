@@ -70,7 +70,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    /// Returns the maximum number of pieces of any added table.
+    /// Returns the maximum number of pieces over all added tables.
+    ///
+    /// This number is updated when adding table files and very fast to read.
+    #[inline]
     pub fn max_pieces(&self) -> usize {
         self.max_pieces
     }
