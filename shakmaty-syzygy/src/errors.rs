@@ -45,7 +45,7 @@ pub enum SyzygyError {
         #[allow(missing_docs)]
         material: Material,
         #[allow(missing_docs)]
-        error: ProbeError,
+        error: Box<ProbeError>,
     },
 }
 
@@ -126,7 +126,7 @@ impl<T> ProbeResultExt<T> for ProbeResult<T> {
         self.map_err(|error| SyzygyError::ProbeFailed {
             metric,
             material: material.into_normalized(),
-            error,
+            error: Box::new(error),
         })
     }
 }
