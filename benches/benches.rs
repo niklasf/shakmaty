@@ -1,5 +1,11 @@
 use iai::black_box;
-use shakmaty::{fen::Fen, perft, san::San, CastlingMode, Chess, Move, Position, Role, Square};
+use shakmaty::{
+    fen::Fen,
+    perft,
+    san::San,
+    zobrist::{Zobrist64, ZobristHash},
+    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Square,
+};
 
 fn bench_shallow_perft() {
     let pos = Chess::default();
@@ -91,6 +97,10 @@ fn bench_play_sans() -> Chess {
     pos
 }
 
+fn bench_zobrist_hash() -> Zobrist64 {
+    black_box(Chess::default()).zobrist_hash(EnPassantMode::Legal)
+}
+
 iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
@@ -99,4 +109,5 @@ iai::main!(
     bench_play_unchecked,
     bench_san_candidates,
     bench_play_sans,
+    bench_zobrist_hash,
 );
