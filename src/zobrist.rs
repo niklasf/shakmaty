@@ -70,17 +70,20 @@ macro_rules! zobrist_value_impl {
         pub struct $t(pub $proxy);
 
         impl PartialEq for $t {
+            #[inline]
             fn eq(&self, other: &$t) -> bool {
                 self.0 == other.0
             }
         }
 
         impl From<$proxy> for $t {
+            #[inline]
             fn from(value: $proxy) -> $t {
                 $t(value)
             }
         }
         impl From<$t> for $proxy {
+            #[inline]
             fn from(value: $t) -> $proxy {
                 value.0
             }
@@ -154,15 +157,18 @@ macro_rules! zobrist_value_impl {
         }
 
         impl ZobristValue for $t {
+            #[inline]
             fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
                 let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
                 $t(PIECE_MASKS[64 * piece_idx + usize::from(square)] as $proxy)
             }
 
+            #[inline]
             fn zobrist_for_white_turn() -> $t {
                 $t(WHITE_TURN_MASK as $proxy)
             }
 
+            #[inline]
             fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> $t {
                 $t(CASTLING_RIGHT_MASKS[match (color, side) {
                     (Color::White, CastlingSide::KingSide) => 0,
@@ -172,10 +178,12 @@ macro_rules! zobrist_value_impl {
                 }] as $proxy)
             }
 
+            #[inline]
             fn zobrist_for_en_passant_file(file: File) -> $t {
                 $t(EN_PASSANT_FILE_MASKS[usize::from(file)] as $proxy)
             }
 
+            #[inline]
             fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
                 if remaining < RemainingChecks::default() {
                     $t(
@@ -187,10 +195,12 @@ macro_rules! zobrist_value_impl {
                 }
             }
 
+            #[inline]
             fn zobrist_for_promoted(square: Square) -> $t {
                 $t(PROMOTED_MASKS[usize::from(square)] as $proxy)
             }
 
+            #[inline]
             fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
                 if 0 < pieces && pieces <= 16 {
                     let color_idx = color as usize;
@@ -360,9 +370,15 @@ impl<P: Position> ZobristHash for P {
 }
 
 fn hash_board<V: ZobristValue>(board: &Board) -> V {
+    // Order optimized for cache efficiency.
     let mut zobrist = V::default();
-    for (sq, piece) in board.clone() {
-        zobrist ^= V::zobrist_for_piece(sq, piece);
+    for role in Role::ALL {
+        for color in [Color::Black, Color::White] {
+            let piece = role.of(color);
+            for sq in board.by_piece(piece) {
+                zobrist ^= V::zobrist_for_piece(sq, piece);
+            }
+        }
     }
     zobrist
 }
