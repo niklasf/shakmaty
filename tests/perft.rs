@@ -85,8 +85,9 @@ macro_rules! gen_tests {
 }
 
 gen_tests! {
-    test_random,      Chess,       "tests/random.perft",         10_000,
     test_tricky,      Chess,       "tests/tricky.perft",        100_000,
+    test_random,      Chess,       "tests/random.perft",         10_000,
+    test_chess960,    Chess,       "tests/chess960.perft",      100_000,
 }
 
 #[cfg(feature = "variant")]
