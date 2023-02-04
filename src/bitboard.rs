@@ -53,7 +53,7 @@ impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
     pub const fn from_square(sq: Square) -> Bitboard {
-        Bitboard(SQUARES[sq as usize])
+        Bitboard(1 << sq as usize)
     }
 
     /// Returns the bitboard containing all squares of the given rank.
@@ -810,17 +810,6 @@ impl Bitboard {
     /// ```
     pub const EAST: Bitboard = Bitboard(0xf0f0_f0f0_f0f0_f0f0);
 }
-
-/// Square masks.
-const SQUARES: [u64; 64] = {
-    let mut masks = [0; 64];
-    let mut i = 0;
-    while i < 64 {
-        masks[i] = 1 << i;
-        i += 1;
-    }
-    masks
-};
 
 /// Rank masks.
 const RANKS: [u64; 8] = {
