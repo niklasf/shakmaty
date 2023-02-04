@@ -65,7 +65,7 @@ impl Bitboard {
     /// Returns the bitboard containing all squares of the given file.
     #[inline]
     pub const fn from_file(file: File) -> Bitboard {
-        Bitboard(FILES[file as usize])
+        Bitboard(FILE_A << file as usize)
     }
 
     /// Shift using `<<` for `White` and `>>` for `Black`.
@@ -822,16 +822,7 @@ const RANKS: [u64; 8] = {
     masks
 };
 
-/// File masks.
-const FILES: [u64; 8] = {
-    let mut masks = [0; 8];
-    let mut i = 0;
-    while i < 8 {
-        masks[i] = 0x0101_0101_0101_0101 << i;
-        i += 1;
-    }
-    masks
-};
+const FILE_A: u64 = 0x0101_0101_0101_0101;
 
 #[derive(Copy, Clone)]
 pub(crate) enum Direction {
@@ -855,10 +846,10 @@ impl Direction {
     #[inline(always)]
     pub const fn translate(self, bitboard: Bitboard) -> Bitboard {
         Bitboard(match self {
-            Direction::NorthWest => (bitboard.0 & !FILES[0]) << 7,
-            Direction::SouthWest => (bitboard.0 & !FILES[0]) >> 9,
-            Direction::NorthEast => (bitboard.0 & !FILES[7]) << 9,
-            Direction::SouthEast => (bitboard.0 & !FILES[7]) >> 7,
+            Direction::NorthWest => (bitboard.0 & !FILE_A) << 7,
+            Direction::SouthWest => (bitboard.0 & !FILE_A) >> 9,
+            Direction::NorthEast => (bitboard.0 << 9) & !FILE_A,
+            Direction::SouthEast => (bitboard.0 >> 7) & !FILE_A,
         })
     }
 }
