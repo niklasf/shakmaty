@@ -378,6 +378,7 @@ impl RemainingChecks {
     /// # Panics
     ///
     /// Panics if `n > 3`.
+    #[track_caller]
     pub const fn new(n: u32) -> RemainingChecks {
         assert!(n <= 3);
         RemainingChecks(n)

@@ -119,6 +119,7 @@ impl File {
     /// # Panics
     ///
     /// Panics if the index is not in the range `0..=7`.
+    #[track_caller]
     #[inline]
     pub const fn new(index: u32) -> File {
         assert!(index < 8);
@@ -240,6 +241,7 @@ impl Rank {
     /// # Panics
     ///
     /// Panics if the index is not in the range `0..=7`.
+    #[track_caller]
     #[inline]
     pub fn new(index: u32) -> Rank {
         assert!(index < 8);
@@ -379,6 +381,7 @@ impl Square {
     /// assert_eq!(Square::new(0), Square::A1);
     /// assert_eq!(Square::new(63), Square::H8);
     /// ```
+    #[track_caller]
     #[inline]
     pub const fn new(index: u32) -> Square {
         assert!(index < 64);

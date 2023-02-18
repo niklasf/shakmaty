@@ -92,6 +92,7 @@ impl Board {
     /// # Panics
     ///
     /// Panics if the bitboards are inconsistent.
+    #[track_caller]
     pub fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
         let mut occupied = Bitboard::EMPTY;
         by_role.for_each(|role| {
