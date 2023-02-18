@@ -824,6 +824,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     ///
     /// Panics if the `material` configuration is not supported by Syzygy
     /// tablebases (more than 7 pieces or side without pieces).
+    #[track_caller]
     pub fn new(raf: F, material: &Material) -> ProbeResult<Table<T, S, F>> {
         let material = material.clone();
         assert!(material.count() <= MAX_PIECES);

@@ -537,6 +537,7 @@ impl Dtz {
     /// assert_eq!(Dtz(0).add_plies(3), Dtz(0));
     /// assert_eq!(Dtz(-1).add_plies(3), Dtz(-4));
     /// ```
+    #[track_caller]
     #[must_use]
     pub fn add_plies(self, plies: u32) -> Dtz {
         self.add_plies_checked(plies).expect("dtz overflow")
