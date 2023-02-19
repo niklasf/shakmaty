@@ -2502,7 +2502,7 @@ pub(crate) mod variant {
             self.board().white().is_empty() || self.board().black().is_empty()
         }
 
-        #[allow(clippy::nonminimal_bool)]
+        #[allow(clippy::nonminimal_bool)] // Aids commentary
         fn has_insufficient_material(&self, color: Color) -> bool {
             // The side with the king can always win by capturing the horde.
             if (self.board.by_color(color) & self.board.kings()).any() {
@@ -2785,7 +2785,7 @@ pub(crate) mod variant {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)] // But typesafe
 fn do_move(
     board: &mut Board,
     promoted: &mut Bitboard,

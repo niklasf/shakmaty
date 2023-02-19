@@ -30,7 +30,6 @@ macro_rules! from_repr_u8_impl {
     ($from:ty, $($t:ty)+) => {
         $(impl From<$from> for $t {
             #[inline]
-            #[allow(clippy::cast_lossless)]
             fn from(value: $from) -> $t {
                 value as u8 as $t
             }
@@ -45,7 +44,6 @@ macro_rules! try_from_int_impl {
 
             #[inline]
             #[allow(unused_comparisons)]
-            #[allow(clippy::cast_lossless)]
             fn try_from(value: $t) -> Result<$type, Self::Error> {
                 if ($lower..$upper).contains(&value) {
                     Ok(<$type>::new(value as u32))
@@ -543,7 +541,6 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_horizontal(self) -> Square {
         self.xor(Square::H1)
     }
@@ -558,7 +555,6 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    #[allow(clippy::unusual_byte_groupings)]
     pub fn flip_vertical(self) -> Square {
         self.xor(Square::A8)
     }
@@ -618,7 +614,6 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    #[allow(clippy::unusual_byte_groupings)]
     pub fn rotate_180(self) -> Square {
         self.xor(Square::H8)
     }

@@ -87,7 +87,7 @@ fn dump_slice<W: Write, T: LowerHex>(
     table_name: &str,
     slice: &[T],
 ) -> io::Result<()> {
-    writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
+    writeln!(w, "#[allow(clippy::unreadable_literal)] // Generated")?;
     write!(w, "static {}: [{}; {}] = [", name, table_name, slice.len())?;
     for v in slice {
         write!(w, "0x{v:x}, ")?;
@@ -101,7 +101,7 @@ fn dump_table<W: Write, T: LowerHex>(
     tname: &str,
     table: &[[T; 64]; 64],
 ) -> io::Result<()> {
-    writeln!(w, "#[allow(clippy::unreadable_literal)]")?;
+    writeln!(w, "#[allow(clippy::unreadable_literal)] // Generated")?;
     write!(w, "static {name}: [[{tname}; 64]; 64] = [")?;
     for row in table {
         write!(w, "[")?;

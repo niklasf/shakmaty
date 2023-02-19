@@ -229,6 +229,7 @@ impl VariantPosition {
         }
     }
 
+    #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn from_setup(
         variant: Variant,
         setup: Setup,
@@ -274,6 +275,7 @@ impl VariantPosition {
         }
     }
 
+    #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();
         let variant = self.variant();
