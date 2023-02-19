@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## v0.23.1
+
+- Significantly optimize performance of Zobrist hashing.
+- Add `Variant::from_ascii()`.
+- Implement `Default` for `VariantPosition`.
+- Use `#[track_caller]` for panicking functions.
+
 ## v0.23.0
 
 - Add optional `nohash-hasher` feature.

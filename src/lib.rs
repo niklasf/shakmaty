@@ -81,7 +81,7 @@
 //!   for sensible types.
 
 #![no_std]
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.23.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.23.1")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(feature = "step", feature(step_trait))]
