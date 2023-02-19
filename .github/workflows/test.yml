@@ -50,3 +50,7 @@ jobs:
         with:
           command: bench
           args: --no-default-features ${{ matrix.flags }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --manifest-path fuzz/Cargo.toml
