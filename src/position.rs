@@ -1007,6 +1007,8 @@ impl Position for Chess {
 
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
+    use core::{cmp::min, ops::Not};
+
     use super::*;
 
     /// An Atomic Chess position.
@@ -2509,54 +2511,63 @@ pub(crate) mod variant {
                 return false;
             }
 
-            // By this point: color == White
+            #[derive(Copy, Clone)]
+            enum SquareColor {
+                Dark,
+                Light,
+            }
+            impl From<SquareColor> for Bitboard {
+                fn from(square_color: SquareColor) -> Bitboard {
+                    match square_color {
+                        SquareColor::Light => Bitboard::LIGHT_SQUARES,
+                        SquareColor::Dark => Bitboard::DARK_SQUARES,
+                    }
+                }
+            }
+            impl Not for SquareColor {
+                type Output = SquareColor;
+
+                fn not(self) -> SquareColor {
+                    match self {
+                        SquareColor::Dark => SquareColor::Light,
+                        SquareColor::Light => SquareColor::Dark,
+                    }
+                }
+            }
+
+            let has_bishop_pair = |side: Color| -> bool {
+                let bishops = self.board.bishops() & self.board.by_color(side);
+                (bishops & Bitboard::DARK_SQUARES).any()
+                    && (bishops & Bitboard::LIGHT_SQUARES).any()
+            };
+
+            // By this point: color is the horde.
             let horde = self.board.material_side(color);
-            let horde_darkb = (Bitboard::DARK_SQUARES
-                & self.board.by_color(color)
-                & self.board.bishops())
-            .count() as u8;
-            let horde_lightb =
-                (Bitboard::LIGHT_SQUARES & self.board.by_color(color) & self.board.bishops())
-                    .count() as u8;
-            let horde_bishop_co = || Color::from_white(horde_lightb >= 1);
+            let horde_bishops = |square_color: SquareColor| -> u8 {
+                (Bitboard::from(square_color) & self.board.by_color(color) & self.board.bishops())
+                    .count() as u8
+            };
+            let horde_bishop_color = if horde_bishops(SquareColor::Light) >= 1 {
+                SquareColor::Light
+            } else {
+                SquareColor::Dark
+            };
+            // Two same color bishops suffice to cover all the light and dark squares
+            // around the enemy king.
             let horde_num = horde.pawn
                 + horde.knight
                 + horde.rook
                 + horde.queen
-                + if horde_darkb <= 2 { horde_darkb } else { 2 }
-                + if horde_lightb <= 2 { horde_lightb } else { 2 };
-            // Two same color bishops suffice to cover all the light and dark squares
-            // around the enemy king.
+                + min(horde_bishops(SquareColor::Dark), 2)
+                + min(horde_bishops(SquareColor::Light), 2);
 
             let pieces = self.board.material_side(!color);
-            let pieces_darkb = || -> u8 {
-                (Bitboard::DARK_SQUARES & self.board.by_color(!color) & self.board.bishops())
-                    .count() as u8
-            };
-            let pieces_lightb = || -> u8 {
-                (Bitboard::LIGHT_SQUARES & self.board.by_color(!color) & self.board.bishops())
+            let pieces_bishops = |square_color: SquareColor| -> u8 {
+                (Bitboard::from(square_color) & self.board.by_color(!color) & self.board.bishops())
                     .count() as u8
             };
             let pieces_num = pieces.count() as u8;
-            let pieces_oppositeb_of = |square_color: Color| -> u8 {
-                match square_color {
-                    White => pieces_darkb(),
-                    Black => pieces_lightb(),
-                }
-            };
-            let pieces_sameb_as = |square_color: Color| -> u8 {
-                match square_color {
-                    White => pieces_lightb(),
-                    Black => pieces_darkb(),
-                }
-            };
             let pieces_of_type_not = |piece: u8| -> u8 { pieces_num - piece };
-            let has_bishop_pair = |side: Color| -> bool {
-                match side {
-                    White => horde_lightb >= 1 && horde_darkb >= 1,
-                    Black => pieces_lightb() >= 1 && pieces_darkb() >= 1,
-                }
-            };
 
             if horde_num == 0 {
                 return true;
@@ -2580,7 +2591,7 @@ pub(crate) mod variant {
                 if !(horde_num == 2
                     && horde.rook == 1
                     && horde.bishop == 1
-                    && pieces_of_type_not(pieces_sameb_as(horde_bishop_co())) == 1)
+                    && pieces_of_type_not(pieces_bishops(horde_bishop_color)) == 1)
                 {
                     return false;
                 }
@@ -2600,8 +2611,8 @@ pub(crate) mod variant {
                     // bishop on B1).
                     return !(pieces.pawn >= 1
                         || pieces.rook >= 1
-                        || pieces_lightb() >= 2
-                        || pieces_darkb() >= 2);
+                        || pieces_bishops(SquareColor::Light) >= 2
+                        || pieces_bishops(SquareColor::Dark) >= 2);
                 } else if horde.pawn == 1 {
                     // Promote the pawn to a queen or a knight and check whether white
                     // can mate.
@@ -2641,8 +2652,8 @@ pub(crate) mod variant {
                         // For example a king on A3 can be mated if there is
                         // a pawn/opposite-color-bishop on A4, a pawn/opposite-color-bishop on
                         // B3, a pawn/bishop/rook/queen on A2 and any other piece on B2.
-                        pieces_oppositeb_of(horde_bishop_co()) >= 2
-                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.pawn >= 1)
+                        pieces_bishops(!horde_bishop_color) >= 2
+                            || (pieces_bishops(!horde_bishop_color) >= 1 && pieces.pawn >= 1)
                             || pieces.pawn >= 2
                     );
                 } else if horde.knight == 1 {
@@ -2663,16 +2674,10 @@ pub(crate) mod variant {
                                 || (pieces.knight >= 1 && pieces.pawn >= 1)
                                 || (pieces.bishop >= 1 && pieces.pawn >= 1)
                                 || (has_bishop_pair(!color) && pieces.pawn >= 1))
-                            && if pieces_darkb() >= 2 {
-                                pieces_of_type_not(pieces_darkb()) >= 3
-                            } else {
-                                true
-                            }
-                            && if pieces_lightb() >= 2 {
-                                pieces_of_type_not(pieces_lightb()) >= 3
-                            } else {
-                                true
-                            }
+                            && (pieces_bishops(SquareColor::Dark) < 2
+                                || pieces_of_type_not(pieces_bishops(SquareColor::Dark)) >= 3)
+                            && (pieces_bishops(SquareColor::Light) < 2
+                                || pieces_of_type_not(pieces_bishops(SquareColor::Light)) >= 3)
                     );
                 }
 
@@ -2701,11 +2706,11 @@ pub(crate) mod variant {
                     return !(
                         // A king on A1 obstructed by a pawn/opposite-color-bishop on
                         // A2 is mated by a knight on D2 and a bishop on C3.
-                        pieces.pawn >= 1 || pieces_oppositeb_of(horde_bishop_co()) >= 1 ||
+                        pieces.pawn >= 1 || pieces_bishops(!horde_bishop_color) >= 1 ||
                             // A king on A1 bounded by two friendly pieces on A2 and B1 is
                             // mated when the knight moves from D4 to C2 so that both the
                             // knight and the bishop deliver check.
-                            pieces_of_type_not( pieces_sameb_as(horde_bishop_co()) ) >=3
+                            pieces_of_type_not( pieces_bishops(horde_bishop_color) ) >=3
                     );
                 } else {
                     // The horde has two or more bishops on the same color.
@@ -2717,10 +2722,10 @@ pub(crate) mod variant {
                         // bishops on B2 and C3. This position is theoretically
                         // achievable even when black has two pawns or when they
                         // have a pawn and an opposite color bishop.
-                        (pieces.pawn >= 1 && pieces_oppositeb_of(horde_bishop_co()) >= 1)
+                        (pieces.pawn >= 1 && pieces_bishops(!horde_bishop_color) >= 1)
                             || (pieces.pawn >= 1 && pieces.knight >= 1)
-                            || (pieces_oppositeb_of(horde_bishop_co()) >= 1 && pieces.knight >= 1)
-                            || (pieces_oppositeb_of(horde_bishop_co()) >= 2)
+                            || (pieces_bishops(!horde_bishop_color) >= 1 && pieces.knight >= 1)
+                            || (pieces_bishops(!horde_bishop_color) >= 2)
                             || pieces.knight >= 2
                             || pieces.pawn >= 2
                         // In every other case, white can only draw.
