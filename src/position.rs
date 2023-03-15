@@ -129,6 +129,7 @@ impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct PositionErrorKinds: u32 {
         /// There are no pieces on the board.
         const EMPTY_BOARD = 1 << 0;
