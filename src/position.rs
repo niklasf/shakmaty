@@ -3484,6 +3484,7 @@ mod tests {
         );
 
         assert_insufficient_material::<Horde>("8/5k2/8/8/8/4NN2/8/8 w - - 0 1", true, false);
+        assert_insufficient_material::<Horde>("8/8/8/7k/7P/7P/8/8 b - - 0 58", false, false);
     }
 
     #[cfg(feature = "variant")]
