@@ -266,11 +266,6 @@ impl Castles {
         self.rook(color, side).is_some()
     }
 
-    #[deprecated = "renamed to Castles::has_color()"]
-    pub const fn has_side(&self, color: Color) -> bool {
-        self.has_color(color)
-    }
-
     pub const fn has_color(&self, color: Color) -> bool {
         self.mask
             .intersect(Bitboard::from_rank(color.backrank()))
@@ -293,11 +288,6 @@ impl Castles {
                 self.rook.black[1] = None;
             }
         }
-    }
-
-    #[deprecated = "renamed to Castles::discard_color()"]
-    pub fn discard_side(&mut self, color: Color) {
-        self.discard_color(color);
     }
 
     pub fn discard_color(&mut self, color: Color) {

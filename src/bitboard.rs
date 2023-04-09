@@ -68,34 +68,6 @@ impl Bitboard {
         Bitboard(FILE_A << file as usize)
     }
 
-    /// Shift using `<<` for `White` and `>>` for `Black`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use shakmaty::{Bitboard, Color};
-    ///
-    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
-    /// assert_eq!(bitboard.relative_shift(Color::Black, 8), Bitboard(0x001e_2222_120e_0a12));
-    /// // . . . . . . . .
-    /// // . 1 1 1 1 . . .
-    /// // . 1 . . . 1 . .
-    /// // . 1 . . . 1 . .
-    /// // . 1 . . 1 . . .
-    /// // . 1 1 1 . . . .
-    /// // . 1 . 1 . . . .
-    /// // . 1 . . 1 . . .
-    /// ```
-    #[deprecated = "use Bitboard::shift() or manual shifts for clearer semantics"]
-    #[must_use]
-    #[inline]
-    pub const fn relative_shift(self, color: Color, shift: u32) -> Bitboard {
-        match color {
-            Color::White => Bitboard(self.0 << shift),
-            Color::Black => Bitboard(self.0 >> shift),
-        }
-    }
-
     /// Silently overflowing bitwise shift with a signed offset, `<<` for
     /// positive values and `>>` for negative values.
     ///

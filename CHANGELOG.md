@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.24.0
+
+- Update `PositionErrorKinds` to `bitflags` 2.
+- Remove previously deprecated methods.
+- Bump minimum supported Rust version to 1.63.
+
 ## v0.23.1
 
 - Significantly optimize performance of Zobrist hashing.
