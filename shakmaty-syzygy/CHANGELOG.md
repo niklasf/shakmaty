@@ -1,5 +1,11 @@
 # Changelog for shakmaty-syzygy
 
+## v0.22.0
+
+- Update shakmaty to `0.24`.
+- Reduce size of error types by boxing unlikely errors.
+- Use `#[track_caller]` for panicking functions.
+
 ## v0.21.0
 
 - Update shakmaty to `0.23`.
