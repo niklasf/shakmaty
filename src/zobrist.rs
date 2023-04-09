@@ -229,7 +229,7 @@ impl Hash for Zobrist128 {
     where
         H: Hasher,
     {
-        state.write_u64(self.0 as u64) // Truncating!
+        state.write_u64(self.0 as u64); // Truncating!
     }
 }
 impl Hash for Zobrist64 {
@@ -237,7 +237,7 @@ impl Hash for Zobrist64 {
     where
         H: Hasher,
     {
-        state.write_u64(self.0)
+        state.write_u64(self.0);
     }
 }
 impl Hash for Zobrist32 {
@@ -245,7 +245,7 @@ impl Hash for Zobrist32 {
     where
         H: Hasher,
     {
-        state.write_u32(self.0)
+        state.write_u32(self.0);
     }
 }
 impl Hash for Zobrist16 {
@@ -253,7 +253,7 @@ impl Hash for Zobrist16 {
     where
         H: Hasher,
     {
-        state.write_u16(self.0)
+        state.write_u16(self.0);
     }
 }
 impl Hash for Zobrist8 {
@@ -261,7 +261,7 @@ impl Hash for Zobrist8 {
     where
         H: Hasher,
     {
-        state.write_u8(self.0)
+        state.write_u8(self.0);
     }
 }
 

@@ -96,6 +96,7 @@ impl Color {
     }
 
     /// Same as the NOT (`!`) operator, but usable in `const` contexts.
+    #[must_use]
     pub const fn other(self) -> Color {
         match self {
             Color::White => Color::Black,
@@ -329,7 +330,7 @@ impl<T> ByColor<ByRole<T>> {
 #[cfg(feature = "variant")]
 impl ByColor<ByRole<u8>> {
     pub(crate) fn count(&self) -> usize {
-        self.iter().map(|side| side.count()).sum()
+        self.iter().map(ByRole::count).sum()
     }
 }
 

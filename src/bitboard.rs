@@ -227,6 +227,7 @@ impl Bitboard {
     }
 
     /// Returns the intersection of `self` and `squares`. Equivalent to bitwise `&`.
+    #[must_use]
     pub const fn intersect(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 & squares.0)
     }
@@ -240,6 +241,7 @@ impl Bitboard {
     }
 
     /// Same as the `with` method, but usable in `const` contexts.
+    #[must_use]
     pub const fn with_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 | squares.0)
     }
@@ -253,6 +255,7 @@ impl Bitboard {
     }
 
     /// Same as the `without` method, but usable in `const` contexts.
+    #[must_use]
     pub const fn without_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 & !squares.0)
     }
@@ -267,6 +270,7 @@ impl Bitboard {
     }
 
     /// Same as the `toggled` method, but usable in `const` contexts.
+    #[must_use]
     pub const fn toggled_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 ^ squares.0)
     }
@@ -346,6 +350,7 @@ impl Bitboard {
     }
 
     /// Returns `self` without the first square.
+    #[must_use]
     #[inline]
     pub const fn without_first(self) -> Bitboard {
         let Bitboard(mask) = self;

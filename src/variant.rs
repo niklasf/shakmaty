@@ -418,7 +418,7 @@ impl Position for VariantPosition {
     }
 
     fn play_unchecked(&mut self, m: &Move) {
-        self.borrow_mut().play_unchecked(m)
+        self.borrow_mut().play_unchecked(m);
     }
 }
 

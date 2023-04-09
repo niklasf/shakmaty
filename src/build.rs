@@ -98,11 +98,11 @@ fn dump_slice<W: Write, T: LowerHex>(
 fn dump_table<W: Write, T: LowerHex>(
     w: &mut W,
     name: &str,
-    tname: &str,
+    ty: &str,
     table: &[[T; 64]; 64],
 ) -> io::Result<()> {
     writeln!(w, "#[allow(clippy::unreadable_literal)] // Generated")?;
-    write!(w, "static {name}: [[{tname}; 64]; 64] = [")?;
+    write!(w, "static {name}: [[{ty}; 64]; 64] = [")?;
     for row in table {
         write!(w, "[")?;
         for column in row {

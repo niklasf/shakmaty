@@ -1088,7 +1088,7 @@ pub(crate) mod variant {
                 errors.remove(PositionErrorKinds::MISSING_KING);
             }
 
-            PositionError { errors, pos }.strict()
+            PositionError { pos, errors }.strict()
         }
     }
 
@@ -1360,7 +1360,7 @@ pub(crate) mod variant {
             };
 
             if setup.castling_rights.any() {
-                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
             }
 
             errors |= validate(&pos, ep_square)
@@ -1369,7 +1369,7 @@ pub(crate) mod variant {
                 - PositionErrorKinds::OPPOSITE_CHECK
                 - PositionErrorKinds::IMPOSSIBLE_CHECK;
 
-            PositionError { errors, pos }.strict()
+            PositionError { pos, errors }.strict()
         }
     }
 
@@ -2160,7 +2160,7 @@ pub(crate) mod variant {
 
             errors |= validate(&pos, None);
 
-            PositionError { errors, pos }.strict()
+            PositionError { pos, errors }.strict()
         }
     }
 
@@ -2392,7 +2392,7 @@ pub(crate) mod variant {
                 }
             }
 
-            PositionError { errors, pos }.strict()
+            PositionError { pos, errors }.strict()
         }
     }
 
@@ -2507,11 +2507,6 @@ pub(crate) mod variant {
 
         #[allow(clippy::nonminimal_bool)] // Aids commentary
         fn has_insufficient_material(&self, color: Color) -> bool {
-            // The side with the king can always win by capturing the horde.
-            if (self.board.by_color(color) & self.board.kings()).any() {
-                return false;
-            }
-
             #[derive(Copy, Clone)]
             enum SquareColor {
                 Dark,
@@ -2534,6 +2529,11 @@ pub(crate) mod variant {
                         SquareColor::Light => SquareColor::Dark,
                     }
                 }
+            }
+
+            // The side with the king can always win by capturing the horde.
+            if (self.board.by_color(color) & self.board.kings()).any() {
+                return false;
             }
 
             let has_bishop_pair = |side: Color| -> bool {
