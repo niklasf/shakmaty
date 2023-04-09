@@ -23,10 +23,7 @@ use core::{
     ops,
 };
 
-use crate::{
-    color::Color,
-    square::{File, Rank, Square},
-};
+use crate::square::{File, Rank, Square};
 
 /// A set of [squares](super::Square) represented by a 64 bit
 /// integer mask.
