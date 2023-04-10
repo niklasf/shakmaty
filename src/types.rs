@@ -19,6 +19,8 @@ use core::{
     num,
 };
 
+use serde::{Serialize, Deserialize};
+
 use crate::{
     color::{ByColor, Color},
     role::Role,
@@ -276,7 +278,7 @@ impl CastlingSide {
 }
 
 /// `Standard` or `Chess960`.
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 pub enum CastlingMode {
     Standard,
     Chess960,

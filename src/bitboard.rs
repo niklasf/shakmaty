@@ -23,6 +23,8 @@ use core::{
     ops,
 };
 
+use serde::{Serialize, Deserialize};
+
 use crate::square::{File, Rank, Square};
 
 /// A set of [squares](super::Square) represented by a 64 bit
@@ -43,7 +45,7 @@ use crate::square::{File, Rank, Square};
 /// // . 1 . . 1 . . .
 /// // . 1 . . . 1 . .
 /// ```
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default, Serialize, Deserialize)]
 pub struct Bitboard(pub u64);
 
 impl Bitboard {

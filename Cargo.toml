@@ -32,6 +32,10 @@ bitflags = "2.0.0"
 btoi = "0.4"
 arrayvec = { version = "0.7", default-features = false }
 nohash-hasher = { version = "0.2", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+
+[build-dependencies]
+serde = { version = "1.0", features = ["derive"] }
 
 [dev-dependencies]
 iai = "0.1"

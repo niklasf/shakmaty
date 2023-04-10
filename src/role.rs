@@ -16,6 +16,8 @@
 
 use core::{array, convert::identity, num};
 
+use serde::{Serialize, Deserialize};
+
 use crate::{color::Color, types::Piece, util::overflow_error};
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
@@ -186,7 +188,7 @@ macro_rules! try_role_from_int_impl {
 try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
 /// Container with values for each [`Role`].
-#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 #[repr(C)]
 pub struct ByRole<T> {
     pub pawn: T,

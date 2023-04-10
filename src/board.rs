@@ -22,6 +22,8 @@ use core::{
     iter::{FromIterator, FusedIterator},
 };
 
+use serde::{Serialize, Deserialize};
+
 use crate::{attacks, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 
 /// [`Piece`] positions on a board.
@@ -43,7 +45,7 @@ use crate::{attacks, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, 
 ///
 /// assert_eq!(board.piece_at(Square::E8), Some(Black.king()));
 /// ```
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct Board {
     by_role: ByRole<Bitboard>,
     by_color: ByColor<Bitboard>,

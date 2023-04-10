@@ -16,6 +16,8 @@
 
 use core::{convert::identity, num::NonZeroU32};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     attacks, Bitboard, Board, ByColor, ByRole, CastlingMode, CastlingSide, Color, File, FromSetup,
     PositionError, Rank, RemainingChecks, Square,
@@ -138,7 +140,7 @@ impl Default for Setup {
 }
 
 /// Castling paths and unmoved rooks.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Castles {
     mask: Bitboard,
     rook: ByColor<[Option<Square>; 2]>,
@@ -339,7 +341,7 @@ impl Castles {
 }
 
 /// En passant square on the third or sixth rank.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub(crate) struct EnPassant(pub Square);
 
 impl From<EnPassant> for Square {

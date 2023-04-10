@@ -18,6 +18,8 @@
 
 use core::{array, convert::identity, fmt, mem, ops, str::FromStr};
 
+use serde::{Deserialize, Serialize};
+
 use crate::{
     role::{ByRole, Role},
     square::Rank,
@@ -26,7 +28,7 @@ use crate::{
 
 /// `White` or `Black`.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 pub enum Color {
     Black = 0,
     White = 1,
@@ -200,7 +202,7 @@ impl FromStr for Color {
 }
 
 /// Container with values for each [`Color`].
-#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash, Deserialize, Serialize)]
 #[repr(C)]
 pub struct ByColor<T> {
     pub black: T,

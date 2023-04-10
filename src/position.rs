@@ -1009,6 +1009,7 @@ impl Position for Chess {
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
     use core::{cmp::min, ops::Not};
+    use serde::{Deserialize, Serialize};
 
     use super::*;
 
@@ -1303,7 +1304,7 @@ pub(crate) mod variant {
 
     /// An Antichess position. Antichess is also known as Giveaway, but players
     /// start without castling rights.
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct Antichess {
         board: Board,
         turn: Color,

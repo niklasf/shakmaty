@@ -24,6 +24,8 @@ use core::{
     str,
 };
 
+use serde::{Serialize, Deserialize};
+
 use crate::util::overflow_error;
 
 macro_rules! from_repr_u8_impl {
@@ -351,7 +353,7 @@ impl std::error::Error for ParseSquareError {}
 /// A square of the chessboard.
 #[rustfmt::skip]
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 #[repr(u8)]
 pub enum Square {
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
