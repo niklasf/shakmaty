@@ -180,12 +180,15 @@ bitflags! {
         /// in Crazyhouse.
         ///
         /// This can be ignored using
-        /// [`PositionError::ignore_impossible_material()`], but note that
+        /// [`PositionError::ignore_too_much_material()`], but note that
         /// other programs may not work with too much material.
-        const IMPOSSIBLE_MATERIAL = 1 << 8;
+        const TOO_MUCH_MATERIAL = 1 << 8;
 
         /// A variant specific rule is violated.
         const VARIANT = 1 << 9;
+
+        #[deprecated = "Use `PositionErrorKinds::TOO_MUCH_MATERIAL` instead"]
+        const IMPOSSIBLE_MATERIAL = PositionErrorKinds::TOO_MUCH_MATERIAL.bits();
     }
 }
 
@@ -221,10 +224,15 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
     }
 
-    /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_MATERIAL`].
+    /// Get the position despite [`PositionErrorKinds::TOO_MUCH_MATERIAL`].
     /// Note that other programs may not work with too much material.
+    pub fn ignore_too_much_material(self) -> Result<P, Self> {
+        self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
+    }
+
+    #[deprecated = "Use `PositionErrorKinds::ignore_too_much_material()`"]
     pub fn ignore_impossible_material(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKinds::IMPOSSIBLE_MATERIAL)
+        self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
     }
 
     /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_CHECK`].
@@ -274,8 +282,8 @@ impl<P> fmt::Display for PositionError<P> {
         reason(PositionErrorKinds::OPPOSITE_CHECK, "opposite check")?;
         reason(PositionErrorKinds::IMPOSSIBLE_CHECK, "impossible check")?;
         reason(
-            PositionErrorKinds::IMPOSSIBLE_MATERIAL,
-            "impossible material",
+            PositionErrorKinds::TOO_MUCH_MATERIAL,
+            "too much material",
         )?;
         reason(PositionErrorKinds::VARIANT, "variant rule violated")?;
         if first {
@@ -315,8 +323,7 @@ pub trait FromSetup: Sized {
     /// let setup = Setup::default();
     ///
     /// let pos = Chess::from_setup(setup, CastlingMode::Standard)
-    ///     .or_else(PositionError::ignore_impossible_material)
-    ///
+    ///     .or_else(PositionError::ignore_too_much_material)
     ///     .or_else(PositionError::ignore_impossible_check)?;
     ///
     /// # Ok::<_, PositionError<_>>(())
@@ -1874,7 +1881,7 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::VARIANT;
             }
 
-            errors -= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+            errors -= PositionErrorKinds::TOO_MUCH_MATERIAL;
 
             if promoted.count()
                 + chess.board().pawns().count()
@@ -1898,7 +1905,7 @@ pub(crate) mod variant {
                     + usize::from(pockets.black.queen)
                     > 2
             {
-                errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                errors |= PositionErrorKinds::TOO_MUCH_MATERIAL;
             }
 
             PositionError {
@@ -2130,7 +2137,7 @@ pub(crate) mod variant {
                     || (setup.board.rooks() & us).count() > 2
                     || (setup.board.queens() & us).more_than_one()
                 {
-                    errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                    errors |= PositionErrorKinds::TOO_MUCH_MATERIAL;
                 }
             }
 
@@ -2364,7 +2371,7 @@ pub(crate) mod variant {
             errors |= validate(&pos, ep_square)
                 - PositionErrorKinds::PAWNS_ON_BACKRANK
                 - PositionErrorKinds::MISSING_KING
-                - PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                - PositionErrorKinds::TOO_MUCH_MATERIAL;
 
             if pos.board().kings().is_empty() {
                 errors |= PositionErrorKinds::MISSING_KING;
@@ -2376,14 +2383,14 @@ pub(crate) mod variant {
                 let us = pos.board.by_color(color);
                 if (pos.board().kings() & us).any() {
                     if !is_standard_material(pos.board(), color) {
-                        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                        errors |= PositionErrorKinds::TOO_MUCH_MATERIAL;
                     }
                     if (pos.board().pawns() & us & Bitboard::BACKRANKS).any() {
                         errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
                     }
                 } else {
                     if us.count() > 36 {
-                        errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+                        errors |= PositionErrorKinds::TOO_MUCH_MATERIAL;
                     }
                     if (pos.board().pawns() & us & (!color).backrank()).any() {
                         errors |= PositionErrorKinds::PAWNS_ON_BACKRANK;
@@ -2891,7 +2898,7 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
         }
 
         if !is_standard_material(pos.board(), color) {
-            errors |= PositionErrorKinds::IMPOSSIBLE_MATERIAL;
+            errors |= PositionErrorKinds::TOO_MUCH_MATERIAL;
         }
     }
 
