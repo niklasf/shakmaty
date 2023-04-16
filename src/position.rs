@@ -712,7 +712,6 @@ impl Hash for Chess {
         self.board.hash(state);
         self.turn.hash(state);
         self.castles.castling_rights().hash(state);
-        self.ep_square.hash(state);
         self.halfmoves.hash(state);
         self.fullmoves.hash(state);
     }
@@ -954,7 +953,7 @@ impl Position for Chess {
         }
 
         let has_ep = role == Role::Pawn
-            && Some(EnPassant(to)) == self.ep_square
+            && self.ep_square.map(Square::from) == Some(to)
             && gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
 
         let blockers = slider_blockers(self.board(), self.them(), king);
@@ -3383,8 +3382,16 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn test_eq() {
+        fn hash<T: Hash>(value: &T) -> u64 {
+            let mut hasher = std::collections::hash_map::DefaultHasher::new();
+            value.hash(&mut hasher);
+            hasher.finish()
+        }
+
         assert_eq!(Chess::default(), Chess::default());
+        assert_eq!(hash(&Chess::default()), hash(&Chess::default()));
         assert_ne!(
             Chess::default(),
             Chess::default().swap_turn().expect("swap turn legal")
@@ -3392,7 +3399,7 @@ mod tests {
 
         // Check that castling paths do not interfere.
         let pos: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBK1BNR w KQkq - 0 1");
-        let pos_after_move = pos
+        let pos_after_move_played = pos
             .play(&Move::Normal {
                 role: Role::King,
                 from: Square::D1,
@@ -3401,10 +3408,9 @@ mod tests {
                 promotion: None,
             })
             .expect("Ke1 is legal");
-        assert_eq!(
-            pos_after_move,
-            setup_fen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1")
-        );
+        let pos_after_move = setup_fen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1");
+        assert_eq!(pos_after_move, pos_after_move_played);
+        assert_eq!(hash(&pos_after_move), hash(&pos_after_move_played));
 
         // Check that promoted pieces are irrelevant in standard chess.
         let pos: Chess = setup_fen("rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNB~QKBNR w KQq - 0 26");
@@ -3430,7 +3436,14 @@ mod tests {
         let final_pos: Chess =
             setup_fen("rnbqkbnQ/ppppppp1/8/8/8/8/PPPPPPP1/RNBQKBNR b KQq - 0 26");
         assert_eq!(pos_after_queen_promotion, final_pos);
+        assert_eq!(hash(&pos_after_queen_promotion), hash(&final_pos));
         assert_ne!(pos_after_knight_promotion, final_pos);
+
+        // Check that irrelevant en passant is treated as such.
+        let pos: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
+        let pos_with_irrelevant_ep: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+        assert_eq!(pos, pos_with_irrelevant_ep);
+        assert_eq!(hash(&pos), hash(&pos_with_irrelevant_ep));
     }
 
     #[cfg(feature = "variant")]
