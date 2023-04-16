@@ -140,7 +140,7 @@ bitflags! {
         /// A player has too many kings.
         const TOO_MANY_KINGS = 1 << 2;
 
-        /// There are pawns on the backrank. Only [`Horde`] allows players to
+        /// There are pawns on the backrank. Only [`Horde`](variant::Horde) allows players to
         /// have pawns on their own backrank.
         const PAWNS_ON_BACKRANK = 1 << 3;
 
