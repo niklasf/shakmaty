@@ -129,6 +129,17 @@ impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
+    ///
+    /// A position is legal if it can be reached with a sequence of legal moves
+    /// from the starting position. All legal positions are accepted.
+    /// However, it is not feasible (or even always deseriable) to reject all
+    /// illegal positions.
+    ///
+    /// Instead, the validity requirements here are chosen based on
+    /// practical considerations: Are shakmaty, as well as common
+    /// chess software (in particular Stockfish and Lichess) able to correctly
+    /// handle the position, and are they likely to continue to do so in future
+    /// versions?
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct PositionErrorKinds: u32 {
         /// There are no pieces on the board.
@@ -164,11 +175,9 @@ bitflags! {
         /// aligned, or check is not possible because the last move was a
         /// double pawn push.
         ///
-        /// Such a position cannot be reached by any sequence of legal moves.
-        ///
         /// This can be ignored using
         /// [`PositionError::ignore_impossible_check()`], but note that other
-        /// programs may not work in such a situation.
+        /// software may not work correctly in such situations.
         const IMPOSSIBLE_CHECK = 1 << 7;
 
         /// The material configuration cannot be reached with any sequence of
@@ -181,7 +190,7 @@ bitflags! {
         ///
         /// This can be ignored using
         /// [`PositionError::ignore_too_much_material()`], but note that
-        /// other programs may not work with too much material.
+        /// other software may not work correctly with too much material.
         const TOO_MUCH_MATERIAL = 1 << 8;
 
         /// A variant specific rule is violated.
@@ -193,6 +202,8 @@ bitflags! {
 }
 
 /// Error when trying to create a [`Position`] from an illegal [`Setup`].
+///
+/// See [`PositionErrorKinds`] for possible reasons.
 #[derive(Clone)]
 pub struct PositionError<P> {
     pub(crate) pos: P,
@@ -241,6 +252,7 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_CHECK)
     }
 
+    /// Returns the reasons for this error.
     pub fn kinds(&self) -> PositionErrorKinds {
         self.errors
     }
@@ -304,12 +316,8 @@ pub trait FromSetup: Sized {
     ///
     /// # Errors
     ///
-    /// Returns [`PositionError`] if the [`Setup`] does not meet basic validity
-    /// requirements.
-    ///
-    /// The requirements are chosen such that the position can be handled
-    /// correctly by shakmaty, as well as other common chess software
-    /// (in particular Stockfish and Lichess).
+    /// Returns [`PositionError`] if the [`Setup`] does not
+    /// meet [basic validity requirements](PositionErrorKinds).
     ///
     /// Meeting the requirements does not imply that the position
     /// is actually reachable with a series of legal moves from the starting
