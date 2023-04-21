@@ -27,7 +27,9 @@ jobs:
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@${{ matrix.toolchain }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
       - run: cargo test --no-default-features ${{ matrix.flags }}
       - run: cargo doc --no-default-features ${{ matrix.flags }}
       - run: cargo bench --no-default-features ${{ matrix.flags }}
