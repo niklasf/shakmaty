@@ -27,24 +27,8 @@ jobs:
     steps:
       - run: sudo apt-get update && sudo apt-get install -y valgrind
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.toolchain }}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-default-features ${{ matrix.flags }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-default-features ${{ matrix.flags }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-          args: --no-default-features ${{ matrix.flags }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --manifest-path fuzz/Cargo.toml
+      - uses: dtolnay/rust-toolchain@${{ matrix.toolchain }}
+      - run: cargo test --no-default-features ${{ matrix.flags }}
+      - run: cargo doc --no-default-features ${{ matrix.flags }}
+      - run: cargo bench --no-default-features ${{ matrix.flags }}
+      - run: cargo check --manifest-path fuzz/Cargo.toml
