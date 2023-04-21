@@ -9,29 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/cache@v3
         with:
           path: tables
           key: ${{ runner.os }}-${{ hashFiles('tables/*/TEST-SOURCE.txt') }}
       - run: ./download-test-tables.sh
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features variant
-      - uses: actions-rs/cargo@v1
-        with:
-          command: bench
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --manifest-path fuzz/Cargo.toml
+      - run: cargo test
+      - run: cargo test --features variant
+      - run: cargo bench
+      - run: cargo check --manifest-path fuzz/Cargo.toml
         env:
           RUSTFLAGS: --cfg fuzzing
