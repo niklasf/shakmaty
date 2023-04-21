@@ -55,47 +55,6 @@ macro_rules! try_from_int_impl {
     }
 }
 
-macro_rules! unsafe_step_impl {
-    ($type:ty) => {
-        #[cfg(feature = "step")]
-        impl core::iter::Step for $type {
-            fn steps_between(start: &Self, end: &Self) -> Option<usize> {
-                usize::from(*end).checked_sub(usize::from(*start))
-            }
-
-            fn forward_checked(start: Self, count: usize) -> Option<Self> {
-                use core::convert::TryFrom as _;
-                i32::try_from(count)
-                    .ok()
-                    .and_then(|count| start.offset(count))
-            }
-
-            fn backward_checked(start: Self, count: usize) -> Option<Self> {
-                use core::convert::TryFrom as _;
-                i32::try_from(count)
-                    .ok()
-                    .and_then(|count| start.offset(-count))
-            }
-
-            unsafe fn forward_unchecked(start: Self, count: usize) -> Self {
-                // Safety: It is the callers responsibility to ensure
-                // start + count is in the range of Self.
-                core::debug_assert!(count < 64);
-                let count = count as u32;
-                unsafe { Self::new_unchecked(u32::from(start) + count) }
-            }
-
-            unsafe fn backward_unchecked(start: Self, count: usize) -> Self {
-                // Safety: It is the callers responsibility to ensure
-                // start - count is in the range of Self.
-                core::debug_assert!(count < 64);
-                let count = count as u32;
-                unsafe { Self::new_unchecked(u32::from(start) - count) }
-            }
-        }
-    };
-}
-
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -216,7 +175,6 @@ impl fmt::Display for File {
 
 from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-unsafe_step_impl! { File }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -333,7 +291,6 @@ impl fmt::Display for Rank {
 
 from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-unsafe_step_impl! { Rank }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug)]
@@ -694,7 +651,6 @@ mod all_squares {
 
 from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-unsafe_step_impl! { Square }
 
 impl Sub for Square {
     type Output = i32;

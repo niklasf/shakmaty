@@ -22,12 +22,6 @@ jobs:
           - "--features nohash-hasher,variant"
         include:
           - toolchain: "nightly"
-            flags: "--features step,variant"
-          - toolchain: "nightly"
-            flags: "--features alloc,step,variant"
-          - toolchain: "nightly"
-            flags: "--features std,step,variant"
-          - toolchain: "nightly"
             flags: "-Z minimal-versions --all-features"
     runs-on: ubuntu-latest
     steps:

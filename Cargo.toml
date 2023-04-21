@@ -16,7 +16,6 @@ rust-version = "1.63" # remember to update test.yml
 default = ["std"]
 alloc = []
 std = ["alloc"]
-step = []
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
 

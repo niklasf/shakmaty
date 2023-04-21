@@ -73,9 +73,6 @@
 //!   Enabled by default for convenience. For `no_std` environments, this must
 //!   be disabled with `default-features = false`.
 //! * `variant`: Enables support for all Lichess variants.
-//! * `step`: Implements
-//!   [`std::iter::Step`](https://doc.rust-lang.org/nightly/std/iter/trait.Step.html)
-//!   for [`Square`], [`File`], and [`Rank`]. Requires nightly Rust.
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
 //!   for sensible types.
@@ -84,7 +81,6 @@
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.24.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
-#![cfg_attr(feature = "step", feature(step_trait))]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 
 #[cfg(feature = "alloc")]
