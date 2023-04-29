@@ -293,10 +293,7 @@ impl<P> fmt::Display for PositionError<P> {
         reason(PositionErrorKinds::INVALID_EP_SQUARE, "invalid ep square")?;
         reason(PositionErrorKinds::OPPOSITE_CHECK, "opposite check")?;
         reason(PositionErrorKinds::IMPOSSIBLE_CHECK, "impossible check")?;
-        reason(
-            PositionErrorKinds::TOO_MUCH_MATERIAL,
-            "too much material",
-        )?;
+        reason(PositionErrorKinds::TOO_MUCH_MATERIAL, "too much material")?;
         reason(PositionErrorKinds::VARIANT, "variant rule violated")?;
         if first {
             f.write_str("unknown reason")?;
@@ -3423,7 +3420,8 @@ mod tests {
                 promotion: None,
             })
             .expect("Ke1 is legal");
-        let pos_after_move = setup_fen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1");
+        let pos_after_move =
+            setup_fen::<Chess>("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR b kq - 1 1");
         assert_eq!(pos_after_move, pos_after_move_played);
         assert_eq!(hash(&pos_after_move), hash(&pos_after_move_played));
 
@@ -3456,7 +3454,8 @@ mod tests {
 
         // Check that irrelevant en passant is treated as such.
         let pos: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
-        let pos_with_irrelevant_ep: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+        let pos_with_irrelevant_ep: Chess =
+            setup_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
         assert_eq!(pos, pos_with_irrelevant_ep);
         assert_eq!(hash(&pos), hash(&pos_with_irrelevant_ep));
     }
