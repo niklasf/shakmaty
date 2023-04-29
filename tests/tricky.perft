@@ -146,9 +146,9 @@ perft 3 711
 #
 
 id asymmetrical-and-king-on-h
-epd r2r3k/p2p4/8/8/8/7P/P7/R3K2R b KQq -
+epd r2r3k/p7/3p4/8/8/P6P/8/R3K2R b KQq -
 perft 1 14
 perft 2 206
-perft 3 3643
-perft 4 64494
-perft 5 1312723
+perft 3 3672
+perft 4 64639
+perft 5 1320962
