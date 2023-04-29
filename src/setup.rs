@@ -205,10 +205,7 @@ impl Castles {
 
         for color in Color::ALL {
             if let Some(king) = setup.board.king_of(color) {
-                if king.file() == File::A
-                    || king.file() == File::H
-                    || king.rank() != color.fold_wb(Rank::First, Rank::Eighth)
-                {
+                if king.rank() != color.fold_wb(Rank::First, Rank::Eighth) {
                     continue;
                 }
 

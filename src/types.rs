@@ -278,7 +278,26 @@ impl CastlingSide {
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingMode {
+    /// Castling notation and validity requirements for standard chess.
+    ///
+    /// UCI notation describes the king movement, e.g., `e1g1`.
+    ///
+    /// Castling rights are only valid for kings and rooks on their own
+    /// backrank. Kings must be on the e-file. Rooks must be on the a-file or
+    /// h-file.
     Standard,
+    /// Castling notation for Chess960 and basic validity requirements.
+    ///
+    /// UCI notation describes a king move to the corresponding rook, e.g.,
+    /// `e1h1`.
+    ///
+    /// Castling rights are only valid for kings and rooks on their own
+    /// backrank. Each player can have only one king-side and queen-side
+    /// castling right respectively.
+    ///
+    /// Beyond the castling rights possible in Chess960 starting positions,
+    /// the white and black rook files need not be the same. The king can be
+    /// on any backrank square, including the a/h-file.
     Chess960,
 }
 

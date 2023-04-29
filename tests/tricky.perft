@@ -140,3 +140,15 @@ epd 8/8/8/1k6/3Pp3/8/8/4KQ2 b - d3
 perft 1 6
 perft 2 121
 perft 3 711
+
+#
+# Impossible castling rights.
+#
+
+id asymmetrical-and-king-on-h
+epd r2r3k/p2p4/8/8/8/7P/P7/R3K2R b KQq - 0 1
+perft 1 14
+perft 2 206
+perft 3 3643
+perft 4 64494
+perft 5 1312723

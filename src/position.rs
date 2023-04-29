@@ -155,7 +155,7 @@ bitflags! {
         /// have pawns on their own backrank.
         const PAWNS_ON_BACKRANK = 1 << 3;
 
-        /// Some castling rights are invalid.
+        /// Some castling rights are invalid for the selected [`CastlingMode`].
         ///
         /// Can be recovered by discarding the invalid castling rights using
         /// [`PositionError::ignore_invalid_castling_rights()`].
