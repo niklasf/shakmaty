@@ -172,12 +172,12 @@ bitflags! {
         const OPPOSITE_CHECK = 1 << 6;
 
         /// There are impossibly many checkers, two sliding checkers are
-        /// aligned, or check is not possible because the last move was a
-        /// double pawn push.
+        /// aligned, or check is not possible because the en passant square
+        /// implies that the last move was a double pawn push.
         ///
-        /// This can be ignored using
-        /// [`PositionError::ignore_impossible_check()`], but note that other
-        /// software may not work correctly in such situations.
+        /// Unlike [`PositionErrorKinds::OPPOSITE_CHECK`], this can be ignored
+        /// using [`PositionError::ignore_impossible_check()`], but note that
+        /// other software may not work correctly in such situations.
         const IMPOSSIBLE_CHECK = 1 << 7;
 
         /// The material configuration cannot be reached with any sequence of
@@ -236,6 +236,7 @@ impl<P> PositionError<P> {
     }
 
     /// Get the position despite [`PositionErrorKinds::TOO_MUCH_MATERIAL`].
+    ///
     /// Note that other programs may not work with too much material.
     pub fn ignore_too_much_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
@@ -246,7 +247,9 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
     }
 
-    /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_CHECK`].
+    /// Get the position despite [`PositionErrorKinds::IMPOSSIBLE_CHECK`]
+    /// (not be be confused with [`PositionErrorKinds::OPPOSITE_CHECK`]).
+    ///
     /// Note that other programs may not work in such a situation.
     pub fn ignore_impossible_check(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_CHECK)
