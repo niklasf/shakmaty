@@ -156,6 +156,12 @@ impl ops::BitXor<bool> for Color {
     }
 }
 
+impl ops::BitXorAssign<bool> for Color {
+    fn bitxor_assign(&mut self, flip: bool) {
+        *self = *self ^ flip;
+    }
+}
+
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.name())
