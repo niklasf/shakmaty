@@ -79,7 +79,7 @@ impl Color {
         matches!(self, Color::Black)
     }
 
-    /// Same as the NOT (`!`) operator, but usable in `const` contexts.
+    /// Same as `!self`, but usable in `const` contexts.
     #[must_use]
     pub const fn other(self) -> Color {
         match self {
