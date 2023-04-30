@@ -299,7 +299,7 @@ impl Bitboard {
     /// Discards the first square.
     #[inline]
     pub fn discard_first(&mut self) {
-        *self = (*self).without_first();
+        *self = self.without_first();
     }
 
     /// Returns `self` without the first square.
@@ -334,6 +334,26 @@ impl Bitboard {
         } else {
             Some(Square::new(63 - self.0.leading_zeros()))
         }
+    }
+
+    /// Discards the last square.
+    #[inline]
+    pub fn discard_last(&mut self) {
+        *self = self.without_last()
+    }
+
+    /// Returns `self` without the last square.
+    #[must_use]
+    #[inline]
+    pub fn without_last(self) -> Bitboard {
+        self ^ Bitboard::from_iter(self.last())
+    }
+
+    /// Returns the bitboard with only the last square of `self`.
+    #[must_use]
+    #[inline]
+    pub fn isolate_last(self) -> Bitboard {
+        Bitboard::from_iter(self.last())
     }
 
     /// Returns the number of squares in `self`.
@@ -1125,8 +1145,20 @@ mod tests {
 
     #[test]
     fn test_isolate_first() {
-        assert_eq!(Bitboard::from(Rank::Second).isolate_first(), Bitboard::from_square(Square::A2));
+        assert_eq!(
+            Bitboard::from(Rank::Second).isolate_first(),
+            Bitboard::from_square(Square::A2)
+        );
         assert_eq!(Bitboard(0).isolate_first(), Bitboard(0));
+    }
+
+    #[test]
+    fn test_isolate_last() {
+        assert_eq!(
+            Bitboard::from(File::C).isolate_last(),
+            Bitboard::from_square(Square::C8)
+        );
+        assert_eq!(Bitboard(0).isolate_last(), Bitboard(0));
     }
 
     #[test]
