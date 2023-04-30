@@ -1125,7 +1125,7 @@ mod tests {
 
     #[test]
     fn test_isolate_first() {
-        assert_eq!(Bitboard::from(Rank::Second).isolate_first(), Bitboard::from_square(Square::B1));
+        assert_eq!(Bitboard::from(Rank::Second).isolate_first(), Bitboard::from_square(Square::A2));
         assert_eq!(Bitboard(0).isolate_first(), Bitboard(0));
     }
 
