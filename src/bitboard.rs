@@ -310,6 +310,14 @@ impl Bitboard {
         Bitboard(mask & mask.wrapping_sub(1))
     }
 
+    /// Returns the bitboard with only the first square of `self`.
+    #[must_use]
+    #[inline]
+    pub const fn isolate_first(self) -> Bitboard {
+        let Bitboard(mask) = self;
+        Bitboard(mask & mask.wrapping_neg())
+    }
+
     /// Removes and returns the last square, if any.
     #[inline]
     pub fn pop_back(&mut self) -> Option<Square> {
@@ -1113,6 +1121,12 @@ mod tests {
             Some(Square::H1)
         );
         assert_eq!(Bitboard(0).last(), None);
+    }
+
+    #[test]
+    fn test_isolate_first() {
+        assert_eq!(Bitboard::from(Rank::Second).isolate_first(), Bitboard::from_square(Square::B1));
+        assert_eq!(Bitboard(0).isolate_first(), Bitboard(0));
     }
 
     #[test]
