@@ -1,5 +1,14 @@
 # Changelog for shakmaty
 
+## v0.25.0
+
+- Remove `step` feature.
+- Fix inconsistent `Hash` for `Chess` due to irrelevant en passant squares.
+- Relax and more precisely document `CastlingMode::Chess960`.
+- Rename `PositionErrorKinds::IMPOSSIBLE_MATERIAL` to `TOO_MUCH_MATERIAL`.
+- Implement `BitXorAssign` for `Color`.
+- Added `Bitboard::{isolate_first,isolate_last,discard_last,without_last}()`.
+
 ## v0.24.0
 
 - Update `PositionErrorKinds` to `bitflags` 2.
