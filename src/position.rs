@@ -1043,6 +1043,27 @@ pub(crate) mod variant {
         }
     }
 
+    impl Hash for Atomic {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.board.hash(state);
+            self.turn.hash(state);
+            self.castles.castling_rights().hash(state);
+            self.halfmoves.hash(state);
+            self.fullmoves.hash(state);
+        }
+    }
+
+    impl PartialEq for Atomic {
+        fn eq(&self, other: &Self) -> bool {
+            self.board == other.board
+                && self.turn == other.turn
+                && self.castles.castling_rights() == other.castles.castling_rights()
+                && self.legal_ep_square() == other.legal_ep_square()
+                && self.halfmoves == other.halfmoves
+                && self.fullmoves == other.fullmoves
+        }
+    }
+
     impl FromSetup for Atomic {
         fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
             let mut errors = PositionErrorKinds::empty();
@@ -1333,6 +1354,27 @@ pub(crate) mod variant {
         }
     }
 
+    impl Hash for Antichess {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.board.hash(state);
+            self.turn.hash(state);
+            self.castles.castling_rights().hash(state);
+            self.halfmoves.hash(state);
+            self.fullmoves.hash(state);
+        }
+    }
+
+    impl PartialEq for Antichess {
+        fn eq(&self, other: &Self) -> bool {
+            self.board == other.board
+                && self.turn == other.turn
+                && self.castles.castling_rights() == other.castles.castling_rights()
+                && self.legal_ep_square() == other.legal_ep_square()
+                && self.halfmoves == other.halfmoves
+                && self.fullmoves == other.fullmoves
+        }
+    }
+
     impl FromSetup for Antichess {
         fn from_setup(
             setup: Setup,
@@ -1521,7 +1563,7 @@ pub(crate) mod variant {
     }
 
     /// A King of the Hill position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, PartialEq, Hash)]
     pub struct KingOfTheHill {
         chess: Chess,
     }
@@ -1660,6 +1702,19 @@ pub(crate) mod variant {
                     white: RemainingChecks::new(3),
                 },
             }
+        }
+    }
+
+    impl Hash for ThreeCheck {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.chess.hash(state);
+            self.remaining_checks.hash(state);
+        }
+    }
+
+    impl PartialEq for ThreeCheck {
+        fn eq(&self, other: &Self) -> bool {
+            self.chess == other.chess && self.remaining_checks == other.remaining_checks
         }
     }
 
@@ -1850,6 +1905,22 @@ pub(crate) mod variant {
             } else {
                 Bitboard(0)
             }
+        }
+    }
+
+    impl Hash for Crazyhouse {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.chess.hash(state);
+            self.promoted.hash(state);
+            self.pockets.hash(state);
+        }
+    }
+
+    impl PartialEq for Crazyhouse {
+        fn eq(&self, other: &Self) -> bool {
+            self.chess == other.chess
+                && self.promoted == other.promoted
+                && self.pockets == other.pockets
         }
     }
 
@@ -2107,6 +2178,27 @@ pub(crate) mod variant {
         }
     }
 
+    impl Hash for RacingKings {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.board.hash(state);
+            self.turn.hash(state);
+            self.castles.castling_rights().hash(state);
+            self.halfmoves.hash(state);
+            self.fullmoves.hash(state);
+        }
+    }
+
+    impl PartialEq for RacingKings {
+        fn eq(&self, other: &Self) -> bool {
+            self.board == other.board
+                && self.turn == other.turn
+                && self.castles.castling_rights() == other.castles.castling_rights()
+                && self.legal_ep_square() == other.legal_ep_square()
+                && self.halfmoves == other.halfmoves
+                && self.fullmoves == other.fullmoves
+        }
+    }
+
     impl FromSetup for RacingKings {
         fn from_setup(
             setup: Setup,
@@ -2328,6 +2420,27 @@ pub(crate) mod variant {
                 halfmoves: 0,
                 fullmoves: NonZeroU32::new(1).unwrap(),
             }
+        }
+    }
+
+    impl Hash for Horde {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            self.board.hash(state);
+            self.turn.hash(state);
+            self.castles.castling_rights().hash(state);
+            self.halfmoves.hash(state);
+            self.fullmoves.hash(state);
+        }
+    }
+
+    impl PartialEq for Horde {
+        fn eq(&self, other: &Self) -> bool {
+            self.board == other.board
+                && self.turn == other.turn
+                && self.castles.castling_rights() == other.castles.castling_rights()
+                && self.legal_ep_square() == other.legal_ep_square()
+                && self.halfmoves == other.halfmoves
+                && self.fullmoves == other.fullmoves
         }
     }
 
