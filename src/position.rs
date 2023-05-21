@@ -1064,6 +1064,8 @@ pub(crate) mod variant {
         }
     }
 
+	impl Eq for Atomic {}
+
     impl FromSetup for Atomic {
         fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
             let mut errors = PositionErrorKinds::empty();
@@ -1375,6 +1377,8 @@ pub(crate) mod variant {
         }
     }
 
+	impl Eq for Antichess {}
+
     impl FromSetup for Antichess {
         fn from_setup(
             setup: Setup,
@@ -1563,7 +1567,7 @@ pub(crate) mod variant {
     }
 
     /// A King of the Hill position.
-    #[derive(Clone, Debug, Default, PartialEq, Hash)]
+    #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
     pub struct KingOfTheHill {
         chess: Chess,
     }
@@ -1717,6 +1721,8 @@ pub(crate) mod variant {
             self.chess == other.chess && self.remaining_checks == other.remaining_checks
         }
     }
+
+	impl Eq for ThreeCheck {}
 
     impl FromSetup for ThreeCheck {
         fn from_setup(
@@ -1923,6 +1929,8 @@ pub(crate) mod variant {
                 && self.pockets == other.pockets
         }
     }
+
+	impl Eq for Crazyhouse {}
 
     impl FromSetup for Crazyhouse {
         fn from_setup(
@@ -2199,6 +2207,8 @@ pub(crate) mod variant {
         }
     }
 
+	impl Eq for RacingKings {}
+
     impl FromSetup for RacingKings {
         fn from_setup(
             setup: Setup,
@@ -2443,6 +2453,8 @@ pub(crate) mod variant {
                 && self.fullmoves == other.fullmoves
         }
     }
+
+	impl Eq for Horde {}
 
     impl FromSetup for Horde {
         fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
