@@ -713,6 +713,7 @@ impl Hash for Chess {
         self.castles.castling_rights().hash(state);
         self.halfmoves.hash(state);
         self.fullmoves.hash(state);
+		self.legal_ep_square().hash(state);
     }
 }
 
@@ -1050,6 +1051,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
+			self.legal_ep_square().hash(state);
         }
     }
 
@@ -1363,6 +1365,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
+			self.legal_ep_square().hash(state);
         }
     }
 
@@ -2201,7 +2204,6 @@ pub(crate) mod variant {
             self.board == other.board
                 && self.turn == other.turn
                 && self.castles.castling_rights() == other.castles.castling_rights()
-                && self.legal_ep_square() == other.legal_ep_square()
                 && self.halfmoves == other.halfmoves
                 && self.fullmoves == other.fullmoves
         }
@@ -2440,6 +2442,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
+			self.legal_ep_square().hash(state);
         }
     }
 
