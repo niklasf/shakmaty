@@ -341,6 +341,8 @@ pub trait FromSetup: Sized {
 /// * remaining checks only in Three-Check
 ///
 /// but specifally *ignoring* halfmove and fullmove counters.
+///
+/// Use [`Setup`] for structural equality.
 pub trait Position {
     /// Piece positions on the board.
     fn board(&self) -> &Board;
