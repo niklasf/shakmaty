@@ -713,7 +713,7 @@ impl Hash for Chess {
         self.castles.castling_rights().hash(state);
         self.halfmoves.hash(state);
         self.fullmoves.hash(state);
-		self.legal_ep_square().hash(state);
+        self.legal_ep_square().hash(state);
     }
 }
 
@@ -1051,7 +1051,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
-			self.legal_ep_square().hash(state);
+            self.legal_ep_square().hash(state);
         }
     }
 
@@ -1066,7 +1066,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for Atomic {}
+    impl Eq for Atomic {}
 
     impl FromSetup for Atomic {
         fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Atomic, PositionError<Atomic>> {
@@ -1365,7 +1365,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
-			self.legal_ep_square().hash(state);
+            self.legal_ep_square().hash(state);
         }
     }
 
@@ -1380,7 +1380,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for Antichess {}
+    impl Eq for Antichess {}
 
     impl FromSetup for Antichess {
         fn from_setup(
@@ -1725,7 +1725,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for ThreeCheck {}
+    impl Eq for ThreeCheck {}
 
     impl FromSetup for ThreeCheck {
         fn from_setup(
@@ -1933,7 +1933,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for Crazyhouse {}
+    impl Eq for Crazyhouse {}
 
     impl FromSetup for Crazyhouse {
         fn from_setup(
@@ -2209,7 +2209,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for RacingKings {}
+    impl Eq for RacingKings {}
 
     impl FromSetup for RacingKings {
         fn from_setup(
@@ -2442,7 +2442,7 @@ pub(crate) mod variant {
             self.castles.castling_rights().hash(state);
             self.halfmoves.hash(state);
             self.fullmoves.hash(state);
-			self.legal_ep_square().hash(state);
+            self.legal_ep_square().hash(state);
         }
     }
 
@@ -2457,7 +2457,7 @@ pub(crate) mod variant {
         }
     }
 
-	impl Eq for Horde {}
+    impl Eq for Horde {}
 
     impl FromSetup for Horde {
         fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Horde, PositionError<Horde>> {
