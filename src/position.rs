@@ -325,6 +325,22 @@ pub trait FromSetup: Sized {
 
 /// A playable chess or chess variant position. See [`Chess`] for a concrete
 /// implementation.
+///
+/// # Equality
+///
+/// All provided variants implement [`Hash`](std::hash::Hash),
+/// [`PartialEq`](std::cmp::PartialEq), and [`Eq`](std::cmp::Eq) according
+/// to FIDE rules for repeated positions. That is, considering
+///
+/// * piece positions
+/// * promoted pieces only in Crazyhouse
+/// * pockets only in Crazyhouse
+/// * turn
+/// * current castling rights
+/// * currently available [legal](`EnPassantMode::Legal`) en passant moves
+/// * remaining checks only in Three-Check
+///
+/// but specifally *ignoring* halfmove and fullmove counters.
 pub trait Position {
     /// Piece positions on the board.
     fn board(&self) -> &Board;
@@ -624,6 +640,12 @@ pub trait Position {
 }
 
 /// A standard Chess position.
+///
+/// # Equality
+///
+/// [`Hash`](std::hash::Hash), [`PartialEq`](std::cmp::PartialEq),
+/// and [`Eq`](std::cmp::Eq) are implemented according to FIDE rules for
+/// repeated positions. See [`Position`](trait.Position.html#equality).
 #[derive(Clone, Debug)]
 pub struct Chess {
     board: Board,
@@ -711,9 +733,8 @@ impl Hash for Chess {
         self.board.hash(state);
         self.turn.hash(state);
         self.castles.castling_rights().hash(state);
-        self.halfmoves.hash(state);
-        self.fullmoves.hash(state);
-        self.legal_ep_square().hash(state);
+        // Optimization: Not hashing legal_ep_square(), but still considered
+        // for equality.
     }
 }
 
@@ -723,8 +744,6 @@ impl PartialEq for Chess {
             && self.turn == other.turn
             && self.castles.castling_rights() == other.castles.castling_rights()
             && self.legal_ep_square() == other.legal_ep_square()
-            && self.halfmoves == other.halfmoves
-            && self.fullmoves == other.fullmoves
     }
 }
 
@@ -1049,9 +1068,6 @@ pub(crate) mod variant {
             self.board.hash(state);
             self.turn.hash(state);
             self.castles.castling_rights().hash(state);
-            self.halfmoves.hash(state);
-            self.fullmoves.hash(state);
-            self.legal_ep_square().hash(state);
         }
     }
 
@@ -1061,8 +1077,6 @@ pub(crate) mod variant {
                 && self.turn == other.turn
                 && self.castles.castling_rights() == other.castles.castling_rights()
                 && self.legal_ep_square() == other.legal_ep_square()
-                && self.halfmoves == other.halfmoves
-                && self.fullmoves == other.fullmoves
         }
     }
 
@@ -1363,9 +1377,6 @@ pub(crate) mod variant {
             self.board.hash(state);
             self.turn.hash(state);
             self.castles.castling_rights().hash(state);
-            self.halfmoves.hash(state);
-            self.fullmoves.hash(state);
-            self.legal_ep_square().hash(state);
         }
     }
 
@@ -1375,8 +1386,6 @@ pub(crate) mod variant {
                 && self.turn == other.turn
                 && self.castles.castling_rights() == other.castles.castling_rights()
                 && self.legal_ep_square() == other.legal_ep_square()
-                && self.halfmoves == other.halfmoves
-                && self.fullmoves == other.fullmoves
         }
     }
 
@@ -1694,7 +1703,7 @@ pub(crate) mod variant {
     }
 
     /// A Three-Check position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
     pub struct ThreeCheck {
         chess: Chess,
         remaining_checks: ByColor<RemainingChecks>,
@@ -1711,21 +1720,6 @@ pub(crate) mod variant {
             }
         }
     }
-
-    impl Hash for ThreeCheck {
-        fn hash<H: Hasher>(&self, state: &mut H) {
-            self.chess.hash(state);
-            self.remaining_checks.hash(state);
-        }
-    }
-
-    impl PartialEq for ThreeCheck {
-        fn eq(&self, other: &Self) -> bool {
-            self.chess == other.chess && self.remaining_checks == other.remaining_checks
-        }
-    }
-
-    impl Eq for ThreeCheck {}
 
     impl FromSetup for ThreeCheck {
         fn from_setup(
@@ -1858,7 +1852,7 @@ pub(crate) mod variant {
     }
 
     /// A Crazyhouse position.
-    #[derive(Clone, Debug, Default)]
+    #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
     pub struct Crazyhouse {
         chess: Chess,
         promoted: Bitboard,
@@ -1916,24 +1910,6 @@ pub(crate) mod variant {
             }
         }
     }
-
-    impl Hash for Crazyhouse {
-        fn hash<H: Hasher>(&self, state: &mut H) {
-            self.chess.hash(state);
-            self.promoted.hash(state);
-            self.pockets.hash(state);
-        }
-    }
-
-    impl PartialEq for Crazyhouse {
-        fn eq(&self, other: &Self) -> bool {
-            self.chess == other.chess
-                && self.promoted == other.promoted
-                && self.pockets == other.pockets
-        }
-    }
-
-    impl Eq for Crazyhouse {}
 
     impl FromSetup for Crazyhouse {
         fn from_setup(
@@ -2194,8 +2170,6 @@ pub(crate) mod variant {
             self.board.hash(state);
             self.turn.hash(state);
             self.castles.castling_rights().hash(state);
-            self.halfmoves.hash(state);
-            self.fullmoves.hash(state);
         }
     }
 
@@ -2204,8 +2178,6 @@ pub(crate) mod variant {
             self.board == other.board
                 && self.turn == other.turn
                 && self.castles.castling_rights() == other.castles.castling_rights()
-                && self.halfmoves == other.halfmoves
-                && self.fullmoves == other.fullmoves
         }
     }
 
@@ -2440,9 +2412,6 @@ pub(crate) mod variant {
             self.board.hash(state);
             self.turn.hash(state);
             self.castles.castling_rights().hash(state);
-            self.halfmoves.hash(state);
-            self.fullmoves.hash(state);
-            self.legal_ep_square().hash(state);
         }
     }
 
@@ -2452,8 +2421,6 @@ pub(crate) mod variant {
                 && self.turn == other.turn
                 && self.castles.castling_rights() == other.castles.castling_rights()
                 && self.legal_ep_square() == other.legal_ep_square()
-                && self.halfmoves == other.halfmoves
-                && self.fullmoves == other.fullmoves
         }
     }
 
