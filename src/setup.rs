@@ -320,7 +320,7 @@ impl Castles {
 }
 
 /// En passant square on the third or sixth rank.
-#[derive(Debug, Copy, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Copy, Clone)]
 pub(crate) struct EnPassant(pub Square);
 
 impl From<EnPassant> for Square {
