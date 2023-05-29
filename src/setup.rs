@@ -6,6 +6,11 @@ use crate::{
 };
 
 /// A not necessarily legal position.
+///
+/// # Equality
+///
+/// [`Hash`](std::hash::Hash), [`PartialEq`](std::cmp::PartialEq), and
+/// [`Eq`](std::cmp::Eq) are implemented in terms of structural equality.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Setup {
     /// Piece positions on the board.
