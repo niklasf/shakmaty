@@ -3440,8 +3440,18 @@ mod tests {
     {
         let pos: P = setup_fen(fen);
 
-        assert_eq!(pos.has_insufficient_material(White), white);
-        assert_eq!(pos.has_insufficient_material(Black), black);
+        assert_eq!(
+            pos.has_insufficient_material(White),
+            white,
+            "expected white {}",
+            if white { "cannot win" } else { "can win " }
+        );
+        assert_eq!(
+            pos.has_insufficient_material(Black),
+            black,
+            "expected black {}",
+            if black { "cannot win" } else { "can win" }
+        );
     }
 
     #[test]
@@ -3569,6 +3579,11 @@ mod tests {
             "8/5p2/5P2/8/3B4/1bB5/8/8 b - - 0 1",
             false_negative,
             false_negative,
+        );
+        assert_insufficient_material::<Antichess>(
+            "8/8/6b1/8/3P4/8/5B2/8 w - - 0 1",
+            false_negative,
+            false,
         );
 
         assert_insufficient_material::<KingOfTheHill>(
