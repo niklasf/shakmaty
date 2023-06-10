@@ -61,7 +61,7 @@ const fn init_rays() -> [[u64; 64]; 64] {
             } else if a & 7 == b & 7 {
                 0x0101_0101_0101_0101 << (a & 7)
             } else if a >> 3 == b >> 3 {
-                0xff << 8 * (a >> 3)
+                0xff << (8 * (a >> 3))
             } else {
                 let diag = (a >> 3) - (a & 7);
                 let anti_diag = (a >> 3) + (a & 7) - 7;
