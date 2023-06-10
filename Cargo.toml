@@ -33,7 +33,7 @@ arrayvec = { version = "0.7", default-features = false }
 nohash-hasher = { version = "0.2", optional = true }
 
 [dev-dependencies]
-iai = "0.1"
+iai = { version = "0.1", git = "https://github.com/sigaloid/iai", rev = "d56a5971f6d5556cd9e9b92e7e0f753c9ce9cdc7" }
 
 [package.metadata.docs.rs]
 all-features = true
