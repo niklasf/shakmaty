@@ -468,7 +468,8 @@ pub trait Position {
     /// configuration where `color` can win with a series of legal moves?
     /// If not, then `color` has insufficient winning material.
     ///
-    /// For a complete dynamic unwinnability solver see https://chasolver.org/.
+    /// For a complete dynamic unwinnability solver see
+    /// <https://chasolver.org/>.
     fn has_insufficient_material(&self, color: Color) -> bool;
 
     /// Tests special variant winning, losing and drawing conditions.
