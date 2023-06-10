@@ -457,17 +457,18 @@ pub trait Position {
     /// Returns `false` if there is any series of legal moves that allows
     /// `color` to win the game.
     ///
-    /// The converse is not necessarily true: The position might be locked up
-    /// such that `color` can never win the game (even if `!color` cooperates),
-    /// or insufficient material might only become apparent after a forced
-    /// sequence of moves.
+    /// The converse is not necessarily true for this static check.
+    /// The position might be locked up such that `color` can never win the
+    /// game (even if `!color` cooperates), or insufficient material might only
+    /// become apparent after a forced sequence of moves.
     ///
-    /// The current implementation can be summarized as follows: Looking
-    /// only at the material configuration, taking into account color
-    /// complexes of bishops and knights, but not concrete piece positions,
-    /// is there a position with the same material configuration where `color`
-    /// can win with a series of legal moves. If not, then `color` has
-    /// insufficient winning material.
+    /// The minimum guarantee is: Looking only at the material configuration,
+    /// taking into account color complexes of bishops and knights, but not
+    /// concrete piece positions, is there a position with the same material
+    /// configuration where `color` can win with a series of legal moves?
+    /// If not, then `color` has insufficient winning material.
+    ///
+    /// For a complete dynamic unwinnability solver see https://chasolver.org/.
     fn has_insufficient_material(&self, color: Color) -> bool;
 
     /// Tests special variant winning, losing and drawing conditions.
