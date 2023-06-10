@@ -73,6 +73,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod bootstrap;
 mod color;
 mod magics;
 mod movelist;

@@ -8,7 +8,7 @@ pub struct Magic {
 }
 
 #[rustfmt::skip]
-pub static ROOK_MAGICS: [Magic; 64] = [
+pub const ROOK_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0001_0101_0101_017e, factor: 0x0028_0077_ffeb_fffe, offset: 26304 },
     Magic { mask: 0x0002_0202_0202_027c, factor: 0x2004_0102_0109_7fff, offset: 35520 },
     Magic { mask: 0x0004_0404_0404_047a, factor: 0x0010_0200_1005_3fff, offset: 38592 },
@@ -76,7 +76,7 @@ pub static ROOK_MAGICS: [Magic; 64] = [
 ];
 
 #[rustfmt::skip]
-pub static BISHOP_MAGICS: [Magic; 64] = [
+pub const BISHOP_MAGICS: [Magic; 64] = [
     Magic { mask: 0x0040_2010_0804_0200, factor: 0x007f_bfbf_bfbf_bfff, offset:  5378 },
     Magic { mask: 0x0000_4020_1008_0400, factor: 0x0000_a060_4010_07fc, offset:  4093 },
     Magic { mask: 0x0000_0040_2010_0a00, factor: 0x0001_0040_0802_0000, offset:  4314 },

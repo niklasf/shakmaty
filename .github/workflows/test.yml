@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - "1.63.0" # remember to update rust-version in Cargo.toml
+          - "1.70.0" # remember to update rust-version in Cargo.toml
           - "stable"
           - "nightly"
         flags:
