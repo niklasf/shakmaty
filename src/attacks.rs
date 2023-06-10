@@ -59,7 +59,7 @@ static ROOK_MAGICS: [Magic; 64] = magics::ROOK_MAGICS;
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
 #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let m = &ROOK_MAGICS[usize::from(sq)];
+    let m = ROOK_MAGICS[usize::from(sq)];
 
     // Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
@@ -97,7 +97,7 @@ static BISHOP_MAGICS: [Magic; 64] = magics::BISHOP_MAGICS;
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
 #[inline]
 pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
-    let m = &BISHOP_MAGICS[usize::from(sq)];
+    let m = BISHOP_MAGICS[usize::from(sq)];
 
     // Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
