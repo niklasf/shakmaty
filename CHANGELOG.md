@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.26.0
+
+- Change semantics of `PartialEq` for `Chess` ❗ (FIDE rules for repetitions instead of structural equality)
+- Implement `Hash`, `PartialEq`, and `Eq` for all variant positions.
+- Replace `build.rs` with const evaluation. Bump MSRV to 1.70.
+
 ## v0.25.0
 
 - Remove `step` feature.
