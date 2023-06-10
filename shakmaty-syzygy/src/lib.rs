@@ -34,7 +34,7 @@
 //!
 //! * `variant`: Enables support for Antichess and Atomic chess.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.23.0")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.24.0")]
 #![forbid(unsafe_code)]
 #![cfg_attr(not(fuzzing), warn(missing_docs))]
 #![warn(missing_debug_implementations)]
