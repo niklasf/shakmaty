@@ -1,5 +1,5 @@
 use core::{
-    fmt::{self, Write as _},
+    fmt::{self, Display, Write as _},
     num,
 };
 
@@ -29,9 +29,16 @@ impl Piece {
 }
 
 /// Information about a move.
+///
+/// # Display
+///
+/// `Move` implements [`Display`] using long algebraic notation. If a position
+/// is available for context, it is more common to use [SAN](crate::san)
+/// (for human interfaces) or [UCI](crate::uci) (for text-based protocols).
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 #[repr(align(4))]
 pub enum Move {
+    /// A normal move, e.g., `Bd3xh7`.
     Normal {
         role: Role,
         from: Square,
@@ -39,18 +46,12 @@ pub enum Move {
         to: Square,
         promotion: Option<Role>,
     },
-    EnPassant {
-        from: Square,
-        to: Square,
-    },
-    Castle {
-        king: Square,
-        rook: Square,
-    },
-    Put {
-        role: Role,
-        to: Square,
-    },
+    /// An en passant capture, e.g., `e5xd6`.
+    EnPassant { from: Square, to: Square },
+    /// A castling move, `O-O` or `O-O-O`.
+    Castle { king: Square, rook: Square },
+    /// A piece drop in Crazyhouse, e.g., `Q@g8`.
+    Put { role: Role, to: Square },
 }
 
 impl Move {
@@ -158,7 +159,7 @@ impl Move {
     }
 }
 
-impl fmt::Display for Move {
+impl Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             Move::Normal {
@@ -430,7 +431,7 @@ macro_rules! try_remaining_checks_from_int_impl {
 
 try_remaining_checks_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
 
-impl fmt::Display for ByColor<RemainingChecks> {
+impl Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}+{}", self.white.0, self.black.0)
     }

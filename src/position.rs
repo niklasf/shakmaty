@@ -348,7 +348,7 @@ pub trait Position {
     fn board(&self) -> &Board;
     /// Positions of tracked promoted pieces. Used only for Crazyhouse.
     fn promoted(&self) -> Bitboard;
-    /// Pockets in chess variants like Crazyhouse.
+    /// Pockets in Crazyhouse.
     fn pockets(&self) -> Option<&ByColor<ByRole<u8>>>;
     /// Side to move.
     fn turn(&self) -> Color;
@@ -3814,5 +3814,14 @@ mod tests {
         assert!(pos.san_candidates(Role::Pawn, Square::C6).is_empty());
         assert!(pos.en_passant_moves().is_empty());
         assert_eq!(pos.legal_moves().len(), 2);
+    }
+
+    #[test]
+    fn test_put_in_standard() {
+        let pos = Chess::default();
+        assert!(!pos.is_legal(&Move::Put {
+            role: Role::Pawn,
+            to: Square::D4
+        }));
     }
 }
