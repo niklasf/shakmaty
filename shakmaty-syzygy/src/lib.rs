@@ -42,6 +42,7 @@
 
 #[macro_use]
 mod errors;
+mod chunk_by;
 mod material;
 mod table;
 mod tablebase;

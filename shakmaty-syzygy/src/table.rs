@@ -7,6 +7,7 @@ use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 
 use crate::{
+    chunk_by::ChunkBy,
     errors::{ProbeError, ProbeResult},
     material::Material,
     types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES},
@@ -471,16 +472,13 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     }
 
     // The remaining identical pieces are grouped together.
-    // TODO: Use slice_group_by when stabilized.
-    let mut last_piece = None;
-    for piece in &pieces[first_len..] {
-        if last_piece != Some(piece) {
-            result.push(1);
-            last_piece = Some(piece);
-        } else {
-            *result.last_mut().unwrap() += 1;
+    result.extend(
+        ChunkBy {
+            slice: &pieces[first_len..],
+            predicate: |l: &Piece, r: &Piece| l == r,
         }
-    }
+        .map(|chunk| chunk.len()),
+    );
 
     result
 }
