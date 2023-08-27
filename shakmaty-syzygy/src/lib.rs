@@ -39,7 +39,6 @@
 #![cfg_attr(not(fuzzing), warn(missing_docs))]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
-#![feature(slice_group_by)]
 
 #[macro_use]
 mod errors;

@@ -471,11 +471,16 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     }
 
     // The remaining identical pieces are grouped together.
-    result.extend(
-        pieces[first_len..]
-            .group_by(|p1, p2| p1 == p2)
-            .map(|group| group.len()),
-    );
+    // TODO: Use slice_group_by when stabilized.
+    let mut last_piece = None;
+    for piece in &pieces[first_len..] {
+        if last_piece != Some(piece) {
+            result.push(1);
+            last_piece = Some(piece);
+        } else {
+            *result.last_mut().unwrap() += 1;
+        }
+    }
 
     result
 }
