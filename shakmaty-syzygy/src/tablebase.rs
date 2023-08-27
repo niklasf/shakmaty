@@ -277,33 +277,33 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .min()
             .unwrap_or(Wdl::Loss);
 
-        // Select a DTZ-optimal move among the moves with best WDL.
-        itertools::process_results(
-            with_wdl
-                .iter()
-                .filter(|a| a.entry.wdl == best_wdl)
-                .map(|a| {
-                    let dtz = a.entry.dtz()?;
-                    Ok(WithDtz {
-                        immediate_loss: dtz.ignore_rounding() == Dtz(-1)
-                            && (a.entry.pos.is_checkmate()
-                                || a.entry.pos.variant_outcome().is_some()),
-                        zeroing: a.m.is_zeroing(),
-                        m: a.m.clone(),
-                        dtz,
-                    })
-                }),
-            |iter| {
-                iter.min_by_key(|m| {
-                    (
-                        Reverse(m.immediate_loss),
-                        m.zeroing ^ m.dtz.is_negative(), // zeroing is good/bad if winning/losing
-                        Reverse(m.dtz.ignore_rounding()),
-                    )
+        // Determine DTZ for each WDL-optimal move.
+        let with_dtz = with_wdl
+            .iter()
+            .filter(|a| a.entry.wdl == best_wdl)
+            .map(|a| {
+                let dtz = a.entry.dtz()?;
+                Ok(WithDtz {
+                    immediate_loss: dtz.ignore_rounding() == Dtz(-1)
+                        && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
+                    zeroing: a.m.is_zeroing(),
+                    m: a.m.clone(),
+                    dtz,
                 })
-                .map(|m| (m.m, m.dtz))
-            },
-        )
+            })
+            .collect::<SyzygyResult<ArrayVec<_, 256>>>()?;
+
+        // Select a DTZ-optimal move among the moves with best WDL.
+        Ok(with_dtz
+            .into_iter()
+            .min_by_key(|m| {
+                (
+                    Reverse(m.immediate_loss),
+                    m.zeroing ^ m.dtz.is_negative(), // zeroing is good/bad if winning/losing
+                    Reverse(m.dtz.ignore_rounding()),
+                )
+            })
+            .map(|m| (m.m, m.dtz)))
     }
 
     fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {

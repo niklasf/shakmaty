@@ -3,7 +3,6 @@ use std::{fs, io, marker::PhantomData, path::Path};
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
 use byteorder::{ByteOrder as _, ReadBytesExt as _, BE, LE};
-use itertools::Itertools as _;
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 
@@ -473,12 +472,9 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
 
     // The remaining identical pieces are grouped together.
     result.extend(
-        pieces
-            .iter()
-            .skip(first_len)
-            .group_by(|p| *p)
-            .into_iter()
-            .map(|(_, g)| g.count()),
+        pieces[first_len..]
+            .group_by(|p1, p2| p1 == p2)
+            .map(|group| group.len()),
     );
 
     result
