@@ -51,7 +51,6 @@
 
 use core::{
     char,
-    cmp::max,
     convert::TryFrom,
     fmt,
     fmt::{Display, Write as _},
@@ -462,7 +461,7 @@ impl Fen {
         if let Some(fullmoves_part) = parts.next() {
             let fullmoves = btoi::btou_saturating(fullmoves_part)
                 .map_err(|_| ParseFenError::InvalidFullmoves)?;
-            result.fullmoves = NonZeroU32::new(max(fullmoves, 1)).expect("non-zero fullmoves");
+            result.fullmoves = NonZeroU32::new(fullmoves).unwrap_or(NonZeroU32::MIN);
         }
 
         let last_part = if let Some(checks_part) = parts.next() {
