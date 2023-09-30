@@ -336,9 +336,8 @@ impl From<EnPassant> for Square {
 
 impl EnPassant {
     pub fn from_setup(setup: &Setup) -> Result<Option<EnPassant>, ()> {
-        let ep_square = match setup.ep_square {
-            Some(ep_square) => ep_square,
-            None => return Ok(None),
+        let Some(ep_square) = setup.ep_square else {
+            return Ok(None);
         };
 
         if ep_square.rank() != setup.turn.relative_rank(Rank::Sixth) {

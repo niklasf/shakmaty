@@ -339,7 +339,7 @@ impl Bitboard {
     /// Discards the last square.
     #[inline]
     pub fn discard_last(&mut self) {
-        *self = self.without_last()
+        *self = self.without_last();
     }
 
     /// Returns `self` without the last square.

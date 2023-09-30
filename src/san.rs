@@ -376,9 +376,8 @@ impl San {
     pub fn find_move<'a>(&self, moves: &'a MoveList) -> Result<&'a Move, SanError> {
         let mut filtered = moves.iter().filter(|m| self.matches(m));
 
-        let m = match filtered.next() {
-            Some(m) => m,
-            None => return Err(SanError::IllegalSan),
+        let Some(m) = filtered.next() else {
+            return Err(SanError::IllegalSan);
         };
 
         if filtered.next().is_some() {
