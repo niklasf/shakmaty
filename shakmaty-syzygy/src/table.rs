@@ -773,7 +773,7 @@ fn read_symlen<F: ReadAt>(
         symlen[usize::from(sym)] = u!(u!(
             symlen[usize::from(left)].checked_add(symlen[usize::from(right)])
         )
-        .checked_add(1))
+        .checked_add(1));
     }
 
     visited[usize::from(sym)] = true;
@@ -895,8 +895,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         ensure!((files[0][0].pieces[0].role == Role::Pawn) == has_pawns);
 
         // Ensure material is consistent with first file.
-        for file in files.iter() {
-            for side in file.iter() {
+        for file in &files {
+            for side in file {
                 let key = Material::from_iter(side.pieces.clone());
                 ensure!(key == Material::from_iter(files[0][0].pieces.clone()));
             }
@@ -932,7 +932,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         if T::METRIC == Metric::Dtz {
             let map_ptr = ptr;
 
-            for file in files.iter_mut() {
+            for file in &mut files {
                 if file.sides[0].flags.contains(Flag::MAPPED) {
                     let mut by_wdl = [0; 4];
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
@@ -955,22 +955,22 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         }
 
         // Setup sparse index.
-        for file in files.iter_mut() {
-            for side in file.sides.iter_mut() {
+        for file in &mut files {
+            for side in &mut file.sides {
                 side.sparse_index = ptr;
                 ptr += u64::from(side.sparse_index_size) * 6;
             }
         }
 
-        for file in files.iter_mut() {
-            for side in file.sides.iter_mut() {
+        for file in &mut files {
+            for side in &mut file.sides {
                 side.block_lengths = ptr;
                 ptr += u64::from(side.block_length_size) * 2;
             }
         }
 
-        for file in files.iter_mut() {
-            for side in file.sides.iter_mut() {
+        for file in &mut files {
+            for side in &mut file.sides {
                 ptr = (ptr + 0x3f) & !0x3f; // 64 byte alignment
                 side.data = ptr;
                 ptr = u!(ptr.checked_add(u64::from(side.blocks_num) * u64::from(side.block_size)));
@@ -1338,7 +1338,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             material.by_color.white.has_pawns() && material.by_color.black.has_pawns();
         let mut next = 1;
         let mut group_sq = side.groups.lens[0];
-        for lens in side.groups.lens.iter().cloned().skip(1) {
+        for lens in side.groups.lens.iter().copied().skip(1) {
             let (prev_squares, group_squares) = squares.split_at_mut(group_sq);
             let group_squares = &mut group_squares[..lens];
             group_squares.sort_unstable();
@@ -1384,9 +1384,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<MaybeRounded<u32>>> {
         assert_eq!(T::METRIC, Metric::Dtz);
 
-        let (side, idx) = match self.encode(pos)? {
-            Some(found) => found,
-            None => return Ok(None), // check other side
+        let Some((side, idx)) = self.encode(pos)? else {
+            return Ok(None); // check other side
         };
 
         let res = self.decompress_pairs(side, idx)?;

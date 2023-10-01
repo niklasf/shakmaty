@@ -154,7 +154,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         {
             table
                 .get_or_try_init(|| WdlTable::open(path, key))
-                .ctx(Metric::Wdl, key.to_owned())
+                .ctx(Metric::Wdl, key.clone())
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
@@ -171,7 +171,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         {
             table
                 .get_or_try_init(|| DtzTable::open(path, key))
-                .ctx(Metric::Dtz, key.to_owned())
+                .ctx(Metric::Dtz, key.clone())
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
@@ -593,9 +593,8 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
     }
 
     fn dtz(&self) -> SyzygyResult<MaybeRounded<Dtz>> {
-        let wdl = match self.wdl.decisive() {
-            Some(wdl) => wdl,
-            None => return Ok(MaybeRounded::Precise(Dtz(0))),
+        let Some(wdl) = self.wdl.decisive() else {
+            return Ok(MaybeRounded::Precise(Dtz(0)));
         };
 
         if self.state == ProbeState::ZeroingBestMove || self.pos.us() == self.pos.our(Role::Pawn) {

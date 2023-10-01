@@ -18,7 +18,7 @@ where
             let mut iter = self.slice.windows(2);
             while let Some([l, r]) = iter.next() {
                 if (self.predicate)(l, r) {
-                    len += 1
+                    len += 1;
                 } else {
                     break;
                 }

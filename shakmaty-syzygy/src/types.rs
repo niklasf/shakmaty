@@ -159,7 +159,7 @@ impl<T> MaybeRounded<T> {
     pub fn precise(self) -> Option<T> {
         match self {
             MaybeRounded::Precise(v) => Some(v),
-            _ => None,
+            MaybeRounded::Rounded(_) => None,
         }
     }
 }
@@ -186,16 +186,19 @@ impl MaybeRounded<Dtz> {
     }
 
     /// See [`Dtz::add_plies()`].
+    #[must_use]
     pub fn add_plies(self, plies: u32) -> MaybeRounded<Dtz> {
         self.map(|dtz| dtz.add_plies(plies))
     }
 
     /// See [`Dtz::add_plies_checked()`].
+    #[must_use]
     pub fn add_plies_checked(self, plies: u32) -> MaybeRounded<Option<Dtz>> {
         self.map(|dtz| dtz.add_plies_checked(plies))
     }
 
     /// See [`Dtz::add_plies_saturating()`].
+    #[must_use]
     pub fn add_plies_saturating(self, plies: u32) -> MaybeRounded<Dtz> {
         self.map(|dtz| dtz.add_plies_saturating(plies))
     }
@@ -232,7 +235,7 @@ impl Wdl {
         match outcome {
             Outcome::Draw => Wdl::Draw,
             Outcome::Decisive { winner } if winner == pov => Wdl::Win,
-            _ => Wdl::Loss,
+            Outcome::Decisive { .. } => Wdl::Loss,
         }
     }
 
