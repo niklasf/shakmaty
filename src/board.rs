@@ -367,6 +367,11 @@ impl Board {
         self.transform(Bitboard::rotate_270);
     }
 
+    /// Makes black pieces white and vice versa.
+    pub fn swap_colors(&mut self) {
+        self.by_color.swap();
+    }
+
     pub fn pop_front(&mut self) -> Option<(Square, Piece)> {
         self.occupied
             .first()

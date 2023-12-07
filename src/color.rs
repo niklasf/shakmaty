@@ -225,7 +225,12 @@ impl<T> ByColor<T> {
         unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
     }
 
+    #[deprecated = "Use ByColor::swap()"]
     pub fn flip(&mut self) {
+        self.swap();
+    }
+
+    pub fn swap(&mut self) {
         mem::swap(&mut self.white, &mut self.black);
     }
 
@@ -327,7 +332,7 @@ impl ByColor<ByRole<u8>> {
 impl<T: PartialOrd> ByColor<T> {
     pub fn normalize(&mut self) {
         if self.white < self.black {
-            self.flip();
+            self.swap();
         }
     }
 
