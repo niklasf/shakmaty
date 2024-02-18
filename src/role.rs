@@ -125,7 +125,7 @@ macro_rules! int_from_role_impl {
     }
 }
 
-int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! nonzero_int_from_role_impl {
     ($($t:ty)+) => {
@@ -143,6 +143,7 @@ nonzero_int_from_role_impl! {
     num::NonZeroU16 num::NonZeroI16
     num::NonZeroU32 num::NonZeroI32
     num::NonZeroU64 num::NonZeroI64
+    num::NonZeroU128 num::NonZeroI128
     num::NonZeroUsize num::NonZeroIsize
 }
 
@@ -167,7 +168,7 @@ macro_rules! try_role_from_int_impl {
     }
 }
 
-try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Role`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]

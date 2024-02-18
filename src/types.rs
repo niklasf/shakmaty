@@ -409,7 +409,7 @@ macro_rules! int_from_remaining_checks_impl {
     }
 }
 
-int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+int_from_remaining_checks_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! try_remaining_checks_from_int_impl {
     ($($t:ty)+) => {
@@ -429,7 +429,7 @@ macro_rules! try_remaining_checks_from_int_impl {
     }
 }
 
-try_remaining_checks_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+try_remaining_checks_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -157,8 +157,8 @@ impl fmt::Display for File {
     }
 }
 
-from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+from_repr_u8_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -273,8 +273,8 @@ impl fmt::Display for Rank {
     }
 }
 
-from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+from_repr_u8_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug)]
@@ -633,8 +633,8 @@ mod all_squares {
     }
 }
 
-from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
-try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 usize isize }
+from_repr_u8_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 impl Sub for Square {
     type Output = i32;
