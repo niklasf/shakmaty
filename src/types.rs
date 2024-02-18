@@ -202,8 +202,8 @@ impl Display for Move {
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingSide {
-    KingSide = 0,
-    QueenSide = 1,
+    KingSide,
+    QueenSide,
 }
 
 impl CastlingSide {
@@ -344,7 +344,14 @@ mod tests {
     }
 
     #[test]
-    fn test_size() {
+    fn test_castling_side_discriminants() {
+        // Fixed but not publicly guaranteed discriminants.
+        assert_eq!(CastlingSide::KingSide as usize, 0);
+        assert_eq!(CastlingSide::QueenSide as usize, 1);
+    }
+
+    #[test]
+    fn test_move_size() {
         assert!(mem::size_of::<Move>() <= 8);
     }
 }
