@@ -114,18 +114,7 @@ impl Role {
     ];
 }
 
-macro_rules! int_from_role_impl {
-    ($($t:ty)+) => {
-        $(impl From<Role> for $t {
-            #[inline]
-            fn from(role: Role) -> $t {
-                role as $t
-            }
-        })+
-    }
-}
-
-int_from_role_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_enum_as_int_impl! { Role, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! nonzero_int_from_role_impl {
     ($($t:ty)+) => {

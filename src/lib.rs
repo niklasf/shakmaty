@@ -73,6 +73,8 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[macro_use]
+mod util;
 mod bootstrap;
 mod color;
 mod magics;
@@ -83,7 +85,6 @@ mod role;
 mod setup;
 mod square;
 mod types;
-mod util;
 
 pub mod attacks;
 pub mod bitboard;

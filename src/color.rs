@@ -190,18 +190,7 @@ impl FromStr for Color {
     }
 }
 
-macro_rules! int_from_color_impl {
-    ($($t:ty)+) => {
-        $(impl From<Color> for $t {
-            #[inline]
-            fn from(color: Color) -> $t {
-                color as $t
-            }
-        })+
-    }
-}
-
-int_from_color_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+from_enum_as_int_impl! { Color, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 macro_rules! try_color_from_int_impl {
     ($($t:ty)+) => {
