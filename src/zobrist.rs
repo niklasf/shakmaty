@@ -8,12 +8,8 @@
 //!
 //! # Warning: Forged collisions
 //!
-//! Zobrist hashes have good collision resistance, but can be
+//! Zobrist hashes have excellent collision resistance, but can be
 //! forged efficiently.
-//!
-//! Additionally, in this implementation, impossible positions with
-//! more than standard material in Crazyhouse pockets are particularly
-//! prone to collisions.
 //!
 //! # Examples
 //!
@@ -143,7 +139,7 @@ macro_rules! zobrist_value_impl {
         impl ZobristValue for $t {
             #[inline]
             fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
-                let piece_idx = (usize::from(piece.role) - 1) * 2 + piece.color as usize;
+                let piece_idx = (usize::from(piece.role) - 1) * 2 + usize::from(piece.color);
                 $t(PIECE_MASKS[64 * piece_idx + usize::from(square)] as $proxy)
             }
 
@@ -169,14 +165,12 @@ macro_rules! zobrist_value_impl {
 
             #[inline]
             fn zobrist_for_remaining_checks(color: Color, remaining: RemainingChecks) -> $t {
-                if remaining < RemainingChecks::default() {
-                    $t(
-                        REMAINING_CHECKS_MASKS[usize::from(remaining) + color.fold_wb(0, 3)]
-                            as $proxy,
-                    )
-                } else {
-                    <$t>::default()
-                }
+                let remaining = !<$proxy>::from(remaining);
+                let base_idx = usize::from(color) * 2;
+                $t(
+                    (((remaining >> 0) & 1) * REMAINING_CHECKS_MASKS[base_idx + 0] as $proxy)
+                        ^ (((remaining >> 1) & 1) * REMAINING_CHECKS_MASKS[base_idx + 1] as $proxy),
+                )
             }
 
             #[inline]
@@ -186,14 +180,16 @@ macro_rules! zobrist_value_impl {
 
             #[inline]
             fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
-                if 0 < pieces && pieces <= 16 {
-                    let color_idx = color as usize;
-                    let role_idx = usize::from(role) - 1;
-                    let pieces_idx = usize::from(pieces) - 1;
-                    $t(POCKET_MASKS[color_idx * 6 * 16 + role_idx * 16 + pieces_idx] as $proxy)
-                } else {
-                    <$t>::default()
-                }
+                let pieces = <$proxy>::from(pieces);
+                let role_idx = usize::from(role) - 1;
+                let base_idx = usize::from(color) * 6 * 7 + role_idx * 7;
+                $t((((pieces >> 0) & 1) * POCKET_MASKS[base_idx + 0] as $proxy)
+                    ^ (((pieces >> 1) & 1) * POCKET_MASKS[base_idx + 1] as $proxy)
+                    ^ (((pieces >> 2) & 1) * POCKET_MASKS[base_idx + 2] as $proxy)
+                    ^ (((pieces >> 3) & 1) * POCKET_MASKS[base_idx + 3] as $proxy)
+                    ^ (((pieces >> 4) & 1) * POCKET_MASKS[base_idx + 4] as $proxy)
+                    ^ (((pieces >> 5) & 1) * POCKET_MASKS[base_idx + 5] as $proxy)
+                    ^ (((pieces >> 6) & 1) * POCKET_MASKS[base_idx + 6] as $proxy))
             }
         }
 
@@ -1274,13 +1270,11 @@ const EN_PASSANT_FILE_MASKS: [u128; 8] = [
     0x47ec_43ff_bc09_2584_67a3_4dac_4356_550b,
 ];
 
-const REMAINING_CHECKS_MASKS: [u128; 3 * 2] = [
+const REMAINING_CHECKS_MASKS: [u128; 2 * 2] = [
     0x6a2a_d922_a69a_13e9_1d6d_c0ee_61ce_803e,
     0x49b5_72c7_9420_27d5_c628_4b65_3d38_e96a,
     0x08c2_e927_1dc9_1e69_803f_5fb0_d2f9_7fae,
     0x088d_fad9_83bb_7913_b183_ccc9_e73d_f9ed,
-    0x90a8_52ca_cfc0_adeb_fdee_f116_02d6_b443,
-    0xc8ce_065f_15fe_38f5_1b0c_e419_8b38_01a6,
 ];
 
 const PROMOTED_MASKS: [u128; 64] = [
@@ -1350,7 +1344,7 @@ const PROMOTED_MASKS: [u128; 64] = [
     0x06a7_9ac4_14c9_632e_7e3d_e4bf_bef5_566f,
 ];
 
-const POCKET_MASKS: [u128; 2 * 6 * 16] = [
+const POCKET_MASKS: [u128; 2 * 6 * 7] = [
     0x6e21_a47d_5b56_1a1d_b262_e9f9_d612_3320,
     0x4263_a757_e414_fe44_9153_3947_cdaa_8bec,
     0x93c4_3f67_cf55_b53f_a13b_56b4_5723_a3d4,
@@ -1435,112 +1429,4 @@ const POCKET_MASKS: [u128; 2 * 6 * 16] = [
     0x282b_bc7b_2209_e436_1580_8744_2731_df68,
     0xc017_2402_afbb_cbc5_6501_0c3e_a0ac_fdcf,
     0x34e3_45bf_a3c4_7ceb_b28e_cdf3_05a7_a831,
-    0xa568_2469_0a26_a07d_fd03_7a2e_2a2e_54e8,
-    0x82de_3ff2_26f8_520b_5f09_f376_3f6a_4882,
-    0xd6e5_02a6_09ba_9dde_e012_5e53_c4e6_4b83,
-    0x3b40_c681_d5b6_e330_1de4_4a24_4be3_752a,
-    0x23c2_3128_38f0_0cc0_f789_19df_b05f_031c,
-    0x6e63_a230_b2ea_b193_bf81_caeb_ad91_d8e1,
-    0x9a08_aa69_fb12_1fc8_bc37_80dc_e0bd_58d5,
-    0x551b_e806_bb80_e780_65b5_fb1a_fa5c_5714,
-    0x5ab7_fd28_c7b9_6a6b_b7dd_b798_d0c1_ff23,
-    0xb327_7b90_3da3_eab9_a823_d99d_1504_f4d6,
-    0xaf84_fcbb_2d16_fa25_a3c5_26e0_7f1c_f98d,
-    0x1c53_b33d_e31b_a544_a848_f93e_7a83_ece4,
-    0x4186_f24f_ae7b_9c26_21e3_9416_00ab_aaec,
-    0x4bcc_d3e2_48e2_a69c_534a_0704_49a9_238d,
-    0x8d6b_46ae_e9ae_0606_f86c_2e4b_b82d_3923,
-    0x7b28_1261_c9e1_028e_a594_b44c_256b_41f8,
-    0x6c50_1072_a110_8abe_f150_3a71_0531_b677,
-    0xa8c4_da9b_a7c8_a22a_171a_27a1_b991_1e11,
-    0x88d5_489e_8bc2_9294_d8d8_a26a_c022_ebe6,
-    0x1381_a967_122b_289a_151c_a9f6_4135_2f33,
-    0xdc94_4a00_8e97_acd7_553b_499d_c1ea_e685,
-    0x6383_8f93_6ef4_25de_0137_684b_ed65_e27e,
-    0x39bd_0519_7aca_ddb5_254a_12bd_9efa_3535,
-    0xf587_1ddb_63b0_aecf_f836_1f0b_0a35_ef6d,
-    0xcd9a_19a4_adda_c30e_a7b7_e76b_7ff8_2166,
-    0x08c6_dce8_8d2b_fe12_e266_e006_7bc7_f396,
-    0xea8c_0b4c_4097_cc43_bdd8_a903_7f5d_0298,
-    0x74fb_47cb_2de1_371f_2d59_77c3_f88a_2a31,
-    0x8c24_06a6_0633_f3a5_4587_cd65_1a3b_b45f,
-    0xc403_8765_8bd2_d9bf_bcdc_3c56_ad97_1eb0,
-    0x4616_dae4_1e7f_6769_248b_2073_706e_1844,
-    0xff41_e4fd_3d1a_34ee_ab03_444d_fb15_bd0a,
-    0xd9c4_e712_cc56_1f6a_bcaf_f313_4756_ab78,
-    0x3935_20a3_1d54_572c_eea8_44cf_3e1d_b285,
-    0x1cc0_2ca6_2684_138e_b917_fdb8_0f35_5116,
-    0xc1b9_f65a_9989_c1d5_2193_1f55_9ece_fa34,
-    0x86e3_a796_6174_637c_7170_c643_6114_a4c2,
-    0x80d8_247d_1168_300a_73d2_a7c1_017a_2aaf,
-    0x1996_e2ac_2b93_8629_3b85_5d17_55dc_e20e,
-    0xb26f_0062_6363_9c6a_37e3_5078_817f_0dbd,
-    0xfe1f_7c18_126a_bdd7_e59b_1e33_89a1_aad3,
-    0x83b9_090f_7e58_e659_bad1_1ebe_3c3d_f239,
-    0x2825_3df5_164c_46a3_d54a_ad8a_64c6_5c27,
-    0x3448_dc02_2a87_a231_eadb_37a4_f7fb_eb4c,
-    0x72eb_d4eb_6f76_301d_5453_586c_4984_a81c,
-    0x1f5c_f5c0_27f9_df47_b677_7cd5_e1b1_6bcc,
-    0xbcda_2313_c8ee_1152_24b6_9016_1baa_0d65,
-    0xb2eb_c333_9460_3af6_5bd3_613d_2ee2_22fd,
-    0x84b3_b1b6_fa01_cb1a_c928_bda0_35f8_c39d,
-    0xe16b_42d5_3a9e_cf6e_29e8_eeca_9b09_c735,
-    0x27b2_4383_307c_7a88_dc35_bba3_f78e_d4ee,
-    0x0163_5963_de0d_35f7_1753_c5b3_ef82_0c81,
-    0xd566_7fb9_42e5_2b2f_ef33_68ab_5656_5ae7,
-    0x958f_aa73_25a9_7d06_ebf4_8bd3_5c4e_ad40,
-    0x7043_3ecb_73b7_ad92_529b_39d0_15e4_9755,
-    0x4ab8_a46b_4c36_eaaa_697e_a706_20e9_8751,
-    0x1869_111d_7c4f_e1a8_ebca_be3d_4cbc_0212,
-    0xfcd4_6428_ff1e_2a1e_2f42_4e66_9d2a_7f1b,
-    0xb65e_4b53_6bfa_3559_6ae4_7a9c_2230_2f58,
-    0x180b_7095_853d_37f3_83f9_a7b5_7452_3121,
-    0xbb02_26e8_c154_3063_77b6_860d_aa7a_39d5,
-    0x708d_753a_0092_df11_1611_e306_f167_e512,
-    0x9992_315a_0c7a_dfe5_2d78_f39e_1adb_aa9d,
-    0xe125_0829_4de8_e35e_1aad_a836_dedb_3ba7,
-    0x4996_0c59_7d11_9ace_f379_9175_3c7d_f558,
-    0x57b7_ccbb_21f7_4d1c_e808_40e6_23a1_9d08,
-    0xee13_3936_2cfc_2fde_cb86_5270_dc12_ea71,
-    0x6938_614f_83f2_eadb_350f_4bc8_d3ab_3787,
-    0x225c_ad0b_9f39_3fce_8d0e_2e1e_3609_b3b0,
-    0xc182_48d8_4de0_1920_96d3_be73_348c_c215,
-    0x5176_67a2_5d5d_4dda_a8fa_ccf9_0f40_06ba,
-    0x4c85_0d85_739b_f00d_4e64_02cd_300e_37f4,
-    0xb14b_ec81_3f45_6e88_e9f5_d81a_6c4e_bc04,
-    0xf451_ce39_caa4_6649_3127_edce_389b_25d4,
-    0xb5a7_0d2a_7d51_278f_7d1c_0961_900c_7fc6,
-    0x586d_2606_687d_8bd8_745a_35d9_9954_6397,
-    0x2f0a_3192_e89a_ae69_ee16_ac7e_dc0a_b87a,
-    0x5622_33c3_3351_4b66_2c61_c062_20f1_5ad6,
-    0xce07_6f19_270b_e140_5faa_92f8_0472_83fe,
-    0x514d_0d13_8314_1fd0_2875_5293_7fe1_0b06,
-    0x79cc_7716_c5a0_bcdb_fc6f_01a7_90e7_b387,
-    0x70d5_58d9_9c09_9cd4_1a81_5748_3920_14a9,
-    0x93e4_a1eb_c793_cd9f_247d_9f29_5ed9_8529,
-    0x05a8_49ee_d2af_e12b_a507_da51_7084_b6bf,
-    0x9778_5a97_b347_5d08_7fc7_5297_e547_ee09,
-    0x7a6f_f517_33b6_0e02_9c00_1de0_0030_a7db,
-    0xd451_52c0_77f2_476c_dcea_a53f_7ca6_ea65,
-    0x3c5d_f4f9_d7d5_c1ca_8c59_69da_7a57_26d3,
-    0xcf12_a391_ff1b_694c_aca0_5f0c_0d8b_ff7c,
-    0xc288_a95f_133c_e1e3_bafe_c4f2_09d1_72df,
-    0x64c9_7efb_318b_3a03_4a83_b8ca_5258_098b,
-    0x8779_0ec7_dec7_dc2c_79e2_016d_acd1_48ef,
-    0x969f_7f76_7f92_58ca_902b_ad8a_8d8b_8104,
-    0x84b1_ff01_20f7_59f5_87e6_89a6_2d87_f03f,
-    0xa19d_df47_73ef_d2a1_2fb5_7fd2_52d5_2552,
-    0xa75f_9c5e_34cc_a8e6_6eb4_8132_2177_4e02,
-    0x521c_8a92_a2a3_e260_4281_066c_9a5a_7407,
-    0xc50f_0a89_eea1_6db0_4f53_f7c7_b022_f55d,
-    0x6e13_7415_e776_5cd5_66f1_3e42_05c0_1ea2,
-    0x578a_e522_a1ac_d365_9d64_5bfe_c6b6_698c,
-    0xb128_f938_00ce_9611_d8f0_c9a0_3a4c_201d,
-    0x220e_4eac_cb1b_e67b_e33f_0569_aa83_31c4,
-    0x987b_37d3_c132_0443_919a_4f35_461a_3b24,
-    0x223e_00d7_caa5_7a43_b4de_88f5_6962_e1fa,
-    0xf077_a836_28e3_293b_bcff_222b_0252_0b0d,
-    0xa0bf_5607_e3b1_8b86_22aa_5366_5a3f_23de,
-    0xb4e0_aff4_e90c_cb0d_22c3_ce12_1986_d762,
-    0x484e_a0a4_8998_be25_fa2c_98ac_27e2_e5b3,
 ];
