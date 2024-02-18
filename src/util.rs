@@ -1,6 +1,6 @@
 use core::{convert::TryFrom as _, num::TryFromIntError};
 
-pub(crate) fn overflow_error() -> TryFromIntError {
+pub(crate) fn out_of_range_error() -> TryFromIntError {
     // This is a hack to construct TryFromIntError despite its private
     // constructor. The standard library keeps it private intentionally,
     // to be able to provide error details in the future, but it is unlikely

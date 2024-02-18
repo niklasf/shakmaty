@@ -1,11 +1,12 @@
 //! White or black.
 
-use core::{array, convert::identity, fmt, mem, ops, str::FromStr};
+use core::{array, convert::identity, fmt, mem, num, ops, str::FromStr};
 
 use crate::{
     role::{ByRole, Role},
     square::Rank,
     types::Piece,
+    util::out_of_range_error,
 };
 
 /// `White` or `Black`.
@@ -188,6 +189,38 @@ impl FromStr for Color {
         Color::from_name(s).ok_or(ParseColorError)
     }
 }
+
+macro_rules! int_from_color_impl {
+    ($($t:ty)+) => {
+        $(impl From<Color> for $t {
+            #[inline]
+            fn from(color: Color) -> $t {
+                color as $t
+            }
+        })+
+    }
+}
+
+int_from_color_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+
+macro_rules! try_color_from_int_impl {
+    ($($t:ty)+) => {
+        $(impl core::convert::TryFrom<$t> for Color {
+            type Error = num::TryFromIntError;
+
+            #[inline]
+            fn try_from(value: $t) -> Result<Color, Self::Error> {
+                Ok(match value {
+                    0 => Color::Black,
+                    1 => Color::White,
+                    _ => return Err(out_of_range_error())
+                })
+            }
+        })+
+    }
+}
+
+try_color_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Color`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]

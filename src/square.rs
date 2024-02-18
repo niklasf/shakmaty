@@ -8,7 +8,7 @@ use core::{
     str,
 };
 
-use crate::util::overflow_error;
+use crate::util::out_of_range_error;
 
 macro_rules! from_repr_u8_impl {
     ($from:ty, $($t:ty)+) => {
@@ -32,7 +32,7 @@ macro_rules! try_from_int_impl {
                 if ($lower..$upper).contains(&value) {
                     Ok(<$type>::new(value as u32))
                 } else {
-                    Err(overflow_error())
+                    Err(out_of_range_error())
                 }
             }
         })+

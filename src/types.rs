@@ -7,7 +7,7 @@ use crate::{
     color::{ByColor, Color},
     role::Role,
     square::{File, Square},
-    util::overflow_error,
+    util::out_of_range_error,
 };
 
 /// A piece with [`Color`] and [`Role`].
@@ -422,7 +422,7 @@ macro_rules! try_remaining_checks_from_int_impl {
                 if n <= 3 {
                     Ok(RemainingChecks::new(n))
                 } else {
-                    Err(overflow_error())
+                    Err(out_of_range_error())
                 }
             }
         })+

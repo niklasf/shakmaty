@@ -1,6 +1,6 @@
 use core::{array, convert::identity, num};
 
-use crate::{color::Color, types::Piece, util::overflow_error};
+use crate::{color::Color, types::Piece, util::out_of_range_error};
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 ///
@@ -161,7 +161,7 @@ macro_rules! try_role_from_int_impl {
                     4 => Role::Rook,
                     5 => Role::Queen,
                     6 => Role::King,
-                    _ => return Err(overflow_error()),
+                    _ => return Err(out_of_range_error()),
                 })
             }
         })+
