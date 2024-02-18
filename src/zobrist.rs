@@ -952,20 +952,18 @@ macro_rules! zobrist_value_impl {
             #[inline]
             fn zobrist_for_castling_right(color: Color, side: CastlingSide) -> $t {
                 #[allow(overflowing_literals)]
-                $t(match (color, side) {
-                    (Color::White, CastlingSide::KingSide) => {
-                        0xca3c_7f8d_050c_44ba_31d7_1dce_64b2_c310
-                    }
-                    (Color::White, CastlingSide::QueenSide) => {
-                        0x8f50_a115_834e_5414_f165_b587_df89_8190
-                    }
-                    (Color::Black, CastlingSide::KingSide) => {
-                        0x7756_8e6e_6151_6b92_a57e_6339_dd2c_f3a0
-                    }
-                    (Color::Black, CastlingSide::QueenSide) => {
-                        0xd153_e6cf_8d19_84ea_1ef6_e6db_b196_1ec9
-                    }
-                })
+                static CASTLING_RIGHT_MASKS: ByColor<[$proxy; 2]> = ByColor {
+                    black: [
+                        0x7756_8e6e_6151_6b92_a57e_6339_dd2c_f3a0,
+                        0xd153_e6cf_8d19_84ea_1ef6_e6db_b196_1ec9,
+                    ],
+                    white: [
+                        0xca3c_7f8d_050c_44ba_31d7_1dce_64b2_c310,
+                        0x8f50_a115_834e_5414_f165_b587_df89_8190,
+                    ],
+                };
+
+                $t(CASTLING_RIGHT_MASKS.get(color)[side as usize])
             }
 
             #[inline]
