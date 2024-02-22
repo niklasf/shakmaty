@@ -1,0 +1,801 @@
+variant,uci,zobrist
+antichess,e2e3 b7b6 f1a6 b8a6 d1g4 a6b4 g4b4 g8h6 b4e7 e8e7 d2d4 d7d6 g2g4 h6g4 h2h3 g4e3 f2e3 c8h3 h1h3 h8g8 h3h7 g7g6 h7f7 e7f7 b1d2 b6b5 e1e2 f8h6 e2e1 h6e3 d2b1 e3d4 b2b4,0x836d5ad4e3304587e75808a6c35c4a2f
+antichess,g2g3 g7g6 b2b3 b7b6 b3b4 a7a5 b4a5 b6a5 a2a4,0x9bf4b251501654df9067cbf83fa5d4b1
+antichess,g1h3 g7g5 h3g5 h7h5 g5f7 e8f7 d2d3 h5h4 c1h6 g8h6 e1d2 h6f5 d2c1 f5d4 h2h3 d4e2 d1e2 h8h5 e2e7 f8e7 g2g3 h4g3 f2g3 h5h3,0xe526f815b272facb075b509f1baa5faf
+antichess,b2b3 g7g6 d2d4 g6g5 c1g5 e7e5 d4e5 d8g5 d1d7 g5g2 d7f7 g2g1 f7h7 h8h7 h1g1 h7h2 g1g8 h2f2 g8f8 e8f8 e1f2 c8h3 f1h3 b8d7 h3d7 a8c8 d7c8 a7a5 c8b7 c7c6,0x21a9235f44befea7303e93f9aade88c8
+antichess,c2c3 c7c5 g2g3 g7g5 d1b3 b7b6 b3f7 e8f7 b2b4 c5b4 c3b4 b6b5 h2h4 g5h4 h1h4 d8a5 b4a5 a7a6 h4h7 h8h7 f1h3 h7h3 g1h3 b5b4 c1a3 b4a3 b1a3 b8c6 a3b5 c6a5 a1d1 a6b5 h3g1 b5b4 a2a3 b4a3 g3g4,0x39fde968aaa0286a1186175f9ffd7afc
+antichess,g2g3 g8h6 b1a3 h6g4 a3b5 g4h2 b5a7 a8a7 h1h2 a7a2 h2h7 h8h7 a1a2 h7h4 g3h4 g7g5 h4g5 f8h6 g5h6 b8a6 a2a6 b7a6 g1h3 f7f5 h3g5 e8f7 g5f7 d7d5 f7d8 c7c6 d8c6 c8b7 c6e7 d5d4 e7f5 b7f3 f5d4 f3e2 f1e2 a6a5 b2b4 a5b4 c1a3 b4a3 c2c4 a3a2 d1b1 a2b1k d4c2 b1c2 e1f1 c2d2 f1g1 d2e2 g1h1 e2f2 h1g1 f2g1 c4c5 g1f2 c5c6 f2f3 h6h7 f3f4 h7h8r,0x18ce69d85e43b25ba5856da05d6e7b41
+antichess,g2g3 g8h6 g3g4 h6g4 f1g2 g4f2 g2b7 f2d1 e1d1 c8b7 d2d3 b7h1 c1h6,0x5fefea262402b58c110bcd916b52dc79
+antichess,e2e3 b7b5 f1b5 b8c6 b5c6 d7c6 d1g4 c8g4 e1d1 g4d1 a2a3,0x55ba31782aa922891d21207352d0df8f
+antichess,e2e3 b7b5 f1b5 g8h6 b5d7 b8d7 g2g4 h6g4 d1g4 g7g5 g4d7 d8d7 g1h3 d7h3 h1f1 h3h2 b1a3 h2f2 e1f2 g5g4 f2f3 g4f3 f1f3,0x28029c99bf843f08065b669230a0b044
+antichess,g2g3 g8h6 g3g4 h6g4 b1a3 g4h2 h1h2 b7b5 h2h7 h8h7 a3b5 h7h3 f1h3 d7d6 h3c8 d8c8 b5d6 c7d6 g1h3 c8h3 e1f1 h3f1 d1f1 b8d7 b2b4 g7g6 b4b5 f8h6 d2d3 h6c1 a1c1 a8d8 b5b6 a7b6 c1a1 d7e5 c2c3 e5d3 e2d3 e8d7 d3d4 b6b5 f1b5 d7c6 b5c6 d8h8 c6d6 e7d6 a2a4 f7f5 a4a5 f5f4 a5a6 f4f3 a6a7 h8b8 a7b8r g6g5 b8e8 g5g4 e8e2 f3e2 f2f3 g4f3 a1a4 e2e1r d4d5 e1e4 a4e4,0x6ed5965860a30c7d8ccba73ac534f318
+antichess,g2g3 g7g6 f1g2 b7b6 g2a8 c8b7 a8b7 b8c6 b7c6 d7c6 d2d3 d8d3 d1d3 e8d8 d3g6 f7g6 c1h6 f8h6 e1d2 h6d2 b1d2 e7e5 h2h4 e5e4 d2e4 g8f6 e4f6 h8g8 f6g8,0xb88a98472d13b5bb16fe76307593ff30
+antichess,c2c3 g7g6 d1b3 c7c6 b3b7 c8b7 g2g3 a7a6 b1a3 d8a5 a3b5 a5b5 b2b4 b5b4 c3b4 a6a5 b4a5 a8a5 c1a3 a5a3 a1c1 a3g3 c1c6 d7c6 h2g3 b8a6 h1h7 h8h7 e2e4 h7h3 f1a6 b7a6 g1h3 g6g5 h3g5 e8d8 g5f7 f8g7 f7d8 g8h6,0x2c0e3ac1a7c014fde7c95f7194b6d21d
+antichess,e2e3 e7e5,0x5634a5550b0737af1a54f14b76aa23e7
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 b1a3 f8a3 b2a3 d7b5 d1e2 b5e2 g1e2 d8d2 e1d2 b8a6 c2c3 a6b4 a3b4 c7c5 b4c5 g8e7 e2f4 e7c6 f4e6 f7e6,0x7531c30375f3d602999cb7d3562ce05e
+antichess,e2e3 c7c5 f1a6 b8a6 d1g4 g7g5 g4d7 e8d7 b2b4 c5b4 b1a3 b4a3 c1a3 a6b4 a3b4 e7e6 b4f8 d8f8 a1c1 g8e7 g1e2 g5g4 g2g3 f8h6 h1g1 h6e3 d2e3 e7f5 h2h3 f5e3 f2e3 g4h3 g1g2 h3g2 c1d1 d7d6 d1d6 g2g1k d6e6 f7e6,0x3820157deceeb9597013e67ebd81e274
+antichess,e2e3 c7c5 f1a6 b8a6 b2b4 c5b4 d1g4 b4b3 c2b3 g7g5 g4d7 e8d7 e3e4 a6b4 b1c3 b4a2 c3a2 f7f5 e4f5 d8b6 f5f6,0x4fd5df942d65913e1ee878ddea65a19e
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 e8d7 c2c4 f8a3 b1a3 d8f6 b2b3 f6f2 e1f2 g8e7 c4c5 d7d6 c5d6 c7d6 d1c2 g7g6 c2g6 e7g6 e3e4 g6e7 g1h3 b8d7 f2e1 e7d5 e4d5 e6d5 g2g3 c8b7 d2d4 a8d8 c1h6 h8f8 h6f8 d8f8 a3c4,0x672e1d530d52c35ad0f5e1ab5fb4e1a9
+antichess,g2g3 g7g5 h2h4 g5h4 h1h4 c7c6 h4h7 h8h7 g1h3 h7h3 f1h3 f7f5 h3f5 d8c7 f5d7 c7g3 f2g3 e8d7 g3g4 e7e6,0x2c792014f395d6201dba751c2b25f35a
+antichess,e2e3 e7e6 f1a6 b8a6 b2b4 f8b4 d1g4 b4d2 g4g7 d2e3 f2e3 d8g5 g7h8 g5g2 h8h7 g2g1 h7g8 g1e1,0x679f26e476c6d767076de087a6cc5300
+antichess,c2c4 b7b5 c4b5 c8a6 b5a6 b8a6 b2b4 a6b4 d1a4 b4a2 a4a7 a2c1 a7a8 d8a8 a1a8 c1e2 a8e8 e2g1 e8e7 f8e7 h1g1 e7a3 b1a3 g8e7,0xf3f6da14f07fb18eb8f7bdbfc6006c57
+antichess,e2e3 b8a6 f1a6 b7a6 b1a3 e7e6 a3b5 a6b5 c2c4 b5c4 d2d3 c4d3 d1d3 f8a3 d3h7 a3b2 c1b2 h8h7 b2g7 h7g7 g2g4,0x8f7ed53d329b76525ef7c4e5f10a18eb
+antichess,e2e3 b7b5 f1b5 c7c6 b5c6 b8c6 b2b4 c6b4 a2a4 b4c2 d1c2 h7h6 c2c8 d8c8 e1d1 c8c1 d1c1 e7e6 a1a3 f8a3 b1a3,0x3ede1ee9db520dbb7c404ca4b2fc019c
+antichess,e2e3 b7b5 f1b5 c8b7 b5d7 b7g2 d7e8 d8d2 d1d2 g2h1 e8f7 h1f3 g1f3 e7e5 f3e5 f8b4 d2b4 b8c6 e5c6 a8e8,0x115bfe7562eea407f2adbf2ebb7dbb5c
+antichess,g2g3 g7g5 b2b3 b7b5 h2h4 g5h4 g3h4 c7c6 h4h5 g8h6 a2a4 b5a4 b3a4 d8a5 c2c3 a5a4 d1a4 h8g8 a4c6 d7c6 a1a7 g8g1 h1g1 a8a7 g1g4 c8g4 e2e4 g4h5 f2f3 h5f3 c3c4,0x8108491a6c64b07d0984a48905d8e2cd
+antichess,e2e3 b7b5 f1b5 g7g5 b5d7 e8d7 h2h4 g5h4 h1h4 h7h5 h4h5 h8h5 d1h5 g8h6 h5h6 f8h6 b2b3 h6e3 d2e3 d8f8 b1c3 f8h6 e3e4 h6c1 a1c1 f7f5 e4f5 d7e6 f5e6 c8e6 c3d5 e6d5 b3b4 d5g2 g1f3 g2f3,0x3fd4c07cf64b80264d3628d51e0e9b58
+antichess,g2g3 g7g5 b2b3 b7b5 a2a4 b5a4 b3a4 c8a6 a4a5 a6e2 g1e2 c7c6 b1a3 d8a5 a1b1,0x8f6edc8bc8b90abd1a965203fed755f0
+antichess,e2e3 d7d6 f1b5 d8d7 b5d7 e8d7 d1h5 g8h6 h5h6 g7h6 b1c3 d6d5 c3d5 d7d6 d5e7 d6e7 g2g4 c8g4 g1h3 g4h3 h1f1 h3f1 e1f1 h6h5,0x1180dbfb5469244eb5d7a962cf532c77
+antichess,e2e3 b7b5 f1b5 c7c6 b5c6 b8c6 b2b4 c6b4 d1f3 b4c2 f3f7 e8f7 e3e4 c2a1 e4e5 e7e6 c1a3,0xa0e458622ed65ed7453638056f237d68
+antichess,e2e3 b7b5 f1b5 c8b7 b5d7 b7g2 d7e8 g2h1 e8f7 d8d2 e1d2 h1f3 f7g8 h8g8 d1f3 b8d7 f3f8 d7f8 a2a4 f8d7 a1a3 d7b8 c2c4 b8a6 a3b3 a6b4 b3b4 a8b8 b4b8 g8b8 b2b4 b8b4 d2e1 b4b1 e3e4 b1c1 e1f1 c1f1 g1e2 f1f2 h2h4 f2e2,0xd6527380e3b9993d3365ff99cb8a85f3
+antichess,g2g3 g7g5 b2b3 b7b5 h2h4 g5h4 h1h4 g8h6 h4h6 f8h6 d2d3 h6c1 d1c1 h7h6 c1h6 h8h6 g1h3 h6h3 f1h3 d7d6 h3c8 d8c8 g3g4 c8g4 a2a4 g4e2 a4b5 e2d3,0xa3d22d858682bc88e15c33d09417cf5f
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 d8d7 d1h5 d7d2 e1d2 b8d7 h5f7 e8f7 b1c3 f8a3 b2a3 g7g5 c3d5 e6d5 c2c4 d5c4 d2d3 c4d3 g1e2 d3e2 h1f1 e2f1b a1b1 f1g2 f2f3 g2f3 e3e4 f3e4 c1g5 e4b1 a3a4,0xb41a3a37a73bd660db7cf06d111dcdbf
+antichess,e2e3 b7b5 f1b5 c8b7 b5d7 b7g2 d7e8 g2h1 e8f7 d8d2 f7g8,0x2497a655649a51f0b7d8f8b86f7eb56f
+antichess,e2e3 b7b5 f1b5 g7g5 b5d7 e8d7 d1h5 g8h6 h5h6 f8h6 e3e4 f7f5 e4f5 d7e6 f5e6 c8e6 c2c4 e6c4 b1a3 c4a2 a1a2 d8d2 e1d2 h6f8 g1e2 b8d7 h1f1 d7b6 b2b3 b6c4 b3c4 h7h6 g2g4 h8h7 e2f4 g5f4 g4g5 h6g5 h2h3 h7h3 a2b2 h3a3 b2b3 a3b3 c1b2 b3b2 f1c1 b2d2 c4c5 d2f2,0xe3b01bbdb69ea9107f12f47387570d10
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 b2b4 f8b4 d1f3 b4d2 e1d2 d8f6 f3f6 g7f6 g1e2 b8c6 e2f4 c6d4 f4e6 f7e6 e3d4 c7c5 d4c5 d7c6 g2g4 c6h1 g4g5 f6g5 f2f3 h1f3 d2e2 f3e2 c1g5 e2d3 c2d3 g8f6 g5f6 a7a6 f6h8 e6e5 h8e5 a8b8 e5b8 a6a5 a2a4 h7h5 b1a3 h5h4 a1g1 h4h3 g1g2 h3g2,0xe167625b4ee4cc09d20a79de0ff30ef9
+antichess,c2c3 e7e6 b1a3 f8a3 b2a3 b8a6 d1c2 a6b4 c2h7 h8h7 c3b4 h7h2 h1h2 c7c5 b4c5 g8h6 h2h6 g7h6 g1h3,0x39c700f64fb53caa5874d13a06d4325d
+antichess,c2c3 c7c6 d1b3 d8b6 b3f7 b6f2 f7e8 f2e1 e8f8 e1f1 f8c8 f1c1 c8b7 c1b2 b7b8 b2b1,0x8fba28f0c6239cce4da8ade6e65e0d7f
+antichess,e2e3 b7b5 f1b5 c8b7 b5d7 b7g2 d7e8 g2h1 e8f7 d8d2 f7g8 h8g8 c1d2 h7h5 d1h5 h1d5 h5d5 g7g6 d5g8 e7e5,0x26f463b1c203c37f97ab75890421e11d
+antichess,e2e3 b7b5 f1b5 c7c5 b5d7 e8d7 b2b4 c5b4 d1g4 f7f6 g4d7 b8d7 c2c3 b4c3 b1c3 g8h6 g1e2 d8a5 c1a3,0xcae3d23856158e0b4c5b14531cef9bfb
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 e8d7 b1a3 f8a3 b2a3 d8h4 g1h3 h4h3 g2h3 g8h6 d1h5 h6g4 h5g4 g7g5 g4e6 d7e6 f2f4 g5f4 e3f4 f7f5 e1e2 b8d7 e2d3 e6f7 c2c3 d7e5 f4e5 f7f6 e5f6 h8g8 d3e4 f5e4 h1f1 c8h3 a1b1 h3f1 b1b5 f1b5 c3c4 b5c4 d2d3 c4a2 d3e4 g8g7 f6g7 a8f8,0x571c23ccab9fc0fb7bde92f179d16ad0
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 b1a3 f8a3 b2a3 b8a6 d1g4 d7a4,0x7bdd46168d0122dd579c548d5f7c362b
+antichess,b2b3 b7b6 g2g3 g7g6 g3g4 h7h5 g4h5 h8h5 b3b4 h5h2 h1h2 f8h6 h2h6 g8h6 f1h3 h6g4 h3g4 d7d6 g4c8 d8c8 g1h3 c8h3 e2e3 h3e3 f2e3 a7a5 b4a5 a8a5 b1a3 a5a3 c1a3 e7e6 a3d6 c7d6 e3e4 e6e5 d1h5 g6h5 d2d4 e5d4 e4e5 d6e5 c2c3 d4c3 e1d2 c3d2 a1c1 d2c1r a2a4 b6b5 a4b5 b8a6 b5a6 c1b1 a6a7 f7f5 a7a8k b1d1 a8a7 e5e4 a7b6 e4e3 b6c5 d1d6 c5d6 e8d7 d6d7 f5f4 d7d6 f4f3 d6d5 e3e2 d5d4 e2e1k d4c3 e1d2 c3d2 f3f2,0x590c9f904f9c30fa736fd107bd5d6887
+antichess,e2e3 b7b5 f1b5 g7g5 b5d7 e8d7 c2c4 d8e8 d1h5 g8h6 h5h6 f8h6 c4c5 b8c6,0x6873981334ceb7bcc27528c524d301f3
+antichess,g2g3 g7g6 b2b3 b7b6 b3b4 e7e6 f1h3 f8b4 h3e6 b4d2 c1d2 d7e6 d2h6 g8h6 d1d8 e8d8 g3g4 h6g4 h2h3 g4f2 e1f2,0x0c7c8507889f66e83ffe91b937fdb3d9
+antichess,e2e3 g7g5 f1a6 b7a6 h2h4 g5h4 h1h4 g8h6 h4h6 f8h6 b1a3 h6e3 d2e3 a6a5 d1d7 e8d7 b2b4 a5b4 c1d2 b4a3 d2a5 d8g8 a5c7 g8g2 c7b8,0x602d81ae9cadfd4ad4e06b4481c14b8f
+antichess,b2b4 c7c5 b4c5 b7b6 c5b6 a7b6 g2g3 a8a2 a1a2 b8a6 a2a6 c8a6 c2c4 a6c4 c1a3 c4e2 g1e2 e7e6 a3f8 e8f8 h2h4 d8h4 h1h4 g8h6 h4h6 g7h6 d2d3 d7d5 e2g1 f7f5 d1g4 f5g4 g1f3 g4f3 f1g2,0xaef06b4d49a80c50dda1ab968f6de643
+antichess,b2b3 b8a6 b3b4 a6b4 a2a3 b4c2 d1c2 f7f5 c2c7 d8c7 e2e4 c7c1 e4f5 c1d2 b1d2 g7g6 f5g6 h7g6 f1a6 h8h2 h1h2 b7a6 h2h5 g6h5 g2g4 h5g4 g1h3,0x809d683dc59217dfba6eba3dfbf9d668
+antichess,g2g3 g8h6 b2b3 g7g6 c2c3 b8c6 b3b4 c6b4 c3b4 c7c5 b4c5 b7b6 c5b6 a7b6 b1a3 a8a3 c1a3 e7e6 a3f8 e8f8 d1c2 d8h4 c2g6 f7g6 g3h4 g6g5 h4g5 d7d5 g5h6 f8g7 h6g7 d5d4 g7h8n d4d3 e2d3 b6b5 h8g6 h7g6 g1e2 e6e5 e2d4 e5d4 f1h3 c8h3 h1f1 h3f1 e1f1 b5b4 a2a3 b4a3 a1a3 g6g5 h2h4 g5h4 f1e2 h4h3 a3a5 h3h2 f2f4 h2h1k f4f5 h1g1 e2d1 g1g2 f5f6 g2g3 f6f7,0x4c639f6222448af5277015c08972a47b
+antichess,e2e4 b7b5 f1b5 b8c6 b5c6 d7c6 d1g4 d8d2 g4c8 d2c2 c8c7 c2b2 c7a7 b2a2 a7e7 a2f2 e7e8 f2g2 e8f8 g2e4,0x586923cf535b4949deb323966e926973
+antichess,e2e3 e7e6 f1a6 b8a6 b2b4 a6b4 a2a3 b4c2 d1c2 f8a3 c2h7 h8h7 a1a3 h7h2 a3a7 a8a7 h1h2 d8h4 h2h4 a7a3 b1a3 b7b5 a3b5,0xb7eda036f23a077f40e69c47079f2cc7
+antichess,g2g3 e7e5 d2d4 e5d4 d1d4 d8h4 d4d7 c8d7 g3h4 d7h3 g1h3 g7g5 h3g5 e8d8 g5h7,0x54fabbe8bad9d1d4027cc166242f0796
+antichess,c2c4 g7g6 g2g4 h7h5 g4h5 g6h5 e2e3 b7b5 c4b5 c7c6 b5c6 d7c6 d1h5 h8h5 f1a6 c8a6 e1f1 a6f1 g1e2 f1e2 h1f1 h5h2 f1d1 h2f2 a2a4 e2d1 b1a3 d8d2 c1d2 f2d2 a1d1 d2b2 d1d2 b2d2 a3c2 d2c2 a4a5 b8a6 e3e4 f7f5 e4f5 e7e6 f5e6 e8f7 e6f7 a6c7 f7g8k c7e8 g8f8 e8g7 f8g7 a8h8 g7h8 c6c5 h8g8 c5c4 g8f8 c2b2 f8e8 c4c3 e8d8 c3c2 a5a6 c2c1b d8d7 c1h6 d7d6 b2b4 d6e6 h6e3 e6d7 e3d4 d7d8 b4b5 d8d7 d4g7 d7d8 b5b7 a6b7 a7a5,0x078e2509acc2cb3cfd0ae15d680d05f6
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 d8d7 b2b4 f8b4 c2c4 d7d2 c1d2 b4d2 e1d2 h7h5 d1h5 h8h5 c4c5 h5h2 h1h2 g8h6 h2h6 g7h6 g1h3 b8c6 e3e4 f7f5,0x7f28bd5f3fe7a6b2541e0560559a33ad
+antichess,c2c4 b7b5 c4b5 g7g6 b5b6 c7b6 b2b4 a7a5 b4a5 a8a5 d1a4 a5a4 b1a3 a4a3 c1a3 e7e6 a3f8 e8f8 h2h4 d8h4 h1h4 g8h6 h4h6 f8e7 h6h7 h8h7 g1h3 h7h3 g2h3 e7d8 e2e4 f7f5 e4f5 g6f5 f1a6 b8a6 e1f1 a6c7 f1g2 f5f4 g2h2 c7d5 a1h1 d5e3 d2e3 f4e3 f2e3 d8e7 e3e4 e6e5 h1g1 d7d5,0xb2a5592cc40edf56915d84c2ae5e6b86
+antichess,g2g3 g7g5 b2b3 b7b5 f2f4 g5f4 g3f4 f7f6 c2c4 b5c4 b3c4 c8a6 f1h3 a6c4 h3d7 c4a2 d7e8 d8e8 a1a2 e8a4,0xe9bf0e4fbaf5d8dfff038eb456da133d
+antichess,g2g3 e7e6 b2b4 f8b4 f1g2 b4d2 g2b7 d2e1 d1e1 c8b7 e1d1 b7h1 d1d7 d8d7 e2e4 h1e4 a2a3 e4c2 a1a2 c2b1,0x46239cb66ee44d64c6c4c01e9ce554b0
+antichess,c2c3 c7c6 d1b3 d8a5 b3f7 a5c3 f7g7 f8g7 b1c3 g7c3 b2c3 b8a6 c1a3 a6b4 a3b4 c6c5 b4c5 a7a6 c5e7 e8e7 a1b1 b7b6 b1b6 a8b8 b6a6 c8a6 c3c4 a6c4 e2e3 c4f1 e1f1 e7d6 g1e2 b8c8 e2c1 c8c1 f1e1 c1e1 h1e1 g8e7,0x8501afbf3cff8c61b8e05229e48fa2bf
+antichess,g2g3 b7b6 b2b3 g7g6 e2e3 b6b5 f1b5 c8b7 b5d7 b7h1 d7e8 d8d2 c1d2 h1f3 d1f3 a7a5 f3f7 g8f6 f7e7 f8e7 e8g6 h7g6 d2a5 h8h2 a5c7,0x062c2cdba0a712754b5d5d09ded4e677
+antichess,b2b4 e7e5 a2a4 f8b4 d2d4 e5d4 d1d4 b4e1 d4a7 e1f2 a7f2 a8a4 a1a4 b8a6 a4a6 b7a6 f2f7 e8f7 c1g5 d8g5 g2g4 g5g4 b1d2 g4e2 g1e2 d7d5 d2e4 d5e4 f1h3 c8h3 h1f1 h3f1 c2c4 f1e2 h2h4 e2c4 h4h5,0x6de0599a44be3c822d73a8fa99ac789c
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 d8d7 d2d4 d7d4 d1d4 f8c5,0x1a5238a9237de391d21dc091ff51ef61
+antichess,e2e3 c7c6 f1a6 b8a6 d1h5 a6c5 h5h7 h8h7 e3e4 h7h2,0x03242a9f3a29d47a9ad22b92629bd709
+antichess,a2a3 g7g5 h2h4 g5h4 h1h4 d7d6 h4h7 h8h7 g1h3 h7h3 g2h3 c8h3 f1h3 f7f5 h3f5 e7e6 f5e6 d8e7 e6g8 e7e2 e1e2 d6d5 g8d5 f8a3 d5b7,0x1d8a1a035662cfc4e6921da4cca076bc
+antichess,g1h3 g7g5 h3g5 f8h6 g5h7 h6d2 c1d2 h8h7 d2h6 h7h6 d1d7 d8d7 g2g4 d7g4 h1g1 g4e2 g1g8 e2f2 e1f2 h6h2 g8e8 h2f2 e8e7,0x98b52a4b04d0024859f4b10e3b21aba7
+antichess,g2g3 g8h6 g3g4 h6g4 b2b3 g4h2 h1h2 h8g8 h2h7 g7g6 h7f7 e8f7 g1f3 e7e5 f3e5 f8a3 e5d7 d8d7 b1a3 d7d2 e1d2 c8h3 f1h3 f7e6 h3e6 g8c8,0x83aff7b25e4eadc69fa24568dd83c3c2
+antichess,b2b3 b7b5 a2a4 b5a4 b3a4 e7e6 a1a3 f8a3 b1a3 d8e7 c2c4 e7a3 c1a3 e8f8 a3f8 h7h5,0x1e2cc60199d3d7e860f80d8cc613b6a3
+antichess,b1c3 b7b5 c3b5 a7a6 b5c7 d8c7 h2h3 c7c2 d1c2 h7h6 c2c8 a8a7 c8a6 a7a6 a1b1 a6a2 d2d3 a2b2 c1b2 e7e5 b2e5 g7g5 b1b8 e8d8 b8d8 g8f6 e5f6 f8a3 f6g5 h6g5 d8d7 h8h3 d7f7 h3h1 e1d1 h1g1 g2g4 g1f1 f7e7 f1d1,0xdc9d2319d0964582fb5f13cfb04ab167
+antichess,g2g3 c7c5 d2d4 c5d4 d1d4 d8a5 d4d7 c8d7 c1h6 a5e1 h6g7 e1f1 g7f8 f1f2 f8e7 g8e7 g3g4 f2g1 h1g1 d7g4 g1g4 e7g8 g4g8,0x97dba0a540bc62a071fd42e76684c261
+antichess,e2e3 b7b5 f1b5 g8h6 b5d7 b8d7 g2g4 h6g4 d1g4 g7g5 g4d7 d8d7 g1f3 d7d2 f3g5 d2c2 g5h7 c2c1 h7f8 h8h2 h1h2 e8f8 h2h7 c1e1 h7f7 e1b1,0x818d6577ca9477af57cd02dff369eb63
+antichess,e2e3 b7b6 f1a6 b8a6 d1g4 a6b4 g4g7 b4c2 g7f7 e8f7 e1f1 c2a1 b2b3 a1b3 a2b3 c8b7 g2g3 b7h1,0x31273c3f600273a8c7a3b27094f741a7
+antichess,e2e3 e7e6 f1a6 b7a6 b2b4 f8b4 d1f3 b4d2 b1d2 g8f6 f3f6 d8f6 g1e2,0xf4c35dfe383d1d725b6f954c3b7d1b00
+antichess,e2e3 b7b5 f1b5 g7g5 b5d7 e8d7 h2h4 g5h4 h1h4 h7h5 h4h5 h8h5 d1h5,0x1cd17ff0112fb316f318f22e6edc7eb0
+antichess,b2b3 e7e6 b3b4 f8b4 f2f3 b4d2 e1d2 d8f6 f3f4 f6f4 d2d3 f4c1 d1c1 g7g5 c1g5 g8f6 g5f6 e8d8 f6d8 h8d8 h2h4 b8a6 h4h5 h7h6 g1h3 b7b6 h3g5 h6g5 h1h4 g5h4 g2g3 h4g3 f1h3 d8g8 h3e6 d7e6 e2e4 f7f5 e4f5 e6f5 d3e2 g8g6 h5g6 a6c5 b1d2 c5d3 e2d3 c8e6 a1d1 e6a2 c2c4 a2c4,0xddf59e886bc807ab7ffecf088bc2dad4
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 d1h5 f8a3 h5f7 e8f7 b1a3 d7b5 a3b5 d8d2 b5c7 d2e3 c7e6,0x80f1c82b8601396707c5701afec5e3a3
+antichess,f2f3 b7b6 c2c3 g7g6 d1a4 c8a6 a4a6 b8a6 b2b4 a6b4 c3b4 a7a5 b4a5 a8a5 b1a3 a5a3 c1a3 e7e6 a3f8 e8f8 h2h4 d8h4 h1h4 g8e7 h4h7 h8h7 g1h3 h7h3,0x3ea64d16ca60bed6c541d0093d1fb097
+antichess,g2g3 b7b6 b2b4 c7c5 b4c5 b6c5 f1h3 d7d6 h3c8 d8c8 c1a3 c8a6 a3c5 a6e2 d1e2 d6c5 e2e7 e8e7 d2d4 c5d4 b1c3 d4c3 e1d2 c3d2 a1c1 d2c1k g1e2 c1c2,0xae93edb3588ca60b240605bec8c2f57f
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 g1h3 f8a3 b2a3 g7g5 h3g5 d8g5 d1g4 g5g4 h1f1,0x3e955b83c3bbbb527fb24098f584a8ae
+antichess,e2e3 e7e6 b2b4 f8b4 d1g4 b4d2 g4g7 d2e3,0x0ba0561a59db77327c133060753031e3
+antichess,c2c4 b7b5 c4b5 c8a6 b5a6 b8a6 a2a4 g7g6 b2b4 a6b4 a1a2 b4a2 d1c2 a2c1 c2c7 c1e2 c7a7 e2g1 h1g1 a8a7 d2d4 a7a4,0x3eab1cfbc8f93f65ae0f3d01d8ec14c3
+antichess,b2b3 b7b6 b3b4 a7a5 b4a5 b6a5 e2e3 c8a6 f1a6 b8a6 d1e2 g7g6 e2a6 a8a6 e3e4,0x22bd61605e49d23eabf7c5e046f97643
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 c8d7 b2b4 f8b4 d1h5 b4d2 c1d2 d7a4 h5f7 a4c2 f7e8 d8d2 e1d2 c2b1 e8b8 b1a2 b8a7 a8a7,0x82ee6252e3a26226abaadca0f20da73d
+antichess,e2e3 b7b5 f1b5 c7c5 b5d7 e8d7 b1c3 c5c4 d2d3 c4d3 c2d3 g8h6 c3a4 g7g6 d1h5,0xd16e964d39439fb6fa9c27f0990c9f57
+antichess,b2b3 b7b6 b3b4 a7a5 b4a5 a8a5 b1a3 a5a3 c1a3 e7e6 a3f8 e8f8 g2g4 d8h4 e2e3 h4f2 e1f2 b6b5 f1b5 h7h5 b5d7 h5g4 d7e6 h8h2 d1g4 c8e6 h1h2 e6a2 a1a2 b8a6 g4g7 f8g7 a2a6 c7c6 a6c6 g8f6 c6f6 g7f6 f2f3 f6g6 h2h6 g6h6 c2c4 f7f5 f3e4,0x391179f58b69666d6929be4130e462e7
+antichess,e2e3 d7d5 e3e4 d5e4 f1a6 b7a6 d1f3 e4f3 g1f3 d8d2 f3d2 c8h3 g2h3 e7e5 f2f4 e5f4 b2b4 f8b4 d2e4 b4e1 h1e1 b8c6 c1f4 c6e5 f4e5 f7f6 e5f6 g8f6 e4f6 g7f6 e1e8 a8e8 c2c4 e8e1 b1d2 e1a1 c4c5 a1a2 c5c6,0x941bbb6ba5ff0c3d999eba5ca938284d
+antichess,e2e3 b7b5 f1b5 g8h6 b5d7 b8d7 c2c4 e7e6 c4c5 f8c5 d1h5 c5e3 h5h6 g7h6 d2e3 d8h4 g1h3 h4h3 g2h3 h6h5 b1c3 e6e5 c3e2 h8g8 h1g1 g8g1 e2g1 h5h4 g1e2 h7h6 e1d2 e8e7 f2f4 e5f4 e3f4 f7f5 e2c3 d7e5 f4e5 e7d6 e5d6 c7d6 b2b4 d6d5 c3d5 f5f4 d5f4 c8h3 f4h3 a8h8 h3g5 h6g5 d2e3 a7a5 b4a5 h4h3 a5a6 g5g4 e3f3 g4f3 c1h6 h8h6 a1b1 h6a6 b1b8 a6a2 b8b1,0x6b22a18193729c8270b3275f415fa0fa
+antichess,e2e3 b7b6 f1a6 c8a6 c2c4 a6c4 d1f3 c4a2 f3a8 a2b1 a1a7 c7c5 a8b8 d8b8 a7d7 e8d7 d2d3 b8h2 h1h2 b1d3 h2h7 h8h7 e3e4 d3e4 e1d2 e4g2 g1f3,0x236226fb141d3f606058cdd8b1564c50
+antichess,g1h3 g7g5 h3g5 f7f5 g5h7 h8h7 g2g4 h7h2 h1h2 f5g4 h2h6 g8h6 f1h3 g4h3 d2d3 e7e5 c1h6 f8h6 d1c1 h6c1 a2a4 c1b2 a4a5 b2a1 b1c3 a1c3 e1d1,0x065a895ce95900f0f1be8df98d59053f
+antichess,g1h3 g7g5 h3g5 f8g7 g5h7 g7b2 c1b2 h8h7 b2f6 e7f6 h1g1 h7h2 g2g3 h2f2 e1f2 g8h6 f2g2 e8e7 g3g4 h6g4 g2f2,0x6c622fe4c07e0c56e31bb7f89ba5f534
+antichess,e2e3 b7b5 f1b5 e7e6 b5d7 e8d7 b2b4 f8b4 d1g4 b4d2 e1d2 d8f6 g4g7 f6a1 g7h7 a1a2 h7f7 a2b1 f7e6 h8h2 h1h2 b1c1 d2c1 d7e6 h2h6 g8h6 g2g4 h6g4 e3e4 g4f2 c1d2 f2e4 c2c4 e4d2 g1f3 d2f3 c4c5 b8a6 c5c6,0x5fa219256c4ea6db5288e1e98a98fcfc
+antichess,e2e3 b7b5 f1b5 c8b7 b5d7 b7g2 d7e8 g2h1 e8f7 d8d2 e1d2 h1f3 d1f3 e7e6 f7g8 h8g8 f3f8 g8f8 g1f3 f8f3 e3e4 f3f2 d2e1 f2c2 c1g5 c2b2 a2a4 b2b1 a1b1 g7g6 b1b8 a8b8 g5d8 b8d8,0x4dc5dd2b7a3b14c045197af33e753d1f
+antichess,c2c3 b7b6 d1a4 b8a6 a4d7 d8d7 d2d3 d7d3 e2d3 a6b4 c3b4,0xeec24ed83cc1ac4dcdf00608c0637271
+antichess,d2d3 g7g5 c1g5 e7e5 g5d8 e8d8 d3d4 e5d4 d1d4 f8g7 d4d7 c8d7 b2b4 g7a1 b1c3 a1c3 a2a4 c3e1 g1h3 e1f2 h3f2 d7a4 b4b5 a4c2 f2e4 c2e4 h2h4 e4g2 f1g2 b8c6 g2c6 b7c6,0xd5e15e0e4ad975b0f9407e83a8d08fde
+antichess,f2f3 g8h6 h2h3 h6g4 h3g4 f7f5 g4f5 g7g6 h1h7 g6f5 h7e7 e8e7 g1h3 h8h3 g2h3 b8a6 b2b4 a6b4 a2a3 b4c2 d1c2 c7c5 c2f5 f8h6 f5d7 h6d2 c1d2 d8d7 d2e3 d7h3 e3c5 h3f3 c5a7 a8a7 e2f3 a7a3 a1a3 b7b5 f1b5 e7e8,0xe0a80e12f3042ba107eb788fd2fe9af6
+antichess,f2f3 d7d6 e2e3 c8g4 f3g4 f7f5 g4f5 e7e6 f5e6 e8f7 e6f7 d8g5 f7g8k g5g2 g8h7 h8h7 f1g2 h7h2 g2b7 h2d2 d1d2 d6d5 d2d5 g7g6 b7a8,0x74570e6c1b77880616844599ab9006cd
+antichess,e2e3 b7b5 f1b5 c8a6 b5d7 d8d7 c2c4 a6c4 d1a4 c4a2 a4d7 e8d7 a1a2 b8a6 a2a6 a8b8 a6a7 b8b2 a7c7 d7c7 c1b2,0x8ce1f517bc76db10460ec22cfdee15eb
+antichess,g1h3 g7g5 h3g5 h7h6 g5f7 e8f7 e2e4 d7d5 e4d5 d8d5 d1h5 d5g2 h5h6 h8h6 f1g2 h6h2 h1h2,0x39a96d5952a47b86f6ba56830576d9c6
+antichess,e2e3 c7c5 f1a6 b8a6 d2d4 c5d4 d1d4 d8a5 d4g7 a5e1 g7f7 e8f7 b2b4 e1c1 a2a4 c1b1 a1b1 a6b4 b1b4 b7b5 b4b5 a8b8 b5b8 h7h5 b8c8,0x758d7203ecdb2f962a971878192d32d2
+antichess,e2e3 e7e6 f1a6 b8a6 b2b3 f8a3 b1a3 b7b5 a3b5 a6b4 b5a7 b4a2 a7c8 d8c8 a1a2 a8a2 c1b2 a2b2 d1g4 b2b3 g4g7 b3e3 g7h8 e3e1 h8h7 e1g1 h7g8 g1g2 g8e8 g2f2 e8f7 f2f7 h1f1 f7f1 h2h4 c8a8 h4h5 f1g1 h5h6 g1f1 h6h7 f1f8 h7h8q f8h8 d2d4 e6e5 d4e5 a8b8 e5e6 d7e6 c2c4 h8d8 c4c5 d8d1 c5c6 b8b7 c6b7 d1d5 b7b8k d5d4 b8c7 d4d6 c7d6 e6e5 d6e5,0x8fd087733782eecd9e4c1269baa4bf37
+antichess,e2e3 b7b5 f1b5 g7g5 b5d7 e8d7 b2b4 d8e8 d1g4 f7f5 g4f5 d7e6 f5e6 c8e6 c2c4 e6c4 b4b5,0x3f79bde2865280795d9e35a9157352eb
+antichess,,0xde1848baf27054a53d01bbb3c1105375
+antichess,e2e3 b7b5 f1b5 g8h6 b5d7 c8d7 d1g4 h6g4 h2h3 g4e3 f2e3 d7h3 h1h3 d8d2 h3h7 d2c1 h7g7 c1b2 g7f7 e8f7,0x30ca559b34032b229131934c4391de18
+antichess,b2b3 e7e6 c1a3 f8a3 b1a3 d8g5 a3b5 g5b5 b3b4 b5e2 g1e2 c7c5 b4c5 d7d6 c5d6 g8e7 d6e7 e8e7 d2d3 b8d7 e2f4 d7b6 f4e6 f7e6 d1h5 b6c4 h5h7 h8h7 d3c4 h7h2 h1h2 b7b5 c4b5,0x669cb6a042683e1dae69928f8871d938
+atomic,e2e4 d7d5 g1f3 c8g4 h2h3 g8f6 e4e5 f6e4 f1b5,0x73a9d809859f49d70553fd06f23cd01e
+atomic,g1f3 f7f6 c2c3 d7d5 b1a3 a7a6 f3h4 c8h3 h4f5 h3f5 d2d4 e7e5 e2e4 g8h6 h2h3 h6g4 h3g4 h7h5 f2f3 g7g6 e4d5 e5e4 f1c4 f8a3 c1f4 c7c6 c4f7 e8f8 f4d6 d8d6 f7g8 e4e3 d1b3,0x534124f942cee719837e9cd75f9d43f3
+atomic,,0x3d71fe83987aab73463b96181691fc9c
+atomic,d2d4 g8h6 f2f3 f7f6 b1a3 b7b5 c1d2 a7a5 e2e4 d7d5 c2c3 h6g4 f3g4,0xdb89c80bbc98fa4332b22c2f9f192165
+atomic,d2d4 e7e5 d4e5 d7d5 e2e3 d8h4 g2g3 h4b4 c1d2,0x7804f7011759cde0e107fa8c8736a672
+atomic,e2e3 e7e6 g1h3 h7h6 b1c3 f8b4 a2a3 d8h4 g2g3 h4d4 d2d3 d4b6 h3f4 b8c6 f2f3 c6d4 b2b3 d4c2,0xec10fa85361a6a38472d74e2cb9b2cf8
+atomic,g1f3 e7e6 f3e5,0x9753bf173a9903fb361057103dd86885
+atomic,e2e4 e7e5 d1h5 g7g6 h5h3 f7f5 e4f5 d8f6,0xed2ffdc92a546cd2b9a164a3ce63e92d
+atomic,e2e3 e7e6 g1f3 c7c6 f3e5 d7d5 e5f7,0x4f3f1d9bf0d8b7776b12972b0546748a
+atomic,g1f3 f7f6 f3d4 e7e6 e2e4 g8h6 f1e2 h6g4 f2f3 g4f2 e1g1 f6f5 d1e1,0x1d70e868863d5bb8cb323de446180181
+atomic,b1c3 c7c6 c3e4 f7f6 e4c5 d7d5 c5d7,0x28742695c90c350c6d86ab4f1bf51d02
+atomic,e2e3 e7e6 f1c4 d7d5 d1h5 g7g6 h5e5 d8h4 g2g3 h4e4 e5d5 g8f6 f2f3 b8c6 c2c3 f8g7 g1h3,0x759a963540eab730ce8a333966ee6c5f
+atomic,g1f3 f7f6 e2e4 c7c6 e4e5 d7d5 e5f6 d5d4 f3e5 d4d3 d1f3 g8f6,0xef8c1205ff7386e916e4b6b5e060ea31
+atomic,e2e3 e7e6 d1f3 f7f5 g1h3 d8h4 e1d1 h4f2 h3g5 g8f6 g5h7 f6e4 d2d3 e4f2 d1e1 f2h1 b1c3 c7c6 a2a3 f8b4 e3e4 f5f4 c1f4 d7d6 e1e2 b8d7 g2g4,0xa417f3ba2e1bcfe73ea662e53e1616eb
+atomic,e2e4 e7e5 d1h5 g7g6 h5h3 f7f5 e4f5 d7d6,0x9339478f6c3029fb87236f0579f2e3ad
+atomic,g1f3 f7f6 b1c3 c7c6 c3b5 c6b5 e2e3 a7a6 f3e5,0x13b579dc671ac54a32b70aea2dd87ea9
+atomic,g1f3 f7f6 f3d4 g8h6 e2e3 c7c6 b1c3 e7e6 c3b5 f8b4 c2c3 e8g8 g2g4 g7g6 h2h4 d7d5 f2f3 b8a6 b5a7 f6f5 d4b5 e6e5 b5c7 e5e4 c7e8 b4e7 e8g7 e7c5 d2d4 f5f4 g7e8 c5e7 b2b3 b7b5 a2a4 e4f3 e3e4 h6g4 f1h3 c8g4 h3g4 d8c8 d1g4 c8g4 a4a5,0x54d78265984e0fa07ce19afe22693e6d
+atomic,e2e4 e7e6 d2d4 d7d6 b1c3 c7c6 g1f3 h7h6 f1c4 b8a6 e1g1 a6b4 a2a3 b4c2 c4e6 f8e7 f1c1 g8f6 c1c6 f6g4,0xefc5a1fb8c78cb658d039eb612069a6d
+atomic,e2e4 d7d5 d1f3 d5e4 f1c4 g8f6 c4f7,0x71bdc01da6859eb2007f64865e208b9f
+atomic,g1f3 f7f6 f3d4 e7e6 d4b5 b8a6 b5a7 g8h6 h2h3 h6f5 e2e3 f8c5 f1b5 c7c6,0xcfcf09e45fafb3426ccee8a48ff88245
+atomic,g1h3 f7f6 e2e3 g7g5 d1h5,0x27ade6bb17ed5d2e6cc31b97f8d9c58b
+atomic,g1f3 f7f6 b1c3 c7c6 c3b5 c6b5 e2e3 e7e6 f3d4 g8h6 d4b5 d8a5 c2c3 h6g4,0xcc15199d35f9294ca966a4d693ad0f3b
+atomic,g1f3 f7f6 e2e3 g8h6 f3e5 f6e5 d1h5 g7g6 h5d5,0x6ae97e961718cdfc5a8406cfeb381ac2
+atomic,g1f3 f7f6 f3d4 g8h6 d4f5 h6f5 b1c3 c7c6 e2e4 e7e6 c3b5 c6b5 f1b5 b8c6 d2d4 g7g6 d4d5 f8h6 c1g5 e8g8 d5d6 f6g5 f2f3,0x105bb7a4d7b13982ea4ee37bd28a2c8c
+atomic,e2e3 c7c6 d1h5 g7g6 h5e5 e7e6 e5c7 d8c7 g1f3 f7f6 b1c3 d7d6 b2b3 b7b6 c1a3 a7a6 d2d4 h7h6 d4d5 e6e5 d5c6 b6b5,0xf71021271c2cdf2e1c1dc32944f73a55
+atomic,b1c3 c7c6 c3e4 b8a6 e4g5 f7f6 g5h7 d8a5 c2c3 a5f5 f2f3 f5c2 d1c2 a6c5,0x57728f8473d0bfb08859f05c0f92979c
+atomic,g1f3 f7f6 f3d4 g8h6 d4f5 h6f5 b1c3 b7b6 c3d5 e7e6 d5c7 f8c5 d2d4 c5d6 c1f4 d6e5 c2c4 a8c8 d1a4,0x4c1796281f2dcfdbd8697ba683e286cc
+atomic,g1f3 f7f6 e2e3 e7e6 c2c3 b7b5 b1a3 g7g6 f1d3 d7d5,0x8c7915bc6a692ceca2bb5e1700b51143
+atomic,g1f3 f7f6 f3d4 g8h6 f2f3 h6f5 d4f5 c7c6 b1c3,0xcf4917a2b299190a24304733f9bb1e39
+atomic,g1h3 e7e5 d2d4 h7h6 e2e4 d7d5 e4d5 e5e4 f1b5 c7c6 c2c3 c8g4 f2f3 e4e3 h3g5 h6g5,0x87892a4dc397762b7ee8f6727c3d1de7
+atomic,g1h3 f7f6 b1c3 c7c6 e2e3 e7e6 c3b5 c6b5 d1h5 g7g6 h5b5 b8c6 b5b6 a7b6 f1b5 e8f7,0x3d6a620d810510e06115dcc44a31faa4
+atomic,g1f3 e7e5 f3g5 f7f5 g5f7 d8h4 g2g3 h4d4 d2d3,0xae21437daa082e24fdf1f2e7448fcc5e
+atomic,g1h3 h7h6 e2e3 e7e6 h3f4 h6h5 d1f3 g8f6 f4e6 d8f6 f3f5 f6f5 b1a3 b7b5 d2d4 d7d5 e3e4 f7f5 c1g5 g7g6 e4e5 c8e6 f1e2 f5f4 f2f3 h5h4 g5h6 f8h6 e2d3 c7c5 d3f5 c5d4 f5e6 b8d7 e5e6 d7e5 h2h3 b5b4 a3b5 e8c8 e6e7 d8e8 b5c7 e5c4 c7d5 c8b7 a1d1 a7a5 d1d5 b7b8,0x66b54c65d6535bc5c41f0b544a499b8d
+atomic,g1h3 h7h6 e2e4 d7d5 b1a3 a7a6 d2d4 c7c6 g2g3 b8d7 c2c3 g7g6 e4e5 e7e6 d1f3 f7f6 e5f6 d7f6 c1g5 f8d6 f3d1 d6f4 g5f6 f4d2 e1e2 g8f6 h3g5 f6e4 g5e4,0xeb0acab94bac7202ff45cd577e41d2b1
+atomic,g1f3 f7f6 f3d4 g8h6 b1c3 h6g4 f2f3 g4f2 d4e6,0x3ba180616157de920f6063b5d7105b29
+atomic,g1f3 f7f6 f3d4 g8h6 e2e3 b7b5 d4f5 e7e6 f5g7 h7h5 d2d4 f6f5 e3e4 f5f4 e4e5 c8b7 d4d5 d7d6,0xec3a37d31e66a0044b490dfc54db072a
+atomic,g1h3 f7f6 e2e3 d7d6 b1c3 c7c6 h3g5 f6f5,0xbbb2e56974ec48b55a4efa9685115d79
+atomic,g1h3 f7f6 d2d4 c7c5 e2e4 d7d5 f1b5,0xdf1f8b38c2cb7accb0574a299811d2a9
+atomic,g1f3 f7f6 e2e3 g8h6 f3e5 f6e5 d1h5 g7g6 h5d5,0x6ae97e961718cdfc5a8406cfeb381ac2
+atomic,g1h3 h7h6 b1c3 c7c6 e2e3 e7e6 c3b5 f8b4 c2c3 d8h4 g2g3 h4g4,0xe2422cb93e8a60a084f4bda8a3e38988
+atomic,g1f3 f7f6 b1c3 b8c6 c3d5 e7e5 d5c7 a8c8 c2c4 g8e7 e2e4 e7g6,0xd0e7c9dd00ef83d278849bb4523c3567
+atomic,e2e4 b8c6 f1c4 e7e6 d1f3 f7f6 c4d5 c6d4 f3h5 g7g6 h5h7 d4c2 d5b7 f8b4 e1f1 d8c8,0x19a7c7c32b4cdaf0146ae8ec99918bd6
+atomic,g1f3 e7e5 f3g5 f7f6 g5f7 h7h5 f7d8,0x3347bee5847b495357eeeb76ac53f49e
+atomic,e2e4 g7g6 g1f3 f7f6 f1b5 c7c6 b5c4 d7d5 d2d4 e7e6 c4b3 f8b4,0xdbdb01a913e6293043cbdb7271d94e7b
+atomic,e2e4 e7e6 g1f3 f7f6 d2d4 d7d5 e4d5 e6e5 d4d5 e5e4 d5d6 e4e3 d6d7 e3f2,0x23794a30eef96897db8c5f7e3df59048
+atomic,g1h3 f7f6 e2e3 e7e6 b1c3 f8b4 h3f4 g7g6 f1b5 c7c6 e1g1 g8h6 f4g6 h7h5 c3e4,0x64ebfc2b40b24f4d5be6f2901dc964e8
+atomic,d2d4 g8h6 e2e4 d7d5 c1f4 h6g4 g2g3 g4f2,0xd0202c245ffd819a500319b788464466
+atomic,g1f3 f7f6 f3d4 g8h6 g2g4 b7b5 d4b3 e7e5 b3a5 f6f5 h2h4 f8b4 c2c3 b4a5 e2e3 d7d5 a2a4 g7g6 f2f3 e5e4 g4g5 f5f4 a4b5 c7c6 b2b4 e4f3 b4b5 f4f3 e1f2,0x42b8b5544b82fa881e834312d3896a28
+atomic,e2e4 g8f6 g1f3 f6g4,0xb305576b524a248a9f9518353547f051
+atomic,g1f3 d7d6 f3d4 c8g4 f2f3 g4h5 d4f5 e7e6 f5e7 h5f3 g2g3 b8c6 c2c3 c6e5 e2e3 e5g4 d1a4 c7c6 a4a5 d8a5 e7g8 e8c8 h2h3 g4e3 f1d3 d6d5 e1g1,0xf836d2706ada1419b357ee94e2b707cd
+atomic,g1f3 e7e5 f3g5 f7f6 g5f7 e8e7 f7d8,0x93346439aeb710a0b26653a70454d0e0
+atomic,g1f3 f7f6 e2e3 b8c6 f3g5 f6g5 d1h5 g7g6 h5d5 d7d6 d5f7,0xd9358f07302d759eefdbd501b70f02b8
+atomic,e2e3 e7e6 d1f3 g8f6 b1c3 d7d5 f1d3 f8b4 d3g6 e8d7 f3g3 e6e5 g6f5 d7e8 f5d7 e8e7,0xc52b600a41bc9035e725b3657c2307c6
+atomic,g1f3 f7f6 f3d4 d7d5 d4e6 c8e6 e2e3 e7e6 f1b5 c7c6 b5d3 g8e7 d1h5 g7g6 h5h4 e7f5,0x1061aa9665f4ebb8191f2a02edc86afc
+atomic,e2e3 e7e6 d1f3 f7f6 f1b5 c7c6 f3f4 c6b5 f4d4 d7d6 d4a4,0x60ab7d1cb597f691b6eb49e34a296223
+atomic,e2e3 g8f6 f2f3 f6h5 f1c4 d7d5 c4d3 c8f5 d3f5,0xdb834f7f36202194d501093bd6b6d9af
+atomic,g1f3 f7f6 e2e3 d7d6 f3d4 c8g4 f2f3 g4e6 d4b5 e6c4 f1d3 c4b5 d3h7 e7e6 f3f4 g7g6 h2h4 b8c6 c2c3 c6e7 e3e4 e7g8 h4h5 g6g5 h5h6 f6f5 h6h7 g5g4 h7h8q d8h4,0xd983b97acfd3ea029ec62a877fa9c714
+atomic,e2e3 e7e6 d2d3 d8f6 f2f3 g8h6 h2h3 f8d6 f3f4 f6h4 g2g3 h4h5 d1h5 b7b6 b1c3 a7a6 c3d5 e6d5 g1f3 c8b7 d3d4 f7f6 f1a6 b8c6 c1d2,0x19fd61129f889db3c170cf00d1e6477e
+atomic,d2d4 b8c6 g1h3 g7g5 e2e4 c6b4 d1h5 h7h6 h5f7,0x17257977de52b7fa411b6860c4c27ba1
+atomic,g1f3 f7f6 f3d4 g8h6 e2e3 c7c6 d1h5 g7g6 d4b5 h6g4 f2f4 c6b5 h5d5 d7d6 d5f7,0x294a5ceda37127b097baafb0b079491a
+atomic,e2e4 e7e6 g1f3 d8f6 e4e5 f6f4 d2d4 f4d2,0x321b02eb3133bdff14c891310e63f7fb
+atomic,g1f3 f7f6 f3d4 e7e5 d4f5 d7d5 f5e7 c8g4 f2f3 g4f3 g2g4 d8d6,0x5e874c3ad25f982a4ba6f62c464531de
+atomic,g1f3 f7f6 f3d4 c7c6 d4f5 e7e6 f5g7 d8a5 b2b4 a5h5 g2g4 h5h4,0x546c73e676564f6a2a51b1bf96864d6a
+atomic,g1f3 f7f6 f3d4 g8h6 g2g4 c7c6 d4b3 e7e6 b3a5 f6f5 h2h4 f5g4 f2f3 d8f6 d2d4 h6g4 e2e3 g4f2 d1d2 f2d3 d2d3 f6g6 h1g1 g6h5 a5b7 f8d6 g1g5 d6g3 e1d1 g3e1 b2b3 e1d2 c1a3 d2b4 a3b4 h5h4 b1a3 e8g8 f1h3 g7g5 d1d2 g5g4 a1g1 g8h8 d2c1 g4g3 f3f4 h7h5 a3c4 d7d6 c4a5 g3g2 a5b7 h5h4 b7d8 f8g8 d8f7 h8h7 f7g5 h7h8 g5f7 h8h7 e3e4 d6d5 f4f5 e6f5 e4e5,0xf6b536189ef479c17ad5b307b4601c94
+atomic,d2d4 g8f6 c2c4 f6e4 e2e3 e4f2,0xf9a6e56bb7af8acec7d2b6bde1f5a6b2
+atomic,e2e4 g8f6 f2f3 f6h5 f1c4 d7d5 c4b5 c7c6 d2d4 e7e5 d4e5 h5f4 c1f4 f8b4 c2c3 b4c5 b5c6 b8c6 d1e2 c6e5 e2b5 e5c6 g1e2 d5e4 e2d4 d8e7 d4e6 e7d6 b5c6 c8e6 e1g1 a8d8 f1e1 e8d7 e1e7 d7d6 e7d7 d6e5 d7d5 e5f6 d5f5 f6e6,0x4e2aa1c74586e81326ca910dcc3c4b11
+atomic,e2e3 e7e6 d1f3 f7f5 f3h5 g7g6 h5h4 g8f6 g1f3 g6g5 f3e5 d7d6 e5f7 d8e7 h4a4 c7c6 f7d6 f6e4,0x18af0fd1ee99042597bd7c5a50670a7b
+atomic,g1f3 d7d6 f3g5 f7f6 g5f7 d8d7 f7d6 c8g4 f2f3 g8h6 f3g4 h6g4 e2e4 g4f2 d1h5 g7g6 h5h4 f8h6 d2d3 h6d2 e1e2 f2d3,0xdc41f9a9b21d654ee16f03be2b8bf1a6
+atomic,,0x3d71fe83987aab73463b96181691fc9c
+atomic,g1h3 h7h6 e2e3 e7e6 h3f4 d7d5 d2d4 g7g6 c2c3 e6e5 b1a3 b7b5 f4d5 a7a5 d4d5 c7c6 d5d6 b8d7 g2g3 g8f6 f2f3 h6h5 a3c4 b5c4 f1c4 f6d5 c4d5 c8a6 d1b3 a6c4 b3b7 d8c7 b7c8 c7c8 b2b3 c4e2 c1a3 e8d7 a3c5 h5h4 g3g4 f7f5 g4g5 e5e4 f3f4 f8g7 h2h3 g7d4 c5d4 c6c5 e1f2,0x73d2ef886ced5c2b84a7163d8c5c0766
+atomic,d2d4 g7g6 g1f3 f7f6 b1a3 c7c6 c2c3 e7e6 e2e4 d7d5 e4e5 f8b4 a3b5 d8a5 c3b4 b8a6 b2b4 g8e7 e5f6 e8g8,0x7404503414de39b52f2f7ab6fff18e16
+atomic,g1f3 f7f6 f3d4 g8h6 d4f3 h6g4 d2d3 g4f2,0x1fa15c025fc7176ab9cea7b7463081f1
+atomic,e2e4 g8f6 b1c3 f6g4 f2f4 g4f2 d1h5 g7g6 h5d5,0xe4eef0b9d127fa3f6324686a07bc27cd
+atomic,e2e4 e7e6 d1f3 f7f6 e4e5 b8c6 e5f6 g8f6 g1h3 f8c5 d2d4,0x2be415496729e125a78d97fed134d652
+atomic,g1f3 f7f6 f3d4 g8h6 e2e3 b8c6 d4f5 h6f5 d1h5 g7g6 h5d5 e7e6,0xed407c76dd1e4c4dd9b0129bf6f61c0f
+atomic,e2e3 g8f6 d1f3 c7c6 g1h3 d8a5 c2c3 e8d8 h3g5,0x6a394872c7d77dd333a60804f07d4b97
+atomic,e2e4 e7e6 g1f3 f7f6 f1b5 c7c6 b1c3 f8b4 e1g1 d7d5 f3h4 g7g6 h4g6 h7h5 g2g4 h5g4 h2h4 f6f5 e4f5 d8g5 d1g4 g5h4 f2f4,0x397192d36a96e2185c319ad6f5d567a0
+atomic,g1f3 f7f6 b1c3 c7c6 c3b5 c6b5 e2e3 a7a6 f3e5 f6e5 d1h5 g7g6 h5d5 d7d6 d5f7,0xbcbd9779edfd4768579ee6d3b008be1e
+atomic,g1h3 f7f6 e2e3 b8c6 f1b5 c6b4 b5d7,0x71d9cf6dc8cf5079a3a23a595857c461
+atomic,d2d4 g8f6 e2e4 f6g4 f2f3 g4f2 d1e2 f2d1,0xbb2e4c60cae630db7485a082e75ca199
+atomic,g1f3 f7f6 f3d4 c7c6 d4f5 e7e6 f5g7 b8a6 b2b4 c6c5 c2c3 c5b4 d1a4 b7b5 a4a5 d8b6 a5b5 c8b7 f2f3 a8c8 c1a3 d7d5 a3c5 f6f5 b1a3 e6e5 a3b5 a7a5 b5d6 e8f8 d6b7,0x5ee21ea5737ab4c01555fdb56e8649bb
+atomic,e2e4 e7e6 d1f3 f7f6 e4e5 b8c6 e5f6 g8f6 f1c4 c6d4 c4d5,0x024011b7ac92acd15197ce32528a8b0b
+atomic,g1f3 f7f6 b1c3 g8h6 g2g4 c7c6 d2d4 d7d6 c3d5 c6d5 e2e4 b7b5 f3e5 d6e5,0x99936d568c1e8eeaa92f4ce1159649bb
+atomic,g1h3 h7h6 e2e4 d7d6 b1a3 b7b5 d2d4 c8g4 f2f3 g4h3 g2g3 g7g6 d4d5 e7e6 e4e5 f7f5 d5e6 d6d5 e5e6 f8e7,0xa724f59b8a9f884c72089ee2733673e4
+atomic,g1f3 f7f6 e2e3 c7c6 b1c3 g8h6 c3d5 c6d5 f3e5 f6e5 d1h5,0xaa27e4ba7709f196b1bdd19f01aadcf7
+atomic,g1f3 f7f6 f3d4 d7d5 d4f5 c8f5 e2e3 h7h5 f1b5 c7c6 b5d3 g7g6 b1c3 d5d4 c3d5 c6d5 d3b5 b8c6 d2d3 g8h6 h2h3 h6f5 g2g3 d4e3 c1f4 d8d4 f4e3 d4e5 f2f4 e5e6 b5c4 f5d4 c2c3 d4c2 e1f1 e6d6 c4f7 e8d8 e3c5 c2e3 f1g1 e3d1 c5d6 e7e5 d3d4 e5d4 a1d1 f8d6 d1e1 d8c7 e1e7 d6e7 h1h2 a8d8 h2d2 d8d3 d2d3 h8e8 g3g4 e8e2 g1f1 c7d6 g4h5 d6d5 c3c4 d5e4 c4c5 e2c2 c5c6 b7c6 b2b4 e4f3 b4b5 c2c1 f1e2 f3e4 b5b6 a7b6,0x6ec9be11107af01a194afbcaf390fce1
+atomic,e2e4 f7f6 d1h5 g7g6 h5d5 d7d6 d5f7 e8d7,0xa7b371ed43c7449708be63d20f158ebf
+atomic,b1c3 c7c6 c3e4 d8a5 c2c3 a5d5 d2d3 f7f6 e4c5 d7d6 c5b7 g8h6,0x824930d7f734208ad73616aa512c4655
+atomic,d2d4 b8c6 b2b4 d7d5 e2e4 c8g4 f2f3 g4h5 e4d5 h5g6,0x869063573751fae68edf18b23bc5ca71
+atomic,g1h3 h7h6 e2e4 e7e6 e4e5 d7d6 d1h5 g7g6 h5f3 f7f5 e5f6 g8f6 d2d4 b8c6 c1g5 e6e5 g5f6 c8f5 d4e5 d8f6 h3g5 e8c8 g5e6,0x3199962a044a4309257f3d920c348741
+atomic,g1f3 f7f6 e2e3 d7d6 f3d4 c8g4 f2f3 g4e6 d4b5 e6c4 d2d3 c4b5 b1c3 c7c6 f3f4 h7h5 c3e4 e7e5 e4c5 d6c5 d3d4 e5e4 d4d5,0x966856b09f102474f58477485e88edb8
+atomic,d2d4 b8a6 b2b4 d7d5 g1h3 h7h6 e2e4 e7e6 g2g3,0xa96dee6af8a9b00d85be904b7741accf
+atomic,,0x3d71fe83987aab73463b96181691fc9c
+atomic,g1h3 h7h6 e2e4 e7e6 b1a3 b7b5 d2d4 f7f5 c1g5 h6g5 h3g5 g7g6 g5f7 d8h4 g2g3 f8a3 g3h4 g8h6 h2h4 f5f4 f2f3 d7d6 a2a4 a7a5 f7h8 e6e5 h4h5 g6g5 d4e5 c8b7 e4e5 h6f5 f1d3 f5e3 d1e2 e3g2 e1f1 g2e3 f1g1 b8d7 d3g6 e8f8 e5d6 a8d8 e2d3 e3c2 a1d1 b7d5,0x9f1b0855c94831bdbb1d1a4e7068759c
+atomic,g1f3 d7d6 f3g5 f7f6 g5f7 d8d7 f7d8 d7g4 f2f3 g4d4 d2d3 d4f2 e1d2,0x57fd3af69d2ba97781e28537d9b672c8
+atomic,e2e3 e7e6 b1c3 f8b4 g1h3 h7h6 f1b5 c7c6 h3f4 h6h5 h2h4 d7d5,0xd557d67aa2f28642155f1197e0fc063d
+atomic,g1f3 e7e5 f3g5 f7f5 e2e3 c7c6 g5f7 d8a5 c2c3 a5a4 b2b3 a4h4 g2g3 h4h5 f2f3 g8f6,0xe78c0c0855c0307e71cbb7ef9b726ee1
+atomic,g1f3 f7f6 b1c3 c7c6 e2e3 d7d5 f3e5 f6e5,0xc0b278b3385ed992bde460c74f05692f
+atomic,g1f3 e7e5 f3g5 f7f6 g5f7 d8e7 f7d6 e7d6 d2d4 f8b4 c2c3 g8e7 d4e5 e8g8 d1d5 e7d5 e2e3 f6f5 f1c4 d7d5 c3b4 d5d4,0x976e7dd30c1f5b2af2d3209c1a3a46c4
+atomic,e2e4 e7e6 d1f3 f7f6 b1c3 c7c6 c3a4 d8a5 b2b4 a5h5 a4c5 f8c5 d2d3 h5h4 c1g5,0xbd355cb5e2965b1fd1869e9b2790492a
+crazyhouse,e2e4 e7e6 d2d4 f7f5 e4f5 e6f5 f1c4 g8e7 P@f7,0xda7c17e1b45628415faa578187420083
+crazyhouse,d2d4 b7b6 d4d5 c8b7 e2e4 e7e6 d5e6 f7e6 d1h5 P@g6 h5g4 g8f6 g4h4 b7e4 h4e4 f6e4 B@b7 Q@f5 P@f3 f8c5 b7a8 e4f2 a8e4 f5e5 a2a3 P@f5,0x35072417cf5f4710f949cbe981bf7b5a
+crazyhouse,d2d4 e7e6 b1c3 d7d5 a2a3 g8f6 g1f3 h7h5 e2e3,0x29edf40bf1ed98de70e144d9ee630a4b
+crazyhouse,d2d4 e7e6 g1f3 d7d5 c1f4 f7f6 e2e3 f8d6 f4d6 d8d6 c2c3 e6e5 d4e5 f6e5 B@c2 e5e4 f3d4 c8g4 f1e2 P@f3 g2f3 e4f3 e2f3 B@e4 f3g4 e4h1 B@f3 P@g2 f3g2 R@f1 g2f1 d6h2 R@c8 e8f7 g4h5 P@g6 P@e6 f7e7 h5f3 h2g1 f3h1 g1h1,0xbd3ead0719573792f08f4588107f1e14
+crazyhouse,d2d4 d7d5 e2e3 b8c6 a2a3 g8f6 b2b3 c8f5 c2c4 d5c4 b3c4 f5b1 a1b1 N@c3 d1c2 c3b1 c2b1 b7b6 B@b7 a8b8 b7c6 P@d7 N@b7 d8c8 c6d7 f6d7 P@c6 d7f6 P@d7 c8d7 c6d7 e8d7 b1f5 e7e6 f5b5 c7c6 b5a6 B@c3 c1d2 R@b1 N@d1 P@c2 f1e2 c2c1q d2c3 c1c3 B@d2 c3b3 a6a7 d7c7,0x6b19fdfb7d3d2323dd5f7afd78a149de
+crazyhouse,d2d4 b7b6 a2a3 c8b7 b1c3 e7e6 c1f4 f8e7 e2e4 h7h5 e4e5 g8h6 d1h5 b8c6 P@g6 c6d4 g6f7 h6f7 h5d1 d4f5 P@g6 f7h6 g1f3 P@g5 f4d2 P@g4,0x4218f0c74406b5bb5f9189eb74c850a4
+crazyhouse,d2d4 d7d5 c1f4 c8f5 e2e3 e7e6 g1f3 b8a6 f1a6 b7a6 N@c6 d8d7 f3e5 d7c8 c6a7 B@a5 e1f1 c8b7 P@d7 e8d8 a7c6 b7c6 e5c6 d8d7 c6a5 P@c6 f4c7 d7c7,0x13e2520897235c673bd863bcc25b12e2
+crazyhouse,g1f3 d7d5 d2d4 b8c6 c1f4 c8g4 h2h3 g4h5 e2e3 e7e6 f1e2 f8d6 f3e5 h5e2 d1e2 d6e5 f4e5 c6e5 d4e5 N@g6 N@h5 B@h6 B@f4 g6f4 e3f4 B@g6 B@a4 B@c6 a4c6 b7c6 B@b7 B@b5 e2b5 c6b5 B@c6 e8f8 N@d7 f8e7 h5g7 h6g7 P@f6 g8f6 e5f6 g7f6 d7f6 P@e2 N@g8 h8g8 f6g8 e7f8 B@h6 f8g8 R@g7 g8h8 b1c3 N@f5 b7a8 f5h6 R@e8 d8e8 c6e8 h8g7 e8f7 Q@f6 P@e5 P@d2 e1d2 f6f4 P@e3 N@c4 d2e2 N@g3 e2e1 P@d2 e1d1 f4f7,0xd32ca54df0a6b2495f26210d401713af
+crazyhouse,e2e4 b8c6 d2d4 d7d6 g1f3 g8f6 b1c3 g7g6 h2h3 f8g7 f1e2 e7e5 d4e5 c6e5,0xd27b59dce57f78b6bdd704d0d2776be7
+crazyhouse,e2e4 g8f6 e4e5 f6e4 d2d4 d7d6 f2f3 d6e5 f3e4 d8d4 d1d4 e5d4 f1c4 e7e6 g1f3 b8c6 e1g1 f8c5 N@d3 c5e7 c4b5 P@e2 f1e1 Q@d1 Q@f2 d1e1 d3e1 R@f1 f2f1 e2f1q g1f1 c8d7 P@d5 e6d5 e4d5 P@e3 R@e2 P@f2 e2f2 e3f2 f1f2 R@h1 d5c6 b7c6 b5c4 P@e3 c1e3 d4e3 f2e3 h1e1 f3e1 N@g4 e3d2 Q@e3,0x15cc0e602d3b611fc5b7f701527f92b1
+crazyhouse,e2e4 c7c5 g1f3 d7d6 f1c4 e7e6 d2d4 c5d4 f3d4 b8c6 d4c6 b7c6 e1g1 f8e7 c1f4 d6d5 e4d5 c6d5 c4b5 c8d7 b5d7 d8d7 P@c7 g8f6 P@b7 e8g8 b7a8q f8a8 B@b7 a8f8 b1c3,0xadfec59cd88f9c30598038be660150dd
+crazyhouse,g2g3 e7e5 f1g2 d7d5 b1c3 g8f6 d2d3 d5d4 c3b1 f6g4 h2h3 g4f6 c1g5 h7h6 g5f6 d8f6 g1f3 f8b4 c2c3 d4c3 b1c3 b4c3 b2c3 g7g5 N@d5 f6d6 B@b3 g5g4 h3g4 c8g4 f3h4 P@g5 P@h3 g5h4 h3g4 h4g3 f2g3,0x853fcfe4b818c2b12c73428dea932ec3
+crazyhouse,e2e4 c7c5 f1c4 e7e6 d2d4 c5d4 d1d4 b8c6 d4d2 g8f6 d2g5 h7h6 g5g3 f6e4 g3f3 d7d5 c4b5 d8a5 b1c3 e4c3 b5c6 b7c6 b2c3 P@e4 f3f4 a5c3 e1d1 P@e5 f4d2 c3d2 c1d2 Q@f1 N@e1 P@e2 d1c1 f1e1 d2e1 f8a3,0xf31d10074b4b38f464146926eb4339b0
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 d7d5 c1g5 d5c4 g5f6 d8f6,0x268946cca16a04a889d3b5f60de428f1
+crazyhouse,e2e4 e7e6 d2d4 f8c5 d4c5 d8h4 d1f3 h4e4 f3e4 d7d5 e4e5 b8a6 e5g7 g8e7 g7h8,0xeb521d169c3048e12541f7c2a13f93a2
+crazyhouse,d2d4 g8f6 b1c3 d7d5 c1g5 c8f5 g1f3 h7h6 g5h4 e7e6 a2a3 f8e7 e2e3 b8d7 f1d3 f6e4 h4e7 d8e7 e1g1 B@d6 B@g3 e8g8 c3b5 a7a6 b5d6 c7d6 B@f4 e4g3 f4g3 N@e4 N@h5 B@g4 h5g7 g8g7 P@e5,0x3a0939094d2f345292daf9e571fd5260
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1c4 d7d6 b1c3 f8e7 e1g1 g8f6 d2d4 c6d4 f3d4 e5d4 d1d4 e8g8 c1g5 N@c6 d4e3 P@d4 e3g3 d4c3 N@h6 g8h8,0x6adaccacecd545fd31aad78affc1b973
+crazyhouse,g1f3 d7d5 d2d4 b8c6 c1g5 c8g4 h2h3 g4h5 b1d2 g8f6 g2g4 h5g6 e2e3 e7e6 f1b5 f8e7 f3e5 e8g8 b5c6 b7c6 e5c6 f6g4 c6e7 d8e7 g5e7 g4f2 P@f6 N@f5 f6g7 f5g7 e7f6 B@h6 B@e5 f2h1 N@e7 g8h8,0x629582738d27411af39265dadea0d478
+crazyhouse,e2e4 e7e5 f1c4 g8f6 d2d3 f8c5 g1f3 c5f2 e1f2 f6g4 f2f1 e8g8 h2h3 g4f6 c1g5 d7d6 B@h4,0xe258be6e57b83ef104980f53e99c7abe
+crazyhouse,e2e4 e7e5 c2c4 b8c6 b1c3 g8f6 d1f3 f8b4 d2d3 b4c3 b2c3 d7d6 B@a4 c8d7 d3d4 e5d4 c3d4 c6d4 f3d3 d4c6 a4c6 d7c6 c1g5 e8g8 g5f6 d8f6 P@b5 f6a1 e1e2 a1a2 N@d2 c6e4 d3e4 f8e8 N@e7 g8f8 B@h4 f7f6 g1f3 e8e7 e4e7 f8e7 R@e4 e7f7 h4f6 g7f6 f3h4 a8e8 e4e8 f7e8 R@e3 e8d7 P@f7 B@h6 h4f5,0xd7e5314c82a2717a5a923ef6a1ce3065
+crazyhouse,e2e4 c7c5 f1c4 e7e6 g1f3 b8c6 e1g1 d7d6 b1c3 g8f6 d2d4 c5d4 f3d4 c6d4 d1d4 N@c6 c4b5 c8d7 b5c6 d7c6 P@d5 P@c5 d4d2 f6e4 c3e4 c6d5 e4c3,0xce2dbf51876c9ca0f9684697d7e2cb70
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1e2 f8c5 d2d3 g8f6,0x5ca3b8b1ca41d358531a978c35fe27fc
+crazyhouse,d2d4 d7d6 h2h3 d8d7 e2e3 d7c6 c2c4 d6d5 c4d5 c6d5 b1c3 d5a5,0x072df98059e2a9e391eefe7e7468d536
+crazyhouse,e2e4 e7e6 d2d4 d7d5 e4d5 e6d5 d1e2 P@e4 f2f3 g8f6 f3e4,0x756db200ec0681b30ccc5accb6d3d90d
+crazyhouse,e2e4 e7e5 g1f3 d7d6 f1b5 c7c6 b5e2 c8g4 b1c3 g4f3 e2f3 b8d7 d2d4 f7f6 d4e5 f6e5 f3h5 g7g6 h5f3 N@d4 e1g1 d4f3 d1f3 P@f4 g2g3 g6g5 g3f4 g5f4 P@g3 P@g5 g3f4 g5f4 N@g2 P@g5 P@g3 h7h5 g3f4 g5g4 f3e2 B@f3 e2e3 f3g2 g1g2 e5f4,0x00fc7959ec36efa1209985ee17e6552f
+crazyhouse,d2d4 b7b6 e2e4 e7e6 f1d3 c8b7 b1d2 b8c6 c2c3 g8f6 g1f3 f8e7 e1g1 a7a6 f1e1 d7d6 d2f1 f6g4 f1g3 h7h5 d4d5 e6d5 e4d5 c6e5 f3e5 d6e5 d3f5 d8d5 P@d7 e8f8 d1d5 b7d5 f5g4 h5g4 Q@c8 a8c8 d7c8q B@d8 c8g4 N@h3 g4h3 h8h3 N@d7 f8g8 R@e8 Q@f8 e8f8 e7f8 N@f6 g7f6 d7f6 d8f6 Q@g4,0x3477d128a46f187fe0bfa6acf2ef8659
+crazyhouse,e2e4 g7g6 d2d4 f8g7 b1c3 g8f6 g1f3 e8g8 f1d3 h7h6 h2h4 d7d6 e4e5 b8c6 e5f6 e7f6 d4d5 c6e5 f3e5 d6e5 h4h5 g6h5 d1h5 P@g6 d3g6 f7g6 h5g6 B@h7 g6g3 P@g5 P@e6 N@f4 c1f4 e5f4 g3g4,0x41fcb43a81d33bfc8a5aef66b8c4c1a2
+crazyhouse,d2d4 g8f6 b1c3 d7d5 c1g5 c8g4 f2f3 b8d7 e2e3 h7h5 g1e2 e7e5 d1d2 f8b4 d4e5 d7e5 e2d4 P@c5 f3g4 c5d4 e3d4 N@f3 g2f3 e5f3 e1d1 f3d2 g5d2 b4c3 d2c3 N@f2,0xb131ac13743e47c91c22a8af5b211144
+crazyhouse,e2e4 d7d5 e4d5 d8d5 d2d4 e7e5 g1f3 e5d4 d1d4 d5d4 f3d4 P@c5 Q@e2 Q@e7 d4f3 b8c6 b1c3 g8f6 c1g5 h7h6 g5f6 g7f6 a1d1 c8e6,0x143f39e0dcd56b16b03c601374a5a5c1
+crazyhouse,e2e4 a7a6 b2b4 e7e6 b4b5 a6b5 f1b5 d8g5 b5f1 g5f6 b1c3 f6e5 d2d4 e5a5 c1d2 a5b4 a1b1 b4d4 P@e3 d4f6 f1d3 f6c3,0xfbfee896ee7da245633e3d69ad011de2
+crazyhouse,d2d4 d7d5 c1g5 h7h6 g5h4 b8c6 e2e3 c8f5,0x96c33366d02d0b888d9f1cebcd470b94
+crazyhouse,e2e4 g8f6 b1c3 d7d5 e4e5 b8c6 g1f3 c8g4 f1b5 a7a6 b5c6 b7c6 c3a4 f6e4,0xc6a0895fa2e9cf5bd7fc3b883e7de9b0
+crazyhouse,e2e4 e7e6 b1c3 d7d5 f2f3 d5e4 f3e4 P@d5 e4d5 e6d5 g1f3 c8g4 f1e2 P@e4 f3e5 g4e2 d1e2 b8c6 e5c6 b7c6 e1g1 g8f6 d2d3 f8b4 c3d5 c6d5 B@c6 B@d7 c6a8 d8a8 R@e5 d7e6 d3e4 f6e4 e5e4 d5e4 P@d7 e6d7 N@e5 P@f3 g2f3 e4f3 e5f3 B@e4 f3g5 R@h1 g1f2 h1f1 f2f1 R@e1 e2e1,0xd54e1f46c8601f86e5db905ab7ca7d10
+crazyhouse,d2d4 g8f6 b1c3 d7d5 c1g5 c8g4 f2f3 b8d7 e2e3 h7h5 f3g4 f6g4 g5h4 d7f6 d1d2 P@b4 B@a4 c7c6 c3d1 f6e4 d2e2 d8a5 a4b3 g7g5 h4g5 e4g5 P@f3 g4f6 d1f2 B@c3 b2c3 b4c3,0xf54be3c247cd6b03387434f07f043076
+crazyhouse,e2e4 g8f6 b1c3 d7d5 e4e5 d5d4 e5f6 e7f6 f1b5,0xdc4fe1ed8182b4b8380e75abd07f8f06
+crazyhouse,d2d4 e7e6 h2h3 d7d5 g1f3 c7c5 g2g3 c5d4 f3d4 P@c5 f2f3 b8c6 d4b3 c5c4 b3d4 c6d4 d1d4 N@c6 d4d1 g8f6 f1g2 f6h5 g3g4 h5g3 h1g1 f7f5 e1f2 f8d6 f3f4 f5g4 f2g3 P@f3 e2f3 g4h3 g2h3 d6f4 c1f4 P@h4,0xef07800071fe8fa2af9a483af14a59c5
+crazyhouse,g1f3 b8c6 c2c4 e7e5 e2e4 d7d6 d2d3 c8g4 c1e3 g4f3 d1f3 d8f6 B@d1 f6f3 g2f3 N@d4 b1c3 Q@b6 b2b3 f8e7,0xdf8ca8467debd2160872fe8e1f8e732b
+crazyhouse,e2e4 e7e6 d2d4 d7d5 e4e5 a7a5 g1f3 a5a4 b1c3 f8b4 f1d3 g8e7 e1g1 e7g6 f3g5 b8c6 g5f7 e8f7 d1f3 N@f6 d3g6 h7g6 e5f6 g7f6 N@g5 f7g7,0x3dcf36b19ae8e80efc1bf3de668613e1
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1b5 f8c5 b5c6 b7c6 d2d3 B@g4 c1e3 c5e3 f2e3 d7d5 e4d5 c6d5 B@c6 c8d7 c6a8 e5e4 a8d5 e4f3 d5f7 e8f7 N@e5 f7e6 e5g4 f3g2 P@f5 e6d6 P@e5 d6c6 B@e4 B@d5 e4d5 c6d5 d1f3 d5c5 B@d4 c5b5 b1c3 b5a6 f3g2 B@b4 a2a3 b4c3 d4c3 B@c6 R@a5 a6b7 B@a6 b7b8 g2d2 d7f5 c3d4,0xf72fdae44b81dd077024cb0bd8451517
+crazyhouse,g1f3 d7d6 d2d4 g8f6 c1g5 h7h6 g5h4 b8d7 e2e3 g7g6 f1d3 f8g7 e1g1 e8g8 b1d2 c7c5 d4c5 d7c5 P@g5 h6g5 h4g5 P@h6 g5h6 g7h6 P@g5 h6g7 g5f6 g7f6 P@g5 f6g7 N@h6 g8h8 a1b1 B@h5,0x3a468e24f8330524dbc2a28c523748e9
+crazyhouse,d2d4 d7d6 e2e3 c7c5 d4c5 d8a5 c1d2 a5c5 P@d4 c5c7 g1f3 c8g4 b1a3 a7a6 c2c4 P@e4 c4c5 e4f3 g2f3 g4d7 c5d6 e7d6 a3c4 b7b5 P@b6 c7b7 c4d6 f8d6 P@c5 d6e7 P@d6 e7h4,0xda5eeaae1c90fe48dc7b63e901d92f14
+crazyhouse,e2e4 d7d5 b1c3 d5d4 c3d5 e7e6 d5f4 e6e5 f4d3 b8c6 g1f3 f8d6 a2a3 a7a6 f1e2 g8f6 h2h4 f6e4 h4h5 h7h6 h1h4 P@g4 f3h2 d8h4 e2g4 h4h2 P@d7 c8d7 g4d7 e8d7 d1g4,0xc5fb0cd6ba6787ee713c59ac4992af53
+crazyhouse,d2d4 g8f6 c1f4 d7d6 g1f3 c8f5 h2h3 h7h6 e2e3 a7a6 c2c3 b8d7 d1b3 b7b6,0xb9d430777a25aea37304342b53d1565e
+crazyhouse,g1f3 d7d5 d2d4 b8c6 c1f4 c8g4 h2h3 g4h5 e2e3 e7e6 f1e2 f8d6 f3e5 h5e2 d1e2 d6e5 f4e5 c6e5 d4e5 N@g6 N@h5 B@h6 B@f4 g6f4 e3f4 B@c4 B@d3 c4d3 c2d3 B@g6 B@a4 c7c6 N@d6 e8f8 d6b7 d8b6 b7d6 g6h5 e2h5 B@g6 h5e2 h6f4 P@f6 g7f6 e5f6 g8f6 P@e7 f8e7 B@e5 f4e5 e2e5 B@b4 B@c3 b4c3 b1c3 B@d4 e5f6 d4f6 B@e3,0x8758ca590e22fb7d688a3a4353a60076
+crazyhouse,d2d4 d7d5 g1f3 c8f5 b1c3 e7e6 c1g5 f8e7 g5e7 g8e7 e2e3 b8c6 B@h4 B@g6 f1d3 e8g8 e1g1 f7f6 f1e1 f5d3 c2d3 B@f5 e3e4 d5e4 d3e4 f5e4 c3e4 e7f5 h4f6 g7f6 P@g5 P@g7 g5f6 g7f6 P@e5 P@g7 e5f6 g7f6,0xf7940b18940589512aef2e40725a7248
+crazyhouse,e2e4 e7e5 g1f3 d7d6 f1c4 h7h6 d2d4 e5d4 f3d4 P@e5 d4f5 g8e7 f5e7 f8e7 N@f5 c8f5 e4f5,0xf101a0ab2dc0489ab95ac83c21e1ed2e
+crazyhouse,e2e4 a7a6 f1c4 e7e6 d2d4 d7d6 c1f4 c7c6 g1f3 b7b6 b1c3 b6b5 c4d3 b5b4 c3a4,0x7dd4cbe39fe528f324becd7fd91a724c
+crazyhouse,e2e4 c7c5 f1c4 e7e6 g1f3 b8c6 e1g1 d7d6 d2d4 c5d4 f3d4 c6d4 d1d4 N@c6 c4b5 c8d7 b5c6 d7c6 P@d5 B@c5 d4d3 e6d5 e4d5 c6d7 f1e1 P@e5 P@d4 c5d4 d3d4 P@c5 d4d2 g8f6 B@g5 f8e7 g5f6 e7f6 N@e4 P@e7 b1c3 B@b4 a2a3 b4c3 b2c3 N@c4 d2e2 c4b6 e4f6 e7f6 c3c4 N@d4 e2d3 e8g8 c1e3 d4f5 B@h3 f5e3 h3d7 e3g2 g1g2 d8d7 B@f5 d7f5 d3f5 B@g6 N@e7 g8h8 e7g6 f7g6 f5e6 P@f3 g2f3 N@d4 f3g2 B@f3,0xdbbdb550537f183eb5094537201dcf5a
+crazyhouse,d2d4 g8f6 b1c3 b8c6 c1g5 d7d6 e2e3 h7h6 g5f6 e7f6 f1d3 f6f5 g1e2 d6d5 e2g3 B@e4 d3e4 f5e4 N@f4 f8b4 e1g1 b4c3 b2c3 N@h4 B@h5 d8g5 f2f3 e4f3 h5f3 P@e4 f3e4 d5e4 g3e4 g5e7 B@d5 B@e6 d5c6 b7c6 P@f6 g7f6 P@g7 h8g8 P@h7 g8g7 h7h8q B@f8 N@h5 B@g5 h5g7 e8d8 R@e8 e7e8 g7e8 g5f4 h8f6 P@e7 f6h4 d8e8 N@f6,0xa7007ee4b0a020f15f1d2e165c85b132
+crazyhouse,e2e4 g8f6 b1c3 b8c6 d2d4 e7e6 e4e5 f6d5 g1f3 d7d6 f1b5 c8d7 e5d6 c7d6 d1e2 c6b4 b5d7 d8d7,0xbfdfda8cd9b04122ad39def8ade1dc79
+crazyhouse,d2d4 e7e6 a2a3 b8c6 e2e3 d8g5 f1b5 c6e7 b5c6 b7c6 d1f3 B@g4 f3f7,0x20657c2dc02068500e5007f7bab39fe4
+crazyhouse,e2e4 g7g6 g1f3 f8g7 f1c4 h7h6 d2d4 g8f6 h2h3 e8g8 c2c3 d7d6 c1e3 b8c6 d1d2 g8h7 b1a3 e7e5 d4e5 d6e5 a1d1 d8d2 d1d2 P@d4 c3d4 e5d4 f3d4 c6d4 e3d4 P@f5 d4f6 g7f6 N@d5 B@g7 d5f6 g7f6 e4f5 c8f5 N@g3 N@e4 g3e4 f5e4 P@f3 e4f3 g2f3 N@g2 e1f1 g2f4 P@g2 f4g2 f1g2 N@f4,0xa65c821b192b2191b00d9848314d0850
+crazyhouse,e2e4 d7d6 f1c4 e7e6 d2d4 d6d5 e4d5 e6d5 c4b5 c7c6 b5a4 g8f6 P@e5 c8g4 g1e2 f6e4 b1d2 e4d2 c1d2 P@f3,0x9ce07c44598263b3b0ea707424a81754
+crazyhouse,e2e4 e7e5 g1f3 d7d6 f1e2 g8f6 d2d3 f8e7 e1g1 e8g8 c1g5 b8c6 b1c3 c6d4 g5f6 d4f3 e2f3 e7f6,0xa16a01bf5d980680b27b538eaf99ad21
+crazyhouse,e2e4 g8f6 e4e5 d7d5 e5f6 e7f6 f1e2 f8d6 g1f3 e8g8 d2d4 f8e8 e1g1 c7c6 c2c4 d5c4 e2c4 P@d5 c4d3 P@e4 d3e4,0xd285044959dbae8128c42ae234b2290c
+crazyhouse,e2e4 e7e6 d1f3 g8f6 b1c3 b8c6 e4e5 c6d4 e5f6 d4f3 g1f3 d8f6 f1e2 f8d6 N@e4 f6e7 e4d6 c7d6 e1g1 e8g8 B@g5 P@f6 g5h4 b7b6 d2d3 c8b7 h4f6 e7f6 P@h6 g7h6 N@g4 f6g6 g4h6 g8h8 f3h4 g6f6 c3e4 b7e4 d3e4 P@g7 B@g5 f6e5 h6g4 e5c5 P@f6 g7f6 g5f6 P@g7 f6g7 h8g7,0x9f22489e54e6536f4ab933d47e1adb34
+crazyhouse,e2e4 d7d6 d2d4 c7c6 h2h3 c8d7 f1d3 e7e5 d4e5 d6e5 P@f5 g8f6 c1g5 f8c5 d1e2 d8b6 g5f6 g7f6 N@c4 b6c7 b1c3 b7b5 c4d2 B@d4 e1c1 d4c3 b2c3,0xd0502017345a91116420d3613b138acf
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1b5 f8c5 b5c6 d7c6 e1g1 g8f6 f3e5 B@d4 e5d3 d4f2 d3f2 f6g4 P@e3,0x4f3549296c919f2e9e0f6e4e09e45e0c
+crazyhouse,e2e4 c7c5 g1f3 b8c6 f1c4 e7e6 d2d4 c5d4 f3d4 c6d4 d1d4 N@c6 d4d1 g8f6 P@d6 P@c7 d6c7 d8c7 b1c3 a7a6 P@d5 c6e5 c4b3 P@c4 b3a4 f8b4 e1g1 b4c3 b2c3 f6e4 d5e6 f7e6 c1f4 N@g6 P@f7 e8f7 f4e5 c7e5 B@d4 e5c7 d1f3 e4f6 N@g5 f7e7 d4f6 g7f6 g5e4 B@e5 N@g4 P@f5 g4e5 g6e5 B@d6 c7d6 e4d6 e5f3 g2f3 N@h3 g1h1 P@g2 h1g2 h3f4 g2g3 Q@g2 g3f4 B@e5 f4e3 e5d6 f1g1 N@d5 e3e2 d5c3 e2d2 g2f3 g1g7 P@f7,0x52b166d3ae0cc0f2610e6e06544130b5
+crazyhouse,g2g3 g7g6 f1g2 f8g7 c2c3 g8f6 d1b3 c7c6 b1a3 e8g8 a3c4 d7d5 c4e3 f6g4 e3g4 c8g4 b3b7 N@c2 e1d1 c2a1 b7a8 g4f5 P@d3 d8c7 N@b4 R@c8 R@b7 b8d7 a8a7 c7e5 e2e4 d5e4 d3e4 f5g4 P@f3 g4e6 P@d4 e5d6 e4e5 c8a8 e5d6 a8a7 b7a7 e7d6 Q@b1 d7b6 b1a1 b6c4 N@e7 g8h8 e7c6,0x55db2bb8463591793f833b6f3cef32a9
+crazyhouse,e2e4 e7e6 f1c4 g8f6 d1h5 b8c6 g1f3 f8c5 h5f7 e8f7 f3g5 f7g6 d2d3 c5f2,0x35ccd3cfdb9d3ec62442b1ccc075bde1
+crazyhouse,e2e4 e7e6 d2d4 f7f5 e4f5 e6f5 d1h5 P@g6 h5e2 d8e7 e2e7 g8e7 P@f7 e8f7 g1f3 P@d5 f3e5 f7e6 Q@f7,0x80255489618356a9f87f4c9c4e8ac870
+crazyhouse,e2e4 c7c5 b1c3 b8c6 g2g3 e7e6 f1g2 a7a6 f2f4 d7d6 g1f3 c8d7 d2d3 h7h6 c1e3 f8e7 h2h3 e7f6 d1d2 f6e7 a1b1 b7b5 e1g1 g8f6 e4e5 f6d5 c3d5 e6d5 e5d6 e7d6 b1e1,0xfc46539872a60f4aff417ca78457eb95
+crazyhouse,e2e4 d7d6 g1f3 c8g4 f1e2 g8f6 b1c3 c7c5 f3g5 g4e2 d1e2 h7h6 g5f7 e8f7 B@d5 e7e6 d5b7 B@c6 b7a8 c6a8 e1g1 N@d4 e2d1 B@b4 P@e3 b4c3 e3d4 c3d4 d2d3 N@g4 P@e3 d4e5 f2f4 P@f2 f1f2 g4f2 g1f2 a8e4 f4e5 d6e5 P@f3 e4c6 c1d2 P@d4 N@c4 d8c7 B@g3 b8d7 e3d4 c5d4 N@a6 P@e3 d2e3 d4e3,0xfc550981848c8dbb1694fc450ebcaacd
+crazyhouse,e2e4 e7e5 g1f3 d7d6 f1c4 f8e7 e1g1 g8f6 c4f7 e8f7 b1c3 h8f8,0x562bf937ce1a5d1ae214ab457728de97
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1c4 d7d6 d2d3 f8e7 e1g1 g8f6 b1c3 e8g8 c3d5 c6a5 d5e7 d8e7 c4b3 a5b3 a2b3 a7a6 c1g5 h7h6 g5f6 e7f6 N@d5 f6d8 B@e7 d8d7 e7f8 g8f8 R@h8 B@g8 N@h7 f8e8 h8g8 B@f8,0xea1bfa6353f90da7770151076762fae2
+crazyhouse,e2e4 g7g6 b1c3 f8g7 d2d4 g8f6 e4e5 e8g8 e5f6 e7f6 f1e2 h7h6 g1f3 d7d6 N@e4 c8f5 c1h6 g7h6 P@g5 f6g5 e4g5 h6g5 f3g5 d8g5 P@e5 P@g7 B@g3 b8c6 h2h4 g5e7 e5d6 c7d6 P@g5 f5c2 d1c2 c6d4 c2e4 e7e4 c3e4 N@c2 e1f1 N@e3 f2e3 c2e3 f1f2 e3d5 B@f4 P@e5 e2c4 e5f4 g3f4 d5f4 c4f7 f8f7 P@h7 g8h7 N@f6 g7f6 Q@h6,0xa23b4aa5a6dc2ef13a75b0223b705871
+crazyhouse,d2d4 d7d5 c1f4 e7e6 g1f3 f7f5 e2e3 g8f6 b1d2,0x607af34fbbfe826f4be1cb5cdff8c828
+crazyhouse,b1c3 e7e6 d2d4 d7d5 e2e3 f8b4 g1f3 b4c3 b2c3 g8f6 c1d2 f6e4 f1d3 e4d2 f3d2 B@b2 N@e2 b2a1 d1a1 h7h5 e1g1 h5h4 h2h3 b8c6 c3c4,0xb532940b188f82b3c14955659ea1a4ca
+crazyhouse,g2g3 d7d6 f1g2 g7g6 c2c3 f8g7 d1b3 g8f6 b1a3 e8g8 a3c4 b8c6 g2c6 b7c6 c4a5 e7e5 a5c6 d8d7 c6a5 B@g2 g1f3 g2h1,0x02c2972382ab40de543572cd47ed1567
+crazyhouse,e2e4 c7c5 b1c3 b8c6 g1f3 d7d6 f1b5 c8g4 h2h3 g4f3 d1f3 g7g6 e1g1 f8g7 c3d5 g8f6 d5f6 g7f6 d2d3 e8g8 b5c6 b7c6 B@h6 N@d4 f3e3 N@e2 g1h1 f6g7 h6g7 g8g7 c2c3 d4c2 e3e2 c2a1 B@h6 g7g8 h6f8 d8f8 N@d7 f8c8 c1h6 c8d7 f1a1 B@g7 h6g7 g8g7 N@g5 B@h6 B@g4 e7e6 g4e6 f7e6 R@f7 d7f7 g5f7 g7f7 Q@b7 N@c7 b7c7 f7g8 P@f7 g8h8 c7b7,0x9b9077c3335632c38eb683d668320863
+crazyhouse,b2b3 d7d5 c1b2 g8f6 g2g3 b8c6 f1g2 e7e5 d2d3 f8d6 b1d2 c8h3 e2e4,0x0a91468add0433e1135d2f86691b7880
+crazyhouse,d2d4 d7d6 h2h3 g8f6 g1f3 c8f5 g2g3 b8d7,0x94f63e0701c229974ed183fc65054d93
+crazyhouse,d2d4 d7d5 g1f3 g8f6 b1c3 c7c6 c1f4 e7e6 e2e3 f8d6 f4d6 d8d6 B@e5 d6d8 f1d3 b8d7 e5d6 B@c7 d6c7 d8c7 B@g3 B@d6 g3d6 c7d6 B@e5 d6e7 e1g1 d7e5 f3e5,0x4aecb5539e662ea5595a2ecdc2e9b578
+crazyhouse,e2e4 e7e6 d2d4 d7d6 g1f3 b8c6 c1e3 g8f6 f1d3 f8e7 b1d2 f6g4 e1g1 e6e5 d4d5 c6b8 c2c3 e8g8 a1c1 g4e3 f2e3,0x5f93dd538c7ad41bc460ddd3b08f714b
+crazyhouse,e2e4 c7c5 b1c3 b8c6 g1f3 c6d4 f1c4 d4f3 d1f3 e7e6 d2d3 N@d4 f3d1 b7b6 c1e3 c8b7 N@f3 d4f3 g2f3 d7d5 e4d5 e6d5 c3d5 b7d5 c4d5 d8d5 B@e4,0xf870b7ad29a425466aa6233c658db28e
+crazyhouse,e2e4 c7c5 f1c4 b8c6 a2a3 e7e6 g1f3 d7d6 d2d3 g8f6 c2c3 f8e7 c1g5 c8d7 b1d2 h7h6 g5h4 a7a6 e1g1 b7b5 c4a2 e8g8 h4f6 e7f6 d3d4 c5d4 c3d4 f6d4 P@c3 d4a7 d2b3 B@b6 d1d6 P@e3 P@c5 e3f2 f1f2 b6c7 d6c7 d8c7 B@d6 c7d6 c5d6 a7f2 g1f2 P@c4 b3d4 c6d4,0x0c438b25d24104bd9f0234eeceb7e3d3
+crazyhouse,e2e4 e7e6 e4e5 d7d6 g1f3 d6e5 f3e5 f8d6 e5f7 e8f7 d1f3 P@f6 f1c4 f7e8 P@f5 e6e5 c4g8 h8g8 P@e6 N@g5 f3h5 e8e7 N@d5 e7f8 d2d3 g5e6 f5e6 c8e6 d5c3 P@g6 h5f3 B@h6 c1h6 g7h6,0x2b7837fae605d7e7b461f7a8ca6c41d9
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1c4 d7d6 d2d4 e5d4 f3d4 c6d4 d1d4 N@e5 c4e2 f8e7 b1c3 g8f6 h2h3 e8g8 P@h6 c7c5 h6g7 c5d4 g7f8q d8f8 R@g5 P@g6 g5e5 d6e5 N@h6 g8h8 P@g5 P@e3 f2e3 d4c3 g5f6 f8h6 P@g7 h8g8 f6e7 h6h4 B@f2,0x871c8990a40eff2007721b1c7217a092
+crazyhouse,d2d4 g7g6 g1f3 f8g7 c1f4 g8f6 e2e3 e8g8 f1e2 h7h6 b1d2 d7d6 a2a3 b8c6 a1c1 c8g4 e1f1 g4f3 e2f3 e7e5 d4e5 d6e5 f3c6 e5f4 c6b7 f4e3 f2e3 a8b8 P@a6 N@c5 N@c6 c5b7 c6d8 f8d8 a6b7 b8b7 P@e7 b7b8 e7d8q b8d8 P@e7 d8e8 B@d8 N@c6 N@e4 c6d8 e7d8q e8d8 e4f6 g7f6 N@e4 B@g7 N@g4 B@e7 R@d3 B@d6 e4f6 e7f6 g4f6 g7f6 d2e4 P@g7 e4f6 g7f6 d3d6 c7d6 B@e7 R@f5 B@f3 d8e8 e7d6 P@e4 P@g4 e4f3 g4f5 f3g2 f1g2 N@h4 g2f2 N@e4 f2e2 B@g4 e2d3 g4f5 d3c4,0x6c767a6be02acf5b14a52217c36ba9a6
+crazyhouse,e2e3 g8f6 g1e2 f6e4 d2d3 e4f2 e1f2 e7e6 N@f3 d8f6 f2g1 b7b6 e3e4 c8b7 c1g5 f6b2 b1d2 h7h6 g5h4 g7g5 h4g3 P@f4 g3f2 P@e3 d2c4 e3f2 g1f2 B@e3 c4e3 f4e3 f2e3 b8c6 B@c3 f8c5 P@d4 b2b5 d4c5 b5c5 P@d4 c5b5 a1b1 b5a6 B@b3 N@g4 e3d2 P@e3 d2c1 g4f2 d1e1 f2h1 d4d5 e8g8 d5c6 b7c6 N@g4 R@c5,0xfdecd5381ad763b5473860b2d20b8592
+crazyhouse,d2d4 d7d5 g1f3 g8f6 c1f4 c8f5 e2e3 e7e6 b1c3 f8d6 f4g3 e8g8 c3b5 d6g3 h2g3 B@e4 b5a3 b8c6 f1e2 c6b4 B@a4 b4c2 a3c2 P@d3 e2d3 e4d3 f3e5 d3c2 a4c2 f5c2 d1c2 B@e4 B@d3 e4d3 e5d3 B@e4 P@f3 e4d3 c2d3 N@b4 d3d1 N@c2 e1f1 B@a6 f1g1 c2a1 d1a1 b4c2 a1d1 R@e1 d1e1 c2e1 g1h2 e1d3 B@e5 d3f2 e5f6 d8f6 B@e5 f6h6,0xeaf9861e71376a807a83fce6cfb359f4
+crazyhouse,e2e4 e7e6 g1f3 d7d6 e4e5 b8c6 e5d6 c7d6 d2d4 g8f6 f1d3 d6d5 d3e2 P@e4 f3e5 f8d6 c1f4 d6e5,0xe0fb6ab8dfe27c63d1ac7e1f21982b51
+crazyhouse,e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f1c4 f8c5 c2c3 d4c3 c4f7 e8f7 d1d5 P@e6 d5c5 d8e7 c5e7 c6e7 Q@f4 P@f6 b1c3 B@h6 f3e5,0xf87133a4b53aaa56d223dbf0c4d32e6d
+crazyhouse,e2e4 d7d6 f1c4 e7e6 g1f3 d6d5 e4d5 e6d5 c4b3 c8g4 e1g1 P@e4 h2h3 g4h5 g2g4 h5g4 h3g4 e4f3 d1f3 c7c6 f1e1 P@e6 P@f5 f8d6 f5e6 N@g5 e6f7 e8f8 f7g8q f8g8 B@e6 P@f7 e6f7 g5f7 P@e6 f7g5 P@f7 g8f8 f3e3 B@e4 P@g2 g5e6 d2d3 P@d4 e3h3 e6g5 N@g6 f8f7 g6h8 d8h8 P@g6 f7g6 h3h5 g6f6,0xb4f9853a4053d217b6c940994879d130
+crazyhouse,d2d4 g8f6 c2c4 d7d5 c4d5 e7e6 d5e6 c8e6 b1c3,0xc079fb7944e0bd849695767f4a7da258
+crazyhouse,c2c3 d7d6 b1a3 e7e6 g2g3 d6d5 f1g2 f8a3,0x33ce2ae379ea52ddcfda17a70e1c1e96
+crazyhouse,e2e4 e7e5 g1f3 d7d6 f1c4 f8e7 d2d4 e5d4 f3d4 g8f6 b1c3 P@b4 P@g5 f6g4 c3d5 a7a5 e1g1 e8g8 d5e7 d8e7 B@f5 g4e5 c4d3 e5d3 c2d3 c8d7 N@d5,0xea92c04dbd24cf098c4e6f3503a59132
+crazyhouse,d2d4 b7b6 b1c3 c8b7 c1f4 d7d6 g1f3 b8d7 e2e4 h7h5 h2h3 h5h4 f4g5 g8f6 g5h4 f6e4 c3e4 b7e4 h4g3 P@b7 f3g5 e4g6 P@e6 d7f6 e6f7,0x20d73f1f56ebae178ce3bf1f62a255ff
+crazyhouse,g1f3 d7d5 f3e5 b8c6 e5f7 e8f7 d2d4 g8f6 c1f4 f6e4 e2e3 e7e6 f1d3 f8b4 c2c3 b4d6 d1h5 g7g6 h5f3 N@h4 d3e4 h4f3 e4f3 d6f4 e3f4 Q@c1 B@d1 c1f4 P@e3 f4h6 h2h3 B@f5 b1d2 e6e5,0xaf7941907a8dfec8535713cf9123eaf7
+crazyhouse,e2e4 e7e5 f1c4 d8f6 d1h5 g8h6 d2d4 e5d4 e4e5 f6f5 h5f5 h6f5 Q@f6 g7f6 e5f6 Q@f4 P@e7 Q@h4 e7f8q e8f8 c1f4 h4f4 Q@g7 f5g7 f6g7 f8g7 g1h3 Q@f3 h3f4 f3g2 f4g2 B@a5,0x41dd91294587229a9ccf3cc63cbbe7a5
+crazyhouse,e2e4 a7a6 d1f3 b7b6 f1c4 e7e6 b1c3 b6b5 c4b3 b5b4 c3a4 c7c6 a4c5 f8c5 e4e5 N@d4 f3e3 d4b3 e3b3 B@d5 b3a4 d5g2 d2d4 c5d4 N@d6 e8e7 a4b4 c6c5 d6f5 e7f8 f5g7 c5b4 g7e6,0x64f3a538224e08e50ec029bcdc10f52b
+crazyhouse,g1f3 g8f6 d2d4 b7b6 c1f4 c8b7 b1d2 e7e6 e2e3 a7a6 f1d3 b8c6 a2a3 f6h5 f4g3 f8e7 c2c4 d7d6 d1c2 h7h6 d4d5 h5g3 h2g3 e6d5 c4d5 c6e5 f3e5 d6e5 N@f5 B@f6 f5e7 d8e7 N@f5 e7d8 P@e6 b7d5 B@c6 d5c6 c2c6 e8f8 e6f7 B@d7 c6c2 P@h7,0x774ad88baba6a4466303b3bb82ab32ef
+crazyhouse,d2d4 g8f6 b1c3 d7d5 c1g5 c8f5 e2e3 h7h6 g5f6 e7f6 f1d3 B@e4 d3e4 f5e4 c3e4 d5e4 N@g3 f8b4 c2c3 N@h4 B@h3 B@d7 B@g4 b4d6 g4d7 b8d7 g3e4 B@d5 P@d3 f6f5 e4d6 c7d6 B@f3 d5f3 g1f3 h4f3 d1f3 N@c2 e1d2 c2a1 h1a1 B@c6 d4d5 N@e5 d5c6 e5f3 g2f3 b7c6 h3f5 R@g2 B@g3 P@h4 B@h3 h4g3 f5d7 e8f8 h3g2 g3f2 B@g3,0x6b1d642af745da18bf22863cf58a84dd
+crazyhouse,e2e4 c7c5 g1f3 d7d6 b1c3 b8c6 d2d4 c5d4 f3d4 c6d4 d1d4 P@h3,0x4d441c96dd92abd7f9872239eb34a24a
+crazyhouse,d2d4 g8f6 c2c4 e7e6 a2a3 b8c6 b1c3 f8e7 g1f3 e8g8 c1g5 f6g4 g5e7 d8e7 d4d5 e6d5 c3d5 e7d6 P@b5,0x47e97ca620b285061c11fd5475c3727f
+crazyhouse,d2d4 e7e6 e2e4 d7d5 e4d5 e6d5 d1e2 g8e7 g1f3 c7c6 c1e3 b8d7 b1c3 d7f6 e1c1 c6c5 f3e5 c5c4 f2f4 e7c6 e5c6 b7c6 f4f5,0xfa3f5927e1f18ed89f6503d1c4e5eecc
+crazyhouse,d2d4 e7e6 a2a3 c7c6 e2e3 d8b6 b2b4 a7a5 c2c3 a5b4,0x67610a933b6b7b84b4889550416cb3e6
+crazyhouse,d2d4 d7d5 c1f4 c8f5 b1c3 e7e6 a2a3 a7a6 e2e3 g8f6 g1f3 f8d6 f4d6 c7d6 B@g5 b8d7 f1d3 f5d3 c2d3 h7h6 g5h4 e8g8 e1g1 B@e7 B@g3 B@g4 h4f6 d7f6 h2h3 g4f3 g2f3 N@h5 B@g4 f6g4 f3g4 h5g3 f2g3 B@a5 N@f3 a5c3 b2c3 B@b2 N@e2 b2a1,0xec025820e5c6b8c131863385ee571b67
+crazyhouse,e2e4 e7e5 g1f3 b8c6 f1c4 d7d6 b1c3 f8e7 h2h3 g8f6 e1g1 e8g8 d2d3 c6d4 c1g5 d4f3 d1f3 N@d4 f3d1 d6d5 g5f6 d5c4 f6e7,0x29490a40050e44906da52cbef2199dce
+horde,e4e5 e7e6 e3e4 c7c6 e2e3 a7a5 b5b6 b8a6 b4b5 c6b5 c4b5 a6c5 b3b4 c5a4,0x04edc23488515812a8c7ff3580fbf7c5
+horde,f5f6 g7f6 g5f6 g8f6 g4g5 f6g8 f4f5 d7d6 f3f4 d6c5 b4c5 e7e6 g3g4,0xc544d7f0da78a819a484b007024e0b7d
+horde,e4e5 d7d6 d4d5 d6c5 b4c5 e7e6 d5e6 f7e6 f5e6 f8c5 f4f5 g7g6 d3d4 c5e7 d4d5 c7c6 b5c6 b7c6 e3e4 b8a6 f3f4 c8b7 d2d4 c6d5 e4d5 b7d5 c4d5 d8d5 d1d3 h7h6,0xaa81fe60845038bb62fa7182f8365dae
+horde,a4a5 b7b6 a5a6 c7c6 a3a4 e7e6 e4e5 e6f5 g4f5 d7d6 e5d6 c8f5 e3e4 f5d7 e4e5 f7f6 e2e4 d8c8 e1e3,0x455106a637eea8ec05c6a4e8317ba8e5
+horde,d4d5 d7d6 d3d4 d6c5 b4c5 e7e6 c5c6 b7c6 b5c6 e6f5 g4f5 h7h5 b3b4 f7f6 g5g6 g8h6 b2b3 h6f5 e4f5 c8f5 e3e4 f5h3 g2h3 a7a5 c4c5 a5b4 a3b4 h8h6 f4f5 f8c5 d4c5 b8c6 d5c6 a8a6 b4b5 a6a8 a2a3 e8f8 b1b2 d8e7 d2d4 a8d8 e2e3 h6g6 f5g6 e7e8 d1d3 e8g6 g1g2 f6f5 e4e5 f5f4 g3f4 d8e8 a4a5 g6e6 a3a4 e6f5 b3b4,0x0d8d4241a5428fec1406c1b9aa82a889
+horde,d4d5 d7d6 d3d4 e7e6 c5d6 f8d6 d5e6 f7e6 f5e6 c8e6 c4c5 d6e7 f4f5 e6c8 a4a5 h7h6 f3f4 h6g5 h4g5 e7g5 f4g5 d8g5 f2f3 g5f6 c3c4 g7g5 f5g6 f6g6 d4d5 h8h6 f1f2 g6h7 h3h4 h7g7 h2h3,0xe7950963593cbb6a54d780ceabdcdc6a
+horde,e4e5 e7e6 d4d5 e6d5 c4d5 d7d6 e5d6 c7d6 c5c6 b7c6 b5c6 d8c7 b4b5 a7a6 c3c4 a6b5 a4b5 c8d7 e3e4 d7c6 d5c6,0x83e39b93d56186d4349ee33c9198e44f
+horde,d4d5 e7e6 d3d4 e6f5 e4f5 d7d6 e3e4 f8e7 d2d3 h7h6 e2e3 h6g5 h4g5 e7g5 f4g5 d8g5,0xc4addf23123c4729deda1229d064b9cb
+horde,d4d5 c7c6 d3d4 d7d6 e4e5 c6d5 c4d5 d6c5 e3e4 c5b4 a3b4 e7e6 f5f6 g7f6 d5e6 f6e5 e6f7 e8f7 f4e5 f8b4 c3b4 d8d4 c2c4 d4e5 c1c3 c8e6 d2d4 e5c7 d4d5 e6d7 d1d3 a7a6 d3d4 a6b5 a4b5 b7b6 e4e5 a8a7 e2e4 c7b7 f3f4 f7e8 f4f5,0x7b02414a40778c49fea29714ead4c2f3
+horde,d4d5 c7c6 d3d4 d7d6 d5c6 d6c5 d2d3 c5b4 c6b7 c8b7 c3b4 e7e6 c2c3 a7a6 c1c2 a6b5 a4b5 b8d7 d1d2 a8a7 f5e6 f7e6 f4f5 e6f5 g4f5 d8a8 a3a4 d7b6 a4a5 b6d7 a2a4 d7b6 a1a3 b6a4 b3a4 a7a5 b4a5 f8a3 b2a3 a8a5 b1b3 g8e7 g3g4 e7c8 c4c5 c8a7 c3c4 e8g8 f3f4 b7c8 f2f3 c8d7 h4h5 d7b5 c4b5 a7b5 a4b5 a5a3 b5b6 f8b8 f5f6 a3c1 f6g7 g8g7 h5h6 g7g8 c2c3 c1e1 d4d5 e1d2 f1f2 d2c3 d3d4 c3b3 h3h4 b3b5 h4h5 b5e2 g5g6 e2f1 d5d6 f1b5 e4e5 b8b6 c5b6 b5b6 f4f5 b6d8 f5f6 d8d7 h2h4 d7e6 h1h3 e6c8 g4g5 c8f5 g2g4 f5f3 d6d7 f3d5 e5e6,0xbba4e98ef6120ea9db708d60704f0948
+horde,d4d5 e7e6 d5e6 f7e6 f5e6 d7e6 f4f5 e6f5 g4f5 f8e7 f5f6 g7f6 g5f6 e7f6 f3f4 f6h4 g3h4 d8h4 e4e5 c8h3 g2h3 h4h3 d3d4 h3f1 e5e6 c7c6 b5c6 b7c6 d4d5 c6d5 c4d5 e8e7 f4f5 g8f6 d5d6 e7e8 d6d7 b8d7 e6d7 e8d7 b4b5 a8c8 c5c6 d7d6 d2d4 f1e1 c3c4 e1d1 c4c5 d6c7 a4a5 d1e2 b5b6 a7b6 a5b6 c7c6 c2c4 e2f3 d4d5 f6d5 c4d5 c6c5 b6b7 c8b8 b3b4 c5d5 c1c3 f3f5 c3c4 d5c4 b2b3 c4b5 a3a4 b5b4 b1b2 b8b7 a2a3 b4b3 g1g3 b3a4 f2f4,0xffebb5045c768194acd1375caca011e3
+horde,d4d5 d7d6 c5c6 b7b6 h4h5 e7e6 d3d4 e6f5 g4f5 f8e7 a4a5 g7g6 h5g6 h7g6 h3h4 g6f5 e4f5 c8f5 e3e4 f5c8 c4c5 f7f6 c3c4 f6g5 f4g5 e7g5 h4g5 d8g5 h2h4 h8h4 g3h4 g5h4 h1h2 g8h6 a5b6 a7b6 a3a4 h6f7 c5b6 c7b6 c4c5 b6c5 b4c5 d6c5 d4c5 f7g5 d2d3 g5h3 g2g3 h4h6 d1d2 h3g1 h2h4 g1h3 c2c4 h3f4 g3f4 h6h4 f4f5 h4h1 b5b6 b8c6 d5c6 h1f1 b6b7 c8b7 c6b7 a8b8 c5c6 e8d8 a4a5 d8c7 b3b4 c7c6 a5a6 c6b6 b4b5 f1e1 c4c5 b6a7 c1c3 b8b7 a6b7 a7b7 f5f6 e1e2 d3d4 e2f3 e4e5 f3f2 c5c6 b7b6 d4d5,0xf2bcf8975b72f8d84235a52dbf14118c
+horde,e4e5 f7f6 e5f6 e7f6 g5f6 g7f6 g4g5 f8e7 e3e4 a7a5 e4e5 f6g5 h4g5 h7h6 h3h4 h6g5 f4g5 e7g5 h4g5 d8g5 e2e4 h8h5 f3f4 g5h6 g3g4 h5h2 g4g5 h6h5 g1h2 h5h2 g2g4 h2h1 b4a5 a8a5 b3b4 a5a4,0xa21ec8df029b0263e5ca25bbeba4e261
+horde,d4d5 a7a6 d3d4 a6b5 c4b5 c7c6 c3c4 c6b5 c4b5 b7b6 c2c3 b6c5 d4c5 d7d6 d2d4 d6c5 d4c5 e7e6 d1d3 e6d5 e4e5 f7f6 e3e4 d5e4 f3e4 f6e5 f4e5 g7g6 f2f4 g6f5 g4f5 h7h6 g5g6 a8a7 g3g4 h6h5 g4g5 b8d7 c5c6 d7b6 a4a5 b6a8 f5f6 g8f6 g5f6 f8h6 g2g3 e8f8 g6g7 h6g7 f6g7 a7g7 g1g2,0x5eaa6d34e1df968be255778cb92d9c7e
+horde,e4e5 f7f6 e3e4 f6e5 f4e5 e7e6 f3f4 h7h6 d4d5 e6d5 c4d5 h6g5 h4g5 g7g6 f5f6 d7d6 d3d4 b7b6 e5e6 g8f6 g5f6 d8f6 e4e5 d6e5 d4e5 f6d8 e2e4 b6c5 d2d4 c5d4 c3d4 a7a5 c2c3 a5b4 a3b4 c7c6 d5c6 c8e6 c3c4 d8d4,0xa5da2e7d9afcf779b68b07c3903b66cb
+horde,a4a5 h7h5 e4e5 d7d6 e5d6 c7d6 c5d6 e7d6 e3e4 b7b6 a5a6 g8e7 f5f6 e7g6 f6g7 f8g7 f4f5 g6h4 g3h4 h5g4 g2g3 g4f3 e2f3 f7f6 g5g6 h8h5 g1g2 e8e7 c4c5 d6c5 b4c5 d8h8 c5c6 h5h4,0x60e1d56db04ef1d91a6c368ea6a16197
+horde,a4a5 b7b6 a5a6 c7c6 a3a4 e7e6 f5e6 d7e6 h4h5 f7f6 g5f6 g8f6 e4e5 f6g8 e3e4 g7g6 e2e3 d8e7 b5c6 b8c6 b4b5 b6c5 b5c6 c8a6 d4c5 e7c5 b3b4 c5c6 b4b5 c6d7 b5a6 d7a4 f4f5 g6f5 g4f5 a4a6 f5f6 g8h6 g3g4 h6f7 f3f4 h7h6 f2f3 a6a5 d3d4 a8c8 d2d3 f8b4 c3b4 a5b4 c2c3 b4a4 c1c2 c8b8 f4f5 e8d7 f3f4 a4c6 f5e6 c6e6 f1f3 a7a5 g2g3,0xd23c58b130ab15ff361aa823f9631d86
+horde,d4d5 d7d6 d3d4 c7c6 e4e5 d6c5 b4c5 c6d5 c4d5 e7e6 d5e6 f7e6 e3e4 e6f5 g4f5 g7g6 f5f6 h7h6 b3b4 h6g5 h4g5 b7b6 e2e3 b6c5 b4c5 a7a6 b5b6 b8d7 a4a5 f8c5 d4c5 d7c5 d2d4 c5a4 c3c4 a4b6 a5b6 d8b6 b2b4 a6a5 b4b5 c8a6 a3a4 a6b7 c4c5 b6c7 c2c4 e8c8 c1c3 c7f7 d1d3 f7e6 b1b3 d8d7 a2a3 d7f7 b3b4 a5b4 a3b4 h8h3 g2h3 e6h3 e5e6 f7f8 e6e7 g8e7 f6e7 f8e8 c5c6 h3f1 c6b7 c8b7 c4c5 e8e7 c5c6 b7c8 d4d5 f1e1 d5d6,0xd36ff031fd85a67a927b4ab4a822c81b
+horde,h4h5 f7f6 g5g6 h7g6 h5g6 e7e6 h3h4 g8h6 h4h5 d7d6 f5e6 c8e6 f4f5 h6f5 e4f5 e6c8 h2h4 h8h5 g4h5 c8f5 g3g4 f5c8 e3e4 d6c5 b4c5 c7c6 e2e3 b7b6 b3b4 a7a5 b2b3 c6b5 a4b5 a5a4 b1b2 b6c5 b4c5 a4b3 c2b3 f6f5 e4f5 d8h4 h1h3 h4f6 a3a4 c8f5 g4f5 f6f5 c1c2 f5h5 c5c6 h5g6 d4d5 b8d7 c6d7 e8d7 e3e4 a8c8,0x91ec86dcdafedf89058cf02d5d88c28f
+horde,d4d5 d7d6 d3d4 e7e6 c5d6 c7d6 d5e6 f7e6 f5e6 c8e6 f4f5 e6d7 a4a5 f8e7 f3f4 h7h6 d2d3 h6g5 h4g5 e7g5 f4g5,0xbe7834ebb59b0fc54dda64562393a872
+horde,e4e5 e7e6 f5e6 d7e6 a4a5 h7h5 g5h6 h8h6 e3e4 g8e7 d4d5 e6d5 c4d5 e7d5 e4d5 d8d5 c3c4 d5d7 c2c3 c7c6 a3a4 a7a6 b5c6 b8c6 c1c2 f8e7 h4h5 h6h7 e2e3 g7g6 h5g6 f7g6 d3d4 d7d8 d4d5 c6a5 b4a5 e7c5 b3b4 c5e7 b2b3 e8f7 d5d6 e7h4 d2d4 d8h8 g3h4 h7h4 c4c5 h4h3 b4b5 a6b5 a4b5 a8a5 a2a4 h3h2 g1h2 h8h2 e3e4 h2h1 f4f5 g6f5 g4f5 h1f1 d4d5 f1e1 e5e6 f7e8 c5c6 b7c6 d5c6 e1f2 d6d7 c8d7 c6d7 e8d8 d1d3,0xbdc86c720e2ea2d0157fffaaf9bea717
+horde,e4e5 f7f6 g5f6 e7f6 e5f6 g8f6 g4g5 f6g8 f5f6 g7f6 g5f6 g8f6 g3g4 f6g8 g4g5 d7d6,0x11c7e611bdff3d0fc2f995b27ce916c4
+horde,a4a5 h7h5 e4e5 d7d6 c5d6 c7d6 d4d5 e7e6 d5e6 f7e6 f5f6 d6e5 f4e5 g7f6 g5f6 h5g4 f3g4 g8f6 e5f6 d8f6 h4h5 e6e5 f2f3 c8e6 f1f2 e6f7 c4c5 b8d7 c5c6 b7c6 b5c6 f6c6 c3c4 d7f6 b4b5 c6c7 a5a6 f6h5 g4h5 h8h5 a3a4 f7e6 h3h4 f8e7 c2c3 e7h4 g3h4 h5h4 c1c2 c7h7 c4c5 h4h2 g1h2 h7h2 c3c4 h2h1 c5c6 h1e1 c4c5 e1d2 a2a3 e8d8 g2g4 d8c7 a1a2 d2d1 a4a5 d1e2 b5b6 c7c6 b6b7 a8b8 b3b4 e2f2 c2c4,0x159e7350ec20700aef98f67adf13ea2d
+horde,a4a5 d7d6 h4h5 d6c5 d4c5 e7e6 d3d4 e6f5 e4f5 c7c6 e3e4 b7b6 b5c6,0x44e62a02638c5ec69fa9eb10791fb909
+horde,e4e5 a7a6 e3e4 a6b5 a4b5 b7b6 d4d5 b6c5 b4c5 c7c6 b5b6 d7d6 b3b4 d6c5 b4c5 c6d5 e4d5 a8a4 e2e4 e7e6 d5d6 b8d7 b2b3 a4a3 d3d4 d7b6 c5b6 d8b6 c4c5 b6a6 d2d3 a3a2 f5f6 g7f6 g5f6 a2a1 g4g5 a1b1 g3g4 b1c1 e1e3 c1d1 f4f5 d1c1 f3f4 c1c2 h4h5 c2c3 d4d5 c3c5 d5e6 f7e6 g5g6 e6f5 g4f5 h7g6 h5g6 g8f6 d3d4 c5c6 e5f6 c6d6 f6f7,0x931849c7b21d833f31b2f001157bdcaa
+horde,h4h5 e7e6 h3h4 d7d6 a4a5 e6f5 g4f5 f8e7 c5d6 c7d6 c4c5 d6c5 b4c5 h7h6 g3g4 h6g5 h4g5 e7g5 f4g5 d8g5 g2g3 g7g6 h2h4 g5h6 h5g6 f7g6 h1h3 g6f5 e4f5 c8d7 a3a4 b7b6 a5b6 a7b6 c5c6 b8c6 b5c6 d7c6 e3e4 c6a4 b3a4 a8a4 e2e3 b6b5 g4g5 h6h5 e1e2 h5f7 d4d5 g8e7 b2b3 a4a3 c3c4 b5c4 b3c4 e7f5 e4f5 f7f5 g1g2 f5e5 d3d4 e5d6 e3e4 d6b4 g5g6 b4c4 c2c3 h8h6 f3f4 h6g6 f4f5 g6h6 f2f4 h6h7 f1f3,0x46b90e596e2197c9114a26f4c0d04f4c
+horde,d4d5 e7e6 c5c6 b7c6 b5c6 d7c6 d5c6 b8c6 b4b5 c6b8,0x18162259328a6d7157c19a81ca0cbd1b
+horde,d4d5 e7e6 d3d4 e6f5 e4f5 f8e7 e3e4 h7h6 e4e5,0xac5543ca17876efc99e59702bb511541
+horde,h4h5,0x6c2742313068b3e1be9252816d5489d8
+horde,d4d5 e7e6 d3d4 d7d6 c5c6 e6f5 g4f5 g8e7 f5f6 g7f6 g5f6 e7c6 b5c6 b7c6 d5c6 b8c6 e4e5 a7a5 d4d5 c6e5 f4e5 a5b4 f3f4 d6e5,0x6291f9590942a9e842fbb6a999b75113
+horde,e4e5 e7e6 e3e4 f7f6 g5g6 h7g6 f5g6 g8e7 h4h5 d7d6 e5f6 g7f6 f4f5 c7c6 g4g5 b7b6 g5f6,0x1e5cf9e4a33e151017fa44d3ecba5d4a
+horde,e4e5 d7d6 e5d6 e7d6 c5d6 c7d6 e3e4 a7a5 b4a5 a8a5 d4d5 b8d7 e2e3 h7h5 g4h5 h8h5 d3d4 d7b6 d2d3 b6a4 b3a4 a5a4 g5g6 f7g6 f5g6 d8f6 f4f5 c8f5 e4f5 f6f5 g3g4 f5g6 g4h5 g6h5 e1e2 h5h4 c4c5 d6c5 d4c5 f8c5 d3d4 c5d4 c3d4 a4d4 e3d4 h4d4 c2c3 d4d5 e2e4 d5b5 f3f4 b5f1 c1c2 f1d1 g2g4 d1g1 e4e5 g1h1 c3c4 h1h2 a3a4 h2f4 c4c5 f4a4 c5c6 a4c6 b2b3 c6f3 e5e6 f3f2 b3b4 f2g3,0x8b398c2dc9b9db81e3fb9903cdbe08db
+horde,e4e5 b7b6 d4d5 c7c6 d5d6 e7d6 e5d6 c8b7 e3e4 a7a6 b5a6 a8a6 e4e5 f7f6 d3d4 f6e5 f4e5 g7g6 f5f6 e8f7 f3f4 h7h6 c5b6 d8b6 c4c5 b6a7 a4a5 a6a5 b4a5 a7a5 d2d3 b8a6 e2e3 a6c5 d4c5 a5c5 d3d4 c5d5 d1d3 c6c5 c3c4 d5c6 d4d5 c6b6 c2c3 h6g5 h4g5 f8d6 e5d6 b6d6 e3e4 g8f6 g5f6 d6f6 g4g5 f6d8 h3h4 h8h5 f2f3 d8h8 h2h3 h5h4 g3h4 h8h4,0xfb36f775ae40cb812cf97612c151e4ac
+horde,e4e5 d7d6 e3e4 d6c5 b4c5 b8d7 b3b4 c7c6 b2b3 a7a6 b5b6 e7e6 a4a5 d8e7 e2e3 f7f6 e1e2 e6f5 g4f5 f6e5 f4e5 d7e5 d4e5 e7e5 d3d4 e5e7,0xef23d3c189e97851f9f1b35f1504630f
+horde,,0xca7dfaba0f90cd41a8a878183978f15b
+horde,e4e5 e7e6 e3e4 f8e7 d4d5 c7c6 d5d6 e7f8 d3d4 e6f5 e4f5 c6b5 a4b5 a7a6 a3a4 a6b5 a4b5 f7f6 e2e4 h7h6 g5g6 b8c6 b5c6 b7c6 h4h5 c8a6 d2d3 a8b8 a2a3 b8b7 d1d2 d8a8 e1e3 b7a7 a3a4 a6c8 a1a2 a7a4 b3a4 a8a4 d4d5 e8d8 d3d4 c8a6 d2d3,0xa771849e979df7955b3e5e9492666ddf
+horde,a4a5 h7h5 a3a4 b7b6 c5b6 a7b6 a5a6 b8a6 b5a6 c8a6 b4b5 a6b7 e4e5 e7e6 f5f6 g7f6 g5f6 g8f6 e5f6 d8f6 g4g5 f6g7 c4c5 b6c5 d4c5 f8c5 d3d4 c5e7 e3e4 f7f6 g5f6 e7f6 e4e5 f6e7 a2a3 a8a5 c3c4 d7d6 e5d6 e7d6 e2e3 e8g8 c4c5 d6e7 c5c6 b7c8 c2c4 f8d8 c1c3 g7f8 b3b4 a5a4 a1a2 e7f6 e3e4 f6d4 c3d4 d8d4 c4c5 f8g7 b5b6 c7b6 c5b6 d4c4 b6b7 c8b7 c6b7 g7b7 b2b3 c4b4 a3b4 a4b4 e1e3 b7b5 d2d4 b5f1 d4d5 e6d5,0x6c5efdff66afebba4d420541d3298d89
+horde,e4e5 a7a5 h4h5 d7d6 c5d6 c7d6 d4d5 e7e6 f5e6 f7e6 e3e4 e6d5 e4d5 b8d7 d3d4 d7b6 e2e4 b6a4 b3a4 a5b4 c3b4 a8a4 e1e3 d6e5 f4e5 c8d7 f3f4 d8a8 f4f5 a4a3 b2a3 a8a3 b1b2 a3a2 e5e6 d7c8 e4e5 f8b4 c2c3 b4f8 f5f6 g7f6 g5f6 g8f6 e5f6 a2a1 f6f7 e8e7 f2f4 a1c1 g4g5 c1d2 f4f5,0x525cca29c8be72b698fd6444f984bbc0
+horde,e4e5 d7d6 c5d6 c7d6 e5d6 e7d6 c4c5 d6c5 d4c5 b7b6 c5b6 a7b6 a4a5 b6a5 c3c4 a5b4 a3b4 f8b4 c2c3,0x5a6ff2530ff5c0fa774e8ea2ea3ff0bf
+horde,a4a5 d7d6 c5d6 d8d6 c4c5 d6d8 d4d5 e7e6 f5e6 f7e6,0x2a386dfd474dde3c50d0549347ad704e
+horde,d4d5 e7e6 d3d4 e6f5 e4f5 a7a5 e3e4 d7d6 e4e5 b8d7 b5b6 d6c5 b6c7 d8c7 b4c5 f8c5 d4c5 d7c5 d2d4 c5a4 b3a4 c7c4 d1d3 c4a4 e2e4 b7b5 f5f6 g7f6 g5f6 b5b4 c3b4 a5b4 f4f5 b4a3 b2b3 a4a6 g4g5 a6a5 e1e3 a5e1 h4h5 e1f1 e5e6 a8a7 e4e5 f1g1,0xfcdd5fc2b23dca2c008b09f9f5db82d8
+horde,h4h5 e7e6 a4a5 f8e7 h3h4 h7h6 g5g6 f7g6 f5g6 e7h4 d4d5 h4e7 d3d4 e6d5 c4d5 d7d6 c5c6 b7c6 b5c6 a7a6 c3c4 e7f8 a3a4 g8e7 f4f5,0xddf2715c3c912e464dbce40cc35c6106
+horde,e4e5 e7e6 d4d5 d7d6 d3d4 d6e5 f4e5 g8e7 d5e6 f7e6 e3e4 e6f5 g4f5 e7f5 e4f5 c8f5 e2e4 f5c8 e1e3 f8e7 d4d5 g7g6 f3f4 h7h6 d2d4 h6g5 h4g5 h8h5 h3h4 e8f7 d1d3 d8h8 d5d6 c7d6 c5d6 e7d8 c4c5 h5h4 g3h4 h8h4 d4d5 h4g4 f2f3 g4h4 f1f2 c8h3 c5c6 b7c6 b5c6 h3c8 b4b5 h4h8 c3c4 h8e8 c4c5 c8d7 c2c4 d7c6 b5c6 b8c6 d5c6 e8c6 d3d4 c6a6 c1c3 a6a5 h2h4 a8c8 g2g4 c8c5 d4c5 a5c5 h4h5 g6h5 g4h5 c5c8 g1g3 c8d7 h1h2 d7e8 h5h6 e8h8 h2h3 f7g6 h3h4 d8b6 b3b4 b6d8 c4c5 a7a6 c3c4 g6f7 b2b3 f7e6 b4b5 e6d7 b3b4 a6b5 a4b5 d7c8 c5c6 c8b8 a3a4 d8b6 a4a5 h8e8 a5b6 b8c8 a2a3 c8b8 b1b3,0x1db45262d993aca4a91d0ebd0346111d
+horde,a4a5 b7b6 a5a6 b8a6 b5a6 c8a6 b4b5 a6b7 c5b6 a7b6 a3a4 e7e6 d4d5 e6d5 c4d5 c7c6 c3c4 c6b5 c4b5 f7f6 c2c4 f6g5 h4g5 g7g6 f5f6 g8f6 g5f6 d8f6 g4g5 f6g7 g3g4 f8a3 b2a3 g7a1 f4f5 a1b1 e4e5 b1c1 f5f6 e8f7 e5e6 d7e6,0x152d3af06ec9a333a44b0847b10b3328
+horde,e4e5 c7c6 e3e4 d7d6 h4h5 h7h6 h3h4 h6g5 h4g5 g7g6 h5g6 f7g6 f5g6 e7e6 c5d6 f8d6 e5d6 d8d6 h2h4 e6e5 d4e5 d6g6 h1h3 b8d7 d3d4 b7b6 f4f5 g6f7 e5e6 f7e7 b5c6 d7f8 d4d5 a7a5 d2d4 a5b4 a3b4 b6b5 a4b5 h8h7 a2a4 e7c7 e4e5 c7a7 a1a3 a7b8 e2e4 h7a7,0x256bc486214a058db371569382ba8475
+horde,d4d5 e7e6 d3d4 e6d5 e4d5 a7a5 e3e4 d7d6 c5c6 g8e7 d2d3 a5b4 a3b4 b7c6 b5c6 e7c6 d5c6 b8c6 d4d5 c6b8 d3d4 c8d7 a4a5 c7c6 d5c6 b8c6 d1d3 c6a5 b4a5 a8a5 d4d5 d8a8 a2a4 d7a4 b3a4 a5a4 a1a3 a4a3 b2a3 a8a3 e4e5 a3c3 e5d6 f8d6 f5f6 g7f6 g5f6 c3f6 c2c3 f6c3 h4h5 c3c1 f4f5 c1e1 g4g5 e1f1 d3d4,0x77bdb80aa3faabbb796ff6ae3cdaf4d0
+horde,f5f6 g7f6 g5f6 e7f6 c5c6 d7c6 b5c6 b7c6 d4d5 c6d5 c4d5 a7a6 e4e5 c8b7 e5f6 b7d5 b4b5 d8f6 b5a6 d5b3 g4g5 f6d8 c2b3 b8c6 d3d4 c6d4 e3d4 f8c5 d4c5 g8f6 g5f6 d8d5 d2d3 d5d7 c5c6 d7c6 a4a5 a8d8 a6a7,0xf05b1b92f3fb8035c6011a6542d33787
+horde,d4d5 g7g6 e4e5 h7h6 f5f6 e7f6 g5f6 g6g5 h4h5 g8f6 e5f6 d8f6 d3d4 f6d8 e3e4 f7f6 f4f5 d7d6 e2e3 b8d7 d2d3 f8g7 f3f4 d7f8 f2f3 g5f4 g3f4 f8h7 h3h4 h7g5 h4g5 f6g5 g2g3 g5f4 g3f4 g7f6 g1g3 f6h4 f1f2 h4f6 e4e5 d6e5 d4e5 f6g7 d3d4 c7c6 b5c6 b7c6 e3e4 c6d5 c4d5 a7a6 c3c4 g7f8 h2h4 c8b7 d1d3 b7c8 e1e3 c8b7 c2c3 b7c8 h1h3 c8b7 a4a5 f8e7 a3a4 e7h4 g4g5 h4g3 f2g3 h6g5 g3g4 g5f4 e3f4 d8h4 d5d6 h4h3 d4d5 h3f3 c5c6 b7c6 d5c6 f3d3 e5e6 d3d6,0x0d5728b0401ba39ba94f3e3c07d51462
+horde,a4a5 a7a6 h4h5 a6b5 c4b5 d7d6 a3a4 e7e6 f5e6 f7e6 c5d6 c7d6 e4e5 b8d7 c3c4 b7b6 a5a6 c8a6 b5a6 a8a6 e3e4 d6e5 f4e5 f8b4 f3f4 b4f8 f4f5,0xca78cbfdbcafbf57c54a831f8accc1fb
+horde,d4d5 d7d6 d3d4 e7e6 c5d6 c7d6 a4a5 h7h5 g5g6 f7g6 f5e6 h5g4 h3g4 g8f6 g4g5 f8e7 g5f6 e7f6 d2d3 f6h4 c4c5 d6c5 b4c5 g6g5 b3b4 g5f4 g3f4 d8f6 c3c4 g7g5 f4f5 f6g6 f5g6 h8g8 f3f4 g8g6 f4f5 g6h6 c5c6,0x82625f344fbc3cf368424bf5f8b85d35
+horde,d4d5 e7e6 f5e6 f7e6 d3d4 e6d5 e4d5 d7d6 c5c6 b7c6 d5c6 h7h6 d4d5 h6g5 h4g5 g7g6 h3h4 f8e7 d2d4 a7a6 d1d3 a6b5 a4b5 e7f8 e3e4 f8e7 a3a4 e7f8 h2h3 f8e7 e2e3 e7f8 a2a3 f8e7 h1h2 e7f8 e1e2 f8e7 a1a2 e7f8 a4a5 f8e7 f4f5 g6f5 f3f4 f5g4 h3g4 c8g4 f2f3 g4c8 h2h3 e7f8 f1f2 f8e7 a3a4 e7f8 a2a3,0x50dc744c0febe693b906d46f9bd8d0e9
+horde,e4e5 e7e6 f5e6 d7e6 e3e4 h7h5 f4f5 g8e7 f5f6,0xd33a080cf8f286343f3a564fa154d36d
+horde,h4h5 g7g6 h5g6 f7g6 f5g6 h7h6 f4f5 h6g5 f3f4 g5f4 e3f4 f8h6 g4g5 h6f8 e4e5 e7e6 f5f6 d7d6,0x572ca5313d8704786c5e7c7996188c31
+horde,e4e5 e7e6 d4d5 d7d6 h4h5 d6e5 f4e5 g8e7 e3e4 e6f5 g4f5 c8f5 e4f5 e7f5 g3g4 f5e7 e2e4 g7g6 h5h6 e7g8 f3f4 g8h6 g5h6 f8h6 e1e3 g6g5 f4f5 h6f8 f2f4 h7h5 g4h5 g5f4 e3f4 d8h4 f1f2 h4h5 d3d4 h5d1 d5d6 c7d6 e5d6 d1c1 d4d5 c1b1 e4e5 b1c2 c5c6 b7c6 d5c6 c2f5 g2g3 f8d6 e5d6 e8g8 d2d4 f5b1 a4a5 b1a1 d4d5 a1b2 b5b6 a7b6 a5b6 b2a2 b6b7 b8c6 d5c6 a2a3 c6c7 a3a7 b7a8q a7a8 c4c5 f7f5 c3c4 g8f7 b4b5 f7e6 f2f3 a8a7 b3b4,0x8025958b470a30b1e94a1be4560ce984
+horde,d4d5 e7e6 d3d4 e6d5 e4d5 a7a6 e3e4 a6b5 a4b5 b7b6 e4e5 b6c5 d4c5 c7c6 d2d4 c6b5 c4b5 d7d6 e5d6 f8d6 c3c4 d6c7 e2e4 b8d7 e1e3 a8a7 d1d3 c8b7 a3a4 d8a8 c5c6 b7c6 d5c6 d7b8 d4d5 a7a4,0x9811707d1478cd86f7d6138bb330cb0a
+horde,d4d5 h7h5 e4e5 h5g4 h3g4 a7a5 e3e4 a5b4 c3b4 c7c6 d5d6 e7e6 f5f6 g7g6 e2e3 c6b5 c4b5 b7b6 d3d4 b6c5 b4c5 f8d6 e5d6 e8f8 e4e5 f8e8 c2c4 e8f8 c1c3 f8e8 h2h3 c8b7 h1h2 e8f8 d2d3 b7f3 g2f3 f8e8 e3e4 e8f8 e1e3 f8e8 d1d2 e8f8 g1g2 f8e8 b5b6 e8f8 b3b4 b8c6 b2b3 f8e8 b1b2 e8f8 b4b5 f8e8 b5c6 e8f8 c6d7 d8d7 b3b4 d7c6 b4b5 c6b7 b2b4 a8a4 c5c6 b7b6 d4d5 a4a3 d6d7 b6c7 d5d6 c7d8 c4c5 a3a2 b5b6 a2a1 b6b7 a1f1 b4b5 g8f6 g5f6 f8g8 g4g5,0xa249091949b72fc6045c7d209c44b483
+horde,,0xca7dfaba0f90cd41a8a878183978f15b
+horde,d4d5 e7e6 d3d4 f7f6 h4h5 f6g5 f4g5 d8g5 f3f4 g5d8 e4e5 e6f5 g4f5 d7d6 e5e6 d6c5 b4c5 g7g6 h5g6 h7g6 f5g6 d8f6 b3b4 c8e6 c5c6 e6c8,0x83af22726cfd12a91694be03059db4ef
+horde,d4d5 c7c6 e4e5 c6d5 c4d5 e7e6 d5d6 e6f5,0xf5f84338f232b2d0a520cdfd36ec5c10
+horde,d4d5 e7e6 d3d4 e6d5 e4d5 a7a5 e3e4 d7d6 c5c6 g8e7 d2d3 a5b4 c3b4 b7c6 d5c6 e7c6 b5c6 b8c6 d4d5 c6b8 d3d4 c8d7 a4a5 c7c6 d1d3 c6d5 e4d5 d7c8 c2c3 f8e7 c1c2 d8c7 e2e4 c7b7 e4e5 d6e5 f4e5 e7d8 e1e3 d8a5,0x7812a4f6d43dacb5e1c126cb057c505c
+horde,d4d5 a7a6 d3d4 a6a5 d2d3 h7h5 d1d2 b7b6 c5c6 d7c6 b5c6 b8c6 d5c6 d8d6 d4d5 e7e6 b4b5 e6d5 e4d5 f7f6 g5g6 f8e7 d3d4 e7f8 e3e4 g8e7 e4e5 f6e5 f4e5 d6d8 e2e4 h8h6 g4g5 h6h8 g3g4 h5g4 f3g4 h8h4 f2f4 e7g8 f5f6 g7f6 g5f6 g8f6 e5f6 d8f6 e1e3 f6g6 d2d3 g6h6 e4e5 h4h3 g2h3 h6h3 e3e4 h3g4 f4f5 g4g1 f5f6 g1f1 h2h4 f1h1 e5e6 h1h4 f6f7 e8e7 e4e5 c8e6 d5e6 e7e6 d4d5 e6e5 d3d4 e5d6 c4c5 b6c5 d4c5 d6c5,0xa9398f2415dbaa91e0ccc2e5e8bf4591
+horde,d4d5 e7e6 d3d4 d7d6 e4e5 d6e5 f4e5 g8e7 d5e6 f7e6 f5e6 e7g6 f3f4 g6h4 g3h4 g7g6 g2g3 f8e7 d4d5 h7h6 e3e4 h6g5 h4g5 h8h3 d5d6 e7g5 f4g5 c7d6 d2d4 c8e6 c5d6 d8g5 d1d2 e6g4 c4c5 g5h6 a4a5 g4c8 d4d5 h3h2 g1h2 h6h2 c5c6 b7c6 b5c6 b8c6 d5c6 h2h1 d2d3 h1f1 b4b5 f1e1 b5b6 a7b6 a5b6 e1f2 b6b7 c8b7 c6b7 a8b8 a3a4 b8b7 c3c4 f2e2 c2c3 e2e3 c1c2 e3a7 d3d4 b7b8 d4d5 a7d7 c4c5 b8c8 e5e6 d7g7 b3b4 c8d8 a4a5 g7e5 a5a6 d8d6 c5d6 e5d6 b4b5 d6b6 c3c4 e8e7,0x479bcca755e7bb4e5c759f13c5c850a4
+horde,e4e5 e7e6 f5f6 h7h6 g5g6 f7g6 g4g5 h6g5 f4g5 g7f6 g5f6 g8f6 e5f6 d8f6 f3f4 f8e7 e3e4 h8h7 e4e5 f6h8 d4d5 e7h4 g3h4 h7h4 d5e6 d7e6 d3d4 h4f4 g2g3 f4d4 c3d4 h8h3 d4d5 h3f1 d5e6 c8e6 f2f4 f1e1 d2d4 e1d1 d4d5 e6d5 c4d5 d1d5 b5b6 a7b6,0x5f6bd4e2a8290133b1733435b38145cf
+horde,e4e5 e7e6 f5f6 g7f6 g5f6 g8f6 e5f6 d8f6 e3e4 f6g7 h4h5 h7h6 e4e5 f7f6 e2e3 d7d6 c5d6 c7d6 c4c5 f6e5 f4e5 d6e5 e1e2 e5d4 c3d4 a7a5 c2c3 b8d7 b5b6 a5b4 a3b4 e6e5 a4a5 e5d4 e3d4 d7f6 c1c2 g7f7 a2a3 f6h5 g4h5 f7h5 c3c4 f8g7 c2c3 c8h3 d4d5 h3d7 d3d4 h5g6 d2d3 h6h5 h2h4 g6h6 e2e3 d7f5 c5c6 e8c8 c6c7 d8e8 b4b5 f5d3 a5a6 b7a6 c4c5 d3b5 c3c4 b5c6 d5c6 h6c6 b3b4 g7d4 e3d4 e8e1 d4d5 c6b7 d5d6,0x45954dbd1d113e02e92c4596a114f13d
+horde,d4d5 e7e6 d3d4 a7a5 h4h5 h7h6 g5g6 f7g6 h5g6 e6f5 g4f5 d7d6 c5c6 h6h5 h3h4 g8e7 c6b7 c8b7 c4c5 a5b4 a3b4 d6c5 b4c5 b7d5 e4d5 e7d5 c3c4 d5b4 c2c3 b4a2 b1a2 c7c6 b5b6 b8d7 e3e4 f8c5 e2e3 c5b6 d2d3 a8a5 c1c2 d8a8 d1d2 a5a4 b3a4 a8a4 g3g4 h5g4 f3g4 a4c2 e1e2 c2d2 g4g5 h8h4 e4e5 d2e1 f5f6 g7f6 e5f6 h4g4 g6g7 d7f6 g5f6 e8f7 h2h3 g4g6 f4f5 g6g5 f2f4 g5f5 e3e4 f5f6 e4e5 f6f4 h3h4 f7g7 h4h5 f4h4 c4c5 b6c5 d4c5 e1f1 c3c4 f1e2 a2a4 e2d3 a4a5 d3c4 a5a6 c4c5,0xea41c0aee6de872f58d8f9d09c3d55bf
+horde,d4d5 e7e6 e4e5 f7f6 d5d6 c7d6 c5d6 g7g6 g5f6 e6f5 g4g5 h7h6 c4c5 h6g5 f4g5 b7b6 d3d4 a7a6 c3c4 a6b5 c4b5 b6c5 b4c5 c8b7 c2c4 a8a5 d2d3 d8c8 e3e4 b7a8 e2e3 f5e4 f3e4 c8b7 f2f4 b7a7 f1f3 a8b7 d1d2 a7a8 d4d5 h8h5 d3d4 e8d8 g3g4 h5h4 g2g3 h4h3 f4f5 g6f5 g4f5 d8e8 g5g6 g8f6 e5f6 h3h6 c1c2 a5a4 b3a4 a8a4 g3g4 a4c4 d2d3 c4b5 g4g5 h6h8 g6g7 f8g7 f6g7 h8g8 f5f6 b7d5 e4d5 e8f7,0x94770ab1d30fdbb5c7d1d7aad69d5250
+horde,,0xca7dfaba0f90cd41a8a878183978f15b
+horde,e4e5 d7d6 e3e4 d6e5 d4e5 e7e6 d3d4 e6f5 e4f5 f8e7 e2e4 h7h6 g5h6 h8h6 h4h5 g7g6 h5g6 f7g6 g4g5 e7g5 f4g5 d8g5 f3f4 g5d8 f5f6 g8f6 e5f6 d8f6 e1e3 f6h8 h3h4 b8d7 c5c6 b7c6 b5c6 d7f6 f2f3 h6h4 g3h4 h8h4 f1f2 f6h5 b4b5 h5f4 e3f4 h4f4 d4d5 c8g4 f3g4 f4g4 f2f3 g4f4 a4a5,0x96d28a34fb2d34a5f97ebfa9fce78a46
+horde,e4e5 e7e6 e3e4 c7c6 h4h5 a7a5 h3h4 d7d5 c5d6 a5b4 a3b4 c6b5 a4b5 f8d6 e5d6 d8d6,0x022726ab100c9a23f6f5e149c82a6c42
+horde,d4d5 a7a5 b4a5 a8a5 b3b4 a5a4 d3d4 b7b6 c5b6 c7b6 d2d3 d7d6 d1d2 d8c7 h4h5 c7a7 h5h6 a4a3 b2a3 a7a3 b1b2 a3a2 h6g7 f8g7 g5g6 h7g6 f5g6 f7g6 h3h4 a2a1 h4h5 g6h5 g4h5 a1c1 c4c5 b6c5 d4c5 d6c5 b4c5 c1b2 b5b6 c8b7 c5c6 b8c6 d5c6 b7c6 b6b7 c6b7 c3c4 b2c2 d3d4 c2c4 d4d5 c4c1 d5d6 e7d6 e4e5 d6e5 f4e5 g7e5 f3f4 e5f6 f4f5 c1e1 e3e4 b7e4 g3g4 e1e2 f1e2 g8e7 h5h6 h8h6 d2d3 e4c6 e2e3 e7d5 d3d4 d5c3 e3e4 c6e4 d4d5 e4d5 g2g3 d5h1 h2h4 f6h4 f2f3 h4g3 f5f6 h6f6 g4g5 f6g6 f3f4,0x20b170e4e14aada98685b212bae29557
+horde,e4e5 a7a5 b4a5 a8a5 b3b4 a5a4 d4d5 c7c6 h4h5 c6b5 c4b5 d7d6 b5b6 d6c5 b4c5 d8d5 d3d4 e7e6 b2b3 a4a3 h5h6 e6f5 g4f5 g7h6 h3h4 h6g5 h4g5 c8f5 e3e4 f5e4 f3e4 d5e4 e2e3 b8d7 h2h3 d7c5 d4c5 f8c5 h3h4 c5b6 f4f5 e4f5 f2f3 f5e5 f3f4 e5e6,0x15f2a9c87273346ef03d7b7262f26292
+horde,e4e5,0xb49a2e105ae12173c9d16ee53d66d73f
+horde,h4h5 e7e6 a4a5 b7b6 a5a6 g7g6 h5g6 h7g6 f5f6 g8f6 g5f6 d8f6 g4g5 f6e7 e4e5 f8g7 h3h4 d7d6 c5d6 c7d6 a3a4 d6e5 f4e5 e7c7 f3f4 e8e7 a2a3 b8d7,0xdcf5727abc9f9ca7faf70421501dcff3
+horde,d4d5 e7e6 e4e5 e6f5 g4f5 d7d6 e3e4 d6c5 b4c5 f8c5 d3d4 c5e7 g3g4 h7h6 g5h6 h8h6 h4h5 g7g6 f5f6 g8f6 e5f6 e7f6 e2e3 g6h5 g4h5 h6h5 e4e5 f6e7 d2d3 c8h3 g2h3 h5h3,0x171fe4c445104964d7996d3e76096ef3
+horde,e4e5 h7h5 d4d5 h5g4 f3g4 g7g6 f5f6 e7f6 e5f6 g8f6 g5f6 d8f6 g4g5 f6f5 e3e4,0x820c7485fa015cd03ac7bbab308382a2
+horde,a4a5 e7e6 d4d5 d7d6 d3d4 e6f5 g4f5 g8e7 g3g4 f7f6 a3a4 g7g6 g5f6 e7f5 g4f5 d8f6 g2g3 g6f5 e4e5 d6e5 d4e5 f6e7 d2d4 f8g7 d5d6 c7d6 c5d6 e7f7 d1d3 e8g8 g3g4 f5g4 h3g4 f8e8 g1g3 b8d7 h2h3 d7e5 d4e5 g7e5 f4e5 e8e5 c4c5 f7e8 e3e4 e8d8 f3f4 e5e8 f2f3 h7h5 d3d4 h5g4 h3g4 g8f7 e4e5 e8g8 h1h3 g8h8 h4h5 h8g8 d4d5 g8g7 e2e4 d8g8,0x692c502f5022590b7972cde69f76d544
+horde,f5f6 e7e6 f6g7 f8g7 h4h5 h7h6 g5h6 h8h6 h3h4 d8e7 g4g5 h6h5 f4f5 e6f5 e4f5 d7d6 c5d6 c7d6 f5f6 g8f6 g5f6 g7f6 g3g4 h5h4 f3f4 h4h2 g1h2 f6h4 g2g3 h4g3 h2g3 e7f8 h1h2 f8h8 h2h4 h8g7 g4g5 g7h7 h4h5 h7h5 g3g4 h5g4 f2f3 g4g1 f1f2 g1f1 f4f5 f1e1 e3e4 c8f5 f3f4 e1d1 d4d5 d1e2 e4e5 e2f2 g5g6 f2f4,0x3a0653f9d9a06c8936ba103f6f845110
+horde,e4e5 e7e6 f5e6 d7e6 e3e4 f7f6 f4f5 f6g5 h4g5 d8g5 f5e6 c8e6 d4d5 e6c8 f3f4 g5g6 d3d4 f8e7 f4f5 g6h6 f2f4 e7d8 d5d6 c7d6 c5d6 g7g5 f5g6 h7g6 d4d5 h6g7 c4c5 h8h7 c5c6 b7c6 b5c6 g7h8 d2d4 a7a6 e5e6 g8f6 d1d3 h7h3 g2h3 h8h3 e4e5 f6d5 e2e4 d5e3 c3c4 e3g4 d6d7 b8d7 c6d7 c8d7 e6d7 e8d7 d4d5 h3f1 c4c5 f1e1 e5e6 d7e7 f4f5 g6f5 e4f5 e1e5 c2c4 e5f5 b4b5 f5d3 b5b6,0x02bfe1567b0e763f0a94cbc170fc563a
+horde,d4d5 e7e6 f5e6 d7e6 d5e6 c8e6 f4f5 e6c8 e4e5 h7h6 f3f4 f8e7 f5f6 g7f6 g5f6 g8f6 e5f6 e7f6 d3d4 f6h4 g3h4 d8h4 g4g5 h6g5 f4g5 c8h3 c5c6 b7c6 b5c6 h3c8 b4b5 h4g5 a4a5 h8h4 b5b6 a7b6 a5b6 b8c6 b6c7 a8a7 d4d5 c6a5 d5d6 g5c5 b3b4 c5d6 b4a5 a7a5 b2b4 a5a3 c4c5 d6c7,0x66c5e73243522eb3ec8f18d448d5573d
+horde,e4e5 a7a6 e3e4 a8a7 d4d5 a6a5 d3d4 a5b4 a3b4 b7b6 c5c6 h7h6 h4h5 f7f6 g5g6 d7d6 e5e6 a7a8 e2e3 a8a7 e4e5 a7a8 e3e4 a8a7 e1e3 a7a8 d2d3 a8a7 d1d2 a7a8 a2a3 a8a7 a1a2 a7a8,0x3629f23c7fc9a1a30507d825780ec249
+horde,e4e5 d7d6 c5d6 e7d6 e5d6 c7d6 d4d5 f8e7 e3e4 a7a5 e4e5 d6e5 f4e5 e7g5 h4g5 d8g5 h3h4 g5e7 f3f4 g8h6 e2e4 h6g4 h2h3 g4e5 f4e5 e7e5 f2f4 e5f6 d3d4 c8f5 e4f5 f6f5 e1e3 h7h5 f1f2 b7b6 c4c5 b6c5 b4c5 f5d5 d2d3 b8d7 e3e4 d5e6 f4f5 e6h6 f2f4 e8c8 b3b4 a5b4 a3b4 c8c7 c5c6 d7b6 b2b3 d8a8 e4e5 b6a4 b3a4 a8a4 d4d5 h6h7 d5d6 c7c8 d3d4 h7f5 d4d5 f5e4 d6d7 c8c7 d5d6,0xdacc946c29f4099e3f686f8e4b96558b
+horde,d4d5 c7c6 d3d4 c6b5 a4b5 a7a6 b5b6 d7d6 a3a4 b8d7 a4a5 d6c5 d4c5 e7e6 d2d4 e6f5 e4f5 f7f6 e3e4 f6g5 h4g5 g7g6 f5f6 g8f6 g5f6 d7f6 g4g5 f6h5 h3h4 f8g7 d1d3 e8g8 e2e3 c8d7 e1e2 d8e7 a2a3 f8e8 d5d6 e7e6 e4e5 h5f6 g5f6 g7f6 e5f6 e6f6 e3e4 d7c6 e4e5 f6e6 e2e4 a8d8 d4d5 e6d7 d5c6 d7c6 d3d4 c6d7 a3a4 h7h6 a1a3 d7g7 b4b5 a6b5 a4b5 g6g5 h4g5 h6g5 a5a6 g5f4 g3f4 b7a6 b5a6 d8a8 a6a7 g7b7 b3b4 e8f8 f4f5 f8f7 g2g4 f7h7 f3f4 h7h4 d4d5 h4g4 e5e6 g4f4 g1g2 f4e4,0xdefcc4cece4e8bef6a676361416d8e4a
+horde,e4e5 g7g6 f5g6 f7g6 e3e4 g8h6 g5h6 f8h6 g4g5 h6g7 g3g4 e7e6 h4h5,0x60980658b123531e98c7f6ba91e43274
+horde,e4e5 a7a5 d4d5 a5b4 c3b4 d7d6 c5c6 b7b6 e5e6 f7f6 g5g6 h7h6 h4h5 a8a7 e3e4 a7a8 d3d4 a8a7 h3h4 a7a8 e2e3 a8a7 d2d3 a7a8 c2c3 a8a7 c1c2 a7a8 d1d2 a8a7 e1e2 a7a8 h2h3 a8a7 h1h2 a7a8 g4g5 h6g5 h4g5 f6g5 f4g5 h8h5 h3h4 a8a7 f3f4 a7a8 f2f3 a8a7 f1f2 a7a8 h2h3 a8a7 e4e5 d6e5 d4e5 a7a8 e3e4 a8a7 d3d4 a7a8 e2e3 a8a7 d2d3 a7a8 c4c5 b6c5 b4c5 a8a7 b3b4 a7a8 c3c4 a8a7 c2c3 a7a4 f5f6,0xcc689557bb3928cae5a8203385a7d83a
+horde,d4d5 h7h5 e4e5 f7f6 g5g6 h5g4 f3g4 a7a5,0x575a07f332669e61e51b582da5c47ba3
+horde,d4d5 a7a6 d3d4 a6b5 c4b5 b7b6 c3c4 b6c5 d4c5 c7c6 d2d4 c6b5 c4b5 d7d6 c2c4 d6c5 d4c5 c8d7 d1d3 d7c8 c1c3,0x7773fafbdc6ac1b8beebddd457a30402
+horde,e4e5 e7e6 f5f6 h7h6 e3e4 h6g5 h4g5 g7f6 g5f6 g8f6 e5f6 d8f6 e4e5 f6g7 h3h4 d7d6 e2e3 f7f6 e5f6 g7f6 h4h5 h8h7 h2h3 f6h8 c5d6 c7d6 c4c5 b8d7 c5c6 d7f6 c3c4 f6h5 g4h5 h7h5 h3h4 f8e7 h1h3 e7h4 g3h4 h5h4 d4d5 e6d5 c4d5 h4h3 g2h3 h8h3 g1g2 h3h1,0xaae5c7a363bdae5eedc98952bb2a5928
+horde,e4e5 a7a5 d4d5 h7h5 d3d4 b7b6 c5c6 d7c6 b5c6 e7e6 f5e6 f7e6 e3e4 e6d5 c4d5 g7g6 b4b5 g8e7 c3c4 e7c6 b5c6 b8c6 d5c6 d8d4 d2d3 d4c5 c2c3 c5c6 d3d4 c8a6 d1d3 b6b5 a4b5 a6b5 c4b5 c6b5 c3c4 b5b6 d4d5 c7c6 c1c3 c6d5 e4d5 f8g7 d3d4 h5g4 h3g4 a5a4 b3b4 a8c8 c4c5 b6b5 b2b3 a4b3 a2b3 c8a8 b1b2 e8g8 c3c4 b5b8 d5d6 g7e5 f4e5 g8f7 e2e4 a8a6 f3f4 b8a8 d4d5 a6a3 b2a3 a8a3 e5e6,0xe18e093ad0a0122e25d304352016489c
+horde,d4d5 e7e6 d3d4 e6f5 g4f5 d7d6 d2d3 d6c5 b4c5 c7c6 d1d2 b8d7 d5d6 d7b8 d4d5 c6d5 e4d5 b7b6 c5c6 a7a6 d6d7 c8d7 c6d7 d8d7 d3d4,0x572c64471032a733c9d0f3c7803d5214
+horde,h4h5 a7a5 e4e5 e7e6 f5e6 f7e6 e3e4 g8e7 d4d5 e6d5 c4d5 a5b4 a3b4 d7d6 c5d6 e7d5 e4d5 c7d6 e5e6 g7g6 h5g6 h7g6 h3h4 f8e7 c3c4 e7g5 h4g5 d8e7 a4a5 c8e6 d5e6 e7e6 e2e4 b7b6 a5a6 b8a6 b5a6 a8a6 a2a4 e6c8 a1a2 c8a8 h2h4 a6a4 b3a4 a8a4 b4b5 e8f7 f4f5 h8a8 h4h5 g6f5 g4f5 a8c8 g3g4 c8c4 d3c4 a4c4 d2d3 c4b5 h5h6 b5e5 g2g3 d6d5 f3f4 e5d4 e1e3 d4c5 e4e5 c5b4 d1d2 b4c5 g5g6 f7g8 g4g5 c5c6 g3g4 b6b5 h1h2 b5b4 h2h4 d5d4 e3e4 b4b3 a2b3 g8h8 f5f6 c6c8 f2f3 c8e8 h4h5 e8e6 g1g3 e6g8 f4f5 g8g7 f3f4 g7g8 f1f3 g8g7 e5e6 g7g8 e4e5 g8g7 c2c3 d4c3 b2c3 g7g8 d3d4 g8g7 c1c2,0xec5eea29db512419448537c85a39a00a
+horde,d4d5 e7e6 a4a5 h7h6 d3d4 f8e7 d5e6 d7e6 d4d5 e6f5 e4f5 h6g5 h4g5 e7g5 f4g5 d8g5 e3e4 g5h6 f3f4 g7g6 f5g6 f7g6 g4g5 h6g7 h3h4 h8h5 e4e5 g8e7 e2e4 g7h7 e1e3 h5h4 g3h4 h7h4 d2d4 c8g4 d1d3 g4d1 h2h3 d1e2 f1e2 h4h5 f2f3 h5h4 d5d6 c7d6 e5d6 e7c8 e4e5 h4e1 e3e4 e1e2 h3h4 e2e3 f4f5 g6f5 e4f5 e3f4 f5f6 f4h4 g5g6 e8f8 g6g7 f8g8 d4d5 h4g5 d3d4 g5f5 h1h3 b8d7 g2g4 f5f3 g4g5 f3f5 h3h4 d7e5 d4e5 f5e5 d6d7 c8e7 f6e7 e5e7 c5c6 b7c6 b5c6 e7d6 b4b5 d6c5 h4h5 a8d8 h5h6 c5d6 b3b4 d6c7 c4c5 c7e5 c3c4 e5d4 b2b3 d4e5 b5b6 a7b6 a5b6 e5e7 a3a4 e7g5 b6b7,0xdea73c6d9051771b28e33b1a7fcbd18e
+horde,c5c6 d7c6 b5c6 b8c6 c4c5 g7g6 f5f6 e7f6 g5f6 g8f6 e4e5 f6g4 e5e6 c8e6 d4d5 e6d5 c3c4 d5c4 d3d4 c4e2 f3g4 e2g4 f4f5 g4f5 d4d5 d8d5 b4b5 f8c5 b5c6 c5e3 b3b4 e3d2 c2c4 d5c6 b4b5 c6c4 c1d2 f5b1 b2b3 c4c1 e1e2 c1d1,0x47748f24372a9e080342f9143eb41242
+horde,e4e5 d7d6 e5d6 c7d6 c5d6 e7d6 d4d5 c8d7 e3e4 b7b6 d3d4 f7f6 g5f6,0x2a17957bdd9fa39bbb3c355cca9b722a
+horde,d4d5 a7a6 d3d4 a6b5 a4b5 b7b6 a3a4 b6c5 b4c5 c7c6 b3b4 c6b5,0x9848d149942b9e6483fb078ae20569b7
+horde,h4h5 g7g6 f5g6 h7g6 h5g6 f7g6 f4f5 g6f5 e4f5 e7e6 f5e6 d7e6 f3f4 c7c6 b5c6 b8c6 h3h4 c6e7 e3e4 e6e5 e2e3 c8g4 f2f3 g4h5 g3g4 h5f7 g2g3 e7g6 h4h5 e5f4 e3f4 g6f4 g3f4 d8d7 g1g3 f7h5 g4h5 d7h3 h5h6 h3h2 e4e5 h2g3 e1e3 g3f3 d4d5 f3d1 d5d6 e8d7 d3d4 d1f1 b4b5 f1c1 d4d5 c1d2 e5e6 d7c8 d6d7 c8d8 c5c6 b7c6 b5c6 d8c7 b3b4 d2e3 b4b5 f8d6 b2b4 e3f4 c4c5 g8e7 c5d6 f4d6 c3c4 e7d5 c4d5 d6d5 e6e7,0x0e144fc1676a19aeca4df6b29dcdf996
+horde,d4d5 e7e6 d3d4 d7d6 e4e5 e6f5 g4f5 c8f5 e3e4 f5c8 d2d3 f7f5 e2e3 f5e4 d3e4 d6c5 b4c5 c7c6 d1d3 c6d5 e4d5,0xbc63c4c2d976009c03a94d2bc4f6b3d6
+horde,d4d5 a7a5 d3d4 a5b4 c3b4 e7e6 d5e6 f7e6 f5f6 g7f6 g5f6 g8f6 f4f5 f6g8 f5e6 d7e6 d4d5 e6d5 d2d4 d5c4 b3c4 b8d7 c2c3 b7b6 c5c6 d7b8 d1d3 c8d7,0xc938c19e62ee1f6ce1cae16cb33624ab
+horde,d4d5 e7e6 d3d4 d7d6 h4h5 f8e7 g5g6 g8h6 g6f7 e8f7 f5e6 c8e6 d5e6 f7e6 c5d6 c7d6 d4d5 e6d7 d2d4 d7e8 d1d3 g7g6 g4g5 e7g5 f4g5 d8g5 f3f4 g5h5 g3g4 h5h4 g4g5 h6f7 c4c5 d6c5 b4c5 h7h6 e4e5 h6g5 f4g5 f7g5 c5c6 b7c6 b5c6 g5f7 c3c4 b8a6 b3b4 a6c7 b4b5 e8e7 b2b4 h8d8 e3e4 h4g5 e2e3 f7e5 f2f4 g5h4 g2g3 h4h3 f4e5 h3f1 a4a5 c7e8 c4c5 f1e1 b5b6 a7b6 a5b6 e1e3 c2c3 e3d3 d5d6,0xfd509238788395e970558af1ac8cec6b
+horde,d4d5 d7d6 c5d6 c7d6 a4a5 b7b6 a5a6 b8a6 b5a6 c8a6 e4e5 d6e5 f4e5 f7f6 e5e6,0xe596e75d0149bff74496582869e54c47
+horde,e4e5 g7g6 f5g6 h7g6 f4f5 g6f5 g4f5 f7f6 g5f6 e7f6 e3e4 f6e5 d4e5 f8e7 f3f4 e7h4 g3g4 d7d6 e5d6 c7d6 d3d4 d6c5,0xab9ca49a3aa48f75f62371cc03caed62
+kingofthehill,d2d4 d7d5 c2c4 c7c6 g1f3 c8f5 c4d5 g8f6 b1c3 c6d5 d1b3 d8b6 b3b6 a7b6 f3e5 b8c6 e2e3 e7e6 f1b5 a8c8 f2f3 f8b4 h2h4 h7h5 c1d2 e8e7 e1e2 b4c3,0xa08296413fb9621a80c52c06f1746e2d
+kingofthehill,d2d4 e7e5 g1f3 d7d5 f3e5 f7f6 f2f4 f6e5 f4e5 c8f5 c2c4 f5e4 b1c3 d8h4 g2g3 h4g4 h1g1 c7c5 e2e3 c5d4 d1g4 d5c4 g4e4 g8f6 e5f6 e8f7 f1c4 f7f6 e4d4 f6g6 c4d3 g6f7 g1f1 f7e7 d4e5 e7d7 d3f5 d7c6 e5d5 c6c7 c3b5 c7b6 e3e4 a7a6 c1e3 b6a5 b2b4 a5a4 e1d2,0x66d6cd93d5b5cd71104db79a0da96e51
+kingofthehill,d2d4 d7d5 c2c4 c7c6 e2e4 d5e4 b1c3 f7f5 f2f3 g8f6 f3e4 f6e4 c3e4 f5e4 e1e2 c8g4 g1f3 e4f3 g2f3 g4f5,0x660d6ac66ef5221acaccf2fe342f9746
+kingofthehill,e2e4 e7e5 g1f3 d7d5 e4d5 f7f5 d2d4 e5e4 f3e5 g8f6 c1g5 h7h6 g5f6 g7f6 d1h5 e8e7 h5f7 e7d6 b1c3 a7a6,0x69108c80397a1c5d6fd317f383f4c625
+kingofthehill,d2d4 d7d5 c2c4 e7e5 b1c3 e5d4 d1d4 g8f6 c4d5 c8f5 d4d1 b8c6 g1f3 c6b4 e2e4 f6e4 c3e4 f5e4 d1e2 b4c2 e1d2 d8e7 f3d4 c2d4 d2c3 d4e2,0x74deb5e52a7e87847c6a1f5c8d76e08f
+kingofthehill,d2d4 b7b5 c2c4 b5c4 b1c3 d7d5 g1f3 f7f5,0x7df3aca9a7e31fe59b37c12a89fc2455
+kingofthehill,d2d4 d7d5 e2e4 c7c6 e4d5 c6d5 c2c4 e7e6 c4d5 e6d5 b1c3 g8f6 g1f3 c8e6 c1g5 f8d6 g5f6 g7f6 e1d2 b8c6 d2d3 f6f5 f3e5 f7f6 f2f4 f6e5 d4e5 d6c5 a2a3 d8b6 b2b4 c5f2 d1f3 h8g8 c3a4 b6d4 d3c2 b7b5 f3d3 b5a4 d3d4 f2d4 c2d3 d4b6 a1c1 a8c8 f1e2 e8d7 e2f3 h7h5 h1d1 h5h4 c1c5 h4h3 g2g4 f5g4 f3d5 e6f5 d3c4 g8d8 d5c6 d7e6,0x84792a5311281a98bfdb70753b4b9723
+kingofthehill,b2b3 e7e5 c1b2 b8c6 e2e3 d7d5 f1b5 e5e4 d1h5 g8f6 b2f6 d8f6 h5d5 c8d7 d5e4 f8e7 g1f3 e8c8 b1c3 h8e8 e4a4 a7a6 b5a6 b7a6 a4a6 c8b8 c3b5 f6a1 e1e2 a1h1 f3d4 c6d4 e3d4 d7b5 a6b5 b8c8 e2d3,0x86af65a9e39c8d68b9617858b7c29c39
+kingofthehill,e2e4 e7e6 d2d4 d7d5 e4e5 c7c5 c2c3 b8c6 g1f3 d8b6,0xfdddf8faf88f614cf2b09157f03b82db
+kingofthehill,d2d4 d7d5 c2c4 c7c6 b1c3 e7e6 g1f3 f7f5 e2e4 f5e4 f3e5 g8f6 c1f4 b8d7 c4c5 d7e5 d4e5 f6d7 e1e2 f8c5 f4e3 d8e7 b2b4 b7b6 b4c5 b6c5,0x790d37082eb895c114a569f627bef18b
+kingofthehill,e2e4 e7e5 d2d4 d7d5 d4e5 d5e4 d1d8 e8d8 b1c3 f7f5 f2f4 b8c6 f1c4 f8b4 g1e2 b4c3 e2c3 d8e7 c1e3 c8e6 e3c5 e7f7 c4e6 f7e6 e1c1 a8d8 c3b5 d8d4 b5c7 e6d7 c5d4 d7c7 d4c5 b7b6 c5a3 g8h6 d1d6 h6g4 h1d1,0x398d93207914ec0d6cb0c02dc3f29479
+kingofthehill,d2d4 d7d5 c2c4 e7e5 b1c3 e5d4 d1d4 d5c4 d4d5 d8d5 c3d5 e8d7,0x567b936356ad8fb9569e439dab14cd67
+kingofthehill,d2d4 d7d5 c2c4 c8f5 b1c3 e7e6 g1f3 g8f6 e2e4 d5e4 f3e5 b8c6,0x1bba1975a83eeff67e6ccaf018dfc27d
+kingofthehill,e2e4 c7c5 d2d4 e7e6 c2c3 d7d5 g1f3 c5c4 e4d5 e6d5 f1e2 g8f6 e1g1 f8e7 f1e1 e8g8 c1g5 h7h6 g5f6 e7f6 f3e5 b8c6 e2g4 c8g4 e5g4 f6g5 b1d2 f7f5 g4e5 g5f6 d2f3 f8e8 e5c6 b7c6 e1e8 d8e8 d1d2 g7g5 a1e1 e8d7,0xf5e3d6485c1739366e4104b29765cb19
+kingofthehill,d2d4 g8f6 c2c4 d7d5 b1c3 d5c4 g1f3 c7c5 e2e4 c5d4 e4e5 d4c3,0xf77f82e569d4cb73d1839f7796b01616
+kingofthehill,e2e4 e7e5 d2d4 d7d5 d4e5 d5e4 d1d8 e8d8 e1e2 f7f5 f2f4 b8c6 c1e3 f8c5 e3c5 d8d7 b1c3 b7b6 a1d1 d7e6,0xb6a418745f18d2f3fa99bf78e2ddfc49
+kingofthehill,e2e4 e7e5 g1f3 d7d5 e4d5 f7f5 d2d4 e5e4 f3e5 g8f6 c1g5 d8d5 f1c4,0xc25768d11fb134e2a8dafae66ac15f93
+kingofthehill,e2e4 e7e5 b1c3 d7d5 f2f4 d5d4 f4e5 f7f6 e5f6 g8f6 e4e5 b8c6 e5f6 f8b4 d1e2 e8f7 e2c4 c8e6,0x9e1d6f09b90368ba71a31c884d163817
+kingofthehill,d2d4 d7d5 c2c4 e7e6 b1c3 c7c6 g1f3 f7f6 e2e4 d5e4 c3e4 f6f5 e4c3 g7g5 c1g5 f8e7 g5e7 d8e7 e1d2 b8d7 d2d3 d7f6 d4d5 c6c5 f3d4 e8d7 d4b3 d7d6 d1e1 e6e5 c3b5 d6d7 a1d1 e5e4 d3e3 a7a6 b3c5 e7c5,0x49dc9ea9f7a8eae55182253a84cd1368
+kingofthehill,e2e4 e7e5 g1f3 d7d5 e4d5 f7f5 d2d4 e5e4 f3e5 d8d5 d1h5 g7g6 e5g6 h7g6 h5h8 e8f7 b1c3 f8g7 c3d5 g7h8 d5c7 b8a6 f1c4 f7f6 c7a8 b7b5 c4g8,0x4de00d50954d85e7fd08e80b9b41a24b
+kingofthehill,g1f3 d7d5 d2d4 c7c6 c2c4 c8f5 b1c3 e7e6 d1b3 d8b6 c4c5 b6b3 a2b3 b7b6 b3b4 a7a5 c5b6 f8b4 c1d2 g8f6 e2e3 e8e7 f3h4 e7d6 h4f5 e6f5 f1d3 g7g6 f2f4 b4c3 b2c3 f6e4 e1e2 b8d7 c3c4 e4d2 e2d2 d5c4 d3c4 d7b6,0xb1304e90925d0b64fb600383319ed3af
+kingofthehill,e2e4 e7e5 f2f4 b8c6 g1f3 d7d6 f1c4 c8g4 e1g1 g8f6 b1c3 c6d4 c4e2 d4e2 d1e2 d6d5 e4d5 g4f3,0x103843a107f26079250733093fdb59c4
+kingofthehill,d2d3 g7g6 d3d4 f8g7 c2c4 d7d6 b1c3 a7a6 g1f3 b7b6 e2e4 c8b7 e4e5 b8d7 e1d2 g8f6,0xbbb527ff8695128e07aa530e26bc0c79
+kingofthehill,e2e4 e7e5 g1f3 d7d5 e4d5 f7f5 d2d4 e5e4 f3e5 g8f6 c1g5 d8d5 f1c4 d5d8,0x8fcd0b1aa550829377088e78c2744ab0
+kingofthehill,d2d4 d7d5 c2c4 e7e5 b1c3 e5d4 g1f3 d4c3 d1d5 d8d5 c4d5 g8f6 b2c3 c8g4 c3c4 g4f3 e2f3 b8d7 c1f4 f8b4 e1e2 b4c3 e2d3 c3a1 f4d2 c7c5 d2c3 a1c3 d3c3 e8c8 f3f4 d8e8 g2g3 e8e1 f1g2 e1h1 g2h1,0xe59306ffbc94dbe79d74060d424482be
+kingofthehill,d2d4 d7d5 g2g3 e7e6 f1g2 g8f6 f2f3 c7c5 e2e3 c5d4 e3d4 b8c6 c2c3 c8d7 f3f4 f8e7 g1f3 h7h6 e1g1 e8g8 c1e3 d8c7 d1d2 f8e8 f3e5 e7d6 b1a3 a7a6 a3c2 a8c8 a1c1 g8f8 g1f2 f8e7 f2f3 e8d8 h2h3 d7e8 c2e1 g7g6 e1d3 f6h5 g3g4 h5f6 h3h4 h6h5 g4g5 f6d7 g2h3 f7f6 e5c6 c7c6 c1e1 f6f5 d3e5 c6b5 e1c1 d6e5 d4e5 d7c5 e3c5 b5c5 f1d1 c5c4 h3f1 c4c5 d2d4 c5d4,0x961ccff645501eee32408506050967b1
+kingofthehill,e2e4 e7e5 f2f4 d7d6 g1f3 b8c6 f1c4 h7h6 e1g1 f8e7 d2d3 e5f4,0xead8f766e5c929f160b242bca0fa5d48
+kingofthehill,c2c4 g8f6 d2d4 e7e5 e2e3 e5d4 e3d4 d7d5 b1c3 f8b4 c1e3 e8g8 g1f3 c8g4 f1d3 c7c6 e1g1 b4c3 b2c3,0x81715784c32843c43a3d3bf236537a27
+kingofthehill,e2e4 e7e5 g1f3 d7d5 f3e5 d5e4 d2d4 f7f5 d1h5 g7g6 e5g6 h7h6 g6h8 e8d7 h5f7 d8e7 f7g8 e7g7 g8g7 f8g7 h8g6 d7e6 c2c4 b7b5 b1c3 b5c4 f1c4 e6d6,0x95d7b091efc96d22261306d98ea83b47
+kingofthehill,d2d4 e7e5 e2e4 e5d4 c2c3 d4c3 b1c3 d7d6 g1f3 b8c6 f1c4 c8g4 c4d5 c6e5 e1e2 e5f3 e2e3 d8f6 g2f3 g4e6 d1d4 c7c5 d4f6 g8f6 e4e5 e6d5 e5f6 d5c6 c3d5 c6d5 h1d1 d5c6 c1d2 e8c8 d2c3 d8e8 e3d3 d6d5 b2b4 c8d7 b4c5,0x7c3d0adb726da4fc13ce64385baafbc1
+kingofthehill,e2e4 e7e5 g1f3 e8e7 b1c3 e7d6 d2d4 e5d4 d1d4 d6e6,0x51386c9dc298507f97576b145b2c2838
+kingofthehill,d2d4 d7d5 c1f4 e7e6 g1f3 f8d6 f4d6 c7d6 e2e3 c8d7 b1c3 g8e7 f1d3 b8c6 e3e4 d5e4 c3e4 d8c7 e1e2 e8g8 e2e3 d6d5 e4c5 d7c8 f3e5 c6e5 d4e5,0xab0d23ab5f61a5dda39a5c6b5e469d39
+kingofthehill,e2e4 e7e5 f2f4 b8c6 g1f3 d7d5 e4d5 d8d5 b1c3 d5d6 f1b5,0x06e02cc11656aa8cf963d3d939c6bc92
+kingofthehill,d2d4 d7d5 e2e3 c7c6 f2f4 c8f5 g1f3 e7e6 f1d3 g8f6 c2c3 f8d6 e1g1 e8g8 d3c2 f8e8 c1d2 b8d7 d2e1 d8c7 e1g3,0x298e3501be9c4cda89d81095890fe56a
+kingofthehill,e2e4 e7e5 f2f4 e5f4 g1f3 g8f6 b1c3 d7d6 f1c4 c7c6 d2d4 b7b5 c4b3 a7a5 a2a3 a5a4 b3a2 c8g4 e1g1 g4f3 d1f3 d6d5 e4e5 f6e4 c3e4,0x7e99a5d3456de475137051c4328c9b16
+kingofthehill,e2e4 e7e5 f1c4 c7c6 d1h5 g7g6 h5f3 d7d5 e4d5 c6d5 c4d5 c8e6 c2c4 e6d5 c4d5 g8f6 b1c3 b8a6 d2d3 a6c7 c1g5 c7d5 g5f6 d5f6 c3e4 f6e4,0x9a2eb5c9c5d0ae94386cdbcacf2332dd
+kingofthehill,e2e4 c7c6 d2d4 d7d6 f1c4 e7e5 d4e5 d6e5 d1d8 e8d8 c4f7,0x76b5f991b58d75a5e53a8b7c5a7fea04
+kingofthehill,d2d4 d7d5 c1f4 c8f5 e2e3 g8f6 g1f3 b8c6 f1e2 h7h6 h2h3 g7g5 f4e5 f8g7 e1g1 c6e5 f3e5 f6e4 e5d3 f7f6 b1d2 e4d6 d3c5 b7b6 c5b3 e7e5 d4e5 f6e5 d2f3 d6e4 c2c3 e8e7 f3d2 e7e6 d2e4 f5e4 f2f3 e4g6 d1d2 h8f8 a1d1 d8d6 c3c4 e5e4 f3f4 g5f4 e3f4 f8f4 d2d5,0xbc62c82b8c1cdc837dda133892896fff
+kingofthehill,d2d4 d7d5 c2c4 d5c4 e2e3 g8f6 f1c4 e7e6 a2a3 c8d7 b1c3 f8d6 g1f3 c7c5 e1e2 c5d4 e3d4 b8c6 c1e3 e6e5 d4d5 c6d4 f3d4,0x255f429b517c107bfd1c5ba548c5d219
+kingofthehill,e2e4 e7e5 f2f4 d7d6 g1f3 c8g4 f1c4 g8f6 e1g1 f6e4 f4e5 g4f3 d1f3 d8e7 f3e4 c7c6 c4f7 e7f7,0x8812d59f54e005b087474a8f9f87b1cf
+kingofthehill,e2e4 d7d6 e1e2 c7c5 e2e3 g7g5 e4e5 c8f5 f1d3 d6d5 d3f5,0xa08b0bff6545972df1aa8d7d944b1f32
+kingofthehill,e2e4 e7e5 d1f3 b8c6 f1c4 g8f6 f3b3 d8e7 c4f1 f6e4 f2f3 e4f6 g1h3 c6d4 f1d3 d4b3 c2b3 e7c5 e1e2 e8e7 b1c3 e7d6 d3e4 h7h6 d2d3 d6e6 c1e3 d7d5 e3c5 d5e4 d3e4 f8c5 e2d3 h8d8 d3e2 b7b6 a1d1 c8b7 d1d8 a8d8 h1d1 f6e4 f3e4 b7e4 d1d8 c5d6 e2e3,0x3e4fa2f0f4c11a3ee0934acf512c24af
+kingofthehill,e2e4 c7c5 f1c4 e7e6 c2c3 d7d5 e4d5 e6d5 c4b5 c8d7 b5d7 b8d7 d2d4 g8f6 f2f3 f8d6 g1e2 e8g8 c1f4 d6f4 e2f4 f8e8 e1f2 d8c7 h1e1 c7f4 e1e8 a8e8 d1d3 f6e4 f2f1 c5c4 d3e2 g8f8 b1d2 e4d2 e2d2 f4d2 a1e1 d2e1,0xa2b354599174fc34a186111ac2930731
+kingofthehill,e2e4 e7e5 f1c4 b8c6 d1h5 d8e7 h5f3 g8f6 c2c3 d7d6 d2d3 c8g4 f3g3 e8c8 c1g5 g4h5 h2h4 h7h6 g5f6 e7f6 f2f3 f8e7 g1e2 g7g5 h4g5,0x5f43f2c4a013d6294a4ad2be7e4db012
+kingofthehill,e2e4 d7d5 e4d5 d8d5 e1e2 e8d7 e2e3 d7d6 f2f4 c8f5 g1f3,0x1c96911dc0f8c4748d102261eac7a5f0
+kingofthehill,e2e4 d7d5 e4d5 c7c6 b1c3 c8f5 d2d3 g8f6 f2f3 c6d5 f1e2 a7a6 g2g4 f5g6 h2h4 h7h5 g4h5 g6h5 g1h3 d5d4 h3g5 d4c3 b2c3 b8c6 c1b2 c6e5 d3d4 e5c6 a2a3 d8d5 e1d2 a8d8 d2d3 e7e5 c3c4 d5d7 g5e4 d7f5 h1g1 c6d4 b2d4 d8d4 d3e3 f6e4,0xb7919c270d97dda2344953ba7fa83b77
+kingofthehill,d2d4 d7d5 c2c4 g8f6 e2e3 c7c6 g1f3 c8g4 a2a3 e7e6 b1c3 f8d6 d1c2 e8g8 b2b3 b8d7 f1d3 d8c7 h2h3 g4h5 g2g4 h5g6 d3g6 f7g6 c1b2 a8e8 f3d2 e6e5 e1c1 e5e4 d2f1 c7a5 b3b4 d6b4 c4c5 b4a3 b2a3 a5a3 c2b2 a3b2 c1b2 g8f7 d1a1 f7e6 a1a7 d7c5 f1d2 c5d3 b2b3 c6c5 a7b7 e8e7 b7b6 e6f7 h1a1 d3f2 d4c5 e7e6 a1a7 e6e7 a7e7,0x0b1d0d844d4592809b0d5ee46573c9f3
+kingofthehill,e2e4 e7e5 d1f3 f8c5 d2d3 g8f6 c2c4 d7d6 g2g4 c8e6,0x7c779571cd55737da85dc11550668ba5
+kingofthehill,e2e4 d7d5 e4d5 c7c6 d5c6 b8c6 b1c3 a7a6 g1f3 c8f5 d2d4 e7e6 f1d3 g8f6 d3f5 e6f5 d1e2 f8e7 c1f4 e8g8 e1g1 e7d6 f1d1 d6f4,0xe9389f41b578100a82699e44f50335d8
+kingofthehill,e2e4 d7d5 e4d5 d8d5 b1c3 d5c6 g1f3 e8d7 f1b5 c6b5 c3b5 d7e6 f3g5 e6e5,0xc0fffbb316048b0d858f0819914f7416
+kingofthehill,e2e4 e7e5 e1e2 f8c5 e2d3 d8g5 f2f4 g5f4 d3c4 c7c6 d2d4 f4e4 c4c5 e4d5 c5b4 a7a5 b4c3 d7d6 c3d2 c8f5 f1d3 f5d3 d2d3 e5e4 d3e3 c6c5 e3f4 f7f5 f4e3 g7g5 c1d2 g8f6 d2c3 f5f4 e3f2 e4e3 f2e2 f6g4 h2h3,0x0dbba630a7d304efd6b8a8c9a6d2ed0f
+kingofthehill,d2d4 d7d5 g2g3 c7c6 f1g2 e7e6 f2f3 f8e7 e2e4 g8f6 e4e5 g7g5 e5f6 e7f6 f3f4 h7h6 c2c3 e8g8 g1f3 c8d7 e1g1 b8a6,0x99de11a8c87015e41a537d31a76252c8
+kingofthehill,e2e4 e7e5 d2d4 b8c6 d4e5 c6e5 f2f4 e5g6 e1e2 f8c5 e2d3 e8e7 d3c4,0x39b6986074377c4e737cbbbd1e11d72e
+kingofthehill,d2d4 g8f6 c2c4 e7e6 a2a3 d7d5 e2e3 c7c6 g1f3 f8d6 b1c3 e8g8 d1c2 b8d7 b2b3 f8e8 f1d3 e6e5 d4e5 d7e5 f3e5 d6e5 c1b2 g8f8 e1c1 c8e6 h1e1 d8b6 f2f4 d5c4 d3c4 e6c4 b3c4 e5c3 c2c3 a8d8 d1d8 e8d8 e3e4 f8e7 a3a4 e7e6,0xc7e79233b0037559ea8739f90b2be6bb
+kingofthehill,e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 c2c3 d5f6 g1f3 b8c6 c1f4 e7e5 f3e5 c6e5 f4e5 d8e7 f1d3 f6d5 f2f4 g7g5 f4f5 f7f6 d1b3 c8e6 b3b5 c7c6 b5c4 d5c3 b2c3 e6c4 d3c4 c6c5 h1f1 c5d4 e1d2 e7c5 d2d3 c5e5 b1d2 a8d8 f1e1 d4c3 d3c2 e5e1 a1d1 e1d2,0x6953552c4a7a2a6c4c3d4aab2dceb9ce
+kingofthehill,d2d4 d7d5 c2c4 e7e6 c4d5 e6d5 g1f3 g8f6 b1c3 c7c5 c1d2 c5d4 f3d4 b8c6 d4f3 d5d4 c3b5 f8c5,0x552bb12af41bf6c72f493ff5f27902ca
+kingofthehill,e2e4,0x8da917693adf8e1f823c9b50fd114196
+kingofthehill,d2d4 d7d5 c2c4 c7c6 b1c3 d5c4 e2e3 c6c5 f1c4 e7e5 d4e5 d8d1 e1d1 e8d7 f2f4 d7c6 c4d5 c6b6 g1f3 c8e6 d5e4 g8h6 c3a4 b6b5 a4c3 b5c4 b2b3 c4c3 c1d2 c3b2 d1e2 h6f5,0x1c68ea0a6f35f1c9b74dc085a372a7cb
+kingofthehill,e2e4 e7e6 d2d4 d7d5 b1c3 c7c5 f2f3 b8c6,0xdafc714b756739366cae9300e4d07176
+kingofthehill,e2e4 c7c5 d1f3 e7e6 f1c4 b8c6 e1e2 g8f6 e4e5 d7d5 e5f6 d5c4 e2e3 d8d4 e3e2 g7f6 c2c3 d4d5,0xf4220ff3d91374d064b18bed6e6e632b
+kingofthehill,e2e4 d7d5 e4d5 d8d5 b1c3 d5d8 g1f3 b8c6 f1c4 e7e6 f3e5 c8d7 e5c6,0xb9757d13428d47a73589a4132eef4487
+kingofthehill,e2e4 d7d5 e1e2 e7e5 e2e3 f8c5 e3d3 d5e4,0x8d99005b4ff84d58370e3b11469b9fda
+kingofthehill,e2e4 e7e5 d1f3 e8e7 f1d3 f7f5 e1e2 e7e6,0xc41064e929bf297980a49e526cf86762
+kingofthehill,e2e4 c7c5 g1f3 e7e6 d2d4 d7d5 f1d3 c5c4 d3e2 b8c6 b1c3 h7h6,0x132517a8132e3a7a18c5cd907dc6d308
+kingofthehill,e2e4 d7d5 e1e2 d5e4 e2e3 d8d5 c2c4 d5d3,0x558209d111226875b9a8c6905332109e
+kingofthehill,e2e4 d7d5 f2f3 d5d4 d2d3 e7e5 c1d2 c7c5 c2c3 f7f6 c3d4 c5d4 b2b3 b8c6 b1a3 c8e6 d2c1,0xc2139ba7e1752682741544b3b83e6508
+kingofthehill,,0x3d71fe83987aab73463b96181691fc9c
+kingofthehill,d2d4 d7d5 g1f3 e7e6 b1c3 f7f5 e2e3 g8f6 f1d3 f8d6 f3d2 c7c6 d1f3 b8d7 e3e4 f5e4 d3e4 d5e4 c3e4,0xac8e5bbbc731b7f0e743eafb9d2888fa
+kingofthehill,d2d4 d7d5 g2g3 c7c6 f1g2 c8f5 f2f3 e7e6 e2e4 d5e4 f3e4 f5g6 c2c3 g8f6 c1g5 f8e7 e4e5 f6d5 g5e7 d8e7 d1e2 b8d7 g1f3 e8g8 b1d2 f7f6 e5f6 g7f6 e1g1 a8e8 d2e4 e6e5 d4e5 d7e5 a1e1 e5f3 g2f3 f6f5 e4d2 e7c5 g1g2 e8e2 e1e2 d5e3 g2h3 e3f1 d2f1 f8e8 g3g4 e8e2 f3e2 c5f2 f1g3,0x39dc5a1674e952460f591a7f023ba401
+kingofthehill,e2e4 e7e5 g1f3 f7f6 d2d4 b8c6 b1c3 d7d6 f1c4 e5d4 f3d4 c6d4 d1d4 c7c5 d4d5 f8e7 e1e2 d8c7 f2f3 f6f5 c1f4 g8f6 d5d3 f5e4 f3e4 c8g4 e2e3 g4h5 e4e5 h5g6 e5f6 g6d3 c2d3 c7c6 c4d5 c6a4 d5c4 a4c6 c4d5 c6d5 c3d5,0x13c1a53fa3be9cfd519e463c0d18bcfb
+kingofthehill,d2d4 d7d5 c2c4 e7e6 e2e3 c7c6 a2a3 c8d7 g1f3 g8f6 b1c3 f8d6 d1c2 d6c7 b2b3 h7h6 f1d3 d8e7 c1b2 e6e5 d4e5 f6e4 c3e4 d5e4 d3e4 d7g4 e1c1 g4f3 e4f3 c7e5 b2e5 e7e5 c2b2 e5e7 h1e1 b8d7 b2g7 e8c8 f3g4 c8b8 g4d7 d8d7 g7h8 b8c7 d1d7 e7d7 e1d1 d7e6 h8d4 b7b6 d4d8 c7b7 d8d7 e6d7 d1d7 b7a6 c1c2,0x4f10554eadd3fed7d8659f469d805548
+kingofthehill,e2e4 e7e5 g1f3 b8c6 d2d3 f8c5 f1e2 d7d5 b1c3 d5e4 d3e4 c5b6 c1e3 c8d7 e3b6 a7b6 c3d5 f7f6 c2c4 g8e7 b2b3 e8f7 d5e7 d8e7 d1d2 h8d8 a1d1 d7e6 d2c2 c6d4 f3d4 e5d4 e2f3 c7c5 d1d3 e7d6 e1e2 f7e7 g2g3 e6h3,0x4ca99785c5ab78452d403d3a379041d6
+kingofthehill,e2e4 c7c5 e1e2 e7e6 e2e3 d7d5 e4d5 e6d5 e3d3 f7f5 d1f3 g8f6 f3f4 b8c6 c2c4 c6b4 d3e3 d8e7 e3f3 e7d6 f4d6 f8d6 b1c3 d5d4 g2g4 g7g6 g4f5 c8f5 g1e2 e8e7 e2d4 c5d4 c3b5,0x05e65e2b9de86b632c13eb6f317b60d0
+kingofthehill,d2d4 d7d5 c2c4 b8c6 e2e3 d5c4 f1c4 e7e5 d4d5 f8b4 b1c3 b4c3 b2c3 c6a5 c4b3 a5b3 a2b3 g8f6 c3c4 e5e4 f2f4 f6g4 d1e2 d8f6 c1b2 f6b6 b2g7 h8g8 g7c3 g4e3 e1d2 g8g2 c3a5 b6d4,0xf9bc2c1f6d79ed12758aa3b89ba8b8bc
+kingofthehill,f2f4 d7d6 e2e4 e8d7 g1f3 c7c5 b1c3 d7e6 f1c4 d6d5 c3d5 e6d6 e1f2 b7b5 c4b5 f7f5 b5c4 c8a6 d2d3 a6c4 d3c4 b8c6 f2e3 e7e6 d5b6 c6d4 f3d4 g7g5 e4f5 g8f6 d4e6 d6c6 e6d8 c6b6 d1h5 a8d8 h5f7 f8g7 f7f6,0x4f707aad58fe2b5f2fb112255847664c
+kingofthehill,d2d4 d7d5 g2g3 b8c6 f1g2 e7e6 c2c3 f8d6 f2f3 c8d7 e2e4 b7b6 e4e5 d6e7 f3f4 f7f6 g1f3 f6e5 d4e5 g8h6 c1e3 g7g6 b1d2 h8g8 f3d4 h6f7 d2f3,0xe6f7f92097828c4cd41dbd275d64b240
+kingofthehill,d2d4 d7d5 c2c4 e7e6 b1c3 f7f5 c1f4 g8f6 g1f3 c7c6 e2e3 f8d6 c4c5 d6f4 e3f4 d8c7 f1d3 c7f4 d1e2 f4c7 e1d2 b8d7 e2e6,0x443917d2e99ce1f6deb6bb67576f0129
+kingofthehill,e2e4 e7e5 g1f3 d8f6 d2d4 e5d4 f3d4 e8e7 f1c4 c7c5 d4f3 b8c6 b1c3 d7d6 g2g3 c8e6 c3d5 e6d5 c4d5 c6b4 c1f4,0x3c0ede2ba644f552641c03b2f489505a
+kingofthehill,d2d4 d7d5 g2g3 c7c6 f1g2 c8f5 f2f3 e7e6 c2c3 g8f6 c1g5 h7h6 g5f6 d8f6 e2e4 d5e4 f3e4 f5h7 e4e5 f6e7 g1f3 f7f5 e5f6 g7f6 e1g1 f8g7 d1e2 e8g8 b1d2 f6f5 f3e5 b8d7 d2f3 d7e5 f3e5 g7e5 e2e5 a8d8 a1e1,0x6e258a28402fd4879d43426e7debe223
+kingofthehill,e2e4 e7e5 d2d4 b8c6 d4e5 c6e5 f2f4 d7d6 g1f3 e5f3 d1f3 g8f6 f1c4 f8e7 b1c3,0xb3bbef9064fdac27de3c82bc227cdf57
+kingofthehill,d2d4 e7e6 c2c4 f7f5 b1c3 g8f6 e2e3 f8e7 g1f3 d7d6 e3e4 c8d7 e4f5 e6f5 c1g5 f6e4 c3e4 f5e4 g5e7 d8e7 f3d2,0x9531de3fcce624b50687b4d00f3339bc
+kingofthehill,e2e4 e7e5 e1e2 d8e7 e2e3 h7h6 d2d4 d7d6 d4e5,0xa7f87c663cc5c9f8036f156885a3fc09
+kingofthehill,e2e4 d7d5 d2d4 d5e4 b1c3 g8f6 f1c4 c8f5 g1e2 e7e6 e2g3 c7c5 e1e2 b8c6 f2f3 c6d4 e2e3 f8d6 f3e4 f5g6 h1f1 h7h5 g3f5 f6g4 e3d3 d6e5 c3d5 d4f5,0xe02be196cccc917500d3be72d2e4f12a
+kingofthehill,d2d4 d7d5 g2g3 b8c6 f1g2 e7e5 d4e5 c6e5 f2f4 e8e7 g2d5 d8d5 d1d5 c7c6 d5e5 c8e6 e2e4 f7f6 e5c3 e7d6 c1e3 b7b6 b1a3 a7a5 a1d1 d6c7 f4f5 f8b4,0xc0492870d227c4c9c62e5bfcec64383d
+kingofthehill,d2d4 e7e5 g1f3 e5e4 f3g1 d7d5 e2e3 f7f5 b1c3,0x32dd0d064112f3f561cf920b62599f9b
+kingofthehill,e2e4 c7c5 e1e2 b8c6 e2e3 e7e5 g1f3 d7d6 c2c3 f7f6 b2b4 b7b6 c1b2 c8g4 h2h3 g4f3,0xcb3856162678cc8d250db91fccb27cc6
+kingofthehill,e2e4 c7c5 g1f3 b8c6 d2d4 e7e5 c2c3 d7d5 e4d5 d8d5 d4e5 d5d1 e1d1 c8f5 f1b5 g8e7 d1e2 a8d8 e2e3,0x78fdf40bd9004d5935bcbbc6c674f47c
+kingofthehill,e2e4 e7e6 f2f4 e8e7 g1f3 e7d6 d1e2 d8f6 b2b3 f6f4 c1a3 d6c6,0x5afaa586af9e8bc29614ef5ac7f42700
+kingofthehill,d2d4 d7d5 c2c4 e7e6 e2e3 f7f5 g1f3 g8f6 a2a3 c7c6 b1c3 f8d6 b2b3 b8d7 d1c2 d8e7 c1b2 e8g8 c4c5 d6c7 b3b4 f6e4 e1c1 e6e5 f1d3,0x683fa21984a098344d622dc5d3f62330
+kingofthehill,d2d4 d7d6 c2c4 g7g6 b1c3 f8g7 e2e3 e7e5 f1d3 f7f5 g1f3 e5e4 d3e4 f5e4 f3d2 g8f6 f2f3 e8g8 f3e4 c7c6 e1g1 c8g4 d1e1 b8d7 e1g3 d6d5 e4e5,0xc1c136901ad576ee3908592a3405bb76
+kingofthehill,e2e4 e7e5 g1f3 b8c6 d2d4 c6d4 f3d4 e5d4 d1d4 f7f6 f1c4 g8e7 b1c3 a7a5 a2a4 a8b8 e1e2 d7d5,0xabee713ddf86f065004832c6c9713101
+kingofthehill,d2d4 d7d5 g2g3 b8c6 f1g2 h7h5 f2f4 h5h4 c2c3 h4h3 g2f3 f7f6 e2e4 e7e6 e4e5 e8f7 c1e3 f6f5 b1d2,0xeeed3825670f68c051b7cb6b6d2b3677
+kingofthehill,d2d4 g8f6 c2c4 d7d5 b1c3 g7g6 e2e3 f8g7 g1f3 c7c6 c4d5 c6d5 f1e2 c8f5 e2d3 b8c6 c1d2 f5d3 f3e5 d3f5 e5c6 b7c6 f2f3 e8g8 e1f2 f8e8 e3e4 f5e6 f2e3 a8b8 e4d5 c6d5 e3f4 d8d6 f4e3 g7h6 e3f2 h6g7 g2g3 b8b2 f2e1 e6f5 d2f4 d6b4 d1c1 b2c2 c1d1 b4c3 e1f1 f5d3 f1g1 e7e6 a1b1 g8f8 b1b3 c3c4 b3d3 c2c1 d1c1 c4c1 g1f2 f8e7 h1c1 f6d7 c1e1 f7f6,0xdc6a57bb4f04dd28ed794770e217da30
+kingofthehill,e2e4 e7e5 c2c4 d8e7 d2d4 d7d6 d4d5 c7c6 g1f3 c6c5 b1c3 h7h6 a2a3 g8f6 b2b4 g7g5 b4c5 d6c5 c1e3 c8g4 f1e2 b8d7 c3a4 b7b6 a1b1 e7d6 d1d3,0x8119051bda9179deefb20a1bdfa8497b
+kingofthehill,e2e3 e7e5 f1c4 d7d5 c4b3 f7f5 g1f3 b8c6 b3a4 e5e4 f3e5 d8d6 d2d4 e8e7 f2f4 e4f3 g2f3 c6e5 e1d2 e7f6 d2c3 d6b4,0x0ad3ff1a984ae453d272d3c1d0773542
+kingofthehill,,0x3d71fe83987aab73463b96181691fc9c
+kingofthehill,e2e4 e7e5 g1f3 f7f6 e1e2 b8c6 c2c4 f8c5 e2d3 d8e7 d1a4 e7d6 d3c3 c5d4 f3d4 d6d4 c3c2 d4e4 d2d3 e4f5 c2c3,0x74f98dcfcd1664008a9f4062e955d470
+kingofthehill,d2d4 e7e6 c2c4 d7d5 c4c5 g8f6 b1c3 b7b6 b2b4 b6c5 b4c5 b8d7 d1b3 f8c5 d4c5 d7c5 b3c2 c5d7 e2e3,0x573ec7e79a1209d33ceae3587be1f488
+kingofthehill,e2e4 e7e5 f2f4 d7d6 g1f3 b8c6 d2d4 e5d4 f1b5 c8d7 b5c6 d7c6 d1d4 g8f6 b1c3 f8e7 h2h3 h7h5 c1e3 a7a6 e1d2 d6d5 e4e5 f6e4 c3e4 d5e4 f3g5 d8d4 e3d4 a8d8 d2e3 e7c5,0x0cfc13da366fddb7ba5c1a7116d3389e
+kingofthehill,c2c4 e7e5 d2d3 g8f6 e2e4 f8c5 h2h3 b8c6 g1f3 d7d6 f1e2 c8e6 c1e3 c5e3 f2e3 b7b6 b1c3 a7a6 d3d4 e5d4 e3d4 c6b4 a2a3 a6a5 a3b4 a5b4 a1a8 d8a8 c3d5 e6d5 e4d5 c7c6 d5c6 a8c6 d4d5 c6c5 d1d4 e8d7 d4c5 b6c5 e1d2 h8e8 e2d3 f6e4 d3e4 e8e4 d2d3 f7f5 h1e1 e4e1 f3e1 d7e7 e1f3 e7f6 d3e3 h7h6 g2g4 g7g5 e3d3 b4b3 d3e3 h6h5 g4h5 g5g4 h3g4,0xfd0a6c33303d0a644b7347f11fec128f
+racingkings,h2h3 d2e4 h3h4 e4f2 g2f2 a2a3 h4h5 a3b3 g1g5,0x36b1008255669e4683771ab110472019
+racingkings,f2d4 a2b3 e1c2 b3c4 c2a1 c4d5 d4b2 b1b2,0x37f54b30c99016a30036f4cf79cda726
+racingkings,h2g3 d1f2 g2f2 a2b3 g3f4 b3c4 f4e5 a1a6 e1c2 b2c2 f2f6 a6c8 f6d6 b1b7 e5f6 c4c5 h1b7 c8b7,0xeae62c595ceec7af0643b6e429f6c8f8
+racingkings,h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 e1c2 b2c2 g2g6 a6c6 g6d6 d2e4 e5e6 b1b7 f1g2 d1f2 h1h4 c4b5 g2e4 f2e4 e2c1 e4d6 g1g8 c2c1,0xf1558fbe7fa857a6c7c5e069cd7bba98
+racingkings,h2h3 b2b8 h3g4 b8c8 g4g5 b1b8 g5h6 c1b2 g2g7 d1f2 e1c2 f2h1 h6h7 b2g7 g1g7,0x6c30299228b20d997a91bdadcd2ef4e0
+racingkings,e1c2 d1f2 c2a1 f2h1 g2g7 b2b8 g1h1 b1b7 g7b7 b8b7 f1g2 c1b2 g2b7,0xc5dc44c64b1464e78f59cc5988d21661
+racingkings,g2g3 c2e4 h1e4 d2e4 h2h3 e4g3 f2g3 a2a3 h3h4 a3a4 h4h5 b2b6 g3f2 d1f2 e2c1 b1c1 g1g5 b6b5 h5h6 c1c7 e1c2 a1f1 c2d4 a4a5 d4b5,0x607d52340d8d93be0b249b3137e574c8
+racingkings,f2e3 a2a3 g2g7 a3a4 g1g5 d2e4 e2d4 e4g5 e1c2 a1a3 g7g5 c1e3 h2h3 d1c3 c2e3 c3d5 g5d5 a3d3 f1d3 b2b5 h3h4 a4a5 d3b5 a5b6 d5d7 b1b5 d4b5 b6b5 h4h5 b5a6,0x49f0596b6531c390f8fafd218a72c88b
+racingkings,h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 e1c2 d1f2 g2f2 b2c2 f2f6 c4b5 f6d6 c2c7 f1g2 a6b6 g2d5 b5a6 g1g8 a6a7 h1h8 c7b7 d6b6 b7b6 e2c1 d2b3 c1b3 b1b3 d5b3 b6b3 e5f6 b3b7 g8f8,0x1f5f6f47241048a998153684b564bb77
+racingkings,h2g3 a2b3 g3f4 a1a5 g2g5 b3b4 g5f5 c2f5 f4g5 a5a6 e2c1 b1c1,0x0cfde1a40d2a60097279219962dea019
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 h1h4 b2b8 g2g8 b1b7 h4f6 d2f1 g8b8 b7b8 g1f1 c1a3 f6d6 b8b7 f1f8 a6c6 e2g3 e4d5 e1d3 c6c7 g3f5 c7a5 f5e7 c4d3 e7d5 d3c4 e5e6 a3d6 d5e7,0xd8f453a02af0c1e36c14d04bec7cfb66
+racingkings,f2d4 c2e4 h2h3 a2a3 e2c3,0x94a5f49b90ff81462a231195021a3e8b
+racingkings,h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 e1c2 b2c2 f2d4 c4b5 g2g6 a6c6 g6d6 b5a6 h1h8 a6b7 g1g8 c6c7 e5e6 c7b8 d6a6 c2c7 d4e5 c7h7 e5b8 h7h8 g8h8,0x68410abd47bbe6eeb57162729c891b68
+racingkings,h2g3 a2b3 g3f4 a1a5 e1c2 b3a4 e2c1 a5d5 c1b3 d1f2 g2f2 d5c5 f2d2 b2b3 g1g5 a4a5 c2b4 a5b6 g5c5 b6a7 d2d8 b1a1 f4e5,0x18118029c41892e7227d4efc3c3365eb
+racingkings,e1c2 d1f2 c2a1 f2h1 h2h3 d2f1 h3g4 b2b5 g1f1 a2a3 e2c1 a3b4,0x76ae88ddb60f005eea8762154abbfdd2
+racingkings,h2g3 a2b3 g3f4 d1f2 f4e5 f2h1 e5f6 a1a8 f6g7 b3a4 g1h1 b2b8 e1c2 a4b5 g2g6 d2c4,0xc64146775fe5de93a05b84d3288fd148
+racingkings,h2h3 a2a3 h3h4 a3a4 h4h5 a4a5 h5h6 b2b4 g2g7 b4f4 e1c2 f4f2,0xd2dbaf09bd4ad0c9b6e5319652e764c1
+racingkings,h2g3 b2b7 g3g4 a2a3 g4g5 a3a4 e1c2 a1b2 g5g6 d2e4 h1h7 e4f2 h7b7 b2b7,0xc86d112a1eddecac5ea6d4bb6e24458a
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b4 e2f4 a2b3 g3h4 d2f1 h4h5 a1a6 g2g6 b3a4 h5h6 b4b7 h1f1,0x8ea0d31b4c79edb2234369e7ceaae490
+racingkings,h2h3 b2b4 g2g3 b1b3 f2c5 a2a3 e2d4 a3a4 d4b3 a1a3 c5b4 a3b4 g3g4 d2e4 g4e4,0x43ff97fdc384d3f5a8d018cd15f36fc0
+racingkings,h2h3 a2a3 g2g5 a3a4 e1c2 b2b5 h3h4 a4a5 g5g6 a1e5 e2c1 d1f2 h1g2 d2e4 g2e4 f2e4 f1b5 b1b5 c1d3 e5c7 g1g5 e4g5 h4h5 b5b6 g6g7 c7c8,0xea90b7b3af419aa2be3c01bb4c795fc3
+racingkings,h2h3 a2a3 h3h4 b2b8 h4h5 a3a4 h5h6 b1b7 g2g7 a4a5 g1g6 a5b5 h6h7 c2f5 e1f3 f5e6 g6e6 c1a3 e6e8 b7b6 h7h8,0x44e46651d322c9754eded7d1e166a1cd
+racingkings,h2h3 a2a3 e2c1 a3a4 e1c2 a4a5 c2a1 d2f1 g2g6 b2b6 h3h4 a5a6 f2b6 b1b6 g6g7 d1f2 h1d5 f1e3 d5d2 b6b7 d2e3 f2d3,0x3e358493a4610dfea1ab2ffc05eb8111
+racingkings,h2h3 a2a3 g2g8 a3a4 h3h4 a4a5 h4h5 b2b6 g1g4 a5a6 g4g7 a1g7 e1c2 a6a7,0x4f062ae59f77a70d4f811438c5a67a9e
+racingkings,h2h3 b2b7 h3g4 d2f1 g1f1 a2a3 h1h5 b7h7 h5d5 c1e3 f2e3 c2e4 d5e4 b1b4 e2d4 d1c3 g4g5 a3a4 e4h7 a1b1 h7b1,0x51fcad5cd42327d024c6d481afa71bc2
+racingkings,e1c2 b2c2 h2h3 a2b3 f2d4 a1a4 h3h4 b3c4,0x66086205f8936fd7db6ee021dbe1107c
+racingkings,h2h3 a2a3 h3h4 a3a4 h4h5 a4a5 h5h6 b2b7 g2g7 a5a6 g7b7 b1b7 g1g7 b7g7 f2d4 a1d4 f1g2,0xbddc4f2b3ca6e535cb3127463a6c3730
+racingkings,h2h3 b2b4 e1c2 b4c4 c2a1 b1a1 g2g4 a2b3 g4c4,0x835a1180226cd0c205836ae46d8490de
+racingkings,h2g3 a2a3 g3f4 a3a4 f4e5 a4a5 g2g6 c2g6 e5d6 b2b7 h1b7 b1b7,0x1cd38472b291fdd176a324ca69e190b9
+racingkings,h2h3 b2b4 e1c2 a1e5 g2g5 e5d4 e2d4 b4d4 f2d4 d2f3 h1f3 c1g5,0x713b8ee6779309cc156ebc6cd9a29ae7
+racingkings,h2g3 a2b3 g3f4 b3b4 f4e5 b4b5 h1h6 d2e4 e1c2 c1h6 g2g6 a1a6 e5e4 a6b6 f2b6 b5a6 g6h6 a6b7 g1g8 b2b6 h6e6 b7a7 e6b6 b1b6 f1g2 b6b8 e4f5,0x3888f33e8e97992a4a39cb2dc42a1364
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 a2b3 g3f4 b3c4 g2g5 b2b5 h1h5 b5c5 f1g2 c4b5 h5h6 c5g5 f4g5 a1a6 e2c1 a6h6,0x6a7f91ac751a145293eddbcd0da5fc42
+racingkings,f2d4 c2e4 h2g3 e4g2 d4b2 g2h1 b2a1 a2b3 g1h1 b3c4 g3f4 c4d5 f4g5 d5c6 g5f6 c6c7 f6g7,0x0245b95d0613973b6e83a2eaf094e196
+racingkings,e2f4 c2e4 f2d4 a2b3 h2g3 d2f3 e1f3 b3b4 h1h5 a1a5 g3h4 c1f4 d4b2 b1b2 g2g8 d1e3 g1g7 e3f1 f3g5 b4c5 h5h6 a5c7 h4h5 b2b6 h6g6 b6g6 g7g6 f4d6,0x96382637d7303ea92cddcede3e690499
+racingkings,e1c2 d1f2 g2f2 b2c2 h2g3 a2b3 f1h3 b3c4 h3f5 c4c5 h1h6,0xe0da9c06c028bee5de84b4ab8b372813
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b4 e2f4 a2a3 g3h4 d2f1 h4g5 b4b6 h1h6 a3b4,0x67ff8012d483802416520b461118e3f5
+racingkings,,0x02c5612781e6b81cda1cd4141a240380
+racingkings,e1c2 d1f2 g2f2 b2c2 h2g3 a2b3 g3g4 b3c4 f2f5 b1b5 h1h7,0x012453ac9b087321d1205d5f04d28fd7
+racingkings,,0x02c5612781e6b81cda1cd4141a240380
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b6 g3f4 a2b3 f4f5 d2f1 g2g6 b3b4 g6f6 a1a7 f5g6 c1b2 h1h7 b4a5 f6b6 a5b6 h7f7 a7f7 g6f7 b6c7,0x67ccd56f3f96456ef136af54d7eea41c
+racingkings,f2d4 a2b3 e1c2 b3c4 g2g6 b2b5 d4a1 c4c5 e2c1 b5b6 h2g3 b6d6 h1h7 c5c6 g3g4 b1b7 f1a6 b7h7 g6g7 d6d7 a1e5 d2c4 g1d1 c4d6 e5d6 c6b6 a6c8 b6a7 c8b7 a7b7 g7g8 h7h6 g4g5 h6d6 d1d6 d7d6 c2b4,0x5f012d663c2400e6525c82bcbcfc3294
+racingkings,,0x02c5612781e6b81cda1cd4141a240380
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b2b4 h2h3 b1a1 g2g4 a2b3 h3h4 a1a5 e2f4 d2f1 h1f1 c1f4 f1f4 b3a4 g4g5 a5g5 h4g5,0x959734ba3d9aef02154c3c6f0c07be52
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 f4e5 a1a8 d4b2 e4g2 f1g2,0xc4094bede3f6064f7de85b8cbcdf8b7f
+racingkings,e1c2,0x3baca8e59079a3525c47c2824d2cef4c
+racingkings,e1c2 d1f2 g2f2 b2c2 h2g3 a2b3 g3g4 b3c4 f2f5 b1b5 h1h7 d2f1 e2c1 b5f5 g4f5,0x97939dfe5037a42dec241c449f8cac02
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 h1h6 a1a6 g2g6 a6c6 f1g2 e4g2 g1g2 b2b8 f4e5 b1b7 e2c1 b7c7 g6e6 d2e4 g2g7 c7g7 h6g7 c4b5 e5f5 b5a6 f5g6 d1c3 g6h7 c6e6 e1f3 e4c5 f3g5,0x4cb0b61c19a48a3b7a41d76b4f5a9e99
+racingkings,f2d4 c2e4 h2g3 d2f3 e1f3 e4f3 g3f3 a2b3 e2c3 d1c3 f3g4 b3a4 d4c3 b2b5,0x0caafc5e4cfd456f0823d64a2bdcf65a
+racingkings,e1c2 b2c2 h2g3 d1f2 g2f2 b1b4 h1h7 c2c5 f2f5 c5f5 h7f5 a2b3 e2f4 a1a5 f5a5,0xda7cd7c07dbeca1fd9fee9fec3c5925f
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b6 g3f4 a2b3 f4f5 b3c4,0x88fae485ba912c580270a1c36387aed0
+racingkings,h2g3 d1f2 g3f4 f2h1 f4e5 d2e4 e1c2 a2b3 e5e6 a1a7 g2g7 b3a4 g7d7 b2b8 e2c1 b1c1 f1d3 c1g1 d3e4 h1f2 e6e7 f2e4 c2d4 g1g6 d7b7,0xf4507f40bee07ab38c3e05aa45bb9069
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 h1h6 a1a6 g2g6 a6c6 f1g2 e4g2 g1g2 b2b8 e2c1 b1c1 f4e5 c4b5 g6e6 d2e4 g2g7 b5a6 e1d3 c1b1 e5f5,0xc023d70d006411b498f37a9eec5bd00b
+racingkings,e1c2 d1f2 c2a1 f2h1 h2h3 d2f1 h3g4 b2e2 g1h1 c1a3 g4g5 b1b6 h1h6 a2b2 h6f6 a3e7 g5g6 e7f6 g6h7 e2g2 a1c2 b2c2 h7h6 c2b3 h6h5 b3a4 h5h6 a4a5,0x022f01daf0bba9e44ac55eada0849a57
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 d4b2 b1b2 h1h4 b2b6 g2g8 c4c5 g1g7 b6d6 f1g2 c5c6 h4f6 a6b7 g7b7 c6b7 f6d6 d2b3 e5f6 b3a5 f6g7,0xbee94493c004c1a6fa5c6843ce47bbc0
+racingkings,f2d4,0x348697e45f1804a1b15e20308904ad39
+racingkings,e1c2 d1f2 g2f2 b2c2 f2f7 c1a3 g1g8 a1c3 e2g3 a3d6 h2h3 d2f1 h3g4 f1g3 h1h7 b1b5 h7g6,0xe08fa11d19dd67ce35496c22bc640dee
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b2b4 h2g3 b1a1 h1h4,0x76c9e5187d248b78948ce56004c8a919
+racingkings,e1c2 b2c2 f2d4 d1b2 h2g3 a2a3 g3f4 a3a4 f4e5 a4b5 g2g6 c2c6 g6c6 b2a4 d4a1 b1a1 e5d6,0xf7b11d72ea5deb9084bba30817ebd826
+racingkings,f2d4 c2e4 h2g3 a2b3 e2c3 d1c3 g3f4 a1a5 h1h8 b3a4 d4c3 a5d5 g2g5 b2b7 g5d5 e4d5 f4g5 b1b6 h8d8 c1a3 c3d2 a3b4 d8d5 b6b5 e1c2 a4a5 f1b5 a5b6 d2b4 b6a7 d5g8 b7b8 b5c6 a7b6,0xe2b0f0386a553b3360b9e1cd20d051f9
+racingkings,h2h3 c2e4 h3h4 d2f1 h4h5 d1f2 g2g5 c1g5 h5g5 b2b6 g5h5 f2h1 e2f4 a2b3 f4g6 b3b4 h5h6,0x01e30009388f2bac7b9b74d5d018fe6d
+racingkings,h2h3 d2f1 h3h4 d1f2 h4h5 b2b6 g2g5 c1g5 h5g5 a2b3 e2f4 b3b4 f4e6 b6e6,0x611ee33181c7b6017531faac3783ca99
+racingkings,f2d4 a2a3 h2g3 a3a4 g3f4 a4b5 h1h6 b2b4 f4e5 b5a5 d4a1 b4b6 h6e6 a5a6 g2g7 c2b3 e6d6 c1a3 e5f6 a3d6,0xba11691d8fde5b8fc7742624e8ec08c4
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b4 e2f4 a2b3 g3h4 a1a5 g2g5 b3a4,0xd646254a4be6a04fe6c0cdb4570a63ad
+racingkings,e1c2 a2b3 f2d4 b3c4 g2g5 d2e4 h1e4 c1g5 e4e5 b2b5 e5g5 b5g5 g1g5 a1a6 h2g3 b1b5 f1g2 d1b2 e2c3 b2d3 c3b5 a6b5,0x95282ef53edb5e9282e147d51bb44689
+racingkings,e1c2,0x3baca8e59079a3525c47c2824d2cef4c
+racingkings,f2d4 c2e4 h2g3 e4g2 g1g2 a2b3 e2c3 d1c3 g3f4 b3b4 f4g5 b4a5 h1h8 b2b6 e1c2 c1b2 g2d2 c3b5 f1b5 a5b5 c2a1,0x6b92e121bf41cb1ca94c7ea1397479e2
+racingkings,h2h3 a2a3 h3h4 a3a4 h4g5 b2b8 g5h6 a4a5 g2g7 a5a6 e1c2 b1b7 h6h7 d1f2 g7b7 a1b2 g1g8 b8a8 g8b8 a8b8 b7b8 b2b8 h1h5 a6a7 h5d5 b8d8 d5d8,0xb1a4ddf359a8bbc40504968fa9e9dfa3
+racingkings,h2h3 d2f1 g1f1 c2e4 h3h4 e4g2 h1g2 d1f2 g2f2 b2b5 e1f3 a2b3 f3g5 b5g5 f2f8 b3c4 e2c1 b1b5 f1f5 g5f5 c1e2 f5f8 e2f4 b5d5 f4d5 c4d5 h4g5,0xf665002b41f8a3e40c439bbb6bc69e00
+racingkings,f2d4 c2e4 h2g3 e4g2 f1g2 a2b3 g3f4 b3a4 f4e5 d2b3 e5e6 a4b5 e6d7,0xc52223716dc9ca8d69dfa3a982e7ef92
+racingkings,e1c2 b2c2 h2g3 a2b3 f2d4 a1a5 g3h4 b3c4 g2g5 a5d8 h4h5 b1b5 h5h6 b5g5 g1g5 d2f3 h1f3 c2e2 h6h7,0x47094c529a5bb775123680bef9074508
+racingkings,f2d4 c2e4 h2g3 d2f3 e1f3 a2b3 f3e5 a1a8 h1h4,0xe8849367ddfb98797823548424db4ad5
+racingkings,h2g3 d1f2 g3f4 b2b5 h1h6 a2b3 e2c3 a1c3 f1b5 b3b4 f4g5 b4b5,0xa5139eadbc10d79e20d17f5fe01be2e8
+racingkings,e1c2 b2c2 f2d4 c1b2 h2g3 a2a3 g3f4 a3a4 f4e5 a4a5 g2g6 a1a4 g6d6,0x28f04e3da70c541dea97b7f69a4ad024
+racingkings,e2f4 d1f2 e1c2 f2h1 c2a1 b1a1 g1h1 a2b3 h2g3 b3b4,0x706b22ea8f42fc6f7cad18c865c7315b
+racingkings,h2g3 a2b3 g3f4 b3c4 f4e5 c4b5 e5d6 b5a6 d6c7 b2b8 g2g8 b1b6,0x8fdf3d6b6ee25ffc3069a72c059988cb
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 d2e4 h2h3 c1g5 h3g4 b1a1 g4f5 b2b4 f5g6 b4b7 h1h7 a2b3 h7g7 a1f1 g6h7 f1f8 g2g5 b3b4 g7f7 e4d6,0xfbb5a53853a0f47f77c2b1c87e7e7d78
+racingkings,h2g3 c2e4 g3f4 d1f2 f4e5 f2h1 e5f6 a2b3 f6f7 a1a8 g2g8,0xe3e038e362092068aef3ab0ee34ca556
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 b1a1 h2g3 b2b4 e2f4 a2b3 g3h4 a1a5 g2g5 b3a4 h4h5,0xddfce5eea98f49e9585bb6a9a42da90f
+racingkings,f2d4 b2b8 d4a1 b1a1 e1c2 a2b3 g2g4 a1a4 c2e1 a4g4 g1g4 b8b4 h2g3 b3a4 e2c1 a4a5 g4b4 a5b4 h1d5 d1e3 d5e5 d2c4 f1c4,0x1616bb0d6ddfa5d980d8ed701aee5e54
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 h1h8,0x404236ee32dedd2126650f083cb55b96
+racingkings,h2h3 a2a3 h3h4 a3a4 h4h5 b2b8 h5h6 b1b7 g2g7 a4b5 g1g6 c2g6 h6g6 d1f2 g6h7,0x7120a7ae68357a486eaa4cf0629c983f
+racingkings,f2d4 c2e4 h2h3 d2f1 g1f1 a2b3 e2g3 b3c4 d4b2 a1b2 g3e4 c4d5 g2b2 b1b2 e1d3 d5c6 d3b2 c6b7 f1f8 c1f4 h1d1 f4b8 d1a4 b8d6 h3g4 d6f8 a4e8 f8d6 b2c4 d6b8 c4b6 b7b6 e8d7 b8c7 d7c8,0x9b5b1c430e415dbe8329c375f00eaa14
+racingkings,e2d4 d1f2 g2f2 c2e4 f1g2 e4g2 f2g2 d2e4 e1c2 b2c2 d4c2 a1f6 g2e2 e4c3 e2f2 f6b6 g1c1 a2b3 c2a3,0x67fcbafcdb0f2fbe333299a4a0b1cfcb
+racingkings,f2d4 c2e4 h2g3 a2b3 g3f4 b3c4 f4e5 a1a6 d4b2 e4g2 g1g2 b1b2 g2g8 b2b7 f1g2 b7c7 e2c1 c4b5 h1h3 a6b6 h3e6,0x0f0150df667723b5be0a2c4985642ed1
+racingkings,h2h3 a2b3 h3g4 a1a8 g4g5 b3c4 g5f6 b2b7 f6g5 d1f2 h1h6 c2e4 h6f6 e4g2 g5g6 b1b6,0xac39b1ae638551330536e65ee5f31d3c
+racingkings,,0x02c5612781e6b81cda1cd4141a240380
+racingkings,f2d4 a2a3 e2c3 a1a2 c3a2 b2a2 h2g3 b1b4 g3f4 d1c3 h1h8 c3b5 f1b5 b4b5 g2g5 b5a5 g5e5,0x48b8bd66782d5b7467608cc7ce1f55bc
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 a2a3 e2c1 b1c1 g2d2 a3b4 a1b3 b2b3 d2d3 b4b5,0x89dea2900e7694b366a83b62f8c9d319
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 a2a3 e2c1 a3a4 g2g5 b1c1 f1d3 c1c6 h2g3 d2b3 a1b3 b2b3 h1h5 a4b4 g3f3 b3c3 f3e4 c3c5 g5e5 b4a5 e4f5 a5b6 e5c5 b6c5 f5g5 c5b6 h5h7 c6c7 h7h8 b6b7 d3f5 b7a7 g5f6 c7b7 f5e4 b7b8 f6g7 b8h8,0xbe0daa39daaf72f2be0563172eb208de
+racingkings,h2g3 a2b3 g3f4 a1a5 e1c2 d1f2 g2f2 b2c2 g1g5 b3b4 e2c1 d2f1 f2c2 a5b5 h1f1 b4a5,0x8cdfd2fab665611d00086b819dc71e98
+racingkings,h2g3 d1f2 g3f4 b2b5 e2d4 a2a3 f1b5 b1b5 g2g5 a3b4 d4b5 b4a5 h1h6 c2e4 g5e5 a1c3 f4g5 c3c6 h6c6 e4c6,0x840e7579cde4cc9c514b3834ebc5388d
+racingkings,e1c2 d1f2 c2a1 f2h1 g2g6 b1a1 g1h1 d2e4 f1g2 b2e2 h2h3 a2b3 g2e4 e2e4 h1g1 b3c4 g1g4 a1a5 h3h4 c4d4 g6f6 c1d2 f6g6 a5f5 g6e6 d2e3 e6e7 f5g5 e7e6 g5d5 e6e7 e3d2 e7e6 d2b4 e6e8 d5f5 e8e6 b4f8 e6e8 f8g7 e8e7 g7e5 e7e6 d4d5 e6e8 d5d6 g4e4 d6d7 e8g8 e5c7 e4a4 f5e5 g8h8 e5e8 a4a8 e8a8,0xa68a6588c3fc1e95883969f4f73631f2
+racingkings,e1c2 d1f2 g2f2 b2c2 h2g3 b1b4 f2f4 a2b3 g3h4 a1a5 g1g5 b3a4 h4h5 b4f4 h5h6 f4f7 g5g7 f7f8 e2c1 d2f1 g7g8 f8g8 h6h7 c2c8 h1h6 g8d8 c1d3 d8d3 h6g7 a5a7 h7h6,0x06449e50973db7e76b36415ecead11e6
+racingkings,f2d4 c2e4 h2g3 a2b3 e2c3 d1c3 g3f4 a1a5 h1h8 b3a4 d4c3 b2b3 c3a5 a4a5 h8f6 b3b6 g2g7 c1b2 f1e2 b2f6 g7f7 f6b2 g1g7 b2g7 f7g7 b1e1 f4g5 e1e2 g7g6,0x9188f3c67ac4cd0af66ab09c2e72c659
+racingkings,h2g3 b2b7 e1c2 a2b3 g3f4 b3c2 f4f5 d1f2 h1h6 d2f1 g2g7 c1h6 g7f7 a1h8 f5e6 b7f7 e6f7 b1b8 g1g6 h6e3 g6g7 c2d3 g7h7 h8d8 f7g7 d8b6,0x0ed8908bb4a51d1be170f8971cd456e1
+racingkings,e1c2 d1f2 g2f2 b2c2 h2h3 d2f1 h3g4 c2e2 f2f1 a2b3 f1c1 b3b4 h1h5 a1a5 h5f5 e2e5 g4h5 a5b6 f5e5 b1b3 g1g6 b3a3 h5h6 a3a7 e5g7 b4b5 h6h7 a7a8 g7g8,0x415c7339793e36c7ae45f25dda37339c
+racingkings,e1c2 a2b3 h2g3 b3c4 h1h5 a1a6 f2d4 b2c2 g3f4 b1b5 g2g5 c1b2 g5b5 a6b5 g1g5 c4b4 e2c3,0x1e917a8b805396bd0f1178f5eb32a431
+racingkings,e1c2 d1f2 g2f2 b2c2 h2g3 b1b4 h1h7 c1a3 f1h3 d2b3 f2f4 a1e5 g3g4 c2e2 f4b4 a3b4 h7f5 b4c5 g1g3 b3d4 f5g5 d4e6 g5c1 c5e3 c1c6 a2b3 g4h4 b3b4,0xe1aef658512e038309722a15466f04f5
+racingkings,e2f4 d1f2 g2f2 c2e4 f1g2 a2a3 g2e4 d2e4 f2b2 c1b2 e1d3 b2d4 g1b1 a3a4 h1e4 a1b1 h2g3,0x0310a6efbef5b46561ad82883938cd00
+racingkings,e1c2 d1f2 c2a1 f2h1 g1h1 a2a3 e2c1 a3b4 g2g5 b2c2 h2g3,0xd3436d8e935369dd7d7967d9f30eea8d
+chess,d2d4 g8f6 g1f3 e7e6 c1g5 d7d5 h2h3 f8e7 e2e3 f6e4 g5e7 d8e7 f1d3 e4f6 c2c3 c7c5 e1g1 c5c4 d3c2 b7b5,0x8b424d0d71230800e0c908c05ec1cf6b
+chess,e2e4 c7c5 f2f4 b8c6 g1f3 e7e6 c2c3 d7d5 e4e5 g8e7 f1b5 a7a6 b5a4 b7b5 a4c2 c8b7 e1g1 a8c8 d2d3 e7f5 g2g4 f5h4 h2h3 h4f3 d1f3 f8e7 c1e3 e8g8 e3f2 d8c7 f3g3 f7f6 b1d2 f6e5 f4e5 c7e5 g3e5 c6e5 d3d4 c5d4 f2d4 e5c4 d2c4 d5c4 g1h2 e7d6 h2g1 b7d5 h3h4 a6a5 f1e1 h7h6 g4g5 d6g3 e1e2 g3h4 g5h6 g7h6 c2e4 h4g5 e4d5 e6d5 e2h2,0x9ae0067a12189f53eb935e66ce31eb8c
+chess,g2g3 e7e6 f1g2 d7d6 e2e3 f8e7 d2d4 g8f6 c2c4 e8g8 b1c3 h7h6 b2b3 c7c6 c1b2 d6d5 g1f3 d5c4 b3c4 f6h7 e1g1 h7g5 d1c2 g5f3 g2f3 f7f5 e3e4 e7g5 e4e5 b8d7 c3e2,0x707e4358294916804f149588d287db80
+chess,e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 f8c5 c1e3 d7d6 d4c6 b7c6 e3c5 d6c5 d1d8 e8d8 f1c4 d8e7 e1g1 g8f6 f2f3 a8b8 b2b3 c8e6 c4e6 e7e6 b1c3 h8d8 f1d1 f6h5 g2g3 h5f6 d1d8 b8d8 a1d1 d8d1 c3d1 f6d7 c2c4 d7e5 g1f2 e5d3 f2e3 d3b4 a2a3 b4c2,0x6ed0189e7eb4ceb02bc97b2a96490e64
+chess,d2d4 d7d5 c2c4 g8f6 e2e3 g7g6 b1c3 f8g7 g1f3 c7c6 c4c5 e8g8 f1d3 c8g4 e1g1 b7b6 c5b6 d8b6 c3a4 b6c7 a4c5 b8d7 b2b4 d7c5 b4c5 f6d7 d1b3 g4f3 g2f3 e7e5 e3e4 e5d4 e4d5 d7c5 b3c4 c5d3 c4d3 c6d5 f3f4 f7f5 f1e1 c7c3 d3c3 d4c3 c1e3 d5d4 e3c1 f8e8 g1f1 e8e1 f1e1 a8e8 e1d1 e8e4 d1c2 e4e2 c2d3 e2f2 d3c4,0x4251bffbce2b49580cae9a15d616e9b9
+chess,d2d4 d7d5 c2c4 d5c4 e2e3 b7b5 a2a4 a7a6 a4b5 c8b7 f1c4 b8d7 b5a6 b7a6 a1a6 d7b6 a6a8 d8a8 c4f1,0xe512cd1a9bb476ad0f80eb78abe43a90
+chess,e2e4 e7e5 d1h5 b8c6 f1c4 g7g6 h5f3 g8f6 g1h3 c6d4 f3c3 f6e4 c3d3 e4f6 c2c3 d4c6 c4b3 d7d5 c3c4 e5e4 d3e2 c6d4 e2e3 d4b3 a2b3,0xa9081aade0ec78789ba6a01f6d50759a
+chess,e2e4 d7d5 e4d5 g8f6 g1f3 f6d5 f1e2 b8c6 b1c3 c8f5 e1g1 e7e6 e2b5 d5b4 d2d3 a7a6 b5c6 b4c6 c1g5 f8e7 d1d2 h7h6 g5f4 e8g8 f4h6 g7h6 d2h6 e7f6 a1e1 c6d4,0x7f8329692563ef53caa921fb796f2b61
+chess,e2e4 e7e5 g1f3 d7d6 f1c4 d8e7 e1g1 h7h6 f1e1 g8f6 b1c3 b8c6 d2d4 c8e6 c4e6,0x0c24f6c6cfa4b6716196c79cbd9f2a67
+chess,d2d4 e7e5 d4e5 f8c5 g1f3 h7h5 c1f4 h5h4 f3g5 f7f6 e5f6 d8f6 e2e3 g8h6 g5e4 f6c6 d1d3 b8a6 e4g5 a6b4 d3c3 h6f5 a2a3 b4d5 c3e5 d5e7 b1c3 d7d6 e5e4 b7b5 f1b5 d6d5 e4e5 c6b5 c3b5 c8a6 b5c7 e8d7 c7a8 c5d6 e5e6 d7c6 g5f7 h8a8 f4d6 f5d6 e6d6 c6b5 d6e7 a8c8 e7d7 b5a5 b2b4 a5b6 f7d6 c8c2 d7d8 b6c6 d8c8 a6c8 d6c8 c6d7 c8a7 d7d6 e1g1 h4h3 g2h3 c2c7 a1c1 c7a7,0xdfe31c7821dffeee12ff7c008b96cdce
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 f8b4 f3g5 g8h6 g5f7 h6f7 d1f3 f7h6 c2c3 b4a5 d2d4 e5d4,0xddfc6485e584bca77bebe4ed9562b57c
+chess,d2d4 d7d5 c2c4 e7e6 a2a3 g8f6 c4c5 f8e7 c1f4 e8g8 h2h3 b7b6 b2b4 c8b7 e2e3 c7c6 f1d3 b8d7 g1f3 h7h6 b1d2 f8e8 e1g1 e7f8 d1c2 a7a5 f1e1 a5b4 a3b4 b6b5 f3e5 d7e5 f4e5 f6d7 e5h2 d8g5 d2f3 g5e7 e3e4 d7f6 h2d6 e7d7 d6f8 e8f8,0x5cadf58b2e5475d237ad2e0f85d8bd56
+chess,g2g3 c7c5 f1g2 d7d6 g1f3 c8d7 e1g1 b8c6 a2a4 a7a6,0xf09b54bf51caa8d855e57786c3f95cc0
+chess,c2c4 e7e5 b1c3 g8f6 g2g3 d7d5 f1g2 c7c6,0x1ec2a91d1dc0626d6e1f7ae6ef4df13e
+chess,e2e4 c7c5 g1f3 e7e6 c2c4 b8c6 b1c3 a7a6 f1e2 d8c7 e1g1 g8f6 d2d3 b7b6 c1g5 f8e7 a2a3 h7h6 g5h4 c8b7 h4g3 e6e5 c3d5 f6d5 e4d5 c6d4 g3e5 d4f3 e2f3 c7e5 f1e1 e5d6 d1e2 e8d8 e2e7 d6e7 e1e7 d8e7 d5d6 e7d6 f3b7 a8a7 b7d5 f7f6 a1e1 h8f8 f2f4 b6b5 b2b4 b5c4 d3c4 c5b4 a3b4 f8b8 e1d1 b8b4 d5f3 d6e7 d1d4,0xb5ce66b00df2046e02e9f738b6bb039a
+chess,e2e4 c7c5 g1f3 g7g6 f1c4 f8g7 d2d3 b8c6 a2a4 e7e6 c2c3 d7d5 e4d5 e6d5 c4b5 h7h6 b5c6 b7c6 e1g1 g8e7 f1e1 e8g8 c1f4 g8h7 b1d2 c8f5 d2f1 f8e8 f1g3 f5g4 h2h3 g4e6 d1d2 e7f5 g3e2,0x950200a2102550b53fd3e1395604c1e0
+chess,e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 e7e6 a2a3 g8f6 b1c3 f8e7 c1e3 e8g8 f1e2 d8a5 e1g1 c6d4 e3d4 e6e5 d4e3 d7d6 e3g5 c8e6 g5f6 e7f6 d1d6 a8d8 d6b4 a5c7 c3d5 e6d5 e4d5 d8d5 e2c4 d5d4 b2b3 a7a6 b4c3 c7d6 a3a4 g8h8 c3f3 e5e4 f3g3 d6g3 h2g3 d4c4 b3c4 f6a1 f1a1 f8c8 a1b1 c8c7 c4c5 g7g6 c5c6 c7c6 b1b7 h8g7 a4a5 c6c5 b7b4 f7f5 b4b7 g7h6 c2c4 c5a5 b7c7 a5a1 g1h2 a1c1 c4c5 a6a5 c5c6 a5a4 c7a7 c1c6 a7a4 c6c2 h2g1 h6g5 f2f3 e4e3 g1f1 h7h6 a4a3 c2f2 f1g1 f2e2 g1h2 g5f6 f3f4 f6e6 h2g1 g6g5 g1f1 e2f2 f1e1 f2g2 a3e3 e6f6 e1f1 g2b2 e3a3 g5f4 g3f4 f6g6 a3h3 b2b4 h3h4 b4b2 f1g1 h6h5 h4h3 b2b4 h3h4 b4b3 h4h2 b3g3 g1f2 g3g4 f2f3 h5h4 h2b2 g6h5 b2b6 g4g3 f3f2 h5g4 b6h6 g3f3 f2g2 f3f4 h6g6 g4h5 g6g8 f4g4 g8g4 h5g4 g2h2 f5f4 h2g1 g4f3 g1f1 h4h3 f1g1 f3e2 g1h2 f4f3,0xda84fb10ea664ae64a23a2176b47a260
+chess,d2d4 g7g6 c2c4 f8g7 b1c3 d7d6 g1f3 g8h6 g2g3 e8g8 f1g2 b8c6 e1g1 f7f6 c1h6 g7h6 e2e3,0xe745ebf06edbc793a1a0767279416cc5
+chess,d2d4 d7d5 c2c4 g8f6 c4d5 d8d5 c1f4 b8c6 e2e3 c8f5 b1c3 d5a5 f1c4 e8c8 g1f3 f6e4 e1g1 e7e5 d1e2 e4c3 b2c3 e5f4 e3f4 a5c3 a1c1 c6d4 e2e5,0xb3563c363ddc3688dc0a829d1cd91737
+chess,,0x3d71fe83987aab73463b96181691fc9c
+chess,e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f1c4 g8f6 e1g1 f8c5 e4e5,0x788a3113097071f2acca2b69f557c40e
+chess,h2h4 e7e5 e2e4 g8f6 c2c4 b8c6 b1c3 c6d4 g1f3 d8e7 f3d4 e5d4 c3d5 e7e4 d5e3 d4d3 d1b3 d7d5 f1d3 e4d4 e3d5 f6d5 c4d5 f8c5 e1g1 e8g8,0xda0259bcda4b0518478c8313804b7721
+chess,g2g3 g8f6 g1f3 d7d5 f1g2 c7c5 d2d3 b8c6 b1d2 c8g4 e1g1 e7e6 b2b3 f8e7 c1b2 e8g8 f3e5 c6e5 b2e5 d8a5 h2h3 g4h5 d2f3 a8c8 f1e1 f8d8 e5b2 c5c4 b2d4 f6d7 b3c4 d5c4 g3g4 h5g6 d4b2 c4c3 b2c1 b7b5 c1f4 b5b4 h3h4 f7f5 h4h5 g6f7 g4f5 a5f5 f4g3 f7h5 d1c1 h5f3 g2f3 e7g5 c1b1 a7a5 a2a3 g5d2 e1d1 h7h5 a3b4 h5h4 g3h2 f5g5 g1h1 a5b4 b1b4 d7e5 d1g1 g5f6 h2e5 f6e5 b4h4 g8f7 f3h5,0xad665f78d8f832e7e091f2c6f1e3af29
+chess,g1f3 g8f6 g2g3 b7b6 f1g2 c8b7 e1g1 c7c5 c2c4 g7g6 d2d4 c5d4 f3d4 b7g2 g1g2 f8g7 b1c3 e8g8 e2e4 d8c7 d1d3 a7a6 c3d5 c7d8 c1g5 f6d5 c4d5 h7h6 g5e3 d8c7 a1c1 c7b7 c1c2 a6a5 f1c1 b8a6 c2c3 a6c5 d3c2 d7d6 a2a3 a5a4 f2f3 g8h7 c2d2 g7d4 d2d4 c5b3 c3c7 b7c7 c1c7 b3d4 e3d4 f8e8,0x6726f0c799c2b30fa07726e57e5914b5
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 f8c5 e1g1 e8g8 c1g5 h7h6 g5d2 d7d5 e4d5 f6d5 c4d5 d8d5 b1c3 d5d8 f1e1 f8e8 c3a4 c5d6 c2c3 c8f5 d3d4 c6d4 c3d4 e5e4 f3e5 d6e5 d4e5 e8e5 d2c3 e5d5 d1b3 f5e6 h2h3 d5d1 b3d1 d8d1 e1d1 f7f5 a4c5 e6c4 b2b3 c4b5 c5e6 g7g5 d1d8 a8d8 e6d8 f5f4 d8b7 g8f7 a1d1 b5c6 b7d8 f7g6 d8c6 g6f5 d1d5 f5e6 d5d1 e4e3 f2e3 f4e3 d1e1 e6d5 e1e3 d5c6 e3e6 c6d5 e6h6 c7c5 h6h5 c5c4 b3c4 d5c4 c3f6 a7a5 h5g5 c4b4 g5g4 b4a3 h3h4 a3a2,0xfec2486939dd4ba11ae50dc57f607884
+chess,d2d4 d7d5 b1c3 b8c6 c1f4 e7e6 g1f3 f8d6 f4d6 c7d6 g2g4 g8f6 g4g5 f6e4 d1d3 d8b6 c3e4 d5e4 d3e4 b6b2 a1d1 c6b4 g5g6 f7f5 e4f4 b4c2 e1d2 c2a3 d2d3 b2c2,0x826c1c5d0fbc8b3bf0469603f79e3275
+chess,e2e4 e7e6 g1f3 d7d5 b1c3 d5e4 c3e4 f7f5 e4g3 g8f6 d2d4 b8c6 c2c3 f8e7 f1c4 f6d5 c4d5 e6d5 g3f5 c8f5 e1g1 e8g8 f3e5 e7d6 e5c6 b7c6 d1f3 c6c5 d4c5 d6c5 f1d1 c7c6 c3c4 f5d3 f3d3 c5f2 g1h1 d5d4 d3f3 f8f3 g2f3,0xf583998ee3040cbb0d91ae17010df642
+chess,e2e4 e7e5 g1f3 b8c6 b1c3 f8b4 d2d4 e5d4 f3d4 c6d4 d1d4 g8f6 d4b4 f6e4 b4e4 d8e7 e4e7 e8e7 f1d3 e7f8 c1f4 d7d5,0xa1c4de92c34adcd546974b7c7539e914
+chess,b1c3 g8f6 e2e4 d7d6 g1f3 g7g6 d2d4 f8g7 h2h3 e8g8 f1c4 b8d7,0x090919c907df0739eead73ab6687c559
+chess,c2c4 e7e5 g2g3 d7d5 f1g2 d5d4 d2d3 c7c5 e2e3 b8c6 g1e2 f8e7 e1g1 g8f6 f1e1 e8g8 e3d4 c5d4 b1d2 c8f5 d2e4,0x383bd0fef006db2c74e2c456bed60d9d
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 f8c5 c2c3 e8g8 e1g1 d7d6 b1d2 a7a6 c4b3 b7b5 a2a4 c8b7 f1e1 c6e7 d2f1 e7g6 f1g3 g6f4 d3d4 c5a7 d4e5 d6e5 d1d8 a8d8 f3e5 f4g6 e5g6 h7g6 c1g5 d8c8 a4b5 f6g4 e1e2 a7f2 e2f2 g4f2 g1f2 a6b5 f2e3 f8e8 a1e1 e8e5 e3f4 c8e8 f4g4 b7e4 g3e4 e5e4 e1e4 e8e4 g4f3 e4e5 g5f4 e5f5 f3e4 g8f8 f4c7,0xa23807888b5cf7e95d3d4fc7d3d707c2
+chess,e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 f1d3 e7e5 d4f3 c8g4 c1e3 f8e7 e1g1 e8g8 h2h3 g4h5 f1e1 b8c6 d3e2 h5g6 d1d3 c6b4 d3d2 d6d5 e4d5 b4c2 f3e5 c2a1 e1a1,0x068bb9d73d212f0d9cfb1db7a315c135
+chess,e2e4 e7e5 f1c4 b8c6 g1f3 f8c5 e1g1 g8f6 d2d3 d7d6 b1c3 e8g8 a2a3 a7a5 c3d5 f6d5 e4d5 c6e7 d3d4 e5d4 f3d4 c7c6 d4b3 c6d5 c4d5 e7d5 d1d5 c5a7 c1g5 d8c7 a1d1 a5a4 b3d4 c8e6 d5f3 a7d4 d1d4 f7f6,0xe7df802adcda87af361dc26d03e8a6c6
+chess,d2d4 c7c5 e2e3 e7e6 g1f3 b7b6 c2c3 c8b7 f1e2 g8f6 e1g1 f8e7 d1d2 e8g8 c3c4 d7d5 c4d5 e6d5 b1c3 b8c6 a2a3,0x92c529247a247bc9859800e77c9aecf3
+chess,e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f1c4 g8f6 e1g1 f8c5 e4e5 d7d5 e5f6 d5c4 f6g7 h8g8 f1e1 c8e6 f3g5 d8d7 g5e6 f7e6 d1h5 d7f7 h5c5 e8c8 c1h6 f7g6 h6f4 g8g7,0x97846de349b22c9277b3cb78527ee345
+chess,c2c4 c7c5 d2d3 b8c6 g1f3 g8f6 g2g3 g7g6 f1g2 f8g7 e1g1 d7d6,0x68a9564e1fcc1f322e7b0022b9bda947
+chess,e2e4 e7e5 f1c4 g8f6 d1f3 b8c6 c2c3 a7a6 d2d3 f8c5 g1e2 b7b5 c4b3 d7d6 a2a4 b5b4 c1d2 b4c3 d2c3 c6d4 e2d4 c5d4 b1d2 d4c3 b2c3 c7c5 b3d5 c8g4 f3g3 h7h5 h2h3 g4e6 e1g1 f6d5 e4d5 e6d5 g3g7 e8e7 f1e1 h8g8 g7h6 g8g2 g1f1 d8g8 f1e2 g2f2 e2f2 g8g2 f2e3 g2h3 e3e2 h3g2 e2d1 g2g4 d1c1 a8b8 c3c4 d5f3 d2f3 g4f3 h6g5 f7f6,0xe06823a582f9fb912e22e65ebef0fdd6
+chess,e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 f1e2 e7e5 d4b3 c8e6 f2f4 b7b5 f4e5 d6e5 d1d8 e8d8 c1g5 b8d7 e1c1 d8c7 a2a3 b5b4 a3b4 f8b4 c3d5 e6d5 e4d5 f6e4 g5e3 a6a5 e2f3 e4d6 c2c3 a5a4 b3d2 b4c5 e3c5 d7c5 h1e1 a8e8 d2e4 c5e4 f3e4 f7f5 e4c2 a4a3 b2a3 d6c4 a3a4 c7d6 c2b3 c4a5 c1c2 e8b8 d1b1 a5b3 b1b3 b8b3 c2b3 d6d5 c3c4 d5d4 e1d1 d4e3 c4c5 e3e2 d1d5 e5e4 d5f5 e4e3 c5c6 e2d2 b3b4 e3e2 f5e5 e2e1q e5e1 d2e1 b4b5 e1d2 a4a5 d2d3 b5b6 d3d4 c6c7 d4d5 b6b7 d5d6 c7c8q h8c8 b7c8 d6c6 c8d8 c6b5 d8e7 b5a5 e7f7 a5b6 f7g7 h7h5 g7g6 h5h4 g6g5 b6c6 g5h4 c6d6 h4g5 d6e7 g5g6 e7f8 h2h3,0x5cc52faebb17191709a5e620f3f8faf1
+chess,g1f3 d7d5 g2g3 c7c5 f1g2 b8c6 d2d3 e7e6,0xf300a57333e9d978146cf86efdfd563e
+chess,e2e4 g7g6 d2d4 f8g7 g1f3 d7d6 b1c3 c8g4 c1e3 g8f6 h2h3 g4f3 d1f3,0xf5a66fd703ad3b49226c506a63a87f02
+chess,d2d4 g8f6 c2c4 e7e6 g1f3 f8b4 c1d2 b4d2 d1d2 d7d6,0xd86e8bae3cc6bba1d29e4a30808ed927
+chess,e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5c6 b7c6 b1c3 d7d5 e4d5 c6d5 d2d4 e5e4 f3e5 g8h6 c1h6 g7h6 e1g1 f8d6 a2a3 d8h4 h2h3 c8h3 g2h3 h4h3 d1g4 h8g8 g4g8 d6f8 g8f7 e8d8 f7d7 h3d7,0xd9184aa2fe4bdce7bc5ca720d2a16b6d
+chess,e2e4 e7e6 e4e5 d7d5 d2d4 c7c5 g1f3 d8b6 b1c3 c5d4 f3d4 b8c6 d4c6 b6c6 f1e2 f8b4 c1d2 b4c3 d2c3 c8d7,0x7f7ac997b5bed2a07ebf463b0fdb88d5
+chess,b1c3 b7b6 e2e4 g7g6 e4e5 c8b7 d2d4 f8g7,0xaa55bf5e47024c355f16d5dc263d8988
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 c6a5 c4b5 a7a6 b5a4 b7b5 a4b3 a5b3 a2b3 c8b7 e1g1 d7d5 e4d5 d8d5 c2c4 b5c4 b3c4 d5e6 f3e5 f8d6 e5f3 e8g8 b1c3 e6g4 h2h3 g4g6 f3h4 g6h5 d1h5 f6h5,0x1978161e014e402d9c756dd0b322301e
+chess,d2d4 e7e6 c2c4 d7d5 g1f3 g8f6 b1c3 f8b4 h2h3 b4c3 b2c3 d5c4 g2g4 b7b5 g4g5 f6d5 e2e4 d5c3 d1c2 c3a4 f1g2 c8b7 e1g1 a4b6 d4d5 e6d5 e4d5 e8g8 g5g6 f7g6 f3g5 b7d5 f1d1 f8f5 g5e6 d8d6 e6f4 c7c6 f4d5 c6d5 c1b2 b8d7 d1e1 d6f4 a1d1 d7f6 a2a4 b5b4 b2d4 b4b3 c2b2 f6e4 d4e3 f4h4,0x3219ff856da19547805ba2b53cb106dc
+chess,e2e4 e7e5 g1f3 b8c6 f1b5 g8e7 d2d3 g7g6 c1g5 a7a6 b5c6 b7c6 g5f6 h8g8 f3e5 f8g7 f6g7 g8g7 e1g1 d7d6 e5f3 c8g4 h2h3 g4e6,0xbc4614d8684d64b6d11f9c67ce797baa
+chess,e2e4 e7e5 f1c4 b8c6 g1f3 f7f5 e4f5 g8f6 d2d3 d7d5 c4b3 f8d6 e1g1 c8f5 b1c3 h7h6 c3d5 f6d5 b3d5 d8e7 c2c3 a8b8 f1e1 c6d8 d3d4 e5e4 d5e4,0x124b72b65ce57c18d1eae47deaf3a8fc
+chess,d2d4 c7c5 g1f3 g8f6 c2c3 e7e6 b1d2 d7d5 g2g3 b8c6 f1g2 f8d6 d4c5 d6c5 d2b3 c5d6 e1g1 b7b6 c1g5 c8a6 f3d2 a8c8 f1e1 h7h6 g5f6,0x479de63cbe6db607a49e8eb6b4376560
+chess,e2e4 c7c5 g1f3 a7a6 c2c3 b8c6 d2d4 c5d4 c3d4 e7e6 b1c3 g8f6 e4e5 f6g4 h2h3 g4h6 c1h6 g7h6 d4d5 c6b4 d5e6 d7e6 d1d8 e8d8 e1c1 d8c7 a2a3,0x405fe58946ed34e4e843c5b4384df5f7
+chess,d2d4 d7d5 b1c3 g8f6 a2a3 e7e6 e2e3 c7c5 d4c5 f8c5 b2b4 c5b6 c1b2 e8g8 d1d2 b8c6 g1f3 c8d7 f1e2 b6c7 e1c1 c6e5 f3e5 c7e5 f2f4,0xa038845ddc352a2b87965f1dd7facae3
+chess,f2f4 d7d5 d2d4 e7e6 e2e3 g8e7 f1d3 e7g6 d3g6 f7g6 g1f3 f8e7 e1g1 e8g8 b1d2 c7c5 c2c3 c5c4 e3e4 d5e4 d2e4 b7b5 f3e5 c8b7 d1e2 b8d7 c1d2 d7f6 e4g3 d8d5 h2h3 f6e4 g3e4 d5e4 e2e4 b7e4 a1e1 e4b7 a2a3 a8e8 g2g4 e7h4 e1e2 h4g3 e5d7 f8f7 d7e5 f7e7,0xfed75c843f68b968ddf84a9a96ca2ced
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 h7h6 b1c3 g8f6 a2a3 f8c5 d2d3 d7d6 h2h3 c8e6 c3a4 c5b6 c4e6 f7e6 a4b6 a7b6 c1e3 d6d5 e4d5 e6d5 f3h2 e8g8 d1d2 d5d4 e3h6 g7h6 d2h6 d8e7 h2g4 e7g7 h6h4 f6g4 h3g4 f8f4 f2f3 a8f8 e1c1 c6e7 h4g3 e7d5 h1h5 d5e3 d1h1 c7c5 h1h2 e3f1 g3h4 f1h2 h5g5 h2f3 g5g7 g8g7 g2f3,0x02c535c3f6d21343adf49dabfeb7310b
+chess,e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3 f5g6 g1f3 e7e6 f1d3 b8d7 e1g1 g8f6,0x936dd4dce2be4d72491b5cda75b262bc
+chess,e2e4 c7c5 g1f3 b8c6 f1c4 e7e6 b1c3 g8f6 d2d4 d7d5 e4d5 e6d5 c4b5 f8e7 f3e5 c8d7 e5d7 d8d7 e1g1 c5d4 d1d4 c6d4 b5d7 e8d7 c1g5 e7b4 g5f6 b4c3 f6g7 c3b2 a1b1 d4e2 g1h1 b2g7 b1b7 d7c6 b7f7 g7c3 f1b1 a8b8 b1b8 h8b8 g2g3 b8b7 f7f3 d5d4 f3f6 c6d5 f6f5 d5e4 f5h5 e2c1 h1g2 b7f7 h5h4 e4d5 f2f4,0x701c8dc9e06040647ad5d4acc2d5375e
+chess,e2e3 e7e6 g2g3 c7c6 f1g2 d7d5 g1e2 c8d7 c2c3 b8a6 e1g1 d8f6 d2d4 e8c8 b1d2 c8b8 e3e4 f8e7 e4e5 f6g6 e2f4 g6f5 d2f3 g7g5 g2h3 g5g4 f3h4 f5g5 f4e6 f7e6 c1g5 e7g5 d1g4 h7h6 h4g6 h8h7 h3g2 a6c7 a1d1 h7g7 g6f4 c7b5 h2h4 g5f6 g4f3 f6e7 a2a4 b5c7 h4h5 c6c5 f4g6 e7g5 f1e1 c5d4 d1d4 a7a6 c3c4 d7a4 c4d5 a4b5 d5d6 c7d5 f3b3 b5c6 e1c1 g5c1 g2d5 c6d5 b3b6 d8d7 g6f4 c1f4 d4f4 d7f7 b6d8 b8a7 f4f7 g7f7 d8g8 f7f5 d6d7 f5e5 d7d8q e5e1 g1h2 e1f1 d8d5 e6d5 g8d5 f1f2 h2g1 f2b2 d5d4 b2b6 d4b2 b6b2 g3g4 a6a5 g4g5 h6g5 h5h6 b2b6 h6h7 b6h6 g1g2 h6h7 g2g3 a5a4 g3g4 h7g7 g4f5 b7b5 f5f6 b5b4 f6g7 a4a3 g7g6 a3a2 g6g5 a2a1q g5f5 b4b3 f5e6 b3b2 e6d5 b2b1q d5d6 b1d1 d6c5 a1a5 c5c6 d1c1 c6d7 a5d2 d7e6 c1e1,0xcd3693559f94d07deac22d03fa827946
+chess,b2b3 d7d6 c1b2 c7c6 d2d3 g8f6 b1d2 e7e5 e2e4 f8e7 g1e2 b8d7 g2g3 d7f8 f1g2 f8g6 h2h3 c8e6 g3g4 d8d7 f2f4 h7h5 f4f5 h5g4 f5g6 f7g6 h3g4 h8h1 g2h1 f6g4 d2f3 g4e3 d1d2 e3g4 e1c1 e8c8 c1b1 a7a5 a2a4 b7b6 e2c3 d6d5 e4d5 e6d5 c3d5 d7d5 f3g5 d5c5 g5e6 c5d6 e6d8 d6d8,0xaffc6e7d7ef0705e8a9fc59a33fa6f98
+chess,e2e4 e7e5 g1f3 b8c6 b1c3 f8c5 f1c4 g8f6 e1g1 e8g8 h2h3 h7h6 d2d3 a7a6 a2a3 b7b5 c4a2,0x0291cadefbf2c85d08f7f37c1834686c
+chess,d2d4 d7d5 g1f3 f7f6 a2a3 h7h5 c2c4 e7e6 b1c3 c7c6,0x1268f8e1e152dd42542e461c69e2acba
+chess,e2e4 b7b6 g1f3 c8b7 b1c3 e7e6 d2d4 g8f6 f1d3 f8b4 d1e2 d7d5 c1g5 h7h6 g5f6 d8f6 e4e5 f6d8 a2a3 b4c3 b2c3 b8c6 a1b1 d8e7 a3a4 e8g8 e1g1 e7e8 c3c4 c6e7 c4d5 b7d5 c2c4 d5b7 d3e4 b7e4 e2e4 e8a4 f1c1 a7a5 e4g4 a4d7 h2h3 a5a4 g4g3 a4a3 b1a1 c7c5 d4c5 b6c5 f3h2 a3a2 h2g4 g8h8 g3h4 e7g6 h4h5 d7d4 g4h6 g7h6 h5h6 h8g8 c1d1 d4e5 h3h4 e5f4,0xcb917178db45c6d4e0a7d058f6ac0947
+chess,e2e4 e7e5 g1f3 b8c6 f1c4 f7f5 d2d3 f8c5 f3g5 f5f4 g5f7 d8h4 e1g1 g8f6 f7h8 f6g4 h2h3 g4f2,0x9b1856d5f268cba1691fdaf62928d097
+chess,e2e4 c7c5 f1c4 e7e6 d2d3 a7a6 a2a3 b7b5 c4a2 d8c7 g1f3 d7d6 b1d2 c8b7 d2f1 b8d7 f1g3 g8f6 f3h4,0x6b1eb7b224e5051df49ba554a34300af
+chess,b1c3 e7e5 e2e4 d8e7 d2d4 d7d6 d4d5 g8f6 f2f3 g7g6 g2g4 f8g7 h2h4 h7h5 g4g5 f6h7,0xc362bd4880f7802d67dbfdad9a149400
+chess,e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 f8c5,0xac946bfd4aebde6005fa8d4aab738568
+chess,,0x3d71fe83987aab73463b96181691fc9c
+chess,e2e4 e7e5 g1f3 b8c6 b1c3 d7d6 f1c4 g8f6 e1g1 f8e7 d2d3 e8g8 f3g5 h7h6 c4f7 f8f7 g5f7 g8f7 d1f3 c8g4 f3g3 d8d7 d3d4 f6h5 g3e3 e7g5 e3e1 g5c1 e1c1 f7g8 d4e5 d6e5 f1d1 g4d1,0x39a97bdcf22d465ebab8cd10fea89c30
+chess,d2d4 e7e6 c2c4 g8f6 b1c3 d7d5 c1f4 f8e7 g1f3 e8g8 e2e3 c7c5 d4c5 e7c5 c4d5 e6d5 f4g5 c8e6 f1d3 h7h6,0x9ce80c0d87a7dac0490f1ca943313a39
+chess,c2c4 e7e6 g1f3 d7d5 g2g3 g8f6 f1g2 c7c6 e1g1 d5c4 d1c2 b7b5 b1c3 c8b7 a2a4 a7a6 a4b5 c6b5 f3e5 b7g2 g1g2 f8d6 e5f3 b8d7 e2e4 e6e5 f1e1 e8g8 d2d3 c4d3 c2d3 d8e7 c3d5 f6d5 e4d5 f7f6 d3f5 d7b6 f5e6 e7e6 d5e6 f8e8 c1e3 b6c4 e1d1 e8e6 b2b3 c4e3 f2e3 d6c5 d1d7 c5e3 a1d1 e3h6 f3h4 a8e8 h4f5 g8f8 f5h6 g7h6 d7h7 e6e7 h7h8 f8g7 h8e8 e7e8 d1d7 g7g6 h2h4 e8e6 g2f3 f6f5 d7d8 e5e4 f3f4 e4e3 d8d1 e3e2 d1e1 g6h5 f4f3 f5f4 e1e2 e6e2 f3e2 f4g3 e2f3 h5h4 f3g2 h4g4 b3b4 h6h5 g2h1 h5h4 h1g2 g4f4 g2h3 f4e4 h3h4 g3g2 h4g3 g2g1q,0xe415eabf9d295f1983c03191d5f5b4ea
+chess,e2e4 e7e5 d1f3 b8c6 f1c4 g8f6 g2g4 d7d5 e4d5 c8g4 f3b3 c6d4 b3a4 g4d7 a4a5 d4c2 e1d1 c2a1 b2b4 b7b6 a5a6 f8b4 c1b2 e8g8,0x1a229a3ac8a52adc45d231ab41464aed
+chess,e2e4 d7d5 e4d5 d8d5 b1c3 d5d6 d2d4 g8f6 g1f3 b8c6 c1g5 c8g4 h2h3 g4f3 d1f3 d6d4 a1d1 d4e5 g5e3 e7e6 f1b5 f8b4 e1g1,0x7868122d42d4c3f37b2d84a7ce8ad8fe
+chess,e2e4 d7d6 d2d4 a7a5 b1c3 g8f6 g1f3 g7g6 c1g5 f8g7 d1d2 h7h5 e1c1 c7c6 d2e2 b7b5 e4e5 f6d5 c3d5 c6d5 e5d6 d8d6,0xd005ccdecd5bb6b356ade07b3f8ca976
+chess,e2e4 c7c6 d2d4 d7d5 c2c3 d5e4 f2f3 g8f6 f3e4 f6e4 g1f3 c8g4 f1e2 e7e6 e1g1 f8d6 d1d3 f7f5 f3e5 d6e5 e2g4 e5h2 g1h2 d8h4 h2g1 h4g4 c1f4 b8d7,0xc16d93e6d4e54f53a8df6f22aeb55614
+chess,e2e4 e7e5 f1c4 g8f6 d2d4 f6e4 d4e5 d7d5 e5d6,0x2c3ffbf5c06283a9ac639f05cb64d5c3
+chess,e2e4 e7e5 g1f3 g8f6 f3e5 b8c6 e5c6 d7c6 b1c3 f8c5 f1c4,0x28d01f37004fc47f6892e259de07c690
+chess,e2e4 e7e5 g1f3 d7d6 f1c4 c8g4 h2h3 g8f6 h3g4 f6g4 f3h2 g4h2 h1h2 b8c6 d2d3 d8f6 c1e3 e8c8 b1c3 c6d4 e3d4 e5d4 c3d5 f6e5 d1h5 e5h5 h2h5 c7c6 d5f4 g7g6 h5a5 b7b5 c4f7 c8b8 e1c1 d8d7 f7e6 d7e7 e6b3 f8h6 g2g3 e7e5 c1b1 h6g5 f4h3 g5d8 f2f4 e5h5 h3f2 d8a5 g3g4 h5h2 d1f1 h8f8 f4f5 g6f5 g4f5 h7h5 a2a3 c6c5 b3e6 h5h4 f2g4 h2g2 g4h6 f8h8 h6f7 h8h7 f7d6 h4h3 f5f6 h3h2 f6f7 h7f7 e6f7 g2g1 f1g1,0x453b4a805f2625d3d6b3174aea219f8a
+chess,d2d4 e7e5 c2c4 e5d4 g1f3 c7c5 g2g3 g8f6 f1g2 d7d5 c4d5 f6d5 e1g1 c8e6 f3g5 f8e7 g5e6 f7e6 d1a4 b8c6 e2e4 d5b6 a4b3 c5c4 b3f3 c6e5 f3h5 e5g6 b1d2 e8g8 e4e5 f8f5 h5e2 f5e5 e2d1 d8c7 d2f3 e5d5 f3d4 a8d8 g2d5 d8d5 d1g4 g6e5 g4e6 g8h8 d4f5 e7f8 c1f4,0x460c6018e5cae8d06caf503feb68473b
+chess,e2e4 d7d6 g2g3 g8f6 f1g2 g7g6 d2d3 f8g7 d3d4 c7c6 b1c3 d8a5 c1d2 e8f8 c3d5 a5d8 d5f6 g7f6 d2c3 b8d7 d1f3,0xa38c79b942fe5c34b516fe007a4a5870
+chess,e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 d8h4 d4c6 h4e4 d1e2 e4e2 f1e2 d7c6 b1c3 c8f5 e2d3 f5d3 c2d3 e8c8 c1e3 d8d3 a1d1 d3d1 e1d1 f8b4 d1c2 g8f6 a2a3 b4d6 g2g3 f6g4 e3d4 f7f6 h2h3 g4e5 f2f4 e5f3 d4e3 c6c5 c3b5 a7a6 b5d6 c7d6 c2c3 h8e8 c3d3 b7b5 h1f1 f3d4 e3d4 c5d4 d3d4 c8c7 f1f2 e8e1 d4d5 c7d7 f2f3 e1d1 d5e4 d6d5 e4e3 d7d6 e3e2 d1b1 b2b3,0x48cacb92f819eed641f7eb93ab6bf1ea
+chess,e2e4 d7d5 d1f3 d5e4 f3e4 b8c6 f1b5 c8d7 g1f3 g8f6 e4d3 e7e6,0x09c2e61544e11705571f675c16aee260
+chess,e2e3 c7c5 d2d4 c5d4 e3d4 g8f6 c2c4 g7g6 b1c3 f8g7 c1e3 e8g8 f1e2 d7d6 d1d2 b8c6 g1f3 f8e8,0x12687766d53da68a83d4de974042cecd
+chess,d2d4 d7d5 c1f4 b8c6 b1c3 g8f6 c3b5 e7e5 d4e5 a7a6 e5f6 a6b5 e2e3 d8f6 f1b5 c8d7 d1d5 f6b2 d5e4 f8e7 a1d1 b2b5 e4d3 e7d6 f4d6 c7d6 d3b5 c6d4 b5b7 d7c6 b7b6 d4c2 e1e2 a8c8 d1d6 c6a4 b6b7 e8g8 b7a7 a4b5 e2f3 b5c6 f3g3 c2b4 a7b6 b4d5 d6c6 d5b6 c6b6 f7f5 g1f3 f5f4 e3f4 f8f6 f3e5 f6b6 e5d7,0x75b431be305958d2a4b3238ac310372e
+chess,e2e4 e7e6 d2d4 d7d5 e4e5 c7c5 c2c3 b8c6 g1f3 d8b6 a2a3 c5c4 f1e2,0x284592f89656c3e992b399ead0beecb5
+chess,e2e4 e7e5 g1f3 d7d6 d2d4 e5d4 f3d4 g8f6 b1c3 c7c5 f1b5 c8d7 b5d7 d8d7 d4b3,0xe14e0a457f6a7e06f2b88dd593641c3b
+chess,e2e4 d7d5 e4d5 g8f6 d2d4 f6d5 f1c4 c7c6 b1c3 c8f5 c3d5 c6d5 c4b5 f5d7 b5d7 b8d7 g1f3 e7e6 e1g1 f8d6 c1g5 d8c7 c2c3 d7b6 d1e2 e8g8 g5h4 a8c8 h4g3 b6c4 b2b3 c4b6,0xeaf1c8f52c4a1ab42fa2136026569378
+chess,e2e4 c7c5 g1f3 g7g6 c2c3 f8g7 d2d4 c5d4 c3d4 d7d5 b1c3 d5e4 c3e4 g8f6 e4f6 g7f6 f1c4 e8g8 e1g1 b8c6 d4d5 c6e5 f3e5 f6e5 f1e1 d8c7 f2f4 e5f4 c1f4 c7f4 d1b3 f4d4 g1h1 c8g4 e1e7 b7b5 c4b5 a8b8 b3d3 d4b2 a1f1,0xeb38fabbfc316696bf0b67a7bd451b02
+chess,e2e4 c7c5,0x29dc49c3e916a23e644d4afe02564aeb
+chess,e2e4 e7e5 b1c3 b8c6 f1c4 f8e7 g1e2 g8f6 d2d3 e8g8 e1g1 c6a5 f2f4 a5c4 d3c4 e5f4 e2f4 d7d6 c3d5 f6d5 e4d5 e7f6 d1f3 d8d7 f4h5 f6d4 g1h1 g7g6 c2c3 d4h8 c1h6 g6h5 h6f8 g8f8 f3h5 f7f6 a1e1 d7g7 e1e6 c8e6 d5e6 f8e7 h5f5 g7g6 f5f3 a8g8 g2g3 h7h5 f3b7 e7e6 b7c7 g6e4,0xc027fa8b758f834275c80678a08e0d14
+chess,e2e4 d7d6 g1f3 g7g6 b1c3 f8g7 d2d4 g8f6 f1d3 e8g8 c1e3 b8d7 d1d2 e7e5 d4e5 d6e5 e3h6 c7c6 h6g7 g8g7 e1c1 d8a5 c1b1 d7c5 h2h4,0x096626afc193004b2dc51e54b01658a5
+chess,d2d4 g8f6 d4d5 d7d6 c2c4 g7g6 f2f3 f8g7 e2e4 b8d7 b1c3 c7c6 g2g4 b7b5 a2a4 b5c4 f1c4 c6c5 c3b5 a7a6 b5c3 d7e5 c4e2 e8g8 f3f4 e5d7 g4g5 f6h5 e2h5 g6h5 d1h5 d8e8 g1f3 f7f5 g5g6 e8g6 h5h3 f5e4 f3h4 g6f6 f4f5 d7e5 c3e4 f6f7 h1g1 c8f5 h4f5 f7f5 h3g2 f8f7 e4g5 e5d3,0xf4a6f0d3ce1105349bbfdd8a35d0a6ee
+chess,d2d3 g8f6 e2e4 d7d5 f2f3 e7e5 c1e3 b8c6 c2c3 c8e6 g2g3 d8d7 b2b3 e8c8 d1e2 h7h6 h2h4 g7g6 f1h3 d5e4 d3e4 e6h3 g1h3 d7d3 e2d3 d8d3 e1e2 d3d7 h1d1 d7d1 e2d1 f8e7 d1e2,0x0d73c58f28726e76c3e74af538f17c55
+chess,d2d4 e7e6 e2e4 b7b6 c2c4 c8b7 b1c3 d7d5 c4d5 e6d5 e4e5 f8e7 g1f3 h7h6 f1d3 d8d7 d1e2 a7a6 e1g1 b8c6 a2a3 c6a5,0x485171d04cf92ea5523d40e60cae1348
+chess,c2c4 d7d5 g2g3 d5c4 f1g2 b8c6 d1a4 c8d7 a4c4 e7e6 a2a3 f8d6 b2b4 g8f6 b1c3,0xd672a3eefaff52404b956456240f29b4
+chess,e2e4 c7c5 d2d4 e7e6 d4d5 e6d5 e4d5 d7d6 f1b5 c8d7 b5d3 g8f6 c2c4 f8e7 g1e2 e8g8 e1g1 b7b5 b2b3 b5c4 b3c4,0x638b93bdfc8ab274dd253820adced5a8
+chess,d2d4 c7c5 d4c5 e7e6 e2e3 f8c5 g1f3 g8f6 f1c4 d7d5 c4b5 b8c6 b5c6 b7c6 c2c3 e8g8 e1g1 f8e8 f3e5 c8b7 b1d2 f6e4 d2e4 d5e4 d1d8 a8d8 f2f3 e4f3 e5f3 d8d3 f3d4 c5d4 c3d4 d3e3 c1e3 e8d8 a1d1 f7f6 d1d3 e6e5 f1d1 c6c5 d4c5 d8d3 d1d3 b7e4 d3d8 g8f7 d8d7 f7g6 d7a7 e4b1 a2a3 b1e4 a7c7 f6f5 c5c6 f5f4 e3b6 g6f6 b2b4 f6e6 b4b5 e6d6 c7g7,0x8d33d2135f1335bb96c3ca3a5c0ddf7b
+chess,e2e4 e7e6 f1c4 d7d5 e4d5 e6d5 c4b3 b8c6 g1f3,0x36685b3f8f9772f2b3d408e2633f5f53
+chess,e2e4 c7c5 c2c3 e7e6 d2d4 d7d5 e4e5 b8c6 g1f3 c8d7 f1d3 d8b6 a2a3 c5d4 c3d4 c6d4 f3d4 b6d4 e1g1 d4e5 f1e1 e5c7 b1c3 f8e7 c3b5 c7c6 d1g4 g7g6 b5d4 c6c8 g4f3 g8f6 c1h6 h8g8 a1c1 c8d8 h6g5 a7a6 g5f6 e7f6 f3d5 e8f8 d5d6 f8g7 c1c7 f6d4 d6d4 d8f6 d4f6 g7f6 c7d7 g8d8 d7d8 a8d8 e1e3 d8d4 g1f1 e6e5 f1e2 f6e6 e3e4 d4d6 e4c4 e6d7 f2f4 e5f4 c4f4 f7f5 h2h4 d7e6 f4b4 b7b5 a3a4 b5a4 b4a4 e6e5 a4a6 d6d4 g2g3 d4b4 a6a5 e5f6 a5b5 b4g4 e2f3 g4d4 d3e2 d4d2 b5b7 h7h6 b2b4 g6g5 h4g5 h6g5 f3e3 d2b2 e2d3 b2b3 b7b6 f6f7 e3d4 b3a3 b6b7 f7f6 b7b6 f6f7 b6c6 f5f4 g3f4 g5f4,0xfe86ba959b7b8bda59ae60c5c0bdaf15
+chess,d2d4 d7d5 g1f3 b8c6 e2e3 c8f5 f1b5 d8d6 b1c3 g8f6 f3e5 e7e6 e1g1 f8e7 f1e1 e8g8 e5c6 b7c6 b5e2 a8b8 a1b1 b8b7 e2f3 f8b8 b2b3 b7b6 c3a4 b6a6 a4c5 a6a5 a2a4 d6d8 c1d2 a5c5 d4c5 e7c5 f3e2 c5b6 a4a5 b6c5,0xbc13e9e7a67119b159fbfc5f31569c00
+chess,e2e4 b8c6 g1f3 d7d6 b1c3 e7e5 d2d4 c8g4 f1c4 h7h6 h2h3 g4f3 d1f3 d8e7 d4e5 c6e5 f3e2 e5c4 e2c4 g8f6 e1g1 g7g5 f1e1 f8g7 c1d2 e8c8 c3b5 c8b8 d2a5 d8c8 e1e3 a7a6 b5d4 f6d7 d4f5 e7f6 a5c3 d7e5 c4b3 h8e8 a1e1 g7h8 c3e5 f6e5 f5h6 f7f5 h6f5 e8f8 g2g4 e5b2 b3b2 h8b2 e3b3 b2e5 e1b1 b7b5 a2a4 c7c6 c2c4 b8a7 a4b5 c6b5 c4b5 c8c3 b5b6 a7b7 b3c3 e5c3 f5d6 b7c6 b6b7 f8b8 d6e8 b8b7,0x3b43f273727663c00a2ea0e49fae5ae8
+chess,d2d4 g8f6 c2c3 c7c5 g1f3 c5d4 c3d4 d8b6 e2e3 d7d5 b1c3 b8c6 f1b5 c8g4 b5c6 b7c6 d1a4 g4f3 g2f3 e7e6 c1d2 f8e7 e1c1 a8b8,0x2c8f5cf242cc1d01c7d208fa8f5f357a
+chess,e2e4 c7c6 g1f3 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3 f5g6 h2h4 h7h6 f3e5,0x6e29c479397c72426a401cff131e3f88
+3check,b1c3 e7e6 c3b5 g8f6 b5c7 d8c7 e2e3 b8c6 f1b5 f8c5 c2c3 a7a6 b5c6,0x04b410d76c329cd6b90a300d48040a41
+3check,b1c3 e7e6 g1f3 a7a6 d2d4 g8f6 e2e4 b8c6 a2a3 b7b6 f1d3 c8b7 e1g1 f8e7 e4e5 f6d5 c3d5,0x7b566222c14ec45968e3c7bdeb1056ee
+3check,e2e4 e7e6 b1c3 f8c5 d2d4 c5b6 g1f3 b8c6 c1e3 g8e7 f1d3 e7g6 e1g1 d8e7 e3g5 f7f6 g5e3 d7d6 d1e2 c8d7 d4d5 e6d5 c3d5 e7f7 e3b6 a7b6 d5c7 e8f8,0xe7cfe4051782ea8990170e9f8d422390
+3check,e2e4 e7e6 b1c3 c7c6 g1f3 g7g6 e4e5 b7b5 c3e4 g8h6 e4f6 e8e7 f6g8 h8g8 d2d4 e7e8 c2c3 d8a5 c1d2,0x78f25186279d0aee1bd4cf187bc95a9f
+3check,e2e3 c7c6 f1c4 d7d5 c4d3 e7e5 e3e4 g8f6 e4d5 e5e4 d3c4 f8d6 d5c6 e8g8 c4f7 f8f7 b1c3 b8c6 d1e2 c6d4 e2d1 f6g4 c3e4 d4c2,0x52320b8c6ba4e3bc9adc4b90018bf5f8
+3check,e2e3 e7e6 g1h3 g8f6 b1c3 h7h6 h3f4 g7g5 f4h5 f6h5 d1h5 d8e7 c3e4 f8g7 f1d3 b8c6 d3e2 b7b6 b2b3 c8b7 c1a3 d7d6 a3d6 c7d6 e4d6 e8d7 d6b7 d7c7 h5f3 c6e5 f3g3 e7d7 e1g1 f7f5 f2f4 e5f3 g3f3 d7d5 f3g3 e6e5 f4e5 g7e5 g3e5 d5e5 d2d4 e5e3 g1h1,0x82242f2d019fd9a514b60469da52cad2
+3check,e2e4 b8c6 f1c4 e7e6 b1c3 c6b4 c4b5 c7c6 b5a4 b4c2 a4c2 f8c5 d2d4 c5b4 c1d2 g8f6 d1e2 d7d5 e4e5 f6e4,0x47469e041c6568a929735a18dd462f1b
+3check,e2e4 g8f6 e4e5 f6d5 g1f3 f7f6 d2d4 g7g6 f1d3 b8c6 e1g1 f8g7 c2c4,0x76925d0b8d5bac62fb0150094ed64657
+3check,e2e4 e7e6 f1c4 f8c5 d1f3 c5f2 e1f2 g8f6 b1c3 c7c6 f3h5 d8b6 f2e1,0x73604e379a812f22b588fc9ec2c61523
+3check,e2e3 g8f6 g1f3 b8c6 f3g5 d7d5 b1c3 e7e6 d1f3 d8d7 f1e2 f8d6 c3b5 e8g8 e2d3 g7g6,0x1a95cd6ef86c220627d1dcdc62c1ad69
+3check,e2e4 e7e6 g1f3 f8c5 d2d4 c5b4 c2c3 b4c3 b2c3 d8f6 c1g5 f6g6 f1e2,0xe993747bcf19473b1e127779ec7d3ae2
+3check,e2e3 e7e6 c2c4 g8f6 b1c3 h7h5 g1f3 h8h6 d2d4 f6e4 d1c2 e4c3 b2c3 g7g5 f1d3 g5g4 f3h4 d8h4 c1b2 b8c6 e1c1 a7a5 h2h3 h4e7 h3g4 h5h4 g2g3 h4h3 g4g5 e7g5 f2f4 g5e7 f4f5 e7g5 d1e1 a8a6,0xc5faea1e18895527d129c31f0f2aa2ee
+3check,e2e4 e7e5 d1h5 g7g6 h5e5 g8e7 e5h8 d7d6 f1c4 d6d5,0xcd2e366812720c864dddeae8bcd1fb2b
+3check,e2e4 b8c6 b1c3 e7e6 g1f3 f8c5 d2d4 c5b4 c1d2 g8e7 f1d3 e8g8 e1g1 g7g6 e4e5 e7f5 d3f5 e6f5,0x8c59fbca4e175a300badb48f401e4a34
+3check,e2e3 g7g5 f1c4 g8f6 c4f7 e8f7 g1f3 d7d6,0x4b9922379507bf75e79854eb7b31d946
+3check,b1c3 e7e6 d2d3 f8b4 d1d2 g8f6 e2e3 f6g4 f2f3 d8h4 g2g3,0xbad242f3f96c14524efb8d9ffc852596
+3check,e2e3 e7e6 g1f3 b8c6 f1e2 f8d6 b1c3 g8f6 h2h4 f6g4 c3e4 c6b4 e4d6 c7d6 c2c3 b4d3 e2d3 g4f2 e1f2 e6e5,0x3fe581f8c218c5d78641f9e0f8dc510f
+3check,e2e4 e7e5 g1f3 g8f6 f3e5 f6e4 e5f7 d8e7 f7d6 c7d6,0xb94c7df41a2552b6d22154bb3ab47858
+3check,e2e4 e7e6 b1c3 g8f6 f1e2 f8c5 g1h3 c5f2 h3f2 c7c6 e1g1 d8c7 g2g3 h7h5 d2d4 f6g4 c1f4 c7b6 e2g4 h5g4 f2g4 c6c5 f4e3,0x1277a9a0ede2ec271e2af678d0c4b79b
+3check,g1f3 e7e6 e2e4 f8c5 f1b5 c5f2 e1f1 c7c6 b5c4 g8h6 d2d3 h6g4 c4e6 g4e3 c1e3 d7e6 d1e2 b8a6 b1c3 a6c5 e3f2 c5d3 c2d3 c8d7 a1e1 d8f6 e4e5 f6g6,0xf1ddf68f8612340c1ccbe54d2778dc49
+3check,e2e4 d7d5 d1f3 d5e4 f3f7 e8f7 f1c4 e7e6 c4e6,0x033bc04bf6c3ef51f20fe453605640cd
+3check,e2e4 e7e6 b1c3 b8c6 g1f3 d8f6 d2d4 f6g6 c1d2 c6b4 a2a3 b4c2 d1c2 g8f6 h2h3 f6h5 e1c1 b7b6 f3e5 g6f6 c3b5 f8d6 e5g4 f6e7 g4f6 e7f6,0x1196f7c9ee2e75f4319e9574e36a6072
+3check,e2e3 e7e6 g1f3 c7c6 f3e5 f8d6 e5f7 e8f7 d1h5 g7g6 h5f3 g8f6 f3f6,0x1df638a25247f762e843250474fa2cab
+3check,e2e3 e7e5 f1c4 d7d5 c4b5 c7c6 b5c6,0x0ffd2c0d113758033aa45c36e93625e6
+3check,e2e3 c7c5 f1c4 e7e5 c4f7 e8f7 d1h5 g7g6,0x5999a2f2dfc66eeacae710b4f6658ed5
+3check,e2e4 e7e6 b1c3 f8c5 d2d4 c5b4 c1d2 b8c6 g1f3 g8f6 f1d3 f6g4 e1g1 h7h5,0xb603a4332c0d9eb25291541adb3df4a0
+3check,e2e4 e7e5 d1f3 g8f6 f3b3 b8c6 b3f7 e8f7 f1c4 f7e8,0x4c44ef504a2b9e6d049cc3d22b61273e
+3check,e2e3 g8h6 f1c4 e7e6 b1c3 b8c6 c3b5 g7g6 b5c7 d8c7 g1f3 f8g7 c2c3 e8g8 b2b3 d7d5 c4d3 e6e5 d3c2 e5e4 f3d4 c6e5 c1b2 e5d3 c2d3 e4d3 d1f3 h6f5 d4f5 c8f5 e1c1 f5e4 f3g3 c7c6 c1b1 b7b5,0xf4ce2c0664b8004f3e091b377f091fad
+3check,e2e4 e7e5 f1c4 d7d5 c4b5 c7c6 b5c6 b8c6 d1h5 g7g6,0x188d13d7cb6392dcd23857471b06359f
+3check,e2e4 e7e5 f1c4 e8e7 d1f3 e7d6 f3d3 d6c6,0x4c4d9bc85ac1f5726eaff0994b1d9e67
+3check,e2e3 e7e6 g1f3 f8c5 b1c3 g8f6 f1d3 b8c6 c3e4 f6e4 d3e4 d7d5 e4d3 e6e5 d3b5 e8g8 b5c6 b7c6 f3e5 d8f6 e5f3 c8g4 e1g1 c5d6 g1h1 f8e8 a1b1 e8e4 b2b3 d6h2 c1b2 f6h6 f3h2 g4d1 f1d1,0xba909fa3a502045191060f36a07d381a
+3check,e2e4 c7c5 f1c4 d7d6 c4f7 e8f7 d1h5 g7g6,0x352aea78264677b4100fc16578270a20
+3check,e2e3 e7e6 b1c3 b8c6 d2d3 f8b4 c1d2 g8f6 g1f3 f6d5 d1e2 b4c3 d2c3 d5c3 b2c3 d8f6 e2d2 c6e5 f3e5 f6e5 f1e2 b7b6 e2f3 a8b8 d3d4 e5f6 d2d3 c8b7 f3b7 b8b7 d3e4 b7b8 e1g1 e8g8 e4g4 d7d5 g4g3 c7c5,0xea75fc1f8a7a5773e1ffb89e41e36161
+3check,e2e3 e7e6 f1c4 c7c6 g1f3 d7d5 c4d3 g8f6 f3e5 d8e7 b2b3 b8d7 c1a3 c6c5 a3c5 e7c5 e5f7 c5e7 f7d6 e7d6 d3g6 e8d8 d1c1 d6b4 c2c3 b4a5 b1a3 f8a3 c1d1 a3d6 d1e2 b7b6 e2f3 d8c7 f3e2 a5c5 e2a6 c8a6 a1c1 c7b8 b3b4 c5c6 c1b1 a6b5 a2a4 c6c4 a4b5 c4b5 c3c4 d5c4 b1c1 h7g6 h1f1 d6b4 e1d1 b5a4 d1e2,0xfe20f9d74568df12f25a93e046438401
+3check,e2e4 e7e6 g1f3 f8c5 b1c3 c5f2 e1f2 g8f6 f2g1 b8c6 d2d4 f6g4 e4e5,0x189ea791edea92f314440437f910a0c7
+3check,e2e4 e7e6 b1c3 d8g5 d2d4 g5h4 g1f3 h4e4 c3e4 f8b4 e1e2,0x516ebd11413140b876afe7366adde3f0
+3check,d2d4 d7d5 g1f3 d8d6 c1d2 c8g4 h2h3 g4f3 g2f3 b8c6,0xe9ec3eb33ea5cca69b23d9fd8546c3ac
+3check,b1c3 e7e6 e2e3 b8c6 b2b3 c6b4 a2a3 b4c2 d1c2 g8f6 c3e4 f6e4 c2e4 d8f6 a1b1 a7a5 c1b2 f6f5,0xfd891ae5b0e64728a4235e3f2c968214
+3check,e2e3 e7e6 g1f3 b8c6 f1e2 g8f6 b1c3 f8d6 f3g5 g7g6 h2h4,0x4e9c76365e602f30b98cfe049bc06b0d
+3check,e2e3 e7e6 f1a6 f8b4 d1h5 b4d2 c1d2 g7g6 h5g6 h7g6 a6b7 c8b7,0x957454aea6cd86510e9df9024873f03a
+3check,e2e3 e7e6 g1f3 c7c6 b1c3 d7d5 d2d4 g8f6 f1d3 f8d6,0x83a79228c614f861c50cca4b3155e590
+3check,e2e4 e7e6 c2c3 d8h4 d1f3 g8f6 f1d3 b8c6 b1a3 c6e5 f3e3 h4f2 e3f2 e5d3 e1f1 d3f2 a3b5 f8d6 b5d6 c7d6 d2d4 f6g4 f1e2 f2h1 e2d2 h1f2 d2e2 f2e4 e2e1 g4h2 e1d1,0xcf0d61fef0436b9c11d378a19d6e9b80
+3check,e2e4 e7e6 b1c3 c7c5 g1f3 b8c6 e4e5 c6d4 f3d4 c5d4 c3b5 d8g5 b5d6,0x78a32a074963bf334be2bbc451f0ebdf
+3check,e2e3 e7e5 f1c4 f8b4 c2c3 b4c3 c4f7 e8f7 d1h5 g7g6 h5f3,0xbf68a7d1d492e640ffe3763b279c97bb
+3check,e2e4 e7e6 d1f3 f8c5 f3f7 e8f7 d2d4 c5b4 c2c3 b4c3,0xd86767cafa47aec4366ef69378c5b5e0
+3check,e2e3 e7e6 g1h3 b8c6 b1c3 g8e7 h3g5 e7g6 g5f7 d8f6 f7d6 f8d6 c3e4 f6f2 e4f2 e8g8 c2c3 c6e5 d1h5 b7b6 e1d1 f8f2 d2d4,0xfac8a54e1f70c2daf63df86f13fd64b0
+3check,e2e3 e7e6 g1f3 b8c6 f1d3 g8f6 h2h4 d7d5 c2c3 e6e5 d3b5 c8d7 a2a4 a7a6 b5c6 d7c6 f3e5 d8e7 e5c6 b7c6 d1f3 e7d6 b1a3 f8e7 a3c2 e8g8 c2d4 f6e4 d4f5 d6f6 f5e7 f6e7 b2b3 c6c5 c1a3 f8e8 g2g4 d5d4 c3d4 e4d2 e1d2 e7e6 a1b1 c5d4 e3e4 e6e4 f3e4 e8e4 h1e1 a8e8 e1e4 e8e4 b1e1 e4e1 d2e1 g7g6 e1d2 f7f5 g4f5 g6f5 d2d3 g8f7 d3d4 f7e6 f2f4 c7c5 a3c5 h7h5 c5f8 e6d7 d4c5 d7c8 c5b6 c8d7 b6a6 d7e8 a6b7 e8f8 a4a5 f8e7,0x8ed73f5440b948b0da7eed2a7f317bd4
+3check,e2e4 e7e6 c2c3 c7c5 g1f3 b8c6 f1b5 a7a6 b5c6 b7c6 e1g1 g8f6 e4e5 f6d5 d2d4 c5d4 c3d4 a8b8 b1c3 d5c3 b2c3 d8a5 f3d2 a5c3 a1b1 b8b1 d2b1 c3a5 b1d2 d7d5 e5d6 f8d6 g2g3 e8g8 d2e4 d6e7 c1g5 e7g5 h2h4,0x9a900b12909c84aa1392e7f03948b2d0
+3check,e2e3 e7e6 g1f3 f8c5 b1c3 c5b4 a2a3 b4c5 b2b4 c5d6 d2d4 g8f6 f1d3 f6g4 d1e2 b8c6 h2h3 g4f2 e2f2 c6e7 e3e4 e7g6 e4e5 d6e7 c3e4 g6h4 f3h4 e7h4,0x85bcb5cd1eaee53e9e440e5a82853cd4
+3check,e2e4 e7e6 b1c3 b8c6 g1f3 f8b4 f1c4 b4c3 d2c3 g8f6 d1e2 e8g8 e1g1 e6e5 f3g5 h7h6 g5f7 f8f7 c4f7 g8h8 f7g6 d7d6 g6f5 c8f5,0x7aa4ccac4e61e8ec1aa4ff5efd242807
+3check,,0x3d71fe83987aab73463b96181691fc9c
+3check,e2e4 e7e6 b1c3 d8h4 d2d4 h4e4,0x3baa48900ac5781167b025983bf3a5ca
+3check,e2e3 e7e6 b1c3 b8c6 g1f3 g8h6 f1b5 f8d6 c3e4 c6e5 b5d7,0xb9558d62545686f5c36de2d762175d3e
+3check,b1c3 c7c6 e2e3 e7e6 g1f3 d7d5 c3b5 b8a6 b5d6 f8d6 c2c3 g8f6 d1c2,0x835b4581c86845db27ea72aa05b30f1f
+3check,e2e3 c7c6 b1c3 d8a5 g1f3 b8a6 a2a3 g7g6 f1c4 e7e6 f3e5 a5e5 d2d4 e5e3 c1e3 g8f6 e1g1 f8d6 g2g3 a6c7 d1f3 d6e7 e3g5,0xd44743f1f21d82bfb75ac461e8ae6557
+3check,g1f3 e7e6 g2g3 f8c5 f1g2 c5f2 e1f2 c7c6 d2d3 d8b6 f2e1,0x69237617653fa0c206481b3a6c1bc4fd
+3check,e2e4 b8c6 b1c3 c6b4 g1f3 e7e6 a2a3 b4d3 c2d3 g8f6,0x33774dcf8e6dbfe216fc497fa0db8c69
+3check,e2e4 e7e6 b1c3 b8c6 g1f3 f8b4 a2a3 b4c3 d2c3 g8f6 c1g5 h7h6 g5f6 d8f6 f1d3 e6e5 d3c4 e8g8 c4f7,0x5255c39833493aa2d2bfbf2a37d129b1
+3check,e2e3 g8f6 b1c3 c7c6 d2d4 e7e6 g1f3 f8b4 c1d2 b8a6 f1d3 d8e7 e1g1 d7d5 e3e4 h7h6 e4d5 c6d5 d3b5 e8f8 f1e1 g7g5 d1e2 b4c3 b2c3 c8d7 b5d7 f6d7 f3e5 d7e5 e2e5 h8g8 e1e3 a8d8 e3f3,0x6ca37196a8c0748176c11446feb3e02a
+3check,e2e3 e7e6 g1h3 b8c6 b1c3 a7a6 c3e4 h7h6 h3f4 g7g5 f4h5 c6e5 h5g7 f8g7 e4d6 c7d6 d1h5 e5g6 f1d3 d8f6 h5h3,0x54babf72000afdec7bf3a709596e70de
+3check,e2e4 e7e6 g1f3 f8c5 d2d4 c5b4 c2c3 b4c3 b1c3 g8f6 e4e5 f6g4 c3b5 g4f2 b5c7,0x94acca650836c46350eb0cea9ebab260
+3check,e2e4 e7e6 b1c3 d8g5 g1f3 g5g4 f1e2 g4g2 h1f1 b8c6 c3b5 e8d8,0x5ab02b49c90d7fc2052bfcf795595284
+3check,e2e4 b8c6 g1f3 c6b4 f1c4 e7e6 e1g1 f8d6 e4e5 d6c5 d2d4 c5b6 c2c3 b4c6 c1g5 f7f6 e5f6 g8f6 f3e5 c6e5 d4e5 b6f2 f1f2 e8g8 e5f6 g7f6 g5h6 f8f7 c4e6 d8e8 e6f7 e8f7 d1e1 d7d5 f2f6 f7d7 f6f8,0x0b2f0bfc8bf7986b61d67769b3e53fea
+3check,e2e4 e7e6 b1c3 c7c5 g1f3 b8c6 e4e5 c6d4,0xb87698c39dd7da612f20ee651bbbfa9b
+3check,g1f3 c7c6 e2e4 e7e6 b1c3 a7a6 d2d4 f8b4 c1d2 b4c3 d2c3 g8f6 f1c4 d7d5 e4e5 f6e4 c4d3 e8g8 d3e4 d5e4 f3d2 f7f5 e1g1 b8d7 d1h5 d8e8 h5e8 f8e8 f2f3 c6c5 f3e4 c5d4 c3d4 b7b5 e4f5 e6f5 d2f3 c8b7 a1d1 b7e4 c2c3 a8d8 f3g5 d7f8 g5e4 f5e4 f1f4 f8e6 f4e4 b5b4 d1d3 b4c3 b2c3 e6g5 e4g4 g5e6 d3g3 g8h8 g4g7 e6g7 e5e6 e8g8 e6e7 d8e8,0xb0dc137fdc6b5567e95a45950afa1c38
+3check,e2e4 c7c5 g1f3 b8c6 f1b5 g7g6 e1g1 f8g7 d2d4 c5d4 b5c6 b7c6 f3d4 d8c7 g2g3 c8a6 f1e1 g8f6 c1f4 e7e5 f4e5 c7e5,0x374d131dd6a2350705811e83514cf5fd
+3check,e2e3 f7f5 f1c4 e7e6 d1h5 e8e7 h5g5 g8f6,0x135ba6e52434c53ec107808456cb412c
+3check,e2e4 e7e6 b1c3 b8c6 g1f3 d8f6 d2d4 f6g6 c1d2 f8b4 d1e2 g8f6 h2h3 f6h5 d4d5 h5g3 f2g3 g6g3 e1d1 c6e5 d5e6 f7e6 f3e5 g3e5,0x6231c1bd97edf76cdfbdc221a1f9273e
+3check,b1c3 g8f6 c3b5 e7e6 e2e3 f8c5 b5c7 d8c7 g1f3 d7d5 c2c3 b8c6 d2d4 c5d6 f1b5 c8d7 e1g1 a7a6 d1a4 e8g8,0xa2efaf53cdc2efd9c635314e0268763c
+3check,e2e4 e7e6 b1c3 c7c5 g1f3 b8c6 f1c4 d7d6 d2d4 c5d4 f3d4 c8d7 d4c6 b7c6 d1f3 g8f6 c1g5 f8e7 e1c1,0x2407df1c311058514630ca94a6b7285c
+3check,e2e4 e7e6 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 b7b5 a4b3 f8d6 e4e5 c6e5 f3e5 d6e5 g2g3 h7h5 f1e1 e5d6 d2d4 h5h4 c1f4 d6f4 g3f4,0x5825e21ee52adeec12cc34483e1d0032
+3check,e2e4 e7e6 b1c3 b8c6 g1f3 f8b4 a2a3 b4c3 d2c3 g8f6 f1d3 e6e5,0x7f6fb46f5aa629f7c8d83ab5697570e0
+3check,b1c3 e7e6 c3b5 b8c6 b5c7 d8c7 g1f3 c6b4 c2c3 b4d3 e2d3 f8c5 d3d4 c5e7 f1b5,0x0b196de9713b23345d3fb0f57714cea7
+3check,e2e3 e7e6 g1h3 g8h6 b1c3 b8c6 c3b5 c6b4 a2a3 a7a6 b5c7 d8c7 a3b4 a6a5 h3f4 f8b4 c2c3 b4d6 f4e6 d7e6 d1a4 c8d7,0xc7d5f1a6f72b6651a415a8f7e7d35cc7
+3check,e2e4 e7e5 f1c4 d8f6 c4f7 f6f7 b1c3 f8c5 c3d5 c5f2 e1f1 f2g1,0x2ff156de8a5daeba35999ac1cc415928
+3check,e2e3 g7g6 b1c3 f8h6 g1f3 d7d5 f1b5 c7c6 b5c6 b7c6 d2d4 c8a6 f3e5 g8f6 d1f3 b8d7 e5f7,0xe07a4592dc3c3ea1fcec2329b4150570
+3check,e2e3 g8f6 g1h3 e7e6 b1c3 f8d6 f1d3 g7g6 h3g5 e8g8 h2h4 h7h6 g5f7 f8f7 d3g6 f7g7 g6f7 g8f7 c3e4 f7f8 e4g5 f8g8 d1f3 b8c6 g5e4 f6e4 f3e4,0xa66725c32baa78ca71ea9a049a6ff5d6
+3check,e2e3 e7e6 b1c3 b8c6 a2a3 a7a6 d2d4 d7d5 g1f3 d8f6 f1d3 f8d6 h2h3 g7g5 e3e4 c6d4 f3d4 f6f2 e1f2,0x189c35a506a8127d9b2e4069aeaad861
+3check,g1f3 e7e6 b1c3 b8c6 e2e3 g8h6 h2h3 f8d6,0xa71794299d023e5cdb5825f53642d722
+3check,e2e3 g8f6 g1h3 e7e6 b1c3 f8d6 f1d3 g7g6 h3g5 d8e7 c3b5 e8g8 h2h4 a7a6 b5d4 c7c5 d4f3 b8c6 h4h5 c6e5 f3e5 d6e5 h5g6 f7g6 d1f3 d7d5 d3g6 e7g7 g6h7 f6h7 g5h7 f8f3,0x3c1880d910765ffde3a11793c5affbbf
+3check,e2e4 b8c6 d1f3 g8h6 f1c4 c6e5 f3f7 e5f7 c4f7 e8f7 g1f3 f7e8 e1g1 e7e6 d2d3 d8f6 c1g5 f6g6 b1c3 f8c5 c3b5 e8f8,0xea8299608402fc5fca02a32aa0e0d713
+3check,d2d4 e7e6 c1d2 b8c6 e2e3 d8h4 g2g3 h4f6 f2f3 f8b4 c2c3 b4d6 f3f4 f6g6 d1f3 b7b6 g1e2 c8b7 e3e4 c6d8 d4d5 g8f6 f4f5 g6g4 f3g4 f6g4 f5e6 d7e6 f1h3 h7h5 h3g4 h5g4 c3c4 f7f5 e4f5 e6d5 e2d4 e8g8 e1g1 d6c5 d2e3 d8c6 f1d1 c6e5,0x61cd8a57fa34a4798e69218039a0190a
+3check,e2e4 e7e6 d2d4 f8b4 c2c3 b4c3 b1c3 b8c6 g1f3 c6b4,0x0d820dbf76b5ffafc1fe400608b51403
+3check,e2e3 e7e6 b1c3 c7c6 g1f3 f8e7 f3e5 g8f6 f1d3 g7g6,0x193913041c293bec014b550c89fb0c7c
+3check,e2e4 e7e6 b1c3 d8g5 d2d4 g5h4 g1f3 h4e4 c3e4 f8b4 e1e2 b8c6,0xfd0c76ede684d383dd423fd47b4c46f3
+3check,g1f3 e7e6 b1c3 b8c6 e2e3 g8h6 f1d3 f8d6 e1g1 d6h2 f3h2 d8h4,0xddfb5d9ebdfb01977800362482364f39
+3check,e2e3 e7e5 f1b5 c7c6 b5c4 e8e7 d1f3 g8h6 f3h3 b7b5 h3h4 e7d6 h4d8,0xb1332003a23b24d2754ff57146cd2c16
+3check,e2e4 e7e6 c2c3 b8c6 g1f3 d8f6 d2d4 f6g6 d1e2 c6b4 b1a3 b4d3 e2d3 b7b6 f3e5 g6f6 a3b5 f8d6 b5d6 c7d6 e5c4 e8f8 d3g3 g8h6,0xd1b84a19f2365db75a456e3c71f3e9ae
+3check,e2e3 b8c6 g1h3 e7e6 b1c3 g8f6 c3b5 d7d5 b5d6 f8d6 h3g5 e8g8 h2h4 f6e4 g5e4 d5e4 h1h3,0xbc0746a8f5e2178c591a669f316901d9
+3check,e2e3 e7e6 g1e2 g8f6 b1c3 a7a6 e2f4 b8c6 f4h5 f6h5 d1h5 d8f6 c3e4 f6g6 h5h3 g6e4 f1d3 e4e5,0x86e1b18f9fbf00f622b5fef19bf237c9
+3check,e2e4 e7e6 b1c3 c7c5 g1f3 b8c6 f1e2 c6d4 e1g1 d4f3 e2f3 f8d6 g2g3 d8f6,0x5cf4610d396e66d6b3dd4f17a29dc138
+3check,e2e3 b8c6 b1c3 c6b4 g1f3 b4d3 f1d3 e7e6 b2b3 f8b4 c1b2 c7c6 a2a3,0xa5ef8b108482e160360cbd3a4d17ece7
+3check,g1f3 d7d6 f3d4 e7e5 d4f3 c8e6 e2e4 b8c6 f3g5 c6d4 g5e6 d4c2,0xb8231b98a20f5e540607d973af959122
+3check,e2e3 e7e6 f1c4 c7c6 g1f3 d7d5 c4d3 g8f6 f3e5 d8e7 b1a3 b8d7 e1g1 d7e5 d3e2 e5f3 e2f3 e7c7 g2g3 f8a3 b2a3 h7h5 f3h5 f6h5 d1g4 g7g6 g4g5 h5g7 g5f6 h8g8 a3a4 g7f5 c1a3 c6c5 a3c5 c7c5,0x162b44bead3994cff25dbb1dfcda6152
+3check,e2e4 e7e6 b1c3 c7c5 g1f3 b8c6 f1b5 c6d4 e4e5 g8e7 c3e4 e7d5 f3d4 c5d4 e4d6 f8d6 e5d6 d8h4 e1g1 e8g8 b5d3 f7f5 d3c4 d5f4 d1f3 g8h8 d2d3 f4g6 f3g3 h4f6 c1g5 f6f7 a1e1 b7b6 g3f3 a8b8 f3h3 f7g8 g5e7 f8f7 f2f4 c8b7 e1e2 b7d5 c4d5 e6d5 f1f2 b8e8 f2f3 e8e7 d6e7 g6e7 h3h4 e7g6 h4h5 g6f4 f3f4 f7e7 e2e7 g8f8 h5h7,0xf03b1dc11164aa1ef309ab621eae0928
+3check,e2e4 e7e5 f1c4 g8h6 d2d3 f8b4 e1f1 d8f6 g1f3 h6g4 c4f7 f6f7 f1g1 b8c6 h2h3 b4c5 c1e3 g4e3 f2e3 c5e3 g1h2,0x704680a7c4516250259993a59c37bb63
+3check,e2e3 g8f6 g1f3 e7e6 f3e5 g7g6 f1d3 f8d6 e5f7 e8f7,0x7450a0150cc81df1f91a7bf48bad5ca2
+3check,b1c3,0x69340ece72e29176bdac8ebad4737e45
+3check,e2e3 e7e6 b1c3 f8b4 g1f3 b8c6 a2a3 b4c5 b2b4 c5d6 f1c4 g8f6 c1b2 f6g4 d1e2 h7h5 c3b5 h5h4 b5d6 c7d6 h2h3 g4h6 b2g7 h8g8 g7h6 g8g2 e1c1,0x9b2809c85ceade8aa1406f17fdf69c0e
+3check,b1c3 e7e6 c3b5 b8c6 b5c7 d8c7 e2e3 c6b4 c2c3 b4c2 d1c2 g8f6 g1f3 f6g4 f3g5,0x12da18d4b54b43a3ac9e639fffe68175
