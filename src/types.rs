@@ -129,8 +129,7 @@ impl Move {
     /// Gets the castling side.
     pub fn castling_side(&self) -> Option<CastlingSide> {
         match *self {
-            Move::Castle { king, rook } if king < rook => Some(CastlingSide::KingSide),
-            Move::Castle { .. } => Some(CastlingSide::QueenSide),
+            Move::Castle { king, rook } => Some(CastlingSide::from_king_side(king < rook)),
             _ => None,
         }
     }
