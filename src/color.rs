@@ -213,7 +213,6 @@ try_color_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Color`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
-#[repr(C)]
 pub struct ByColor<T> {
     pub black: T,
     pub white: T,
@@ -233,18 +232,18 @@ impl<T> ByColor<T> {
 
     #[inline]
     pub const fn get(&self, color: Color) -> &T {
-        // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &*(self as *const ByColor<T>)
-                .cast::<T>()
-                .offset(color as isize)
+        match color {
+            Color::Black => &self.black,
+            Color::White => &self.white,
         }
     }
 
     #[inline]
     pub fn get_mut(&mut self, color: Color) -> &mut T {
-        // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe { &mut *(self as *mut ByColor<T>).cast::<T>().offset(color as isize) }
+        match color {
+            Color::Black => &mut self.black,
+            Color::White => &mut self.white,
+        }
     }
 
     #[deprecated = "Use ByColor::swap()"]
