@@ -13,14 +13,17 @@ pub enum CastlingSide {
 }
 
 impl CastlingSide {
+    #[inline]
     pub const fn is_queen_side(self) -> bool {
         matches!(self, CastlingSide::QueenSide)
     }
 
+    #[inline]
     pub const fn is_king_side(self) -> bool {
         matches!(self, CastlingSide::KingSide)
     }
 
+    #[inline]
     pub const fn from_queen_side(queen_side: bool) -> CastlingSide {
         if queen_side {
             CastlingSide::QueenSide
@@ -29,6 +32,7 @@ impl CastlingSide {
         }
     }
 
+    #[inline]
     pub const fn from_king_side(king_side: bool) -> CastlingSide {
         if king_side {
             CastlingSide::KingSide
@@ -59,6 +63,7 @@ impl CastlingSide {
         Square::from_coords(self.rook_to_file(), color.backrank())
     }
 
+    #[inline]
     pub const fn other(self) -> CastlingSide {
         match self {
             CastlingSide::KingSide => CastlingSide::QueenSide,
@@ -73,6 +78,7 @@ impl CastlingSide {
 impl ops::Not for CastlingSide {
     type Output = CastlingSide;
 
+    #[inline]
     fn not(self) -> CastlingSide {
         self.other()
     }
@@ -81,6 +87,7 @@ impl ops::Not for CastlingSide {
 impl ops::BitXor<bool> for CastlingSide {
     type Output = CastlingSide;
 
+    #[inline]
     fn bitxor(self, flip: bool) -> CastlingSide {
         CastlingSide::from_king_side(self.is_king_side() ^ flip)
     }
@@ -101,6 +108,7 @@ pub struct ByCastlingSide<T> {
 }
 
 impl<T> ByCastlingSide<T> {
+    #[inline]
     pub fn new_with<F>(mut init: F) -> ByCastlingSide<T>
     where
         F: FnMut(CastlingSide) -> T,
@@ -111,6 +119,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub const fn get(&self, side: CastlingSide) -> &T {
         match side {
             CastlingSide::KingSide => &self.king_side,
@@ -118,6 +127,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub fn get_mut(&mut self, side: CastlingSide) -> &mut T {
         match side {
             CastlingSide::KingSide => &mut self.king_side,
@@ -137,6 +147,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub fn for_each<F>(self, mut f: F)
     where
         F: FnMut(T),
@@ -145,6 +156,7 @@ impl<T> ByCastlingSide<T> {
         f(self.queen_side);
     }
 
+    #[inline]
     pub fn map<U, F>(self, mut f: F) -> ByCastlingSide<U>
     where
         F: FnMut(T) -> U,
@@ -155,6 +167,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub fn find<F>(&self, mut predicate: F) -> Option<CastlingSide>
     where
         F: FnMut(&T) -> bool,
@@ -168,6 +181,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub const fn as_ref(&self) -> ByCastlingSide<&T> {
         ByCastlingSide {
             king_side: &self.king_side,
@@ -175,6 +189,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
+    #[inline]
     pub fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
         ByCastlingSide {
             king_side: &mut self.king_side,
