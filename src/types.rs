@@ -4,9 +4,10 @@ use core::{
 };
 
 use crate::{
+    castling_side::CastlingSide,
     color::{ByColor, Color},
     role::Role,
-    square::{File, Square},
+    square::Square,
     util::out_of_range_error,
 };
 
@@ -199,67 +200,6 @@ impl Display for Move {
     }
 }
 
-/// `KingSide` (O-O) or `QueenSide` (O-O-O).
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-pub enum CastlingSide {
-    KingSide,
-    QueenSide,
-}
-
-impl CastlingSide {
-    pub const fn is_queen_side(self) -> bool {
-        match self {
-            CastlingSide::KingSide => false,
-            CastlingSide::QueenSide => true,
-        }
-    }
-
-    pub const fn is_king_side(self) -> bool {
-        !self.is_queen_side()
-    }
-
-    pub const fn from_queen_side(queen_side: bool) -> CastlingSide {
-        if queen_side {
-            CastlingSide::QueenSide
-        } else {
-            CastlingSide::KingSide
-        }
-    }
-
-    pub const fn from_king_side(king_side: bool) -> CastlingSide {
-        if king_side {
-            CastlingSide::KingSide
-        } else {
-            CastlingSide::QueenSide
-        }
-    }
-
-    pub const fn king_to_file(self) -> File {
-        match self {
-            CastlingSide::KingSide => File::G,
-            CastlingSide::QueenSide => File::C,
-        }
-    }
-
-    pub const fn rook_to_file(self) -> File {
-        match self {
-            CastlingSide::KingSide => File::F,
-            CastlingSide::QueenSide => File::D,
-        }
-    }
-
-    pub fn king_to(self, color: Color) -> Square {
-        Square::from_coords(self.king_to_file(), color.backrank())
-    }
-
-    pub fn rook_to(self, color: Color) -> Square {
-        Square::from_coords(self.rook_to_file(), color.backrank())
-    }
-
-    /// `KingSide` and `QueenSide`, in this order.
-    pub const ALL: [CastlingSide; 2] = [CastlingSide::KingSide, CastlingSide::QueenSide];
-}
-
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingMode {
@@ -341,13 +281,6 @@ mod tests {
         assert!(Role::Bishop < Role::Rook);
         assert!(Role::Rook < Role::Queen);
         assert!(Role::Queen < Role::King);
-    }
-
-    #[test]
-    fn test_castling_side_discriminants() {
-        // Fixed but not publicly guaranteed discriminants.
-        assert_eq!(CastlingSide::KingSide as usize, 0);
-        assert_eq!(CastlingSide::QueenSide as usize, 1);
     }
 
     #[test]

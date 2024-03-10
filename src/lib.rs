@@ -76,6 +76,7 @@ extern crate std;
 #[macro_use]
 mod util;
 mod bootstrap;
+mod castling_side;
 mod color;
 mod magics;
 mod movelist;
@@ -99,6 +100,7 @@ pub mod variant;
 
 pub use bitboard::Bitboard;
 pub use board::Board;
+pub use castling_side::{ByCastlingSide, CastlingSide};
 pub use color::{ByColor, Color, ParseColorError};
 pub use movelist::MoveList;
 pub use perft::perft;
@@ -109,7 +111,7 @@ pub use position::{
 pub use role::{ByRole, Role};
 pub use setup::{Castles, Setup};
 pub use square::{File, ParseSquareError, Rank, Square};
-pub use types::{CastlingMode, CastlingSide, EnPassantMode, Move, Piece, RemainingChecks};
+pub use types::{CastlingMode, EnPassantMode, Move, Piece, RemainingChecks};
 
 #[cfg(feature = "nohash-hasher")]
 impl nohash_hasher::IsEnabled for File {}
