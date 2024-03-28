@@ -163,6 +163,14 @@ impl<T> MaybeRounded<T> {
             MaybeRounded::Rounded(_) => None,
         }
     }
+
+    /// Gets the inner value, *only* if it was affected by DTZ rounding.
+    pub fn rounded(self) -> Option<T> {
+        match self {
+            MaybeRounded::Precise(_) => None,
+            MaybeRounded::Rounded(v) => Some(v),
+        }
+    }
 }
 
 impl MaybeRounded<Dtz> {
