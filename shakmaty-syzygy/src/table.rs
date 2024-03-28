@@ -454,7 +454,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     let material = Material::from_iter(pieces.clone());
 
     // For pawnless positions: If there are at least 3 unique pieces then 3
-    // unique pieces wil form the leading group. Otherwise the two kings will
+    // unique pieces will form the leading group. Otherwise the two kings will
     // form the leading group.
     let first_len = if material.has_pawns() {
         0
