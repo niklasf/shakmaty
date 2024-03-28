@@ -67,6 +67,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
     /// actually opened. This happens lazily when probing.
     ///
+    /// Traverses symbolic links.
+    ///
     /// Note that probing generally requires tables for the specific material
     /// composition, as well as material compositions that are transitively
     /// reachable by captures and promotions. These are sometimes distributed
@@ -79,8 +81,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Returns an error result when:
     ///
     /// * The `path` does not exist.
-    /// * `path` is not a directory.
-    /// * The process lacks permissions to list the directory.
+    /// * `path` is not pointing to a directory.
+    /// * Listing the directory fails (no permission, ...).
     pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<usize> {
         let mut num = 0;
 
@@ -97,15 +99,23 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// The file is not actually opened. This happens lazily when probing.
     ///
+    /// Traverses symbolic links.
+    ///
     /// # Errors
     ///
-    /// Returns an error when no file exists at the given path or the
-    /// filename does not indicate that it is a valid table file
-    /// (e.g. `KQvKP.rtbz`).
+    /// Returns an immediate error result when:
+    ///
+    /// * Querying metadata for the path fails (file does not exist,
+    ///   broken symlink, no permission to read metadata, ...).
+    /// * `path` is not pointing to a regular file.
+    /// * The filename does not indicate that it is a valid table file
+    ///   (e.g. `KQvKP.rtbz`).
     pub fn add_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
-        let path = path.as_ref();
+        self.add_file_impl(path.as_ref())
+    }
 
-        if !path.is_file() {
+    fn add_file_impl(&mut self, path: &Path) -> io::Result<()> {
+        if !path.metadata()?.is_file() {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
