@@ -105,53 +105,57 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// Returns an immediate error result when:
     ///
+    /// * The filename does not indicate that it is a valid table file
+    ///   (e.g. `KQvKP.rtbz`).
     /// * Querying metadata for the path fails (file does not exist,
     ///   broken symlink, no permission to read metadata, ...).
     /// * `path` is not pointing to a regular file.
-    /// * The filename does not indicate that it is a valid table file
-    ///   (e.g. `KQvKP.rtbz`).
+    /// * The file size indicates that the table file must be corrupted.
     pub fn add_file<P: AsRef<Path>>(&mut self, path: P) -> io::Result<()> {
         self.add_file_impl(path.as_ref())
     }
 
     fn add_file_impl(&mut self, path: &Path) -> io::Result<()> {
-        if !path.metadata()?.is_file() {
-            return Err(io::Error::from(io::ErrorKind::InvalidInput));
-        }
-
+        // Validate filename.
         let (stem, ext) = path
             .file_stem()
             .and_then(|s| s.to_str())
             .zip(path.extension())
             .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))?;
-
         let material =
             Material::from_str(stem).map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))?;
-
         let pieces = material.count();
-
         if pieces > S::MAX_PIECES {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
-
         if material.by_color.white.count() < 1 || material.by_color.black.count() < 1 {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
-
-        if ext == S::TBW.ext
-            || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext))
-        {
-            self.wdl
-                .insert(material, (path.to_path_buf(), OnceCell::new()));
-        } else if ext == S::TBZ.ext
-            || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext))
-        {
-            self.dtz
-                .insert(material, (path.to_path_buf(), OnceCell::new()));
-        } else {
+        let is_tbw = ext == S::TBW.ext
+            || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext));
+        let is_tbz = ext == S::TBZ.ext
+            || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext));
+        if !is_tbw && !is_tbz {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
 
+        // Check meta data.
+        let meta = path.metadata()?;
+        if !meta.is_file() {
+            return Err(io::Error::from(io::ErrorKind::InvalidData));
+        }
+        if meta.len() % 64 != 16 {
+            return Err(io::Error::from(io::ErrorKind::InvalidData));
+        }
+
+        // Add path.
+        if is_tbw {
+            self.wdl
+                .insert(material, (path.to_path_buf(), OnceCell::new()));
+        } else {
+            self.dtz
+                .insert(material, (path.to_path_buf(), OnceCell::new()));
+        }
         self.max_pieces = max(self.max_pieces, pieces);
         Ok(())
     }
