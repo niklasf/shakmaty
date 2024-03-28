@@ -149,6 +149,7 @@ impl<T> MaybeRounded<T> {
     }
 
     /// Gets the inner value.
+    #[must_use]
     pub fn ignore_rounding(self) -> T {
         match self {
             MaybeRounded::Rounded(v) | MaybeRounded::Precise(v) => v,
