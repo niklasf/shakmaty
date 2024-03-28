@@ -10,6 +10,7 @@ categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 exclude = ["tables/**/*.*tb*"]
 edition = "2021"
+rust-version = "1.77"
 
 [[bench]]
 name = "benches"
