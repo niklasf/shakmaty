@@ -19,7 +19,7 @@ harness = false
 [dependencies]
 arrayvec = "0.7"
 bitflags = "2.0.0"
-shakmaty = "0.26.0"
+shakmaty = "0.27.0"
 byteorder = "1.2"
 positioned-io = "0.3"
 rustc-hash = "1.0"

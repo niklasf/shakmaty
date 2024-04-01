@@ -1,6 +1,5 @@
 [package]
 name = "shakmaty-syzygy-fuzz"
-version = "0.0.0"
 publish = false
 edition = "2021"
 
@@ -8,9 +7,12 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-shakmaty = "0.26"
+shakmaty = "0.27"
 shakmaty-syzygy = { path = ".." }
 libfuzzer-sys = "0.4"
+
+[workspace]
+members = ["."] # Let fuzz suite not interfere with workspaces
 
 [[bin]]
 name = "pawnful"

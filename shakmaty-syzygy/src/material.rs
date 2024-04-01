@@ -1,7 +1,4 @@
-use std::{
-    cmp::{Ord, Ordering, PartialOrd},
-    fmt,
-};
+use std::{cmp::Ordering, fmt};
 
 use shakmaty::{Board, ByColor, ByRole, Piece, Role};
 

@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, fmt, ops::Neg};
+use std::{fmt, ops::Neg};
 
 use arrayvec::ArrayVec;
 use shakmaty::{Chess, Color, Outcome, Piece};
