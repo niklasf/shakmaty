@@ -1,6 +1,5 @@
 [package]
 name = "shakmaty-fuzz"
-version = "0.0.0"
 publish = false
 edition = "2021"
 
@@ -12,7 +11,7 @@ libfuzzer-sys = "0.4"
 shakmaty = { path = ".." }
 
 [workspace]
-members = ["."] # Let fuzzing suite not interfere with workspaces
+members = ["."] # Let fuzz suite not interfere with workspaces
 
 [[bin]]
 name = "fen"
