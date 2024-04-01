@@ -99,7 +99,7 @@ impl ops::BitXorAssign<bool> for CastlingSide {
     }
 }
 
-// Container with values for each [`CastlingSide`].
+/// Container with values for each [`CastlingSide`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByCastlingSide<T> {

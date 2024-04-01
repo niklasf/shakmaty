@@ -1,5 +1,20 @@
 # Changelog for shakmaty
 
+## v0.27.0
+
+- Improve Zobrist hashing.
+  * Regroup internal tables for cache efficiency.
+  * Optimize bit-widths less than the full `Zobrist128`.
+  * `Crazyhouse` pockets with more than standard material no longer prone to
+    collisions.
+  * Change `Crazyhouse` and `ThreeCheck` hashes ❗
+- Undocument `CastlingSide` discriminants. No longer considered stable.
+- Add `ByCastlingSide`.
+- Add `Board::swap_colors()`.
+- Add `ByColor::swap()`.
+- Provide integer conversions for `Color`.
+- For types that have integer conversions, also support `u128` and `i128`.
+
 ## v0.26.0
 
 - Change semantics of `PartialEq` for `Chess` ❗ (FIDE rules for repetitions instead of structural equality)
