@@ -1,5 +1,11 @@
 # Changelog for shakmaty-syzygy
 
+## v0.25.0
+
+- Update shakmaty to `0.27`.
+- Validate file sizes when adding table files.
+- Propagate I/O error kind when failing to add individual table files.
+
 ## v0.24.0
 
 - Update shakmaty to `0.26`.
