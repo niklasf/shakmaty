@@ -1,11 +1,6 @@
 //! Sets of squares.
 
-use core::{
-    fmt,
-    fmt::Write,
-    iter::{FromIterator, FusedIterator},
-    ops,
-};
+use core::{fmt, fmt::Write, iter::FusedIterator, ops};
 
 use crate::square::{File, Rank, Square};
 

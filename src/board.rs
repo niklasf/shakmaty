@@ -1,10 +1,6 @@
 //! Piece positions on a board.
 
-use core::{
-    fmt,
-    fmt::Write,
-    iter::{FromIterator, FusedIterator},
-};
+use core::{fmt, fmt::Write, iter::FusedIterator};
 
 use crate::{attacks, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 

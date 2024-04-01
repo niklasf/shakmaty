@@ -1,6 +1,5 @@
 use core::{
     cmp::max,
-    convert::TryInto,
     fmt::{self, Write as _},
     mem,
     num::TryFromIntError,

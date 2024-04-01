@@ -50,9 +50,7 @@
 //! ```
 
 use core::{
-    char,
-    convert::TryFrom,
-    fmt,
+    char, fmt,
     fmt::{Display, Write as _},
     num::NonZeroU32,
     str::FromStr,
