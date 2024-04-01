@@ -1,5 +1,6 @@
 use std::{
     cmp::{max, Reverse},
+    ffi::OsStr,
     fs, io,
     path::{Path, PathBuf},
 };
@@ -117,20 +118,24 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     fn add_file_impl(&mut self, path: &Path) -> io::Result<()> {
         // Validate filename.
-        let (stem, ext) = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .zip(path.extension())
-            .ok_or_else(|| io::Error::from(io::ErrorKind::InvalidInput))?;
-        let material =
-            Material::from_str(stem).map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))?;
+        let Some(stem) = path.file_stem().and_then(OsStr::to_str) else {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        };
+        let Ok(material) = Material::from_str(stem) else {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        };
         let pieces = material.count();
-        if pieces > S::MAX_PIECES {
+        if pieces > S::MAX_PIECES
+            || material.by_color.white.count() < 1
+            || material.by_color.black.count() < 1
+        {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
-        if material.by_color.white.count() < 1 || material.by_color.black.count() < 1 {
+
+        // Check file extension.
+        let Some(ext) = path.extension() else {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
-        }
+        };
         let is_tbw = ext == S::TBW.ext
             || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext));
         let is_tbz = ext == S::TBZ.ext
@@ -142,10 +147,16 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Check meta data.
         let meta = path.metadata()?;
         if !meta.is_file() {
-            return Err(io::Error::from(io::ErrorKind::InvalidData));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "not a regular file",
+            ));
         }
         if meta.len() % 64 != 16 {
-            return Err(io::Error::from(io::ErrorKind::InvalidData));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "unexpected file size",
+            ));
         }
 
         // Add path.
