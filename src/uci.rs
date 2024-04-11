@@ -2,29 +2,29 @@
 //!
 //! # Examples
 //!
-//! Parsing UCIs:
+//! Parsing UCI moves:
 //!
 //! ```
-//! use shakmaty::{Square, uci::Uci};
+//! use shakmaty::{Square, uci::UciMove};
 //!
-//! let uci: Uci = "g1f3".parse()?;
+//! let uci: UciMove = "g1f3".parse()?;
 //!
-//! assert_eq!(uci, Uci::Normal {
+//! assert_eq!(uci, UciMove::Normal {
 //!     from: Square::G1,
 //!     to: Square::F3,
 //!     promotion: None,
 //! });
 //!
-//! # Ok::<_, shakmaty::uci::ParseUciError>(())
+//! # Ok::<_, shakmaty::uci::ParseUciMoveError>(())
 //! ```
 //!
 //! Converting to a legal move in the context of a position:
 //!
 //! ```
-//! # use shakmaty::{Square, uci::{IllegalUciError, ParseUciError, Uci}};
+//! # use shakmaty::{Square, uci::{IllegalUciMoveError, ParseUciMoveError, UciMove}};
 //! use shakmaty::{Color::White, Chess, Setup, Position};
 //!
-//! # let uci: Uci = "g1f3".parse()?;
+//! # let uci: UciMove = "g1f3".parse()?;
 //! let mut pos = Chess::default();
 //! let m = uci.to_move(&pos)?;
 //!
@@ -32,15 +32,15 @@
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //!
 //! # #[derive(Debug)] struct CommonError;
-//! # impl From<IllegalUciError> for CommonError { fn from(_: IllegalUciError) -> Self { Self } }
-//! # impl From<ParseUciError> for CommonError { fn from(_: ParseUciError) -> Self { Self } }
+//! # impl From<IllegalUciMoveError> for CommonError { fn from(_: IllegalUciMoveError) -> Self { Self } }
+//! # impl From<ParseUciMoveError> for CommonError { fn from(_: ParseUciMoveError) -> Self { Self } }
 //! # Ok::<_, CommonError>(())
 //! ```
 //!
-//! Converting from [`Move`] to [`Uci`]:
+//! Converting from [`Move`] to [`UciMove`]:
 //!
 //! ```
-//! # use shakmaty::{Square, Move, Role, Chess, Position, uci::Uci};
+//! # use shakmaty::{Square, Move, Role, Chess, Position, uci::UciMove};
 //! #
 //! let pos = Chess::default();
 //!
@@ -55,10 +55,10 @@
 //! let uci = m.to_uci(pos.castles().mode());
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = Uci::from_standard(&m);
+//! let uci = UciMove::from_standard(&m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = Uci::from_chess960(&m);
+//! let uci = UciMove::from_chess960(&m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //! ```
 //!
@@ -68,35 +68,50 @@ use core::{fmt, str::FromStr};
 
 use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 
-/// Error when parsing an invalid UCI.
+/// Error when parsing an invalid UCI move.
 #[derive(Clone, Debug)]
-pub struct ParseUciError;
+pub struct ParseUciMoveError;
 
-impl fmt::Display for ParseUciError {
+#[deprecated(
+    since = "0.28.0",
+    note = "use shakmaty::uci::ParseUciMoveError instead"
+)]
+pub type ParseUciError = ParseUciMoveError;
+
+impl fmt::Display for ParseUciMoveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("invalid uci")
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for ParseUciError {}
+impl std::error::Error for ParseUciMoveError {}
 
-/// Error when UCI is illegal.
+/// Error when UCI move is illegal.
 #[derive(Clone, Debug)]
-pub struct IllegalUciError;
+pub struct IllegalUciMoveError;
 
-impl fmt::Display for IllegalUciError {
+#[deprecated(
+    since = "0.28.0",
+    note = "use shakmaty::uci::ParseUciMoveError instead"
+)]
+pub type IllegalUciError = IllegalUciMoveError;
+
+impl fmt::Display for IllegalUciMoveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("illegal uci")
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for IllegalUciError {}
+impl std::error::Error for IllegalUciMoveError {}
+
+#[deprecated(since = "0.28.0", note = "use shakmaty::uci::UciMove instead")]
+pub type Uci = UciMove;
 
 /// A move as represented in the UCI protocol.
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
-pub enum Uci {
+pub enum UciMove {
     /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {
         from: Square,
@@ -109,81 +124,81 @@ pub enum Uci {
     Null,
 }
 
-impl FromStr for Uci {
-    type Err = ParseUciError;
+impl FromStr for UciMove {
+    type Err = ParseUciMoveError;
 
-    fn from_str(uci: &str) -> Result<Uci, ParseUciError> {
-        Uci::from_ascii(uci.as_bytes())
+    fn from_str(uci: &str) -> Result<UciMove, ParseUciMoveError> {
+        UciMove::from_ascii(uci.as_bytes())
     }
 }
 
-impl fmt::Display for Uci {
+impl fmt::Display for UciMove {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
-            Uci::Normal {
+            UciMove::Normal {
                 from,
                 to,
                 promotion: None,
             } => write!(f, "{from}{to}"),
-            Uci::Normal {
+            UciMove::Normal {
                 from,
                 to,
                 promotion: Some(promotion),
             } => write!(f, "{}{}{}", from, to, promotion.char()),
-            Uci::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
-            Uci::Null => f.write_str("0000"),
+            UciMove::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
+            UciMove::Null => f.write_str("0000"),
         }
     }
 }
 
-impl Uci {
+impl UciMove {
     /// Parses a move in UCI notation.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseUciError`] if `uci` is not syntactically valid.
+    /// Returns [`ParseUciMoveError`] if `uci` is not syntactically valid.
     ///
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::{Square, uci::Uci};
+    /// use shakmaty::{Square, uci::UciMove};
     ///
-    /// let uci = Uci::from_ascii(b"e4e5")?;
+    /// let uci = UciMove::from_ascii(b"e4e5")?;
     ///
-    /// assert_eq!(uci, Uci::Normal {
+    /// assert_eq!(uci, UciMove::Normal {
     ///     from: Square::E4,
     ///     to: Square::E5,
     ///     promotion: None,
     /// });
     ///
-    /// # Ok::<_, shakmaty::uci::ParseUciError>(())
+    /// # Ok::<_, shakmaty::uci::ParseUciMoveError>(())
     /// ```
-    pub fn from_ascii(uci: &[u8]) -> Result<Uci, ParseUciError> {
+    pub fn from_ascii(uci: &[u8]) -> Result<UciMove, ParseUciMoveError> {
         if uci.len() != 4 && uci.len() != 5 {
-            return Err(ParseUciError);
+            return Err(ParseUciMoveError);
         }
 
         if uci == b"0000" {
-            return Ok(Uci::Null);
+            return Ok(UciMove::Null);
         }
 
-        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciError)?;
+        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciMoveError)?;
 
         if uci[1] == b'@' {
-            Ok(Uci::Put {
-                role: Role::from_char(char::from(uci[0])).ok_or(ParseUciError)?,
+            Ok(UciMove::Put {
+                role: Role::from_char(char::from(uci[0])).ok_or(ParseUciMoveError)?,
                 to,
             })
         } else {
-            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciError)?;
+            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciMoveError)?;
             if uci.len() == 5 {
-                Ok(Uci::Normal {
+                Ok(UciMove::Normal {
                     from,
                     to,
-                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciError)?),
+                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciMoveError)?),
                 })
             } else {
-                Ok(Uci::Normal {
+                Ok(UciMove::Normal {
                     from,
                     to,
                     promotion: None,
@@ -202,27 +217,27 @@ impl Uci {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::{Move, Square, uci::Uci};
+    /// use shakmaty::{Move, Square, uci::UciMove};
     ///
     /// let m = Move::Castle {
     ///     king: Square::E8,
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = Uci::from_standard(&m);
+    /// let uci = UciMove::from_standard(&m);
     /// assert_eq!(uci.to_string(), "e8g8");
     /// ```
-    pub fn from_standard(m: &Move) -> Uci {
+    pub fn from_standard(m: &Move) -> UciMove {
         match *m {
             Move::Castle { king, rook } => {
                 let side = CastlingSide::from_king_side(king < rook);
-                Uci::Normal {
+                UciMove::Normal {
                     from: king,
                     to: Square::from_coords(side.king_to_file(), king.rank()),
                     promotion: None,
                 }
             }
-            _ => Uci::from_chess960(m),
+            _ => UciMove::from_chess960(m),
         }
     }
 
@@ -233,47 +248,47 @@ impl Uci {
     /// # Examples
     ///
     /// ```
-    /// use shakmaty::{Move, Square, uci::Uci};
+    /// use shakmaty::{Move, Square, uci::UciMove};
     ///
     /// let m = Move::Castle {
     ///     king: Square::E8,
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = Uci::from_chess960(&m);
+    /// let uci = UciMove::from_chess960(&m);
     /// assert_eq!(uci.to_string(), "e8h8");
     /// ```
-    pub const fn from_chess960(m: &Move) -> Uci {
+    pub const fn from_chess960(m: &Move) -> UciMove {
         match *m {
             Move::Normal {
                 from,
                 to,
                 promotion,
                 ..
-            } => Uci::Normal {
+            } => UciMove::Normal {
                 from,
                 to,
                 promotion,
             },
-            Move::EnPassant { from, to, .. } => Uci::Normal {
+            Move::EnPassant { from, to, .. } => UciMove::Normal {
                 from,
                 to,
                 promotion: None,
             },
-            Move::Castle { king, rook } => Uci::Normal {
+            Move::Castle { king, rook } => UciMove::Normal {
                 from: king,
                 to: rook,
                 promotion: None,
             }, // Chess960-style
-            Move::Put { role, to } => Uci::Put { role, to },
+            Move::Put { role, to } => UciMove::Put { role, to },
         }
     }
 
-    /// See [`Uci::from_standard()`] or [`Uci::from_chess960()`].
-    pub fn from_move(m: &Move, mode: CastlingMode) -> Uci {
+    /// See [`UciMove::from_standard()`] or [`UciMove::from_chess960()`].
+    pub fn from_move(m: &Move, mode: CastlingMode) -> UciMove {
         match mode {
-            CastlingMode::Standard => Uci::from_standard(m),
-            CastlingMode::Chess960 => Uci::from_chess960(m),
+            CastlingMode::Standard => UciMove::from_standard(m),
+            CastlingMode::Chess960 => UciMove::from_chess960(m),
         }
     }
 
@@ -282,20 +297,20 @@ impl Uci {
     ///
     /// # Errors
     ///
-    /// Returns [`IllegalUciError`] if the move is not legal.
+    /// Returns [`IllegalUciMoveError`] if the move is not legal.
     ///
     /// [`Move`]: super::Move
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciError> {
+    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciMoveError> {
         let candidate = match *self {
-            Uci::Normal {
+            UciMove::Normal {
                 from,
                 to,
                 promotion,
             } => {
-                let role = pos.board().role_at(from).ok_or(IllegalUciError)?;
+                let role = pos.board().role_at(from).ok_or(IllegalUciMoveError)?;
 
                 if promotion.is_some() && role != Role::Pawn {
-                    return Err(IllegalUciError);
+                    return Err(IllegalUciMoveError);
                 }
 
                 if role == Role::King && (pos.castles().castling_rights() & pos.us()).contains(to) {
@@ -334,22 +349,22 @@ impl Uci {
                     }
                 }
             }
-            Uci::Put { role, to } => Move::Put { role, to },
-            Uci::Null => return Err(IllegalUciError),
+            UciMove::Put { role, to } => Move::Put { role, to },
+            UciMove::Null => return Err(IllegalUciMoveError),
         };
 
         if pos.is_legal(&candidate) {
             Ok(candidate)
         } else {
-            Err(IllegalUciError)
+            Err(IllegalUciMoveError)
         }
     }
 }
 
 impl Move {
-    /// See [`Uci::from_move()`].
-    pub fn to_uci(&self, mode: CastlingMode) -> Uci {
-        Uci::from_move(self, mode)
+    /// See [`UciMove::from_move()`].
+    pub fn to_uci(&self, mode: CastlingMode) -> UciMove {
+        UciMove::from_move(self, mode)
     }
 }
 
@@ -362,31 +377,31 @@ mod tests {
     pub fn test_uci_to_en_passant() {
         let mut pos = Chess::default();
         let e4 = "e2e4"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&e4);
         let nc6 = "b8c6"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("Nc6")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&nc6);
         let e5 = "e4e5"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("e5")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&e5);
         let d5 = "d7d5"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&d5);
         let exd5 = "e5d6"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("exd6")
             .to_move(&pos)
             .expect("legal en passant");
@@ -400,31 +415,31 @@ mod tests {
 
         let mut pos = Crazyhouse::default();
         let e4 = "e2e4"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&e4);
         let d5 = "d7d5"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&d5);
         let exd5 = "e4d5"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("exd5")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&exd5);
         let qxd5 = "d8d5"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("Qxd5")
             .to_move(&pos)
             .expect("legal");
         pos.play_unchecked(&qxd5);
         let p_at_d7 = "P@d7"
-            .parse::<Uci>()
+            .parse::<UciMove>()
             .expect("P@d7+")
             .to_move(&pos)
             .expect("legal");
@@ -439,7 +454,7 @@ mod tests {
             .expect("valid fen")
             .into_position(CastlingMode::Standard)
             .expect("valid position");
-        let uci = "g2h1".parse::<Uci>().expect("valid uci");
+        let uci = "g2h1".parse::<UciMove>().expect("valid uci");
         let m = uci.to_move(&pos).expect("legal uci");
         assert_eq!(
             m,
@@ -464,7 +479,7 @@ mod tests {
             .expect("valid position");
         for uci in &["f2f4", "d7d6", "f1g3", "c8g4", "g1f2", "e8d8", "e1g1"] {
             let m = uci
-                .parse::<Uci>()
+                .parse::<UciMove>()
                 .expect("valid uci")
                 .to_move(&pos)
                 .expect("legal");
