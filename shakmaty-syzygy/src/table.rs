@@ -997,11 +997,11 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         let main_idx = idx / u64::from(d.span);
         ensure!(main_idx <= u64::from(u32::max_value()));
 
-        let mut block = self.raf.read_u32_at::<LE>(d.sparse_index + 6 * main_idx)?;
-        let offset = i64::from(
-            self.raf
-                .read_u16_at::<LE>(d.sparse_index + 6 * main_idx + 4)?,
-        );
+        let mut sparse_index_entry = [0; 4 + 2];
+        self.raf
+            .read_exact_at(d.sparse_index + 6 * main_idx, &mut sparse_index_entry[..])?;
+        let mut block = LE::read_u32(&sparse_index_entry[..]);
+        let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
 
         let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         lit_idx += offset;
