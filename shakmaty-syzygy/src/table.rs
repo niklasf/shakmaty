@@ -1027,15 +1027,14 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             }
         }
 
-        // Read block (and 4 bytes to prevent out of bounds read) into memory.
+        // Read block (and 4 bytes to allow a final symbol refill) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
-        let block_buffer = &mut block_buffer[..(d.block_size as usize + 4)];
         self.raf.read_exact_at(
             u!(d.data
                 .checked_add(u64::from(block) * u64::from(d.block_size))),
-            block_buffer,
+            &mut block_buffer[..(d.block_size as usize + 4)],
         )?;
-        let mut cursor = io::Cursor::new(block_buffer);
+        let mut cursor = &block_buffer[..(d.block_size as usize + 4)];
 
         // Find sym, the Huffman symbol that encodes the value for idx.
         let mut buf = cursor.read_u64::<BE>()?;
