@@ -407,15 +407,6 @@ fn read_magic_header<F: ReadAt>(raf: &F) -> ProbeResult<[u8; 4]> {
     }
 }
 
-/// Read 3 byte Huffman tree node.
-fn read_lr<F: ReadAt>(raf: &F, ptr: u64) -> io::Result<(u16, u16)> {
-    let mut buf = [0; 3];
-    raf.read_exact_at(ptr, &mut buf)?;
-    let left = (u16::from(buf[1] & 0xf) << 8) | u16::from(buf[0]);
-    let right = (u16::from(buf[2]) << 4) | (u16::from(buf[1]) >> 4);
-    Ok((left, right))
-}
-
 /// Header nibble to piece.
 fn nibble_to_piece(p: u8) -> Option<Piece> {
     let color = Color::from_white(p & 8 == 0);
@@ -578,6 +569,30 @@ impl DtzMap {
     }
 }
 
+/// Huffman symbol.
+#[derive(Debug, Clone)]
+struct Symbol {
+    lr: [u8; 3],
+    len: u8,
+}
+
+impl Symbol {
+    fn new() -> Symbol {
+        Symbol {
+            lr: [0; 3],
+            len: 0,
+        }
+    }
+
+    fn left(&self) -> u16 {
+        (u16::from(self.lr[1] & 0xf) << 8) | u16::from(self.lr[0])
+    }
+
+    fn right(&self) -> u16 {
+        (u16::from(self.lr[2]) << 4) | (u16::from(self.lr[1]) >> 4)
+    }
+}
+
 /// Description of encoding and compression.
 #[derive(Debug)]
 struct PairsData {
@@ -593,8 +608,6 @@ struct PairsData {
     /// Number of blocks in the table.
     blocks_num: u32,
 
-    /// Offset of the symbol table.
-    btree: u64,
     /// Minimum length in bits of the Huffman symbols.
     min_symlen: u8,
     /// Offset of the lowest symbols for each length.
@@ -602,7 +615,7 @@ struct PairsData {
     /// 64-bit padded lowest symbols for each length.
     base: Vec<u64>,
     /// Number of values represented by a given Huffman symbol.
-    symlen: Vec<u8>,
+    symbols: Vec<Symbol>,
 
     /// Offset of the sparse index.
     sparse_index: u64,
@@ -647,13 +660,12 @@ impl PairsData {
                     block_length_size: 0,
                     block_size: 0,
                     blocks_num: 0,
-                    btree: 0,
                     data: 0,
                     lowest_sym: 0,
                     span: 0,
                     sparse_index: 0,
                     sparse_index_size: 0,
-                    symlen: Vec::new(),
+                    symbols: Vec::new(),
                     dtz_map: None,
                 },
                 ptr + 2,
@@ -700,17 +712,17 @@ impl PairsData {
             *base = u!(base.checked_shl(64 - (u32::from(min_symlen) + i as u32)));
         }
 
-        // Initialize symlen.
+        // Initialize symbols.
         ptr += 10 + h as u64 * 2;
         let sym = raf.read_u16_at::<LE>(ptr)?;
         ptr += 2;
         let btree = ptr;
-        let mut symlen = vec![0; usize::from(sym)];
-        let mut visited = vec![false; symlen.len()];
+        let mut symbols = vec![Symbol::new(); usize::from(sym)];
+        let mut visited = vec![false; symbols.len()];
         for s in 0..sym {
-            read_symlen(raf, btree, &mut symlen, &mut visited, s, 16)?;
+            read_symbols(raf, btree, &mut symbols, &mut visited, s, 16)?;
         }
-        ptr += symlen.len() as u64 * 3 + (symlen.len() as u64 & 1);
+        ptr += symbols.len() as u64 * 3 + (symbols.len() as u64 & 1);
 
         // Result.
         Ok((
@@ -722,11 +734,10 @@ impl PairsData {
                 span,
                 blocks_num,
 
-                btree,
                 min_symlen,
                 lowest_sym,
                 base,
-                symlen,
+                symbols,
 
                 sparse_index: 0, // to be initialized later
                 sparse_index_size,
@@ -743,11 +754,11 @@ impl PairsData {
     }
 }
 
-/// Build the symlen table.
-fn read_symlen<F: ReadAt>(
+/// Build the symbol table.
+fn read_symbols<F: ReadAt>(
     raf: &F,
     btree: u64,
-    symlen: &mut Vec<u8>,
+    symbols: &mut Vec<Symbol>,
     visited: &mut [bool],
     sym: u16,
     depth: u8,
@@ -756,24 +767,25 @@ fn read_symlen<F: ReadAt>(
         return Ok(());
     }
 
-    let ptr = btree + 3 * u64::from(sym);
-    let (left, right) = read_lr(&raf, ptr)?;
+    let mut symbol = Symbol::new();
+    raf.read_exact_at(btree + 3 * u64::from(sym), &mut symbol.lr[..])?;
 
-    if right == 0xfff {
-        symlen[usize::from(sym)] = 0;
+    if symbol.right() == 0xfff {
+        symbol.len = 0;
     } else {
         // Guard against stack overflow.
         let depth = u!(depth.checked_sub(1));
 
-        read_symlen(raf, btree, symlen, visited, left, depth)?;
-        read_symlen(raf, btree, symlen, visited, right, depth)?;
+        read_symbols(raf, btree, symbols, visited, symbol.left(), depth)?;
+        read_symbols(raf, btree, symbols, visited, symbol.right(), depth)?;
 
-        symlen[usize::from(sym)] = u!(u!(
-            symlen[usize::from(left)].checked_add(symlen[usize::from(right)])
+        symbol.len = u!(u!(
+            symbols[usize::from(symbol.left())].len.checked_add(symbols[usize::from(symbol.right())].len)
         )
         .checked_add(1));
     }
 
+    symbols[usize::from(sym)] = symbol;
     visited[usize::from(sym)] = true;
     Ok(())
 }
@@ -1059,11 +1071,11 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             sym = ((buf - d.base[len]) >> (64 - len - usize::from(d.min_symlen))) as u16;
             sym += self.raf.read_u16_at::<LE>(d.lowest_sym + 2 * len as u64)?;
 
-            if lit_idx < i64::from(*u!(d.symlen.get(usize::from(sym)))) + 1 {
+            if lit_idx < i64::from(u!(d.symbols.get(usize::from(sym))).len) + 1 {
                 break;
             }
 
-            lit_idx -= i64::from(*u!(d.symlen.get(usize::from(sym)))) + 1;
+            lit_idx -= i64::from(u!(d.symbols.get(usize::from(sym))).len) + 1;
             len += usize::from(d.min_symlen);
             buf <<= len;
             buf_size -= len;
@@ -1077,25 +1089,20 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
         trace!(sym, "symbol found");
 
         // Decompress Huffman symbol.
-        while *u!(d.symlen.get(usize::from(sym))) != 0 {
-            let (left, right) = read_lr(&self.raf, d.btree + 3 * u64::from(sym))?;
+        let mut symbol = u!(d.symbols.get(usize::from(sym)));
+        loop {
+            if symbol.len == 0 {
+                return Ok(symbol.left());
+            }
 
-            if lit_idx < i64::from(*u!(d.symlen.get(usize::from(left)))) + 1 {
-                sym = left;
+            let left_symbol = u!(d.symbols.get(usize::from(symbol.left())));
+            if lit_idx < i64::from(left_symbol.len) + 1 {
+                symbol = left_symbol;
             } else {
-                lit_idx -= i64::from(*u!(d.symlen.get(usize::from(left)))) + 1;
-                sym = right;
+                lit_idx -= i64::from(left_symbol.len) + 1;
+                symbol = u!(d.symbols.get(usize::from(symbol.right())));
             }
         }
-        trace!(sym, "symbol decompressed");
-
-        let w = d.btree + 3 * u64::from(sym);
-        let value = match T::METRIC {
-            Metric::Wdl => u16::from(self.raf.read_u8_at(w)?),
-            Metric::Dtz => self.raf.read_u16_at::<LE>(w)? & 0xfff,
-        };
-        trace!(value, "value loaded");
-        Ok(value)
     }
 
     /// Given a position, determine the unique (modulo symmetries) index into
