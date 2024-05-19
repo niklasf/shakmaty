@@ -5,6 +5,7 @@ use bitflags::bitflags;
 use byteorder::{ByteOrder as _, ReadBytesExt as _, BE, LE};
 use positioned_io::{RandomAccessFile, ReadAt, ReadBytesAtExt as _};
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
+use tracing::{trace, trace_span};
 
 use crate::{
     errors::{ProbeError, ProbeResult},
@@ -974,6 +975,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
             }
         }
 
+        trace!(%material, "table opened");
+
         // Result.
         Ok(Table {
             is_wdl: PhantomData,
@@ -988,6 +991,8 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     /// Retrieves the value stored for `idx` by decompressing Huffman coded
     /// symbols stored in the corresponding block of the table.
     fn decompress_pairs(&self, d: &PairsData, idx: u64) -> ProbeResult<u16> {
+        trace!(idx, "decompress pairs");
+
         // Special case: The table stores only a single value.
         if d.flags.contains(Flag::SINGLE_VALUE) {
             return Ok(u16::from(d.min_symlen));
@@ -1005,6 +1010,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
 
         let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
         lit_idx += offset;
+        trace!("sparse index read");
 
         // Now move forwards/backwards to find the correct block.
         while lit_idx < 0 {
@@ -1026,6 +1032,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 break;
             }
         }
+        trace!("block located");
 
         // Read block (and 4 bytes to allow a final symbol refill) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
@@ -1067,6 +1074,7 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 buf |= u64::from(cursor.read_u32::<BE>()?) << (64 - buf_size);
             }
         }
+        trace!(sym, "symbol found");
 
         // Decompress Huffman symbol.
         while *u!(d.symlen.get(usize::from(sym))) != 0 {
@@ -1079,12 +1087,15 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
                 sym = right;
             }
         }
+        trace!(sym, "symbol decompressed");
 
         let w = d.btree + 3 * u64::from(sym);
-        match T::METRIC {
-            Metric::Wdl => Ok(u16::from(self.raf.read_u8_at(w)?)),
-            Metric::Dtz => Ok(self.raf.read_u16_at::<LE>(w)? & 0xfff),
-        }
+        let value = match T::METRIC {
+            Metric::Wdl => u16::from(self.raf.read_u8_at(w)?),
+            Metric::Dtz => self.raf.read_u16_at::<LE>(w)? & 0xfff,
+        };
+        trace!(value, "value loaded");
+        Ok(value)
     }
 
     /// Given a position, determine the unique (modulo symmetries) index into
@@ -1362,46 +1373,50 @@ impl<T: TableTag, S: Position + Syzygy, F: ReadAt> Table<T, S, F> {
     }
 
     pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
-        assert_eq!(T::METRIC, Metric::Wdl);
+        trace_span!("wdl table").in_scope(|| {
+            assert_eq!(T::METRIC, Metric::Wdl);
 
-        let (side, idx) = self.encode(pos)?.expect("wdl tables are two sided");
-        let decompressed = self.decompress_pairs(side, idx)?;
+            let (side, idx) = self.encode(pos)?.expect("wdl tables are two sided");
+            let decompressed = self.decompress_pairs(side, idx)?;
 
-        Ok(match decompressed {
-            0 => Wdl::Loss,
-            1 => Wdl::BlessedLoss,
-            2 => Wdl::Draw,
-            3 => Wdl::CursedWin,
-            4 => Wdl::Win,
-            _ => throw!(),
+            Ok(match decompressed {
+                0 => Wdl::Loss,
+                1 => Wdl::BlessedLoss,
+                2 => Wdl::Draw,
+                3 => Wdl::CursedWin,
+                4 => Wdl::Win,
+                _ => throw!(),
+            })
         })
     }
 
     pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<MaybeRounded<u32>>> {
-        assert_eq!(T::METRIC, Metric::Dtz);
+        trace_span!("dtz table").in_scope(|| {
+            assert_eq!(T::METRIC, Metric::Dtz);
 
-        let Some((side, idx)) = self.encode(pos)? else {
-            return Ok(None); // check other side
-        };
+            let Some((side, idx)) = self.encode(pos)? else {
+                return Ok(None); // check other side
+            };
 
-        let res = self.decompress_pairs(side, idx)?;
+            let res = self.decompress_pairs(side, idx)?;
 
-        let res = u32::from(match side.dtz_map {
-            None => res,
-            Some(ref map) => map.read(&self.raf, wdl, res)?,
-        });
+            let res = u32::from(match side.dtz_map {
+                None => res,
+                Some(ref map) => map.read(&self.raf, wdl, res)?,
+            });
 
-        let stores_plies = match wdl {
-            DecisiveWdl::Win => side.flags.contains(Flag::WIN_PLIES),
-            DecisiveWdl::Loss => side.flags.contains(Flag::LOSS_PLIES),
-            DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
-        };
+            let stores_plies = match wdl {
+                DecisiveWdl::Win => side.flags.contains(Flag::WIN_PLIES),
+                DecisiveWdl::Loss => side.flags.contains(Flag::LOSS_PLIES),
+                DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
+            };
 
-        Ok(Some(if stores_plies {
-            MaybeRounded::Precise(res)
-        } else {
-            MaybeRounded::Rounded(2 * res)
-        }))
+            Ok(Some(if stores_plies {
+                MaybeRounded::Precise(res)
+            } else {
+                MaybeRounded::Rounded(2 * res)
+            }))
+        })
     }
 }
 

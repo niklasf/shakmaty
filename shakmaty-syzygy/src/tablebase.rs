@@ -10,6 +10,7 @@ use once_cell::sync::OnceCell;
 use positioned_io::RandomAccessFile;
 use rustc_hash::FxHashMap;
 use shakmaty::{Move, Position, Role};
+use tracing::trace_span;
 
 use crate::{
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
@@ -225,9 +226,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_wdl(&self, pos: &S) -> SyzygyResult<AmbiguousWdl> {
-        self.probe(pos)
-            .and_then(|entry| entry.dtz())
-            .map(|dtz| AmbiguousWdl::from_dtz_and_halfmoves(dtz, pos.halfmoves()))
+        trace_span!("probe wdl", pieces = pos.board().occupied().count()).in_scope(|| {
+            self.probe(pos)
+                .and_then(|entry| entry.dtz())
+                .map(|dtz| AmbiguousWdl::from_dtz_and_halfmoves(dtz, pos.halfmoves()))
+        })
     }
 
     /// Probe tables for the [`Dtz`] value of a position.
@@ -238,7 +241,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// See [`SyzygyError`] for possible error conditions.
     pub fn probe_dtz(&self, pos: &S) -> SyzygyResult<MaybeRounded<Dtz>> {
-        self.probe(pos).and_then(|entry| entry.dtz())
+        trace_span!("probe dtz", pieces = pos.board().occupied().count())
+            .in_scope(|| self.probe(pos).and_then(|entry| entry.dtz()))
     }
 
     /// Get the recommended tablebase move.
