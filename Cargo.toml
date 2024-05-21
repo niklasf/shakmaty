@@ -14,7 +14,7 @@ rust-version = "1.75" # remember to update test.yml
 [features]
 default = ["std"]
 alloc = []
-std = ["alloc"]
+std = ["alloc", "btoi/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
 
