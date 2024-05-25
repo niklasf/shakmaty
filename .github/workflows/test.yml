@@ -34,3 +34,13 @@ jobs:
       - run: cargo doc --no-default-features ${{ matrix.flags }}
       - run: cargo bench --no-default-features ${{ matrix.flags }}
       - run: cargo check --manifest-path fuzz/Cargo.toml
+  check_no_std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: thumbv6m-none-eabi
+      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features variant,nohash-hasher
+      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features alloc,variant,nohash-hasher
