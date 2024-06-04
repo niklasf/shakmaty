@@ -13,7 +13,7 @@ use tracing::trace_span;
 
 use crate::{
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
-    filesystem::{Filesystem, StdFilesystem},
+    filesystem::{DefaultFilesystem, Filesystem},
     material::Material,
     table::{DtzTable, WdlTable},
     types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
@@ -60,10 +60,19 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebase<S> {
         Tablebase {
-            filesystem: Box::new(StdFilesystem),
+            filesystem: Box::new(DefaultFilesystem),
             wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
             dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
             max_pieces: 0,
+        }
+    }
+
+    /// Create an empty collection of tables, providing a custom filesystem
+    /// implementation.
+    pub fn with_filesystem(filesystem: Box<dyn Filesystem>) -> Tablebase<S> {
+        Tablebase {
+            filesystem,
+            ..Tablebase::new()
         }
     }
 

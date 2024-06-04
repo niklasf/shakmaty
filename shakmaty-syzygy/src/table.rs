@@ -8,8 +8,7 @@ use tracing::{trace, trace_span};
 
 use crate::{
     errors::{ProbeError, ProbeResult},
-    filesystem,
-    filesystem::ReadHint,
+    filesystem::{RandomAccessFile, ReadHint},
     material::Material,
     types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES},
 };
@@ -396,7 +395,7 @@ impl Consts {
 }
 
 /// Read the magic header bytes that identify a tablebase file.
-fn read_magic_header(raf: &dyn filesystem::File) -> ProbeResult<[u8; 4]> {
+fn read_magic_header(raf: &dyn RandomAccessFile) -> ProbeResult<[u8; 4]> {
     let mut buf = [0; 4];
     if let Err(error) = raf.read_exact_at(ReadHint::Header, 0, &mut buf) {
         match error.kind() {
@@ -429,7 +428,7 @@ fn offdiag(sq: Square) -> bool {
 
 /// Parse a piece list.
 fn parse_pieces(
-    raf: &dyn filesystem::File,
+    raf: &dyn RandomAccessFile,
     ptr: u64,
     count: usize,
     side: Color,
@@ -554,7 +553,7 @@ enum DtzMap {
 }
 
 impl DtzMap {
-    fn read(&self, raf: &dyn filesystem::File, wdl: DecisiveWdl, res: u16) -> ProbeResult<u16> {
+    fn read(&self, raf: &dyn RandomAccessFile, wdl: DecisiveWdl, res: u16) -> ProbeResult<u16> {
         let wdl = match wdl {
             DecisiveWdl::Win => 0,
             DecisiveWdl::Loss => 1,
@@ -639,7 +638,7 @@ struct PairsData {
 
 impl PairsData {
     pub fn parse<S: Syzygy, T: TableTag>(
-        raf: &dyn filesystem::File,
+        raf: &dyn RandomAccessFile,
         mut ptr: u64,
         groups: GroupData,
     ) -> ProbeResult<(PairsData, u64)> {
@@ -760,7 +759,7 @@ impl PairsData {
 
 /// Build the symbol table.
 fn read_symbols(
-    raf: &dyn filesystem::File,
+    raf: &dyn RandomAccessFile,
     btree: u64,
     symbols: &mut Vec<Symbol>,
     visited: &mut [bool],
@@ -809,7 +808,7 @@ struct Table<T: TableTag, P: Position + Syzygy> {
     is_wdl: PhantomData<T>,
     syzygy: PhantomData<P>,
 
-    raf: Box<dyn filesystem::File>,
+    raf: Box<dyn RandomAccessFile>,
 
     num_unique_pieces: u8,
     min_like_man: u8,
@@ -835,7 +834,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     /// Panics if the `material` configuration is not supported by Syzygy
     /// tablebases (more than 7 pieces or side without pieces).
     #[track_caller]
-    pub fn new(raf: Box<dyn filesystem::File>, material: &Material) -> ProbeResult<Table<T, S>> {
+    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<Table<T, S>> {
         let material = material.clone();
         assert!(material.count() <= MAX_PIECES);
         assert!(material.by_color.white.count() >= 1);
@@ -1457,7 +1456,7 @@ pub struct WdlTable<S: Position + Syzygy> {
 }
 
 impl<S: Position + Syzygy> WdlTable<S> {
-    pub fn new(raf: Box<dyn filesystem::File>, material: &Material) -> ProbeResult<WdlTable<S>> {
+    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<WdlTable<S>> {
         Table::new(raf, material).map(|table| WdlTable { table })
     }
 
@@ -1473,7 +1472,7 @@ pub struct DtzTable<S: Position + Syzygy> {
 }
 
 impl<S: Position + Syzygy> DtzTable<S> {
-    pub fn new(raf: Box<dyn filesystem::File>, material: &Material) -> ProbeResult<DtzTable<S>> {
+    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<DtzTable<S>> {
         Table::new(raf, material).map(|table| DtzTable { table })
     }
 
