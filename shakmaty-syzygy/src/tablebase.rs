@@ -1,19 +1,19 @@
 use std::{
     cmp::{max, Reverse},
     ffi::OsStr,
-    fs, io,
+    fmt, io,
     path::{Path, PathBuf},
 };
 
 use arrayvec::ArrayVec;
 use once_cell::sync::OnceCell;
-use positioned_io::RandomAccessFile;
 use rustc_hash::FxHashMap;
 use shakmaty::{Move, Position, Role};
 use tracing::trace_span;
 
 use crate::{
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
+    filesystem::{Filesystem, StdFilesystem},
     material::Material,
     table::{DtzTable, WdlTable},
     types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
@@ -33,11 +33,21 @@ enum ProbeState {
 }
 
 /// A collection of tables.
-#[derive(Debug)]
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S, RandomAccessFile>>)>,
-    dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S, RandomAccessFile>>)>,
+    filesystem: Box<dyn Filesystem>,
+    wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S>>)>,
+    dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S>>)>,
     max_pieces: usize,
+}
+
+impl<S: Position + Clone + Syzygy + fmt::Debug> fmt::Debug for Tablebase<S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Tablebase")
+            .field("wdl", &self.wdl)
+            .field("dtz", &self.dtz)
+            .field("max_pieces", &self.max_pieces)
+            .finish_non_exhaustive()
+    }
 }
 
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
@@ -50,6 +60,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Create an empty collection of tables.
     pub fn new() -> Tablebase<S> {
         Tablebase {
+            filesystem: Box::new(StdFilesystem),
             wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
             dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
             max_pieces: 0,
@@ -88,8 +99,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<usize> {
         let mut num = 0;
 
-        for entry in fs::read_dir(path)? {
-            if self.add_file(entry?.path()).is_ok() {
+        for entry in self.filesystem.read_dir(path.as_ref())? {
+            if self.add_file_impl(&entry).is_ok() {
                 num += 1;
             }
         }
@@ -146,14 +157,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Check meta data.
-        let meta = path.metadata()?;
-        if !meta.is_file() {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "not a regular file",
-            ));
-        }
-        if meta.len() % 64 != 16 {
+        if self.filesystem.regular_file_size(path)? % 64 != 16 {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidData,
                 "unexpected file size",
@@ -172,14 +176,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         Ok(())
     }
 
-    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S, RandomAccessFile>> {
+    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S>> {
         if let Some((path, table)) = self
             .wdl
             .get(key)
             .or_else(|| self.wdl.get(&key.clone().into_flipped()))
         {
             table
-                .get_or_try_init(|| WdlTable::open(path, key))
+                .get_or_try_init(|| WdlTable::new(self.filesystem.open(path)?, key))
                 .ctx(Metric::Wdl, key.clone())
         } else {
             Err(SyzygyError::MissingTable {
@@ -189,14 +193,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
-    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S, RandomAccessFile>> {
+    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S>> {
         if let Some((path, table)) = self
             .dtz
             .get(key)
             .or_else(|| self.dtz.get(&key.clone().into_flipped()))
         {
             table
-                .get_or_try_init(|| DtzTable::open(path, key))
+                .get_or_try_init(|| DtzTable::new(self.filesystem.open(path)?, key))
                 .ctx(Metric::Dtz, key.clone())
         } else {
             Err(SyzygyError::MissingTable {
