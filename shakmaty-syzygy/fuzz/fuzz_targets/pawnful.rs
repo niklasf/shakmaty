@@ -37,12 +37,12 @@ struct FakeFile {
 }
 
 impl RandomAccessFile for FakeFile {
-    fn read_at(&self, _hint: ReadHint, offset: u64, buf: &mut [u8]) -> io::Result<usize> {
-        let start = offset as usize;
-        let end = start + buf.len();
+    fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
+        let offset = offset as usize;
+        let end = offset + buf.len();
         buf.copy_from_slice(
             self.data
-                .get(start..end)
+                .get(offset..end)
                 .ok_or(io::ErrorKind::UnexpectedEof)?,
         );
         Ok(buf.len())

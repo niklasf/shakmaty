@@ -54,21 +54,21 @@ pub trait RandomAccessFile: Send + Sync {
     /// Reads some bytes starting from a given offset.
     ///
     /// See [`std::os::unix::fs::FileExt::read_at()`] for precise semantics.
-    fn read_at(&self, hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize>;
+    fn read_at(&self, buf: &mut [u8], offset: u64, hint: ReadHint) -> io::Result<usize>;
 
     /// Reads the exact number of bytes required to fill `buf` from the given
     /// offset.
     ///
     /// See [`std::os::unix::fs::FileExt::read_exact_at()`] for
     /// precise semantics.
-    fn read_exact_at(&self, hint: ReadHint, mut pos: u64, mut buf: &mut [u8]) -> io::Result<()> {
+    fn read_exact_at(&self, mut buf: &mut [u8], mut offset: u64, hint: ReadHint) -> io::Result<()> {
         while !buf.is_empty() {
-            match self.read_at(hint, pos, buf) {
+            match self.read_at(buf, offset, hint) {
                 Ok(0) => break,
                 Ok(n) => {
                     let tmp = buf;
                     buf = &mut tmp[n..];
-                    pos += n as u64;
+                    offset += n as u64;
                 }
                 Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
                 Err(e) => return Err(e),
@@ -81,17 +81,17 @@ pub trait RandomAccessFile: Send + Sync {
     }
 
     /// Reads the single byte at a given offset.
-    fn read_u8_at(&self, hint: ReadHint, pos: u64) -> io::Result<u8> {
+    fn read_u8_at(&self, offset: u64, hint: ReadHint) -> io::Result<u8> {
         let mut buf = [0];
-        self.read_exact_at(hint, pos, &mut buf[..])?;
+        self.read_exact_at(&mut buf[..], offset, hint)?;
         Ok(buf[0])
     }
 
     /// Reads two bytes at a given offset, returning an integer in little
     /// endian.
-    fn read_u16_le_at(&self, hint: ReadHint, pos: u64) -> io::Result<u16> {
+    fn read_u16_le_at(&self, offset: u64, hint: ReadHint) -> io::Result<u16> {
         let mut buf = [0; 2];
-        self.read_exact_at(hint, pos, &mut buf[..])?;
+        self.read_exact_at(&mut buf[..], offset, hint)?;
         Ok(u16::from_le_bytes(buf))
     }
 }
@@ -134,12 +134,12 @@ pub(crate) mod os {
 
     impl RandomAccessFile for OsRandomAccessFile {
         #[cfg(unix)]
-        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
-            std::os::unix::fs::FileExt::read_at(&self.file, buf, pos)
+        fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
+            std::os::unix::fs::FileExt::read_at(&self.file, buf, offset)
         }
         #[cfg(windows)]
-        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
-            std::os::windows::fs::FileExt::seek_read(&self.file, buf, pos)
+        fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
+            std::os::windows::fs::FileExt::seek_read(&self.file, buf, offset)
         }
     }
 }
@@ -183,12 +183,12 @@ pub(crate) mod mmap {
     }
 
     impl RandomAccessFile for MmapRandomAccessFile {
-        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
-            let pos = pos as usize;
-            let end = pos + buf.len();
+        fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
+            let offset = offset as usize;
+            let end = offset + buf.len();
             buf.copy_from_slice(
                 self.mmap
-                    .get(pos..end)
+                    .get(offset..end)
                     .ok_or(io::ErrorKind::UnexpectedEof)?,
             );
             Ok(buf.len())

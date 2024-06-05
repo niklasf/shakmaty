@@ -397,7 +397,7 @@ impl Consts {
 /// Read the magic header bytes that identify a tablebase file.
 fn read_magic_header(raf: &dyn RandomAccessFile) -> ProbeResult<[u8; 4]> {
     let mut buf = [0; 4];
-    if let Err(error) = raf.read_exact_at(ReadHint::Header, 0, &mut buf) {
+    if let Err(error) = raf.read_exact_at(&mut buf, 0, ReadHint::Header) {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => Err(ProbeError::Magic { magic: buf }),
             _ => Err(ProbeError::Read { error }),
@@ -435,7 +435,7 @@ fn parse_pieces(
 ) -> ProbeResult<Pieces> {
     let mut buffer = [0; MAX_PIECES];
     let bytes = &mut buffer[..count];
-    raf.read_exact_at(ReadHint::Header, ptr, bytes)?;
+    raf.read_exact_at(bytes, ptr, ReadHint::Header)?;
 
     let mut pieces = Pieces::new();
     for p in bytes {
@@ -564,11 +564,11 @@ impl DtzMap {
         Ok(match *self {
             DtzMap::Normal { map_ptr, by_wdl } => {
                 let offset = map_ptr + u64::from(by_wdl[wdl]) + u64::from(res);
-                u16::from(raf.read_u8_at(ReadHint::DtzMap, offset)?)
+                u16::from(raf.read_u8_at(offset, ReadHint::DtzMap)?)
             }
             DtzMap::Wide { map_ptr, by_wdl } => {
                 let offset = map_ptr + 2 * (u64::from(by_wdl[wdl]) + u64::from(res));
-                raf.read_u16_le_at(ReadHint::DtzMap, offset)?
+                raf.read_u16_le_at(offset, ReadHint::DtzMap)?
             }
         })
     }
@@ -642,11 +642,11 @@ impl PairsData {
         mut ptr: u64,
         groups: GroupData,
     ) -> ProbeResult<(PairsData, u64)> {
-        let flags = Flag::from_bits_truncate(raf.read_u8_at(ReadHint::Header, ptr)?);
+        let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr, ReadHint::Header)?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::METRIC == Metric::Wdl {
-                raf.read_u8_at(ReadHint::Header, ptr + 1)?
+                raf.read_u8_at(ptr + 1, ReadHint::Header)?
             } else {
                 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
                 u8::from(S::CAPTURES_COMPULSORY)
@@ -676,7 +676,7 @@ impl PairsData {
 
         // Read header.
         let mut header = [0; 10];
-        raf.read_exact_at(ReadHint::Header, ptr, &mut header)?;
+        raf.read_exact_at(&mut header, ptr, ReadHint::Header)?;
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
@@ -703,9 +703,9 @@ impl PairsData {
             let ptr = lowest_sym + i as u64 * 2;
 
             base[i] = u!(u!(
-                base[i + 1].checked_add(u64::from(raf.read_u16_le_at(ReadHint::Header, ptr)?))
+                base[i + 1].checked_add(u64::from(raf.read_u16_le_at(ptr, ReadHint::Header)?))
             )
-            .checked_sub(u64::from(raf.read_u16_le_at(ReadHint::Header, ptr + 2)?)))
+            .checked_sub(u64::from(raf.read_u16_le_at(ptr + 2, ReadHint::Header)?)))
                 / 2;
 
             ensure!(base[i] * 2 >= base[i + 1]);
@@ -717,7 +717,7 @@ impl PairsData {
 
         // Initialize symbols.
         ptr += 10 + h as u64 * 2;
-        let sym = raf.read_u16_le_at(ReadHint::Header, ptr)?;
+        let sym = raf.read_u16_le_at(ptr, ReadHint::Header)?;
         ptr += 2;
         let btree = ptr;
         let mut symbols = vec![Symbol::new(); usize::from(sym)];
@@ -772,9 +772,9 @@ fn read_symbols(
 
     let mut symbol = Symbol::new();
     raf.read_exact_at(
-        ReadHint::Header,
-        btree + 3 * u64::from(sym),
         &mut symbol.lr[..],
+        btree + 3 * u64::from(sym),
+        ReadHint::Header,
     )?;
 
     if symbol.right() == 0xfff {
@@ -856,7 +856,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Read layout flags.
-        let layout = Layout::from_bits_truncate(raf.read_u8_at(ReadHint::Header, 4)?);
+        let layout = Layout::from_bits_truncate(raf.read_u8_at(4, ReadHint::Header)?);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
@@ -879,17 +879,17 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             .map(|file| {
                 let order = [
                     [
-                        raf.read_u8_at(ReadHint::Header, ptr)? & 0xf,
+                        raf.read_u8_at(ptr, ReadHint::Header)? & 0xf,
                         if pp {
-                            raf.read_u8_at(ReadHint::Header, ptr + 1)? & 0xf
+                            raf.read_u8_at(ptr + 1, ReadHint::Header)? & 0xf
                         } else {
                             0xf
                         },
                     ],
                     [
-                        raf.read_u8_at(ReadHint::Header, ptr)? >> 4,
+                        raf.read_u8_at(ptr, ReadHint::Header)? >> 4,
                         if pp {
-                            raf.read_u8_at(ReadHint::Header, ptr + 1)? >> 4
+                            raf.read_u8_at(ptr + 1, ReadHint::Header)? >> 4
                         } else {
                             0xf
                         },
@@ -964,13 +964,13 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for idx in &mut by_wdl {
                             *idx = ((ptr - map_ptr + 2) / 2) as u16;
-                            ptr += u64::from(raf.read_u16_le_at(ReadHint::Header, ptr)?) * 2 + 2;
+                            ptr += u64::from(raf.read_u16_le_at(ptr, ReadHint::Header)?) * 2 + 2;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Wide { map_ptr, by_wdl });
                     } else {
                         for idx in &mut by_wdl {
                             *idx = (ptr - map_ptr + 1) as u16;
-                            ptr += u64::from(raf.read_u8_at(ReadHint::Header, ptr)?) + 1;
+                            ptr += u64::from(raf.read_u8_at(ptr, ReadHint::Header)?) + 1;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Normal { map_ptr, by_wdl });
                     }
@@ -1032,9 +1032,9 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let mut sparse_index_entry = [0; 4 + 2];
         self.raf.read_exact_at(
-            ReadHint::SparseIndex,
-            d.sparse_index + 6 * main_idx,
             &mut sparse_index_entry[..],
+            d.sparse_index + 6 * main_idx,
+            ReadHint::SparseIndex,
         )?;
         let mut block = LE::read_u32(&sparse_index_entry[..]);
         let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
@@ -1047,14 +1047,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
             lit_idx += i64::from(self.raf.read_u16_le_at(
-                ReadHint::BlockLengths,
                 d.block_lengths + u64::from(block) * 2,
+                ReadHint::BlockLengths,
             )?) + 1;
         }
         loop {
             let block_length = i64::from(self.raf.read_u16_le_at(
-                ReadHint::BlockLengths,
                 d.block_lengths + u64::from(block) * 2,
+                ReadHint::BlockLengths,
             )?) + 1;
             if lit_idx >= block_length {
                 lit_idx -= block_length;
@@ -1068,10 +1068,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         // Read block (and 4 bytes to allow a final symbol refill) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
         self.raf.read_exact_at(
-            ReadHint::Data,
+            &mut block_buffer[..(d.block_size as usize + 4)],
             u!(d.data
                 .checked_add(u64::from(block) * u64::from(d.block_size))),
-            &mut block_buffer[..(d.block_size as usize + 4)],
+            ReadHint::Data,
         )?;
         let mut cursor = &block_buffer[..(d.block_size as usize + 4)];
 
@@ -1091,7 +1091,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             sym = ((buf - d.base[len]) >> (64 - len - usize::from(d.min_symlen))) as u16;
             sym += self
                 .raf
-                .read_u16_le_at(ReadHint::Header, d.lowest_sym + 2 * len as u64)?;
+                .read_u16_le_at(d.lowest_sym + 2 * len as u64, ReadHint::Header)?;
 
             if lit_idx < i64::from(u!(d.symbols.get(usize::from(sym))).len) + 1 {
                 break;
