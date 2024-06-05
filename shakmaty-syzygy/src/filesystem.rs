@@ -186,7 +186,7 @@ pub(crate) mod mmap {
         fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
             let pos = pos as usize;
             let end = pos + buf.len();
-            buf.clone_from_slice(
+            buf.copy_from_slice(
                 self.mmap
                     .get(pos..end)
                     .ok_or(io::ErrorKind::UnexpectedEof)?,

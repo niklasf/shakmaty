@@ -78,11 +78,13 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// # Safety
     ///
+    /// * Ensure that `usize` can represent the size of table files in bytes.
+    ///   This is true on 64-bit systems.
     /// * Externally guarantee that table files are not modified after
     ///   they were opened.
     /// * Externally guarantee absence of I/O errors (or live with the
-    ///   consequences). I/O errors will generate page faults
-    ///   (`SIGSEV`/`SIGBUS` on Unix).
+    ///   consequences). For example, I/O errors will generate
+    ///   `SIGSEV`/`SIGBUS` on Linux.
     #[cfg(feature = "mmap")]
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
         // Safety: Forwarding contract of memmap2::MmapOptions::map()
