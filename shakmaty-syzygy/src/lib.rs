@@ -32,6 +32,8 @@
 //!
 //! # Cargo features
 //!
+//! * `mmap`: Enables support for memory-mapped tablebase files
+//!   via `Tablebase::with_mmap_filesystem()`.
 //! * `variant`: Enables support for Antichess and Atomic chess.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.25.0")]

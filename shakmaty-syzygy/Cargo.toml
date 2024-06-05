@@ -27,7 +27,7 @@ tracing = "0.1"
 memmap2 = { version = "0.9", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libc = "0.2"
+libc = "0.2" # for optional posix_fadvise
 
 [dev-dependencies]
 csv = "1"
@@ -36,8 +36,8 @@ clap = { version = "4", features = ["derive", "deprecated"] }
 
 [features]
 default = []
-variant = ["shakmaty/variant"]
 mmap = ["memmap2"]
+variant = ["shakmaty/variant"]
 
 [package.metadata.docs.rs]
 all-features = true

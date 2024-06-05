@@ -99,24 +99,6 @@ pub trait RandomAccessFile: Send + Sync {
     }
 }
 
-fn regular_file_size(path: &Path) -> io::Result<u64> {
-    let meta = path.metadata()?;
-    if !meta.is_file() {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "not a regular file",
-        ));
-    }
-    Ok(meta.len())
-}
-
-fn read_dir(path: &Path) -> io::Result<Vec<PathBuf>> {
-    fs::read_dir(path)?
-        .into_iter()
-        .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
-        .collect()
-}
-
 #[cfg(any(unix, windows))]
 pub(crate) mod os {
     use super::*;
@@ -124,15 +106,17 @@ pub(crate) mod os {
 
     impl Filesystem for OsFilesystem {
         fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
-            regular_file_size(path)
+            regular_file_size_impl(path)
         }
 
         fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
-            read_dir(path)
+            read_dir_impl(path)
         }
 
         fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
             let file = fs::File::open(path)?;
+
+            // Safety: No requirements.
             #[cfg(target_os = "linux")]
             unsafe {
                 libc::posix_fadvise(
@@ -142,6 +126,7 @@ pub(crate) mod os {
                     libc::POSIX_FADV_RANDOM,
                 );
             }
+
             Ok(Box::new(OsRandomAccessFile { file }))
         }
     }
@@ -180,16 +165,16 @@ pub(crate) mod mmap {
 
     impl Filesystem for MmapFilesystem {
         fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
-            regular_file_size(path)
+            regular_file_size_impl(path)
         }
 
         fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
-            read_dir(path)
+            read_dir_impl(path)
         }
 
         fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
             let file = fs::File::open(path)?;
-            // Safety: Contract moved to MmapFilesystem::new().
+            // Safety: Contract forwarded to MmapFilesystem::new().
             let mmap = unsafe { MmapOptions::new().map(&file)? };
             mmap.advise(Advice::Random)?;
             Ok(Box::new(MmapRandomAccessFile { mmap }))
@@ -213,4 +198,24 @@ pub(crate) mod mmap {
             Ok(buf.len())
         }
     }
+}
+
+#[cfg(any(unix, windows, feature = "mmap"))]
+fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
+    let meta = path.metadata()?;
+    if !meta.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "not a regular file",
+        ));
+    }
+    Ok(meta.len())
+}
+
+#[cfg(any(unix, windows, feature = "mmap"))]
+fn read_dir_impl(path: &Path) -> io::Result<Vec<PathBuf>> {
+    fs::read_dir(path)?
+        .into_iter()
+        .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
+        .collect()
 }

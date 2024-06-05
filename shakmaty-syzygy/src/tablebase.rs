@@ -58,7 +58,8 @@ impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
 }
 
 impl<S: Position + Clone + Syzygy> Tablebase<S> {
-    /// Create an empty collection of tables.
+    /// Creates an empty collection of tables. A safe default filesystem
+    /// implementation will be used to read table files.
     #[cfg(any(unix, windows))]
     pub fn new() -> Tablebase<S> {
         Tablebase {
@@ -69,17 +70,31 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
     }
 
+    /// Creates an empty collection of tables. Memory mapping will be used
+    /// to read table files.
+    ///
+    /// Reading from memory maps avoids the significant syscall overhead
+    /// of the default implementation.
+    ///
+    /// # Safety
+    ///
+    /// * Externally guarantee that table files are not modified after
+    ///   they were opened.
+    /// * Externally guarantee absence of I/O errors (or live with the
+    ///   consequences). I/O errors will generate page faults
+    ///   (`SIGSEV`/`SIGBUS` on Unix).
     #[cfg(feature = "mmap")]
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
-        // Safety: Forwarding contract.
+        // Safety: Forwarding contract of memmap2::MmapOptions::map()
+        // to caller.
         Tablebase {
             filesystem: Box::new(unsafe { filesystem::mmap::MmapFilesystem::new() }),
             ..Tablebase::new()
         }
     }
 
-    /// Create an empty collection of tables, providing a custom filesystem
-    /// implementation.
+    /// Creates an empty collection of tables. A custom filesystem
+    /// implementation will be used to read table files.
     pub fn with_filesystem(filesystem: Box<dyn Filesystem>) -> Tablebase<S> {
         Tablebase {
             filesystem,
