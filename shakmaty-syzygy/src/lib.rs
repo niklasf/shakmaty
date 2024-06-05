@@ -37,7 +37,6 @@
 //! * `variant`: Enables support for Antichess and Atomic chess.
 
 #![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.25.0")]
-#![cfg_attr(not(fuzzing), warn(missing_docs))]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 
@@ -49,10 +48,6 @@ mod table;
 mod tablebase;
 mod types;
 
-#[cfg(fuzzing)]
-pub use crate::table::{DtzTable, WdlTable};
-#[cfg(fuzzing)]
-pub use crate::types::DecisiveWdl;
 pub use crate::{
     errors::{ProbeError, SyzygyError},
     material::Material,
