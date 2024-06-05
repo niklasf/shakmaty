@@ -1,11 +1,10 @@
 use shakmaty::{fen::Fen, CastlingMode, Chess, FromSetup, Position};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
-fn test_csv<S>(path: &str)
+fn test_csv<S>(mut tables: Tablebase<S>, path: &str)
 where
     S: Position + FromSetup + Syzygy + Clone,
 {
-    let mut tables = Tablebase::new();
     tables
         .add_directory("tables/chess")
         .expect("read directory");
@@ -58,19 +57,31 @@ where
     }
 }
 
+#[cfg(any(unix, windows))]
 #[test]
 fn test_chess() {
-    test_csv::<Chess>("tests/chess.csv");
+    test_csv::<Chess>(Tablebase::new(), "tests/chess.csv");
 }
 
-#[cfg(feature = "variant")]
+#[cfg(feature = "mmap")]
+#[test]
+fn test_chess_mmap() {
+    // Safety: No modifications to table files and I/O errors please.
+    // Fingers crossed.
+    test_csv::<Chess>(
+        unsafe { Tablebase::with_mmap_filesystem() },
+        "tests/chess.csv",
+    );
+}
+
+#[cfg(all(any(unix, windows), feature = "variant"))]
 #[test]
 fn test_atomic() {
-    test_csv::<shakmaty::variant::Atomic>("tests/atomic.csv");
+    test_csv::<shakmaty::variant::Atomic>(Tablebase::new(), "tests/atomic.csv");
 }
 
-#[cfg(feature = "variant")]
+#[cfg(all(any(unix, windows), feature = "variant"))]
 #[test]
 fn test_antichess() {
-    test_csv::<shakmaty::variant::Antichess>("tests/antichess.csv");
+    test_csv::<shakmaty::variant::Antichess>(Tablebase::new(), "tests/antichess.csv");
 }

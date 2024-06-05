@@ -17,6 +17,7 @@ jobs:
       - run: ./download-test-tables.sh
       - run: cargo test
       - run: cargo test --features variant
+      - run: cargo test --all-features
       - run: cargo bench
       - run: cargo check --manifest-path fuzz/Cargo.toml
         env:
