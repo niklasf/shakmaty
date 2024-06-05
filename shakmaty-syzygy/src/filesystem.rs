@@ -17,7 +17,8 @@ pub trait Filesystem: Send + Sync {
     /// ultimately point to a regular file.
     fn regular_file_size(&self, path: &Path) -> io::Result<u64>;
 
-    /// Returns a list of files in the given directory.
+    /// Returns a list of files in the given directory. May filter for table
+    /// files.
     ///
     /// # Errors
     ///
@@ -87,8 +88,8 @@ pub trait RandomAccessFile: Send + Sync {
         Ok(buf[0])
     }
 
-    /// Reads two bytes at a given offset, returning an integer in little
-    /// endian.
+    /// Reads two bytes at a given offset, and interprets them as a
+    /// little endian integer.
     fn read_u16_le_at(&self, offset: u64, hint: ReadHint) -> io::Result<u16> {
         let mut buf = [0; 2];
         self.read_exact_at(&mut buf[..], offset, hint)?;

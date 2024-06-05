@@ -5,13 +5,8 @@ on:
   - pull_request
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
+  linux:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -25,3 +20,11 @@ jobs:
       - run: cargo test --all-features
       - run: cargo bench
       - run: cargo check --manifest-path fuzz/Cargo.toml
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check
+      - run: cargo check --features variant
+      - run: cargo check --all-features
