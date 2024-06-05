@@ -5,8 +5,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use positioned_io::ReadAt as _;
-
 /// An abstract filesystem.
 pub trait Filesystem: Send + Sync {
     /// Determines the size in bytes of the given file.
@@ -101,40 +99,118 @@ pub trait RandomAccessFile: Send + Sync {
     }
 }
 
-pub(crate) struct DefaultFilesystem;
+fn regular_file_size(path: &Path) -> io::Result<u64> {
+    let meta = path.metadata()?;
+    if !meta.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "not a regular file",
+        ));
+    }
+    Ok(meta.len())
+}
 
-impl Filesystem for DefaultFilesystem {
-    fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
-        let meta = path.metadata()?;
-        if !meta.is_file() {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "not a regular file",
-            ));
+fn read_dir(path: &Path) -> io::Result<Vec<PathBuf>> {
+    fs::read_dir(path)?
+        .into_iter()
+        .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
+        .collect()
+}
+
+#[cfg(any(unix, windows))]
+pub(crate) mod os {
+    use super::*;
+    pub struct OsFilesystem;
+
+    impl Filesystem for OsFilesystem {
+        fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
+            regular_file_size(path)
         }
-        Ok(meta.len())
+
+        fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
+            read_dir(path)
+        }
+
+        fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
+            let file = fs::File::open(path)?;
+            #[cfg(target_os = "linux")]
+            unsafe {
+                libc::posix_fadvise(
+                    std::os::unix::io::AsRawFd::as_raw_fd(&file),
+                    0,
+                    0,
+                    libc::POSIX_FADV_RANDOM,
+                );
+            }
+            Ok(Box::new(OsRandomAccessFile { file }))
+        }
     }
 
-    fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
-        fs::read_dir(path)?
-            .into_iter()
-            .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
-            .collect()
+    pub struct OsRandomAccessFile {
+        file: fs::File,
     }
 
-    fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
-        Ok(Box::new(DefaultRandomAccessFile {
-            inner: positioned_io::RandomAccessFile::open(path)?,
-        }))
+    impl RandomAccessFile for OsRandomAccessFile {
+        #[cfg(unix)]
+        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
+            std::os::unix::fs::FileExt::read_at(&self.file, buf, pos)
+        }
+        #[cfg(windows)]
+        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
+            std::os::windows::fs::FileExt::seek_read(&self.file, buf, pos)
+        }
     }
 }
 
-pub(crate) struct DefaultRandomAccessFile {
-    inner: positioned_io::RandomAccessFile,
-}
+#[cfg(feature = "mmap")]
+pub(crate) mod mmap {
+    use memmap2::{Advice, Mmap, MmapOptions};
 
-impl RandomAccessFile for DefaultRandomAccessFile {
-    fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
-        self.inner.read_at(pos, buf)
+    use super::*;
+
+    pub struct MmapFilesystem {
+        _priv: (),
+    }
+
+    impl MmapFilesystem {
+        pub unsafe fn new() -> MmapFilesystem {
+            MmapFilesystem { _priv: () }
+        }
+    }
+
+    impl Filesystem for MmapFilesystem {
+        fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
+            regular_file_size(path)
+        }
+
+        fn read_dir(&self, path: &Path) -> io::Result<Vec<PathBuf>> {
+            read_dir(path)
+        }
+
+        fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
+            let file = fs::File::open(path)?;
+            // Safety: Contract moved to MmapFilesystem::new().
+            let mmap = unsafe { MmapOptions::new().map(&file)? };
+            mmap.advise(Advice::Random)?;
+            Ok(Box::new(MmapRandomAccessFile { mmap }))
+        }
+    }
+
+    pub struct MmapRandomAccessFile {
+        mmap: Mmap,
+    }
+
+    impl RandomAccessFile for MmapRandomAccessFile {
+        fn read_at(&self, _hint: ReadHint, pos: u64, buf: &mut [u8]) -> io::Result<usize> {
+            let pos = pos as usize;
+            let end = pos + buf.len();
+            buf.clone_from_slice(
+                &self
+                    .mmap
+                    .get(pos..end)
+                    .ok_or_else(|| io::Error::from(io::ErrorKind::UnexpectedEof))?,
+            );
+            Ok(buf.len())
+        }
     }
 }
