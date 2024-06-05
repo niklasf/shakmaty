@@ -147,7 +147,7 @@ pub(crate) mod os {
 
 #[cfg(feature = "mmap")]
 pub(crate) mod mmap {
-    use memmap2::{Advice, Mmap, MmapOptions};
+    use memmap2::{Mmap, MmapOptions};
 
     use super::*;
 
@@ -172,9 +172,13 @@ pub(crate) mod mmap {
 
         fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
             let file = fs::File::open(path)?;
+
             // Safety: Contract forwarded to MmapFilesystem::new().
             let mmap = unsafe { MmapOptions::new().map(&file)? };
-            mmap.advise(Advice::Random)?;
+
+            #[cfg(unix)]
+            mmap.advise(memmap2::Advice::Random)?;
+
             Ok(Box::new(MmapRandomAccessFile { mmap }))
         }
     }
