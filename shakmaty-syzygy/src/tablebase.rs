@@ -51,6 +51,7 @@ impl<S: Position + Clone + Syzygy + fmt::Debug> fmt::Debug for Tablebase<S> {
     }
 }
 
+#[cfg(any(unix, windows))]
 impl<S: Position + Clone + Syzygy> Default for Tablebase<S> {
     fn default() -> Tablebase<S> {
         Tablebase::new()
@@ -62,12 +63,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// implementation will be used to read table files.
     #[cfg(any(unix, windows))]
     pub fn new() -> Tablebase<S> {
-        Tablebase {
-            filesystem: Box::new(filesystem::os::OsFilesystem),
-            wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
-            dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
-            max_pieces: 0,
-        }
+        Tablebase::with_filesystem(Box::new(filesystem::os::OsFilesystem))
     }
 
     /// Creates an empty collection of tables. Memory mapping will be used
@@ -89,10 +85,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
         // Safety: Forwarding contract of memmap2::MmapOptions::map()
         // to caller.
-        Tablebase {
-            filesystem: Box::new(unsafe { filesystem::mmap::MmapFilesystem::new() }),
-            ..Tablebase::new()
-        }
+        Tablebase::with_filesystem(unsafe { Box::new(filesystem::mmap::MmapFilesystem::new()) })
     }
 
     /// Creates an empty collection of tables. A custom filesystem
@@ -100,7 +93,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     pub fn with_filesystem(filesystem: Box<dyn Filesystem>) -> Tablebase<S> {
         Tablebase {
             filesystem,
-            ..Tablebase::new()
+            wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),
+            dtz: FxHashMap::with_capacity_and_hasher(145, Default::default()),
+            max_pieces: 0,
         }
     }
 
