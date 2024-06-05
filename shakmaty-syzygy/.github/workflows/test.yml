@@ -6,7 +6,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -20,5 +25,3 @@ jobs:
       - run: cargo test --all-features
       - run: cargo bench
       - run: cargo check --manifest-path fuzz/Cargo.toml
-        env:
-          RUSTFLAGS: --cfg fuzzing
