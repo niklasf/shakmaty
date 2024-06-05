@@ -75,10 +75,7 @@ pub trait RandomAccessFile: Send + Sync {
             }
         }
         if !buf.is_empty() {
-            return Err(io::Error::new(
-                io::ErrorKind::UnexpectedEof,
-                "failed to fill whole buffer",
-            ));
+            return Err(io::ErrorKind::UnexpectedEof.into());
         }
         Ok(())
     }
@@ -190,10 +187,9 @@ pub(crate) mod mmap {
             let pos = pos as usize;
             let end = pos + buf.len();
             buf.clone_from_slice(
-                &self
-                    .mmap
+                self.mmap
                     .get(pos..end)
-                    .ok_or_else(|| io::Error::from(io::ErrorKind::UnexpectedEof))?,
+                    .ok_or(io::ErrorKind::UnexpectedEof)?,
             );
             Ok(buf.len())
         }
@@ -215,7 +211,6 @@ fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
 #[cfg(any(unix, windows, feature = "mmap"))]
 fn read_dir_impl(path: &Path) -> io::Result<Vec<PathBuf>> {
     fs::read_dir(path)?
-        .into_iter()
         .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
         .collect()
 }

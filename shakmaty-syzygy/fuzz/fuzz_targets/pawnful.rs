@@ -41,8 +41,7 @@ impl RandomAccessFile for FakeFile {
         let start = offset as usize;
         let end = start + buf.len();
         buf.copy_from_slice(
-            &self
-                .data
+            self.data
                 .get(start..end)
                 .ok_or(io::ErrorKind::UnexpectedEof)?,
         );
