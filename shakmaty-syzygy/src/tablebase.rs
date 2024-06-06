@@ -3,6 +3,7 @@ use std::{
     ffi::OsStr,
     fmt, io,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use arrayvec::ArrayVec;
@@ -35,7 +36,7 @@ enum ProbeState {
 
 /// A collection of tables.
 pub struct Tablebase<S: Position + Clone + Syzygy> {
-    filesystem: Box<dyn Filesystem>,
+    filesystem: Arc<dyn Filesystem>,
     wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S>>)>,
     dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S>>)>,
     max_pieces: usize,
@@ -63,7 +64,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// implementation will be used to read table files.
     #[cfg(any(unix, windows))]
     pub fn new() -> Tablebase<S> {
-        Tablebase::with_filesystem(Box::new(filesystem::os::OsFilesystem))
+        Tablebase::with_filesystem(Arc::new(filesystem::os::OsFilesystem))
     }
 
     /// Creates an empty collection of tables. Memory mapping will be used
@@ -85,12 +86,12 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
         // Safety: Forwarding contract of memmap2::MmapOptions::map()
         // to caller.
-        Tablebase::with_filesystem(unsafe { Box::new(filesystem::mmap::MmapFilesystem::new()) })
+        Tablebase::with_filesystem(unsafe { Arc::new(filesystem::mmap::MmapFilesystem::new()) })
     }
 
     /// Creates an empty collection of tables. A custom filesystem
     /// implementation will be used to read table files.
-    pub fn with_filesystem(filesystem: Box<dyn Filesystem>) -> Tablebase<S> {
+    pub fn with_filesystem(filesystem: Arc<dyn Filesystem>) -> Tablebase<S> {
         Tablebase {
             filesystem,
             wdl: FxHashMap::with_capacity_and_hasher(145, Default::default()),

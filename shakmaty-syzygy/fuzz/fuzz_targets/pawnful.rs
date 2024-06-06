@@ -3,6 +3,7 @@
 use std::{
     io,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use libfuzzer_sys::fuzz_target;
@@ -56,6 +57,6 @@ fuzz_target!(|data: &[u8]| {
         .into_position(CastlingMode::Standard)
         .expect("valid position");
 
-    let tables = Tablebase::with_filesystem(Box::new(FakeFilesystem { data: data.into() }));
+    let tables = Tablebase::with_filesystem(Arc::new(FakeFilesystem { data: data.into() }));
     let _ = tables.probe_wdl(&pos);
 });

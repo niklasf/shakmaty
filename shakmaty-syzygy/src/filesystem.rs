@@ -6,7 +6,7 @@ use std::{
 };
 
 /// An abstract filesystem.
-pub trait Filesystem: Send + Sync {
+pub trait Filesystem: Sync + Send {
     /// Determines the size in bytes of the given file.
     ///
     /// Follows symbolic links.
@@ -51,7 +51,7 @@ pub enum ReadHint {
 }
 
 /// An abstract randomly readable file.
-pub trait RandomAccessFile: Send + Sync {
+pub trait RandomAccessFile: Sync + Send {
     /// Reads some bytes starting from a given offset.
     ///
     /// See [`std::os::unix::fs::FileExt::read_at()`] for precise semantics.
