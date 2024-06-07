@@ -27,7 +27,7 @@ pub trait Syzygy {
     /// Whether both players will have exactly one king unless the game
     /// is over.
     const ONE_KING: bool;
-    /// Wether kings are allowed to be on adjacent squares.
+    /// Whether kings are allowed to be on adjacent squares.
     const CONNECTED_KINGS: bool;
     /// Whether captures are compulsory.
     const CAPTURES_COMPULSORY: bool;
