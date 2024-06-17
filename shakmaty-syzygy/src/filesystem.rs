@@ -13,7 +13,8 @@ pub trait Filesystem: Sync + Send {
     ///
     /// # Errors
     ///
-    /// See [`std::fs::metadata()`]. Additionally errors if `path` does not
+    /// See [`std::fs::metadata()`]. Additionally errors with
+    /// [`std::io::ErrorKind::InvalidInput`] if `path` does not
     /// ultimately point to a regular file.
     fn regular_file_size(&self, path: &Path) -> io::Result<u64>;
 
@@ -206,7 +207,7 @@ fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
     let meta = path.metadata()?;
     if !meta.is_file() {
         return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
+            io::ErrorKind::InvalidInput,
             "not a regular file",
         ));
     }

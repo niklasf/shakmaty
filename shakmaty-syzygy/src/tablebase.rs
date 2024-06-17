@@ -126,15 +126,20 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// Returns an error result when:
     ///
-    /// * The `path` does not exist.
     /// * `path` is not pointing to a directory.
     /// * Listing the directory fails (no permission, ...).
+    /// * Querying meta data for a table in `path` failed. Some tables
+    ///   maybe have already been added.
+    /// * There is a table in `path` where the file size indicates that
+    ///   it must be corrupted. Some tables may have already been added.
     pub fn add_directory<P: AsRef<Path>>(&mut self, path: P) -> io::Result<usize> {
         let mut num = 0;
 
         for entry in self.filesystem.read_dir(path.as_ref())? {
-            if self.add_file_impl(&entry).is_ok() {
-                num += 1;
+            match self.add_file_impl(&entry) {
+                Ok(()) => num += 1,
+                Err(err) if err.kind() == io::ErrorKind::InvalidInput => (), // Not a table. Ignore
+                Err(err) => return Err(err),
             }
         }
 
