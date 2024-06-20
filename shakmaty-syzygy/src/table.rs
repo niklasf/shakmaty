@@ -128,7 +128,7 @@ const MULT_TWIST: [u64; 64] = [
 
 /// Unused entry. Initialized to `-1`, so that most uses will cause noticable
 /// overflow in debug mode.
-const Z0: u64 = u64::max_value();
+const Z0: u64 = u64::MAX;
 
 /// Encoding of all 462 configurations of two not-connected kings.
 #[rustfmt::skip]
@@ -1028,7 +1028,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         // Use the sparse index to jump very close to the correct block.
         let main_idx = idx / u64::from(d.span);
-        ensure!(main_idx <= u64::from(u32::max_value()));
+        ensure!(main_idx <= u64::from(u32::MAX));
 
         let mut sparse_index_entry = [0; 4 + 2];
         self.raf.read_exact_at(

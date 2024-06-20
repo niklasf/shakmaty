@@ -42,3 +42,6 @@ variant = ["shakmaty/variant"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docs_rs"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }
