@@ -107,12 +107,14 @@ mod os {
     /// A safe default filesystem implementation.
     #[derive(Default)]
     pub struct OsFilesystem {
-        _priv: (),
+        advise_random: bool,
     }
 
     impl fmt::Debug for OsFilesystem {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("OsFilesystem").finish_non_exhaustive()
+            f.debug_struct("OsFilesystem")
+                .field("advise_random", &self.advise_random)
+                .finish_non_exhaustive()
         }
     }
 
@@ -120,7 +122,19 @@ mod os {
         /// Creates a new instance of the safe default filesystem
         /// implementation.
         pub fn new() -> OsFilesystem {
-            OsFilesystem { _priv: () }
+            OsFilesystem {
+                advise_random: true,
+            }
+        }
+
+        /// Determines whether the `POSIX_FADV_RANDOM` hint is used when
+        /// opening files.
+        ///
+        /// Defaults to `true`.
+        #[must_use]
+        pub fn with_advise_random(mut self, advise_random: bool) -> Self {
+            self.advise_random = advise_random;
+            self
         }
     }
 
@@ -136,15 +150,17 @@ mod os {
         fn open(&self, path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
             let file = fs::File::open(path)?;
 
-            // Safety: No requirements.
             #[cfg(target_os = "linux")]
-            unsafe {
-                libc::posix_fadvise(
-                    std::os::unix::io::AsRawFd::as_raw_fd(&file),
-                    0,
-                    0,
-                    libc::POSIX_FADV_RANDOM,
-                );
+            if self.advise_random {
+                // Safety: No requirements.
+                unsafe {
+                    libc::posix_fadvise(
+                        std::os::unix::io::AsRawFd::as_raw_fd(&file),
+                        0,
+                        0,
+                        libc::POSIX_FADV_RANDOM,
+                    );
+                }
             }
 
             Ok(Box::new(OsRandomAccessFile { file }))
@@ -180,12 +196,15 @@ mod mmap {
 
     /// A filesystem implementation using memory maps to read table files.
     pub struct MmapFilesystem {
+        advise_random: bool,
         _unsafe_priv: (),
     }
 
     impl fmt::Debug for MmapFilesystem {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.debug_struct("MmapFilesystem").finish_non_exhaustive()
+            f.debug_struct("MmapFilesystem")
+                .field("advise_random", &self.advise_random)
+                .finish_non_exhaustive()
         }
     }
 
@@ -204,7 +223,20 @@ mod mmap {
         ///   consequences). For example, I/O errors will generate
         ///   `SIGSEV`/`SIGBUS` on Linux.
         pub unsafe fn new() -> MmapFilesystem {
-            MmapFilesystem { _unsafe_priv: () }
+            MmapFilesystem {
+                advise_random: true,
+                _unsafe_priv: (),
+            }
+        }
+
+        /// Determines whether the `MADV_RANDOM` hint is used when creating
+        /// memory maps.
+        ///
+        /// Defaults to `true`.
+        #[must_use]
+        pub fn with_advise_random(mut self, advise_random: bool) -> Self {
+            self.advise_random = advise_random;
+            self
         }
     }
 
@@ -224,7 +256,9 @@ mod mmap {
             let mmap = unsafe { MmapOptions::new().map(&file)? };
 
             #[cfg(unix)]
-            mmap.advise(memmap2::Advice::Random)?;
+            if self.advise_random {
+                mmap.advise(memmap2::Advice::Random)?;
+            }
 
             Ok(Box::new(MmapRandomAccessFile { mmap }))
         }
