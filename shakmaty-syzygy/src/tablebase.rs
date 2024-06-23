@@ -64,10 +64,10 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// implementation will be used to read table files.
     #[cfg(any(unix, windows))]
     pub fn new() -> Tablebase<S> {
-        Tablebase::with_filesystem(Arc::new(filesystem::os::OsFilesystem))
+        Tablebase::with_filesystem(Arc::new(filesystem::OsFilesystem::new()))
     }
 
-    /// Creates an empty collection of tables. Memory mapping will be used
+    /// Creates an empty collection of tables. Memory maps will be used
     /// to read table files.
     ///
     /// Reading from memory maps avoids the significant syscall overhead
@@ -75,8 +75,6 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ///
     /// # Safety
     ///
-    /// * Ensure that `usize` can represent the size of table files in bytes.
-    ///   This is true on 64-bit systems.
     /// * Externally guarantee that table files are not modified after
     ///   they were opened.
     /// * Externally guarantee absence of I/O errors (or live with the
@@ -86,7 +84,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
         // Safety: Forwarding contract of memmap2::MmapOptions::map()
         // to caller.
-        Tablebase::with_filesystem(unsafe { Arc::new(filesystem::mmap::MmapFilesystem::new()) })
+        Tablebase::with_filesystem(unsafe { Arc::new(filesystem::MmapFilesystem::new()) })
     }
 
     /// Creates an empty collection of tables. A custom filesystem

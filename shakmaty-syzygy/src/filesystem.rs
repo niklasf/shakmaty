@@ -99,9 +99,30 @@ pub trait RandomAccessFile: Sync + Send {
 }
 
 #[cfg(any(unix, windows))]
-pub(crate) mod os {
+mod os {
+    use std::fmt;
+
     use super::*;
-    pub struct OsFilesystem;
+
+    /// A safe default filesystem implementation.
+    #[derive(Default)]
+    pub struct OsFilesystem {
+        _priv: (),
+    }
+
+    impl fmt::Debug for OsFilesystem {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_struct("OsFilesystem").finish_non_exhaustive()
+        }
+    }
+
+    impl OsFilesystem {
+        /// Creates a new instance of the safe default filesystem
+        /// implementation.
+        pub fn new() -> OsFilesystem {
+            OsFilesystem { _priv: () }
+        }
+    }
 
     impl Filesystem for OsFilesystem {
         fn regular_file_size(&self, path: &Path) -> io::Result<u64> {
@@ -146,19 +167,44 @@ pub(crate) mod os {
     }
 }
 
-#[cfg(feature = "mmap")]
-pub(crate) mod mmap {
+#[cfg(any(unix, windows))]
+pub use os::OsFilesystem;
+
+#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
+mod mmap {
+    use std::fmt;
+
     use memmap2::{Mmap, MmapOptions};
 
     use super::*;
 
+    /// A filesystem implementation using memory maps to read table files.
     pub struct MmapFilesystem {
-        _priv: (),
+        _unsafe_priv: (),
+    }
+
+    impl fmt::Debug for MmapFilesystem {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_struct("MmapFilesystem").finish_non_exhaustive()
+        }
     }
 
     impl MmapFilesystem {
+        /// Creates a new instance of a filesystem implementation that
+        /// uses memory maps to read table files.
+        ///
+        /// Reading from memory maps avoids the significant syscall overhead
+        /// of the default filesystem implementation.
+        ///
+        /// # Safety
+        ///
+        /// * Externally guarantee that files are not modified after
+        ///   they were opened.
+        /// * Externally guarantee absence of I/O errors (or live with the
+        ///   consequences). For example, I/O errors will generate
+        ///   `SIGSEV`/`SIGBUS` on Linux.
         pub unsafe fn new() -> MmapFilesystem {
-            MmapFilesystem { _priv: () }
+            MmapFilesystem { _unsafe_priv: () }
         }
     }
 
@@ -201,6 +247,9 @@ pub(crate) mod mmap {
         }
     }
 }
+
+#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
+pub use mmap::MmapFilesystem;
 
 #[cfg(any(unix, windows, feature = "mmap"))]
 fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
