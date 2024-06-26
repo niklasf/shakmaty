@@ -122,15 +122,13 @@ mod os {
         /// Creates a new instance of the safe default filesystem
         /// implementation.
         pub fn new() -> OsFilesystem {
-            OsFilesystem {
-                advise_random: true,
-            }
+            OsFilesystem::default()
         }
 
         /// Determines whether the `POSIX_FADV_RANDOM` hint is used when
         /// opening files.
         ///
-        /// Defaults to `true`.
+        /// Defaults to `false`.
         #[must_use]
         pub fn with_advise_random(mut self, advise_random: bool) -> Self {
             self.advise_random = advise_random;
@@ -224,7 +222,7 @@ mod mmap {
         ///   `SIGSEV`/`SIGBUS` on Linux.
         pub unsafe fn new() -> MmapFilesystem {
             MmapFilesystem {
-                advise_random: true,
+                advise_random: false,
                 _unsafe_priv: (),
             }
         }
@@ -232,7 +230,7 @@ mod mmap {
         /// Determines whether the `MADV_RANDOM` hint is used when creating
         /// memory maps.
         ///
-        /// Defaults to `true`.
+        /// Defaults to `false`.
         #[must_use]
         pub fn with_advise_random(mut self, advise_random: bool) -> Self {
             self.advise_random = advise_random;
