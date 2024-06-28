@@ -36,13 +36,12 @@ pub trait Filesystem: Sync + Send {
 
 /// The purpose of a read. Advisory only.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[non_exhaustive]
 pub enum ReadHint {
     /// Reading metadata from the table file header.
     Header,
     /// Reading the DTZ value map.
     DtzMap,
-    /// Reading to sparse index to jump close to the correct entry in the block
+    /// Reading the sparse index to jump close to the correct entry in the block
     /// length table.
     SparseIndex,
     /// Reading the block length table.
