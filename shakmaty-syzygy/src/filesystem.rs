@@ -164,7 +164,7 @@ mod os {
         }
     }
 
-    pub struct OsRandomAccessFile {
+    struct OsRandomAccessFile {
         file: fs::File,
     }
 
@@ -261,7 +261,7 @@ mod mmap {
         }
     }
 
-    pub struct MmapRandomAccessFile {
+    struct MmapRandomAccessFile {
         mmap: Mmap,
     }
 
@@ -282,7 +282,7 @@ mod mmap {
 #[cfg(all(feature = "mmap", target_pointer_width = "64"))]
 pub use mmap::MmapFilesystem;
 
-#[cfg(any(unix, windows, feature = "mmap"))]
+#[cfg(any(unix, windows, all(feature = "mmap", target_pointer_width = "64")))]
 fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
     let meta = path.metadata()?;
     if !meta.is_file() {
@@ -294,7 +294,7 @@ fn regular_file_size_impl(path: &Path) -> io::Result<u64> {
     Ok(meta.len())
 }
 
-#[cfg(any(unix, windows, feature = "mmap"))]
+#[cfg(any(unix, windows, all(feature = "mmap", target_pointer_width = "64")))]
 fn read_dir_impl(path: &Path) -> io::Result<Vec<PathBuf>> {
     fs::read_dir(path)?
         .map(|maybe_entry| maybe_entry.map(|entry| entry.path().to_owned()))
