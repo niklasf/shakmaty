@@ -12,8 +12,8 @@ pub enum SyzygyError {
     /// Position has castling rights, but Syzygy tables do not contain
     /// positions with castling rights.
     Castling,
-    /// Position has too many pieces. Syzygy tables only support up to
-    /// 6 or 7 pieces.
+    /// Position has too many pieces, i.e., more pieces than any opened table.
+    /// Syzygy tables for standard chess support up to 7 pieces.
     TooManyPieces,
     /// Missing table.
     MissingTable {

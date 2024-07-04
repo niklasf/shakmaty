@@ -376,9 +376,14 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     }
 
     fn probe<'a>(&'a self, pos: &'a S) -> SyzygyResult<WdlEntry<'a, S>> {
-        if pos.board().occupied().count() > S::MAX_PIECES {
+        // Probing resolves captures, so sometimes we can obtain results
+        // for positions that have more pieces than the maximum amount of
+        // supported pieces. We artificially limit this to one additional
+        // level, to make sure search remains somewhat bounded.
+        if pos.board().occupied().count() > S::MAX_PIECES + 1 {
             return Err(SyzygyError::TooManyPieces);
         }
+
         if pos.castles().any() {
             return Err(SyzygyError::Castling);
         }
@@ -627,6 +632,11 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // Test for KvK.
         if S::ONE_KING && pos.board().kings() == pos.board().occupied() {
             return Ok(Wdl::Draw);
+        }
+
+        // More pieces than any opened table.
+        if pos.board().occupied().count() > self.max_pieces {
+            return Err(SyzygyError::TooManyPieces);
         }
 
         // Get raw WDL value from the appropriate table.
