@@ -1,5 +1,18 @@
 # Changelog for shakmaty-syzygy
 
+## v0.25.1
+
+- Add `Tablebase::with_mmap_filesystem()` behind optional `mmap` feature.
+- Add `Tablebase::with_filesystem()` and provide abstractions to implement
+  custom methods to open and read table files.
+- Add basic `tracing` instrumentation.
+- Relax eager check for too many pieces, so that some 8 piece positions
+  with captures can be resolved.
+- No longer set `POSIX_FADVISE_RANDOM` by default. Can be re-enabled by using
+  `OsFilesystem::with_advise_random()`.
+- Optimize probe performance by joining consecutive reads and keeping
+  symbol tables in memory.
+
 ## v0.25.0
 
 - Update shakmaty to `0.27`.
