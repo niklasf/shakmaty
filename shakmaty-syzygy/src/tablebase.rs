@@ -80,7 +80,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// * Externally guarantee absence of I/O errors (or live with the
     ///   consequences). For example, I/O errors will generate
     ///   `SIGSEV`/`SIGBUS` on Linux.
-    #[cfg(feature = "mmap")]
+    #[cfg(all(feature = "mmap", target_pointer_width = "64"))]
     pub unsafe fn with_mmap_filesystem() -> Tablebase<S> {
         // Safety: Forwarding contract of memmap2::MmapOptions::map()
         // to caller.

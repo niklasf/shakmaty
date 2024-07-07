@@ -63,7 +63,7 @@ fn test_chess() {
     test_csv::<Chess>(Tablebase::new(), "tests/chess.csv");
 }
 
-#[cfg(feature = "mmap")]
+#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
 #[test]
 fn test_chess_mmap() {
     // Safety: No modifications to table files and I/O errors please.

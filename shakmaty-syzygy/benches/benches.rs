@@ -32,7 +32,7 @@ fn bench_probe_wdl(bench: &mut Bencher) {
     });
 }
 
-#[cfg(feature = "mmap")]
+#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
 fn bench_probe_wdl_mmap(bench: &mut Bencher) {
     // Safety: No modifications to table files and I/O errors please.
     // Fingers crossed.
@@ -55,9 +55,9 @@ fn bench_probe_wdl_mmap(bench: &mut Bencher) {
     });
 }
 
-#[cfg(not(feature = "mmap"))]
+#[cfg(not(all(feature = "mmap", target_pointer_width = "64")))]
 benchmark_group!(benches, bench_add_directory, bench_probe_wdl);
-#[cfg(feature = "mmap")]
+#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
 benchmark_group!(
     benches,
     bench_add_directory,
