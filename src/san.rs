@@ -315,38 +315,33 @@ impl San {
                 promotion,
             } => {
                 // Disambiguate.
-                let (rank, file) = moves
-                    .iter()
-                    .filter(|c| match *c {
+                let mut ambiguous = false;
+                let mut ambiguous_file = false;
+                let mut ambiguous_rank = false;
+                for candidate in moves {
+                    match *candidate {
                         Move::Normal {
                             role: r,
                             to: t,
                             promotion: p,
+                            from: f,
                             ..
-                        } => role == *r && to == *t && promotion == *p,
-                        _ => false,
-                    })
-                    .fold((false, false), |(rank, file), c| match *c {
-                        Move::Normal {
-                            from: candidate, ..
-                        } => {
-                            if from == candidate {
-                                (rank, file)
-                            } else if from.rank() == candidate.rank()
-                                || from.file() != candidate.file()
-                            {
-                                (rank, true)
-                            } else {
-                                (true, file)
+                        } if from != f && role == r && to == t && promotion == p => {
+                            ambiguous = true;
+                            if from.rank() == f.rank() {
+                                ambiguous_rank = true;
+                            }
+                            if from.file() == f.file() {
+                                ambiguous_file = true;
                             }
                         }
-                        _ => (rank, file),
-                    });
-
+                        _ => {}
+                    }
+                }
                 San::Normal {
                     role,
-                    file: if file { Some(from.file()) } else { None },
-                    rank: if rank { Some(from.rank()) } else { None },
+                    file: (ambiguous && (!ambiguous_file || ambiguous_rank)).then(|| from.file()),
+                    rank: ambiguous_file.then(|| from.rank()),
                     capture: capture.is_some(),
                     to,
                     promotion,
@@ -638,7 +633,7 @@ mod tests {
     use core::mem;
 
     use super::*;
-    use crate::{fen::Fen, CastlingMode, Chess};
+    use crate::{fen::Fen, uci::UciMove, CastlingMode, Chess};
 
     #[test]
     fn test_size() {
@@ -676,6 +671,42 @@ mod tests {
             .into_position::<Chess>(CastlingMode::Standard)
             .expect("legal fen");
         assert_eq!(san.to_move(&pos), Err(SanError::IllegalSan));
+    }
+
+    #[test]
+    fn test_disambiguation() {
+        let chaos_fen = "N3k2N/8/8/3N4/N4N1N/2R5/1R6/4K3 w - -";
+        let regression_fen = "8/2KN1p2/5p2/3N1B1k/5PNp/7P/7P/8 w - -";
+        let illegal_alternatives_fen = "8/8/8/R2nkn2/8/8/2K5/8 b - -";
+        let promotions_fen = "7k/1p2Npbp/8/2P5/1P1r4/3b2QP/3q1pPK/2RB4 b - -";
+
+        for (fen, uci, san) in [
+            (chaos_fen, "e1f1", "Kf1"),
+            (chaos_fen, "c3c2", "Rcc2"),
+            (chaos_fen, "b2c2", "Rbc2"),
+            (chaos_fen, "a4b6", "N4b6"),
+            (chaos_fen, "h8g6", "N8g6"),
+            (chaos_fen, "h4g6", "Nh4g6"),
+            (regression_fen, "d5f6", "N5xf6#"),
+            (illegal_alternatives_fen, "f5e3", "Ne3+"),
+            (promotions_fen, "f2f1q", "f1=Q"),
+            (promotions_fen, "f2f1n", "f1=N+"),
+        ] {
+            let pos = fen
+                .parse::<Fen>()
+                .expect("valid fen")
+                .into_position::<Chess>(CastlingMode::Standard)
+                .expect("legal fen");
+            let m = uci
+                .parse::<UciMove>()
+                .expect("valid uci")
+                .to_move(&pos)
+                .expect("legal uci");
+            let san_plus = san.parse::<SanPlus>().expect("valid san");
+
+            assert_eq!(San::disambiguate(&m, &pos.legal_moves()), san_plus.san);
+            assert_eq!(SanPlus::from_move(pos, &m), san_plus);
+        }
     }
 
     #[cfg(feature = "alloc")]
