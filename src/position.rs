@@ -340,7 +340,7 @@ pub trait FromSetup: Sized {
 /// * currently available [legal](`EnPassantMode::Legal`) en passant moves
 /// * remaining checks only in Three-Check
 ///
-/// but specifally *ignoring* halfmove and fullmove counters.
+/// but specifically *ignoring* halfmove and fullmove counters.
 ///
 /// Use [`Setup`] for structural equality.
 pub trait Position {
