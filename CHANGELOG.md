@@ -1,5 +1,11 @@
 # Changelog for shakmaty
 
+## v0.27.1
+
+- Fix overly specific SAN disambiguation where rank would suffice.
+- Fix `no_std` compatibility.
+- Rename `Uci` to `UciMove` (with a deprecated alias remaining).
+
 ## v0.27.0
 
 - Improve Zobrist hashing.
