@@ -152,14 +152,14 @@ impl ops::BitXor<bool> for Color {
     type Output = Color;
 
     #[inline]
-    fn bitxor(self, flip: bool) -> Color {
-        Color::from_white(self.is_white() ^ flip)
+    fn bitxor(self, toggle: bool) -> Color {
+        Color::from_white(self.is_white() ^ toggle)
     }
 }
 
 impl ops::BitXorAssign<bool> for Color {
-    fn bitxor_assign(&mut self, flip: bool) {
-        *self = *self ^ flip;
+    fn bitxor_assign(&mut self, toggle: bool) {
+        *self = *self ^ toggle;
     }
 }
 
@@ -256,11 +256,17 @@ impl<T> ByColor<T> {
     }
 
     #[must_use]
-    pub fn into_flipped(self) -> ByColor<T> {
+    pub fn into_swapped(self) -> ByColor<T> {
         ByColor {
-            black: self.white,
             white: self.black,
+            black: self.white,
         }
+    }
+
+    #[deprecated = "Use ByColor::into_swapped()"]
+    #[must_use]
+    pub fn into_flipped(self) -> ByColor<T> {
+        self.into_swapped()
     }
 
     #[inline]

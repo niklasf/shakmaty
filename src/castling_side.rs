@@ -88,14 +88,14 @@ impl ops::BitXor<bool> for CastlingSide {
     type Output = CastlingSide;
 
     #[inline]
-    fn bitxor(self, flip: bool) -> CastlingSide {
-        CastlingSide::from_king_side(self.is_king_side() ^ flip)
+    fn bitxor(self, toggle: bool) -> CastlingSide {
+        CastlingSide::from_king_side(self.is_king_side() ^ toggle)
     }
 }
 
 impl ops::BitXorAssign<bool> for CastlingSide {
-    fn bitxor_assign(&mut self, flip: bool) {
-        *self = *self ^ flip;
+    fn bitxor_assign(&mut self, toggle: bool) {
+        *self = *self ^ toggle;
     }
 }
 
@@ -140,11 +140,17 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[must_use]
-    pub fn into_flipped(self) -> ByCastlingSide<T> {
+    pub fn into_swapped(self) -> ByCastlingSide<T> {
         ByCastlingSide {
             king_side: self.queen_side,
             queen_side: self.king_side,
         }
+    }
+
+    #[deprecated = "Use ByCastlingSide::into_swapped()"]
+    #[must_use]
+    pub fn into_flipped(self) -> ByCastlingSide<T> {
+        self.into_swapped()
     }
 
     #[inline]
