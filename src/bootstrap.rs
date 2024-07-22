@@ -2,7 +2,7 @@
 //! time.
 
 #[cfg(feature = "runtime-lut")]
-use std::boxed::Box;
+use alloc::boxed::Box;
 
 use crate::magics;
 

@@ -17,7 +17,7 @@ alloc = []
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
-runtime-lut = ["dep:lazy_static"]
+runtime-lut = ["alloc", "dep:lazy_static"]
 
 [[bench]]
 name = "benches"
