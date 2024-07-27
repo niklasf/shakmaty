@@ -56,7 +56,7 @@ use core::{fmt, str::FromStr};
 
 use crate::{CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square};
 
-/// Error when parsing a syntactially invalid SAN.
+/// Error when parsing a syntactically invalid SAN.
 #[derive(Clone, Debug)]
 pub struct ParseSanError;
 

@@ -116,7 +116,7 @@ bitflags! {
     ///
     /// A position is legal if it can be reached with a sequence of legal moves
     /// from the starting position. All legal positions are accepted.
-    /// However, it is not feasible (or even always deseriable) to reject all
+    /// However, it is not feasible (or even always desirable) to reject all
     /// illegal positions.
     ///
     /// Instead, the validity requirements here are chosen based on

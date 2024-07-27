@@ -15,7 +15,7 @@
 //!   default values of `8/8/8/8/8/8/8/8 w - - 0 1`.
 //! * Accepts multiple spaces and underscores (`_`) as separators between
 //!   FEN fields.
-//! * Accepts `0` as fulllmove number and uses `1` instead.
+//! * Accepts `0` as fullmove number and uses `1` instead.
 //!
 //! [`Fen`] and [`Epd`] implement [`FromStr`]:
 //!
@@ -36,7 +36,7 @@
 //! # Writing
 //!
 //! Writes X-FEN with `[q]` style for Crazyhouse pockets and `3+3` style
-//! for remainig checks in Three-Check.
+//! for remaining checks in Three-Check.
 //!
 //! [`Fen`] and [`Epd`] implement [`Display`]:
 //!
