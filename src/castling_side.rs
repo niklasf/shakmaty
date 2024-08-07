@@ -147,7 +147,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
-    #[deprecated = "Use ByCastlingSide::into_swapped()"]
+    #[deprecated = "Use `ByCastlingSide::into_swapped()`"]
     #[must_use]
     pub fn into_flipped(self) -> ByCastlingSide<T> {
         self.into_swapped()

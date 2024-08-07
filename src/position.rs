@@ -99,7 +99,7 @@ pub struct PlayError<P> {
 
 impl<P> PlayError<P> {
     /// Returns the unchanged position.
-    #[deprecated = "Use public field PlayError::position"]
+    #[deprecated = "Use public field `PlayError::position`"]
     pub fn into_inner(self) -> P {
         self.position
     }

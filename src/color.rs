@@ -246,7 +246,7 @@ impl<T> ByColor<T> {
         }
     }
 
-    #[deprecated = "Use ByColor::swap()"]
+    #[deprecated = "Use `ByColor::swap()`"]
     pub fn flip(&mut self) {
         self.swap();
     }
@@ -263,7 +263,7 @@ impl<T> ByColor<T> {
         }
     }
 
-    #[deprecated = "Use ByColor::into_swapped()"]
+    #[deprecated = "Use `ByColor::into_swapped()`"]
     #[must_use]
     pub fn into_flipped(self) -> ByColor<T> {
         self.into_swapped()

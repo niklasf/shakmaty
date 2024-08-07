@@ -72,10 +72,7 @@ use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 #[derive(Clone, Debug)]
 pub struct ParseUciMoveError;
 
-#[deprecated(
-    since = "0.28.0",
-    note = "use shakmaty::uci::ParseUciMoveError instead"
-)]
+#[deprecated = "Use `ParseUciMoveError` instead"]
 pub type ParseUciError = ParseUciMoveError;
 
 impl fmt::Display for ParseUciMoveError {
@@ -91,10 +88,7 @@ impl std::error::Error for ParseUciMoveError {}
 #[derive(Clone, Debug)]
 pub struct IllegalUciMoveError;
 
-#[deprecated(
-    since = "0.28.0",
-    note = "use shakmaty::uci::ParseUciMoveError instead"
-)]
+#[deprecated = "Use `ParseUciMoveError` instead"]
 pub type IllegalUciError = IllegalUciMoveError;
 
 impl fmt::Display for IllegalUciMoveError {
@@ -106,7 +100,7 @@ impl fmt::Display for IllegalUciMoveError {
 #[cfg(feature = "std")]
 impl std::error::Error for IllegalUciMoveError {}
 
-#[deprecated(since = "0.28.0", note = "use shakmaty::uci::UciMove instead")]
+#[deprecated = "Use `UciMove` instead"]
 pub type Uci = UciMove;
 
 /// A move as represented in the UCI protocol.
