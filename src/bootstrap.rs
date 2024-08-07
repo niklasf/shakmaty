@@ -9,6 +9,11 @@ const KNIGHT_DELTAS: [i32; 8] = [17, 15, 10, 6, -17, -15, -10, -6];
 const WHITE_PAWN_DELTAS: [i32; 2] = [7, 9];
 const BLACK_PAWN_DELTAS: [i32; 2] = [-7, -9];
 
+const FILE_DELTAS: [i32; 2] = [8, -8];
+const RANK_DELTAS: [i32; 2] = [1, -1];
+const DIAG_DELTAS: [i32; 2] = [9, -9];
+const ANTI_DIAG_DELTAS: [i32; 2] = [7, -7];
+
 const fn sliding_attacks(square: i32, occupied: u64, deltas: &[i32]) -> u64 {
     let mut attack = 0;
 
@@ -35,14 +40,18 @@ const fn sliding_attacks(square: i32, occupied: u64, deltas: &[i32]) -> u64 {
     attack
 }
 
-const fn init_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
+const fn init_sliding_attacks(occupied: u64, deltas: &[i32]) -> [u64; 64] {
     let mut table = [0; 64];
     let mut sq = 0;
     while sq < 64 {
-        table[sq] = sliding_attacks(sq as i32, !0, deltas);
+        table[sq] = sliding_attacks(sq as i32, occupied, deltas);
         sq += 1;
     }
     table
+}
+
+const fn init_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
+    init_sliding_attacks(!0, deltas)
 }
 
 pub static KNIGHT_ATTACKS: [u64; 64] = init_stepping_attacks(&KNIGHT_DELTAS);
@@ -50,7 +59,12 @@ pub static KING_ATTACKS: [u64; 64] = init_stepping_attacks(&KING_DELTAS);
 pub static WHITE_PAWN_ATTACKS: [u64; 64] = init_stepping_attacks(&WHITE_PAWN_DELTAS);
 pub static BLACK_PAWN_ATTACKS: [u64; 64] = init_stepping_attacks(&BLACK_PAWN_DELTAS);
 
-const fn init_rays() -> [[u64; 64]; 64] {
+pub static FILE_RANGE: [u64; 64] = init_sliding_attacks(0, &FILE_DELTAS);
+pub static RANK_RANGE: [u64; 64] = init_sliding_attacks(0, &RANK_DELTAS);
+pub static DIAG_RANGE: [u64; 64] = init_sliding_attacks(0, &DIAG_DELTAS);
+pub static ANTI_DIAG_RANGE: [u64; 64] = init_sliding_attacks(0, &ANTI_DIAG_DELTAS);
+
+pub static RAYS: [[u64; 64]; 64] = {
     let mut table = [[0; 64]; 64];
     let mut a = 0;
     while a < 64 {
@@ -86,11 +100,9 @@ const fn init_rays() -> [[u64; 64]; 64] {
         a += 1;
     }
     table
-}
+};
 
-pub static RAYS: [[u64; 64]; 64] = init_rays();
-
-const fn init_magics() -> [u64; 88772] {
+pub static ATTACKS: [u64; 88772] = {
     let mut table = [0; 88772];
     let mut square = 0;
     while square < 64 {
@@ -125,6 +137,4 @@ const fn init_magics() -> [u64; 88772] {
         square += 1;
     }
     table
-}
-
-pub static ATTACKS: [u64; 88772] = init_magics();
+};

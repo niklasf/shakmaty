@@ -24,6 +24,7 @@ use crate::{
     bitboard::Bitboard,
     bootstrap::{
         ATTACKS, BLACK_PAWN_ATTACKS, KING_ATTACKS, KNIGHT_ATTACKS, RAYS, WHITE_PAWN_ATTACKS,
+        DIAG_RANGE, ANTI_DIAG_RANGE, FILE_RANGE, RANK_RANGE,
     },
     color::Color,
     magics,
@@ -54,10 +55,35 @@ pub fn king_attacks(sq: Square) -> Bitboard {
     Bitboard(KING_ATTACKS[usize::from(sq)])
 }
 
+fn hyperbola(sq: Square, range: u64, occupied: Bitboard) -> Bitboard {
+    let forward = occupied & Bitboard(range);
+    let reverse = forward.flip_vertical();
+    let forward = Bitboard(forward.0.wrapping_sub(1 << usize::from(sq)));
+    let reverse = Bitboard(reverse.0.wrapping_sub(1 << usize::from(sq.flip_vertical())));
+    (forward ^ reverse.flip_vertical()) & range
+}
+fn file_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    hyperbola(sq, FILE_RANGE[usize::from(sq)], occupied)
+}
+fn rank_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    let range = RANK_RANGE[usize::from(sq)];
+    let forward = occupied & range;
+    let reverse = forward.rotate_180();
+    let forward = Bitboard(forward.0.wrapping_sub(1 << usize::from(sq)));
+    let reverse = Bitboard(reverse.0.wrapping_sub(1 << usize::from(sq.rotate_180())));
+    (forward ^ reverse.rotate_180()) & range
+}
+pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    hyperbola(sq, DIAG_RANGE[usize::from(sq)], occupied) ^ hyperbola(sq, ANTI_DIAG_RANGE[usize::from(sq)], occupied)
+}
+pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+    file_attacks(sq, occupied) ^ rank_attacks(sq, occupied)
+}
+
 static ROOK_MAGICS: [Magic; 64] = magics::ROOK_MAGICS;
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
-#[inline]
+/* #[inline]
 pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let m = ROOK_MAGICS[usize::from(sq)];
 
@@ -67,29 +93,6 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
     debug_assert!(idx < ATTACKS.len());
     Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
-}
-
-/// Gets the set of potential blocking squares for a rook on `sq`.
-///
-/// # Example
-///
-/// ```
-/// use shakmaty::{attacks, Square};
-///
-/// let mask = attacks::rook_mask(Square::E8);
-/// // 0 1 1 1 0 1 1 0
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 0 . . .
-///
-/// assert_eq!(mask.count(), 11);
-#[inline]
-pub fn rook_mask(sq: Square) -> Bitboard {
-    Bitboard(ROOK_MAGICS[usize::from(sq)].mask)
 }
 
 static BISHOP_MAGICS: [Magic; 64] = magics::BISHOP_MAGICS;
@@ -105,31 +108,7 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
     debug_assert!(idx < ATTACKS.len());
     Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
-}
-
-/// Gets the set of potential blocking squares for a bishop on `sq`.
-///
-/// # Example
-///
-/// ```
-/// use shakmaty::{attacks, Square};
-///
-/// let mask = attacks::bishop_mask(Square::D5);
-/// // 0 . . . . . 0 .
-/// // . 1 . . . 1 . .
-/// // . . 1 . 1 . . .
-/// // . . . 0 . . . .
-/// // . . 1 . 1 . . .
-/// // . 1 . . . 1 . .
-/// // 0 . . . . . 1 .
-/// // . . . . . . . 0
-///
-/// assert_eq!(mask.count(), 9);
-/// ```
-#[inline]
-pub fn bishop_mask(sq: Square) -> Bitboard {
-    Bitboard(BISHOP_MAGICS[usize::from(sq)].mask)
-}
+} */
 
 /// Looks up attacks for a queen on `sq` with `occupied` squares.
 #[inline]
