@@ -148,7 +148,20 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// ```
 #[inline]
 pub fn ray(a: Square, b: Square) -> Bitboard {
-    Bitboard(RAYS[usize::from(a)][usize::from(b)])
+    if a == b {
+        Bitboard::EMPTY
+    } else if a.rank() == b.rank() {
+        Bitboard::from_rank(a.rank())
+    } else if a.file() == b.file() {
+        Bitboard::from_file(a.file())
+    } else if Bitboard(DIAG_RANGE[usize::from(a)]).contains(b) {
+        Bitboard(DIAG_RANGE[usize::from(a)]).with(a)
+    } else if Bitboard(ANTI_DIAG_RANGE[usize::from(a)]).contains(b) {
+        Bitboard(ANTI_DIAG_RANGE[usize::from(a)]).with(a)
+    } else {
+        Bitboard::EMPTY
+    }
+    //Bitboard(RAYS[usize::from(a)][usize::from(b)])
 }
 
 /// The squares between the two squares (bounds not included), or an empty
