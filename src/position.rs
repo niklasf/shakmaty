@@ -95,13 +95,6 @@ pub struct PlayError<P> {
     pub position: P,
 }
 
-impl<P> PlayError<P> {
-    /// Returns the unchanged position.
-    pub fn into_inner(self) -> P {
-        self.position
-    }
-}
-
 impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "illegal move {:?} in {:?}", self.r#move, self.position)
