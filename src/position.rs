@@ -91,20 +91,20 @@ impl FromStr for Outcome {
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
 pub struct PlayError<P> {
-    m: Move,
-    inner: P,
+    pub r#move: Move,
+    pub position: P,
 }
 
 impl<P> PlayError<P> {
     /// Returns the unchanged position.
     pub fn into_inner(self) -> P {
-        self.inner
+        self.position
     }
 }
 
 impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "illegal move {:?} in {:?}", self.m, self.inner)
+        write!(f, "illegal move {:?} in {:?}", self.r#move, self.position)
     }
 }
 
@@ -620,8 +620,8 @@ pub trait Position {
             Ok(self)
         } else {
             Err(PlayError {
-                m: m.clone(),
-                inner: self,
+                r#move: m.clone(),
+                position: self,
             })
         }
     }
