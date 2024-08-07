@@ -60,6 +60,14 @@
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
 //!   for sensible types.
+//! * `runtime-lut`: Shakmaty uses internal tables to speed up its algorithms.
+//!   By default, these tables are generated at compile time and embedded within
+//!   the built binary. Some of these tables are quite large, so if you are
+//!   concerned about binary size, you can enable this feature to instead
+//!   have the tables generated at runtime. Tables will be initialised the
+//!   first time shakmaty needs them, or if you would like predictability
+//!   you can manually trigger initialization with the [`init_tables`]
+//!   function.
 
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.27.1")]
@@ -100,6 +108,7 @@ pub mod variant;
 
 pub use bitboard::Bitboard;
 pub use board::Board;
+pub use bootstrap::init_tables;
 pub use castling_side::{ByCastlingSide, CastlingSide};
 pub use color::{ByColor, Color, ParseColorError};
 pub use movelist::MoveList;
