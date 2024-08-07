@@ -91,12 +91,15 @@ impl FromStr for Outcome {
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
 pub struct PlayError<P> {
+    /// The move that was not played.
     pub m: Move,
+    /// The unchanged position.
     pub position: P,
 }
 
 impl<P> PlayError<P> {
     /// Returns the unchanged position.
+    #[deprecated = "Use public field PlayError::position"]
     pub fn into_inner(self) -> P {
         self.position
     }
