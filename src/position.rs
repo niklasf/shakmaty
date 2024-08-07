@@ -91,7 +91,7 @@ impl FromStr for Outcome {
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
 pub struct PlayError<P> {
-    pub r#move: Move,
+    pub m: Move,
     pub position: P,
 }
 
@@ -104,7 +104,7 @@ impl<P> PlayError<P> {
 
 impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "illegal move {:?} in {:?}", self.r#move, self.position)
+        write!(f, "illegal move {:?} in {:?}", self.m, self.position)
     }
 }
 
@@ -620,7 +620,7 @@ pub trait Position {
             Ok(self)
         } else {
             Err(PlayError {
-                r#move: m.clone(),
+                m: m.clone(),
                 position: self,
             })
         }
