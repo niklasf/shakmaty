@@ -101,6 +101,13 @@ fn bench_zobrist_hash() -> Zobrist64 {
     black_box(Chess::default()).zobrist_hash(EnPassantMode::Legal)
 }
 
+fn bench_fen_roundtrip() -> String {
+    black_box("rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7")
+        .parse::<Fen>()
+        .expect("valid fen")
+        .to_string()
+}
+
 iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
@@ -110,4 +117,5 @@ iai::main!(
     bench_san_candidates,
     bench_play_sans,
     bench_zobrist_hash,
+    bench_fen_roundtrip
 );
