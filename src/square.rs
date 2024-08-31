@@ -8,6 +8,7 @@ use core::{
 };
 
 use crate::util::out_of_range_error;
+use crate::util::AppendAscii;
 
 macro_rules! try_from_int_impl {
     ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
@@ -601,6 +602,11 @@ impl Square {
             self.rank().distance(other.rank()),
         )
     }
+
+    pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        f.append_ascii(self.file().char())?;
+        f.append_ascii(self.rank().char())
+    }
 }
 
 mod all_squares {
@@ -650,8 +656,7 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_char(self.file().char())?;
-        f.write_char(self.rank().char())
+        self.append_to(f)
     }
 }
 

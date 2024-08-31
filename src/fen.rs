@@ -50,22 +50,23 @@
 //! ```
 
 use core::{
-    char, fmt,
-    fmt::{Display, Write as _},
+    char,
+    fmt::{self, Display},
     num::NonZeroU32,
     str::FromStr,
 };
 
+use crate::util::AppendAscii;
 use crate::{
     Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
     Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
 };
 
-fn fmt_castling(
-    f: &mut fmt::Formatter<'_>,
+fn append_castling<W: AppendAscii>(
+    f: &mut W,
     board: &Board,
     castling_rights: Bitboard,
-) -> fmt::Result {
+) -> Result<(), W::Error> {
     let mut empty = true;
 
     for color in Color::ALL {
@@ -76,7 +77,7 @@ fn fmt_castling(
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
         for rook in (castling_rights & color.backrank()).into_iter().rev() {
-            f.write_char(
+            f.append_ascii(
                 if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
                     color.fold_wb('Q', 'q')
                 } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
@@ -91,42 +92,45 @@ fn fmt_castling(
     }
 
     if empty {
-        f.write_char('-')?;
+        f.append_ascii('-')?;
     }
 
     Ok(())
 }
 
-fn fmt_pockets(f: &mut fmt::Formatter<'_>, pockets: &ByColor<ByRole<u8>>) -> fmt::Result {
-    f.write_char('[')?;
+fn append_pockets<W: AppendAscii>(
+    f: &mut W,
+    pockets: &ByColor<ByRole<u8>>,
+) -> Result<(), W::Error> {
+    f.append_ascii('[')?;
     for color in Color::ALL {
         for role in Role::ALL {
             let piece = Piece { color, role };
             for _ in 0..*pockets.piece(piece) {
-                f.write_char(piece.char())?;
+                f.append_ascii(piece.char())?;
             }
         }
     }
-    f.write_char(']')
+    f.append_ascii(']')
 }
 
-fn fmt_epd(f: &mut fmt::Formatter<'_>, setup: &Setup) -> fmt::Result {
-    setup.board.board_fen(setup.promoted).fmt(f)?;
+fn append_epd<W: AppendAscii>(f: &mut W, setup: &Setup) -> Result<(), W::Error> {
+    setup.board.board_fen(setup.promoted).append_to(f)?;
     if let Some(ref pockets) = setup.pockets {
-        fmt_pockets(f, pockets)?;
+        append_pockets(f, pockets)?;
     }
-    f.write_char(' ')?;
-    f.write_char(setup.turn.char())?;
-    f.write_char(' ')?;
-    fmt_castling(f, &setup.board, setup.castling_rights)?;
-    f.write_char(' ')?;
+    f.append_ascii(' ')?;
+    f.append_ascii(setup.turn.char())?;
+    f.append_ascii(' ')?;
+    append_castling(f, &setup.board, setup.castling_rights)?;
+    f.append_ascii(' ')?;
     match setup.ep_square {
-        Some(ref ep_square) => Display::fmt(ep_square, f)?,
-        None => f.write_char('-')?,
+        Some(ref ep_square) => ep_square.append_to(f)?,
+        None => f.append_ascii('-')?,
     }
     if let Some(ref remaining_checks) = setup.remaining_checks {
-        f.write_char(' ')?;
-        Display::fmt(remaining_checks, f)?;
+        f.append_ascii(' ')?;
+        remaining_checks.append_to(f)?;
     }
     Ok(())
 }
@@ -272,7 +276,7 @@ impl FromStr for Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.board_fen(Bitboard(0)).fmt(f)
+        self.board_fen(Bitboard(0)).append_to(f)
     }
 }
 
@@ -286,8 +290,8 @@ pub struct BoardFen<'b> {
     promoted: Bitboard,
 }
 
-impl<'b> Display for BoardFen<'b> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl BoardFen<'_> {
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
         for rank in Rank::ALL.into_iter().rev() {
             let mut empty = 0;
 
@@ -296,11 +300,11 @@ impl<'b> Display for BoardFen<'b> {
 
                 empty = if let Some(piece) = self.board.piece_at(square) {
                     if empty > 0 {
-                        f.write_char(char::from_digit(empty, 10).expect("8 files only"))?;
+                        f.append_ascii(char::from_digit(empty, 10).expect("8 files only"))?;
                     }
-                    f.write_char(piece.char())?;
+                    f.append_ascii(piece.char())?;
                     if self.promoted.contains(square) {
-                        f.write_char('~')?;
+                        f.append_ascii('~')?;
                     }
                     0
                 } else {
@@ -309,15 +313,21 @@ impl<'b> Display for BoardFen<'b> {
             }
 
             if empty > 0 {
-                f.write_char(char::from_digit(empty, 10).expect("8 files only"))?;
+                f.append_ascii(char::from_digit(empty, 10).expect("8 files only"))?;
             }
 
             if rank > Rank::First {
-                f.write_char('/')?;
+                f.append_ascii('/')?;
             }
         }
 
         Ok(())
+    }
+}
+
+impl Display for BoardFen<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.append_to(f)
     }
 }
 
@@ -505,6 +515,14 @@ impl Fen {
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.0, mode)
     }
+
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        append_epd(f, &self.0)?;
+        f.append_ascii(' ')?;
+        f.append_int(self.0.halfmoves)?;
+        f.append_ascii(' ')?;
+        f.append_int(u32::from(self.0.fullmoves))
+    }
 }
 
 impl From<Setup> for Fen {
@@ -529,8 +547,7 @@ impl FromStr for Fen {
 
 impl Display for Fen {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt_epd(f, &self.0)?;
-        write!(f, " {} {}", self.0.halfmoves, self.0.fullmoves)
+        self.append_to(f)
     }
 }
 
@@ -571,6 +588,10 @@ impl Epd {
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.into_setup(), mode)
     }
+
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        append_epd(f, &self.0)
+    }
 }
 
 impl From<Setup> for Epd {
@@ -595,7 +616,7 @@ impl FromStr for Epd {
 
 impl Display for Epd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt_epd(f, &self.0)
+        self.append_to(f)
     }
 }
 
