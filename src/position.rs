@@ -47,15 +47,19 @@ impl Outcome {
             _ => return Err(ParseOutcomeError::Invalid),
         })
     }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Outcome::Decisive { winner: White } => "1-0",
+            Outcome::Decisive { winner: Black } => "0-1",
+            Outcome::Draw => "1/2-1/2",
+        }
+    }
 }
 
 impl fmt::Display for Outcome {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match *self {
-            Outcome::Decisive { winner: White } => "1-0",
-            Outcome::Decisive { winner: Black } => "0-1",
-            Outcome::Draw => "1/2-1/2",
-        })
+        f.write_str(self.as_str())
     }
 }
 

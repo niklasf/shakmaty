@@ -8,7 +8,7 @@ use crate::{
     color::{ByColor, Color},
     role::Role,
     square::Square,
-    util::out_of_range_error,
+    util::{out_of_range_error, AppendAscii},
 };
 
 /// A piece with [`Color`] and [`Role`].
@@ -370,8 +370,16 @@ macro_rules! try_remaining_checks_from_int_impl {
 
 try_remaining_checks_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
+impl ByColor<RemainingChecks> {
+    pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        f.append_u32(self.white.0)?;
+        f.append_ascii('+')?;
+        f.append_u32(self.black.0)
+    }
+}
+
 impl Display for ByColor<RemainingChecks> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}+{}", self.white.0, self.black.0)
+        self.append_to(f)
     }
 }

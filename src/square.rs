@@ -7,7 +7,7 @@ use core::{
     str,
 };
 
-use crate::util::out_of_range_error;
+use crate::util::{out_of_range_error, AppendAscii};
 
 macro_rules! try_from_int_impl {
     ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {
@@ -601,6 +601,26 @@ impl Square {
             self.rank().distance(other.rank()),
         )
     }
+
+    pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        f.append_ascii(self.file().char())?;
+        f.append_ascii(self.rank().char())
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
+    }
 }
 
 mod all_squares {
@@ -650,8 +670,7 @@ impl str::FromStr for Square {
 
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_char(self.file().char())?;
-        f.write_char(self.rank().char())
+        self.append_to(f)
     }
 }
 
