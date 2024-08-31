@@ -102,10 +102,12 @@ fn bench_zobrist_hash() -> Zobrist64 {
 }
 
 fn bench_fen_roundtrip() -> String {
+    let mut buffer = String::new();
     black_box("rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7")
         .parse::<Fen>()
         .expect("valid fen")
-        .to_string()
+        .append_to_string(&mut buffer);
+    buffer
 }
 
 iai::main!(

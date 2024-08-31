@@ -523,6 +523,11 @@ impl Fen {
         f.append_ascii(' ')?;
         f.append_int(u32::from(self.0.fullmoves))
     }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
 }
 
 impl From<Setup> for Fen {
