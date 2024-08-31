@@ -39,7 +39,7 @@ fn test_zobrist_reference() {
             pos.zobrist_hash::<Zobrist128>(EnPassantMode::Legal),
             record.zobrist,
             "line {}",
-            i + 1
+            i + 2
         )
     }
 }

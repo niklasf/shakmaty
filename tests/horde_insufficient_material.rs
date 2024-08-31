@@ -31,7 +31,7 @@ fn white_insufficient_material_in_horde() {
             "{} with comment {:?} in line {}",
             record.fen,
             record.comment,
-            i + 1
+            i + 2
         );
     }
 }
