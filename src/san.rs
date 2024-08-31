@@ -54,7 +54,9 @@
 
 use core::{fmt, str::FromStr};
 
-use crate::{CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square};
+use crate::{
+    util::AppendAscii, CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square,
+};
 
 /// Error when parsing a syntactically invalid SAN.
 #[derive(Clone, Debug)]
@@ -455,6 +457,76 @@ impl San {
             San::Null => false,
         }
     }
+
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        match *self {
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            } => {
+                if role != Role::Pawn {
+                    f.append_ascii(role.upper_char())?;
+                }
+                if let Some(file) = file {
+                    f.append_ascii(file.char())?;
+                }
+                if let Some(rank) = rank {
+                    f.append_ascii(rank.char())?;
+                }
+                if capture {
+                    f.append_ascii('x')?;
+                }
+                to.append_to(f)?;
+                if let Some(promotion) = promotion {
+                    f.append_ascii('=')?;
+                    f.append_ascii(promotion.upper_char())?;
+                }
+            }
+            San::Castle(CastlingSide::KingSide) => {
+                f.append_ascii('O')?;
+                f.append_ascii('-')?;
+                f.append_ascii('O')?;
+            }
+            San::Castle(CastlingSide::QueenSide) => {
+                f.append_ascii('O')?;
+                f.append_ascii('-')?;
+                f.append_ascii('O')?;
+                f.append_ascii('-')?;
+                f.append_ascii('O')?;
+            }
+            San::Put { role, to } => {
+                if role != Role::Pawn {
+                    f.append_ascii(role.upper_char())?;
+                }
+                f.append_ascii('@')?;
+                to.append_to(f)?;
+            }
+            San::Null => {
+                f.append_ascii('-')?;
+                f.append_ascii('-')?;
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
+    }
 }
 
 impl FromStr for San {
@@ -467,42 +539,7 @@ impl FromStr for San {
 
 impl fmt::Display for San {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            San::Normal {
-                role,
-                file,
-                rank,
-                capture,
-                to,
-                promotion,
-            } => {
-                if role != Role::Pawn {
-                    write!(f, "{}", role.upper_char())?;
-                }
-                if let Some(file) = file {
-                    write!(f, "{}", file.char())?;
-                }
-                if let Some(rank) = rank {
-                    write!(f, "{}", rank.char())?;
-                }
-                if capture {
-                    write!(f, "x")?;
-                }
-                write!(f, "{to}")?;
-                if let Some(promotion) = promotion {
-                    write!(f, "={}", promotion.upper_char())?;
-                }
-                Ok(())
-            }
-            San::Castle(CastlingSide::KingSide) => write!(f, "O-O"),
-            San::Castle(CastlingSide::QueenSide) => write!(f, "O-O-O"),
-            San::Put {
-                role: Role::Pawn,
-                to,
-            } => write!(f, "@{to}"),
-            San::Put { role, to } => write!(f, "{}@{}", role.upper_char(), to),
-            San::Null => write!(f, "--"),
-        }
+        self.append_to(f)
     }
 }
 
@@ -606,6 +643,29 @@ impl SanPlus {
             },
         }
     }
+
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        self.san.append_to(f)?;
+        if let Some(suffix) = self.suffix {
+            f.append_ascii(suffix.char())?;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
+    }
 }
 
 impl FromStr for SanPlus {
@@ -618,11 +678,7 @@ impl FromStr for SanPlus {
 
 impl fmt::Display for SanPlus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.san)?;
-        if let Some(suffix) = self.suffix {
-            write!(f, "{suffix}")?;
-        }
-        Ok(())
+        self.append_to(f)
     }
 }
 
