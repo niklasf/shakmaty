@@ -114,6 +114,7 @@ fn append_pockets<W: AppendAscii>(
 }
 
 fn append_epd<W: AppendAscii>(f: &mut W, setup: &Setup) -> Result<(), W::Error> {
+    f.reserve(21);
     setup.board.board_fen(setup.promoted).append_to(f)?;
     if let Some(ref pockets) = setup.pockets {
         append_pockets(f, pockets)?;
