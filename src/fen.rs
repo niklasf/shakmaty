@@ -296,8 +296,7 @@ impl<'b> Display for BoardFen<'b> {
 
                 empty = if let Some(piece) = self.board.piece_at(square) {
                     if empty > 0 {
-                        let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
-                        f.write_char(ch)?;
+                        f.write_char(char::from_digit(empty, 10).expect("8 files only"))?;
                     }
                     f.write_char(piece.char())?;
                     if self.promoted.contains(square) {
@@ -310,8 +309,7 @@ impl<'b> Display for BoardFen<'b> {
             }
 
             if empty > 0 {
-                let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
-                f.write_char(ch)?;
+                f.write_char(char::from_digit(empty, 10).expect("8 files only"))?;
             }
 
             if rank > Rank::First {
