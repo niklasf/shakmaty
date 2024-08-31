@@ -295,27 +295,24 @@ impl BoardFen<'_> {
         f.reserve(15);
 
         for rank in Rank::ALL.into_iter().rev() {
-            let mut empty = 0;
+            let mut prev_file = -1;
 
-            for file in File::ALL {
-                let square = Square::from_coords(file, rank);
+            for square in self.board.occupied() & rank {
+                let empty = i32::from(square.file()) - prev_file - 1;
+                if empty > 0 {
+                    f.append_ascii(char::from(b'0' + empty as u8))?;
+                }
+                prev_file = i32::from(square.file());
 
-                empty = if let Some(piece) = self.board.piece_at(square) {
-                    if empty > 0 {
-                        f.append_ascii(char::from_digit(empty, 10).expect("8 files only"))?;
-                    }
-                    f.append_ascii(piece.char())?;
-                    if self.promoted.contains(square) {
-                        f.append_ascii('~')?;
-                    }
-                    0
-                } else {
-                    empty + 1
-                };
+                f.append_ascii(self.board.piece_at(square).expect("piece").char())?;
+                if self.promoted.contains(square) {
+                    f.append_ascii('~')?;
+                }
             }
 
+            let empty = i32::from(File::H) - prev_file;
             if empty > 0 {
-                f.append_ascii(char::from_digit(empty, 10).expect("8 files only"))?;
+                f.append_ascii(char::from(b'0' + empty as u8))?;
             }
 
             if rank > Rank::First {
