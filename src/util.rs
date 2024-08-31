@@ -1,6 +1,4 @@
-use core::fmt;
-use core::fmt::Write as _;
-use core::{convert::TryFrom as _, num::TryFromIntError};
+use core::{convert::TryFrom as _, fmt, fmt::Write as _, num::TryFromIntError};
 
 pub(crate) fn out_of_range_error() -> TryFromIntError {
     // This is a hack to construct TryFromIntError despite its private
@@ -27,7 +25,7 @@ pub(crate) trait AppendAscii {
     fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error>;
     fn reserve(&mut self, additional: usize);
 
-    fn append_int(&mut self, n: u32) -> Result<(), Self::Error> {
+    fn append_u32(&mut self, n: u32) -> Result<(), Self::Error> {
         if n >= 1000_000_000 {
             self.append_ascii(char::from(b'0' + ((n / 1000_000_000) % 10) as u8))?;
         }
@@ -94,5 +92,20 @@ impl AppendAscii for alloc::vec::Vec<u8> {
     fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error> {
         self.push(ascii_char as u8);
         Ok(())
+    }
+}
+
+#[cfg(feature = "std")]
+pub(crate) struct WriteAscii<W>(pub W);
+
+#[cfg(feature = "std")]
+impl<W: std::io::Write> AppendAscii for WriteAscii<W> {
+    type Error = std::io::Error;
+
+    fn reserve(&mut self, _additional: usize) {}
+
+    fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error> {
+        let buf = [ascii_char as u8];
+        self.0.write_all(&buf[..])
     }
 }

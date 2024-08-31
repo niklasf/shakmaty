@@ -56,10 +56,9 @@ use core::{
     str::FromStr,
 };
 
-use crate::util::AppendAscii;
 use crate::{
-    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
-    Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
+    util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
+    FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
 };
 
 fn append_castling<W: AppendAscii>(
@@ -292,6 +291,8 @@ pub struct BoardFen<'b> {
 
 impl BoardFen<'_> {
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        f.reserve(15);
+
         for rank in Rank::ALL.into_iter().rev() {
             let mut empty = 0;
 
@@ -322,6 +323,21 @@ impl BoardFen<'_> {
         }
 
         Ok(())
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
@@ -519,14 +535,24 @@ impl Fen {
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
         append_epd(f, &self.0)?;
         f.append_ascii(' ')?;
-        f.append_int(self.0.halfmoves)?;
+        f.append_u32(self.0.halfmoves)?;
         f.append_ascii(' ')?;
-        f.append_int(u32::from(self.0.fullmoves))
+        f.append_u32(u32::from(self.0.fullmoves))
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_to_string(self, s: &mut alloc::string::String) {
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
         let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
@@ -596,6 +622,21 @@ impl Epd {
 
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
         append_epd(f, &self.0)
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
