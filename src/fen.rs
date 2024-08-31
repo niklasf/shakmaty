@@ -307,15 +307,15 @@ impl<'b> Display for BoardFen<'b> {
                 } else {
                     empty + 1
                 };
+            }
 
-                if file == File::H && empty > 0 {
-                    let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
-                    f.write_char(ch)?;
-                }
+            if empty > 0 {
+                let ch = char::from_digit(empty, 10).ok_or(fmt::Error)?;
+                f.write_char(ch)?;
+            }
 
-                if file == File::H && rank > Rank::First {
-                    f.write_char('/')?;
-                }
+            if rank > Rank::First {
+                f.write_char('/')?;
             }
         }
 
