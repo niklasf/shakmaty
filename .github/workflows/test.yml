@@ -25,14 +25,24 @@ jobs:
             flags: "-Z minimal-versions --all-features"
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get update && sudo apt-get install -y valgrind
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.toolchain }}
       - run: cargo test --no-default-features ${{ matrix.flags }}
       - run: cargo doc --no-default-features ${{ matrix.flags }}
-      - run: cargo bench --no-default-features ${{ matrix.flags }}
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y valgrind
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo bench
+  check_fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
       - run: cargo check --manifest-path fuzz/Cargo.toml
   check_no_std:
     runs-on: ubuntu-latest
