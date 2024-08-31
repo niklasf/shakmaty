@@ -66,7 +66,7 @@
 
 use core::{fmt, str::FromStr};
 
-use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
+use crate::{util::AppendAscii, CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
 
 /// Error when parsing an invalid UCI move.
 #[derive(Clone, Debug)]
@@ -128,20 +128,7 @@ impl FromStr for UciMove {
 
 impl fmt::Display for UciMove {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            UciMove::Normal {
-                from,
-                to,
-                promotion: None,
-            } => write!(f, "{from}{to}"),
-            UciMove::Normal {
-                from,
-                to,
-                promotion: Some(promotion),
-            } => write!(f, "{}{}{}", from, to, promotion.char()),
-            UciMove::Put { to, role } => write!(f, "{}@{}", role.upper_char(), to),
-            UciMove::Null => f.write_str("0000"),
-        }
+        self.append_to(f)
     }
 }
 
@@ -352,6 +339,49 @@ impl UciMove {
         } else {
             Err(IllegalUciMoveError)
         }
+    }
+
+    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+        match *self {
+            UciMove::Normal {
+                from,
+                to,
+                promotion,
+            } => {
+                from.append_to(f)?;
+                to.append_to(f)?;
+                if let Some(promotion) = promotion {
+                    f.append_ascii(promotion.char())?;
+                }
+            }
+            UciMove::Put { role, to } => {
+                f.append_ascii(role.upper_char())?;
+                f.append_ascii('@')?;
+                to.append_to(f)?;
+            }
+            UciMove::Null => {
+                f.append_ascii('0')?;
+                f.append_ascii('0')?;
+                f.append_ascii('0')?;
+                f.append_ascii('0')?;
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+        let _ = self.append_to(s);
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+        let _ = self.append_to(buf);
+    }
+
+    #[cfg(feature = "std")]
+    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+        self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
