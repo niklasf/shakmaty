@@ -26,8 +26,8 @@ pub(crate) trait AppendAscii {
     fn reserve(&mut self, additional: usize);
 
     fn append_u32(&mut self, n: u32) -> Result<(), Self::Error> {
-        if n >= 1000_000_000 {
-            self.append_ascii(char::from(b'0' + ((n / 1000_000_000) % 10) as u8))?;
+        if n >= 1_000_000_000 {
+            self.append_ascii(char::from(b'0' + ((n / 1_000_000_000) % 10) as u8))?;
         }
         if n >= 100_000_000 {
             self.append_ascii(char::from(b'0' + ((n / 100_000_000) % 10) as u8))?;
@@ -35,8 +35,8 @@ pub(crate) trait AppendAscii {
         if n >= 10_000_000 {
             self.append_ascii(char::from(b'0' + ((n / 10_000_000) % 10) as u8))?;
         }
-        if n >= 1000_000 {
-            self.append_ascii(char::from(b'0' + ((n / 1000_000) % 10) as u8))?;
+        if n >= 1_000_000 {
+            self.append_ascii(char::from(b'0' + ((n / 1_000_000) % 10) as u8))?;
         }
         if n >= 100_000 {
             self.append_ascii(char::from(b'0' + ((n / 100_000) % 10) as u8))?;
@@ -44,8 +44,8 @@ pub(crate) trait AppendAscii {
         if n >= 10_000 {
             self.append_ascii(char::from(b'0' + ((n / 10_000) % 10) as u8))?;
         }
-        if n >= 1000 {
-            self.append_ascii(char::from(b'0' + ((n / 1000) % 10) as u8))?;
+        if n >= 1_000 {
+            self.append_ascii(char::from(b'0' + ((n / 1_000) % 10) as u8))?;
         }
         if n >= 100 {
             self.append_ascii(char::from(b'0' + ((n / 100) % 10) as u8))?;
