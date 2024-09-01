@@ -633,7 +633,8 @@ pub trait Position {
         }
     }
 
-    /// Swap turns. This is sometimes called "playing a null move".
+    /// Swap turns and discard en passant rights. This is sometimes called
+    /// "playing a null move".
     ///
     /// # Errors
     ///

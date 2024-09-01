@@ -110,9 +110,29 @@ impl Setup {
         }
     }
 
+    /// Swap turns and discard en passant rights. This is sometimes called
+    /// "playing a null move".
     pub fn swap_turn(&mut self) {
         self.turn = !self.turn;
         self.ep_square = None;
+    }
+
+    /// Mirror vertically and swap turns and all piece colors, so that the
+    /// resulting setup is equivalent modulo color.
+    ///
+    /// Move counters remain unchanged.
+    pub fn mirror(&mut self) {
+        self.board.mirror();
+        self.promoted = self.promoted.flip_vertical();
+        if let Some(pockets) = &mut self.pockets {
+            pockets.swap();
+        }
+        self.turn = !self.turn;
+        self.castling_rights = self.castling_rights.flip_vertical();
+        self.ep_square = self.ep_square.map(Square::flip_vertical);
+        if let Some(remaining_checks) = &mut self.remaining_checks {
+            remaining_checks.swap();
+        }
     }
 
     pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
