@@ -117,6 +117,11 @@ impl Setup {
         self.ep_square = None;
     }
 
+    pub fn into_swapped_turn(mut self) -> Setup {
+        self.swap_turn();
+        self
+    }
+
     /// Mirror vertically and swap turns and all piece colors, so that the
     /// resulting setup is equivalent modulo color.
     ///
@@ -133,6 +138,11 @@ impl Setup {
         if let Some(remaining_checks) = &mut self.remaining_checks {
             remaining_checks.swap();
         }
+    }
+
+    pub fn into_mirrored(mut self) -> Setup {
+        self.mirror();
+        self
     }
 
     pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {

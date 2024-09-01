@@ -368,11 +368,21 @@ impl Board {
         self.by_color.swap();
     }
 
+    pub fn into_swapped_colors(mut self) -> Board {
+        self.swap_colors();
+        self
+    }
+
     /// Mirror the board vertically and swap piece colors, so that the resulting
     /// board is equivalent modulo color.
     pub fn mirror(&mut self) {
         self.flip_vertical();
         self.swap_colors();
+    }
+
+    pub fn into_mirrored(mut self) -> Board {
+        self.mirror();
+        self
     }
 
     pub fn pop_front(&mut self) -> Option<(Square, Piece)> {
