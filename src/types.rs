@@ -157,6 +157,37 @@ impl Move {
             }
         )
     }
+
+    #[must_use]
+    pub fn to_mirrored(&self) -> Move {
+        match *self {
+            Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion,
+            } => Move::Normal {
+                role,
+                from: from.flip_vertical(),
+                capture,
+                to: to.flip_vertical(),
+                promotion,
+            },
+            Move::EnPassant { from, to } => Move::EnPassant {
+                from: from.flip_vertical(),
+                to: to.flip_vertical(),
+            },
+            Move::Castle { king, rook } => Move::Castle {
+                king: king.flip_vertical(),
+                rook: rook.flip_vertical(),
+            },
+            Move::Put { role, to } => Move::Put {
+                role,
+                to: to.flip_vertical(),
+            },
+        }
+    }
 }
 
 impl Display for Move {

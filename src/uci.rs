@@ -341,6 +341,26 @@ impl UciMove {
         }
     }
 
+    #[must_use]
+    pub fn to_mirrored(&self) -> UciMove {
+        match *self {
+            UciMove::Normal {
+                from,
+                to,
+                promotion,
+            } => UciMove::Normal {
+                from: from.flip_vertical(),
+                to: to.flip_vertical(),
+                promotion,
+            },
+            UciMove::Put { role, to } => UciMove::Put {
+                role,
+                to: to.flip_vertical(),
+            },
+            UciMove::Null => UciMove::Null,
+        }
+    }
+
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
         match *self {
             UciMove::Normal {
