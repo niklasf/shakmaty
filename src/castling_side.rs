@@ -7,6 +7,7 @@ use crate::{
 
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum CastlingSide {
     KingSide,
     QueenSide,
@@ -101,6 +102,7 @@ impl ops::BitXorAssign<bool> for CastlingSide {
 
 /// Container with values for each [`CastlingSide`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[repr(C)]
 pub struct ByCastlingSide<T> {
     pub king_side: T,

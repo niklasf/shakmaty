@@ -44,10 +44,11 @@ pub trait ZobristValue: BitXorAssign + Default + Copy {
 
 macro_rules! zobrist_value_impl {
     ($t:ident, $proxy:ty, $bits:literal) => {
-        #[derive(Default, Copy, Clone, Eq)]
         #[doc = "A [`ZobristValue`] with "]
         #[doc = stringify!($bits)]
         #[doc = " bits."]
+        #[derive(Default, Copy, Clone, Eq)]
+        #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
         pub struct $t(pub $proxy);
 
         impl PartialEq for $t {

@@ -17,6 +17,7 @@ use crate::{
 
 /// Discriminant of [`VariantPosition`].
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy, Default)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum Variant {
     /// See [`Chess`].
     #[default]

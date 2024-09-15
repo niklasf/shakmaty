@@ -12,6 +12,7 @@ use crate::{
 /// `White` or `Black`.
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum Color {
     Black = 0,
     White = 1,
@@ -213,6 +214,7 @@ try_color_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Color`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct ByColor<T> {
     pub black: T,
     pub white: T,
