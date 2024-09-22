@@ -1,5 +1,18 @@
 # Changelog for shakmaty
 
+## v0.27.2
+
+- Significantly optimize FEN writing. Add
+  `append_to_string()`,
+  `append_ascii_to()`,
+  and `write_ascii_to()`
+  for types `Square`, `BoardFen`, `Fen`, `Epd`, `San`, `SanPlus`, and `UciMove`.
+- Add `Setup::mirror()` and `into_mirrored()`, add `UciMove::to_mirrored()`,
+  add `Move::to_mirrored()`.
+- Rename `{ByColor,ByCastlingSide}::into_flipped()` to `into_swapped()` (with
+  deprecated alias remaining).
+- Make fields of `PlayError` public. Deprecate `PlayError::into_inner()`.
+
 ## v0.27.1
 
 - Fix overly specific SAN disambiguation where rank would suffice.
