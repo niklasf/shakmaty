@@ -1042,6 +1042,15 @@ pub(crate) mod variant {
 
     use super::*;
 
+    enum KingTag {}
+
+    impl Stepper for KingTag {
+        const ROLE: Role = Role::King;
+        fn attacks(from: Square) -> Bitboard {
+            attacks::king_attacks(from)
+        }
+    }
+
     /// An Atomic Chess position.
     #[derive(Clone, Debug)]
     pub struct Atomic {
@@ -3190,19 +3199,11 @@ enum KnightTag {}
 enum BishopTag {}
 enum RookTag {}
 enum QueenTag {}
-enum KingTag {}
 
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
     fn attacks(from: Square) -> Bitboard {
         attacks::knight_attacks(from)
-    }
-}
-
-impl Stepper for KingTag {
-    const ROLE: Role = Role::King;
-    fn attacks(from: Square) -> Bitboard {
-        attacks::king_attacks(from)
     }
 }
 
