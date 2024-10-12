@@ -108,15 +108,18 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     /// Add all relevant tables from a directory.
     ///
-    /// Tables are selected by filename, e.g. `KQvKP.rtbz`. The files are not
-    /// actually opened. This happens lazily when probing.
+    /// Tables are selected by filename, e.g., `KQvKP.rtbz`.
     ///
-    /// Traverses symbolic links.
+    /// The files are not actually opened. This happens lazily when probing.
+    /// Eventually all files may be opened, so configure resource limits like
+    /// `RLIMIT_NOFILE` accordingly.
     ///
-    /// Note that probing generally requires tables for the specific material
+    /// Probing generally requires tables for the specific material
     /// composition, as well as material compositions that are transitively
     /// reachable by captures and promotions. These are sometimes distributed
     /// separately, so make sure to add tables from all relevant directories.
+    ///
+    /// Traverses symbolic links.
     ///
     /// Returns the number of added table files.
     ///
