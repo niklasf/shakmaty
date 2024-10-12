@@ -35,9 +35,9 @@ def deps(variant, suite, target, extra_endgames=[]):
 
             if variant == "chess":
                 if len(table) <= 6:
-                    print("{}/3-4-5/{}.rtbw".format(base, table), file=out)
+                    print("{}/3-4-5-wdl/{}.rtbw".format(base, table), file=out)
                     if also_dtz:
-                        print("{}/3-4-5/{}.rtbz".format(base, table), file=out)
+                        print("{}/3-4-5-dtz/{}.rtbz".format(base, table), file=out)
                 elif len(table) <= 7:
                     print("{}/6-wdl/{}.rtbw".format(base, table), file=out)
                     if also_dtz:
