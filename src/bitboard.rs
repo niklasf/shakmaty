@@ -168,6 +168,18 @@ impl Bitboard {
         }
     }
 
+    /// Adds `square`, returning whether the square was newly added.
+    #[must_use = "use Bitboard::add() if return value is not needed"]
+    #[inline]
+    pub fn insert(&mut self, square: Square) -> bool {
+        if self.contains(square) {
+            false
+        } else {
+            self.add(square);
+            true
+        }
+    }
+
     /// Clears all squares.
     #[inline]
     pub fn clear(&mut self) {
