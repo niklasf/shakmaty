@@ -219,7 +219,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if let Some((path, table)) = self
             .wdl
             .get(key)
-            .or_else(|| self.wdl.get(&key.clone().into_flipped()))
+            .or_else(|| self.wdl.get(&key.clone().into_swapped()))
         {
             table
                 .get_or_try_init(|| WdlTable::new(self.filesystem.open(path)?, key))
@@ -236,7 +236,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         if let Some((path, table)) = self
             .dtz
             .get(key)
-            .or_else(|| self.dtz.get(&key.clone().into_flipped()))
+            .or_else(|| self.dtz.get(&key.clone().into_swapped()))
         {
             table
                 .get_or_try_init(|| DtzTable::new(self.filesystem.open(path)?, key))

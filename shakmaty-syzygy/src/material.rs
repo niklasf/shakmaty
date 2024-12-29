@@ -151,9 +151,9 @@ impl Material {
             .unwrap_or(0)
     }
 
-    pub(crate) fn into_flipped(self) -> Material {
+    pub(crate) fn into_swapped(self) -> Material {
         Material {
-            by_color: self.by_color.into_flipped(),
+            by_color: self.by_color.into_swapped(),
         }
     }
 

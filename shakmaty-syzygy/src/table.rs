@@ -904,7 +904,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     .map(|side| {
                         let pieces = parse_pieces(&*raf, ptr, material.count(), *side)?;
                         let key = Material::from_iter(pieces.clone());
-                        ensure!(key == material || key.into_flipped() == material);
+                        ensure!(key == material || key.into_swapped() == material);
                         GroupData::new::<S>(pieces, order[side.fold_wb(0, 1)], file)
                     })
                     .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
@@ -1132,7 +1132,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     fn encode(&self, pos: &S) -> ProbeResult<Option<(&PairsData, u64)>> {
         let key = Material::from_board(pos.board());
         let material = Material::from_iter(self.files[0].sides[0].groups.pieces.clone());
-        assert!(key == material || key == material.clone().into_flipped());
+        assert!(key == material || key == material.clone().into_swapped());
 
         let symmetric_btm = material.is_symmetric() && pos.turn().is_black();
         let black_stronger = key != material;
