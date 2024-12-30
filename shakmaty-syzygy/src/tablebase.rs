@@ -16,7 +16,7 @@ use crate::{
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
     filesystem,
     filesystem::Filesystem,
-    material::Material,
+    material::{Material, NormalizedMaterial},
     table::{DtzTable, WdlTable},
     types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
     AmbiguousWdl,
@@ -37,8 +37,8 @@ enum ProbeState {
 /// A collection of tables.
 pub struct Tablebase<S: Position + Clone + Syzygy> {
     filesystem: Arc<dyn Filesystem>,
-    wdl: FxHashMap<Material, (PathBuf, OnceCell<WdlTable<S>>)>,
-    dtz: FxHashMap<Material, (PathBuf, OnceCell<DtzTable<S>>)>,
+    wdl: FxHashMap<NormalizedMaterial, (PathBuf, OnceCell<WdlTable<S>>)>,
+    dtz: FxHashMap<NormalizedMaterial, (PathBuf, OnceCell<DtzTable<S>>)>,
     max_pieces: usize,
 }
 
@@ -204,47 +204,39 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Add path.
+        let material = material.to_normalized();
+        let path = path.to_path_buf();
         if is_tbw {
-            self.wdl
-                .insert(material, (path.to_path_buf(), OnceCell::new()));
+            self.wdl.insert(material, (path, OnceCell::new()));
         } else {
-            self.dtz
-                .insert(material, (path.to_path_buf(), OnceCell::new()));
+            self.dtz.insert(material, (path, OnceCell::new()));
         }
         self.max_pieces = max(self.max_pieces, pieces);
         Ok(())
     }
 
-    fn wdl_table(&self, key: &Material) -> SyzygyResult<&WdlTable<S>> {
-        if let Some((path, table)) = self
-            .wdl
-            .get(key)
-            .or_else(|| self.wdl.get(&key.clone().into_swapped()))
-        {
+    fn wdl_table(&self, material: &NormalizedMaterial) -> SyzygyResult<&WdlTable<S>> {
+        if let Some((path, table)) = self.wdl.get(material) {
             table
-                .get_or_try_init(|| WdlTable::new(self.filesystem.open(path)?, key))
-                .ctx(Metric::Wdl, key.clone())
+                .get_or_try_init(|| WdlTable::new(self.filesystem.open(path)?, material.inner()))
+                .ctx(Metric::Wdl, material)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Wdl,
-                material: key.clone().into_normalized(),
+                material: material.inner().clone(),
             })
         }
     }
 
-    fn dtz_table(&self, key: &Material) -> SyzygyResult<&DtzTable<S>> {
-        if let Some((path, table)) = self
-            .dtz
-            .get(key)
-            .or_else(|| self.dtz.get(&key.clone().into_swapped()))
-        {
+    fn dtz_table(&self, material: &NormalizedMaterial) -> SyzygyResult<&DtzTable<S>> {
+        if let Some((path, table)) = self.dtz.get(material) {
             table
-                .get_or_try_init(|| DtzTable::new(self.filesystem.open(path)?, key))
-                .ctx(Metric::Dtz, key.clone())
+                .get_or_try_init(|| DtzTable::new(self.filesystem.open(path)?, material.inner()))
+                .ctx(Metric::Dtz, material)
         } else {
             Err(SyzygyError::MissingTable {
                 metric: Metric::Dtz,
-                material: key.clone().into_normalized(),
+                material: material.inner().clone(),
             })
         }
     }
@@ -643,9 +635,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         }
 
         // Get raw WDL value from the appropriate table.
-        let key = Material::from_board(pos.board());
-        self.wdl_table(&key)
-            .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, key))
+        let material = Material::from_board(pos.board()).to_normalized();
+        self.wdl_table(&material)
+            .and_then(|table| table.probe_wdl(pos).ctx(Metric::Wdl, &material))
     }
 
     fn probe_dtz_table(
@@ -654,9 +646,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         wdl: DecisiveWdl,
     ) -> SyzygyResult<Option<MaybeRounded<u32>>> {
         // Get raw DTZ value from the appropriate table.
-        let key = Material::from_board(pos.board());
-        self.dtz_table(&key)
-            .and_then(|table| table.probe_dtz(pos, wdl).ctx(Metric::Dtz, key))
+        let material = Material::from_board(pos.board()).to_normalized();
+        self.dtz_table(&material)
+            .and_then(|table| table.probe_dtz(pos, wdl).ctx(Metric::Dtz, &material))
     }
 }
 
@@ -739,7 +731,10 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             }
         }
 
-        (|| Ok(u!(best)))().ctx(Metric::Dtz, Material::from_board(self.pos.board()))
+        (|| Ok(u!(best)))().ctx(
+            Metric::Dtz,
+            &Material::from_board(self.pos.board()).to_normalized(),
+        )
     }
 }
 

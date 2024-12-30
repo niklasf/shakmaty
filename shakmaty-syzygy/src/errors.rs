@@ -1,6 +1,9 @@
 use std::{backtrace::Backtrace, error::Error, fmt, io};
 
-use crate::{material::Material, types::Metric};
+use crate::{
+    material::{Material, NormalizedMaterial},
+    types::Metric,
+};
 
 pub type SyzygyResult<T> = Result<T, SyzygyError>;
 
@@ -102,14 +105,14 @@ impl Error for ProbeError {
 }
 
 pub trait ProbeResultExt<T> {
-    fn ctx(self, metric: Metric, material: Material) -> SyzygyResult<T>;
+    fn ctx(self, metric: Metric, material: &NormalizedMaterial) -> SyzygyResult<T>;
 }
 
 impl<T> ProbeResultExt<T> for ProbeResult<T> {
-    fn ctx(self, metric: Metric, material: Material) -> SyzygyResult<T> {
+    fn ctx(self, metric: Metric, material: &NormalizedMaterial) -> SyzygyResult<T> {
         self.map_err(|error| SyzygyError::ProbeFailed {
             metric,
-            material: material.into_normalized(),
+            material: material.inner().clone(),
             error: Box::new(error),
         })
     }

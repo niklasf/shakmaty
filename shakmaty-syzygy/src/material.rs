@@ -158,15 +158,24 @@ impl Material {
         }
     }
 
-    pub(crate) fn into_normalized(self) -> Material {
-        Material {
-            by_color: self.by_color.into_normalized(),
-        }
+    pub(crate) fn to_normalized(&self) -> NormalizedMaterial {
+        NormalizedMaterial(Material {
+            by_color: self.by_color.clone().into_normalized(),
+        })
     }
 }
 
 impl fmt::Display for Material {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}v{}", self.by_color.white, self.by_color.black)
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub(crate) struct NormalizedMaterial(Material);
+
+impl NormalizedMaterial {
+    pub fn inner(&self) -> &Material {
+        &self.0
     }
 }
