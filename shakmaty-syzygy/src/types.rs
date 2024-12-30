@@ -277,6 +277,7 @@ impl Wdl {
         }
     }
 
+    #[inline]
     pub(crate) fn decisive(self) -> Option<DecisiveWdl> {
         Some(match self {
             Wdl::Loss => DecisiveWdl::Loss,
@@ -292,6 +293,7 @@ impl Wdl {
     /// * `1` if `self > Wdl::Draw`
     /// * `0` if `self == Wdl::Draw`
     /// * `-1` if `self < Wdl::Draw`
+    #[inline]
     pub fn signum(self) -> i32 {
         i32::from(self).signum()
     }
@@ -300,6 +302,7 @@ impl Wdl {
 impl Neg for Wdl {
     type Output = Wdl;
 
+    #[inline]
     fn neg(self) -> Wdl {
         match self {
             Wdl::Loss => Wdl::Win,
@@ -351,6 +354,7 @@ pub enum DecisiveWdl {
 }
 
 impl DecisiveWdl {
+    #[inline]
     pub fn signum(self) -> i32 {
         i32::from(self).signum()
     }
@@ -359,6 +363,7 @@ impl DecisiveWdl {
 impl Neg for DecisiveWdl {
     type Output = DecisiveWdl;
 
+    #[inline]
     fn neg(self) -> DecisiveWdl {
         match self {
             DecisiveWdl::Loss => DecisiveWdl::Win,
@@ -571,21 +576,25 @@ impl Dtz {
     /// * `1` if `self > Dtz(0)`
     /// * `0` if `self == Dtz(0)`
     /// * `-1` if `self < Dtz(0)`
+    #[inline]
     pub fn signum(self) -> i32 {
         self.0.signum()
     }
 
     /// Returns `self == Dtz(0)`.
+    #[inline]
     pub fn is_zero(self) -> bool {
         self.0 == 0
     }
 
     /// Returns `self > Dtz(0)`.
+    #[inline]
     pub fn is_positive(self) -> bool {
         self.0 > 0
     }
 
     /// Returns `self < Dtz(0)`.
+    #[inline]
     pub fn is_negative(self) -> bool {
         self.0 < 0
     }
