@@ -188,9 +188,9 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         };
         let is_tbw = ext == S::TBW.ext
-            || (!material.has_pawns() && S::PAWNLESS_TBW.map_or(false, |t| ext == t.ext));
+            || (!material.has_pawns() && S::PAWNLESS_TBW.is_some_and(|t| ext == t.ext));
         let is_tbz = ext == S::TBZ.ext
-            || (!material.has_pawns() && S::PAWNLESS_TBZ.map_or(false, |t| ext == t.ext));
+            || (!material.has_pawns() && S::PAWNLESS_TBZ.is_some_and(|t| ext == t.ext));
         if !is_tbw && !is_tbz {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
