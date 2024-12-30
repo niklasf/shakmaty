@@ -40,12 +40,12 @@ impl Ord for MaterialSide {
     fn cmp(&self, other: &MaterialSide) -> Ordering {
         self.count()
             .cmp(&other.count())
-            .then(self.by_role.king.cmp(&other.by_role.king))
-            .then(self.by_role.queen.cmp(&other.by_role.queen))
-            .then(self.by_role.rook.cmp(&other.by_role.rook))
-            .then(self.by_role.bishop.cmp(&other.by_role.bishop))
-            .then(self.by_role.knight.cmp(&other.by_role.knight))
-            .then(self.by_role.pawn.cmp(&other.by_role.pawn))
+            .then_with(|| self.by_role.king.cmp(&other.by_role.king))
+            .then_with(|| self.by_role.queen.cmp(&other.by_role.queen))
+            .then_with(|| self.by_role.rook.cmp(&other.by_role.rook))
+            .then_with(|| self.by_role.bishop.cmp(&other.by_role.bishop))
+            .then_with(|| self.by_role.knight.cmp(&other.by_role.knight))
+            .then_with(|| self.by_role.pawn.cmp(&other.by_role.pawn))
     }
 }
 
