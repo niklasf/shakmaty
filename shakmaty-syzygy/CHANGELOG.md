@@ -1,5 +1,10 @@
 # Changelog for shakmaty-syzygy
 
+## v0.25.2
+
+- Let `Tablebase` use normalized material keys for each table.
+- Small optimizations and documentation improvements.
+
 ## v0.25.1
 
 - Add `Tablebase::with_mmap_filesystem()` behind optional `mmap` feature.

@@ -36,7 +36,7 @@
 //!   via `Tablebase::with_mmap_filesystem()`.
 //! * `variant`: Enables support for Antichess and Atomic chess.
 
-#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.25.1")]
+#![doc(html_root_url = "https://docs.rs/shakmaty-syzygy/0.25.2")]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 
