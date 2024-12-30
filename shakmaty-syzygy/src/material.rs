@@ -31,8 +31,8 @@ impl MaterialSide {
         self.by_role.pawn > 0
     }
 
-    fn unique_roles(&self) -> u8 {
-        self.by_role.into_iter().filter(|c| *c == 1).sum()
+    fn unique_roles(&self) -> usize {
+        self.by_role.into_iter().filter(|c| *c == 1).count()
     }
 }
 
@@ -137,17 +137,19 @@ impl Material {
         self.by_color.iter().any(|side| side.has_pawns())
     }
 
-    pub(crate) fn unique_pieces(&self) -> u8 {
+    pub(crate) fn unique_pieces(&self) -> usize {
         self.by_color.iter().map(|side| side.unique_roles()).sum()
     }
 
-    pub(crate) fn min_like_man(&self) -> u8 {
-        self.by_color
-            .iter()
-            .flat_map(|side| side.by_role)
-            .filter(|c| 2 <= *c)
-            .min()
-            .unwrap_or(0)
+    pub(crate) fn min_like_man(&self) -> usize {
+        usize::from(
+            self.by_color
+                .iter()
+                .flat_map(|side| side.by_role)
+                .filter(|c| 2 <= *c)
+                .min()
+                .unwrap_or(0),
+        )
     }
 
     pub(crate) fn into_swapped(self) -> Material {

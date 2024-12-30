@@ -460,7 +460,7 @@ fn group_pieces(pieces: &Pieces) -> ArrayVec<usize, MAX_PIECES> {
     } else if material.unique_pieces() == 2 {
         2
     } else {
-        usize::from(material.min_like_man())
+        material.min_like_man()
     };
 
     if first_len > 0 {
@@ -517,7 +517,7 @@ impl GroupData {
                 } else if material.min_like_man() == 2 {
                     idx *= 278;
                 } else {
-                    idx *= CONSTS.mult_factor[usize::from(material.min_like_man()) - 1];
+                    idx *= CONSTS.mult_factor[material.min_like_man() - 1];
                 }
             } else if k == order[1] {
                 // Remaining pawns.
@@ -810,8 +810,8 @@ struct Table<T: TableTag, P: Position + Syzygy> {
 
     raf: Box<dyn RandomAccessFile>,
 
-    num_unique_pieces: u8,
-    min_like_man: u8,
+    num_unique_pieces: usize,
+    min_like_man: usize,
     files: ArrayVec<FileData, 4>,
 }
 
