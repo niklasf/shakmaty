@@ -65,7 +65,7 @@ pub trait RandomAccessFile: Sync + Send {
     fn read_exact_at(&self, mut buf: &mut [u8], mut offset: u64, hint: ReadHint) -> io::Result<()> {
         while !buf.is_empty() {
             match self.read_at(buf, offset, hint) {
-                Ok(0) => break,
+                Ok(0) => return Err(io::ErrorKind::UnexpectedEof.into()),
                 Ok(n) => {
                     let tmp = buf;
                     buf = &mut tmp[n..];
@@ -74,9 +74,6 @@ pub trait RandomAccessFile: Sync + Send {
                 Err(ref e) if e.kind() == io::ErrorKind::Interrupted => {}
                 Err(e) => return Err(e),
             }
-        }
-        if !buf.is_empty() {
-            return Err(io::ErrorKind::UnexpectedEof.into());
         }
         Ok(())
     }
