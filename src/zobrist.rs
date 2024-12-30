@@ -1329,9 +1329,9 @@ impl<P: Position> ZobristHash for P {
         }
 
         if let Some(pockets) = self.pockets() {
-            for (color, pocket) in pockets.as_ref().zip_color() {
-                for role in Role::ALL {
-                    zobrist ^= V::zobrist_for_pocket(color, role, *pocket.get(role));
+            for (color, pocket) in pockets.zip_color() {
+                for (role, pieces) in pocket.zip_role() {
+                    zobrist ^= V::zobrist_for_pocket(color, role, pieces);
                 }
             }
         }
@@ -1354,8 +1354,8 @@ impl<P: Position> ZobristHash for P {
         }
 
         if let Some(remaining_checks) = self.remaining_checks() {
-            for (color, remaining) in remaining_checks.as_ref().zip_color() {
-                zobrist ^= V::zobrist_for_remaining_checks(color, *remaining);
+            for (color, remaining) in remaining_checks.zip_color() {
+                zobrist ^= V::zobrist_for_remaining_checks(color, remaining);
             }
         }
 

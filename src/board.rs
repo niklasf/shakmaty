@@ -306,9 +306,7 @@ impl Board {
 
     pub fn material_side(&self, color: Color) -> ByRole<u8> {
         let side = self.by_color(color);
-        self.by_role
-            .as_ref()
-            .map(|pieces| (*pieces & side).count() as u8)
+        self.by_role.map(|pieces| (pieces & side).count() as u8)
     }
 
     pub fn material(&self) -> ByColor<ByRole<u8>> {
