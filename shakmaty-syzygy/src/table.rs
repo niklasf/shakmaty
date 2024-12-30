@@ -835,7 +835,6 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     /// tablebases (more than 7 pieces or side without pieces).
     #[track_caller]
     pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<Table<T, S>> {
-        let material = material.clone();
         assert!(material.count() <= MAX_PIECES);
         assert!(material.by_color.white.count() >= 1);
         assert!(material.by_color.black.count() >= 1);
@@ -904,7 +903,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     .map(|side| {
                         let pieces = parse_pieces(&*raf, ptr, material.count(), *side)?;
                         let key = Material::from_iter(pieces.clone());
-                        ensure!(key == material || key.into_swapped() == material);
+                        ensure!(&key == material || &key.into_swapped() == material);
                         GroupData::new::<S>(pieces, order[side.fold_wb(0, 1)], file)
                     })
                     .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
