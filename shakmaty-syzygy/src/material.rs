@@ -24,7 +24,7 @@ impl MaterialSide {
     }
 
     pub(crate) fn count(&self) -> usize {
-        self.by_role.iter().map(|c| usize::from(*c)).sum()
+        self.by_role.into_iter().map(usize::from).sum()
     }
 
     pub(crate) fn has_pawns(&self) -> bool {
@@ -32,7 +32,7 @@ impl MaterialSide {
     }
 
     fn unique_roles(&self) -> u8 {
-        self.by_role.iter().filter(|c| **c == 1).sum()
+        self.by_role.into_iter().filter(|c| *c == 1).sum()
     }
 }
 
@@ -57,8 +57,8 @@ impl PartialOrd for MaterialSide {
 
 impl fmt::Display for MaterialSide {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (role, count) in self.by_role.as_ref().zip_role().into_iter().rev() {
-            f.write_str(&role.upper_char().to_string().repeat(usize::from(*count)))?;
+        for (role, count) in self.by_role.zip_role().into_iter().rev() {
+            f.write_str(&role.upper_char().to_string().repeat(usize::from(count)))?;
         }
         Ok(())
     }
@@ -144,8 +144,7 @@ impl Material {
     pub(crate) fn min_like_man(&self) -> u8 {
         self.by_color
             .iter()
-            .flat_map(|side| side.by_role.iter())
-            .copied()
+            .flat_map(|side| side.by_role)
             .filter(|c| 2 <= *c)
             .min()
             .unwrap_or(0)
