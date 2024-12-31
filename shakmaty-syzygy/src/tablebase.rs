@@ -158,7 +158,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Returns an immediate error result when:
     ///
     /// * The filename does not indicate that it is a valid table file
-    ///   (e.g. `KQvKP.rtbz`).
+    ///   (e.g., `KQvKP.rtbz`).
     /// * Querying metadata for the path fails (file does not exist,
     ///   broken symlink, no permission to read metadata, ...).
     /// * `path` is not pointing to a regular file.
@@ -244,6 +244,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Probe tables for the [`Wdl`] value of a position, assuming `pos`
     /// is reached directly after a capture or pawn move.
     ///
+    /// Requires only WDL tables.
+    ///
     /// # Errors
     ///
     /// See [`SyzygyError`] for possible error conditions.
@@ -285,7 +287,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     /// Following the tablebase mainline *starting from a capture or pawn move*
     /// guarantees achieving the optimal outcome under the 50-move rule.
     ///
-    /// Otherwise (i.e. when not immediately following the tablebase mainline
+    /// Otherwise (i.e., when not immediately following the tablebase mainline
     /// after the capture that crosses into tablebase territory),
     /// [some care needs to be taken due to DTZ rounding](MaybeRounded).
     ///
@@ -389,8 +391,8 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
         // (1) Resolving en passant captures.
         //
         // (2) When a position has a capture that achieves a particular result
-        //     (e.g. there is a winning capture), then the position itself
-        //     should have at least that value (e.g. it is winning). In this
+        //     (e.g., there is a winning capture), then the position itself
+        //     should have at least that value (e.g., it is winning). In this
         //     case the table can store an arbitrary lower value, whichever is
         //     best for compression.
         //

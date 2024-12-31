@@ -99,17 +99,15 @@ impl Syzygy for shakmaty::variant::Antichess {
 /// # DTZ
 ///
 /// Rounded [`Dtz`] values may be off by one:
-///
-/// * `MaybeRounded::Rounded(Dtz(-n))` can mean a loss with a forced
-///   zeroing move in `n` or `n + 1` plies.
-/// * `MaybeRounded::Rounded(Dtz(n))` can mean a win with a forced
-///   zeroing move in `n` or `n + 1` plies.
+/// `MaybeRounded::Rounded(Dtz(n))` can mean `Dtz(n)` or `Dtz(n).add_plies(1)`.
 ///
 /// # WDL
 ///
-/// Because of that `MaybeRounded::Rounded(Dtz(100))` might correspond to
-/// [`Wdl::Win`] or [`Wdl::CursedWin`], and `MaybeRounded::Rounded(Dtz(-100))`
-/// might correspond to [`Wdl::Loss`] or [`Wdl::BlessedLoss`].
+/// Because of that,
+/// `MaybeRounded::Rounded(Dtz(100))` might correspond to
+/// [`Wdl::Win`] or [`Wdl::CursedWin`] ([`AmbiguousWdl::MaybeWin`]), and
+/// `MaybeRounded::Rounded(Dtz(-100))` might correspond to
+/// [`Wdl::Loss`] or [`Wdl::BlessedLoss`] ([`AmbiguousWdl::MaybeLoss`]).
 ///
 /// Rounding will never be used for endgame phases that are exactly on the
 /// edge of the 50-move rule (value ±100 directly after a capture or pawn
@@ -119,7 +117,7 @@ impl Syzygy for shakmaty::variant::Antichess {
 ///
 /// So some primary tablebase lines may waste up to 1 ply, but never more,
 /// and never for endgame phases (starting after a capture or pawn
-/// move) where wasting 1 ply would change the game theoretical outcome.
+/// move) where wasting 1 ply would change the game-theoretical outcome.
 ///
 /// Users need to be careful in positions that are nearly drawn
 /// under the 50-move rule! Carelessly wasting 1 more ply by not
@@ -482,7 +480,7 @@ impl From<Wdl> for AmbiguousWdl {
 /// DTZ<sub>50</sub>′′. Based on the distance to zeroing of the
 /// half-move clock.
 ///
-/// Zeroing the half-move clock while keeping the game theoretical result in
+/// Zeroing the half-move clock while keeping the game-theoretical result in
 /// hand guarantees making progress, so min-maxing `Dtz` values guarantees
 /// achieving the optimal outcome under the 50-move rule.
 ///

@@ -1,8 +1,8 @@
 //! Probe Syzygy endgame tablebases.
 //!
 //! [Syzygy tables](https://syzygy-tables.info/#syzygy) allow optimal play
-//! under the 50-move rule. Tables are available for positions with up to
-//! 7 pieces.
+//! with and without regard to the 50-move rule.
+//! Tables are available for positions with up to 7 pieces.
 //!
 //! # Example
 //!
