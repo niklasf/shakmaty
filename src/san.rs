@@ -449,7 +449,7 @@ impl San {
                 }
                 _ => false,
             },
-            San::Castle(side) => m.castling_side().map_or(false, |s| side == s),
+            San::Castle(side) => m.castling_side().is_some_and(|s| side == s),
             San::Put { role, to } => match *m {
                 Move::Put { role: r, to: t } => r == role && to == t,
                 _ => false,

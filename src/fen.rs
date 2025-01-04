@@ -77,9 +77,9 @@ fn append_castling<W: AppendAscii>(
 
         for rook in (castling_rights & color.backrank()).into_iter().rev() {
             f.append_ascii(
-                if Some(rook) == candidates.first() && king.map_or(false, |k| rook < k) {
+                if Some(rook) == candidates.first() && king.is_some_and(|k| rook < k) {
                     color.fold_wb('Q', 'q')
-                } else if Some(rook) == candidates.last() && king.map_or(false, |k| k < rook) {
+                } else if Some(rook) == candidates.last() && king.is_some_and(|k| k < rook) {
                     color.fold_wb('K', 'k')
                 } else {
                     let file = rook.file();

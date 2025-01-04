@@ -393,7 +393,7 @@ pub trait Position {
     /// Generates legal castling moves.
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
         let mut moves = self.legal_moves();
-        moves.retain(|m| m.castling_side().map_or(false, |s| side == s));
+        moves.retain(|m| m.castling_side().is_some_and(|s| side == s));
         moves
     }
 
