@@ -1031,7 +1031,7 @@ impl IntoIterator for Bitboard {
 }
 
 /// Iterator over the squares of a [`Bitboard`].
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct IntoIter(Bitboard);
 
 impl Iterator for IntoIter {
