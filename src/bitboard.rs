@@ -1066,14 +1066,14 @@ impl ExactSizeIterator for IntoIter {
     }
 }
 
-impl FusedIterator for IntoIter {}
-
 impl DoubleEndedIterator for IntoIter {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
         self.0.pop_back()
     }
 }
+
+impl FusedIterator for IntoIter {}
 
 /// Iterator over the subsets of a [`Bitboard`].
 ///

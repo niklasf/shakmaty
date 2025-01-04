@@ -483,8 +483,6 @@ impl ExactSizeIterator for Iter<'_> {
     }
 }
 
-impl FusedIterator for Iter<'_> {}
-
 impl DoubleEndedIterator for Iter<'_> {
     fn next_back(&mut self) -> Option<(Square, Piece)> {
         self.squares
@@ -493,14 +491,7 @@ impl DoubleEndedIterator for Iter<'_> {
     }
 }
 
-impl<'a> Default for Iter<'a> {
-    fn default() -> Iter<'a> {
-        Iter {
-            squares: bitboard::IntoIter::default(),
-            board: const { &Board::empty() },
-        }
-    }
-}
+impl FusedIterator for Iter<'_> {}
 
 impl<'a> IntoIterator for &'a Board {
     type IntoIter = Iter<'a>;
@@ -511,24 +502,16 @@ impl<'a> IntoIterator for &'a Board {
     }
 }
 
-impl IntoIterator for Board {
-    type IntoIter = IntoIter;
-    type Item = (Square, Piece);
-
-    fn into_iter(self) -> IntoIter {
-        IntoIter { inner: self }
-    }
-}
-
-/// Iterator over the pieces of a [`Board`].
-#[derive(Clone, Eq, PartialEq, Hash)]
+/// Iterator that drains pieces of a [`Board`].
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct IntoIter {
     inner: Board,
 }
 
-impl fmt::Debug for IntoIter {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("IntoIter").finish_non_exhaustive()
+impl IntoIter {
+    /// Returns a board with the remaining pieces.
+    pub fn into_board(self) -> Board {
+        self.inner
     }
 }
 
@@ -539,10 +522,12 @@ impl Iterator for IntoIter {
         self.inner.pop_front()
     }
 
+    #[inline]
     fn count(self) -> usize {
         self.len()
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
@@ -550,6 +535,7 @@ impl Iterator for IntoIter {
 }
 
 impl ExactSizeIterator for IntoIter {
+    #[inline]
     fn len(&self) -> usize {
         self.inner.occupied.count()
     }
@@ -562,6 +548,15 @@ impl DoubleEndedIterator for IntoIter {
 }
 
 impl FusedIterator for IntoIter {}
+
+impl IntoIterator for Board {
+    type IntoIter = IntoIter;
+    type Item = (Square, Piece);
+
+    fn into_iter(self) -> IntoIter {
+        IntoIter { inner: self }
+    }
+}
 
 #[cfg(test)]
 mod tests {
