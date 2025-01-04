@@ -383,6 +383,23 @@ impl Board {
         self
     }
 
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.occupied.is_empty()
+    }
+
+    pub fn first(&self) -> Option<(Square, Piece)> {
+        self.occupied
+            .first()
+            .and_then(|sq| self.piece_at(sq).map(|piece| (sq, piece)))
+    }
+
+    pub fn last(&self) -> Option<(Square, Piece)> {
+        self.occupied
+            .last()
+            .and_then(|sq| self.piece_at(sq).map(|piece| (sq, piece)))
+    }
+
     pub fn pop_front(&mut self) -> Option<(Square, Piece)> {
         self.occupied
             .first()
@@ -531,6 +548,10 @@ impl Iterator for IntoIter {
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.len();
         (len, Some(len))
+    }
+
+    fn last(self) -> Option<(Square, Piece)> {
+        self.inner.last()
     }
 }
 
