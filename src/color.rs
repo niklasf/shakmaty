@@ -396,3 +396,19 @@ impl<T> IntoIterator for ByColor<T> {
         [self.white, self.black].into_iter()
     }
 }
+
+impl<T> ops::Index<Color> for ByColor<T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: Color) -> &T {
+        self.get(index)
+    }
+}
+
+impl<T> ops::IndexMut<Color> for ByColor<T> {
+    #[inline]
+    fn index_mut(&mut self, index: Color) -> &mut T {
+        self.get_mut(index)
+    }
+}

@@ -1,4 +1,4 @@
-use core::{array, convert::identity, num};
+use core::{array, convert::identity, num, ops};
 
 use crate::{color::Color, types::Piece, util::out_of_range_error};
 
@@ -337,5 +337,21 @@ impl<T> IntoIterator for ByRole<T> {
             self.king,
         ]
         .into_iter()
+    }
+}
+
+impl<T> ops::Index<Role> for ByRole<T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, role: Role) -> &T {
+        self.get(role)
+    }
+}
+
+impl<T> ops::IndexMut<Role> for ByRole<T> {
+    #[inline]
+    fn index_mut(&mut self, role: Role) -> &mut T {
+        self.get_mut(role)
     }
 }

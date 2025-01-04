@@ -244,6 +244,22 @@ impl<T> IntoIterator for ByCastlingSide<T> {
     }
 }
 
+impl<T> ops::Index<CastlingSide> for ByCastlingSide<T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: CastlingSide) -> &T {
+        self.get(index)
+    }
+}
+
+impl<T> ops::IndexMut<CastlingSide> for ByCastlingSide<T> {
+    #[inline]
+    fn index_mut(&mut self, index: CastlingSide) -> &mut T {
+        self.get_mut(index)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
