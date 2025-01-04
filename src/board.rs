@@ -2,7 +2,7 @@
 
 use core::{fmt, fmt::Write, iter::FusedIterator};
 
-use crate::{attacks, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
+use crate::{attacks, bitboard, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 
 /// [`Piece`] positions on a board.
 ///
@@ -394,6 +394,13 @@ impl Board {
             .last()
             .and_then(|sq| self.remove_piece_at(sq).map(|piece| (sq, piece)))
     }
+
+    pub fn iter(&self) -> Iter<'_> {
+        Iter {
+            squares: self.occupied.into_iter(),
+            board: self,
+        }
+    }
 }
 
 impl Default for Board {
@@ -432,6 +439,75 @@ impl FromIterator<(Square, Piece)> for Board {
         let mut board = Board::empty();
         board.extend(iter);
         board
+    }
+}
+
+/// Iterator over the pieces of a [`Board`].
+#[derive(Debug, Clone)]
+pub struct Iter<'a> {
+    squares: bitboard::IntoIter,
+    board: &'a Board,
+}
+
+impl Iterator for Iter<'_> {
+    type Item = (Square, Piece);
+
+    fn next(&mut self) -> Option<(Square, Piece)> {
+        self.squares
+            .next()
+            .and_then(|sq| self.board.piece_at(sq).map(|piece| (sq, piece)))
+    }
+
+    #[inline]
+    fn count(self) -> usize {
+        self.squares.len()
+    }
+
+    #[inline]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.squares.size_hint()
+    }
+
+    #[inline]
+    fn last(self) -> Option<(Square, Piece)> {
+        self.squares
+            .last()
+            .and_then(|sq| self.board.piece_at(sq).map(|piece| (sq, piece)))
+    }
+}
+
+impl ExactSizeIterator for Iter<'_> {
+    #[inline]
+    fn len(&self) -> usize {
+        self.squares.len()
+    }
+}
+
+impl FusedIterator for Iter<'_> {}
+
+impl DoubleEndedIterator for Iter<'_> {
+    fn next_back(&mut self) -> Option<(Square, Piece)> {
+        self.squares
+            .next_back()
+            .and_then(|sq| self.board.piece_at(sq).map(|piece| (sq, piece)))
+    }
+}
+
+impl<'a> Default for Iter<'a> {
+    fn default() -> Iter<'a> {
+        Iter {
+            squares: bitboard::IntoIter::default(),
+            board: const { &Board::empty() },
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a Board {
+    type IntoIter = Iter<'a>;
+    type Item = (Square, Piece);
+
+    fn into_iter(self) -> Iter<'a> {
+        self.iter()
     }
 }
 
