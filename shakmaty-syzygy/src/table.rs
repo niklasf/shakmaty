@@ -1391,6 +1391,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         mut block: u32,
         mut lit_idx: i64,
     ) -> ProbeResult<(u32, i64)> {
+        // Backwards.
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
             lit_idx += i64::from(self.raf.read_u16_le_at(
@@ -1399,21 +1400,26 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             )?) + 1;
         }
 
+        // Forwards.
+        let mut buffer = [0; 2 * 16];
         loop {
-            let block_length = i64::from(self.raf.read_u16_le_at(
+            self.raf.read_exact_at(
+                &mut buffer[..],
                 d.block_lengths + u64::from(block) * 2,
                 ReadHint::BlockLengths,
-            )?) + 1;
-            if lit_idx >= block_length {
-                lit_idx -= block_length;
-                block = u!(block.checked_add(1));
-            } else {
-                break;
+            )?;
+            let mut cursor = &buffer[..];
+            for _ in 0..16 {
+                let block_length = i64::from(cursor.read_u16::<LE>()?) + 1;
+                if lit_idx >= block_length {
+                    lit_idx -= block_length;
+                    block = u!(block.checked_add(1));
+                } else {
+                    trace!("block located");
+                    return Ok((block, lit_idx));
+                }
             }
         }
-        trace!("block located");
-
-        Ok((block, lit_idx))
     }
 
     pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
