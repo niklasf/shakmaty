@@ -1024,43 +1024,10 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Use the sparse index to jump very close to the correct block.
-        let main_idx = idx / u64::from(d.span);
-        ensure!(main_idx <= u64::from(u32::MAX));
-
-        let mut sparse_index_entry = [0; 4 + 2];
-        self.raf.read_exact_at(
-            &mut sparse_index_entry[..],
-            d.sparse_index + 6 * main_idx,
-            ReadHint::SparseIndex,
-        )?;
-        let mut block = LE::read_u32(&sparse_index_entry[..]);
-        let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
-
-        let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
-        lit_idx += offset;
-        trace!("sparse index read");
+        let (block, lit_idx) = self.read_sparse_index(d, idx)?;
 
         // Now move forwards/backwards to find the correct block.
-        while lit_idx < 0 {
-            block = u!(block.checked_sub(1));
-            lit_idx += i64::from(self.raf.read_u16_le_at(
-                d.block_lengths + u64::from(block) * 2,
-                ReadHint::BlockLengths,
-            )?) + 1;
-        }
-        loop {
-            let block_length = i64::from(self.raf.read_u16_le_at(
-                d.block_lengths + u64::from(block) * 2,
-                ReadHint::BlockLengths,
-            )?) + 1;
-            if lit_idx >= block_length {
-                lit_idx -= block_length;
-                block = u!(block.checked_add(1));
-            } else {
-                break;
-            }
-        }
-        trace!("block located");
+        let (block, mut lit_idx) = self.read_block_lengths(d, block, lit_idx)?;
 
         // Read block (and 4 bytes to allow a final symbol refill) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
@@ -1396,6 +1363,57 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         Ok(Some((side, idx)))
+    }
+
+    fn read_sparse_index(&self, d: &PairsData, idx: u64) -> ProbeResult<(u32, i64)> {
+        let main_idx = idx / u64::from(d.span);
+        ensure!(main_idx <= u64::from(u32::MAX));
+
+        let mut sparse_index_entry = [0; 4 + 2];
+        self.raf.read_exact_at(
+            &mut sparse_index_entry[..],
+            d.sparse_index + 6 * main_idx,
+            ReadHint::SparseIndex,
+        )?;
+        let block = LE::read_u32(&sparse_index_entry[..]);
+        let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
+
+        let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
+        lit_idx += offset;
+        trace!("sparse index read");
+
+        Ok((block, lit_idx))
+    }
+
+    fn read_block_lengths(
+        &self,
+        d: &PairsData,
+        mut block: u32,
+        mut lit_idx: i64,
+    ) -> ProbeResult<(u32, i64)> {
+        while lit_idx < 0 {
+            block = u!(block.checked_sub(1));
+            lit_idx += i64::from(self.raf.read_u16_le_at(
+                d.block_lengths + u64::from(block) * 2,
+                ReadHint::BlockLengths,
+            )?) + 1;
+        }
+
+        loop {
+            let block_length = i64::from(self.raf.read_u16_le_at(
+                d.block_lengths + u64::from(block) * 2,
+                ReadHint::BlockLengths,
+            )?) + 1;
+            if lit_idx >= block_length {
+                lit_idx -= block_length;
+                block = u!(block.checked_add(1));
+            } else {
+                break;
+            }
+        }
+        trace!("block located");
+
+        Ok((block, lit_idx))
     }
 
     pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
