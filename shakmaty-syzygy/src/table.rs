@@ -803,6 +803,58 @@ struct FileData {
     sides: ArrayVec<PairsData, 2>,
 }
 
+/// Small bi-directional read-ahead buffer for the block length table.
+struct BlockLengthBuffer {
+    buffer: [u8; 2 * BlockLengthBuffer::CACHED_BLOCKS as usize],
+    first_block: u32,
+}
+
+impl BlockLengthBuffer {
+    const CACHED_BLOCKS: u32 = 16;
+
+    pub fn new() -> BlockLengthBuffer {
+        BlockLengthBuffer {
+            buffer: [0; 2 * BlockLengthBuffer::CACHED_BLOCKS as usize],
+            first_block: 0,
+        }
+    }
+
+    pub fn fill_buffer(
+        &mut self,
+        raf: &dyn RandomAccessFile,
+        d: &PairsData,
+        block: u32,
+    ) -> ProbeResult<()> {
+        raf.read_exact_at(
+            &mut self.buffer[..],
+            d.block_lengths + u64::from(block) * 2,
+            ReadHint::BlockLengths,
+        )?;
+        self.first_block = block;
+        Ok(())
+    }
+
+    pub fn read(
+        &mut self,
+        raf: &dyn RandomAccessFile,
+        d: &PairsData,
+        block: u32,
+    ) -> ProbeResult<u16> {
+        if block < self.first_block {
+            self.fill_buffer(
+                raf,
+                d,
+                block.saturating_sub(BlockLengthBuffer::CACHED_BLOCKS - 1),
+            )?;
+        } else if block >= self.first_block + BlockLengthBuffer::CACHED_BLOCKS {
+            self.fill_buffer(raf, d, block)?;
+        }
+
+        let index = (block - self.first_block) as usize * 2;
+        Ok(LE::read_u16(&self.buffer[index..]))
+    }
+}
+
 /// A Syzygy table.
 struct Table<T: TableTag, P: Position + Syzygy> {
     is_wdl: PhantomData<T>,
@@ -1391,33 +1443,28 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         mut block: u32,
         mut lit_idx: i64,
     ) -> ProbeResult<(u32, i64)> {
+        let mut buffer = BlockLengthBuffer::new();
+        buffer.fill_buffer(
+            &*self.raf,
+            d,
+            block.saturating_sub(BlockLengthBuffer::CACHED_BLOCKS / 2),
+        )?;
+
         // Backwards.
         while lit_idx < 0 {
             block = u!(block.checked_sub(1));
-            lit_idx += i64::from(self.raf.read_u16_le_at(
-                d.block_lengths + u64::from(block) * 2,
-                ReadHint::BlockLengths,
-            )?) + 1;
+            lit_idx += i64::from(buffer.read(&*self.raf, d, block)?) + 1;
         }
 
         // Forwards.
-        let mut buffer = [0; 2 * 16];
         loop {
-            self.raf.read_exact_at(
-                &mut buffer[..],
-                d.block_lengths + u64::from(block) * 2,
-                ReadHint::BlockLengths,
-            )?;
-            let mut cursor = &buffer[..];
-            for _ in 0..16 {
-                let block_length = i64::from(cursor.read_u16::<LE>()?) + 1;
-                if lit_idx >= block_length {
-                    lit_idx -= block_length;
-                    block = u!(block.checked_add(1));
-                } else {
-                    trace!("block located");
-                    return Ok((block, lit_idx));
-                }
+            let block_length = i64::from(buffer.read(&*self.raf, d, block)?) + 1;
+            if lit_idx >= block_length {
+                lit_idx -= block_length;
+                block = u!(block.checked_add(1));
+            } else {
+                trace!("block located");
+                return Ok((block, lit_idx));
             }
         }
     }
