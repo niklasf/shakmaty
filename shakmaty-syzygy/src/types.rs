@@ -6,7 +6,7 @@ use shakmaty::{Chess, Color, Outcome, Piece};
 /// File extension and magic header bytes of Syzygy tables.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TableType {
-    /// File extension, e.g. `rtbw`.
+    /// File extension, e.g., `rtbw`.
     pub ext: &'static str,
     /// Magic header bytes.
     pub magic: [u8; 4],

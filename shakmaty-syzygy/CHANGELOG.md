@@ -1,5 +1,9 @@
 # Changelog for shakmaty-syzygy
 
+## v0.25.3
+
+- Optimize reads from the block lengths table.
+
 ## v0.25.2
 
 - Let `Tablebase` use normalized material keys for each table.

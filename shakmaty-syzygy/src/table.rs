@@ -803,12 +803,13 @@ struct FileData {
     sides: ArrayVec<PairsData, 2>,
 }
 
-/// Small bi-directional read-ahead buffer for the block length table.
+/// Small readahead buffer for the block length table.
 struct BlockLengthBuffer {
     buffer: [u8; 2 * BlockLengthBuffer::CACHED_BLOCKS as usize],
     first_block: Option<u32>,
 }
 
+/// Readahead direction.
 enum Readahead {
     Forward,
     Backward,

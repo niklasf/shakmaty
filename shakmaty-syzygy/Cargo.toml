@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty-syzygy"
-version = "0.25.2" # remember to update changelog and html_root_url
+version = "0.25.3" # remember to update changelog and html_root_url
 description = "Probe Syzygy tablebases"
 repository = "https://github.com/niklasf/shakmaty-syzygy"
 readme = "README.md"
