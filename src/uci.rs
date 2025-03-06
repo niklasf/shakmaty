@@ -132,6 +132,28 @@ impl fmt::Display for UciMove {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for UciMove {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for UciMove {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = alloc::string::String::deserialize(deserializer)?;
+
+        Self::from_str(&str).map_err(serde::de::Error::custom)
+    }
+}
+
 impl UciMove {
     /// Parses a move in UCI notation.
     ///

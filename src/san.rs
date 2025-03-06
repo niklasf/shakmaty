@@ -543,6 +543,28 @@ impl fmt::Display for San {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for San {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for San {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = alloc::string::String::deserialize(deserializer)?;
+
+        Self::from_str(&str).map_err(serde::de::Error::custom)
+    }
+}
+
 /// Check (`+`) or checkmate (`#`) suffix.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum Suffix {
@@ -679,6 +701,28 @@ impl FromStr for SanPlus {
 impl fmt::Display for SanPlus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.append_to(f)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SanPlus {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for SanPlus {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = alloc::string::String::deserialize(deserializer)?;
+
+        Self::from_str(&str).map_err(serde::de::Error::custom)
     }
 }
 
