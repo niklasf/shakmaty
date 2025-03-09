@@ -559,9 +559,24 @@ impl<'de> serde::Deserialize<'de> for San {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = alloc::string::String::deserialize(deserializer)?;
+        struct SanVisitor;
 
-        Self::from_str(&str).map_err(serde::de::Error::custom)
+        impl<'de> serde::de::Visitor<'de> for SanVisitor {
+            type Value = San;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("SAN string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_str(SanVisitor)
     }
 }
 
@@ -720,9 +735,24 @@ impl<'de> serde::Deserialize<'de> for SanPlus {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = alloc::string::String::deserialize(deserializer)?;
+        struct SanPlusVisitor;
 
-        Self::from_str(&str).map_err(serde::de::Error::custom)
+        impl<'de> serde::de::Visitor<'de> for SanPlusVisitor {
+            type Value = SanPlus;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("SAN string with suffix")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_str(SanPlusVisitor)
     }
 }
 

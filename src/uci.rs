@@ -148,9 +148,24 @@ impl<'de> serde::Deserialize<'de> for UciMove {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = alloc::string::String::deserialize(deserializer)?;
+        struct UciMoveVisitor;
 
-        Self::from_str(&str).map_err(serde::de::Error::custom)
+        impl<'de> serde::de::Visitor<'de> for UciMoveVisitor {
+            type Value = UciMove;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("UCI move string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<UciMove, E>
+            where
+                E: serde::de::Error,
+            {
+                value.parse().map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_str(UciMoveVisitor)
     }
 }
 

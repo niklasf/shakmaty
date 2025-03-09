@@ -596,9 +596,24 @@ impl<'de> serde::Deserialize<'de> for Fen {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = alloc::string::String::deserialize(deserializer)?;
+        struct FenVisitor;
 
-        Self::from_str(&str).map_err(serde::de::Error::custom)
+        impl<'de> serde::de::Visitor<'de> for FenVisitor {
+            type Value = Fen;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("FEN string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Fen::from_str(value).map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_str(FenVisitor)
     }
 }
 
@@ -702,9 +717,24 @@ impl<'de> serde::Deserialize<'de> for Epd {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = alloc::string::String::deserialize(deserializer)?;
+        struct EpdVisitor;
 
-        Self::from_str(&str).map_err(serde::de::Error::custom)
+        impl<'de> serde::de::Visitor<'de> for EpdVisitor {
+            type Value = Epd;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("EPD string")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Epd::from_str(value).map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_str(EpdVisitor)
     }
 }
 
