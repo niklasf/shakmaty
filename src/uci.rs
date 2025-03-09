@@ -138,6 +138,7 @@ impl serde::Serialize for UciMove {
     where
         S: serde::Serializer,
     {
+        // Longest syntactically valid UCI move: a1a1q
         let mut s = arrayvec::ArrayString::<5>::new();
         let _ = self.append_to(&mut s);
         serializer.serialize_str(&s)
