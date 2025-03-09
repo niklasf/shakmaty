@@ -153,7 +153,7 @@ impl<'de> serde::Deserialize<'de> for UciMove {
     {
         struct UciMoveVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for UciMoveVisitor {
+        impl serde::de::Visitor<'_> for UciMoveVisitor {
             type Value = UciMove;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

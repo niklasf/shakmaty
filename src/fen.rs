@@ -600,7 +600,7 @@ impl<'de> serde::Deserialize<'de> for Fen {
     {
         struct FenVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for FenVisitor {
+        impl serde::de::Visitor<'_> for FenVisitor {
             type Value = Fen;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -723,7 +723,7 @@ impl<'de> serde::Deserialize<'de> for Epd {
     {
         struct EpdVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for EpdVisitor {
+        impl serde::de::Visitor<'_> for EpdVisitor {
             type Value = Epd;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
