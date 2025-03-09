@@ -13,11 +13,11 @@ rust-version = "1.75" # remember to update test.yml
 
 [features]
 default = ["std"]
-alloc = []
+alloc = ["serde?/alloc"]
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
-serde = ["dep:serde", "alloc"]
+serde = ["dep:serde"]
 
 [[bench]]
 name = "benches"

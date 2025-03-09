@@ -14,13 +14,12 @@ jobs:
           - "nightly"
         flags:
           - ""
-          - "--features variant"
-          - "--features alloc"
-          - "--features serde"
-          - "--features std"
-          - "--features alloc,variant"
-          - "--features std,variant,serde"
+          - "--features variant,serde"
           - "--features nohash-hasher,variant"
+          - "--features alloc"
+          - "--features alloc,variant,serde"
+          - "--features std"
+          - "--features std,variant,serde"
         include:
           - toolchain: "nightly"
             flags: "-Z minimal-versions --all-features"
@@ -53,5 +52,5 @@ jobs:
         with:
           toolchain: stable
           targets: thumbv6m-none-eabi
-      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features variant,nohash-hasher
-      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features alloc,variant,nohash-hasher
+      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features variant,nohash-hasher,serde
+      - run: cargo check --target thumbv6m-none-eabi --no-default-features --features alloc,variant,nohash-hasher,serde

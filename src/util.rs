@@ -1,5 +1,7 @@
 use core::{convert::TryFrom as _, fmt, fmt::Write as _, num::TryFromIntError};
 
+use arrayvec::ArrayString;
+
 pub(crate) fn out_of_range_error() -> TryFromIntError {
     // This is a hack to construct TryFromIntError despite its private
     // constructor. The standard library keeps it private intentionally,
@@ -64,6 +66,17 @@ impl AppendAscii for fmt::Formatter<'_> {
 
     fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error> {
         self.write_char(ascii_char)
+    }
+}
+
+impl<const CAP: usize> AppendAscii for ArrayString<CAP> {
+    type Error = core::convert::Infallible;
+
+    fn reserve(&mut self, _additional: usize) {}
+
+    fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error> {
+        self.push(ascii_char);
+        Ok(())
     }
 }
 

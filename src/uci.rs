@@ -138,7 +138,9 @@ impl serde::Serialize for UciMove {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+        let mut s = arrayvec::ArrayString::<5>::new();
+        let _ = self.append_to(&mut s);
+        serializer.serialize_str(&s)
     }
 }
 

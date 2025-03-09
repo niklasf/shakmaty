@@ -580,13 +580,15 @@ impl Display for Fen {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "serde", feature = "alloc"))]
 impl serde::Serialize for Fen {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+        let mut s = alloc::string::String::new();
+        self.append_to_string(&mut s);
+        serializer.serialize_str(&s)
     }
 }
 
@@ -701,13 +703,15 @@ impl Display for Epd {
     }
 }
 
-#[cfg(feature = "serde")]
+#[cfg(all(feature = "serde", feature = "alloc"))]
 impl serde::Serialize for Epd {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+        let mut s = alloc::string::String::new();
+        self.append_to_string(&mut s);
+        serializer.serialize_str(&s)
     }
 }
 

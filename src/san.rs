@@ -549,7 +549,10 @@ impl serde::Serialize for San {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+        // Longest syntactically valid SAN: Na1xa1=Q
+        let mut s = arrayvec::ArrayString::<8>::new();
+        let _ = self.append_to(&mut s);
+        serializer.serialize_str(&s)
     }
 }
 
@@ -725,7 +728,10 @@ impl serde::Serialize for SanPlus {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+        // Longest syntactically valid SAN with suffix: Na1xa1=Q#
+        let mut s = arrayvec::ArrayString::<9>::new();
+        let _ = self.append_to(&mut s);
+        serializer.serialize_str(&s)
     }
 }
 
