@@ -1,6 +1,6 @@
 # Changelog for shakmaty
 
-## Upcoming
+## v0.27.3
 
 - Implement `serde::{Serialize,Deserialize}` for `Fen`, `Epd`, `San`, `SanPlus`,
   and `UciMove`.

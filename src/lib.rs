@@ -65,7 +65,7 @@
 //!   for sensible types.
 
 #![no_std]
-#![doc(html_root_url = "https://docs.rs/shakmaty/0.27.2")]
+#![doc(html_root_url = "https://docs.rs/shakmaty/0.27.3")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
