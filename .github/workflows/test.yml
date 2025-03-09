@@ -16,9 +16,10 @@ jobs:
           - ""
           - "--features variant"
           - "--features alloc"
+          - "--features serde"
           - "--features std"
           - "--features alloc,variant"
-          - "--features std,variant"
+          - "--features std,variant,serde"
           - "--features nohash-hasher,variant"
         include:
           - toolchain: "nightly"

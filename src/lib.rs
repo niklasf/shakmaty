@@ -57,6 +57,9 @@
 //!   Enabled by default for convenience. For `no_std` environments, this must
 //!   be disabled with `default-features = false`.
 //! * `variant`: Enables support for all Lichess variants.
+//! * `serde`: Implements [`serde::Serialize`](https://docs.rs/serde/1/serde/trait.Serialize.html)
+//!   and [`serde::Deserialize`](https://docs.rs/serde/1/serde/trait.Deserialize.html) for
+//!   types with unique natural representations. Implies `alloc`.
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
 //!   for sensible types.
