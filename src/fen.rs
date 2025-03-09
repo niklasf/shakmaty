@@ -580,6 +580,28 @@ impl Display for Fen {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for Fen {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Fen {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = alloc::string::String::deserialize(deserializer)?;
+
+        Self::from_str(&str).map_err(serde::de::Error::custom)
+    }
+}
+
 /// An EPD like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Epd(Setup);
@@ -661,6 +683,28 @@ impl FromStr for Epd {
 impl Display for Epd {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.append_to(f)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Epd {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&alloc::string::ToString::to_string(self))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Epd {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = alloc::string::String::deserialize(deserializer)?;
+
+        Self::from_str(&str).map_err(serde::de::Error::custom)
     }
 }
 
