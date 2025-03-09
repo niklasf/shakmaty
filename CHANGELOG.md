@@ -1,5 +1,17 @@
 # Changelog for shakmaty
 
+## Upcoming
+
+- Implement `serde::{Serialize,Deserialize}` for `Fen`, `Epd`, `San`, `SanPlus`,
+  and `UciMove`.
+- Add `Board::{is_empty,first,last}()`.
+- Add `Bitboard::insert()`.
+- Implement `IntoIterator` for `&Board`.
+- Add `board::IntoIter::into_board()`.
+- Implement `{Index,IndexMut}` for `ByColor`, `ByRole`, and `ByCastlingSide`.
+- Implement `Default` for `bitboard::IntoIter`.
+- Optimize Zobrist hashing.
+
 ## v0.27.2
 
 - Significantly optimize FEN writing. Add
