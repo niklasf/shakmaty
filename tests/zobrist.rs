@@ -6,7 +6,7 @@ fn test_zobrist_reference() {
         formats::SpaceSeparator, serde_as, DisplayFromStr, FromInto, StringWithSeparator,
     };
     use shakmaty::{
-        uci::Uci,
+        uci::UciMove,
         variant::{Variant, VariantPosition},
         zobrist::{Zobrist128, ZobristHash as _},
         EnPassantMode, Position as _,
@@ -17,8 +17,8 @@ fn test_zobrist_reference() {
     struct Record {
         #[serde_as(as = "DisplayFromStr")]
         variant: Variant,
-        #[serde_as(as = "StringWithSeparator<SpaceSeparator, Uci>")]
-        uci: Vec<Uci>,
+        #[serde_as(as = "StringWithSeparator<SpaceSeparator, UciMove>")]
+        uci: Vec<UciMove>,
         #[serde_as(as = "FromInto<u128>")]
         zobrist: Zobrist128,
     }
