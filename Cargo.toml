@@ -18,6 +18,7 @@ std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
 serde = ["dep:serde"]
+step = []
 
 [[bench]]
 name = "benches"

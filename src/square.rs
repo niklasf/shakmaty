@@ -27,6 +27,29 @@ macro_rules! try_from_int_impl {
     }
 }
 
+macro_rules! step_via_usize_impl {
+    ($type:ty) => {
+        #[cfg(feature = "step")]
+        impl core::iter::Step for $type {
+            fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+                core::iter::Step::steps_between(&usize::from(*start), &usize::from(*end))
+            }
+
+            fn forward_checked(start: Self, count: usize) -> Option<Self> {
+                usize::from(start)
+                    .checked_add(count)
+                    .and_then(|file| Self::try_from(file).ok())
+            }
+
+            fn backward_checked(start: Self, count: usize) -> Option<Self> {
+                usize::from(start)
+                    .checked_sub(count)
+                    .and_then(|file| Self::try_from(file).ok())
+            }
+        }
+    };
+}
+
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -147,6 +170,7 @@ impl fmt::Display for File {
 
 from_enum_as_int_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+step_via_usize_impl! { File }
 
 /// A rank of the chessboard.
 #[allow(missing_docs)]
@@ -263,6 +287,7 @@ impl fmt::Display for Rank {
 
 from_enum_as_int_impl! { Rank, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_int_impl! { Rank, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+step_via_usize_impl! { Rank }
 
 /// Error when parsing an invalid square name.
 #[derive(Clone, Debug)]
@@ -643,6 +668,7 @@ mod all_squares {
 
 from_enum_as_int_impl! { Square, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 try_from_int_impl! { Square, 0, 64, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
+step_via_usize_impl! { Square }
 
 impl Sub for Square {
     type Output = i32;

@@ -69,6 +69,7 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
+#![cfg_attr(feature = "step", feature(step_trait))]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
