@@ -93,7 +93,7 @@ impl fmt::Display for SanError {
 impl std::error::Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum San {
     Normal {
         role: Role,
@@ -624,7 +624,7 @@ impl fmt::Display for Suffix {
 }
 
 /// A [`San`] and possible check and checkmate suffixes.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SanPlus {
     pub san: San,
     pub suffix: Option<Suffix>,

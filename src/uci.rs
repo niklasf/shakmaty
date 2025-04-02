@@ -104,7 +104,7 @@ impl std::error::Error for IllegalUciMoveError {}
 pub type Uci = UciMove;
 
 /// A move as represented in the UCI protocol.
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum UciMove {
     /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {
