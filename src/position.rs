@@ -667,7 +667,7 @@ pub struct Chess {
 
 impl Chess {
     #[cfg(feature = "variant")]
-    fn gives_check(&self, m: &Move) -> bool {
+    fn gives_check(&self, m: Move) -> bool {
         let mut pos = self.clone();
         pos.play_unchecked(m);
         pos.is_check()
@@ -1198,7 +1198,7 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
                 &mut Bitboard(0),
@@ -1210,7 +1210,7 @@ pub(crate) mod variant {
                 m,
             );
 
-            match *m {
+            match m {
                 Move::Normal {
                     capture: Some(_),
                     to,
@@ -1262,7 +1262,7 @@ pub(crate) mod variant {
             // For simplicity we filter all pseudo legal moves.
             moves.retain(|m| {
                 let mut after = self.clone();
-                after.play_unchecked(m);
+                after.play_unchecked(*m);
                 if let Some(our_king) = after.board().king_of(self.turn()) {
                     (after.board.kings() & after.board().by_color(!self.turn())).is_empty()
                         || after
@@ -1498,7 +1498,7 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
                 &mut Bitboard(0),
@@ -1665,7 +1665,7 @@ pub(crate) mod variant {
             self.chess.into_setup(mode)
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             self.chess.play_unchecked(m);
         }
 
@@ -1806,7 +1806,7 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             let turn = self.chess.turn();
             self.chess.play_unchecked(m);
             if self.is_check() {
@@ -1852,7 +1852,7 @@ pub(crate) mod variant {
             (self.board().by_color(color) & !self.board().kings()).is_empty()
         }
 
-        fn is_irreversible(&self, m: &Move) -> bool {
+        fn is_irreversible(&self, m: Move) -> bool {
             self.chess.is_irreversible(m) || self.chess.gives_check(m)
         }
 
@@ -2033,8 +2033,8 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
-            match *m {
+        fn play_unchecked(&mut self, m: Move) {
+            match m {
                 Move::Normal {
                     capture: Some(capture),
                     to,
@@ -2116,8 +2116,8 @@ pub(crate) mod variant {
             moves
         }
 
-        fn is_irreversible(&self, m: &Move) -> bool {
-            match *m {
+        fn is_irreversible(&self, m: Move) -> bool {
+            match m {
                 Move::Castle { .. } => true,
                 Move::Normal { role, from, to, .. } => {
                     self.chess.castles.castling_rights().contains(from)
@@ -2307,7 +2307,7 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
                 &mut Bitboard(0),
@@ -2338,14 +2338,14 @@ pub(crate) mod variant {
 
             let blockers = slider_blockers(self.board(), self.them(), king);
             if blockers.any() {
-                moves.retain(|m| is_safe(self, king, m, blockers));
+                moves.retain(|m| is_safe(self, king, *m, blockers));
             }
 
             // Do not allow giving check. This could be implemented more
             // efficiently.
             moves.retain(|m| {
                 let mut after = self.clone();
-                after.play_unchecked(m);
+                after.play_unchecked(*m);
                 !after.is_check()
             });
 
@@ -2558,7 +2558,7 @@ pub(crate) mod variant {
             }
         }
 
-        fn play_unchecked(&mut self, m: &Move) {
+        fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
                 &mut Bitboard(0),
@@ -2605,7 +2605,7 @@ pub(crate) mod variant {
             if let Some(king) = king {
                 let blockers = slider_blockers(self.board(), self.them(), king);
                 if blockers.any() || has_ep {
-                    moves.retain(|m| is_safe(self, king, m, blockers));
+                    moves.retain(|m| is_safe(self, king, *m, blockers));
                 }
             }
 
@@ -3629,7 +3629,7 @@ mod tests {
         let pos: Atomic = setup_fen("rnb1kbnr/pppppppp/8/4q3/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
 
         let pos = pos
-            .play(&Move::Normal {
+            .play(Move::Normal {
                 role: Role::Queen,
                 from: Square::E5,
                 to: Square::E2,

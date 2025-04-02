@@ -503,31 +503,31 @@ mod tests {
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e4);
+        pos.play_unchecked(e4);
         let d5 = "d7d5"
             .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&d5);
+        pos.play_unchecked(d5);
         let exd5 = "e4d5"
             .parse::<UciMove>()
             .expect("exd5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&exd5);
+        pos.play_unchecked(exd5);
         let qxd5 = "d8d5"
             .parse::<UciMove>()
             .expect("Qxd5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&qxd5);
+        pos.play_unchecked(qxd5);
         let p_at_d7 = "P@d7"
             .parse::<UciMove>()
             .expect("P@d7+")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&p_at_d7);
+        pos.play_unchecked(p_at_d7);
         assert!(pos.is_check());
     }
 
