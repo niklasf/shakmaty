@@ -427,8 +427,8 @@ pub trait Position {
     /// forced lines. For example, a checking move that will force the king
     /// to lose castling rights is not considered irreversible, only the
     /// actual king move is.
-    fn is_irreversible(&self, m: &Move) -> bool {
-        (match *m {
+    fn is_irreversible(&self, m: Move) -> bool {
+        (match m {
             Move::Normal {
                 role: Role::Pawn, ..
             }
@@ -490,7 +490,7 @@ pub trait Position {
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls. Consider using
     /// [`Position::play()`] if you cannot guarantee legality.
-    fn play_unchecked(&mut self, m: &Move);
+    fn play_unchecked(&mut self, m: Move);
 
     // Implementation note: Trait methods above this comment should be made
     // available for VariantPosition. The provided methods below this comment
@@ -519,8 +519,8 @@ pub trait Position {
     }
 
     /// Tests a move for legality.
-    fn is_legal(&self, m: &Move) -> bool /* FINAL */ {
-        let moves = match *m {
+    fn is_legal(&self, m: Move) -> bool /* FINAL */ {
+        let moves = match m {
             Move::Normal { role, to, .. } | Move::Put { role, to } => self.san_candidates(role, to),
             Move::EnPassant { to, .. } => self.san_candidates(Role::Pawn, to),
             Move::Castle { king, rook } if king.file() < rook.file() => {
@@ -528,7 +528,7 @@ pub trait Position {
             }
             Move::Castle { .. } => self.castling_moves(CastlingSide::QueenSide),
         };
-        moves.contains(m)
+        moves.contains(&m)
     }
 
     /// The en passant square, if it is the target of a
@@ -618,7 +618,7 @@ pub trait Position {
     ///
     /// Returns a [`PlayError`] if the move is not legal. You can use
     /// [`Position::play_unchecked()`] if you can guarantee legality.
-    fn play(mut self, m: &Move) -> Result<Self, PlayError<Self>>
+    fn play(mut self, m: Move) -> Result<Self, PlayError<Self>>
     where
         Self: Sized,
     {
@@ -626,10 +626,7 @@ pub trait Position {
             self.play_unchecked(m);
             Ok(self)
         } else {
-            Err(PlayError {
-                m: m.clone(),
-                position: self,
-            })
+            Err(PlayError { m, position: self })
         }
     }
 
@@ -840,7 +837,7 @@ impl Position for Chess {
         }
     }
 
-    fn play_unchecked(&mut self, m: &Move) {
+    fn play_unchecked(&mut self, m: Move) {
         do_move(
             &mut self.board,
             &mut Bitboard(0),
@@ -888,7 +885,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, *m, blockers));
         }
 
         moves
@@ -913,7 +910,7 @@ impl Position for Chess {
                 .king_of(self.turn())
                 .expect("king in standard chess");
             let blockers = slider_blockers(self.board(), self.them(), king);
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, *m, blockers));
         }
 
         moves
@@ -937,7 +934,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() {
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, *m, blockers));
         }
 
         moves
@@ -989,7 +986,7 @@ impl Position for Chess {
 
         let blockers = slider_blockers(self.board(), self.them(), king);
         if blockers.any() || has_ep {
-            moves.retain(|m| is_safe(self, king, m, blockers));
+            moves.retain(|m| is_safe(self, king, *m, blockers));
         }
 
         moves
@@ -2914,7 +2911,7 @@ fn do_move(
     ep_square: &mut Option<EnPassant>,
     halfmoves: &mut u32,
     fullmoves: &mut NonZeroU32,
-    m: &Move,
+    m: Move,
 ) {
     let color = *turn;
     ep_square.take();
@@ -2925,7 +2922,7 @@ fn do_move(
         halfmoves.saturating_add(1)
     };
 
-    match *m {
+    match m {
         Move::Normal {
             role,
             from,
@@ -3363,8 +3360,8 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
     blockers
 }
 
-fn is_safe<P: Position>(pos: &P, king: Square, m: &Move, blockers: Bitboard) -> bool {
-    match *m {
+fn is_safe<P: Position>(pos: &P, king: Square, m: Move, blockers: Bitboard) -> bool {
+    match m {
         Move::Normal { from, to, .. } => {
             !blockers.contains(from) || attacks::aligned(from, to, king)
         }
@@ -3517,7 +3514,7 @@ mod tests {
         // Check that castling paths do not interfere.
         let pos: Chess = setup_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBK1BNR w KQkq - 0 1");
         let pos_after_move_played = pos
-            .play(&Move::Normal {
+            .play(Move::Normal {
                 role: Role::King,
                 from: Square::D1,
                 to: Square::E1,
@@ -3534,7 +3531,7 @@ mod tests {
         let pos: Chess = setup_fen("rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNB~QKBNR w KQq - 0 26");
         let pos_after_queen_promotion = pos
             .clone()
-            .play(&Move::Normal {
+            .play(Move::Normal {
                 role: Role::Pawn,
                 from: Square::H7,
                 to: Square::H8,
@@ -3543,7 +3540,7 @@ mod tests {
             })
             .expect("h8=Q is legal");
         let pos_after_knight_promotion = pos
-            .play(&Move::Normal {
+            .play(Move::Normal {
                 role: Role::Pawn,
                 from: Square::H7,
                 to: Square::H8,
@@ -3828,7 +3825,7 @@ mod tests {
     #[test]
     fn test_put_in_standard() {
         let pos = Chess::default();
-        assert!(!pos.is_legal(&Move::Put {
+        assert!(!pos.is_legal(Move::Put {
             role: Role::Pawn,
             to: Square::D4
         }));

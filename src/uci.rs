@@ -28,7 +28,7 @@
 //! let mut pos = Chess::default();
 //! let m = uci.to_move(&pos)?;
 //!
-//! pos.play_unchecked(&m);
+//! pos.play_unchecked(m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //!
 //! # #[derive(Debug)] struct CommonError;
@@ -374,7 +374,7 @@ impl UciMove {
             UciMove::Null => return Err(IllegalUciMoveError),
         };
 
-        if pos.is_legal(&candidate) {
+        if pos.is_legal(candidate) {
             Ok(candidate)
         } else {
             Err(IllegalUciMoveError)
@@ -401,8 +401,8 @@ impl UciMove {
         }
     }
 
-    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
-        match *self {
+    fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        match self {
             UciMove::Normal {
                 from,
                 to,
@@ -465,25 +465,25 @@ mod tests {
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e4);
+        pos.play_unchecked(e4);
         let nc6 = "b8c6"
             .parse::<UciMove>()
             .expect("Nc6")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&nc6);
+        pos.play_unchecked(nc6);
         let e5 = "e4e5"
             .parse::<UciMove>()
             .expect("e5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e5);
+        pos.play_unchecked(e5);
         let d5 = "d7d5"
             .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&d5);
+        pos.play_unchecked(d5);
         let exd5 = "e5d6"
             .parse::<UciMove>()
             .expect("exd6")
@@ -567,7 +567,7 @@ mod tests {
                 .expect("valid uci")
                 .to_move(&pos)
                 .expect("legal");
-            pos.play_unchecked(&m);
+            pos.play_unchecked(m);
         }
         assert_eq!(
             Fen::from_position(pos, crate::EnPassantMode::Legal).to_string(),
