@@ -381,7 +381,7 @@ impl Position for VariantPosition {
         self.borrow().promotion_moves()
     }
 
-    fn is_irreversible(&self, m: &Move) -> bool {
+    fn is_irreversible(&self, m: Move) -> bool {
         self.borrow().is_irreversible(m)
     }
 
@@ -401,7 +401,7 @@ impl Position for VariantPosition {
         self.borrow().variant_outcome()
     }
 
-    fn play_unchecked(&mut self, m: &Move) {
+    fn play_unchecked(&mut self, m: Move) {
         self.borrow_mut().play_unchecked(m);
     }
 }
@@ -414,7 +414,7 @@ mod tests {
     fn test_variant_position_play() {
         let pos = VariantPosition::new(Variant::Chess);
         let pos = pos
-            .play(&Move::Normal {
+            .play(Move::Normal {
                 role: Role::Knight,
                 from: Square::G1,
                 to: Square::F3,

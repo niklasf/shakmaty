@@ -32,7 +32,7 @@ fn test_zobrist_reference() {
 
         for uci in record.uci {
             let m = uci.to_move(&pos).expect("legal uci");
-            pos.play_unchecked(&m);
+            pos.play_unchecked(m);
         }
 
         assert_eq!(

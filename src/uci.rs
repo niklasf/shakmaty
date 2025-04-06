@@ -28,7 +28,7 @@
 //! let mut pos = Chess::default();
 //! let m = uci.to_move(&pos)?;
 //!
-//! pos.play_unchecked(&m);
+//! pos.play_unchecked(m);
 //! assert_eq!(pos.board().piece_at(Square::F3), Some(White.knight()));
 //!
 //! # #[derive(Debug)] struct CommonError;
@@ -55,10 +55,10 @@
 //! let uci = m.to_uci(pos.castles().mode());
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = UciMove::from_standard(&m);
+//! let uci = UciMove::from_standard(m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = UciMove::from_chess960(&m);
+//! let uci = UciMove::from_chess960(m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //! ```
 //!
@@ -104,7 +104,7 @@ impl std::error::Error for IllegalUciMoveError {}
 pub type Uci = UciMove;
 
 /// A move as represented in the UCI protocol.
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum UciMove {
     /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {
@@ -245,11 +245,11 @@ impl UciMove {
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = UciMove::from_standard(&m);
+    /// let uci = UciMove::from_standard(m);
     /// assert_eq!(uci.to_string(), "e8g8");
     /// ```
-    pub fn from_standard(m: &Move) -> UciMove {
-        match *m {
+    pub fn from_standard(m: Move) -> UciMove {
+        match m {
             Move::Castle { king, rook } => {
                 let side = CastlingSide::from_king_side(king < rook);
                 UciMove::Normal {
@@ -276,11 +276,11 @@ impl UciMove {
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = UciMove::from_chess960(&m);
+    /// let uci = UciMove::from_chess960(m);
     /// assert_eq!(uci.to_string(), "e8h8");
     /// ```
-    pub const fn from_chess960(m: &Move) -> UciMove {
-        match *m {
+    pub const fn from_chess960(m: Move) -> UciMove {
+        match m {
             Move::Normal {
                 from,
                 to,
@@ -306,7 +306,7 @@ impl UciMove {
     }
 
     /// See [`UciMove::from_standard()`] or [`UciMove::from_chess960()`].
-    pub fn from_move(m: &Move, mode: CastlingMode) -> UciMove {
+    pub fn from_move(m: Move, mode: CastlingMode) -> UciMove {
         match mode {
             CastlingMode::Standard => UciMove::from_standard(m),
             CastlingMode::Chess960 => UciMove::from_chess960(m),
@@ -321,8 +321,8 @@ impl UciMove {
     /// Returns [`IllegalUciMoveError`] if the move is not legal.
     ///
     /// [`Move`]: super::Move
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciMoveError> {
-        let candidate = match *self {
+    pub fn to_move<P: Position>(self, pos: &P) -> Result<Move, IllegalUciMoveError> {
+        let candidate = match self {
             UciMove::Normal {
                 from,
                 to,
@@ -374,7 +374,7 @@ impl UciMove {
             UciMove::Null => return Err(IllegalUciMoveError),
         };
 
-        if pos.is_legal(&candidate) {
+        if pos.is_legal(candidate) {
             Ok(candidate)
         } else {
             Err(IllegalUciMoveError)
@@ -382,8 +382,8 @@ impl UciMove {
     }
 
     #[must_use]
-    pub fn to_mirrored(&self) -> UciMove {
-        match *self {
+    pub fn to_mirrored(self) -> UciMove {
+        match self {
             UciMove::Normal {
                 from,
                 to,
@@ -401,8 +401,8 @@ impl UciMove {
         }
     }
 
-    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
-        match *self {
+    fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        match self {
             UciMove::Normal {
                 from,
                 to,
@@ -430,24 +430,24 @@ impl UciMove {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+    pub fn append_to_string(self, s: &mut alloc::string::String) {
         let _ = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+    pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
 
     #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+    pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
 impl Move {
     /// See [`UciMove::from_move()`].
-    pub fn to_uci(&self, mode: CastlingMode) -> UciMove {
+    pub fn to_uci(self, mode: CastlingMode) -> UciMove {
         UciMove::from_move(self, mode)
     }
 }
@@ -465,25 +465,25 @@ mod tests {
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e4);
+        pos.play_unchecked(e4);
         let nc6 = "b8c6"
             .parse::<UciMove>()
             .expect("Nc6")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&nc6);
+        pos.play_unchecked(nc6);
         let e5 = "e4e5"
             .parse::<UciMove>()
             .expect("e5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e5);
+        pos.play_unchecked(e5);
         let d5 = "d7d5"
             .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&d5);
+        pos.play_unchecked(d5);
         let exd5 = "e5d6"
             .parse::<UciMove>()
             .expect("exd6")
@@ -503,31 +503,31 @@ mod tests {
             .expect("e4")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&e4);
+        pos.play_unchecked(e4);
         let d5 = "d7d5"
             .parse::<UciMove>()
             .expect("d5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&d5);
+        pos.play_unchecked(d5);
         let exd5 = "e4d5"
             .parse::<UciMove>()
             .expect("exd5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&exd5);
+        pos.play_unchecked(exd5);
         let qxd5 = "d8d5"
             .parse::<UciMove>()
             .expect("Qxd5")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&qxd5);
+        pos.play_unchecked(qxd5);
         let p_at_d7 = "P@d7"
             .parse::<UciMove>()
             .expect("P@d7+")
             .to_move(&pos)
             .expect("legal");
-        pos.play_unchecked(&p_at_d7);
+        pos.play_unchecked(p_at_d7);
         assert!(pos.is_check());
     }
 
@@ -567,7 +567,7 @@ mod tests {
                 .expect("valid uci")
                 .to_move(&pos)
                 .expect("legal");
-            pos.play_unchecked(&m);
+            pos.play_unchecked(m);
         }
         assert_eq!(
             Fen::from_position(pos, crate::EnPassantMode::Legal).to_string(),
