@@ -55,10 +55,10 @@
 //! let uci = m.to_uci(pos.castles().mode());
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = UciMove::from_standard(&m);
+//! let uci = UciMove::from_standard(m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //!
-//! let uci = UciMove::from_chess960(&m);
+//! let uci = UciMove::from_chess960(m);
 //! assert_eq!(uci.to_string(), "b1c3");
 //! ```
 //!
@@ -245,11 +245,11 @@ impl UciMove {
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = UciMove::from_standard(&m);
+    /// let uci = UciMove::from_standard(m);
     /// assert_eq!(uci.to_string(), "e8g8");
     /// ```
-    pub fn from_standard(m: &Move) -> UciMove {
-        match *m {
+    pub fn from_standard(m: Move) -> UciMove {
+        match m {
             Move::Castle { king, rook } => {
                 let side = CastlingSide::from_king_side(king < rook);
                 UciMove::Normal {
@@ -276,11 +276,11 @@ impl UciMove {
     ///     rook: Square::H8,
     /// };
     ///
-    /// let uci = UciMove::from_chess960(&m);
+    /// let uci = UciMove::from_chess960(m);
     /// assert_eq!(uci.to_string(), "e8h8");
     /// ```
-    pub const fn from_chess960(m: &Move) -> UciMove {
-        match *m {
+    pub const fn from_chess960(m: Move) -> UciMove {
+        match m {
             Move::Normal {
                 from,
                 to,
@@ -306,7 +306,7 @@ impl UciMove {
     }
 
     /// See [`UciMove::from_standard()`] or [`UciMove::from_chess960()`].
-    pub fn from_move(m: &Move, mode: CastlingMode) -> UciMove {
+    pub fn from_move(m: Move, mode: CastlingMode) -> UciMove {
         match mode {
             CastlingMode::Standard => UciMove::from_standard(m),
             CastlingMode::Chess960 => UciMove::from_chess960(m),
@@ -321,8 +321,8 @@ impl UciMove {
     /// Returns [`IllegalUciMoveError`] if the move is not legal.
     ///
     /// [`Move`]: super::Move
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, IllegalUciMoveError> {
-        let candidate = match *self {
+    pub fn to_move<P: Position>(self, pos: &P) -> Result<Move, IllegalUciMoveError> {
+        let candidate = match self {
             UciMove::Normal {
                 from,
                 to,
@@ -382,8 +382,8 @@ impl UciMove {
     }
 
     #[must_use]
-    pub fn to_mirrored(&self) -> UciMove {
-        match *self {
+    pub fn to_mirrored(self) -> UciMove {
+        match self {
             UciMove::Normal {
                 from,
                 to,
@@ -430,24 +430,24 @@ impl UciMove {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+    pub fn append_to_string(self, s: &mut alloc::string::String) {
         let _ = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+    pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
 
     #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+    pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
 impl Move {
     /// See [`UciMove::from_move()`].
-    pub fn to_uci(&self, mode: CastlingMode) -> UciMove {
+    pub fn to_uci(self, mode: CastlingMode) -> UciMove {
         UciMove::from_move(self, mode)
     }
 }
