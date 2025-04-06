@@ -123,7 +123,7 @@ impl Setup {
     }
 
     /// Mirror vertically and swap turns and all piece colors, so that the
-    /// resulting setup is equivalent modulo color.
+    /// resulting setup would be equivalent in standard chess.
     ///
     /// Move counters remain unchanged.
     pub fn mirror(&mut self) {
