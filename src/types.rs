@@ -37,7 +37,6 @@ impl Piece {
 /// is available for context, it is more common to use [SAN](crate::san)
 /// (for human interfaces) or [UCI](crate::uci) (for text-based protocols).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-#[repr(align(4))]
 pub enum Move {
     /// A normal move, e.g., `Bd3xh7`.
     Normal {
