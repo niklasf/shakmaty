@@ -44,7 +44,7 @@
 //! # let pos = Chess::default();
 //! # let san: San = "Nf3".parse()?;
 //! # let m = san.to_move(&pos)?;
-//! assert_eq!(San::from_move(&pos, &m).to_string(), "Nf3");
+//! assert_eq!(San::from_move(&pos, m).to_string(), "Nf3");
 //!
 //! # #[derive(Debug)] struct CommonError;
 //! # impl From<ParseSanError> for CommonError { fn from(_: ParseSanError) -> Self { Self } }
@@ -93,7 +93,7 @@ impl fmt::Display for SanError {
 impl std::error::Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum San {
     Normal {
         role: Role,
@@ -219,8 +219,8 @@ impl San {
     }
 
     /// Converts a move to Standard Algebraic Notation.
-    pub fn from_move<P: Position>(pos: &P, m: &Move) -> San {
-        let legals = match *m {
+    pub fn from_move<P: Position>(pos: &P, m: Move) -> San {
+        let legals = match m {
             Move::Normal { role, to, .. } if role != Role::Pawn => pos.san_candidates(role, to),
             _ => MoveList::new(),
         };
@@ -234,8 +234,8 @@ impl San {
     /// # Errors
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
-    pub fn to_move<P: Position>(&self, pos: &P) -> Result<Move, SanError> {
-        match *self {
+    pub fn to_move<P: Position>(self, pos: &P) -> Result<Move, SanError> {
+        match self {
             San::Normal {
                 role,
                 file,
@@ -269,7 +269,7 @@ impl San {
                     .split_first()
                     .map_or(Err(SanError::IllegalSan), |(m, others)| {
                         if others.is_empty() {
-                            Ok(m.clone())
+                            Ok(*m)
                         } else {
                             Err(SanError::AmbiguousSan)
                         }
@@ -278,19 +278,19 @@ impl San {
             San::Castle(side) => pos
                 .castling_moves(side)
                 .first()
-                .cloned()
+                .copied()
                 .ok_or(SanError::IllegalSan),
             San::Put { role, to } => {
                 let mut legals = pos.san_candidates(role, to);
                 legals.retain(|m| matches!(*m, Move::Put { .. }));
-                legals.first().cloned().ok_or(SanError::IllegalSan)
+                legals.first().copied().ok_or(SanError::IllegalSan)
             }
             San::Null => Err(SanError::IllegalSan),
         }
     }
 
-    pub fn disambiguate(m: &Move, moves: &MoveList) -> San {
-        match *m {
+    pub fn disambiguate(m: Move, moves: &MoveList) -> San {
+        match m {
             Move::Normal {
                 role: Role::Pawn,
                 from,
@@ -370,8 +370,8 @@ impl San {
     /// # Errors
     ///
     /// Returns [`SanError`] if there is no unique matching legal move.
-    pub fn find_move<'a>(&self, moves: &'a MoveList) -> Result<&'a Move, SanError> {
-        let mut filtered = moves.iter().filter(|m| self.matches(m));
+    pub fn find_move(self, moves: &MoveList) -> Result<&Move, SanError> {
+        let mut filtered = moves.iter().filter(|m| self.matches(**m));
 
         let Some(m) = filtered.next() else {
             return Err(SanError::IllegalSan);
@@ -400,23 +400,23 @@ impl San {
     /// };
     ///
     /// let nf3 = San::from_ascii(b"Nf3")?;
-    /// assert!(nf3.matches(&m));
+    /// assert!(nf3.matches(m));
     ///
     /// let ng1f3 = San::from_ascii(b"Ng1f3")?;
-    /// assert!(ng1f3.matches(&m));
+    /// assert!(ng1f3.matches(m));
     ///
     /// // capture does not match
     /// let nxf3 = San::from_ascii(b"Nxf3")?;
-    /// assert!(!nxf3.matches(&m));
+    /// assert!(!nxf3.matches(m));
     ///
     /// // other file does not match
     /// let nef3 = San::from_ascii(b"Nef3")?;
-    /// assert!(!nef3.matches(&m));
+    /// assert!(!nef3.matches(m));
     ///
     /// # Ok::<_, shakmaty::san::ParseSanError>(())
     /// ```
-    pub fn matches(&self, m: &Move) -> bool {
-        match *self {
+    pub fn matches(self, m: Move) -> bool {
+        match self {
             San::Normal {
                 role,
                 file,
@@ -424,7 +424,7 @@ impl San {
                 capture,
                 to,
                 promotion,
-            } => match *m {
+            } => match m {
                 Move::Normal {
                     role: r,
                     from,
@@ -450,7 +450,7 @@ impl San {
                 _ => false,
             },
             San::Castle(side) => m.castling_side().is_some_and(|s| side == s),
-            San::Put { role, to } => match *m {
+            San::Put { role, to } => match m {
                 Move::Put { role: r, to: t } => r == role && to == t,
                 _ => false,
             },
@@ -458,8 +458,8 @@ impl San {
         }
     }
 
-    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
-        match *self {
+    fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
+        match self {
             San::Normal {
                 role,
                 file,
@@ -514,17 +514,17 @@ impl San {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+    pub fn append_to_string(self, s: &mut alloc::string::String) {
         let _ = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+    pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
 
     #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+    pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
@@ -624,7 +624,7 @@ impl fmt::Display for Suffix {
 }
 
 /// A [`San`] and possible check and checkmate suffixes.
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SanPlus {
     pub san: San,
     pub suffix: Option<Suffix>,
@@ -655,7 +655,7 @@ impl SanPlus {
     ///
     /// Illegal moves can corrupt the state of the position and may
     /// (or may not) panic or cause panics on future calls.
-    pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: &Move) -> SanPlus {
+    pub fn from_move_and_play_unchecked<P: Position>(pos: &mut P, m: Move) -> SanPlus {
         let san = San::from_move(pos, m);
         pos.play_unchecked(m);
         SanPlus {
@@ -664,8 +664,8 @@ impl SanPlus {
         }
     }
 
-    pub fn from_move<P: Position>(mut pos: P, m: &Move) -> SanPlus {
-        let moves = match *m {
+    pub fn from_move<P: Position>(mut pos: P, m: Move) -> SanPlus {
+        let moves = match m {
             Move::Normal { role, to, .. } | Move::Put { role, to } => pos.san_candidates(role, to),
             Move::EnPassant { to, .. } => pos.san_candidates(Role::Pawn, to),
             Move::Castle { king, rook } if king.file() < rook.file() => {
@@ -675,7 +675,7 @@ impl SanPlus {
         };
         SanPlus {
             san: San::disambiguate(m, &moves),
-            suffix: if moves.contains(m) {
+            suffix: if moves.contains(&m) {
                 pos.play_unchecked(m);
                 Suffix::from_position(&pos)
             } else {
@@ -684,7 +684,7 @@ impl SanPlus {
         }
     }
 
-    fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
+    fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
         self.san.append_to(f)?;
         if let Some(suffix) = self.suffix {
             f.append_ascii(suffix.char())?;
@@ -693,17 +693,17 @@ impl SanPlus {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_to_string(&self, s: &mut alloc::string::String) {
+    pub fn append_to_string(self, s: &mut alloc::string::String) {
         let _ = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
-    pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
+    pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
 
     #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
+    pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
@@ -840,8 +840,8 @@ mod tests {
                 .expect("legal uci");
             let san_plus = san.parse::<SanPlus>().expect("valid san");
 
-            assert_eq!(San::disambiguate(&m, &pos.legal_moves()), san_plus.san);
-            assert_eq!(SanPlus::from_move(pos, &m), san_plus);
+            assert_eq!(San::disambiguate(m, &pos.legal_moves()), san_plus.san);
+            assert_eq!(SanPlus::from_move(pos, m), san_plus);
         }
     }
 

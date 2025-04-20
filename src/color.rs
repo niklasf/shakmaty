@@ -351,8 +351,8 @@ impl<T> ByColor<ByRole<T>> {
 
 #[cfg(feature = "variant")]
 impl ByColor<ByRole<u8>> {
-    pub(crate) fn count(&self) -> usize {
-        self.iter().map(ByRole::count).sum()
+    pub(crate) fn count(self) -> usize {
+        self.iter().map(|&role| role.count()).sum()
     }
 }
 
