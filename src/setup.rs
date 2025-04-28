@@ -112,12 +112,12 @@ impl Setup {
 
     /// Swap turns and discard en passant rights. This is sometimes called
     /// "playing a null move".
-    pub fn swap_turn(&mut self) {
-        self.turn = !self.turn;
+    pub const fn swap_turn(&mut self) {
+        self.turn = self.turn.other();
         self.ep_square = None;
     }
 
-    pub fn into_swapped_turn(mut self) -> Setup {
+    pub const fn into_swapped_turn(mut self) -> Setup {
         self.swap_turn();
         self
     }

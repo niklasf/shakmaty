@@ -98,7 +98,7 @@ impl Color {
     }
 
     #[inline]
-    pub fn relative_rank(self, rank: Rank) -> Rank {
+    pub const fn relative_rank(self, rank: Rank) -> Rank {
         match self {
             Color::White => rank,
             Color::Black => rank.flip_vertical(),
@@ -251,7 +251,7 @@ impl<T> ByColor<T> {
         self.swap();
     }
 
-    pub fn swap(&mut self) {
+    pub const fn swap(&mut self) {
         mem::swap(&mut self.white, &mut self.black);
     }
 
