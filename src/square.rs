@@ -1,5 +1,4 @@
 use core::{
-    cmp::max,
     fmt::{self, Write as _},
     mem,
     num::TryFromIntError,
@@ -68,22 +67,37 @@ impl File {
     }
 
     #[inline]
-    pub fn from_char(ch: char) -> Option<File> {
-        if ('a'..='h').contains(&ch) {
-            Some(File::new(u32::from(ch as u8 - b'a')))
-        } else {
-            None
+    pub const fn from_char(ch: char) -> Option<File> {
+        match ch {
+            'a' => Some(File::A),
+            'b' => Some(File::B),
+            'c' => Some(File::C),
+            'd' => Some(File::D),
+            'e' => Some(File::E),
+            'f' => Some(File::F),
+            'g' => Some(File::G),
+            'h' => Some(File::H),
+            _ => None,
         }
     }
 
     #[inline]
-    pub fn char(self) -> char {
-        char::from(b'a' + u8::from(self))
+    pub const fn char(self) -> char {
+        match self {
+            File::A => 'a',
+            File::B => 'b',
+            File::C => 'c',
+            File::D => 'd',
+            File::E => 'e',
+            File::F => 'f',
+            File::G => 'g',
+            File::H => 'h',
+        }
     }
 
     #[inline]
-    pub fn upper_char(self) -> char {
-        char::from(b'A' + u8::from(self))
+    pub const fn upper_char(self) -> char {
+        self.char().to_ascii_uppercase()
     }
 
     #[must_use]
@@ -95,26 +109,26 @@ impl File {
     }
 
     #[inline]
-    pub fn distance(self, other: File) -> u32 {
-        u32::from(self).abs_diff(u32::from(other))
+    pub const fn distance(self, other: File) -> u32 {
+        self.u32().abs_diff(other.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_horizontal(self) -> File {
-        File::new(7 - u32::from(self))
+    pub const fn flip_horizontal(self) -> File {
+        File::new(7 - self.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_diagonal(self) -> Rank {
-        Rank::new(u32::from(self))
+    pub const fn flip_diagonal(self) -> Rank {
+        Rank::new(self.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_anti_diagonal(self) -> Rank {
-        Rank::new(7 - u32::from(self))
+    pub const fn flip_anti_diagonal(self) -> Rank {
+        Rank::new(7 - self.u32())
     }
 
     /// `A`, ..., `H`.
@@ -171,7 +185,7 @@ impl Rank {
     /// Panics if the index is not in the range `0..=7`.
     #[track_caller]
     #[inline]
-    pub fn new(index: u32) -> Rank {
+    pub const fn new(index: u32) -> Rank {
         assert!(index < 8);
         unsafe { Rank::new_unchecked(index) }
     }
@@ -183,23 +197,38 @@ impl Rank {
     /// It is the callers responsibility to ensure the index is in the range
     /// `0..=7`.
     #[inline]
-    pub unsafe fn new_unchecked(index: u32) -> Rank {
+    pub const unsafe fn new_unchecked(index: u32) -> Rank {
         debug_assert!(index < 8);
         unsafe { mem::transmute(index as u8) }
     }
 
     #[inline]
-    pub fn from_char(ch: char) -> Option<Rank> {
-        if ('1'..='8').contains(&ch) {
-            Some(Rank::new(u32::from(ch as u8 - b'1')))
-        } else {
-            None
+    pub const fn from_char(ch: char) -> Option<Rank> {
+        match ch {
+            '1' => Some(Rank::First),
+            '2' => Some(Rank::Second),
+            '3' => Some(Rank::Third),
+            '4' => Some(Rank::Fourth),
+            '5' => Some(Rank::Fifth),
+            '6' => Some(Rank::Sixth),
+            '7' => Some(Rank::Seventh),
+            '8' => Some(Rank::Eighth),
+            _ => None,
         }
     }
 
     #[inline]
-    pub fn char(self) -> char {
-        char::from(b'1' + u8::from(self))
+    pub const fn char(self) -> char {
+        match self {
+            Rank::First => '1',
+            Rank::Second => '2',
+            Rank::Third => '3',
+            Rank::Fourth => '4',
+            Rank::Fifth => '5',
+            Rank::Sixth => '6',
+            Rank::Seventh => '7',
+            Rank::Eighth => '8',
+        }
     }
 
     #[must_use]
@@ -211,26 +240,26 @@ impl Rank {
     }
 
     #[inline]
-    pub fn distance(self, other: Rank) -> u32 {
-        u32::from(self).abs_diff(u32::from(other))
+    pub const fn distance(self, other: Rank) -> u32 {
+        self.u32().abs_diff(other.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_vertical(self) -> Rank {
-        Rank::new(7 - u32::from(self))
+    pub const fn flip_vertical(self) -> Rank {
+        Rank::new(7 - self.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_diagonal(self) -> File {
-        File::new(u32::from(self))
+    pub const fn flip_diagonal(self) -> File {
+        File::new(self.u32())
     }
 
     #[must_use]
     #[inline]
-    pub fn flip_anti_diagonal(self) -> File {
-        File::new(7 - u32::from(self))
+    pub const fn flip_anti_diagonal(self) -> File {
+        File::new(7 - self.u32())
     }
 
     /// `First`, ..., `Eighth`.
@@ -336,10 +365,10 @@ impl Square {
     /// assert_eq!(Square::from_coords(File::A, Rank::First), Square::A1);
     /// ```
     #[inline]
-    pub fn from_coords(file: File, rank: Rank) -> Square {
+    pub const fn from_coords(file: File, rank: Rank) -> Square {
         // Safety: Files and ranks are represented with 3 bits each, and all
         // 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(file) | (u32::from(rank) << 3)) }
+        unsafe { Square::new_unchecked(file.u32() | (rank.u32() << 3)) }
     }
 
     /// Parses a square name.
@@ -358,11 +387,11 @@ impl Square {
     /// # Ok::<_, shakmaty::ParseSquareError>(())
     /// ```
     #[inline]
-    pub fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
+    pub const fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
             match (
-                File::from_char(char::from(s[0])),
-                Rank::from_char(char::from(s[1])),
+                File::from_char(s[0] as char),
+                Rank::from_char(s[1] as char),
             ) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
@@ -383,8 +412,8 @@ impl Square {
     /// assert_eq!(Square::B2.file(), File::B);
     /// ```
     #[inline]
-    pub fn file(self) -> File {
-        File::new(u32::from(self) & 7)
+    pub const fn file(self) -> File {
+        File::new(self.u32() & 7)
     }
 
     /// Gets the rank.
@@ -398,8 +427,8 @@ impl Square {
     /// assert_eq!(Square::B2.rank(), Rank::Second);
     /// ```
     #[inline]
-    pub fn rank(self) -> Rank {
-        Rank::new(u32::from(self) >> 3)
+    pub const fn rank(self) -> Rank {
+        Rank::new(self.u32() >> 3)
     }
 
     /// Gets file and rank.
@@ -413,7 +442,7 @@ impl Square {
     /// assert_eq!(Square::H8.coords(), (File::H, Rank::Eighth));
     /// ```
     #[inline]
-    pub fn coords(self) -> (File, Rank) {
+    pub const fn coords(self) -> (File, Rank) {
         (self.file(), self.rank())
     }
 
@@ -432,7 +461,7 @@ impl Square {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Square> {
-        i32::from(self)
+        self.i32()
             .checked_add(delta)
             .and_then(|index| index.try_into().ok())
     }
@@ -446,18 +475,18 @@ impl Square {
     /// offset for `self`.
     #[must_use]
     #[inline]
-    pub unsafe fn offset_unchecked(self, delta: i32) -> Square {
+    pub const unsafe fn offset_unchecked(self, delta: i32) -> Square {
         debug_assert!(-64 < delta && delta < 64);
-        unsafe { Square::new_unchecked((i32::from(self) + delta) as u32) }
+        unsafe { Square::new_unchecked((self.i32() + delta) as u32) }
     }
 
     /// Return the bitwise XOR of the numeric square representations. For some
     /// operands this is a useful geometric transformation.
     #[must_use]
     #[inline]
-    pub fn xor(self, other: Square) -> Square {
+    pub const fn xor(self, other: Square) -> Square {
         // Safety: 6 bit value XOR 6 bit value -> 6 bit value.
-        unsafe { Square::new_unchecked(u32::from(self) ^ u32::from(other)) }
+        unsafe { Square::new_unchecked(self.u32() ^ other.u32()) }
     }
 
     /// Flip the square horizontally.
@@ -470,7 +499,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_horizontal(self) -> Square {
+    pub const fn flip_horizontal(self) -> Square {
         self.xor(Square::H1)
     }
 
@@ -484,7 +513,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_vertical(self) -> Square {
+    pub const fn flip_vertical(self) -> Square {
         self.xor(Square::A8)
     }
 
@@ -498,11 +527,11 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_diagonal(self) -> Square {
+    pub const fn flip_diagonal(self) -> Square {
         // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
         // Safety: We are selecting 32 - 26 = 6 bits with the shift, and all
         // 6 bits values are in the range 0..=63.
-        unsafe { Square::new_unchecked(u32::from(self).wrapping_mul(0x2080_0000) >> 26) }
+        unsafe { Square::new_unchecked(self.u32().wrapping_mul(0x2080_0000) >> 26) }
     }
 
     /// Flip at the h1-a8 diagonal.
@@ -515,7 +544,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn flip_anti_diagonal(self) -> Square {
+    pub const fn flip_anti_diagonal(self) -> Square {
         self.flip_diagonal().rotate_180()
     }
 
@@ -529,7 +558,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_90(self) -> Square {
+    pub const fn rotate_90(self) -> Square {
         self.flip_diagonal().flip_vertical()
     }
 
@@ -543,7 +572,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_180(self) -> Square {
+    pub const fn rotate_180(self) -> Square {
         self.xor(Square::H8)
     }
 
@@ -557,7 +586,7 @@ impl Square {
     /// ```
     #[must_use]
     #[inline]
-    pub fn rotate_270(self) -> Square {
+    pub const fn rotate_270(self) -> Square {
         self.flip_diagonal().flip_horizontal()
     }
 
@@ -570,8 +599,8 @@ impl Square {
     /// assert!(!Square::D8.is_light());
     /// ```
     #[inline]
-    pub fn is_light(self) -> bool {
-        (u32::from(self.rank()) + u32::from(self.file())) % 2 == 1
+    pub const fn is_light(self) -> bool {
+        (self.rank().u32() + self.file().u32()) % 2 == 1
     }
 
     /// Tests is the square is a dark square.
@@ -583,8 +612,8 @@ impl Square {
     /// assert!(!Square::E8.is_dark());
     /// ```
     #[inline]
-    pub fn is_dark(self) -> bool {
-        (u32::from(self.rank()) + u32::from(self.file())) % 2 == 0
+    pub const fn is_dark(self) -> bool {
+        (self.rank().u32() + self.file().u32()) % 2 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
@@ -595,11 +624,15 @@ impl Square {
     ///
     /// assert_eq!(Square::A2.distance(Square::B5), 3);
     /// ```
-    pub fn distance(self, other: Square) -> u32 {
-        max(
-            self.file().distance(other.file()),
-            self.rank().distance(other.rank()),
-        )
+    pub const fn distance(self, other: Square) -> u32 {
+        let file_distance = self.file().distance(other.file());
+        let rank_distance = self.rank().distance(other.rank());
+
+        if file_distance > rank_distance {
+            file_distance
+        } else {
+            rank_distance
+        }
     }
 
     pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
