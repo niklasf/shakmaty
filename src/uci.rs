@@ -192,31 +192,50 @@ impl UciMove {
     ///     promotion: None,
     /// });
     ///
+    /// const UCI: UciMove = if let Ok(m) = UciMove::from_ascii(b"e4e5") { m } else { panic!() };
+    ///
     /// # Ok::<_, shakmaty::uci::ParseUciMoveError>(())
     /// ```
-    pub fn from_ascii(uci: &[u8]) -> Result<UciMove, ParseUciMoveError> {
+    ///
+    /// ```compile_fail
+    /// // Doesn't compile
+    /// const UCI: UciMove = if let Ok(m) = UciMove::from_ascii(b"k4e5") { m } else { panic!() };
+    /// ```
+    pub const fn from_ascii(uci: &[u8]) -> Result<UciMove, ParseUciMoveError> {
         if uci.len() != 4 && uci.len() != 5 {
             return Err(ParseUciMoveError);
         }
 
-        if uci == b"0000" {
+        if uci.len() == 4 && uci[0] == b'0' && uci[1] == b'0' && uci[2] == b'0' && uci[3] == b'0' {
             return Ok(UciMove::Null);
         }
 
-        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciMoveError)?;
+        let to = match Square::from_ascii(&[uci[2], uci[3]]) {
+            Ok(to) => to,
+            Err(_) => return Err(ParseUciMoveError),
+        };
 
         if uci[1] == b'@' {
             Ok(UciMove::Put {
-                role: Role::from_char(char::from(uci[0])).ok_or(ParseUciMoveError)?,
+                role: match Role::from_char(uci[0] as char) {
+                    Some(role) => role,
+                    None => return Err(ParseUciMoveError),
+                },
                 to,
             })
         } else {
-            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciMoveError)?;
+            let from = match Square::from_ascii(&[uci[0], uci[1]]) {
+                Ok(from) => from,
+                Err(_) => return Err(ParseUciMoveError),
+            };
             if uci.len() == 5 {
                 Ok(UciMove::Normal {
                     from,
                     to,
-                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciMoveError)?),
+                    promotion: match Role::from_char(uci[4] as char) {
+                        Some(role) => Some(role),
+                        None => return Err(ParseUciMoveError),
+                    },
                 })
             } else {
                 Ok(UciMove::Normal {
