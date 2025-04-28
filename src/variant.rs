@@ -268,7 +268,7 @@ impl VariantPosition {
         VariantPosition::from_setup(variant, setup, mode)
     }
 
-    pub fn variant(&self) -> Variant {
+    pub const fn variant(&self) -> Variant {
         match self {
             VariantPosition::Chess(_) => Variant::Chess,
             VariantPosition::Atomic(_) => Variant::Atomic,

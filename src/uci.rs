@@ -401,7 +401,7 @@ impl UciMove {
     }
 
     #[must_use]
-    pub fn to_mirrored(self) -> UciMove {
+    pub const fn to_mirrored(self) -> UciMove {
         match self {
             UciMove::Normal {
                 from,

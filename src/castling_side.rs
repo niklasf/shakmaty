@@ -55,11 +55,11 @@ impl CastlingSide {
         }
     }
 
-    pub fn king_to(self, color: Color) -> Square {
+    pub const fn king_to(self, color: Color) -> Square {
         Square::from_coords(self.king_to_file(), color.backrank())
     }
 
-    pub fn rook_to(self, color: Color) -> Square {
+    pub const fn rook_to(self, color: Color) -> Square {
         Square::from_coords(self.rook_to_file(), color.backrank())
     }
 
@@ -135,7 +135,7 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
-    pub fn swap(&mut self) {
+    pub const fn swap(&mut self) {
         mem::swap(&mut self.king_side, &mut self.queen_side);
     }
 
