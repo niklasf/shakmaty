@@ -11,11 +11,19 @@ pub(crate) fn out_of_range_error() -> TryFromIntError {
 }
 
 macro_rules! from_enum_as_int_impl {
-    ($from:ty, $($t:ty)+) => {
+    ($from:ty, $($t:ident)+) => {
+        impl $from {
+            $(
+            #[inline]
+            const fn $t(self) -> $t {
+                self as $t
+            }
+            )+
+        }
         $(impl From<$from> for $t {
             #[inline]
             fn from(value: $from) -> $t {
-                value as $t
+                value.$t()
             }
         })+
     }
