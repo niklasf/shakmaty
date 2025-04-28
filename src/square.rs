@@ -97,7 +97,16 @@ impl File {
 
     #[inline]
     pub const fn upper_char(self) -> char {
-        self.char().to_ascii_uppercase()
+        match self {
+            File::A => 'A',
+            File::B => 'B',
+            File::C => 'C',
+            File::D => 'D',
+            File::E => 'E',
+            File::F => 'F',
+            File::G => 'G',
+            File::H => 'H',
+        }
     }
 
     #[must_use]
