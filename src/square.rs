@@ -389,10 +389,7 @@ impl Square {
     #[inline]
     pub const fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
-            match (
-                File::from_char(s[0] as char),
-                Rank::from_char(s[1] as char),
-            ) {
+            match (File::from_char(s[0] as char), Rank::from_char(s[1] as char)) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
             }
