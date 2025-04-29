@@ -15,7 +15,7 @@ macro_rules! from_enum_as_int_impl {
         impl $from {
             $(
             #[inline]
-            const fn $t(self) -> $t {
+            pub(crate) const fn $t(self) -> $t {
                 self as $t
             }
             )+

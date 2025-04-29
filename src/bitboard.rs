@@ -968,6 +968,12 @@ where
     }
 }
 
+impl Bitboard {
+    pub(crate) const fn bitxor(self, rhs: Bitboard) -> Bitboard {
+        Bitboard(self.0 ^ rhs.0)
+    }
+}
+
 impl<T> ops::BitXor<T> for Bitboard
 where
     T: Into<Bitboard>,
@@ -976,8 +982,7 @@ where
 
     #[inline]
     fn bitxor(self, rhs: T) -> Bitboard {
-        let Bitboard(rhs) = rhs.into();
-        Bitboard(self.0 ^ rhs)
+        self.bitxor(rhs.into())
     }
 }
 
