@@ -24,8 +24,12 @@ impl Piece {
         self.color.fold_wb(self.role.upper_char(), self.role.char())
     }
 
-    pub fn from_char(ch: char) -> Option<Piece> {
-        Role::from_char(ch).map(|role| role.of(Color::from_white(32 & ch as u8 == 0)))
+    pub const fn from_char(ch: char) -> Option<Piece> {
+        if let Some(role) = Role::from_char(ch) {
+            Some(role.of(Color::from_white(32 & ch as u8 == 0)))
+        } else {
+            None
+        }
     }
 }
 

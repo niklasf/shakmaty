@@ -55,14 +55,14 @@ pub const fn king_attacks(sq: Square) -> Bitboard {
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
 #[inline]
-pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let m = ROOK_MAGICS[sq.usize()];
 
-    // (panic) Safety: The attack table was generated with sufficient size
+    // Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
     // checks is worth about 2% in move generation and perft.
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
-    Bitboard(ATTACKS[idx])
+    Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
 }
 
 /// Gets the set of potential blocking squares for a rook on `sq`.
@@ -90,14 +90,14 @@ pub const fn rook_mask(sq: Square) -> Bitboard {
 
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
 #[inline]
-pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let m = BISHOP_MAGICS[sq.usize()];
 
     // (panic) Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
     // checks is worth about 2% in move generation and perft.
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
-    Bitboard(ATTACKS[idx])
+    Bitboard(unsafe { *ATTACKS.get_unchecked(idx) })
 }
 
 /// Gets the set of potential blocking squares for a bishop on `sq`.
@@ -126,12 +126,12 @@ pub const fn bishop_mask(sq: Square) -> Bitboard {
 
 /// Looks up attacks for a queen on `sq` with `occupied` squares.
 #[inline]
-pub const fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
+pub fn queen_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     rook_attacks(sq, occupied).bitxor(bishop_attacks(sq, occupied))
 }
 
 /// Looks up attacks for `piece` on `sq` with `occupied` squares.
-pub const fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
+pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
     match piece.role {
         Role::Pawn => pawn_attacks(piece.color, sq),
         Role::Knight => knight_attacks(sq),
