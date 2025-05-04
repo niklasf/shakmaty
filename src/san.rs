@@ -252,14 +252,14 @@ impl San {
                         promotion: p,
                         ..
                     } => {
-                        file.map_or(true, |f| f == from.file())
-                            && rank.map_or(true, |r| r == from.rank())
+                        file.is_none_or(|f| f == from.file())
+                            && rank.is_none_or(|r| r == from.rank())
                             && capture == c.is_some()
                             && promotion == p
                     }
                     Move::EnPassant { from, .. } => {
-                        file.map_or(true, |f| f == from.file())
-                            && rank.map_or(true, |r| r == from.rank())
+                        file.is_none_or(|f| f == from.file())
+                            && rank.is_none_or(|r| r == from.rank())
                             && capture
                             && promotion.is_none()
                     }
@@ -433,16 +433,16 @@ impl San {
                     promotion: pr,
                 } => {
                     role == r
-                        && file.map_or(true, |f| f == from.file())
-                        && rank.map_or(true, |r| r == from.rank())
+                        && file.is_none_or(|f| f == from.file())
+                        && rank.is_none_or(|r| r == from.rank())
                         && capture == c.is_some()
                         && to == t
                         && promotion == pr
                 }
                 Move::EnPassant { from, to: t } => {
                     role == Role::Pawn
-                        && file.map_or(true, |f| f == from.file())
-                        && rank.map_or(true, |r| r == from.rank())
+                        && file.is_none_or(|f| f == from.file())
+                        && rank.is_none_or(|r| r == from.rank())
                         && capture
                         && to == t
                         && promotion.is_none()
