@@ -112,8 +112,8 @@ impl File {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<File> {
-        i32::from(self)
-            .checked_add(delta)
+        self.to_u32()
+            .checked_add_signed(delta)
             .and_then(|index| index.try_into().ok())
     }
 
@@ -255,8 +255,8 @@ impl Rank {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Rank> {
-        i32::from(self)
-            .checked_add(delta)
+        self.to_u32()
+            .checked_add_signed(delta)
             .and_then(|index| index.try_into().ok())
     }
 
