@@ -26,8 +26,7 @@ use crate::{
         ATTACKS, BLACK_PAWN_ATTACKS, KING_ATTACKS, KNIGHT_ATTACKS, RAYS, WHITE_PAWN_ATTACKS,
     },
     color::Color,
-    magics,
-    magics::Magic,
+    magics::{BISHOP_MAGICS, ROOK_MAGICS},
     role::Role,
     square::Square,
     types::Piece,
@@ -53,8 +52,6 @@ pub fn knight_attacks(sq: Square) -> Bitboard {
 pub fn king_attacks(sq: Square) -> Bitboard {
     Bitboard(KING_ATTACKS[usize::from(sq)])
 }
-
-static ROOK_MAGICS: [Magic; 64] = magics::ROOK_MAGICS;
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
 #[inline]
@@ -91,8 +88,6 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 pub fn rook_mask(sq: Square) -> Bitboard {
     Bitboard(ROOK_MAGICS[usize::from(sq)].mask)
 }
-
-static BISHOP_MAGICS: [Magic; 64] = magics::BISHOP_MAGICS;
 
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
 #[inline]
