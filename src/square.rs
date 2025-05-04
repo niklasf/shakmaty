@@ -110,25 +110,31 @@ impl File {
 
     #[inline]
     pub const fn distance(self, other: File) -> u32 {
-        self.u32().abs_diff(other.u32())
+        self.to_u32().abs_diff(other.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_horizontal(self) -> File {
-        File::new(7 - self.u32())
+        File::new(7 - self.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_diagonal(self) -> Rank {
-        Rank::new(self.u32())
+        Rank::new(self.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_anti_diagonal(self) -> Rank {
-        Rank::new(7 - self.u32())
+        Rank::new(7 - self.to_u32())
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn to_u32(self) -> u32 {
+        self as u32
     }
 
     /// `A`, ..., `H`.
@@ -241,25 +247,31 @@ impl Rank {
 
     #[inline]
     pub const fn distance(self, other: Rank) -> u32 {
-        self.u32().abs_diff(other.u32())
+        self.to_u32().abs_diff(other.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_vertical(self) -> Rank {
-        Rank::new(7 - self.u32())
+        Rank::new(7 - self.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_diagonal(self) -> File {
-        File::new(self.u32())
+        File::new(self.to_u32())
     }
 
     #[must_use]
     #[inline]
     pub const fn flip_anti_diagonal(self) -> File {
-        File::new(7 - self.u32())
+        File::new(7 - self.to_u32())
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn to_u32(self) -> u32 {
+        self as u32
     }
 
     /// `First`, ..., `Eighth`.
@@ -368,7 +380,7 @@ impl Square {
     pub const fn from_coords(file: File, rank: Rank) -> Square {
         // Safety: Files and ranks are represented with 3 bits each, and all
         // 6 bit values are in the range 0..=63.
-        unsafe { Square::new_unchecked(file.u32() | (rank.u32() << 3)) }
+        unsafe { Square::new_unchecked(file.to_u32() | (rank.to_u32() << 3)) }
     }
 
     /// Parses a square name.
@@ -389,10 +401,7 @@ impl Square {
     #[inline]
     pub const fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
-            match (
-                File::from_char(s[0] as char),
-                Rank::from_char(s[1] as char),
-            ) {
+            match (File::from_char(s[0] as char), Rank::from_char(s[1] as char)) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
             }
@@ -413,7 +422,7 @@ impl Square {
     /// ```
     #[inline]
     pub const fn file(self) -> File {
-        File::new(self.u32() & 7)
+        File::new(self.to_u32() & 7)
     }
 
     /// Gets the rank.
@@ -428,7 +437,7 @@ impl Square {
     /// ```
     #[inline]
     pub const fn rank(self) -> Rank {
-        Rank::new(self.u32() >> 3)
+        Rank::new(self.to_u32() >> 3)
     }
 
     /// Gets file and rank.
@@ -461,8 +470,8 @@ impl Square {
     #[must_use]
     #[inline]
     pub fn offset(self, delta: i32) -> Option<Square> {
-        self.i32()
-            .checked_add(delta)
+        self.to_u32()
+            .checked_add_signed(delta)
             .and_then(|index| index.try_into().ok())
     }
 
@@ -477,7 +486,7 @@ impl Square {
     #[inline]
     pub const unsafe fn offset_unchecked(self, delta: i32) -> Square {
         debug_assert!(-64 < delta && delta < 64);
-        unsafe { Square::new_unchecked((self.i32() + delta) as u32) }
+        unsafe { Square::new_unchecked(self.to_u32().wrapping_add_signed(delta)) }
     }
 
     /// Return the bitwise XOR of the numeric square representations. For some
@@ -486,7 +495,7 @@ impl Square {
     #[inline]
     pub const fn xor(self, other: Square) -> Square {
         // Safety: 6 bit value XOR 6 bit value -> 6 bit value.
-        unsafe { Square::new_unchecked(self.u32() ^ other.u32()) }
+        unsafe { Square::new_unchecked(self.to_u32() ^ other.to_u32()) }
     }
 
     /// Flip the square horizontally.
@@ -531,7 +540,7 @@ impl Square {
         // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Diagonal.
         // Safety: We are selecting 32 - 26 = 6 bits with the shift, and all
         // 6 bits values are in the range 0..=63.
-        unsafe { Square::new_unchecked(self.u32().wrapping_mul(0x2080_0000) >> 26) }
+        unsafe { Square::new_unchecked(self.to_u32().wrapping_mul(0x2080_0000) >> 26) }
     }
 
     /// Flip at the h1-a8 diagonal.
@@ -600,7 +609,7 @@ impl Square {
     /// ```
     #[inline]
     pub const fn is_light(self) -> bool {
-        (self.rank().u32() + self.file().u32()) % 2 == 1
+        (self.rank().to_u32() + self.file().to_u32()) % 2 == 1
     }
 
     /// Tests is the square is a dark square.
@@ -613,7 +622,7 @@ impl Square {
     /// ```
     #[inline]
     pub const fn is_dark(self) -> bool {
-        (self.rank().u32() + self.file().u32()) % 2 == 0
+        (self.rank().to_u32() + self.file().to_u32()) % 2 == 0
     }
 
     /// The distance between the two squares, i.e. the number of king steps
@@ -633,6 +642,12 @@ impl Square {
         } else {
             rank_distance
         }
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn to_u32(self) -> u32 {
+        self as u32
     }
 
     pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {
