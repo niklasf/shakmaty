@@ -345,7 +345,7 @@ impl Position for VariantPosition {
         self.borrow().fullmoves()
     }
 
-    fn to_setup(self, mode: EnPassantMode) -> Setup {
+    fn to_setup(&self, mode: EnPassantMode) -> Setup {
         self.borrow().to_setup(mode)
     }
 
