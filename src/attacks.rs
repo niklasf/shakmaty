@@ -24,9 +24,7 @@ use core::hint::assert_unchecked;
 
 use crate::{
     bitboard::Bitboard,
-    bootstrap::{
-        ATTACKS, BLACK_PAWN_ATTACKS, KING_ATTACKS, KNIGHT_ATTACKS, RAYS, WHITE_PAWN_ATTACKS,
-    },
+    bootstrap::{ATTACKS, KING_ATTACKS, KNIGHT_ATTACKS, PAWN_ATTACKS, RAYS},
     color::Color,
     magics::{BISHOP_MAGICS, ROOK_MAGICS},
     role::Role,
@@ -37,10 +35,7 @@ use crate::{
 /// Looks up attacks for a pawn of `color` on `sq`.
 #[inline]
 pub const fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
-    Bitboard(match color {
-        Color::White => WHITE_PAWN_ATTACKS[sq.to_usize()],
-        Color::Black => BLACK_PAWN_ATTACKS[sq.to_usize()],
-    })
+    Bitboard(PAWN_ATTACKS.get(color)[sq.to_usize()])
 }
 
 /// Looks up attacks for a knight on `sq`.

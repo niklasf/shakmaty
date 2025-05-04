@@ -1,6 +1,6 @@
 // Initialize static lookup tables at compile time.
 
-use crate::magics;
+use crate::{color::ByColor, magics};
 
 const ROOK_DELTAS: [i32; 4] = [8, 1, -8, -1];
 const BISHOP_DELTAS: [i32; 4] = [9, 7, -9, -7];
@@ -47,8 +47,10 @@ const fn init_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
 
 pub static KNIGHT_ATTACKS: [u64; 64] = init_stepping_attacks(&KNIGHT_DELTAS);
 pub static KING_ATTACKS: [u64; 64] = init_stepping_attacks(&KING_DELTAS);
-pub static WHITE_PAWN_ATTACKS: [u64; 64] = init_stepping_attacks(&WHITE_PAWN_DELTAS);
-pub static BLACK_PAWN_ATTACKS: [u64; 64] = init_stepping_attacks(&BLACK_PAWN_DELTAS);
+pub static PAWN_ATTACKS: ByColor<[u64; 64]> = ByColor {
+    white: init_stepping_attacks(&WHITE_PAWN_DELTAS),
+    black: init_stepping_attacks(&BLACK_PAWN_DELTAS),
+};
 
 const fn init_rays() -> [[u64; 64]; 64] {
     let mut table = [[0; 64]; 64];
