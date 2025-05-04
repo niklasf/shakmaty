@@ -239,7 +239,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn get_mut(&mut self, color: Color) -> &mut T {
+    pub const fn get_mut(&mut self, color: Color) -> &mut T {
         match color {
             Color::Black => &mut self.black,
             Color::White => &mut self.white,
@@ -312,7 +312,7 @@ impl<T> ByColor<T> {
     }
 
     #[inline]
-    pub fn as_mut(&mut self) -> ByColor<&mut T> {
+    pub const fn as_mut(&mut self) -> ByColor<&mut T> {
         ByColor {
             black: &mut self.black,
             white: &mut self.white,
@@ -344,7 +344,7 @@ impl<T> ByColor<ByRole<T>> {
         self.get(piece.color).get(piece.role)
     }
 
-    pub fn piece_mut(&mut self, piece: Piece) -> &mut T {
+    pub const fn piece_mut(&mut self, piece: Piece) -> &mut T {
         self.get_mut(piece.color).get_mut(piece.role)
     }
 }

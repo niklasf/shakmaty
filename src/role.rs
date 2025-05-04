@@ -197,7 +197,7 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn get_mut(&mut self, role: Role) -> &mut T {
+    pub const fn get_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
             &mut *(self as *mut ByRole<T>)
@@ -269,7 +269,7 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
-    pub fn as_mut(&mut self) -> ByRole<&mut T> {
+    pub const fn as_mut(&mut self) -> ByRole<&mut T> {
         ByRole {
             pawn: &mut self.pawn,
             knight: &mut self.knight,
