@@ -194,38 +194,49 @@ impl UciMove {
     ///
     /// # Ok::<_, shakmaty::uci::ParseUciMoveError>(())
     /// ```
-    pub fn from_ascii(uci: &[u8]) -> Result<UciMove, ParseUciMoveError> {
-        if uci.len() != 4 && uci.len() != 5 {
-            return Err(ParseUciMoveError);
-        }
-
-        if uci == b"0000" {
-            return Ok(UciMove::Null);
-        }
-
-        let to = Square::from_ascii(&uci[2..4]).map_err(|_| ParseUciMoveError)?;
-
-        if uci[1] == b'@' {
-            Ok(UciMove::Put {
-                role: Role::from_char(char::from(uci[0])).ok_or(ParseUciMoveError)?,
-                to,
-            })
-        } else {
-            let from = Square::from_ascii(&uci[0..2]).map_err(|_| ParseUciMoveError)?;
-            if uci.len() == 5 {
-                Ok(UciMove::Normal {
-                    from,
-                    to,
-                    promotion: Some(Role::from_char(char::from(uci[4])).ok_or(ParseUciMoveError)?),
-                })
+    pub const fn from_ascii(uci: &[u8]) -> Result<UciMove, ParseUciMoveError> {
+        Ok(if uci.len() == 4 {
+            if uci[0] == b'0' && uci[1] == b'0' && uci[2] == b'0' && uci[3] == b'0' {
+                return Ok(UciMove::Null);
+            } else if uci[1] == b'@' {
+                let Some(role) = Role::from_char(uci[0] as char) else {
+                    return Err(ParseUciMoveError);
+                };
+                let Ok(to) = Square::from_ascii(&[uci[2], uci[3]]) else {
+                    return Err(ParseUciMoveError);
+                };
+                UciMove::Put { role, to }
             } else {
-                Ok(UciMove::Normal {
+                let Ok(from) = Square::from_ascii(&[uci[0], uci[1]]) else {
+                    return Err(ParseUciMoveError);
+                };
+                let Ok(to) = Square::from_ascii(&[uci[2], uci[3]]) else {
+                    return Err(ParseUciMoveError);
+                };
+                UciMove::Normal {
                     from,
                     to,
                     promotion: None,
-                })
+                }
             }
-        }
+        } else if uci.len() == 5 {
+            let Ok(from) = Square::from_ascii(&[uci[0], uci[1]]) else {
+                return Err(ParseUciMoveError);
+            };
+            let Ok(to) = Square::from_ascii(&[uci[2], uci[3]]) else {
+                return Err(ParseUciMoveError);
+            };
+            let Some(promotion) = Role::from_char(uci[4] as char) else {
+                return Err(ParseUciMoveError);
+            };
+            UciMove::Normal {
+                from,
+                to,
+                promotion: Some(promotion),
+            }
+        } else {
+            return Err(ParseUciMoveError);
+        })
     }
 
     /// Converts a move to UCI notation. Castling moves are represented as
