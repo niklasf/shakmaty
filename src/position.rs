@@ -377,7 +377,19 @@ pub trait Position {
     fn fullmoves(&self) -> NonZeroU32;
 
     /// Converts the position to the current [`Setup`].
-    fn into_setup(self, mode: EnPassantMode) -> Setup;
+    fn to_setup(&self, mode: EnPassantMode) -> Setup /* FINAL */ {
+        Setup {
+            board: self.board().clone(),
+            promoted: self.promoted(),
+            pockets: self.pockets().copied(),
+            turn: self.turn(),
+            castling_rights: self.castles().castling_rights(),
+            ep_square: self.ep_square(mode),
+            remaining_checks: self.remaining_checks().copied(),
+            halfmoves: self.halfmoves(),
+            fullmoves: self.fullmoves(),
+        }
+    }
 
     /// Generates all legal moves.
     fn legal_moves(&self) -> MoveList;
@@ -642,7 +654,7 @@ pub trait Position {
         Self: Sized + FromSetup,
     {
         let mode = self.castles().mode();
-        let mut setup = self.into_setup(EnPassantMode::Always);
+        let mut setup = self.to_setup(EnPassantMode::Always);
         setup.swap_turn();
         Self::from_setup(setup, mode)
     }
@@ -756,7 +768,7 @@ impl PartialEq for Chess {
     }
 }
 
-/// Equivalent to comparing `Position::into_setup(EnPassantMode::Legal)`.
+/// Equivalent to comparing `Position::to_setup(EnPassantMode::Legal)`.
 ///
 /// Positions with different [`CastlingMode`] may be equivalent. En passant
 /// squares are considered only if there is a legal en passant capture.
@@ -821,20 +833,6 @@ impl Position for Chess {
 
     fn fullmoves(&self) -> NonZeroU32 {
         self.fullmoves
-    }
-
-    fn into_setup(self, mode: EnPassantMode) -> Setup {
-        Setup {
-            ep_square: self.ep_square(mode),
-            board: self.board,
-            promoted: Bitboard::EMPTY,
-            pockets: None,
-            turn: self.turn,
-            castling_rights: self.castles.castling_rights(),
-            remaining_checks: None,
-            halfmoves: self.halfmoves,
-            fullmoves: self.fullmoves,
-        }
     }
 
     fn play_unchecked(&mut self, m: Move) {
@@ -1184,20 +1182,6 @@ pub(crate) mod variant {
             self.fullmoves
         }
 
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            Setup {
-                ep_square: self.ep_square(mode),
-                board: self.board,
-                promoted: Bitboard::EMPTY,
-                pockets: None,
-                turn: self.turn,
-                castling_rights: self.castles.castling_rights(),
-                remaining_checks: None,
-                halfmoves: self.halfmoves,
-                fullmoves: self.fullmoves,
-            }
-        }
-
         fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
@@ -1484,20 +1468,6 @@ pub(crate) mod variant {
             self.fullmoves
         }
 
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            Setup {
-                ep_square: self.ep_square(mode),
-                board: self.board,
-                promoted: Bitboard::EMPTY,
-                pockets: None,
-                turn: self.turn,
-                castling_rights: self.castles.castling_rights(),
-                remaining_checks: None,
-                halfmoves: self.halfmoves,
-                fullmoves: self.fullmoves,
-            }
-        }
-
         fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
@@ -1661,10 +1631,6 @@ pub(crate) mod variant {
             self.chess.fullmoves()
         }
 
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            self.chess.into_setup(mode)
-        }
-
         fn play_unchecked(&mut self, m: Move) {
             self.chess.play_unchecked(m);
         }
@@ -1797,13 +1763,6 @@ pub(crate) mod variant {
 
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves
-        }
-
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            Setup {
-                remaining_checks: Some(self.remaining_checks),
-                ..self.chess.into_setup(mode)
-            }
         }
 
         fn play_unchecked(&mut self, m: Move) {
@@ -2023,14 +1982,6 @@ pub(crate) mod variant {
 
         fn fullmoves(&self) -> NonZeroU32 {
             self.chess.fullmoves()
-        }
-
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            Setup {
-                promoted: self.promoted,
-                pockets: Some(self.pockets),
-                ..self.chess.into_setup(mode)
-            }
         }
 
         fn play_unchecked(&mut self, m: Move) {
@@ -2293,20 +2244,6 @@ pub(crate) mod variant {
             self.fullmoves
         }
 
-        fn into_setup(self, _mode: EnPassantMode) -> Setup {
-            Setup {
-                board: self.board,
-                promoted: Bitboard::EMPTY,
-                pockets: None,
-                turn: self.turn,
-                castling_rights: self.castles.castling_rights(),
-                ep_square: None,
-                remaining_checks: None,
-                halfmoves: self.halfmoves,
-                fullmoves: self.fullmoves,
-            }
-        }
-
         fn play_unchecked(&mut self, m: Move) {
             do_move(
                 &mut self.board,
@@ -2542,20 +2479,6 @@ pub(crate) mod variant {
 
         fn fullmoves(&self) -> NonZeroU32 {
             self.fullmoves
-        }
-
-        fn into_setup(self, mode: EnPassantMode) -> Setup {
-            Setup {
-                ep_square: self.ep_square(mode),
-                board: self.board,
-                promoted: Bitboard::EMPTY,
-                pockets: None,
-                turn: self.turn,
-                castling_rights: self.castles.castling_rights(),
-                remaining_checks: None,
-                halfmoves: self.halfmoves,
-                fullmoves: self.fullmoves,
-            }
         }
 
         fn play_unchecked(&mut self, m: Move) {
@@ -3787,7 +3710,7 @@ mod tests {
             .expect("valid position");
         let swapped = pos.swap_turn().expect("swap turn");
         assert_eq!(
-            Fen(swapped.into_setup(EnPassantMode::Always)).to_string(),
+            Fen(swapped.to_setup(EnPassantMode::Always)).to_string(),
             "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3"
         );
     }

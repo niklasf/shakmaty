@@ -45,7 +45,7 @@
 //!
 //! let pos = Chess::default();
 //!
-//! assert_eq!(Epd::from_position(pos, EnPassantMode::Legal).to_string(),
+//! assert_eq!(Epd::from_position(&pos, EnPassantMode::Legal).to_string(),
 //!            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -");
 //! ```
 
@@ -508,8 +508,8 @@ impl Fen {
         Fen(setup)
     }
 
-    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Fen {
-        Fen(pos.into_setup(mode))
+    pub fn from_position<P: Position>(pos: &P, mode: EnPassantMode) -> Fen {
+        Fen(pos.to_setup(mode))
     }
 
     pub const fn as_setup(&self) -> &Setup {
@@ -641,8 +641,8 @@ impl Epd {
         Epd(setup)
     }
 
-    pub fn from_position<P: Position>(pos: P, mode: EnPassantMode) -> Epd {
-        Epd::from_setup(pos.into_setup(mode))
+    pub fn from_position<P: Position>(pos: &P, mode: EnPassantMode) -> Epd {
+        Epd::from_setup(pos.to_setup(mode))
     }
 
     pub const fn as_setup(&self) -> &Setup {
@@ -767,7 +767,7 @@ mod tests {
         assert_eq!(pos.legal_ep_square(), None);
 
         assert_eq!(
-            Epd::from_position(pos, EnPassantMode::Legal).to_string(),
+            Epd::from_position(&pos, EnPassantMode::Legal).to_string(),
             "4k3/8/8/8/3Pp3/8/8/3KR3 b - -"
         );
     }

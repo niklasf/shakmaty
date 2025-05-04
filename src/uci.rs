@@ -581,7 +581,7 @@ mod tests {
             pos.play_unchecked(m);
         }
         assert_eq!(
-            Fen::from_position(pos, crate::EnPassantMode::Legal).to_string(),
+            Fen::from_position(&pos, crate::EnPassantMode::Legal).to_string(),
             "nbkr1nbr/ppp1pppp/3p4/8/5Pq1/6N1/PPPPPBPP/NBQR1RK1 b - - 5 4"
         );
     }
