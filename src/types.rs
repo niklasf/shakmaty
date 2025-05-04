@@ -20,12 +20,18 @@ pub struct Piece {
 }
 
 impl Piece {
-    pub fn char(self) -> char {
-        self.color.fold_wb(self.role.upper_char(), self.role.char())
+    pub const fn char(self) -> char {
+        match self.color {
+            Color::White => self.role.upper_char(),
+            Color::Black => self.role.char(),
+        }
     }
 
-    pub fn from_char(ch: char) -> Option<Piece> {
-        Role::from_char(ch).map(|role| role.of(Color::from_white(32 & ch as u8 == 0)))
+    pub const fn from_char(ch: char) -> Option<Piece> {
+        let Some(role) = Role::from_char(ch) else {
+            return None;
+        };
+        Some(role.of(Color::from_white(32 & ch as u8 == 0)))
     }
 }
 
