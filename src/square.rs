@@ -146,6 +146,12 @@ impl File {
         self as u32
     }
 
+    #[must_use]
+    #[inline(always)]
+    pub const fn to_usize(self) -> usize {
+        self as usize
+    }
+
     /// `A`, ..., `H`.
     pub const ALL: [File; 8] = [
         File::A,
@@ -281,6 +287,12 @@ impl Rank {
     #[inline]
     pub const fn to_u32(self) -> u32 {
         self as u32
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn to_usize(self) -> usize {
+        self as usize
     }
 
     /// `First`, ..., `Eighth`.
@@ -657,6 +669,12 @@ impl Square {
     #[inline]
     pub const fn to_u32(self) -> u32 {
         self as u32
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn to_usize(self) -> usize {
+        self as usize
     }
 
     pub(crate) fn append_to<W: AppendAscii>(self, f: &mut W) -> Result<(), W::Error> {

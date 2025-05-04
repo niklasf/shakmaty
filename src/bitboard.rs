@@ -29,19 +29,19 @@ impl Bitboard {
     /// A bitboard with a single square.
     #[inline]
     pub const fn from_square(sq: Square) -> Bitboard {
-        Bitboard(1 << sq as usize)
+        Bitboard(1 << sq.to_u32())
     }
 
     /// Returns the bitboard containing all squares of the given rank.
     #[inline]
     pub const fn from_rank(rank: Rank) -> Bitboard {
-        Bitboard(RANKS[rank as usize])
+        Bitboard(RANKS[rank.to_usize()])
     }
 
     /// Returns the bitboard containing all squares of the given file.
     #[inline]
     pub const fn from_file(file: File) -> Bitboard {
-        Bitboard(FILE_A << file as usize)
+        Bitboard(FILE_A << file.to_u32())
     }
 
     /// Silently overflowing bitwise shift with a signed offset, `<<` for

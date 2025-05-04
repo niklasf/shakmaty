@@ -34,23 +34,23 @@ use crate::{
 
 /// Looks up attacks for a pawn of `color` on `sq`.
 #[inline]
-pub fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
+pub const fn pawn_attacks(color: Color, sq: Square) -> Bitboard {
     Bitboard(match color {
-        Color::White => WHITE_PAWN_ATTACKS[usize::from(sq)],
-        Color::Black => BLACK_PAWN_ATTACKS[usize::from(sq)],
+        Color::White => WHITE_PAWN_ATTACKS[sq.to_usize()],
+        Color::Black => BLACK_PAWN_ATTACKS[sq.to_usize()],
     })
 }
 
 /// Looks up attacks for a knight on `sq`.
 #[inline]
-pub fn knight_attacks(sq: Square) -> Bitboard {
-    Bitboard(KNIGHT_ATTACKS[usize::from(sq)])
+pub const fn knight_attacks(sq: Square) -> Bitboard {
+    Bitboard(KNIGHT_ATTACKS[sq.to_usize()])
 }
 
 /// Looks up attacks for a king on `sq`.
 #[inline]
-pub fn king_attacks(sq: Square) -> Bitboard {
-    Bitboard(KING_ATTACKS[usize::from(sq)])
+pub const fn king_attacks(sq: Square) -> Bitboard {
+    Bitboard(KING_ATTACKS[sq.to_usize()])
 }
 
 /// Looks up attacks for a rook on `sq` with `occupied` squares.
@@ -85,8 +85,8 @@ pub fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 ///
 /// assert_eq!(mask.count(), 11);
 #[inline]
-pub fn rook_mask(sq: Square) -> Bitboard {
-    Bitboard(ROOK_MAGICS[usize::from(sq)].mask)
+pub const fn rook_mask(sq: Square) -> Bitboard {
+    Bitboard(ROOK_MAGICS[sq.to_usize()].mask)
 }
 
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
@@ -122,8 +122,8 @@ pub fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
 /// assert_eq!(mask.count(), 9);
 /// ```
 #[inline]
-pub fn bishop_mask(sq: Square) -> Bitboard {
-    Bitboard(BISHOP_MAGICS[usize::from(sq)].mask)
+pub const fn bishop_mask(sq: Square) -> Bitboard {
+    Bitboard(BISHOP_MAGICS[sq.to_usize()].mask)
 }
 
 /// Looks up attacks for a queen on `sq` with `occupied` squares.
@@ -163,8 +163,8 @@ pub fn attacks(sq: Square, piece: Piece, occupied: Bitboard) -> Bitboard {
 /// // . . . 1 . . . .
 /// ```
 #[inline]
-pub fn ray(a: Square, b: Square) -> Bitboard {
-    Bitboard(RAYS[usize::from(a)][usize::from(b)])
+pub const fn ray(a: Square, b: Square) -> Bitboard {
+    Bitboard(RAYS[a.to_usize()][b.to_usize()])
 }
 
 /// The squares between the two squares (bounds not included), or an empty
