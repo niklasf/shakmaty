@@ -1,0 +1,13 @@
+name: Clippy
+on: [push, pull_request]
+
+jobs:
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-hack
+
+      - name: Clippy
+        run: cargo hack clippy --feature-powerset --workspace --bins --examples --benches --tests --all-targets -- --deny warnings
