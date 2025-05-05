@@ -707,7 +707,7 @@ impl SanPlus {
     pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
-    
+
     /// # Errors
     /// See [`Write::write_all`](std::io::Write::write_all).
     #[cfg(feature = "std")]

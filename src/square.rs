@@ -71,7 +71,9 @@ impl File {
     pub const unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
         #[allow(clippy::cast_possible_truncation)] // caller responsible
-        unsafe { mem::transmute(index as u8) }
+        unsafe {
+            mem::transmute(index as u8)
+        }
     }
 
     #[inline]

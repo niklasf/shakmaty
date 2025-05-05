@@ -678,8 +678,8 @@ pub trait Position {
 ///
 /// # Equality
 ///
-/// [`Hash`](std::hash::Hash), [`PartialEq`](std::cmp::PartialEq),
-/// and [`Eq`](std::cmp::Eq) are implemented according to FIDE rules for
+/// [`Hash`], [`PartialEq`],
+/// and [`Eq`] are implemented according to FIDE rules for
 /// repeated positions. See [`Position`](trait.Position.html#equality).
 #[derive(Clone, Debug)]
 pub struct Chess {
@@ -2556,10 +2556,7 @@ pub(crate) mod variant {
 
         // Aids commentary
         // too_many_lines: function well documented
-        #[allow(
-            clippy::nonminimal_bool,
-            clippy::too_many_lines
-        )]
+        #[allow(clippy::nonminimal_bool, clippy::too_many_lines)]
         fn has_insufficient_material(&self, color: Color) -> bool {
             #[derive(Copy, Clone)]
             enum SquareColor {
@@ -2800,7 +2797,7 @@ pub(crate) mod variant {
                     // knight on C3, as long as there is another black piece to waste
                     // a tempo.
                     pieces_num == 1
-                }
+                };
             }
 
             true

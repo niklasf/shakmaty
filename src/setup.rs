@@ -148,7 +148,7 @@ impl Setup {
     }
 
     #[allow(clippy::missing_errors_doc)] // linked to function
-    /// See [`P::from_setup`].
+    /// See [`P::from_setup`](FromSetup::from_setup).
     pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self, mode)
     }

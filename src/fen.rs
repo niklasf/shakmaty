@@ -667,7 +667,7 @@ impl Epd {
     }
 
     #[allow(clippy::missing_errors_doc)] // function with errors doc linked
-    /// See [`P::from_setup`].
+    /// See [`P::from_setup`](FromSetup::from_setup).
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.into_setup(), mode)
     }
