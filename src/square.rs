@@ -17,6 +17,13 @@ macro_rules! try_from_int_impl {
             #[allow(unused_comparisons)]
             fn try_from(value: $t) -> Result<$type, Self::Error> {
                 if ($lower..$upper).contains(&value) {
+                    // we're checking the range
+                    // cast_lossless: we don't know the type
+                    #[allow(
+                        clippy::cast_sign_loss,
+                        clippy::cast_possible_truncation,
+                        clippy::cast_lossless
+                    )]
                     Ok(<$type>::new(value as u32))
                 } else {
                     Err(out_of_range_error())
@@ -63,6 +70,7 @@ impl File {
     #[inline]
     pub const unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
+        #[allow(clippy::cast_possible_truncation)] // caller responsible
         unsafe { mem::transmute(index as u8) }
     }
 
@@ -693,12 +701,15 @@ impl Square {
     }
 
     #[cfg(feature = "std")]
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
 mod all_squares {
+    #[allow(clippy::enum_glob_use)] // no
     use super::Square::{self, *};
     impl Square {
         /// `A1`, `B1`, ..., `G8`, `H8`.

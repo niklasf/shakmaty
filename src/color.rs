@@ -339,6 +339,22 @@ impl<T> ByColor<T> {
     }
 }
 
+impl<'a, T: 'a> IntoIterator for &'a ByColor<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T: 'a> IntoIterator for &'a mut ByColor<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 impl<T> ByColor<ByRole<T>> {
     pub const fn piece(&self, piece: Piece) -> &T {
         self.get(piece.color).get(piece.role)

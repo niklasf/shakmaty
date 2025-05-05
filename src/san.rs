@@ -323,17 +323,21 @@ impl San {
                 for candidate in moves {
                     match *candidate {
                         Move::Normal {
-                            role: r,
-                            to: t,
-                            promotion: p,
-                            from: f,
+                            role: candidate_role,
+                            to: candidate_to,
+                            promotion: candidate_promotion,
+                            from: candidate_from,
                             ..
-                        } if from != f && role == r && to == t && promotion == p => {
+                        } if from != candidate_from
+                            && role == candidate_role
+                            && to == candidate_to
+                            && promotion == candidate_promotion =>
+                        {
                             ambiguous = true;
-                            if from.rank() == f.rank() {
+                            if from.rank() == candidate_from.rank() {
                                 ambiguous_rank = true;
                             }
-                            if from.file() == f.file() {
+                            if from.file() == candidate_from.file() {
                                 ambiguous_file = true;
                             }
                         }
@@ -523,6 +527,8 @@ impl San {
         let _ = self.append_to(buf);
     }
 
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     #[cfg(feature = "std")]
     pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
@@ -701,7 +707,9 @@ impl SanPlus {
     pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
-
+    
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     #[cfg(feature = "std")]
     pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
@@ -786,7 +794,7 @@ mod tests {
             "d1=N", "@e4#", "K@b3", "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+",
         ] {
             let result = san.parse::<SanPlus>().expect("valid san").to_string();
-            assert_eq!(*san, result, "read {} write {}", san, result);
+            assert_eq!(*san, result, "read {san} write {result}");
         }
     }
 

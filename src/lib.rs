@@ -69,6 +69,8 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
+#![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate, clippy::inline_always)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

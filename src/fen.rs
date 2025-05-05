@@ -298,11 +298,14 @@ impl BoardFen<'_> {
             let mut prev_file = -1;
 
             for square in self.board.occupied() & rank {
-                let empty = i32::from(square.file()) - prev_file - 1;
+                // does not wrap, all values are in [-1, 7], theres' 3 of them
+                let empty = i8::from(square.file()) - prev_file - 1;
                 if empty > 0 {
+                    // we check empty > 0
+                    #[allow(clippy::cast_sign_loss)]
                     f.append_ascii(char::from(b'0' + empty as u8))?;
                 }
-                prev_file = i32::from(square.file());
+                prev_file = i8::from(square.file());
 
                 f.append_ascii(self.board.piece_at(square).expect("piece").char())?;
                 if self.promoted.contains(square) {
@@ -310,8 +313,12 @@ impl BoardFen<'_> {
                 }
             }
 
-            let empty = i32::from(File::H) - prev_file;
+            // does not wrap because prev_file is either -1 or at most 7 (see the loop)
+            // File::H is 7 so -7 or +1 it doesnt wrap
+            let empty = i8::from(File::H) - prev_file;
             if empty > 0 {
+                // we check empty > 0
+                #[allow(clippy::cast_sign_loss)]
                 f.append_ascii(char::from(b'0' + empty as u8))?;
             }
 
@@ -334,6 +341,8 @@ impl BoardFen<'_> {
     }
 
     #[cfg(feature = "std")]
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
@@ -549,6 +558,8 @@ impl Fen {
     }
 
     #[cfg(feature = "std")]
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }
@@ -628,6 +639,8 @@ impl Epd {
         Epd(Setup::empty())
     }
 
+    /// # Errors
+    /// See [`Fen::from_ascii`].
     pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
         Ok(Epd::from_setup(Fen::from_ascii(epd)?.into_setup()))
     }
@@ -653,6 +666,8 @@ impl Epd {
         self.0
     }
 
+    #[allow(clippy::missing_errors_doc)] // function with errors doc linked
+    /// See [`P::from_setup`].
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.into_setup(), mode)
     }
@@ -671,6 +686,8 @@ impl Epd {
         let _ = self.append_to(buf);
     }
 
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     #[cfg(feature = "std")]
     pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
@@ -832,7 +849,7 @@ mod tests {
             .parse::<Fen>()
             .expect("valid fen")
             .into_setup();
-        assert_eq!(setup.pockets, Some(Default::default()));
+        assert_eq!(setup.pockets, Some(ByColor::default()));
     }
 
     #[test]

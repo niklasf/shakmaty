@@ -37,9 +37,13 @@ const fn sliding_attacks(square: i32, occupied: u64, deltas: &[i32]) -> u64 {
 
 const fn init_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
     let mut table = [0; 64];
-    let mut sq = 0;
+    let mut sq: usize = 0;
     while sq < 64 {
-        table[sq] = sliding_attacks(sq as i32, !0, deltas);
+        assert!(sq <= i32::MAX as usize); // private function, only used in const
+        #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+        {
+            table[sq] = sliding_attacks(sq as i32, !0, deltas);
+        }
         sq += 1;
     }
     table
@@ -52,12 +56,16 @@ pub static PAWN_ATTACKS: ByColor<[u64; 64]> = ByColor {
     black: init_stepping_attacks(&BLACK_PAWN_DELTAS),
 };
 
-const fn init_rays() -> [[u64; 64]; 64] {
+// assert makes sure it doesn't happen
+#[expect(clippy::cast_sign_loss)]
+pub static RAYS: [[u64; 64]; 64] = const {
     let mut table = [[0; 64]; 64];
     let mut a = 0;
     while a < 64 {
         let mut b = 0;
         while b < 64 {
+            assert!(a >= 0);
+            assert!(b >= 0);
             table[a as usize][b as usize] = if a == b {
                 0
             } else if a & 7 == b & 7 {
@@ -88,14 +96,15 @@ const fn init_rays() -> [[u64; 64]; 64] {
         a += 1;
     }
     table
-}
+};
 
-pub static RAYS: [[u64; 64]; 64] = init_rays();
-
-const fn init_magics() -> [u64; 88772] {
+// assert makes sure it doesn't happen
+#[expect(clippy::cast_sign_loss)]
+pub static ATTACKS: [u64; 88772] = {
     let mut table = [0; 88772];
     let mut square = 0;
     while square < 64 {
+        assert!(square >= 0);
         let magic = &magics::BISHOP_MAGICS[square as usize];
         let range = magic.mask;
         let mut subset = 0;
@@ -110,6 +119,7 @@ const fn init_magics() -> [u64; 88772] {
             }
         }
 
+        assert!(square >= 0);
         let magic = &magics::ROOK_MAGICS[square as usize];
         let range = magic.mask;
         let mut subset = 0;
@@ -127,6 +137,4 @@ const fn init_magics() -> [u64; 88772] {
         square += 1;
     }
     table
-}
-
-pub static ATTACKS: [u64; 88772] = init_magics();
+};

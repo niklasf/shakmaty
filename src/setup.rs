@@ -117,6 +117,7 @@ impl Setup {
         self.ep_square = None;
     }
 
+    #[must_use]
     pub const fn into_swapped_turn(mut self) -> Setup {
         self.swap_turn();
         self
@@ -140,11 +141,14 @@ impl Setup {
         }
     }
 
+    #[must_use]
     pub fn into_mirrored(mut self) -> Setup {
         self.mirror();
         self
     }
 
+    #[allow(clippy::missing_errors_doc)] // linked to function
+    /// See [`P::from_setup`].
     pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self, mode)
     }

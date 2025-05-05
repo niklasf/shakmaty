@@ -38,6 +38,7 @@ impl Outcome {
         }
     }
 
+    #[allow(clippy::missing_errors_doc)] // documented
     pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
         Ok(match bytes {
             b"1-0" => Outcome::Decisive { winner: White },
@@ -216,12 +217,18 @@ impl<P> PositionError<P> {
 
     /// Discards invalid castling rights to recover from
     /// [`PositionErrorKinds::INVALID_CASTLING_RIGHTS`].
+    ///
+    /// # Errors
+    /// Errors if the position still has errors.
     pub fn ignore_invalid_castling_rights(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::INVALID_CASTLING_RIGHTS)
     }
 
     /// Discards invalid en passant squares to recover from
     /// [`PositionErrorKinds::INVALID_EP_SQUARE`].
+    ///
+    /// # Errors
+    /// Errors if the position still has errors.
     pub fn ignore_invalid_ep_square(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::INVALID_EP_SQUARE)
     }
@@ -229,10 +236,14 @@ impl<P> PositionError<P> {
     /// Get the position despite [`PositionErrorKinds::TOO_MUCH_MATERIAL`].
     ///
     /// Note that other programs may not work with too much material.
+    ///
+    /// # Errors
+    /// Errors if the position still has errors.
     pub fn ignore_too_much_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
     }
 
+    #[allow(clippy::missing_errors_doc)] // deprecated
     #[deprecated = "Use `PositionErrorKinds::ignore_too_much_material()`"]
     pub fn ignore_impossible_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
@@ -242,6 +253,9 @@ impl<P> PositionError<P> {
     /// (not be be confused with [`PositionErrorKinds::OPPOSITE_CHECK`]).
     ///
     /// Note that other programs may not work in such a situation.
+    ///
+    /// # Errors
+    /// Errors if the position still has errors.
     pub fn ignore_impossible_check(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::IMPOSSIBLE_CHECK)
     }
@@ -256,7 +270,7 @@ impl<P> fmt::Debug for PositionError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PositionError")
             .field("errors", &self.errors)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -336,7 +350,7 @@ pub trait FromSetup: Sized {
 /// # Equality
 ///
 /// All provided variants implement [`Hash`],
-/// [`PartialEq`], and [`Eq`] according
+/// [`PartialEq`], and [`Eq`]according
 /// to FIDE rules for repeated positions. That is, considering
 ///
 /// * piece positions
@@ -664,8 +678,8 @@ pub trait Position {
 ///
 /// # Equality
 ///
-/// [`Hash`], [`PartialEq`],
-/// and [`Eq`] are implemented according to FIDE rules for
+/// [`Hash`](std::hash::Hash), [`PartialEq`](std::cmp::PartialEq),
+/// and [`Eq`](std::cmp::Eq) are implemented according to FIDE rules for
 /// repeated positions. See [`Position`](trait.Position.html#equality).
 #[derive(Clone, Debug)]
 pub struct Chess {
@@ -705,12 +719,11 @@ impl Chess {
             }
         };
 
-        let ep_square = match EnPassant::from_setup(&setup) {
-            Ok(ep_square) => ep_square,
-            Err(()) => {
-                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
-                None
-            }
+        let ep_square = if let Ok(ep_square) = EnPassant::from_setup(&setup) {
+            ep_square
+        } else {
+            errors |= PositionErrorKinds::INVALID_EP_SQUARE;
+            None
         };
 
         let pos = Chess {
@@ -1033,9 +1046,14 @@ impl Position for Chess {
 
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
+    use super::{
+        attacks, do_move, evasions, gen_castling_moves, gen_en_passant, gen_non_king,
+        gen_safe_king, is_safe, is_standard_material, slider_blockers, validate, Bitboard, Black,
+        Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Chess, Color, EnPassant,
+        FromSetup, Hash, Hasher, Move, MoveList, NonZeroU32, Outcome, Position, PositionError,
+        PositionErrorKinds, Rank, RemainingChecks, Role, Setup, Square, Stepper, White,
+    };
     use core::{cmp::min, ops::Not};
-
-    use super::*;
 
     enum KingTag {}
 
@@ -1110,12 +1128,11 @@ pub(crate) mod variant {
                 }
             };
 
-            let ep_square = match EnPassant::from_setup(&setup) {
-                Ok(ep_square) => ep_square,
-                Err(()) => {
-                    errors |= PositionErrorKinds::INVALID_EP_SQUARE;
-                    None
-                }
+            let ep_square = if let Ok(ep_square) = EnPassant::from_setup(&setup) {
+                ep_square
+            } else {
+                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
+                None
             };
 
             let pos = Atomic {
@@ -1400,12 +1417,11 @@ pub(crate) mod variant {
         ) -> Result<Antichess, PositionError<Antichess>> {
             let mut errors = PositionErrorKinds::empty();
 
-            let ep_square = match EnPassant::from_setup(&setup) {
-                Ok(ep_square) => ep_square,
-                Err(()) => {
-                    errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
-                    None
-                }
+            let ep_square = if let Ok(ep_square) = EnPassant::from_setup(&setup) {
+                ep_square
+            } else {
+                errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
+                None
             };
 
             let pos = Antichess {
@@ -2393,12 +2409,11 @@ pub(crate) mod variant {
                 }
             };
 
-            let ep_square = match EnPassant::from_setup(&setup) {
-                Ok(ep_square) => ep_square,
-                Err(()) => {
-                    errors |= PositionErrorKinds::INVALID_EP_SQUARE;
-                    None
-                }
+            let ep_square = if let Ok(ep_square) = EnPassant::from_setup(&setup) {
+                ep_square
+            } else {
+                errors |= PositionErrorKinds::INVALID_EP_SQUARE;
+                None
             };
 
             let pos = Horde {
@@ -2539,7 +2554,12 @@ pub(crate) mod variant {
             self.board().white().is_empty() || self.board().black().is_empty()
         }
 
-        #[allow(clippy::nonminimal_bool)] // Aids commentary
+        // Aids commentary
+        // too_many_lines: function well documented
+        #[allow(
+            clippy::nonminimal_bool,
+            clippy::too_many_lines
+        )]
         fn has_insufficient_material(&self, color: Color) -> bool {
             #[derive(Copy, Clone)]
             enum SquareColor {
@@ -2747,39 +2767,39 @@ pub(crate) mod variant {
                             // knight and the bishop deliver check.
                             pieces_of_type_not( pieces_bishops(horde_bishop_color) ) >=3
                     );
-                } else {
-                    // The horde has two or more bishops on the same color.
-                    // White can only win if black has enough material to obstruct
-                    // the squares of the opposite color around the king.
-                    return !(
-                        // A king on A1 obstructed by a pawn/opposite-bishop/knight
-                        // on A2 and a opposite-bishop/knight on B1 is mated by two
-                        // bishops on B2 and C3. This position is theoretically
-                        // achievable even when black has two pawns or when they
-                        // have a pawn and an opposite color bishop.
-                        (pieces.pawn >= 1 && pieces_bishops(!horde_bishop_color) >= 1)
-                            || (pieces.pawn >= 1 && pieces.knight >= 1)
-                            || (pieces_bishops(!horde_bishop_color) >= 1 && pieces.knight >= 1)
-                            || (pieces_bishops(!horde_bishop_color) >= 2)
-                            || pieces.knight >= 2
-                            || pieces.pawn >= 2
-                        // In every other case, white can only draw.
-                    );
                 }
+
+                // The horde has two or more bishops on the same color.
+                // White can only win if black has enough material to obstruct
+                // the squares of the opposite color around the king.
+                return !(
+                    // A king on A1 obstructed by a pawn/opposite-bishop/knight
+                    // on A2 and a opposite-bishop/knight on B1 is mated by two
+                    // bishops on B2 and C3. This position is theoretically
+                    // achievable even when black has two pawns or when they
+                    // have a pawn and an opposite color bishop.
+                    (pieces.pawn >= 1 && pieces_bishops(!horde_bishop_color) >= 1)
+                        || (pieces.pawn >= 1 && pieces.knight >= 1)
+                        || (pieces_bishops(!horde_bishop_color) >= 1 && pieces.knight >= 1)
+                        || (pieces_bishops(!horde_bishop_color) >= 2)
+                        || pieces.knight >= 2
+                        || pieces.pawn >= 2
+                    // In every other case, white can only draw.
+                );
             } else if horde_num == 3 {
                 // A king in the corner is mated by two knights and a bishop or three
                 // knights or the bishop pair and a knight/bishop.
-                if (horde.knight == 2 && horde.bishop == 1)
+                return if (horde.knight == 2 && horde.bishop == 1)
                     || horde.knight == 3
                     || has_bishop_pair(color)
                 {
-                    return false;
+                    false
                 } else {
                     // White has two same color bishops and a knight.
                     // A king on A1 is mated by a bishop on B2, a bishop on C1 and a
                     // knight on C3, as long as there is another black piece to waste
                     // a tempo.
-                    return pieces_num == 1;
+                    pieces_num == 1
                 }
             }
 

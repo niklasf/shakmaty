@@ -451,6 +451,8 @@ impl UciMove {
     }
 
     #[cfg(feature = "std")]
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }

@@ -190,7 +190,7 @@ impl<T> ByRole<T> {
     pub const fn get(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
-            &*(self as *const ByRole<T>)
+            &*core::ptr::from_ref(self)
                 .cast::<T>()
                 .offset(role as isize - 1)
         }
@@ -200,7 +200,7 @@ impl<T> ByRole<T> {
     pub const fn get_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
         unsafe {
-            &mut *(self as *mut ByRole<T>)
+            &mut *core::ptr::from_mut(self)
                 .cast::<T>()
                 .offset(role as isize - 1)
         }
@@ -301,6 +301,24 @@ impl<T> ByRole<T> {
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 6> {
         self.as_mut().into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a ByRole<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut ByRole<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

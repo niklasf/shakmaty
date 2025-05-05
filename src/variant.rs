@@ -53,6 +53,7 @@ impl Variant {
         }
     }
 
+    #[allow(clippy::missing_errors_doc)] // documented
     /// Selects a variant based on the name used by the `UCI_Variant` option
     /// of chess engines.
     pub fn from_uci(s: &str) -> Result<Variant, ParseVariantError> {
@@ -69,6 +70,7 @@ impl Variant {
         })
     }
 
+    #[allow(clippy::missing_errors_doc)] // documented
     /// Selects a variant based on its name or known alias.
     pub fn from_ascii(s: &[u8]) -> Result<Variant, ParseVariantError> {
         Ok(match s {
@@ -213,6 +215,7 @@ impl VariantPosition {
         }
     }
 
+    #[allow(clippy::missing_errors_doc)] // documented
     #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn from_setup(
         variant: Variant,
@@ -259,6 +262,7 @@ impl VariantPosition {
         }
     }
 
+    #[allow(clippy::missing_errors_doc)] // documented
     #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();

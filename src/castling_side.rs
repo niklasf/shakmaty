@@ -64,6 +64,7 @@ impl CastlingSide {
     }
 
     #[inline]
+    #[must_use]
     pub const fn other(self) -> CastlingSide {
         match self {
             CastlingSide::KingSide => CastlingSide::QueenSide,
@@ -220,6 +221,22 @@ impl<T> ByCastlingSide<T> {
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
         self.as_mut().into_iter()
+    }
+}
+
+impl<'a, T: 'a> IntoIterator for &'a ByCastlingSide<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T: 'a> IntoIterator for &'a mut ByCastlingSide<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
