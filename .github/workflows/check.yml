@@ -1,0 +1,28 @@
+name: Check
+on: [push, pull_request]
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        toolchain:
+          - "1.85.1" # remember to update rust-version in Cargo.toml
+          - "stable"
+          - "nightly"
+        include:
+          - toolchain: "nightly"
+            flags: "-Z minimal-versions"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-hack
+
+      - name: Main
+        run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --all-targets ${{ matrix.flags }}
+      - run: rustup target add thumbv6m-none-eabi
+      - name: No-std
+        run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --skip std --target thumbv6m-none-eabi ${{ matrix.flags }}
+      - name: Fuzz
+        run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --manifest-path fuzz/Cargo.toml --all-targets ${{ matrix.flags }}

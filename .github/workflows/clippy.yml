@@ -9,5 +9,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@cargo-hack
 
-      - name: Clippy
-        run: cargo hack clippy --feature-powerset --workspace --bins --examples --benches --tests --all-targets -- --deny warnings
+      - name: Main
+        run: cargo hack clippy --feature-powerset --all-targets -- --deny warnings
+      - name: Fuzz
+        run: cargo hack clippy --feature-powerset --manifest-path fuzz/Cargo.toml --all-targets -- --deny warnings

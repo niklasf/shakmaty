@@ -1,0 +1,15 @@
+name: Doc check
+on: [push, pull_request]
+
+jobs:
+  doc-check:
+    runs-on: ubuntu-latest
+    env:
+      RUSTDOCFLAGS: "-D warnings"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-hack
+
+      - name: Doc check
+        run: cargo hack --feature-powerset doc
