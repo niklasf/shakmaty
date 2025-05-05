@@ -335,8 +335,8 @@ pub trait FromSetup: Sized {
 ///
 /// # Equality
 ///
-/// All provided variants implement [`Hash`](std::hash::Hash),
-/// [`PartialEq`](std::cmp::PartialEq), and [`Eq`](std::cmp::Eq) according
+/// All provided variants implement [`Hash`],
+/// [`PartialEq`], and [`Eq`] according
 /// to FIDE rules for repeated positions. That is, considering
 ///
 /// * piece positions
@@ -664,8 +664,8 @@ pub trait Position {
 ///
 /// # Equality
 ///
-/// [`Hash`](std::hash::Hash), [`PartialEq`](std::cmp::PartialEq),
-/// and [`Eq`](std::cmp::Eq) are implemented according to FIDE rules for
+/// [`Hash`], [`PartialEq`],
+/// and [`Eq`] are implemented according to FIDE rules for
 /// repeated positions. See [`Position`](trait.Position.html#equality).
 #[derive(Clone, Debug)]
 pub struct Chess {
