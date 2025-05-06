@@ -68,8 +68,7 @@ impl fmt::Display for ParseSanError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseSanError {}
+impl core::error::Error for ParseSanError {}
 
 /// `IllegalSan` or `AmbiguousSan`.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -89,8 +88,7 @@ impl fmt::Display for SanError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for SanError {}
+impl core::error::Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
 #[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]

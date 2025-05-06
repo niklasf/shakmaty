@@ -38,7 +38,7 @@ impl Outcome {
         }
     }
 
-    #[allow(clippy::missing_errors_doc)] // documented
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant documentation")]
     pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
         Ok(match bytes {
             b"1-0" => Outcome::Decisive { winner: White },
@@ -82,8 +82,7 @@ impl fmt::Display for ParseOutcomeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseOutcomeError {}
+impl core::error::Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
@@ -116,8 +115,7 @@ impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     }
 }
 
-#[cfg(feature = "std")]
-impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
+impl<P: fmt::Debug> core::error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
@@ -243,7 +241,7 @@ impl<P> PositionError<P> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
     }
 
-    #[allow(clippy::missing_errors_doc)] // deprecated
+    #[expect(clippy::missing_errors_doc, reason = "deprecated")]
     #[deprecated = "Use `PositionErrorKinds::ignore_too_much_material()`"]
     pub fn ignore_impossible_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
@@ -261,7 +259,7 @@ impl<P> PositionError<P> {
     }
 
     /// Returns the reasons for this error.
-    pub fn kinds(&self) -> PositionErrorKinds {
+    pub const fn kinds(&self) -> PositionErrorKinds {
         self.errors
     }
 }
@@ -311,8 +309,7 @@ impl<P> fmt::Display for PositionError<P> {
     }
 }
 
-#[cfg(feature = "std")]
-impl<P> std::error::Error for PositionError<P> {}
+impl<P> core::error::Error for PositionError<P> {}
 
 /// Validate and set up a playable [`Position`]. All provided chess variants
 /// support this.
@@ -699,7 +696,7 @@ impl Chess {
         pos.is_check()
     }
 
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn from_setup_unchecked(
         setup: Setup,
         mode: CastlingMode,
@@ -1046,6 +1043,8 @@ impl Position for Chess {
 
 #[cfg(feature = "variant")]
 pub(crate) mod variant {
+    use core::{cmp::min, ops::Not};
+
     use super::{
         attacks, do_move, evasions, gen_castling_moves, gen_en_passant, gen_non_king,
         gen_safe_king, is_safe, is_standard_material, slider_blockers, validate, Bitboard, Black,
@@ -1053,7 +1052,6 @@ pub(crate) mod variant {
         FromSetup, Hash, Hasher, Move, MoveList, NonZeroU32, Outcome, Position, PositionError,
         PositionErrorKinds, Rank, RemainingChecks, Role, Setup, Square, Stepper, White,
     };
-    use core::{cmp::min, ops::Not};
 
     enum KingTag {}
 
@@ -2555,8 +2553,7 @@ pub(crate) mod variant {
         }
 
         // Aids commentary
-        // too_many_lines: function well documented
-        #[allow(clippy::nonminimal_bool, clippy::too_many_lines)]
+        #[expect(clippy::nonminimal_bool)]
         fn has_insufficient_material(&self, color: Color) -> bool {
             #[derive(Copy, Clone)]
             enum SquareColor {
@@ -2842,7 +2839,7 @@ pub(crate) mod variant {
     }
 }
 
-#[allow(clippy::too_many_arguments)] // But typesafe
+#[expect(clippy::too_many_arguments, reason = "but typesafe")]
 fn do_move(
     board: &mut Board,
     promoted: &mut Bitboard,

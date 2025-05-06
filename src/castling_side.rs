@@ -129,7 +129,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn get_mut(&mut self, side: CastlingSide) -> &mut T {
+    pub const fn get_mut(&mut self, side: CastlingSide) -> &mut T {
         match side {
             CastlingSide::KingSide => &mut self.king_side,
             CastlingSide::QueenSide => &mut self.queen_side,
@@ -197,7 +197,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
+    pub const fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
         ByCastlingSide {
             king_side: &mut self.king_side,
             queen_side: &mut self.queen_side,

@@ -10,7 +10,6 @@ use crate::{
 };
 
 /// `White` or `Black`.
-#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum Color {
     Black = 0,
@@ -179,8 +178,7 @@ impl fmt::Display for ParseColorError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseColorError {}
+impl core::error::Error for ParseColorError {}
 
 impl FromStr for Color {
     type Err = ParseColorError;
@@ -247,7 +245,7 @@ impl<T> ByColor<T> {
     }
 
     #[deprecated = "Use `ByColor::swap()`"]
-    pub fn flip(&mut self) {
+    pub const fn flip(&mut self) {
         self.swap();
     }
 

@@ -139,7 +139,6 @@ macro_rules! zobrist_value_impl {
 
         impl ZobristValue for $t {
             #[inline]
-            #[allow(clippy::too_many_lines)] // can't really make it shorter
             fn zobrist_for_piece(square: Square, piece: Piece) -> $t {
                 #[allow(overflowing_literals)]
                 static PIECE_MASKS: ByColor<ByRole<[$proxy; 64]>> = ByColor {
@@ -1078,7 +1077,6 @@ macro_rules! zobrist_value_impl {
             }
 
             #[inline]
-            #[allow(clippy::too_many_lines)] // can't really make it shorter
             fn zobrist_for_pocket(color: Color, role: Role, pieces: u8) -> $t {
                 #[allow(overflowing_literals)]
                 static POCKET_MASKS: ByColor<ByRole<[$proxy; 7]>> = ByColor {
@@ -1225,7 +1223,7 @@ impl Hash for Zobrist128 {
     where
         H: Hasher,
     {
-        state.write_u64(self.0 as u64); // Truncating!
+        state.write_u128(self.0);
     }
 }
 impl Hash for Zobrist64 {

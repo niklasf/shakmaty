@@ -147,7 +147,7 @@ impl Setup {
         self
     }
 
-    #[allow(clippy::missing_errors_doc)] // linked to function
+    #[expect(clippy::missing_errors_doc, reason = "linked to function")]
     /// See [`P::from_setup`](FromSetup::from_setup).
     pub fn position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self, mode)
@@ -240,6 +240,10 @@ impl Castles {
         }
     }
 
+    /// # Errors
+    /// Returns the same value in both `Ok` or `Err` variants.
+    /// An error signals that the setup castling rights don't match the returned [`Castles`]'s
+    /// rights.
     pub fn from_setup(setup: &Setup, mode: CastlingMode) -> Result<Castles, Castles> {
         let mut castles = Castles::empty(mode);
         let rooks = setup.castling_rights & setup.board.rooks();
@@ -299,7 +303,7 @@ impl Castles {
         self.mask.is_empty()
     }
 
-    pub fn has(&self, color: Color, side: CastlingSide) -> bool {
+    pub const fn has(&self, color: Color, side: CastlingSide) -> bool {
         self.rook(color, side).is_some()
     }
 
@@ -422,11 +426,11 @@ impl EnPassant {
         self.0
     }
 
-    pub fn pawn_pushed_from(self) -> Square {
+    pub const fn pawn_pushed_from(self) -> Square {
         self.0.xor(Square::A4)
     }
 
-    pub fn pawn_pushed_to(self) -> Square {
+    pub const fn pawn_pushed_to(self) -> Square {
         self.0.xor(Square::A2)
     }
 }

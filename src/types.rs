@@ -12,7 +12,6 @@ use crate::{
 };
 
 /// A piece with [`Color`] and [`Role`].
-#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
@@ -164,7 +163,7 @@ impl Move {
     }
 
     #[must_use]
-    pub fn to_mirrored(self) -> Move {
+    pub const fn to_mirrored(self) -> Move {
         match self {
             Move::Normal {
                 role,
@@ -378,7 +377,16 @@ macro_rules! int_from_remaining_checks_impl {
         $(impl From<RemainingChecks> for $t {
             #[inline]
             fn from(RemainingChecks(checks): RemainingChecks) -> $t {
-                checks as $t
+                #[allow(clippy::allow_attributes, reason = "macro, warnings won't always trigger")]
+                #[allow(
+                    clippy::cast_possible_truncation,
+                    clippy::cast_possible_wrap,
+                    clippy::cast_lossless,
+                    reason = "checks is always <= 3, cast_lossless: can't know the type beforehand"
+                )]
+                {
+                    checks as $t
+                }
             }
         })+
     }

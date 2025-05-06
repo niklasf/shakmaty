@@ -81,8 +81,7 @@ impl fmt::Display for ParseUciMoveError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseUciMoveError {}
+impl core::error::Error for ParseUciMoveError {}
 
 /// Error when UCI move is illegal.
 #[derive(Clone, Debug)]
@@ -97,8 +96,7 @@ impl fmt::Display for IllegalUciMoveError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for IllegalUciMoveError {}
+impl core::error::Error for IllegalUciMoveError {}
 
 #[deprecated = "Use `UciMove` instead"]
 pub type Uci = UciMove;

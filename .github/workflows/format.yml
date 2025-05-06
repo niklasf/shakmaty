@@ -7,7 +7,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
 
       - name: Format
-        run: cargo fmt --all --check
+        run: cargo +nightly fmt --all --check

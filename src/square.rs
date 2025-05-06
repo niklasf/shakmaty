@@ -14,15 +14,14 @@ macro_rules! try_from_int_impl {
             type Error = TryFromIntError;
 
             #[inline]
-            #[allow(unused_comparisons)]
             fn try_from(value: $t) -> Result<$type, Self::Error> {
                 if ($lower..$upper).contains(&value) {
-                    // we're checking the range
-                    // cast_lossless: we don't know the type
+                    #[allow(clippy::allow_attributes, reason = "it's a macro, warnings won't always trigger")]
                     #[allow(
                         clippy::cast_sign_loss,
                         clippy::cast_possible_truncation,
-                        clippy::cast_lossless
+                        clippy::cast_lossless,
+                        reason = "we're checking the range, cast_lossless: we don't know the type"
                     )]
                     Ok(<$type>::new(value as u32))
                 } else {
@@ -34,7 +33,6 @@ macro_rules! try_from_int_impl {
 }
 
 /// A file of the chessboard.
-#[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum File {
@@ -70,7 +68,7 @@ impl File {
     #[inline]
     pub const unsafe fn new_unchecked(index: u32) -> File {
         debug_assert!(index < 8);
-        #[allow(clippy::cast_possible_truncation)] // caller responsible
+        #[expect(clippy::cast_possible_truncation, reason = "caller responsible")]
         unsafe {
             mem::transmute(index as u8)
         }
@@ -194,7 +192,6 @@ from_enum_as_int_impl! { File, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isi
 try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// A rank of the chessboard.
-#[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum Rank {
@@ -230,7 +227,10 @@ impl Rank {
     #[inline]
     pub const unsafe fn new_unchecked(index: u32) -> Rank {
         debug_assert!(index < 8);
-        unsafe { mem::transmute(index as u8) }
+        #[expect(clippy::cast_possible_truncation, reason = "caller responsible")]
+        unsafe {
+            mem::transmute(index as u8)
+        }
     }
 
     #[inline]
@@ -346,12 +346,10 @@ impl fmt::Display for ParseSquareError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseSquareError {}
+impl core::error::Error for ParseSquareError {}
 
 /// A square of the chessboard.
 #[rustfmt::skip]
-#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum Square {
@@ -395,7 +393,10 @@ impl Square {
     #[inline]
     pub const unsafe fn new_unchecked(index: u32) -> Square {
         debug_assert!(index < 64);
-        unsafe { mem::transmute(index as u8) }
+        #[expect(clippy::cast_possible_truncation, reason = "caller responsible")]
+        unsafe {
+            mem::transmute(index as u8)
+        }
     }
 
     /// Tries to get a square from file and rank.
@@ -711,7 +712,8 @@ impl Square {
 }
 
 mod all_squares {
-    #[allow(clippy::enum_glob_use)] // no
+    #![allow(clippy::allow_attributes, reason = "false positive occurs when #[expect] is used")]
+    #[allow(clippy::enum_glob_use, reason = "nothing else is imported, would be too many imports")]
     use super::Square::{self, *};
     impl Square {
         /// `A1`, `B1`, ..., `G8`, `H8`.

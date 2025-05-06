@@ -13,7 +13,6 @@ use crate::{color::Color, types::Piece, util::out_of_range_error};
 /// assert_eq!(u32::from(Role::Pawn), 1);
 /// assert_eq!(u32::from(Role::King), 6);
 /// ```
-#[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub enum Role {
     Pawn = 1,

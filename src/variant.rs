@@ -53,7 +53,7 @@ impl Variant {
         }
     }
 
-    #[allow(clippy::missing_errors_doc)] // documented
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant docs")]
     /// Selects a variant based on the name used by the `UCI_Variant` option
     /// of chess engines.
     pub fn from_uci(s: &str) -> Result<Variant, ParseVariantError> {
@@ -70,9 +70,9 @@ impl Variant {
         })
     }
 
-    #[allow(clippy::missing_errors_doc)] // documented
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant docs")]
     /// Selects a variant based on its name or known alias.
-    pub fn from_ascii(s: &[u8]) -> Result<Variant, ParseVariantError> {
+    pub const fn from_ascii(s: &[u8]) -> Result<Variant, ParseVariantError> {
         Ok(match s {
             b"chess" | b"standard" | b"chess960" | b"fromPosition" | b"Standard" | b"Chess960"
             | b"From Position" => Variant::Chess,
@@ -119,8 +119,7 @@ impl fmt::Display for ParseVariantError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseVariantError {}
+impl core::error::Error for ParseVariantError {}
 
 impl FromStr for Variant {
     type Err = ParseVariantError;
@@ -134,7 +133,6 @@ impl FromStr for Variant {
 impl nohash_hasher::IsEnabled for Variant {}
 
 /// Dynamically dispatched chess variant [`Position`].
-#[allow(missing_docs)]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VariantPosition {
     Chess(Chess),
@@ -215,8 +213,7 @@ impl VariantPosition {
         }
     }
 
-    #[allow(clippy::missing_errors_doc)] // documented
-    #[allow(clippy::result_large_err)] // Ok variant is also large
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant docs")]
     pub fn from_setup(
         variant: Variant,
         setup: Setup,
@@ -262,8 +259,7 @@ impl VariantPosition {
         }
     }
 
-    #[allow(clippy::missing_errors_doc)] // documented
-    #[allow(clippy::result_large_err)] // Ok variant is also large
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant docs")]
     pub fn swap_turn(self) -> Result<VariantPosition, PositionError<VariantPosition>> {
         let mode = self.castles().mode();
         let variant = self.variant();

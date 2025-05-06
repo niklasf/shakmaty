@@ -67,10 +67,25 @@
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.27.3")]
 #![forbid(unsafe_op_in_unsafe_fn)]
-#![warn(missing_debug_implementations)]
+#![warn(
+    missing_debug_implementations,
+    clippy::missing_const_for_fn,
+    clippy::pedantic,
+    clippy::allow_attributes,
+    clippy::alloc_instead_of_core,
+    clippy::std_instead_of_core,
+    clippy::std_instead_of_alloc,
+    clippy::cfg_not_test,
+    clippy::clone_on_ref_ptr,
+    clippy::string_add,
+    clippy::unnecessary_safety_comment,
+    clippy::unnecessary_safety_doc,
+    clippy::tests_outside_test_module
+)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
-#![warn(clippy::pedantic)]
-#![allow(clippy::must_use_candidate, clippy::inline_always)]
+#![allow(clippy::must_use_candidate, reason = "triggers too much")]
+#![allow(clippy::inline_always, reason = "assumes the authors are stupid")]
+#![allow(clippy::too_many_lines, reason = "splitting things into functions which are used once is debatable")]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

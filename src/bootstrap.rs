@@ -40,7 +40,11 @@ const fn init_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
     let mut sq: usize = 0;
     while sq < 64 {
         assert!(sq <= i32::MAX as usize); // private function, only used in const
-        #[expect(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_possible_wrap,
+            reason = "assert makes sure it doesn't happen"
+        )]
         {
             table[sq] = sliding_attacks(sq as i32, !0, deltas);
         }
@@ -56,8 +60,7 @@ pub static PAWN_ATTACKS: ByColor<[u64; 64]> = ByColor {
     black: init_stepping_attacks(&BLACK_PAWN_DELTAS),
 };
 
-// assert makes sure it doesn't happen
-#[expect(clippy::cast_sign_loss)]
+#[expect(clippy::cast_sign_loss, reason = "assert makes sure it doesn't happen")]
 pub static RAYS: [[u64; 64]; 64] = const {
     let mut table = [[0; 64]; 64];
     let mut a = 0;
@@ -98,8 +101,7 @@ pub static RAYS: [[u64; 64]; 64] = const {
     table
 };
 
-// assert makes sure it doesn't happen
-#[expect(clippy::cast_sign_loss)]
+#[expect(clippy::cast_sign_loss, reason = "assert makes sure it doesn't happen")]
 pub static ATTACKS: [u64; 88772] = {
     let mut table = [0; 88772];
     let mut square = 0;

@@ -165,15 +165,14 @@ impl Display for ParseFenError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseFenError {}
+impl core::error::Error for ParseFenError {}
 
 fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
     let mut promoted = Bitboard(0);
     let mut board = Board::empty();
 
     let mut rank = 7i8;
-    let mut file = 0i8;
+    let mut file = 0u8;
 
     let mut iter = board_fen.iter().copied().peekable();
 
@@ -185,7 +184,8 @@ fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError>
                 return Err(ParseFenError::InvalidBoard);
             }
         } else if (b'1'..=b'8').contains(&ch) {
-            file += (ch - b'0') as i8;
+            // does not wrap, b'1'..=b'8' - b'0' >= 0
+            file += ch - b'0';
             if file > 8 {
                 return Err(ParseFenError::InvalidBoard);
             }
@@ -248,6 +248,7 @@ fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
 }
 
 impl Board {
+    #[expect(clippy::missing_errors_doc, reason = "error type has relevant docs")]
     pub fn from_ascii_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
         Ok(parse_board_fen(board_fen)?.0)
     }
@@ -301,8 +302,7 @@ impl BoardFen<'_> {
                 // does not wrap, all values are in [-1, 7], theres' 3 of them
                 let empty = i8::from(square.file()) - prev_file - 1;
                 if empty > 0 {
-                    // we check empty > 0
-                    #[allow(clippy::cast_sign_loss)]
+                    #[expect(clippy::cast_sign_loss, reason = "we check empty > 0")]
                     f.append_ascii(char::from(b'0' + empty as u8))?;
                 }
                 prev_file = i8::from(square.file());
@@ -317,8 +317,7 @@ impl BoardFen<'_> {
             // File::H is 7 so -7 or +1 it doesnt wrap
             let empty = i8::from(File::H) - prev_file;
             if empty > 0 {
-                // we check empty > 0
-                #[allow(clippy::cast_sign_loss)]
+                #[expect(clippy::cast_sign_loss, reason = "we check empty > 0")]
                 f.append_ascii(char::from(b'0' + empty as u8))?;
             }
 
@@ -666,7 +665,7 @@ impl Epd {
         self.0
     }
 
-    #[allow(clippy::missing_errors_doc)] // function with errors doc linked
+    #[expect(clippy::missing_errors_doc, reason = "function with error doc linked")]
     /// See [`P::from_setup`](FromSetup::from_setup).
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
         P::from_setup(self.into_setup(), mode)
