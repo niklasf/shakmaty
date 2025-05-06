@@ -85,7 +85,10 @@
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 #![allow(clippy::must_use_candidate, reason = "triggers too much")]
 #![allow(clippy::inline_always, reason = "assumes the authors are stupid")]
-#![allow(clippy::too_many_lines, reason = "splitting things into functions which are used once is debatable")]
+#![allow(
+    clippy::too_many_lines,
+    reason = "splitting things into functions which are used once is debatable"
+)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

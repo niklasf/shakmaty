@@ -712,8 +712,14 @@ impl Square {
 }
 
 mod all_squares {
-    #![allow(clippy::allow_attributes, reason = "false positive occurs when #[expect] is used")]
-    #[allow(clippy::enum_glob_use, reason = "nothing else is imported, would be too many imports")]
+    #![allow(
+        clippy::allow_attributes,
+        reason = "false positive occurs when #[expect] is used"
+    )]
+    #[allow(
+        clippy::enum_glob_use,
+        reason = "nothing else is imported, would be too many imports"
+    )]
     use super::Square::{self, *};
     impl Square {
         /// `A1`, `B1`, ..., `G8`, `H8`.

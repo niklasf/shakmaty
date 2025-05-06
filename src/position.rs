@@ -38,7 +38,10 @@ impl Outcome {
         }
     }
 
-    #[expect(clippy::missing_errors_doc, reason = "error type has relevant documentation")]
+    #[expect(
+        clippy::missing_errors_doc,
+        reason = "error type has relevant documentation"
+    )]
     pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
         Ok(match bytes {
             b"1-0" => Outcome::Decisive { winner: White },
