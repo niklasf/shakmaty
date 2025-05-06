@@ -9,7 +9,7 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
 keywords = ["chess", "lichess"]
 edition = "2021"
-rust-version = "1.85.1" # remember to update test.yml
+rust-version = "1.85.1" # remember to update check.yml
 
 [features]
 default = ["std"]
