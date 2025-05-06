@@ -310,7 +310,7 @@ impl Board {
         self.by_role.map(|pieces| (pieces & side).count())
     }
 
-    /// Returns the amount of pieces on the board, separated by role.
+    /// Returns the amount of pieces on the board, separated by role and color.
     pub fn material(&self) -> ByColor<ByRole<u8>> {
         ByColor::new_with(|color| self.material_side(color))
     }
