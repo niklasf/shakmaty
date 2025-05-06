@@ -375,7 +375,10 @@ impl Bitboard {
     #[doc(alias = "len")]
     #[inline]
     pub const fn count(self) -> u8 {
-        #[expect(clippy::cast_possible_truncation, reason = "u64 only has 64 bits in it, count_ones returns 64 at most, 64 fits in u8")]
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "u64 only has 64 bits in it, count_ones returns 64 at most, 64 fits in u8"
+        )]
         {
             self.0.count_ones() as u8
         }

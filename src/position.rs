@@ -2618,7 +2618,10 @@ pub(crate) mod variant {
                 (Bitboard::from(square_color) & self.board.by_color(!color) & self.board.bishops())
                     .count()
             };
-            #[expect(clippy::cast_possible_truncation, reason = "there can only be 64 pieces, thus material summed up is at most 64")]
+            #[expect(
+                clippy::cast_possible_truncation,
+                reason = "there can only be 64 pieces, thus material summed up is at most 64"
+            )]
             let pieces_num = pieces.count() as u8;
             let pieces_of_type_not = |piece: u8| -> u8 { pieces_num - piece };
 
