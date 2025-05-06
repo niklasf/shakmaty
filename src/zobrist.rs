@@ -1223,7 +1223,7 @@ impl Hash for Zobrist128 {
     where
         H: Hasher,
     {
-        state.write_u128(self.0);
+        state.write_u64(self.0 as u64);
     }
 }
 impl Hash for Zobrist64 {
