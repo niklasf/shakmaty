@@ -304,11 +304,13 @@ impl Board {
                 | (attacks::pawn_attacks(attacker.other(), sq) & self.by_role.pawn))
     }
 
+    /// Returns the amount of pieces on the board owned by this `color`, separated by role.
     pub fn material_side(&self, color: Color) -> ByRole<u8> {
         let side = self.by_color(color);
-        self.by_role.map(|pieces| (pieces & side).count() as u8)
+        self.by_role.map(|pieces| (pieces & side).count())
     }
 
+    /// Returns the amount of pieces on the board, separated by role and color.
     pub fn material(&self) -> ByColor<ByRole<u8>> {
         ByColor::new_with(|color| self.material_side(color))
     }
@@ -362,11 +364,12 @@ impl Board {
     }
 
     /// Swap piece colors, making black pieces white and vice versa.
-    pub fn swap_colors(&mut self) {
+    pub const fn swap_colors(&mut self) {
         self.by_color.swap();
     }
 
-    pub fn into_swapped_colors(mut self) -> Board {
+    #[must_use]
+    pub const fn into_swapped_colors(mut self) -> Board {
         self.swap_colors();
         self
     }
@@ -378,13 +381,14 @@ impl Board {
         self.swap_colors();
     }
 
+    #[must_use]
     pub fn into_mirrored(mut self) -> Board {
         self.mirror();
         self
     }
 
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.occupied.is_empty()
     }
 
@@ -527,7 +531,7 @@ pub struct IntoIter {
 
 impl IntoIter {
     /// Returns a board with the remaining pieces.
-    pub fn into_board(self) -> Board {
+    pub const fn into_board(self) -> Board {
         self.inner
     }
 }
@@ -558,7 +562,7 @@ impl Iterator for IntoIter {
 impl ExactSizeIterator for IntoIter {
     #[inline]
     fn len(&self) -> usize {
-        self.inner.occupied.count()
+        self.inner.occupied.count().into()
     }
 }
 

@@ -64,6 +64,7 @@ impl CastlingSide {
     }
 
     #[inline]
+    #[must_use]
     pub const fn other(self) -> CastlingSide {
         match self {
             CastlingSide::KingSide => CastlingSide::QueenSide,
@@ -128,7 +129,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn get_mut(&mut self, side: CastlingSide) -> &mut T {
+    pub const fn get_mut(&mut self, side: CastlingSide) -> &mut T {
         match side {
             CastlingSide::KingSide => &mut self.king_side,
             CastlingSide::QueenSide => &mut self.queen_side,
@@ -196,7 +197,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
+    pub const fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
         ByCastlingSide {
             king_side: &mut self.king_side,
             queen_side: &mut self.queen_side,
@@ -220,6 +221,22 @@ impl<T> ByCastlingSide<T> {
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
         self.as_mut().into_iter()
+    }
+}
+
+impl<'a, T: 'a> IntoIterator for &'a ByCastlingSide<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T: 'a> IntoIterator for &'a mut ByCastlingSide<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

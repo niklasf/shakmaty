@@ -81,8 +81,7 @@ impl fmt::Display for ParseUciMoveError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseUciMoveError {}
+impl core::error::Error for ParseUciMoveError {}
 
 /// Error when UCI move is illegal.
 #[derive(Clone, Debug)]
@@ -97,8 +96,7 @@ impl fmt::Display for IllegalUciMoveError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for IllegalUciMoveError {}
+impl core::error::Error for IllegalUciMoveError {}
 
 #[deprecated = "Use `UciMove` instead"]
 pub type Uci = UciMove;
@@ -451,6 +449,8 @@ impl UciMove {
     }
 
     #[cfg(feature = "std")]
+    /// # Errors
+    /// See [`Write::write_all`](std::io::Write::write_all).
     pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
         self.append_to(&mut crate::util::WriteAscii(w))
     }

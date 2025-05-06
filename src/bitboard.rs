@@ -182,7 +182,7 @@ impl Bitboard {
 
     /// Clears all squares.
     #[inline]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.0 = 0;
     }
 
@@ -287,7 +287,7 @@ impl Bitboard {
     /// Removes and returns the first square, if any.
     #[must_use = "use Bitboard::discard_first() if return value is not needed"]
     #[inline]
-    pub fn pop_front(&mut self) -> Option<Square> {
+    pub const fn pop_front(&mut self) -> Option<Square> {
         let square = self.first();
         self.discard_first();
         square
@@ -305,7 +305,7 @@ impl Bitboard {
 
     /// Discards the first square.
     #[inline]
-    pub fn discard_first(&mut self) {
+    pub const fn discard_first(&mut self) {
         *self = self.without_first();
     }
 
@@ -363,7 +363,7 @@ impl Bitboard {
         Bitboard::from_iter(self.last())
     }
 
-    /// Returns the number of squares in `self`.
+    /// Returns the number of squares in `self`. Maximum value is 64.
     ///
     /// # Examples
     ///
@@ -374,8 +374,14 @@ impl Bitboard {
     /// ```
     #[doc(alias = "len")]
     #[inline]
-    pub const fn count(self) -> usize {
-        self.0.count_ones() as usize
+    pub const fn count(self) -> u8 {
+        #[expect(
+            clippy::cast_possible_truncation,
+            reason = "u64 only has 64 bits in it, count_ones returns 64 at most, 64 fits in u8"
+        )]
+        {
+            self.0.count_ones() as u8
+        }
     }
 
     /// Tests if there is more than one square in `self`.
@@ -1044,13 +1050,13 @@ impl Iterator for IntoIter {
 
     #[inline]
     fn count(self) -> usize {
-        self.0.count()
+        self.0.count().into()
     }
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.0.count();
-        (len, Some(len))
+        (len.into(), Some(len.into()))
     }
 
     #[inline]
@@ -1062,7 +1068,7 @@ impl Iterator for IntoIter {
 impl ExactSizeIterator for IntoIter {
     #[inline]
     fn len(&self) -> usize {
-        self.0.count()
+        self.0.count().into()
     }
 }
 
