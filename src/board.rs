@@ -304,11 +304,13 @@ impl Board {
                 | (attacks::pawn_attacks(attacker.other(), sq) & self.by_role.pawn))
     }
 
+    /// Returns the amount of pieces on the board owned by this `color`, separated by role.
     pub fn material_side(&self, color: Color) -> ByRole<u8> {
         let side = self.by_color(color);
         self.by_role.map(|pieces| (pieces & side).count())
     }
-
+    
+    /// Returns the amount of pieces on the board, separated by role.
     pub fn material(&self) -> ByColor<ByRole<u8>> {
         ByColor::new_with(|color| self.material_side(color))
     }
