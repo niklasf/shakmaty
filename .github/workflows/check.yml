@@ -18,15 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/install-action@cargo-hack
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: x86_64-unknown-none
 
-      - name: Install toolchains
-        run: |
-          rustup toolchain install ${{ matrix.toolchain }}-x86_64-unknown-linux-gnu
-          rustup toolchain install --force-non-host ${{ matrix.toolchain }}-x86_64-unknown-none
-          rustup target add x86_64-unknown-none
       - name: Main
         run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --all-targets ${{ matrix.flags }}
       - name: No-std
-        run: rustup run ${{ matrix.toolchain }}-x86_64-unknown-none cargo hack check --feature-powerset --skip std --target x86_64-unknown-none ${{ matrix.flags }}
+        run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --skip std,default --target x86_64-unknown-none ${{ matrix.flags }}
       - name: Fuzz
         run: rustup run ${{ matrix.toolchain }} cargo hack check --feature-powerset --manifest-path fuzz/Cargo.toml --all-targets ${{ matrix.flags }}
