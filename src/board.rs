@@ -306,7 +306,7 @@ impl Board {
 
     pub fn material_side(&self, color: Color) -> ByRole<u8> {
         let side = self.by_color(color);
-        self.by_role.map(|pieces| (pieces & side).count() as u8)
+        self.by_role.map(|pieces| (pieces & side).count())
     }
 
     pub fn material(&self) -> ByColor<ByRole<u8>> {
@@ -560,7 +560,7 @@ impl Iterator for IntoIter {
 impl ExactSizeIterator for IntoIter {
     #[inline]
     fn len(&self) -> usize {
-        self.inner.occupied.count()
+        self.inner.occupied.count().into()
     }
 }
 

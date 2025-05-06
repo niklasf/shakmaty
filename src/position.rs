@@ -1921,30 +1921,30 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::TOO_MANY_KINGS;
             }
 
-            if pockets.count() + chess.board().occupied().count() > 64 {
+            if pockets.count() + usize::from(chess.board().occupied().count()) > 64 {
                 errors |= PositionErrorKinds::VARIANT;
             }
 
             errors -= PositionErrorKinds::TOO_MUCH_MATERIAL;
 
-            if promoted.count()
-                + chess.board().pawns().count()
+            if usize::from(promoted.count())
+                + usize::from(chess.board().pawns().count())
                 + usize::from(pockets.white.pawn)
                 + usize::from(pockets.black.pawn)
                 > 16
-                || (chess.board().knights() & !promoted).count()
+                || usize::from((chess.board().knights() & !promoted).count())
                     + usize::from(pockets.white.knight)
                     + usize::from(pockets.black.knight)
                     > 4
-                || (chess.board().bishops() & !promoted).count()
+                || usize::from((chess.board().bishops() & !promoted).count())
                     + usize::from(pockets.white.bishop)
                     + usize::from(pockets.black.bishop)
                     > 4
-                || (chess.board().rooks() & !promoted).count()
+                || usize::from((chess.board().rooks() & !promoted).count())
                     + usize::from(pockets.white.rook)
                     + usize::from(pockets.black.rook)
                     > 4
-                || (chess.board().queens() & !promoted).count()
+                || usize::from((chess.board().queens() & !promoted).count())
                     + usize::from(pockets.white.queen)
                     + usize::from(pockets.black.queen)
                     > 2
@@ -2100,7 +2100,7 @@ pub(crate) mod variant {
             // In practise no material can leave the game, but this is simple
             // to implement anyway. Bishops can be captured and put onto a
             // different color complex.
-            self.board().occupied().count() + self.pockets.count() <= 3
+            usize::from(self.board().occupied().count()) + self.pockets.count() <= 3
                 && self.promoted.is_empty()
                 && self.board().pawns().is_empty()
                 && self.board().rooks_and_queens().is_empty()
@@ -2597,7 +2597,7 @@ pub(crate) mod variant {
             let horde = self.board.material_side(color);
             let horde_bishops = |square_color: SquareColor| -> u8 {
                 (Bitboard::from(square_color) & self.board.by_color(color) & self.board.bishops())
-                    .count() as u8
+                    .count()
             };
             let horde_bishop_color = if horde_bishops(SquareColor::Light) >= 1 {
                 SquareColor::Light
@@ -2616,7 +2616,7 @@ pub(crate) mod variant {
             let pieces = self.board.material_side(!color);
             let pieces_bishops = |square_color: SquareColor| -> u8 {
                 (Bitboard::from(square_color) & self.board.by_color(!color) & self.board.bishops())
-                    .count() as u8
+                    .count()
             };
             let pieces_num = pieces.count() as u8;
             let pieces_of_type_not = |piece: u8| -> u8 { pieces_num - piece };
