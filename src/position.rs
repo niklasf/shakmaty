@@ -2879,11 +2879,11 @@ fn do_move(
             let side = CastlingSide::from_queen_side(rook < king);
             board.discard_piece_at(king);
             board.discard_piece_at(rook);
-            board.set_piece_at(
+            board.set_new_piece_at(
                 Square::from_coords(side.rook_to_file(), rook.rank()),
                 color.rook(),
             );
-            board.set_piece_at(
+            board.set_new_piece_at(
                 Square::from_coords(side.king_to_file(), king.rank()),
                 color.king(),
             );
@@ -2892,10 +2892,10 @@ fn do_move(
         Move::EnPassant { from, to } => {
             board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn
             board.discard_piece_at(from);
-            board.set_piece_at(to, color.pawn());
+            board.set_new_piece_at(to, color.pawn());
         }
         Move::Put { role, to } => {
-            board.set_piece_at(to, Piece { color, role });
+            board.set_new_piece_at(to, Piece { color, role });
         }
     }
 

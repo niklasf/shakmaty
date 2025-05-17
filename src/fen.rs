@@ -198,7 +198,7 @@ fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError>
                         promoted.add(sq);
                         iter.next();
                     }
-                    board.set_piece_at(sq, piece);
+                    board.set_new_piece_at(sq, piece);
                 }
                 _ => return Err(ParseFenError::InvalidBoard),
             }

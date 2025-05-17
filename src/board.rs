@@ -271,6 +271,13 @@ impl Board {
     }
 
     #[inline]
+    pub(crate) fn set_new_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
+        assert!(self.occupied.insert(sq));
+        self.by_role.get_mut(role).toggle(sq);
+        self.by_color.get_mut(color).toggle(sq);
+    }
+
+    #[inline]
     pub const fn by_color(&self, color: Color) -> Bitboard {
         *self.by_color.get(color)
     }

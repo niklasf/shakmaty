@@ -28,13 +28,13 @@ fn bench_kiwipete() {
 }
 
 fn bench_play_unchecked() -> Chess {
-    let m = Move::Normal {
+    let m = black_box(Move::Normal {
         role: Role::Knight,
         from: Square::G1,
         capture: None,
         to: Square::F3,
         promotion: None,
-    };
+    });
 
     let mut pos = black_box(Chess::default());
     pos.play_unchecked(m);
