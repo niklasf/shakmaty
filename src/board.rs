@@ -231,7 +231,7 @@ impl Board {
     #[inline]
     pub fn role_at(&self, sq: Square) -> Option<Role> {
         if self.occupied.contains(sq) {
-            self.by_role.find(|r| r.contains(sq))
+            Some(self.by_role.find_or_king(|r| r.contains(sq)))
         } else {
             None // catch early
         }

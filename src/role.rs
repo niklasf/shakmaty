@@ -257,6 +257,26 @@ impl<T> ByRole<T> {
     }
 
     #[inline]
+    pub(crate) fn find_or_king<F>(&self, mut predicate: F) -> Role
+    where
+        F: FnMut(&T) -> bool,
+    {
+        if predicate(&self.pawn) {
+            Role::Pawn
+        } else if predicate(&self.knight) {
+            Role::Knight
+        } else if predicate(&self.bishop) {
+            Role::Bishop
+        } else if predicate(&self.rook) {
+            Role::Rook
+        } else if predicate(&self.queen) {
+            Role::Queen
+        } else {
+            Role::King
+        }
+    }
+
+    #[inline]
     pub const fn as_ref(&self) -> ByRole<&T> {
         ByRole {
             pawn: &self.pawn,
