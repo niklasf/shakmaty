@@ -445,10 +445,7 @@ impl Board {
     }
 
     pub fn iter(&self) -> Iter<'_> {
-        Iter {
-            squares: self.occupied.into_iter(),
-            board: self,
-        }
+        self.into_iter()
     }
 }
 
@@ -547,7 +544,10 @@ impl<'a> IntoIterator for &'a Board {
     type Item = (Square, Piece);
 
     fn into_iter(self) -> Iter<'a> {
-        self.iter()
+        Iter {
+            squares: self.occupied.into_iter(),
+            board: self,
+        }
     }
 }
 
