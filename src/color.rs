@@ -1,6 +1,6 @@
 //! White or black.
 
-use core::{array, convert::identity, fmt, mem, num, ops, str::FromStr};
+use core::{array, convert::identity, error, fmt, mem, num, ops, str::FromStr};
 
 use crate::{
     role::{ByRole, Role},
@@ -179,8 +179,7 @@ impl fmt::Display for ParseColorError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseColorError {}
+impl error::Error for ParseColorError {}
 
 impl FromStr for Color {
     type Err = ParseColorError;
@@ -247,7 +246,7 @@ impl<T> ByColor<T> {
     }
 
     #[deprecated = "Use `ByColor::swap()`"]
-    pub fn flip(&mut self) {
+    pub const fn flip(&mut self) {
         self.swap();
     }
 
@@ -331,11 +330,11 @@ impl<T> ByColor<T> {
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 2> {
-        self.as_ref().into_iter()
+        self.into_iter()
     }
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
-        self.as_mut().into_iter()
+        self.into_iter()
     }
 }
 
@@ -394,6 +393,24 @@ impl<T> IntoIterator for ByColor<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         [self.white, self.black].into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a ByColor<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_ref().into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut ByColor<T> {
+    type Item = &'a mut T;
+    type IntoIter = array::IntoIter<&'a mut T, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut().into_iter()
     }
 }
 

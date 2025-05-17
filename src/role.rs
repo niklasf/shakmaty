@@ -1,4 +1,4 @@
-use core::{array, convert::identity, num, ops};
+use core::{array, convert::identity, num, ops, ptr};
 
 use crate::{color::Color, types::Piece, util::out_of_range_error};
 
@@ -189,21 +189,13 @@ impl<T> ByRole<T> {
     #[inline]
     pub const fn get(&self, role: Role) -> &T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &*(self as *const ByRole<T>)
-                .cast::<T>()
-                .offset(role as isize - 1)
-        }
+        unsafe { &*ptr::from_ref(self).cast::<T>().offset(role as isize - 1) }
     }
 
     #[inline]
     pub const fn get_mut(&mut self, role: Role) -> &mut T {
         // Safety: Trivial offset into #[repr(C)] struct.
-        unsafe {
-            &mut *(self as *mut ByRole<T>)
-                .cast::<T>()
-                .offset(role as isize - 1)
-        }
+        unsafe { &mut *ptr::from_mut(self).cast::<T>().offset(role as isize - 1) }
     }
 
     #[inline]
@@ -316,11 +308,11 @@ impl<T> ByRole<T> {
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 6> {
-        self.as_ref().into_iter()
+        self.into_iter()
     }
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 6> {
-        self.as_mut().into_iter()
+        self.into_iter()
     }
 }
 
@@ -357,6 +349,24 @@ impl<T> IntoIterator for ByRole<T> {
             self.king,
         ]
         .into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a ByRole<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_ref().into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut ByRole<T> {
+    type Item = &'a mut T;
+    type IntoIter = array::IntoIter<&'a mut T, 6>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut().into_iter()
     }
 }
 

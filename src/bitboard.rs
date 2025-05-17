@@ -182,7 +182,7 @@ impl Bitboard {
 
     /// Clears all squares.
     #[inline]
-    pub fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.0 = 0;
     }
 
@@ -287,7 +287,7 @@ impl Bitboard {
     /// Removes and returns the first square, if any.
     #[must_use = "use Bitboard::discard_first() if return value is not needed"]
     #[inline]
-    pub fn pop_front(&mut self) -> Option<Square> {
+    pub const fn pop_front(&mut self) -> Option<Square> {
         let square = self.first();
         self.discard_first();
         square
@@ -305,7 +305,7 @@ impl Bitboard {
 
     /// Discards the first square.
     #[inline]
-    pub fn discard_first(&mut self) {
+    pub const fn discard_first(&mut self) {
         *self = self.without_first();
     }
 

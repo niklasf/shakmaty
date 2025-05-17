@@ -1387,39 +1387,39 @@ mod tests {
         let reference_values = [
             (
                 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                Zobrist64(0x463b96181691fc9c),
+                Zobrist64(0x463b_9618_1691_fc9c),
             ),
             (
                 "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-                Zobrist64(0x823c9b50fd114196),
+                Zobrist64(0x823c_9b50_fd11_4196),
             ),
             (
                 "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
-                Zobrist64(0x0756b94461c50fb0),
+                Zobrist64(0x0756_b944_61c5_0fb0),
             ),
             (
                 "rnbqkbnr/ppp1pppp/8/3pP3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2",
-                Zobrist64(0x662fafb965db29d4),
+                Zobrist64(0x662f_afb9_65db_29d4),
             ),
             (
                 "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3",
-                Zobrist64(0x22a48b5a8e47ff78),
+                Zobrist64(0x22a4_8b5a_8e47_ff78),
             ),
             (
                 "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPPKPPP/RNBQ1BNR b kq - 1 3",
-                Zobrist64(0x652a607ca3f242c1),
+                Zobrist64(0x652a_607c_a3f2_42c1),
             ),
             (
                 "rnbq1bnr/ppp1pkpp/8/3pPp2/8/8/PPPPKPPP/RNBQ1BNR w - - 2 4",
-                Zobrist64(0x00fdd303c946bdd9),
+                Zobrist64(0x00fd_d303_c946_bdd9),
             ),
             (
                 "rnbqkbnr/p1pppppp/8/8/PpP4P/8/1P1PPPP1/RNBQKBNR b KQkq c3 0 3",
-                Zobrist64(0x3c8123ea7b067637),
+                Zobrist64(0x3c81_23ea_7b06_7637),
             ),
             (
                 "rnbqkbnr/p1pppppp/8/8/P6P/R1p5/1P1PPPP1/1NBQKBNR b Kkq - 1 4",
-                Zobrist64(0x5c3f9b829b279560),
+                Zobrist64(0x5c3f_9b82_9b27_9560),
             ),
         ];
 
@@ -1433,8 +1433,7 @@ mod tests {
             assert_eq!(
                 pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal),
                 expected,
-                "{}",
-                fen
+                "{fen}",
             );
         }
     }

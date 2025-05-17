@@ -1,4 +1,5 @@
 use core::{
+    error,
     fmt::{self, Write as _},
     mem,
     num::TryFromIntError,
@@ -336,8 +337,7 @@ impl fmt::Display for ParseSquareError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseSquareError {}
+impl error::Error for ParseSquareError {}
 
 /// A square of the chessboard.
 #[rustfmt::skip]

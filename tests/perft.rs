@@ -15,7 +15,7 @@ where
     let mut pos = P::default();
 
     for line in reader.lines().map(|l| l.unwrap()) {
-        println!("{}", line);
+        println!("{line}");
 
         let trimmed = line.trim();
         let mut slices = trimmed.splitn(2, ' ');

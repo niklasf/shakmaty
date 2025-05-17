@@ -164,7 +164,7 @@ impl Move {
     }
 
     #[must_use]
-    pub fn to_mirrored(self) -> Move {
+    pub const fn to_mirrored(self) -> Move {
         match self {
             Move::Normal {
                 role,

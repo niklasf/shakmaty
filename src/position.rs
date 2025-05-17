@@ -1,5 +1,5 @@
 use core::{
-    fmt,
+    error, fmt,
     hash::{Hash, Hasher},
     num::NonZeroU32,
     str::FromStr,
@@ -81,8 +81,7 @@ impl fmt::Display for ParseOutcomeError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseOutcomeError {}
+impl error::Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
@@ -115,8 +114,7 @@ impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     }
 }
 
-#[cfg(feature = "std")]
-impl<P: fmt::Debug> std::error::Error for PlayError<P> {}
+impl<P: fmt::Debug> error::Error for PlayError<P> {}
 
 bitflags! {
     /// Reasons for a [`Setup`] not being a legal [`Position`].
@@ -256,7 +254,7 @@ impl<P> fmt::Debug for PositionError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("PositionError")
             .field("errors", &self.errors)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -297,8 +295,7 @@ impl<P> fmt::Display for PositionError<P> {
     }
 }
 
-#[cfg(feature = "std")]
-impl<P> std::error::Error for PositionError<P> {}
+impl<P> error::Error for PositionError<P> {}
 
 /// Validate and set up a playable [`Position`]. All provided chess variants
 /// support this.

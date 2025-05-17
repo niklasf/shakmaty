@@ -76,7 +76,14 @@ impl Board {
     pub const fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
         let mut occupied = Bitboard::EMPTY;
 
-        let ByRole { pawn, knight, bishop, rook, queen, king } = by_role;
+        let ByRole {
+            pawn,
+            knight,
+            bishop,
+            rook,
+            queen,
+            king,
+        } = by_role;
 
         assert!(occupied.is_disjoint_const(pawn), "pawn not disjoint");
         occupied.0 |= pawn.0;
@@ -105,7 +112,7 @@ impl Board {
             occupied.0 == by_color.black.0 | by_color.white.0,
             "by_role does not match by_color"
         );
-        
+
         Board {
             by_role,
             by_color,
@@ -385,11 +392,12 @@ impl Board {
     }
 
     /// Swap piece colors, making black pieces white and vice versa.
-    pub fn swap_colors(&mut self) {
+    pub const fn swap_colors(&mut self) {
         self.by_color.swap();
     }
 
-    pub fn into_swapped_colors(mut self) -> Board {
+    #[must_use]
+    pub const fn into_swapped_colors(mut self) -> Board {
         self.swap_colors();
         self
     }
@@ -401,13 +409,14 @@ impl Board {
         self.swap_colors();
     }
 
+    #[must_use]
     pub fn into_mirrored(mut self) -> Board {
         self.mirror();
         self
     }
 
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.occupied.is_empty()
     }
 

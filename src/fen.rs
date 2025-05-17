@@ -50,7 +50,7 @@
 //! ```
 
 use core::{
-    char,
+    char, error,
     fmt::{self, Display},
     num::NonZeroU32,
     str::FromStr,
@@ -165,8 +165,7 @@ impl Display for ParseFenError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseFenError {}
+impl error::Error for ParseFenError {}
 
 fn parse_board_fen(board_fen: &[u8]) -> Result<(Board, Bitboard), ParseFenError> {
     let mut promoted = Bitboard(0);
@@ -832,7 +831,7 @@ mod tests {
             .parse::<Fen>()
             .expect("valid fen")
             .into_setup();
-        assert_eq!(setup.pockets, Some(Default::default()));
+        assert_eq!(setup.pockets, Some(ByColor::default()));
     }
 
     #[test]

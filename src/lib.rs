@@ -50,12 +50,10 @@
 //! * `alloc`: Enables APIs which require the
 //!   [`alloc`](https://doc.rust-lang.org/stable/alloc/index.html) crate
 //!   (e.g. FEN string rendering).
-//! * `std`: Implements the
-//!   [`std::error::Error`](https://doc.rust-lang.org/stable/std/error/trait.Error.html)
-//!   trait for various errors in the crate.
-//!   Implies the `alloc` feature (since `std` depends on `alloc` anyway).
-//!   Enabled by default for convenience. For `no_std` environments, this must
-//!   be disabled with `default-features = false`.
+//! * `std`: Allows writing ASCII representations of some types directly into `std::io::Write`.
+//!   Implies `alloc`.
+//!   Enabled by default for convenience.
+//!   For `no_std` environments, this must be disabled with `default-features = false`.
 //! * `variant`: Enables support for all Lichess variants.
 //! * `serde`: Implements [`serde::Serialize`](https://docs.rs/serde/1/serde/trait.Serialize.html)
 //!   and [`serde::Deserialize`](https://docs.rs/serde/1/serde/trait.Deserialize.html) for

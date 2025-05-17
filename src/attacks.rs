@@ -208,8 +208,8 @@ mod tests {
     #[test]
     fn test_rook_attacks() {
         assert_eq!(
-            rook_attacks(Square::D6, Bitboard(0x3f7f28802826f5b9)),
-            Bitboard(0x8370808000000)
+            rook_attacks(Square::D6, Bitboard(0x3f7f_2880_2826_f5b9)),
+            Bitboard(0x0008_3708_0800_0000)
         );
     }
 }

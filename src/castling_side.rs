@@ -63,6 +63,7 @@ impl CastlingSide {
         Square::from_coords(self.rook_to_file(), color.backrank())
     }
 
+    #[must_use]
     #[inline]
     pub const fn other(self) -> CastlingSide {
         match self {
@@ -128,7 +129,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn get_mut(&mut self, side: CastlingSide) -> &mut T {
+    pub const fn get_mut(&mut self, side: CastlingSide) -> &mut T {
         match side {
             CastlingSide::KingSide => &mut self.king_side,
             CastlingSide::QueenSide => &mut self.queen_side,
@@ -196,7 +197,7 @@ impl<T> ByCastlingSide<T> {
     }
 
     #[inline]
-    pub fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
+    pub const fn as_mut(&mut self) -> ByCastlingSide<&mut T> {
         ByCastlingSide {
             king_side: &mut self.king_side,
             queen_side: &mut self.queen_side,
@@ -215,11 +216,11 @@ impl<T> ByCastlingSide<T> {
     }
 
     pub fn iter(&self) -> array::IntoIter<&T, 2> {
-        self.as_ref().into_iter()
+        self.into_iter()
     }
 
     pub fn iter_mut(&mut self) -> array::IntoIter<&mut T, 2> {
-        self.as_mut().into_iter()
+        self.into_iter()
     }
 }
 
@@ -241,6 +242,24 @@ impl<T> IntoIterator for ByCastlingSide<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         [self.king_side, self.queen_side].into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a ByCastlingSide<T> {
+    type Item = &'a T;
+    type IntoIter = array::IntoIter<&'a T, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_ref().into_iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut ByCastlingSide<T> {
+    type Item = &'a mut T;
+    type IntoIter = array::IntoIter<&'a mut T, 2>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut().into_iter()
     }
 }
 

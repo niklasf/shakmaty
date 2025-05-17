@@ -3,7 +3,7 @@
 //! These are games played with normal chess pieces but special rules.
 //! Every chess variant implements [`FromSetup`] and [`Position`].
 
-use core::{fmt, num::NonZeroU32, str, str::FromStr};
+use core::{error, fmt, num::NonZeroU32, str, str::FromStr};
 
 pub use crate::position::{
     variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
@@ -117,8 +117,7 @@ impl fmt::Display for ParseVariantError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for ParseVariantError {}
+impl error::Error for ParseVariantError {}
 
 impl FromStr for Variant {
     type Err = ParseVariantError;
