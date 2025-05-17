@@ -112,25 +112,40 @@ impl Bitboard {
     /// Tests if `self` contains the given square.
     #[inline]
     pub const fn contains(self, sq: Square) -> bool {
-        self.intersect(Bitboard::from_square(sq)).any()
+        self.intersect_const(Bitboard::from_square(sq)).any()
     }
 
     /// Adds `squares`.
     #[inline]
     pub fn add<T: Into<Bitboard>>(&mut self, squares: T) {
-        *self |= squares;
+        self.add_const(squares.into());
+    }
+
+    #[inline]
+    pub const fn add_const(&mut self, squares: Bitboard) {
+        self.0 |= squares.0;
     }
 
     /// Toggles `squares`.
     #[inline]
     pub fn toggle<T: Into<Bitboard>>(&mut self, squares: T) {
-        *self ^= squares;
+        self.toggle_const(squares.into());
+    }
+
+    #[inline]
+    pub const fn toggle_const(&mut self, squares: Bitboard) {
+        self.0 ^= squares.0;
     }
 
     /// Discards `squares`.
     #[inline]
     pub fn discard<T: Into<Bitboard>>(&mut self, squares: T) {
-        *self &= !squares.into();
+        self.discard_const(squares.into());
+    }
+
+    #[inline]
+    pub const fn discard_const(&mut self, squares: Bitboard) {
+        self.0 &= !squares.0;
     }
 
     /// Removes a square from the bitboard.
@@ -149,9 +164,9 @@ impl Bitboard {
     /// ```
     #[must_use = "use Bitboard::discard() if return value is not needed"]
     #[inline]
-    pub fn remove(&mut self, sq: Square) -> bool {
+    pub const fn remove(&mut self, sq: Square) -> bool {
         if self.contains(sq) {
-            self.toggle(sq);
+            self.toggle_const(Bitboard::from_square(sq));
             true
         } else {
             false
@@ -160,22 +175,22 @@ impl Bitboard {
 
     /// Conditionally adds or discards `square`.
     #[inline]
-    pub fn set(&mut self, square: Square, v: bool) {
+    pub const fn set(&mut self, square: Square, v: bool) {
         if v {
-            self.add(square);
+            self.add_const(Bitboard::from_square(square));
         } else {
-            self.discard(square);
+            self.discard_const(Bitboard::from_square(square));
         }
     }
 
     /// Adds `square`, returning whether the square was newly added.
     #[must_use = "use Bitboard::add() if return value is not needed"]
     #[inline]
-    pub fn insert(&mut self, square: Square) -> bool {
+    pub const fn insert(&mut self, square: Square) -> bool {
         if self.contains(square) {
             false
         } else {
-            self.add(square);
+            self.add_const(Bitboard::from_square(square));
             true
         }
     }
@@ -188,7 +203,14 @@ impl Bitboard {
 
     /// Returns the intersection of `self` and `squares`. Equivalent to bitwise `&`.
     #[must_use]
-    pub const fn intersect(self, squares: Bitboard) -> Bitboard {
+    #[inline]
+    pub fn intersect<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
+        self.intersect_const(squares.into())
+    }
+
+    #[must_use]
+    #[inline]
+    pub const fn intersect_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 & squares.0)
     }
 
@@ -202,6 +224,7 @@ impl Bitboard {
 
     /// Same as the `with` method, but usable in `const` contexts.
     #[must_use]
+    #[inline]
     pub const fn with_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 | squares.0)
     }
@@ -216,13 +239,14 @@ impl Bitboard {
 
     /// Same as the `without` method, but usable in `const` contexts.
     #[must_use]
+    #[inline]
     pub const fn without_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 & !squares.0)
     }
 
     /// Returns all squares that are in `self` or `squares` but not in both
     /// (symmetric set difference). Equivalent to bitwise `^`.
-    #[doc(alias = "symmetric_difference")]
+    #[doc(alias = "symmetric_difference", alias = "xor")]
     #[must_use]
     #[inline]
     pub fn toggled<T: Into<Bitboard>>(self, squares: T) -> Bitboard {
@@ -231,6 +255,7 @@ impl Bitboard {
 
     /// Same as the `toggled` method, but usable in `const` contexts.
     #[must_use]
+    #[inline]
     pub const fn toggled_const(self, squares: Bitboard) -> Bitboard {
         Bitboard(self.0 ^ squares.0)
     }
@@ -242,8 +267,9 @@ impl Bitboard {
     }
 
     /// Same as the `is_disjoint` method, but usable in `const` contexts.
+    #[inline]
     pub const fn is_disjoint_const(self, other: Bitboard) -> bool {
-        Bitboard(self.0 & other.0).is_empty()
+        self.intersect_const(other).is_empty()
     }
 
     /// Tests if `self` is a subset of `other`.
@@ -327,10 +353,12 @@ impl Bitboard {
 
     /// Removes and returns the last square, if any.
     #[inline]
-    pub fn pop_back(&mut self) -> Option<Square> {
-        let square = self.last();
-        *self ^= Bitboard::from_iter(square);
-        square
+    pub const fn pop_back(&mut self) -> Option<Square> {
+        let maybe_square = self.last();
+        if let Some(square) = maybe_square {
+            self.toggle_const(Bitboard::from_square(square));
+        }
+        maybe_square
     }
 
     /// Returns the last square.
@@ -345,22 +373,28 @@ impl Bitboard {
 
     /// Discards the last square.
     #[inline]
-    pub fn discard_last(&mut self) {
-        *self = self.without_last();
+    pub const fn discard_last(&mut self) {
+        if let Some(last) = self.last() {
+            self.toggle_const(Bitboard::from_square(last));
+        }
     }
 
     /// Returns `self` without the last square.
     #[must_use]
     #[inline]
-    pub fn without_last(self) -> Bitboard {
-        self ^ Bitboard::from_iter(self.last())
+    pub const fn without_last(mut self) -> Bitboard {
+        self.discard_last();
+        self
     }
 
     /// Returns the bitboard with only the last square of `self`.
     #[must_use]
     #[inline]
-    pub fn isolate_last(self) -> Bitboard {
-        Bitboard::from_iter(self.last())
+    pub const fn isolate_last(self) -> Bitboard {
+        match self.last() {
+            Some(square) => Bitboard::from_square(square),
+            None => Bitboard::EMPTY,
+        }
     }
 
     /// Returns the number of squares in `self`.

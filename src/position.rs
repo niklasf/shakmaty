@@ -2974,22 +2974,30 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
 
 const fn is_standard_material(board: &Board, color: Color) -> bool {
     let our = board.by_color(color);
-    let promoted_pieces = board.queens().intersect(our).count().saturating_sub(1)
-        + board.rooks().intersect(our).count().saturating_sub(2)
-        + board.knights().intersect(our).count().saturating_sub(2)
+    let promoted_pieces = board
+        .queens()
+        .intersect_const(our)
+        .count()
+        .saturating_sub(1)
+        + board.rooks().intersect_const(our).count().saturating_sub(2)
+        + board
+            .knights()
+            .intersect_const(our)
+            .count()
+            .saturating_sub(2)
         + board
             .bishops()
-            .intersect(our)
-            .intersect(Bitboard::LIGHT_SQUARES)
+            .intersect_const(our)
+            .intersect_const(Bitboard::LIGHT_SQUARES)
             .count()
             .saturating_sub(1)
         + board
             .bishops()
-            .intersect(our)
-            .intersect(Bitboard::DARK_SQUARES)
+            .intersect_const(our)
+            .intersect_const(Bitboard::DARK_SQUARES)
             .count()
             .saturating_sub(1);
-    board.pawns().intersect(our).count() + promoted_pieces <= 8
+    board.pawns().intersect_const(our).count() + promoted_pieces <= 8
 }
 
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {

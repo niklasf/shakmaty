@@ -74,34 +74,24 @@ impl Board {
     /// Panics if the bitboards are inconsistent.
     #[track_caller]
     pub const fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
-        let mut occupied = Bitboard::EMPTY;
+        let occupied = by_role
+            .pawn
+            .with_const(by_role.knight)
+            .with_const(by_role.bishop)
+            .with_const(by_role.rook)
+            .with_const(by_role.queen)
+            .with_const(by_role.king);
 
-        let ByRole {
-            pawn,
-            knight,
-            bishop,
-            rook,
-            queen,
-            king,
-        } = by_role;
-
-        assert!(occupied.is_disjoint_const(pawn), "pawn not disjoint");
-        occupied.0 |= pawn.0;
-
-        assert!(occupied.is_disjoint_const(knight), "knight not disjoint");
-        occupied.0 |= knight.0;
-
-        assert!(occupied.is_disjoint_const(bishop), "bishop not disjoint");
-        occupied.0 |= bishop.0;
-
-        assert!(occupied.is_disjoint_const(rook), "rook not disjoint");
-        occupied.0 |= rook.0;
-
-        assert!(occupied.is_disjoint_const(queen), "queen not disjoint");
-        occupied.0 |= queen.0;
-
-        assert!(occupied.is_disjoint_const(king), "king not disjoint");
-        occupied.0 |= king.0;
+        assert!(
+            occupied.count()
+                == by_role.pawn.count()
+                    + by_role.knight.count()
+                    + by_role.bishop.count()
+                    + by_role.rook.count()
+                    + by_role.queen.count()
+                    + by_role.king.count(),
+            "by_role not disjoint"
+        );
 
         assert!(
             by_color.black.is_disjoint_const(by_color.white),
@@ -244,7 +234,7 @@ impl Board {
     pub const fn king_of(&self, color: Color) -> Option<Square> {
         self.by_role
             .king
-            .intersect(self.by_color(color))
+            .intersect_const(self.by_color(color))
             .single_square()
     }
 
@@ -315,7 +305,7 @@ impl Board {
     #[inline]
     pub const fn by_piece(&self, piece: Piece) -> Bitboard {
         self.by_color(piece.color)
-            .intersect(self.by_role(piece.role))
+            .intersect_const(self.by_role(piece.role))
     }
 
     pub fn attacks_from(&self, sq: Square) -> Bitboard {

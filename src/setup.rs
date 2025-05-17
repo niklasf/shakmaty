@@ -303,7 +303,7 @@ impl Castles {
 
     pub const fn has_color(&self, color: Color) -> bool {
         self.mask
-            .intersect(Bitboard::from_rank(color.backrank()))
+            .intersect_const(Bitboard::from_rank(color.backrank()))
             .any()
     }
 
