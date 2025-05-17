@@ -148,12 +148,6 @@ impl<T> ByCastlingSide<T> {
         }
     }
 
-    #[deprecated = "Use `ByCastlingSide::into_swapped()`"]
-    #[must_use]
-    pub fn into_flipped(self) -> ByCastlingSide<T> {
-        self.into_swapped()
-    }
-
     #[inline]
     pub fn for_each<F>(self, mut f: F)
     where

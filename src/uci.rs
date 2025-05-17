@@ -72,9 +72,6 @@ use crate::{util::AppendAscii, CastlingMode, CastlingSide, Move, Position, Rank,
 #[derive(Clone, Debug)]
 pub struct ParseUciMoveError;
 
-#[deprecated = "Use `ParseUciMoveError` instead"]
-pub type ParseUciError = ParseUciMoveError;
-
 impl fmt::Display for ParseUciMoveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("invalid uci")
@@ -87,9 +84,6 @@ impl error::Error for ParseUciMoveError {}
 #[derive(Clone, Debug)]
 pub struct IllegalUciMoveError;
 
-#[deprecated = "Use `ParseUciMoveError` instead"]
-pub type IllegalUciError = IllegalUciMoveError;
-
 impl fmt::Display for IllegalUciMoveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("illegal uci")
@@ -97,9 +91,6 @@ impl fmt::Display for IllegalUciMoveError {
 }
 
 impl error::Error for IllegalUciMoveError {}
-
-#[deprecated = "Use `UciMove` instead"]
-pub type Uci = UciMove;
 
 /// A move as represented in the UCI protocol.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]

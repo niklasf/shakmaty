@@ -100,14 +100,6 @@ pub struct PlayError<P> {
     pub position: P,
 }
 
-impl<P> PlayError<P> {
-    /// Returns the unchanged position.
-    #[deprecated = "Use public field `PlayError::position`"]
-    pub fn into_inner(self) -> P {
-        self.position
-    }
-}
-
 impl<P: fmt::Debug> fmt::Display for PlayError<P> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "illegal move {:?} in {:?}", self.m, self.position)
@@ -184,9 +176,6 @@ bitflags! {
 
         /// A variant specific rule is violated.
         const VARIANT = 1 << 9;
-
-        #[deprecated = "Use `PositionErrorKinds::TOO_MUCH_MATERIAL` instead"]
-        const IMPOSSIBLE_MATERIAL = PositionErrorKinds::TOO_MUCH_MATERIAL.bits();
     }
 }
 
@@ -228,11 +217,6 @@ impl<P> PositionError<P> {
     ///
     /// Note that other programs may not work with too much material.
     pub fn ignore_too_much_material(self) -> Result<P, Self> {
-        self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
-    }
-
-    #[deprecated = "Use `PositionErrorKinds::ignore_too_much_material()`"]
-    pub fn ignore_impossible_material(self) -> Result<P, Self> {
         self.ignore(PositionErrorKinds::TOO_MUCH_MATERIAL)
     }
 
