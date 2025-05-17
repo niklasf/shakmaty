@@ -55,10 +55,10 @@ pub const fn king_attacks(sq: Square) -> Bitboard {
 pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let m = ROOK_MAGICS[sq.to_usize()];
 
+    let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
     // Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
     // checks is worth about 2% in move generation and perft.
-    let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 12)) as usize + m.offset;
     unsafe { assert_unchecked(idx < ATTACKS.len()) };
     Bitboard(ATTACKS[idx])
 }
@@ -91,10 +91,10 @@ pub const fn rook_mask(sq: Square) -> Bitboard {
 pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let m = BISHOP_MAGICS[sq.to_usize()];
 
+    let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
     // Safety: The attack table was generated with sufficient size
     // for all relevant occupancies (all subsets of m.mask). Omitting bounds
     // checks is worth about 2% in move generation and perft.
-    let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
     unsafe { assert_unchecked(idx < ATTACKS.len()) };
     Bitboard(ATTACKS[idx])
 }
@@ -208,8 +208,8 @@ mod tests {
     #[test]
     fn test_rook_attacks() {
         assert_eq!(
-            rook_attacks(Square::D6, Bitboard(0x3f7f28802826f5b9)),
-            Bitboard(0x8370808000000)
+            rook_attacks(Square::D6, Bitboard(0x3f7f_2880_2826_f5b9)),
+            Bitboard(0x0008_3708_0800_0000)
         );
     }
 }
