@@ -239,10 +239,8 @@ impl Board {
 
     #[inline]
     pub fn piece_at(&self, sq: Square) -> Option<Piece> {
-        self.role_at(sq).map(|role| Piece {
-            color: Color::from_white(self.by_color.white.contains(sq)),
-            role,
-        })
+        self.color_at(sq)
+            .map(|color| self.by_role.find_or_king(|r| r.contains(sq)).of(color))
     }
 
     #[must_use = "use Board::discard_piece_at() if return value is not needed"]
