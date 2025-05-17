@@ -73,21 +73,39 @@ impl Board {
     ///
     /// Panics if the bitboards are inconsistent.
     #[track_caller]
-    pub fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
+    pub const fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
         let mut occupied = Bitboard::EMPTY;
-        by_role.for_each(|role| {
-            assert!(occupied.is_disjoint(role), "by_role not disjoint");
-            occupied |= role;
-        });
+
+        let ByRole { pawn, knight, bishop, rook, queen, king } = by_role;
+
+        assert!(occupied.is_disjoint_const(pawn), "pawn not disjoint");
+        occupied.0 |= pawn.0;
+
+        assert!(occupied.is_disjoint_const(knight), "knight not disjoint");
+        occupied.0 |= knight.0;
+
+        assert!(occupied.is_disjoint_const(bishop), "bishop not disjoint");
+        occupied.0 |= bishop.0;
+
+        assert!(occupied.is_disjoint_const(rook), "rook not disjoint");
+        occupied.0 |= rook.0;
+
+        assert!(occupied.is_disjoint_const(queen), "queen not disjoint");
+        occupied.0 |= queen.0;
+
+        assert!(occupied.is_disjoint_const(king), "king not disjoint");
+        occupied.0 |= king.0;
+
         assert!(
-            by_color.black.is_disjoint(by_color.white),
+            by_color.black.is_disjoint_const(by_color.white),
             "by_color not disjoint"
         );
-        assert_eq!(
-            occupied,
-            by_color.black | by_color.white,
+
+        assert!(
+            occupied.0 == by_color.black.0 | by_color.white.0,
             "by_role does not match by_color"
         );
+        
         Board {
             by_role,
             by_color,
