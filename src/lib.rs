@@ -81,6 +81,7 @@ mod castling_side;
 mod color;
 mod magics;
 mod movelist;
+mod nnue_compress;
 mod perft;
 mod position;
 mod role;
@@ -104,6 +105,7 @@ pub use board::Board;
 pub use castling_side::{ByCastlingSide, CastlingSide};
 pub use color::{ByColor, Color, ParseColorError};
 pub use movelist::MoveList;
+pub use nnue_compress::CompressedPosition;
 pub use perft::perft;
 pub use position::{
     Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
