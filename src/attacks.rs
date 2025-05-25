@@ -63,29 +63,6 @@ pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     Bitboard(ATTACKS[idx])
 }
 
-/// Gets the set of potential blocking squares for a rook on `sq`.
-///
-/// # Example
-///
-/// ```
-/// use shakmaty::{attacks, Square};
-///
-/// let mask = attacks::rook_mask(Square::E8);
-/// // 0 1 1 1 0 1 1 0
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 1 . . .
-/// // . . . . 0 . . .
-///
-/// assert_eq!(mask.count(), 11);
-#[inline]
-pub const fn rook_mask(sq: Square) -> Bitboard {
-    Bitboard(ROOK_MAGICS[sq.to_usize()].mask)
-}
-
 /// Looks up attacks for a bishop on `sq` with `occupied` squares.
 #[inline]
 pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
@@ -97,30 +74,6 @@ pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
     let idx = (m.factor.wrapping_mul(occupied.0 & m.mask) >> (64 - 9)) as usize + m.offset;
     unsafe { assert_unchecked(idx < ATTACKS.len()) };
     Bitboard(ATTACKS[idx])
-}
-
-/// Gets the set of potential blocking squares for a bishop on `sq`.
-///
-/// # Example
-///
-/// ```
-/// use shakmaty::{attacks, Square};
-///
-/// let mask = attacks::bishop_mask(Square::D5);
-/// // 0 . . . . . 0 .
-/// // . 1 . . . 1 . .
-/// // . . 1 . 1 . . .
-/// // . . . 0 . . . .
-/// // . . 1 . 1 . . .
-/// // . 1 . . . 1 . .
-/// // 0 . . . . . 1 .
-/// // . . . . . . . 0
-///
-/// assert_eq!(mask.count(), 9);
-/// ```
-#[inline]
-pub const fn bishop_mask(sq: Square) -> Bitboard {
-    Bitboard(BISHOP_MAGICS[sq.to_usize()].mask)
 }
 
 /// Looks up attacks for a queen on `sq` with `occupied` squares.
