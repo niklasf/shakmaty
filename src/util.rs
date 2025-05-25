@@ -107,18 +107,3 @@ impl AppendAscii for alloc::vec::Vec<u8> {
         Ok(())
     }
 }
-
-#[cfg(feature = "std")]
-pub(crate) struct WriteAscii<W>(pub W);
-
-#[cfg(feature = "std")]
-impl<W: std::io::Write> AppendAscii for WriteAscii<W> {
-    type Error = std::io::Error;
-
-    fn reserve(&mut self, _additional: usize) {}
-
-    fn append_ascii(&mut self, ascii_char: char) -> Result<(), Self::Error> {
-        let buf = [ascii_char as u8];
-        self.0.write_all(&buf[..])
-    }
-}

@@ -438,11 +438,6 @@ impl UciMove {
     pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
-
-    #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(self, w: W) -> std::io::Result<()> {
-        self.append_to(&mut crate::util::WriteAscii(w))
-    }
 }
 
 impl Move {

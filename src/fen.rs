@@ -331,11 +331,6 @@ impl BoardFen<'_> {
     pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
-
-    #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
-        self.append_to(&mut crate::util::WriteAscii(w))
-    }
 }
 
 impl Display for BoardFen<'_> {
@@ -546,11 +541,6 @@ impl Fen {
     pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
     }
-
-    #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
-        self.append_to(&mut crate::util::WriteAscii(w))
-    }
 }
 
 impl From<Setup> for Fen {
@@ -668,11 +658,6 @@ impl Epd {
     #[cfg(feature = "alloc")]
     pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
-    }
-
-    #[cfg(feature = "std")]
-    pub fn write_ascii_to<W: std::io::Write>(&self, w: W) -> std::io::Result<()> {
-        self.append_to(&mut crate::util::WriteAscii(w))
     }
 }
 
