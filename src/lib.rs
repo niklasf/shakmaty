@@ -1,4 +1,4 @@
-//! A library for chess move generation.
+//! A library for chess vocabulary and move generation.
 //!
 //! # Examples
 //!
