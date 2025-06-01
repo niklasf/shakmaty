@@ -1,13 +1,26 @@
-use core::{convert::TryFrom as _, fmt, fmt::Write as _, num::TryFromIntError};
+use core::{
+    array::TryFromSliceError,
+    convert::TryFrom as _,
+    fmt::{self, Write as _},
+    num::TryFromIntError,
+};
 
 use arrayvec::ArrayString;
 
 pub(crate) fn out_of_range_error() -> TryFromIntError {
-    // This is a hack to construct TryFromIntError despite its private
-    // constructor. The standard library keeps it private intentionally,
+    // Construct TryFromIntError despite its private constructor.
+    // The standard library keeps it private intentionally,
     // to be able to provide error details in the future, but it is unlikely
     // that something more specific than "overflow" will be added.
     u32::try_from(u64::MAX).unwrap_err()
+}
+
+pub(crate) fn try_from_slice_error() -> TryFromSliceError {
+    // Construct TryFromSliceError despite its private constructor.
+    // The standard library keeps it private intentionally,
+    // to be able to provide error details in the future, but it is unlikely
+    // that will really happen.
+    <[u8; 0]>::try_from(&[0u8][..]).unwrap_err()
 }
 
 macro_rules! from_enum_as_int_impl {

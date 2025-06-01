@@ -79,6 +79,7 @@ mod castling_side;
 mod color;
 mod magics;
 mod movelist;
+mod packed;
 mod perft;
 mod position;
 mod role;
