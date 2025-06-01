@@ -1,11 +1,11 @@
-use crate::{Bitboard, Board, ByColor, ByRole, Color, Piece, Rank, Role, Setup, Square};
-use core::array::TryFromSliceError;
-use core::error;
-use core::fmt::Display;
-use core::num::NonZeroU32;
-use core::{fmt, mem};
+use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
-use crate::util::try_from_slice_error;
+#[cfg(feature = "variant")]
+use crate::variant::Variant;
+use crate::{
+    util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank, Role, Setup,
+    Square,
+};
 
 // The format:
 //
@@ -88,7 +88,7 @@ impl PackedSetup {
         setup: &Setup,
         variant: Variant,
     ) -> Result<PackedSetup, PackSetupError> {
-        PackedSetup::pack_internal(setup, 0, NonZerou32::MIN, variant_to_byte(variant))
+        PackedSetup::pack_internal(setup, 0, NonZeroU32::MIN, variant_to_byte(variant))
     }
 
     fn pack_internal(
@@ -199,9 +199,9 @@ impl PackedSetup {
     }
 
     #[cfg(feature = "variant")]
-    pub fn unpack_variant(&self) -> Result<(Setup, Variant), UnpackSetupError> {
+    pub fn unpack_variant(&self) -> Result<(Setup, crate::variant::Variant), UnpackSetupError> {
         let (setup, variant) = self.unpack_internal()?;
-        Ok((setup, byte_to_variant(variant)?))
+        Ok((setup, variant_from_byte(variant)?))
     }
 
     fn unpack_internal(&self) -> Result<(Setup, u8), UnpackSetupError> {
@@ -350,6 +350,8 @@ const VARIANT_THREECHECK: u8 = 5;
 
 #[cfg(feature = "variant")]
 fn variant_to_byte(variant: Variant) -> u8 {
+    use crate::variant::Variant;
+
     match variant {
         Variant::Chess => 0,
         Variant::Crazyhouse => VARIANT_CRAZYHOUSE,
@@ -363,7 +365,9 @@ fn variant_to_byte(variant: Variant) -> u8 {
 }
 
 #[cfg(feature = "variant")]
-fn byte_to_variant(variant: u8) -> Result<Variant, UnpackSetupError> {
+fn variant_from_byte(variant: u8) -> Result<Variant, UnpackSetupError> {
+    use crate::variant::Variant;
+
     Ok(match variant {
         0 | 2 | 3 => Variant::Chess,
         VARIANT_CRAZYHOUSE => Variant::Crazyhouse,
@@ -373,7 +377,7 @@ fn byte_to_variant(variant: u8) -> Result<Variant, UnpackSetupError> {
         7 => Variant::Atomic,
         8 => Variant::Horde,
         9 => Variant::RacingKings,
-        _ => return Err(UnpackSetupError),
+        _ => return Err(UnpackSetupError { _priv: () }),
     })
 }
 

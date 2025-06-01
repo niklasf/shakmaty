@@ -8,7 +8,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-shakmaty = { path = ".." }
+shakmaty = { path = "..", features = ["variant"] }
 
 [workspace]
 members = ["."] # Let fuzz suite not interfere with workspaces
@@ -28,3 +28,7 @@ path = "fuzz_targets/uci.rs"
 [[bin]]
 name = "square"
 path = "fuzz_targets/square.rs"
+
+[[bin]]
+name = "packed_setup"
+path = "fuzz_targets/packed_setup.rs"
