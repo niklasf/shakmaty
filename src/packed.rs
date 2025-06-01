@@ -1,3 +1,36 @@
+//! Binary encodings that balance compression and encoding/decoding speed.
+//!
+//! # Packing
+//!
+//! ```
+//! use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+//!
+//! let pos = Chess::default();
+//! let setup = pos.to_setup(EnPassantMode::Always);
+//! let packed = PackedSetup::pack_standard(&setup)?;
+//! let bytes = packed.as_bytes();
+//! assert!(bytes.len() <= PackedSetup::MAX_BYTES);
+//! # Ok::<_, shakmaty::packed::PackSetupError>(())
+//! ```
+//!
+//! # Unpacking
+//!
+//! ```
+//! # use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+//! #
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! #     let packed = PackedSetup::pack_standard(&Chess::default().to_setup(EnPassantMode::Always))?;
+//! #     let bytes = packed.as_bytes();
+//! use shakmaty::{CastlingMode, FromSetup};
+//!
+//! let packed = PackedSetup::try_from_bytes(bytes)?;
+//! let setup = packed.unpack_standard()?;
+//! let pos = Chess::from_setup(setup, CastlingMode::Chess960)?;
+//! assert_eq!(pos, Chess::default());
+//! #     Ok(())
+//! # }
+//! ```
+
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
 #[cfg(feature = "variant")]
@@ -7,33 +40,31 @@ use crate::{
     Square,
 };
 
-// The format:
-//
-// 8 bytes: occupancy
-// 32 bytes: Up to 64 piece nibbles
-// 5 byte: leb128 ply
-// 5 byte: leb128 half move clock
-// 1 byte: variant info
-// + 1 byte: check counts
-// + 5 bytes: pockets
-//   8 bytes: promoted flags
-// ---
-// 64 bytes
-
+/// A compactly encoded board, standard chess setup, or variant setup.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PackedSetup {
     inner: [u8; PackedSetup::MAX_BYTES],
 }
 
 impl PackedSetup {
-    pub const MAX_BYTES: usize = 8 + 64 / 2 + 5 + 5 + 1 + 5 + 8;
+    /// Maximum number of bytes needed to encode any representable setup.
+    pub const MAX_BYTES: usize = 8 /* occupancy */ +
+        64 / 2 /* piece nibbles */ +
+        5 /* halfmoves */ +
+        5 /* ply */ +
+        1 /* variant */ +
+        5 + 8 /* crazyhouse pockets and promoted pieces */;
 
+    /// Construct a compactly packed equivalent of [`Setup::empty()`].
     pub const fn empty() -> PackedSetup {
         PackedSetup {
             inner: [0; PackedSetup::MAX_BYTES],
         }
     }
 
+    /// Unwrap the packed byte representation.
+    ///
+    /// Guaranteed not to have trailing zero bytes.
     pub fn as_bytes(&self) -> &[u8] {
         // Trim trailing zeroes
         let mut bytes = &self.inner[..];
@@ -47,6 +78,23 @@ impl PackedSetup {
         bytes
     }
 
+    /// Wrap a given byte represetation.
+    ///
+    /// Ignores trailing zero bytes within the maximum length.
+    ///
+    /// Supports
+    /// [Stockfish's nnue-pytorch](https://github.com/official-stockfish/nnue-pytorch)
+    /// position format.
+    ///
+    /// Also supports
+    /// [Lichess's binary FEN](https://lichess.org/@/revoof/blog/adapting-nnue-pytorchs-binary-position-format-for-lichess/cpeeAMeY).
+    ///
+    /// # Errors
+    ///
+    /// Errors if `bytes` is longer than `PackedSetup::MAX_BYTES`.
+    ///
+    /// Success does not mean that `bytes` represents a valid `Setup`. This
+    /// is validated later, when unpacking.
     pub fn try_from_bytes(bytes: &[u8]) -> Result<PackedSetup, TryFromSliceError> {
         let mut packed = PackedSetup::empty();
         let dst = packed
@@ -57,6 +105,7 @@ impl PackedSetup {
         Ok(packed)
     }
 
+    /// Construct a compactly packed equivalent of the given board.
     pub fn pack_board(board: &Board) -> PackedSetup {
         PackedSetup::pack_standard(&Setup {
             board: board.clone(),
@@ -65,14 +114,45 @@ impl PackedSetup {
         .expect("all boards representable")
     }
 
+    /// Construct a compactly packed equivalent of the given standard chess
+    /// setup.
+    ///
+    /// # Errors
+    ///
+    /// Errors when an illegal standard chess setup can not be packed
+    /// losslessly.
+    ///
+    /// * No matching pawn on the correct side of the board for the en passant
+    ///   square.
+    /// * Not all castling rights have matching unmoved rooks.
+    /// * Remaining Three-check checks (but this is standard chess).
+    /// * Crazyhouse pockets (but this is standard chess).
     pub fn pack_standard(setup: &Setup) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(setup, setup.halfmoves, setup.fullmoves, 0)
     }
 
+    /// Construct a compactly packed equivalent of the given standard chess
+    /// setup, ignoring move counters.
+    ///
+    /// # Errors
+    ///
+    /// Same error conditions as [`PackedSetup::pack_standard()`].
     pub fn pack_standard_normalized(setup: &Setup) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(setup, 0, NonZeroU32::MIN, 0)
     }
 
+    /// Construct a compactly packed equivalent of the given variant setup.
+    ///
+    /// # Errors
+    ///
+    /// Errors when an illegal variant setup can not be packed losslessly.
+    ///
+    /// * No matching pawn on the correct side of the board for the en passant
+    ///   square.
+    /// * Not all castling rights have matching unmoved rooks.
+    /// * Remaining checks, but variant is not Three-check.
+    /// * Pockets, but variant is not Crazyhouse.
+    /// * More than 15 Crazyhouse pocket pieces of any type and color.
     #[cfg(feature = "variant")]
     pub fn pack_variant(setup: &Setup, variant: Variant) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(
@@ -83,6 +163,12 @@ impl PackedSetup {
         )
     }
 
+    /// Construct a compactly packed equivalent of the given variant setup,
+    /// ignoring move counters.
+    ///
+    /// # Errors
+    ///
+    /// Same error conditions as [`PackedSetup::pack_variant()`].
     #[cfg(feature = "variant")]
     pub fn pack_variant_normalized(
         setup: &Setup,
@@ -189,15 +275,33 @@ impl PackedSetup {
         Ok(packed)
     }
 
+    /// Unpack an encoded board.
+    ///
+    /// # Errors
+    ///
+    /// Invalid encoding.
     pub fn unpack_board(&self) -> Result<Board, UnpackSetupError> {
         Ok(self.unpack_standard()?.board)
     }
 
+    /// Unpack a standard chess setup.
+    ///
+    /// # Errors
+    ///
+    /// Invalid encoding or not standard chess.
     pub fn unpack_standard(&self) -> Result<Setup, UnpackSetupError> {
-        let (setup, _) = self.unpack_internal()?;
+        let (setup, variant) = self.unpack_internal()?;
+        if !matches!(variant, 0 | 2 | 3) {
+            return Err(UnpackSetupError { _priv: () });
+        }
         Ok(setup)
     }
 
+    /// Unpack a variant setup.
+    ///
+    /// # Errors
+    ///
+    /// Invalid encoding.
     #[cfg(feature = "variant")]
     pub fn unpack_variant(&self) -> Result<(Setup, crate::variant::Variant), UnpackSetupError> {
         let (setup, variant) = self.unpack_internal()?;
@@ -316,6 +420,15 @@ pub struct UnpackSetupError {
     _priv: (),
 }
 
+impl Display for UnpackSetupError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("invalid packed setup encoding")
+    }
+}
+
+impl error::Error for UnpackSetupError {}
+
+/// Error when packing an unrepresentable setup.
 #[derive(Debug, Clone)]
 pub enum PackSetupError {
     EpSquare,
@@ -335,6 +448,7 @@ impl Display for PackSetupError {
     }
 }
 
+/// Error when unpacking an invalid or unexpected encoding.
 impl error::Error for PackSetupError {}
 
 impl TryFrom<&[u8]> for PackedSetup {
