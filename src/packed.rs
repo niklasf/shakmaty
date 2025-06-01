@@ -1,5 +1,7 @@
+use crate::Setup;
+use core::array::TryFromSliceError;
 use core::mem;
-use core::{array::TryFromSliceError, fmt};
+use core::num::NonZeroU32;
 
 use crate::util::try_from_slice_error;
 
@@ -17,11 +19,13 @@ use crate::util::try_from_slice_error;
 // 65 bytes
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PackedSetup([u8; 8 + 64 / 2 + 6 + 5 + 1 + 5 + 8]);
+pub struct PackedSetup([u8; PackedSetup::MAX_BYTES]);
 
 impl PackedSetup {
+    pub const MAX_BYTES: usize = 8 + 64 / 2 + 6 + 5 + 1 + 5 + 8;
+
     pub const fn empty() -> PackedSetup {
-        PackedSetup([0; 8 + 64 / 2 + 6 + 5 + 1 + 5 + 8])
+        PackedSetup([0; PackedSetup::MAX_BYTES])
     }
 
     pub fn as_bytes(&self) -> &[u8] {
@@ -46,6 +50,53 @@ impl PackedSetup {
         dst.copy_from_slice(bytes);
         Ok(packed)
     }
+
+    pub fn pack_chess(setup: &Setup) -> PackedSetup {
+        PackedSetup::pack_internal(setup, setup.halfmoves, setup.fullmoves, 0)
+    }
+
+    pub fn pack_chess_normalized(setup: &Setup) -> PackedSetup {
+        PackedSetup::pack_internal(setup, 0, NonZeroU32::MIN, 0)
+    }
+
+    #[cfg(feature = "variant")]
+    pub fn pack_variant(setup: &Setup, variant: Variant) -> PackedSetup {
+        PackedSetup::pack_internal(
+            setup,
+            setup.halfmoves,
+            setup.fullmoves,
+            variant_to_byte(variant),
+        )
+    }
+
+    #[cfg(feature = "variant")]
+    pub fn pack_variant_normalized(setup: &Setup, variant: Variant) -> PackedSetup {
+        PackedSetup::pack_internal(setup, 0, NonZerou32::MIN, variant_to_byte(variant))
+    }
+
+    fn pack_internal(
+        setup: &Setup,
+        halfmoves: u32,
+        fullmoves: NonZeroU32,
+        variant: u8,
+    ) -> PackedSetup {
+        todo!()
+    }
+
+    pub fn unpack_standard(&self) -> Setup {
+        let (setup, _) = self.unpack_internal();
+        setup
+    }
+
+    #[cfg(feature = "variant")]
+    pub fn unpack_variant(&self) -> (Setup, Variant) {
+        let (setup, variant) = self.unpack_internal();
+        (setup, byte_to_variant(variant))
+    }
+
+    fn unpack_internal(&self) -> (Setup, u8) {
+        todo!()
+    }
 }
 
 impl TryFrom<&[u8]> for PackedSetup {
@@ -53,6 +104,32 @@ impl TryFrom<&[u8]> for PackedSetup {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         PackedSetup::try_from_bytes(value)
+    }
+}
+
+#[cfg(feature = "variant")]
+fn variant_to_byte(variant: Variant) -> u8 {
+    match variant {
+        Variant::Chess => 0,
+        Variant::KingOfTheHill => 4,
+        Variant::ThreeCheck => 5,
+        Variant::Antichess => 6,
+        Variant::Atomic => 7,
+        Variant::Horde => 8,
+        Variant::RacingKings => 9,
+    }
+}
+
+#[cfg(feature = "variant")]
+fn byte_to_variant(variant: u8) -> Variant {
+    match variant {
+        4 => Variant::KingOfTheHill,
+        5 => Variant::ThreeCheck,
+        6 => Variant::Antichess,
+        7 => Variant::Atomic,
+        8 => Variant::Horde,
+        9 => Variant::RacingKings,
+        _ => Variant::Chess,
     }
 }
 
