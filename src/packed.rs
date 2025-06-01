@@ -1,40 +1,18 @@
 //! Binary encodings that balance compression and encoding/decoding speed.
 //!
+//! Type | Via
+//! --- | ---
+//! [`Square`] | `u8::from(_)`
+//! [`Color`] | `u8::from(_)`
+//! [`Bitboard`] | `u64::from(_).to_be_bytes()`
+//! [`Board`] | [`PackedSetup::pack_board()`]
+//! [`Chess`](crate::Chess), [`Setup`] of a legal standard chess position | [`PackedSetup::pack_standard()`], [`PackedSetup::pack_standard_normalized()`]
+//! `VariantPosition`, [`Setup`] of a legal variant position | `PackedSetup::pack_variant()`, `PackedSetup::pack_variant_normalized()`
+//!
 //! # Stability
 //!
 //! All encodings are guaranteed to be stable. Changing encodings is considered
 //! a semver breaking change and will be noted in the changelog.
-//!
-//! # Packing
-//!
-//! ```
-//! use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
-//!
-//! let pos = Chess::default();
-//! let setup = pos.to_setup(EnPassantMode::Always);
-//! let packed = PackedSetup::pack_standard(&setup)?;
-//! let bytes = packed.as_bytes();
-//! assert!(bytes.len() <= PackedSetup::MAX_BYTES);
-//! # Ok::<_, shakmaty::packed::PackSetupError>(())
-//! ```
-//!
-//! # Unpacking
-//!
-//! ```
-//! # use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
-//! #
-//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
-//! #     let packed = PackedSetup::pack_standard(&Chess::default().to_setup(EnPassantMode::Always))?;
-//! #     let bytes = packed.as_bytes();
-//! use shakmaty::{CastlingMode, FromSetup};
-//!
-//! let packed = PackedSetup::try_from_bytes(bytes)?;
-//! let setup = packed.unpack_standard()?;
-//! let pos = Chess::from_setup(setup, CastlingMode::Chess960)?;
-//! assert_eq!(pos, Chess::default());
-//! #     Ok(())
-//! # }
-//! ```
 
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
@@ -46,6 +24,37 @@ use crate::{
 };
 
 /// A compactly encoded board, standard chess setup, or variant setup.
+///
+/// # Packing
+///
+/// ```
+/// use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+///
+/// let pos = Chess::default();
+/// let setup = pos.to_setup(EnPassantMode::Always);
+/// let packed = PackedSetup::pack_standard(&setup)?;
+/// let bytes = packed.as_bytes();
+/// assert!(bytes.len() <= PackedSetup::MAX_BYTES);
+/// # Ok::<_, shakmaty::packed::PackSetupError>(())
+/// ```
+///
+/// # Unpacking
+///
+/// ```
+/// # use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+/// #
+/// # fn main() -> Result<(), Box<dyn core::error::Error>> {
+/// #     let packed = PackedSetup::pack_standard(&Chess::default().to_setup(EnPassantMode::Always))?;
+/// #     let bytes = packed.as_bytes();
+/// use shakmaty::{CastlingMode, FromSetup};
+///
+/// let packed = PackedSetup::try_from_bytes(bytes)?;
+/// let setup = packed.unpack_standard()?;
+/// let pos = Chess::from_setup(setup, CastlingMode::Chess960)?;
+/// assert_eq!(pos, Chess::default());
+/// #     Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PackedSetup {
     inner: [u8; PackedSetup::MAX_BYTES],
