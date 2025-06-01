@@ -31,10 +31,6 @@
 //! # }
 //! ```
 
-// TODO: Comments wrt check counts and pockets.
-// TODO: Error for kings in pockets.
-// TODO: Check endianness.
-
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
 #[cfg(feature = "variant")]
@@ -123,13 +119,13 @@ impl PackedSetup {
     /// # Errors
     ///
     /// Errors when an illegal standard chess setup can not be packed
-    /// losslessly.
+    /// losslessly:
     ///
     /// * En passant square does not have matching pawn on the correct side
     ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
-    /// * Remaining Three-check checks (but this is standard chess).
-    /// * Crazyhouse pockets (but this is standard chess).
+    /// * Has remaining checks for Three-check (but this is standard chess).
+    /// * Has Crazyhouse pockets (but this is standard chess).
     pub fn pack_standard(setup: &Setup) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(setup, setup.halfmoves, setup.fullmoves, 0)
     }
@@ -148,14 +144,15 @@ impl PackedSetup {
     ///
     /// # Errors
     ///
-    /// Errors when an illegal variant setup can not be packed losslessly.
+    /// Errors when an illegal variant setup can not be packed losslessly:
     ///
     /// * En passant square does not have matching pawn on the correct side
     ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
-    /// * Remaining checks, but variant is not Three-check.
-    /// * Pockets, but variant is not Crazyhouse.
-    /// * More than 15 Crazyhouse pocket pieces of any type and color.
+    /// * Has remaining checks for Three-check, but variant is not Three-Check.
+    /// * Has Crazyhouse pockets, but variant is not Crazyhouse.
+    /// * Has more than 15 Crazyhouse pocket pieces of any type and color.
+    /// * Has Crazyhouse pockets containing kings.
     #[cfg(feature = "variant")]
     pub fn pack_variant(setup: &Setup, variant: Variant) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(
@@ -258,6 +255,9 @@ impl PackedSetup {
             writer
                 .write_nibbles(pockets.white.queen, pockets.black.queen)
                 .map_err(|()| PackSetupError::Pockets)?;
+            if pockets.white.king > 0 || pockets.black.king > 0 {
+                return Err(PackSetupError::Pockets);
+            }
             if setup.promoted.any() {
                 writer.write_u64(setup.promoted.into());
             }
