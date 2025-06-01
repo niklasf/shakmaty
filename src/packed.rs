@@ -418,6 +418,7 @@ impl PackedSetup {
     }
 }
 
+/// Error when unpacking an invalid or unexpected encoding.
 #[derive(Debug, Clone)]
 pub struct UnpackSetupError {
     _priv: (),
@@ -451,7 +452,6 @@ impl Display for PackSetupError {
     }
 }
 
-/// Error when unpacking an invalid or unexpected encoding.
 impl error::Error for PackSetupError {}
 
 impl TryFrom<&[u8]> for PackedSetup {
