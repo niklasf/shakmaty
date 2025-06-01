@@ -48,6 +48,14 @@ impl PackedSetup {
     }
 }
 
+impl TryFrom<&[u8]> for PackedSetup {
+    type Error = TryFromSliceError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        PackedSetup::try_from_bytes(value)
+    }
+}
+
 struct Writer<'a> {
     inner: &'a mut [u8],
 }
@@ -85,11 +93,45 @@ impl Writer<'_> {
     }
 }
 
-impl TryFrom<&[u8]> for PackedSetup {
-    type Error = TryFromSliceError;
+struct Reader<'a> {
+    inner: &'a [u8],
+}
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        PackedSetup::try_from_bytes(value)
+impl Reader<'_> {
+    fn new(src: &[u8]) -> Reader<'_> {
+        Reader { inner: src }
+    }
+
+    #[inline]
+    fn read_u8(&mut self) -> u8 {
+        let (head, tail) = self.inner.split_at(1);
+        self.inner = tail;
+        head[0]
+    }
+
+    fn read_u64(&mut self) -> u64 {
+        let (head, tail) = self.inner.split_at(8);
+        self.inner = tail;
+        u64::from_be_bytes(head.try_into().unwrap())
+    }
+
+    fn read_nibbles(&mut self) -> (u8, u8) {
+        let n = self.read_u8();
+        (n & 0xf, n >> 4)
+    }
+
+    fn read_leb128(&mut self, max_bytes: usize) -> u64 {
+        let mut n = 0;
+        let mut shift = 0;
+        for _ in 0..max_bytes {
+            let byte = self.read_u8();
+            n |= u64::from(byte & 127) << shift;
+            shift += 7;
+            if byte & 128 == 0 {
+                break;
+            }
+        }
+        n
     }
 }
 
@@ -135,11 +177,45 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn test_write_u8() {
+    fn test_read_write_u8() {
         let mut buf = [0; 2];
+
         let mut writer = Writer::new(&mut buf);
         writer.write_u8(1);
         writer.write_u8(2);
-        assert_eq!(buf, [1, 2]);
+
+        let mut reader = Reader::new(&buf);
+        assert_eq!(reader.read_u8(), 1);
+        assert_eq!(reader.read_u8(), 2);
+    }
+
+    #[test]
+    fn test_read_write_u64() {
+        let mut buf = [0; 16];
+
+        let mut writer = Writer::new(&mut buf);
+        writer.write_u64(0x1234_5678_9abc_def0);
+        writer.write_u64(u64::MAX);
+
+        let mut reader = Reader::new(&buf);
+        assert_eq!(reader.read_u64(), 0x1234_5678_9abc_def0);
+        assert_eq!(reader.read_u64(), u64::MAX);
+    }
+
+    #[test]
+    fn test_read_write_leb128() {
+        let mut buf = [0; 16];
+
+        let mut writer = Writer::new(&mut buf);
+        writer.write_leb128(u64::from(u32::MAX));
+        writer.write_leb128(u64::from(u32::MAX) * 2 + 1);
+        writer.write_leb128(1);
+        writer.write_leb128(0);
+
+        let mut reader = Reader::new(&buf);
+        assert_eq!(reader.read_leb128(5), u64::from(u32::MAX));
+        assert_eq!(reader.read_leb128(5), u64::from(u32::MAX) * 2 + 1);
+        assert_eq!(reader.read_leb128(5), 1);
+        assert_eq!(reader.read_leb128(5), 0);
     }
 }
