@@ -1,5 +1,10 @@
 //! Binary encodings that balance compression and encoding/decoding speed.
 //!
+//! # Stability
+//!
+//! All encodings are guaranteed to be stable. Changing encodings is considered
+//! a semver breaking change and will be noted in the changelog.
+//!
 //! # Packing
 //!
 //! ```
