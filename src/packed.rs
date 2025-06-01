@@ -31,6 +31,10 @@
 //! # }
 //! ```
 
+// TODO: Comments wrt check counts and pockets.
+// TODO: Error for kings in pockets.
+// TODO: Check endianness.
+
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
 #[cfg(feature = "variant")]
@@ -85,7 +89,6 @@ impl PackedSetup {
     /// Supports
     /// [Stockfish's nnue-pytorch](https://github.com/official-stockfish/nnue-pytorch)
     /// position format.
-    ///
     /// Also supports
     /// [Lichess's binary FEN](https://lichess.org/@/revoof/blog/adapting-nnue-pytorchs-binary-position-format-for-lichess/cpeeAMeY).
     ///
@@ -93,8 +96,8 @@ impl PackedSetup {
     ///
     /// Errors if `bytes` is longer than `PackedSetup::MAX_BYTES`.
     ///
-    /// Success does not mean that `bytes` represents a valid `Setup`. This
-    /// is validated later, when unpacking.
+    /// Success does not guarantee that a setup can later be unpacked, let alone
+    /// that it represents a legal position.
     pub fn try_from_bytes(bytes: &[u8]) -> Result<PackedSetup, TryFromSliceError> {
         let mut packed = PackedSetup::empty();
         let dst = packed
@@ -122,8 +125,8 @@ impl PackedSetup {
     /// Errors when an illegal standard chess setup can not be packed
     /// losslessly.
     ///
-    /// * No matching pawn on the correct side of the board for the en passant
-    ///   square.
+    /// * En passant square does not have matching pawn on the correct side
+    ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
     /// * Remaining Three-check checks (but this is standard chess).
     /// * Crazyhouse pockets (but this is standard chess).
@@ -147,8 +150,8 @@ impl PackedSetup {
     ///
     /// Errors when an illegal variant setup can not be packed losslessly.
     ///
-    /// * No matching pawn on the correct side of the board for the en passant
-    ///   square.
+    /// * En passant square does not have matching pawn on the correct side
+    ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
     /// * Remaining checks, but variant is not Three-check.
     /// * Pockets, but variant is not Crazyhouse.
