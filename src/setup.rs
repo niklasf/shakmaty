@@ -1,5 +1,8 @@
 use core::{convert::identity, num::NonZeroU32};
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+
 use crate::{
     attacks, Bitboard, Board, ByCastlingSide, ByColor, ByRole, CastlingMode, CastlingSide, Color,
     File, FromSetup, PositionError, Rank, RemainingChecks, Square,
@@ -374,6 +377,24 @@ impl Castles {
 
     pub const fn mode(&self) -> CastlingMode {
         self.mode
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl Arbitrary for Castles {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        let setup = Setup::arbitrary();
+        let mode = CastlingMode::arbitrary();
+
+        (setup, mode)
+            .prop_filter_map(
+                "only Castles with valid Setup and CastlingMode",
+                |(setup, mode)| Castles::from_setup(&setup, mode).ok(),
+            )
+            .boxed()
     }
 }
 
