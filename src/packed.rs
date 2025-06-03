@@ -506,6 +506,43 @@ fn variant_from_byte(variant: u8) -> Result<Variant, UnpackSetupError> {
     })
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for PackedSetup {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_bytes())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for PackedSetup {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct PackedSetupVisitor;
+
+        impl serde::de::Visitor<'_> for PackedSetupVisitor {
+            type Value = PackedSetup;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("packed setup bytes")
+            }
+
+            fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                PackedSetup::try_from_bytes(value).map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_bytes(PackedSetupVisitor)
+    }
+}
+
 /// A move encoded as exactly 2 bytes.
 ///
 /// # Packing
@@ -625,6 +662,43 @@ impl From<PackedUciMove> for [u8; 2] {
     }
 }
 
+#[cfg(feature = "serde")]
+impl serde::Serialize for PackedUciMove {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u16(u16::from_le_bytes(self.inner))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for PackedUciMove {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct PackedUciMoveVisitor;
+
+        impl serde::de::Visitor<'_> for PackedUciMoveVisitor {
+            type Value = PackedUciMove;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("packed uci move as unsigned integer")
+            }
+
+            fn visit_u16<E>(self, value: u16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(PackedUciMove::from_bytes(value.to_le_bytes()))
+            }
+        }
+
+        deserializer.deserialize_u16(PackedUciMoveVisitor)
+    }
+}
+
 struct Writer<'a> {
     inner: &'a mut [u8],
 }
@@ -711,43 +785,6 @@ impl Reader<'_> {
             }
         }
         n
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for PackedSetup {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bytes(self.as_bytes())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PackedSetup {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct PackedSetupVisitor;
-
-        impl serde::de::Visitor<'_> for PackedSetupVisitor {
-            type Value = PackedSetup;
-
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str("packed setup bytes")
-            }
-
-            fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                PackedSetup::try_from_bytes(value).map_err(serde::de::Error::custom)
-            }
-        }
-
-        deserializer.deserialize_bytes(PackedSetupVisitor)
     }
 }
 
