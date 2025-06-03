@@ -418,6 +418,7 @@ impl PackedSetup {
                     king: 0,
                 },
             });
+            setup.promoted = Bitboard(reader.read_u64());
         }
 
         if variant == VARIANT_THREECHECK {
@@ -683,5 +684,54 @@ mod tests {
         assert_eq!(reader.read_leb128(5), u64::from(u32::MAX) * 2 + 1);
         assert_eq!(reader.read_leb128(5), 1);
         assert_eq!(reader.read_leb128(5), 0);
+    }
+
+    #[test]
+    fn test_read_write_board() {
+        let board = Board::default();
+
+        let roundtripped = PackedSetup::pack_board(&board)
+            .unpack_board()
+            .expect("roundtrip");
+
+        assert_eq!(roundtripped, board);
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_read_write_crazyhouse_setup() {
+        use crate::fen::Fen;
+
+        let setup = "r2N~4/pkpp1pRp/1p2pN2/4P3/8/2B1Bp2/PPP1qP1q/R1K5/NBRppnnb b - - 0 26"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+
+        let (roundtripped, variant) = PackedSetup::pack_variant(&setup, Variant::Crazyhouse)
+            .expect("representable")
+            .unpack_variant()
+            .expect("roundtrip");
+
+        assert_eq!(setup, roundtripped);
+        assert_eq!(variant, Variant::Crazyhouse);
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_read_write_3check_setup() {
+        use crate::fen::Fen;
+
+        let setup = "3r1r2/ppp2pk1/6R1/5R2/2P1p3/8/P1P3PP/7K b - - 0 27 +2+0"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+
+        let (roundtripped, variant) = PackedSetup::pack_variant(&setup, Variant::ThreeCheck)
+            .expect("representable")
+            .unpack_variant()
+            .expect("roundtrip");
+
+        assert_eq!(setup, roundtripped);
+        assert_eq!(variant, Variant::ThreeCheck);
     }
 }
