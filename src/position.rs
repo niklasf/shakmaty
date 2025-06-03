@@ -6,6 +6,8 @@ use core::{
 };
 
 use bitflags::bitflags;
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
 
 use crate::{
     attacks,
@@ -66,6 +68,7 @@ impl fmt::Display for Outcome {
 
 /// Error when parsing the outcome of a game.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum ParseOutcomeError {
     /// Got `*`.
     Unknown,
@@ -94,6 +97,7 @@ impl FromStr for Outcome {
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct PlayError<P> {
     /// The move that was not played.
     pub m: Move,
@@ -310,6 +314,34 @@ pub trait FromSetup: Sized {
     /// # Ok::<_, PositionError<_>>(())
     /// ```
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
+}
+
+/// A wrapper that implements [`Arbitrary`] for any type that implements [`FromSetup`] and [`Debug`].
+#[cfg(feature = "proptest")]
+#[derive(Debug)]
+pub struct FromSetupArbitrary<FS>(pub FS)
+where
+    FS: FromSetup + fmt::Debug;
+
+#[cfg(feature = "proptest")]
+impl<FS> Arbitrary for FromSetupArbitrary<FS>
+where
+    FS: FromSetup + fmt::Debug,
+{
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        let setup = Setup::arbitrary();
+        let mode = CastlingMode::arbitrary();
+
+        (setup, mode)
+            .prop_filter_map(
+                "only FromSetup for valid Setup and CastlingMode",
+                |(setup, mode)| FS::from_setup(setup, mode).ok().map(FromSetupArbitrary),
+            )
+            .boxed()
+    }
 }
 
 /// A playable chess or chess variant position. See [`Chess`] for a concrete
