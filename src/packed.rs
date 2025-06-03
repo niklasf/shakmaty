@@ -1,46 +1,57 @@
 //! Binary encodings that balance compression and encoding/decoding speed.
 //!
-//! # Packing
+//! # Stability
 //!
-//! ```
-//! use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
-//!
-//! let pos = Chess::default();
-//! let setup = pos.to_setup(EnPassantMode::Always);
-//! let packed = PackedSetup::pack_standard(&setup)?;
-//! let bytes = packed.as_bytes();
-//! assert!(bytes.len() <= PackedSetup::MAX_BYTES);
-//! # Ok::<_, shakmaty::packed::PackSetupError>(())
-//! ```
-//!
-//! # Unpacking
-//!
-//! ```
-//! # use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
-//! #
-//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
-//! #     let packed = PackedSetup::pack_standard(&Chess::default().to_setup(EnPassantMode::Always))?;
-//! #     let bytes = packed.as_bytes();
-//! use shakmaty::{CastlingMode, FromSetup};
-//!
-//! let packed = PackedSetup::try_from_bytes(bytes)?;
-//! let setup = packed.unpack_standard()?;
-//! let pos = Chess::from_setup(setup, CastlingMode::Chess960)?;
-//! assert_eq!(pos, Chess::default());
-//! #     Ok(())
-//! # }
-//! ```
+//! All encodings are guaranteed to be stable. Changing encodings is considered
+//! a semver breaking change and will be noted in the changelog. But note that
+//! in such a case a migration by unpacking with the previous version may be
+//! required.
 
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
 #[cfg(feature = "variant")]
 use crate::variant::Variant;
 use crate::{
-    util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank, Role, Setup,
-    Square,
+    uci::UciMove, util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank,
+    Role, Setup, Square,
 };
 
 /// A compactly encoded board, standard chess setup, or variant setup.
+///
+/// Maximum size is 24 bytes for standard legal chess positions without move
+/// counters. Maximum size is 64 bytes for not strictly legal variant positions
+/// with move counters.
+///
+/// # Packing
+///
+/// ```
+/// use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+///
+/// let pos = Chess::default();
+/// let setup = pos.to_setup(EnPassantMode::Always);
+/// let packed = PackedSetup::pack_standard(&setup)?;
+/// let bytes = packed.as_bytes();
+/// assert!(bytes.len() <= PackedSetup::MAX_BYTES);
+/// # Ok::<_, shakmaty::packed::PackSetupError>(())
+/// ```
+///
+/// # Unpacking
+///
+/// ```
+/// # use shakmaty::{Chess, EnPassantMode, packed::PackedSetup, Position};
+/// #
+/// # fn main() -> Result<(), Box<dyn core::error::Error>> {
+/// #     let packed = PackedSetup::pack_standard(&Chess::default().to_setup(EnPassantMode::Always))?;
+/// #     let bytes = packed.as_bytes();
+/// use shakmaty::{CastlingMode, FromSetup};
+///
+/// let packed = PackedSetup::try_from_bytes(bytes)?;
+/// let setup = packed.unpack_standard()?;
+/// let pos = Chess::from_setup(setup, CastlingMode::Chess960)?;
+/// assert_eq!(pos, Chess::default());
+/// #     Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PackedSetup {
     inner: [u8; PackedSetup::MAX_BYTES],
@@ -85,7 +96,6 @@ impl PackedSetup {
     /// Supports
     /// [Stockfish's nnue-pytorch](https://github.com/official-stockfish/nnue-pytorch)
     /// position format.
-    ///
     /// Also supports
     /// [Lichess's binary FEN](https://lichess.org/@/revoof/blog/adapting-nnue-pytorchs-binary-position-format-for-lichess/cpeeAMeY).
     ///
@@ -93,8 +103,8 @@ impl PackedSetup {
     ///
     /// Errors if `bytes` is longer than `PackedSetup::MAX_BYTES`.
     ///
-    /// Success does not mean that `bytes` represents a valid `Setup`. This
-    /// is validated later, when unpacking.
+    /// Success does not guarantee that a setup can later be unpacked, let alone
+    /// that it represents a legal position.
     pub fn try_from_bytes(bytes: &[u8]) -> Result<PackedSetup, TryFromSliceError> {
         let mut packed = PackedSetup::empty();
         let dst = packed
@@ -120,13 +130,13 @@ impl PackedSetup {
     /// # Errors
     ///
     /// Errors when an illegal standard chess setup can not be packed
-    /// losslessly.
+    /// losslessly:
     ///
-    /// * No matching pawn on the correct side of the board for the en passant
-    ///   square.
+    /// * En passant square does not have matching pawn on the correct side
+    ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
-    /// * Remaining Three-check checks (but this is standard chess).
-    /// * Crazyhouse pockets (but this is standard chess).
+    /// * Has remaining checks for Three-check (but this is standard chess).
+    /// * Has Crazyhouse pockets (but this is standard chess).
     pub fn pack_standard(setup: &Setup) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(setup, setup.halfmoves, setup.fullmoves, 0)
     }
@@ -145,14 +155,15 @@ impl PackedSetup {
     ///
     /// # Errors
     ///
-    /// Errors when an illegal variant setup can not be packed losslessly.
+    /// Errors when an illegal variant setup can not be packed losslessly:
     ///
-    /// * No matching pawn on the correct side of the board for the en passant
-    ///   square.
+    /// * En passant square does not have matching pawn on the correct side
+    ///   of the board.
     /// * Not all castling rights have matching unmoved rooks.
-    /// * Remaining checks, but variant is not Three-check.
-    /// * Pockets, but variant is not Crazyhouse.
-    /// * More than 15 Crazyhouse pocket pieces of any type and color.
+    /// * Has remaining checks for Three-check, but variant is not Three-Check.
+    /// * Has Crazyhouse pockets, but variant is not Crazyhouse.
+    /// * Has more than 15 Crazyhouse pocket pieces of any type and color.
+    /// * Has Crazyhouse pockets containing kings.
     #[cfg(feature = "variant")]
     pub fn pack_variant(setup: &Setup, variant: Variant) -> Result<PackedSetup, PackSetupError> {
         PackedSetup::pack_internal(
@@ -255,6 +266,9 @@ impl PackedSetup {
             writer
                 .write_nibbles(pockets.white.queen, pockets.black.queen)
                 .map_err(|()| PackSetupError::Pockets)?;
+            if pockets.white.king > 0 || pockets.black.king > 0 {
+                return Err(PackSetupError::Pockets);
+            }
             if setup.promoted.any() {
                 writer.write_u64(setup.promoted.into());
             }
@@ -401,6 +415,7 @@ impl PackedSetup {
                     king: 0,
                 },
             });
+            setup.promoted = Bitboard(reader.read_u64());
         }
 
         if variant == VARIANT_THREECHECK {
@@ -415,6 +430,7 @@ impl PackedSetup {
     }
 }
 
+/// Error when unpacking an invalid or unexpected encoding.
 #[derive(Debug, Clone)]
 pub struct UnpackSetupError {
     _priv: (),
@@ -448,7 +464,6 @@ impl Display for PackSetupError {
     }
 }
 
-/// Error when unpacking an invalid or unexpected encoding.
 impl error::Error for PackSetupError {}
 
 impl TryFrom<&[u8]> for PackedSetup {
@@ -493,6 +508,199 @@ fn variant_from_byte(variant: u8) -> Result<Variant, UnpackSetupError> {
         9 => Variant::RacingKings,
         _ => return Err(UnpackSetupError { _priv: () }),
     })
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for PackedSetup {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_bytes(self.as_bytes())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for PackedSetup {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct PackedSetupVisitor;
+
+        impl serde::de::Visitor<'_> for PackedSetupVisitor {
+            type Value = PackedSetup;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("packed setup bytes")
+            }
+
+            fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                PackedSetup::try_from_bytes(value).map_err(serde::de::Error::custom)
+            }
+        }
+
+        deserializer.deserialize_bytes(PackedSetupVisitor)
+    }
+}
+
+/// A move encoded as exactly 2 bytes.
+///
+/// # Packing
+///
+/// ```
+/// use shakmaty::{packed::PackedUciMove, Role, Square, uci::UciMove};
+///
+/// let m = UciMove::Normal {
+///     from: Square::G7,
+///     to: Square::G8,
+///     promotion: Some(Role::Queen),
+/// };
+///
+/// let packed = PackedUciMove::pack(m);
+/// let bytes: [u8; 2] = packed.to_bytes();
+/// ```
+///
+/// # Unpacking
+///
+/// ```
+/// # use shakmaty::{packed::PackedUciMove, Role, Square, uci::UciMove};
+/// #
+/// # let m = UciMove::Normal {
+/// #     from: Square::G7,
+/// #     to: Square::G8,
+/// #     promotion: Some(Role::Queen),
+/// # };
+/// #
+/// # let packed = PackedUciMove::pack(m);
+/// # let bytes = packed.to_bytes();
+/// #
+/// let packed = PackedUciMove::from_bytes(bytes);
+/// assert_eq!(packed.unpack(), m);
+/// ```
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct PackedUciMove {
+    inner: [u8; 2],
+}
+
+impl PackedUciMove {
+    /// Compactly pack the given move.
+    pub fn pack(m: UciMove) -> PackedUciMove {
+        let (from, to, role, special) = match m {
+            UciMove::Normal {
+                from,
+                to,
+                promotion,
+            } => (from, to, promotion, false),
+            UciMove::Put { role, to } => (to, to, Some(role), true),
+            UciMove::Null => (Square::A1, Square::A1, None, true),
+        };
+        PackedUciMove {
+            inner: (u16::from(from)
+                | (u16::from(to) << 6)
+                | (role.map_or(0, u16::from) << 12)
+                | (u16::from(special) << 15))
+                .to_le_bytes(),
+        }
+    }
+
+    /// Unpack the wrapped bytes.
+    pub fn unpack(self) -> UciMove {
+        let le = u16::from_le_bytes(self.inner);
+        let from = Square::new(u32::from(le & 0x3f));
+        let to = Square::new(u32::from((le >> 6) & 0x3f));
+        let role = Role::try_from((le >> 12) & 0x7).ok();
+        let special = (le >> 15) != 0;
+        match (from, to, role, special) {
+            (from, to, promotion, false) => UciMove::Normal {
+                from,
+                to,
+                promotion,
+            },
+            (_, to, Some(role), true) => UciMove::Put { role, to },
+            (_, _, None, true) => UciMove::Null,
+        }
+    }
+
+    /// Wrap a given byte representation.
+    #[inline]
+    pub fn from_bytes(bytes: [u8; 2]) -> PackedUciMove {
+        PackedUciMove { inner: bytes }
+    }
+
+    /// Unwrap the packed byte representation.
+    #[inline]
+    pub fn to_bytes(self) -> [u8; 2] {
+        self.inner
+    }
+}
+
+impl From<UciMove> for PackedUciMove {
+    #[inline]
+    fn from(m: UciMove) -> PackedUciMove {
+        PackedUciMove::pack(m)
+    }
+}
+
+impl From<PackedUciMove> for UciMove {
+    #[inline]
+    fn from(packed: PackedUciMove) -> UciMove {
+        packed.unpack()
+    }
+}
+
+impl From<[u8; 2]> for PackedUciMove {
+    #[inline]
+    fn from(bytes: [u8; 2]) -> PackedUciMove {
+        PackedUciMove::from_bytes(bytes)
+    }
+}
+
+impl From<PackedUciMove> for [u8; 2] {
+    #[inline]
+    fn from(packed: PackedUciMove) -> [u8; 2] {
+        packed.inner
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for PackedUciMove {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u16(u16::from_le_bytes(self.inner))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for PackedUciMove {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct PackedUciMoveVisitor;
+
+        impl serde::de::Visitor<'_> for PackedUciMoveVisitor {
+            type Value = PackedUciMove;
+
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("packed uci move as unsigned integer")
+            }
+
+            fn visit_u16<E>(self, value: u16) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(PackedUciMove::from_bytes(value.to_le_bytes()))
+            }
+        }
+
+        deserializer.deserialize_u16(PackedUciMoveVisitor)
+    }
 }
 
 struct Writer<'a> {
@@ -584,43 +792,6 @@ impl Reader<'_> {
     }
 }
 
-#[cfg(feature = "serde")]
-impl serde::Serialize for PackedSetup {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_bytes(self.as_bytes())
-    }
-}
-
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for PackedSetup {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        struct PackedSetupVisitor;
-
-        impl serde::de::Visitor<'_> for PackedSetupVisitor {
-            type Value = PackedSetup;
-
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                f.write_str("packed setup bytes")
-            }
-
-            fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
-            where
-                E: serde::de::Error,
-            {
-                PackedSetup::try_from_bytes(value).map_err(serde::de::Error::custom)
-            }
-        }
-
-        deserializer.deserialize_bytes(PackedSetupVisitor)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -666,5 +837,105 @@ mod tests {
         assert_eq!(reader.read_leb128(5), u64::from(u32::MAX) * 2 + 1);
         assert_eq!(reader.read_leb128(5), 1);
         assert_eq!(reader.read_leb128(5), 0);
+    }
+
+    #[test]
+    fn test_read_write_board() {
+        let board = Board::default();
+
+        let roundtripped = PackedSetup::pack_board(&board)
+            .unpack_board()
+            .expect("roundtrip");
+
+        assert_eq!(roundtripped, board);
+    }
+
+    #[test]
+    fn test_read_write_standard_setup() {
+        let setup = Setup::default();
+
+        let packed = PackedSetup::pack_standard(&setup).expect("representable");
+        assert!(packed.as_bytes().len() == 24);
+
+        let roundtripped = packed.unpack_standard().expect("roundtrip");
+        assert_eq!(roundtripped, setup);
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_read_write_crazyhouse_setup() {
+        use crate::fen::Fen;
+
+        let setup = "r2N~4/pkpp1pRp/1p2pN2/4P3/8/2B1Bp2/PPP1qP1q/R1K5/NBRppnnb b - - 0 26"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+
+        let (roundtripped, variant) = PackedSetup::pack_variant(&setup, Variant::Crazyhouse)
+            .expect("representable")
+            .unpack_variant()
+            .expect("roundtrip");
+
+        assert_eq!(setup, roundtripped);
+        assert_eq!(variant, Variant::Crazyhouse);
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_read_write_3check_setup() {
+        use crate::fen::Fen;
+
+        let setup = "3r1r2/ppp2pk1/6R1/5R2/2P1p3/8/P1P3PP/7K b - - 0 27 +2+0"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+
+        let (roundtripped, variant) = PackedSetup::pack_variant(&setup, Variant::ThreeCheck)
+            .expect("representable")
+            .unpack_variant()
+            .expect("roundtrip");
+
+        assert_eq!(setup, roundtripped);
+        assert_eq!(variant, Variant::ThreeCheck);
+    }
+
+    #[test]
+    fn test_read_write_uci_move() {
+        // Normal (no promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Normal {
+                    from,
+                    to,
+                    promotion: None,
+                };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Normal (promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                for role in Role::ALL {
+                    let uci = UciMove::Normal {
+                        from,
+                        to,
+                        promotion: Some(role),
+                    };
+                    assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+                }
+            }
+        }
+
+        // Put
+        for role in Role::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Put { role, to };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Null
+        assert_eq!(PackedUciMove::pack(UciMove::Null).unpack(), UciMove::Null);
     }
 }
