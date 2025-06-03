@@ -1,26 +1,19 @@
 //! Binary encodings that balance compression and encoding/decoding speed.
 //!
-//! Type | Via
-//! --- | ---
-//! [`Square`] | `u8::from(_)`
-//! [`Color`] | `u8::from(_)`
-//! [`Bitboard`] | `u64::from(_).to_be_bytes()`
-//! [`Board`] | [`PackedSetup::pack_board()`]
-//! [`Chess`](crate::Chess), [`Setup`] of a legal standard chess position | [`PackedSetup::pack_standard()`], [`PackedSetup::pack_standard_normalized()`]
-//! `VariantPosition`, [`Setup`] of a legal variant position | `PackedSetup::pack_variant()`, `PackedSetup::pack_variant_normalized()`
-//!
 //! # Stability
 //!
 //! All encodings are guaranteed to be stable. Changing encodings is considered
-//! a semver breaking change and will be noted in the changelog.
+//! a semver breaking change and will be noted in the changelog. But note that
+//! in such a case a migration by unpacking with the previous version may be
+//! required.
 
 use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZeroU32};
 
 #[cfg(feature = "variant")]
 use crate::variant::Variant;
 use crate::{
-    util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank, Role, Setup,
-    Square,
+    uci::UciMove, util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank,
+    Role, Setup, Square,
 };
 
 /// A compactly encoded board, standard chess setup, or variant setup.
@@ -513,6 +506,125 @@ fn variant_from_byte(variant: u8) -> Result<Variant, UnpackSetupError> {
     })
 }
 
+/// A move encoded as exactly 2 bytes.
+///
+/// # Packing
+///
+/// ```
+/// use shakmaty::{packed::PackedUciMove, Role, Square, uci::UciMove};
+///
+/// let m = UciMove::Normal {
+///     from: Square::G7,
+///     to: Square::G8,
+///     promotion: Some(Role::Queen),
+/// };
+///
+/// let packed = PackedUciMove::pack(m);
+/// let bytes: [u8; 2] = packed.to_bytes();
+/// ```
+///
+/// # Unpacking
+///
+/// ```
+/// # use shakmaty::{packed::PackedUciMove, Role, Square, uci::UciMove};
+/// #
+/// # let m = UciMove::Normal {
+/// #     from: Square::G7,
+/// #     to: Square::G8,
+/// #     promotion: Some(Role::Queen),
+/// # };
+/// #
+/// # let packed = PackedUciMove::pack(m);
+/// # let bytes = packed.to_bytes();
+/// #
+/// let packed = PackedUciMove::from_bytes(bytes);
+/// assert_eq!(packed.unpack(), m);
+/// ```
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct PackedUciMove {
+    inner: [u8; 2],
+}
+
+impl PackedUciMove {
+    /// Compactly pack the given move.
+    pub fn pack(m: UciMove) -> PackedUciMove {
+        let (from, to, role, special) = match m {
+            UciMove::Normal {
+                from,
+                to,
+                promotion,
+            } => (from, to, promotion, false),
+            UciMove::Put { role, to } => (to, to, Some(role), true),
+            UciMove::Null => (Square::A1, Square::A1, None, true),
+        };
+        PackedUciMove {
+            inner: (u16::from(from)
+                | (u16::from(to) << 6)
+                | (role.map_or(0, u16::from) << 12)
+                | (u16::from(special) << 15))
+                .to_le_bytes(),
+        }
+    }
+
+    /// Unpack the wrapped bytes.
+    pub fn unpack(self) -> UciMove {
+        let le = u16::from_le_bytes(self.inner);
+        let from = Square::new(u32::from(le & 0x3f));
+        let to = Square::new(u32::from((le >> 6) & 0x3f));
+        let role = Role::try_from((le >> 12) & 0x7).ok();
+        let special = (le >> 15) != 0;
+        match (from, to, role, special) {
+            (from, to, promotion, false) => UciMove::Normal {
+                from,
+                to,
+                promotion,
+            },
+            (_, to, Some(role), true) => UciMove::Put { role, to },
+            (_, _, None, true) => UciMove::Null,
+        }
+    }
+
+    /// Wrap a given byte representation.
+    #[inline]
+    pub fn from_bytes(bytes: [u8; 2]) -> PackedUciMove {
+        PackedUciMove { inner: bytes }
+    }
+
+    /// Unwrap the packed byte representation.
+    #[inline]
+    pub fn to_bytes(self) -> [u8; 2] {
+        self.inner
+    }
+}
+
+impl From<UciMove> for PackedUciMove {
+    #[inline]
+    fn from(m: UciMove) -> PackedUciMove {
+        PackedUciMove::pack(m)
+    }
+}
+
+impl From<PackedUciMove> for UciMove {
+    #[inline]
+    fn from(packed: PackedUciMove) -> UciMove {
+        packed.unpack()
+    }
+}
+
+impl From<[u8; 2]> for PackedUciMove {
+    #[inline]
+    fn from(bytes: [u8; 2]) -> PackedUciMove {
+        PackedUciMove::from_bytes(bytes)
+    }
+}
+
+impl From<PackedUciMove> for [u8; 2] {
+    #[inline]
+    fn from(packed: PackedUciMove) -> [u8; 2] {
+        packed.inner
+    }
+}
+
 struct Writer<'a> {
     inner: &'a mut [u8],
 }
@@ -695,6 +807,46 @@ mod tests {
             .expect("roundtrip");
 
         assert_eq!(roundtripped, board);
+    }
+
+    #[test]
+    fn test_read_write_uci_move() {
+        // Normal (no promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Normal {
+                    from,
+                    to,
+                    promotion: None,
+                };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Normal (promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                for role in Role::ALL {
+                    let uci = UciMove::Normal {
+                        from,
+                        to,
+                        promotion: Some(role),
+                    };
+                    assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+                }
+            }
+        }
+
+        // Put
+        for role in Role::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Put { role, to };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Null
+        assert_eq!(PackedUciMove::pack(UciMove::Null).unpack(), UciMove::Null);
     }
 
     #[cfg(feature = "variant")]
