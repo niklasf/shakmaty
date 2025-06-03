@@ -56,6 +56,9 @@ use core::{
     str::FromStr,
 };
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+
 use crate::{
     util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
     FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
@@ -342,6 +345,7 @@ impl Display for BoardFen<'_> {
 
 /// A FEN like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct Fen(pub Setup);
 
 impl Fen {
@@ -724,6 +728,16 @@ impl<'de> serde::Deserialize<'de> for Epd {
         }
 
         deserializer.deserialize_str(EpdVisitor)
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl Arbitrary for Epd {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        Setup::arbitrary().prop_map(Epd::from_setup).boxed()
     }
 }
 
