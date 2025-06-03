@@ -7,6 +7,7 @@ use crate::{
 
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum CastlingSide {
     KingSide,
     QueenSide,

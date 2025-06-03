@@ -30,6 +30,7 @@ macro_rules! try_from_int_impl {
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[repr(u8)]
 pub enum File {
     A = 0,
@@ -187,6 +188,7 @@ try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize i
 /// A rank of the chessboard.
 #[allow(missing_docs)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[repr(u8)]
 pub enum Rank {
     First = 0,
@@ -344,6 +346,7 @@ impl error::Error for ParseSquareError {}
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum Square {
     A1 = 0, B1, C1, D1, E1, F1, G1, H1,
     A2, B2, C2, D2, E2, F2, G2, H2,

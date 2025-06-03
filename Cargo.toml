@@ -18,6 +18,7 @@ std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
 serde = ["dep:serde"]
+proptest = ["dep:proptest-derive", "dep:proptest", "proptest?/std", "std"]
 
 [[bench]]
 name = "benches"
@@ -33,6 +34,8 @@ bitflags = "2.0.0"
 btoi = { version = "0.4", default-features = false }
 nohash-hasher = { version = "0.2", default-features = false, optional = true }
 serde = { version = "1.0.197", default-features = false, optional = true }
+proptest-derive = { version = "0.5", default-features = false, optional = true }
+proptest = { version = "1", default-features = false, optional = true }
 
 [dev-dependencies]
 csv = "1.3"

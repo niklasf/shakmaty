@@ -59,6 +59,8 @@
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
 //!   for sensible types.
+//! * `proptest`: Implements [`proptest::arbitrary::Arbitrary`](https://docs.rs/proptest/1/proptest/arbitrary/trait.Arbitrary.html)
+//!   for most types.
 
 #![no_std]
 #![doc(html_root_url = "https://docs.rs/shakmaty/0.27.3")]

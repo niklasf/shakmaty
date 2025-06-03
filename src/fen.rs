@@ -137,6 +137,7 @@ fn append_epd<W: AppendAscii>(f: &mut W, setup: &Setup) -> Result<(), W::Error> 
 
 /// Errors that can occur when parsing a FEN.
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum ParseFenError {
     InvalidFen,
     InvalidBoard,

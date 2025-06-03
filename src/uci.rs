@@ -94,6 +94,7 @@ impl error::Error for IllegalUciMoveError {}
 
 /// A move as represented in the UCI protocol.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum UciMove {
     /// A normal move, e.g. `e2e4` or `h2h1q`.
     Normal {

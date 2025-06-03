@@ -18,6 +18,7 @@ use crate::{
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw,
