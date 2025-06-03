@@ -18,6 +18,10 @@ use crate::{
 
 /// A compactly encoded board, standard chess setup, or variant setup.
 ///
+/// Maximum size is 24 bytes for standard legal chess positions without move
+/// counters. Maximum size is 64 bytes for not strictly legal variant positions
+/// with move counters.
+///
 /// # Packing
 ///
 /// ```
@@ -847,43 +851,14 @@ mod tests {
     }
 
     #[test]
-    fn test_read_write_uci_move() {
-        // Normal (no promotion)
-        for from in Square::ALL {
-            for to in Square::ALL {
-                let uci = UciMove::Normal {
-                    from,
-                    to,
-                    promotion: None,
-                };
-                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
-            }
-        }
+    fn test_read_write_standard_setup() {
+        let setup = Setup::default();
 
-        // Normal (promotion)
-        for from in Square::ALL {
-            for to in Square::ALL {
-                for role in Role::ALL {
-                    let uci = UciMove::Normal {
-                        from,
-                        to,
-                        promotion: Some(role),
-                    };
-                    assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
-                }
-            }
-        }
+        let packed = PackedSetup::pack_standard(&setup).expect("representable");
+        assert!(packed.as_bytes().len() == 24);
 
-        // Put
-        for role in Role::ALL {
-            for to in Square::ALL {
-                let uci = UciMove::Put { role, to };
-                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
-            }
-        }
-
-        // Null
-        assert_eq!(PackedUciMove::pack(UciMove::Null).unpack(), UciMove::Null);
+        let roundtripped = packed.unpack_standard().expect("roundtrip");
+        assert_eq!(roundtripped, setup);
     }
 
     #[cfg(feature = "variant")]
@@ -922,5 +897,45 @@ mod tests {
 
         assert_eq!(setup, roundtripped);
         assert_eq!(variant, Variant::ThreeCheck);
+    }
+
+    #[test]
+    fn test_read_write_uci_move() {
+        // Normal (no promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Normal {
+                    from,
+                    to,
+                    promotion: None,
+                };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Normal (promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                for role in Role::ALL {
+                    let uci = UciMove::Normal {
+                        from,
+                        to,
+                        promotion: Some(role),
+                    };
+                    assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+                }
+            }
+        }
+
+        // Put
+        for role in Role::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Put { role, to };
+                assert_eq!(PackedUciMove::pack(uci).unpack(), uci);
+            }
+        }
+
+        // Null
+        assert_eq!(PackedUciMove::pack(UciMove::Null).unpack(), UciMove::Null);
     }
 }
