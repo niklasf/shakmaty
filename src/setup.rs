@@ -380,24 +380,6 @@ impl Castles {
     }
 }
 
-#[cfg(feature = "proptest")]
-impl Arbitrary for Castles {
-    type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        let setup = Setup::arbitrary();
-        let mode = CastlingMode::arbitrary();
-
-        (setup, mode)
-            .prop_filter_map(
-                "only Castles with valid Setup and CastlingMode",
-                |(setup, mode)| Castles::from_setup(&setup, mode).ok(),
-            )
-            .boxed()
-    }
-}
-
 /// En passant square on the third or sixth rank.
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct EnPassant(pub Square);
