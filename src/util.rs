@@ -7,7 +7,6 @@ use core::{
 
 use arrayvec::ArrayString;
 
-#[inline]
 pub(crate) fn out_of_range_error() -> TryFromIntError {
     // Construct TryFromIntError despite its private constructor.
     // The standard library keeps it private intentionally,

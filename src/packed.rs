@@ -612,7 +612,15 @@ impl PackedUciMove {
         let le = u16::from_le_bytes(self.inner);
         let from = Square::try_from(le & 0x3f).expect("masked");
         let to = Square::try_from((le >> 6) & 0x3f).expect("masked");
-        let role = Role::try_from((le >> 12) & 0x7).ok();
+        let role = match (le >> 12) & 0x7 {
+            1 => Some(Role::Pawn),
+            2 => Some(Role::Knight),
+            3 => Some(Role::Bishop),
+            4 => Some(Role::Rook),
+            5 => Some(Role::Queen),
+            6 => Some(Role::King),
+            _ => None,
+        };
         let special = (le >> 15) != 0;
         match (from, to, role, special) {
             (from, to, promotion, false) => UciMove::Normal {
