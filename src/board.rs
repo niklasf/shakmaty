@@ -7,6 +7,8 @@ use core::{
 };
 
 #[cfg(feature = "proptest")]
+use proptest::bits::u64::masked;
+#[cfg(feature = "proptest")]
 use proptest::prelude::*;
 
 use crate::{attacks, bitboard, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
@@ -660,14 +662,56 @@ impl Arbitrary for Board {
     type Strategy = BoxedStrategy<Self>;
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        let by_role = ByRole::<Bitboard>::arbitrary();
-        let by_color = ByColor::<Bitboard>::arbitrary();
+        // Random u64 (Bitboard)
+        any::<u64>()
+            .prop_flat_map(|pawn| {
+                // Random Bitboard but it doesn't intersect with pawn
+                masked(!pawn).prop_flat_map(move |knight| {
+                    // pk = pawn and knight union
+                    let pk = pawn | knight;
 
-        (by_role, by_color)
-            .prop_filter_map(
-                "only Boards with consistent Bitboards",
-                |(by_role, by_color)| Board::from_bitboards_maybe(by_role, by_color).ok(),
-            )
+                    // Random Bitboard but it doesn't intersect with either pawn or knight
+                    masked(!pk).prop_flat_map(move |bishop| {
+                        // Repeat
+                        let pkb = pk | bishop;
+
+                        masked(!pkb).prop_flat_map(move |rook| {
+                            let pkbr = pkb | rook;
+
+                            masked(!pkbr).prop_flat_map(move |queen| {
+                                let pkbrq = pkbr | queen;
+
+                                masked(!pkbrq).prop_flat_map(move |king| {
+                                    // We're done with by_role, now we need this
+                                    let by_role_union = pkbrq | king;
+
+                                    // by_color union must equal by_role union
+                                    // Black is generated within by_role union
+                                    masked(by_role_union).prop_map(move |black| {
+                                        // White is by_role union except black
+                                        let white = by_role_union ^ black;
+
+                                        Board::from_bitboards(
+                                            ByRole {
+                                                pawn: Bitboard(pawn),
+                                                knight: Bitboard(knight),
+                                                bishop: Bitboard(bishop),
+                                                rook: Bitboard(rook),
+                                                queen: Bitboard(queen),
+                                                king: Bitboard(king),
+                                            },
+                                            ByColor {
+                                                black: Bitboard(black),
+                                                white: Bitboard(white),
+                                            },
+                                        )
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            })
             .boxed()
     }
 }

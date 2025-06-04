@@ -887,4 +887,16 @@ mod tests {
             "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA - 0 1"
         );
     }
+
+    #[cfg(feature = "proptest")]
+    proptest! {
+        /// Catches overflows.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn fen_display_doesnt_crash(fen in any::<Fen>()) {
+            use alloc::string::ToString;
+
+            let _ = fen.to_string();
+        }
+    }
 }
