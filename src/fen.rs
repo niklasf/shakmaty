@@ -907,7 +907,27 @@ mod tests {
         /// Uses standard Chess positions.
         #[cfg(feature = "alloc")]
         #[test]
-        fn fen_to_str_from_str(fen in fen_strategy()) {
+        fn fen_to_str_from_chess(fen in fen_strategy()) {
+            let mut buf = Vec::with_capacity(60);
+            fen.append_ascii_to(&mut buf);
+
+            match Fen::from_ascii(&buf) {
+                Ok(parsed) => assert_eq!(parsed, fen),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 FEN");
+
+                    panic!("{s} should be a valid FEN but could not be parsed due to: {e}")
+                }
+            }
+        }
+
+        /// Tests that the display implementation of a [`Fen`] can always be converted
+        /// back to the same [`Fen`].
+        ///
+        /// Uses standard Chess positions.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn fen_to_str_from_str_setup(fen in any::<Fen>()) {
             let mut buf = Vec::with_capacity(60);
             fen.append_ascii_to(&mut buf);
 
