@@ -7,6 +7,7 @@ use core::{
 
 use arrayvec::ArrayString;
 
+#[cold]
 pub(crate) fn out_of_range_error() -> TryFromIntError {
     // Construct TryFromIntError despite its private constructor.
     // The standard library keeps it private intentionally,
@@ -15,6 +16,7 @@ pub(crate) fn out_of_range_error() -> TryFromIntError {
     u32::try_from(u64::MAX).unwrap_err()
 }
 
+#[cold]
 pub(crate) fn try_from_slice_error() -> TryFromSliceError {
     // Construct TryFromSliceError despite its private constructor.
     // The standard library keeps it private intentionally,
