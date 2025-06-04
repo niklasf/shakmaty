@@ -316,34 +316,6 @@ pub trait FromSetup: Sized {
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Self, PositionError<Self>>;
 }
 
-/// A wrapper that implements [`Arbitrary`] for any type that implements [`FromSetup`] and [`Debug`].
-#[cfg(feature = "proptest")]
-#[derive(Debug)]
-pub struct FromSetupArbitrary<FS>(pub FS)
-where
-    FS: FromSetup + fmt::Debug;
-
-#[cfg(feature = "proptest")]
-impl<FS> Arbitrary for FromSetupArbitrary<FS>
-where
-    FS: FromSetup + fmt::Debug,
-{
-    type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        let setup = Setup::arbitrary();
-        let mode = CastlingMode::arbitrary();
-
-        (setup, mode)
-            .prop_filter_map(
-                "only FromSetup for valid Setup and CastlingMode",
-                |(setup, mode)| FS::from_setup(setup, mode).ok().map(FromSetupArbitrary),
-            )
-            .boxed()
-    }
-}
-
 /// A playable chess or chess variant position. See [`Chess`] for a concrete
 /// implementation.
 ///
@@ -671,6 +643,41 @@ pub trait Position {
         let mut setup = self.to_setup(EnPassantMode::Always);
         setup.swap_turn();
         Self::from_setup(setup, mode)
+    }
+
+    /// Generates a strategy that produces a random position by playing up to the specified amount
+    /// of random, legal moves on the current position.
+    ///
+    /// Stops playing moves if there are no legal moves remaining.
+    #[cfg(feature = "proptest")]
+    fn strategy(self, moves: u32) -> BoxedStrategy<Self>
+    where
+        Self: Clone + fmt::Debug + 'static,
+    {
+        let mut pos = Just(self).boxed();
+
+        for _ in 0..moves {
+            // `moves` many times, map previous position to a new position with one more legal move
+            pos = pos
+                .prop_flat_map(|prev_pos| {
+                    let legal = prev_pos.legal_moves();
+
+                    if legal.is_empty() {
+                        Just(prev_pos).boxed()
+                    } else {
+                        proptest::sample::select(legal.to_vec())
+                            .prop_map(move |mv| {
+                                let mut next_pos = prev_pos.clone();
+                                next_pos.play_unchecked(mv);
+                                next_pos
+                            })
+                            .boxed()
+                    }
+                })
+                .boxed();
+        }
+
+        pos
     }
 }
 

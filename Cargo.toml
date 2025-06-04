@@ -18,7 +18,7 @@ std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 nohash-hasher = ["dep:nohash-hasher"]
 serde = ["dep:serde"]
-proptest = ["dep:proptest-derive", "dep:proptest", "proptest?/std", "std"]
+proptest = ["dep:proptest-derive", "proptest/alloc"]
 
 [[bench]]
 name = "benches"

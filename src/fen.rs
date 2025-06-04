@@ -743,13 +743,16 @@ impl Arbitrary for Epd {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use alloc::vec::Vec;
+
     use super::*;
 
     #[cfg(feature = "alloc")]
     #[test]
     fn test_legal_ep_square() {
-        use alloc::string::ToString as _;
-
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
         assert_eq!(
@@ -871,8 +874,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_castling_right_without_rook() {
-        use alloc::string::ToString as _;
-
         let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
             .parse::<Fen>()
             .expect("valid fen")
@@ -888,15 +889,56 @@ mod tests {
         );
     }
 
+    #[cfg(all(feature = "proptest", feature = "alloc"))]
+    prop_compose! {
+        fn fen_strategy()
+            (moves in 0u32..500)
+            (position in crate::Chess::new().strategy(moves))
+            -> Fen {
+            Fen(position.to_setup(EnPassantMode::Always))
+        }
+    }
+
     #[cfg(feature = "proptest")]
     proptest! {
-        /// Catches overflows.
+        /// Tests that the display implementation of a [`Fen`] can always be converted
+        /// back to the same [`Fen`].
+        ///
+        /// Uses standard Chess positions.
         #[cfg(feature = "alloc")]
         #[test]
-        fn fen_display_doesnt_crash(fen in any::<Fen>()) {
-            use alloc::string::ToString;
+        fn fen_to_str_from_str(fen in fen_strategy()) {
+            let mut buf = Vec::with_capacity(60);
+            fen.append_ascii_to(&mut buf);
 
-            let _ = fen.to_string();
+            match Fen::from_ascii(&buf) {
+                Ok(parsed) => assert_eq!(parsed, fen),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 FEN");
+
+                    panic!("{s} should be a valid FEN but could not be parsed due to: {e}")
+                }
+            }
+        }
+
+        /// Tests that the display implementation of a [`BoardFen`] can always be converted
+        /// back to the same [`BoardFen`].
+        ///
+        /// `promoted` [`Bitboard`] is always empty.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn board_fen(board in any::<Board>()) {
+            let mut buf = Vec::with_capacity(43);
+            board.board_fen(Bitboard::EMPTY).append_ascii_to(&mut buf);
+
+            match parse_board_fen(&buf) {
+                Ok((parsed, _)) => assert_eq!(parsed, board),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 board FEN");
+
+                    panic!("{s} should be a valid board FEN but could not be parsed due to: {e}")
+                }
+            }
         }
     }
 }
