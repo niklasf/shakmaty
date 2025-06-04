@@ -1,8 +1,10 @@
 use iai::black_box;
 use shakmaty::{
     fen::Fen,
+    packed::PackedUciMove,
     perft,
     san::San,
+    uci::UciMove,
     zobrist::{Zobrist64, ZobristHash},
     CastlingMode, Chess, EnPassantMode, Move, Position, Role, Square,
 };
@@ -80,6 +82,22 @@ fn bench_fen_roundtrip() -> String {
     buffer
 }
 
+fn bench_packed_uci_roundtrip() {
+    for from in Square::ALL {
+        for to in Square::ALL {
+            let uci = UciMove::Normal {
+                from,
+                to,
+                promotion: None,
+            };
+            assert_eq!(
+                black_box(black_box(PackedUciMove::pack(black_box(uci))).unpack()),
+                uci
+            );
+        }
+    }
+}
+
 iai::main!(
     bench_shallow_perft,
     bench_deep_perft,
@@ -87,5 +105,6 @@ iai::main!(
     bench_play_unchecked,
     bench_play_sans,
     bench_zobrist_hash,
-    bench_fen_roundtrip
+    bench_fen_roundtrip,
+    bench_packed_uci_roundtrip,
 );
