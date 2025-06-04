@@ -610,8 +610,8 @@ impl PackedUciMove {
     /// Unpack the wrapped bytes.
     pub fn unpack(self) -> UciMove {
         let le = u16::from_le_bytes(self.inner);
-        let from = Square::new(u32::from(le & 0x3f));
-        let to = Square::new(u32::from((le >> 6) & 0x3f));
+        let from = Square::try_from(le & 0x3f).expect("masked");
+        let to = Square::try_from((le >> 6) & 0x3f).expect("masked");
         let role = Role::try_from((le >> 12) & 0x7).ok();
         let special = (le >> 15) != 0;
         match (from, to, role, special) {
@@ -769,7 +769,7 @@ impl Reader<'_> {
     fn read_u64(&mut self) -> u64 {
         let (head, tail) = self.inner.split_at(8);
         self.inner = tail;
-        u64::from_be_bytes(head.try_into().unwrap())
+        u64::from_be_bytes(head.try_into().expect("8 bytes"))
     }
 
     fn read_nibbles(&mut self) -> (u8, u8) {
