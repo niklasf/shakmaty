@@ -927,7 +927,7 @@ mod tests {
         /// `promoted` [`Bitboard`] is always empty.
         #[cfg(feature = "alloc")]
         #[test]
-        fn board_fen(board in any::<Board>()) {
+        fn board_fen_to_str_from_str(board in any::<Board>()) {
             let mut buf = Vec::with_capacity(43);
             board.board_fen(Bitboard::EMPTY).append_ascii_to(&mut buf);
 
