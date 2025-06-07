@@ -91,6 +91,7 @@ impl fmt::Display for SanError {
 impl error::Error for SanError {}
 
 /// A move in Standard Algebraic Notation.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum San {
     Normal {
@@ -577,6 +578,7 @@ impl<'de> serde::Deserialize<'de> for San {
 }
 
 /// Check (`+`) or checkmate (`#`) suffix.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum Suffix {
     Check,
@@ -617,6 +619,7 @@ impl fmt::Display for Suffix {
 }
 
 /// A [`San`] and possible check and checkmate suffixes.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SanPlus {
     pub san: San,

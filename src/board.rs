@@ -641,6 +641,18 @@ impl IntoIterator for Board {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl arbitrary::Arbitrary<'_> for Board {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Board> {
+        let mut board = Board::default();
+        for _ in 0..u.arbitrary_len::<(Square, Piece)>()? {
+            let (sq, piece) = arbitrary::Arbitrary::arbitrary(u)?;
+            board.set_piece_at(sq, piece);
+        }
+        Ok(board)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

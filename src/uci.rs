@@ -93,6 +93,7 @@ impl fmt::Display for IllegalUciMoveError {
 impl error::Error for IllegalUciMoveError {}
 
 /// A move as represented in the UCI protocol.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum UciMove {
     /// A normal move, e.g. `e2e4` or `h2h1q`.

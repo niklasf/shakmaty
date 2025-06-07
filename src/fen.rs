@@ -52,6 +52,7 @@
 use core::{
     char, error,
     fmt::{self, Display},
+    iter,
     num::NonZeroU32,
     str::FromStr,
 };
@@ -77,7 +78,11 @@ fn append_castling<W: AppendAscii>(
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
-        for rook in (castling_rights & color.backrank()).into_iter().rev() {
+        for rook in (castling_rights & color.backrank())
+            .into_iter()
+            .rev()
+            .take(2)
+        {
             f.append_ascii(
                 if Some(rook) == candidates.first() && king.is_some_and(|k| rook < k) {
                     color.fold_wb('Q', 'q')
@@ -104,13 +109,17 @@ fn append_pockets<W: AppendAscii>(
     pockets: &ByColor<ByRole<u8>>,
 ) -> Result<(), W::Error> {
     f.append_ascii('[')?;
-    for color in Color::ALL {
-        for role in Role::ALL {
-            let piece = Piece { color, role };
-            for _ in 0..*pockets.piece(piece) {
-                f.append_ascii(piece.char())?;
-            }
-        }
+    for c in Color::ALL
+        .into_iter()
+        .flat_map(move |color| {
+            Role::ALL.into_iter().flat_map(move |role| {
+                let piece = Piece { role, color };
+                iter::repeat(piece.char()).take(usize::from(*pockets.piece(piece)))
+            })
+        })
+        .take(64)
+    {
+        f.append_ascii(c)?;
     }
     f.append_ascii(']')
 }
@@ -267,6 +276,9 @@ bitflags! {
 
         /// Too many castling rights or castling rights not on the backrank.
         const CASTLING_RIGHTS = 1 << 1;
+
+        /// Too many pocket pieces.
+        const POCKETS = 1 << 2;
     }
 }
 
@@ -438,6 +450,16 @@ impl Fen {
             || (setup.castling_rights & Rank::Eighth).count() > 2
         {
             errors |= LossyFenErrorKinds::CASTLING_RIGHTS;
+        }
+        if let Some(pockets) = setup.pockets {
+            if pockets
+                .into_iter()
+                .flat_map(|side| side.into_iter().map(u32::from))
+                .sum::<u32>()
+                > 64
+            {
+                errors |= LossyFenErrorKinds::POCKETS;
+            }
         }
 
         let fen = Fen::from_setup_unchecked(setup);

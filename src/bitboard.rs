@@ -22,6 +22,7 @@ use crate::{File, Rank, Square};
 /// // . 1 . . 1 . . .
 /// // . 1 . . . 1 . .
 /// ```
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
 

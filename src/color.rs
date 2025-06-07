@@ -6,6 +6,7 @@ use crate::{util::out_of_range_error, ByRole, Piece, Rank, Role};
 
 /// `White` or `Black`.
 #[allow(missing_docs)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum Color {
     Black = 0,
@@ -206,6 +207,7 @@ macro_rules! try_color_from_int_impl {
 try_color_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Color`].
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 pub struct ByColor<T> {
     pub black: T,

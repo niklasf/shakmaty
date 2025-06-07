@@ -14,6 +14,7 @@ use crate::{CastlingSide, Role, Square};
 /// `Move` implements [`Display`] using long algebraic notation. If a position
 /// is available for context, it is more common to use [SAN](crate::san)
 /// (for human interfaces) or [UCI](crate::uci) (for text-based protocols).
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Move {
     /// A normal move, e.g., `Bd3xh7`.

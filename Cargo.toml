@@ -16,6 +16,7 @@ default = ["std"]
 alloc = ["serde?/alloc"]
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
+arbitrary = ["dep:arbitrary"]
 nohash-hasher = ["dep:nohash-hasher"]
 serde = ["dep:serde"]
 
@@ -28,6 +29,7 @@ required-features = ["alloc"]
 bench = false
 
 [dependencies]
+arbitrary = { version = "1.4.1", features = ["derive"], optional = true }
 arrayvec = { version = "0.7", default-features = false }
 bitflags = "2.0.0"
 btoi = { version = "0.4", default-features = false }

@@ -14,6 +14,7 @@ use crate::{util::out_of_range_error, Color, Piece};
 /// assert_eq!(u32::from(Role::King), 6);
 /// ```
 #[allow(missing_docs)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub enum Role {
     Pawn = 1,
@@ -160,6 +161,7 @@ macro_rules! try_role_from_int_impl {
 try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Role`].
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByRole<T> {

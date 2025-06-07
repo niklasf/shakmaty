@@ -10,6 +10,7 @@ use crate::{
 
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
@@ -160,6 +161,13 @@ impl RemainingChecks {
     #[must_use]
     pub const fn saturating_sub(self, n: u32) -> RemainingChecks {
         RemainingChecks(self.0.saturating_sub(n))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl arbitrary::Arbitrary<'_> for RemainingChecks {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<RemainingChecks> {
+        u.int_in_range(0..=3).map(RemainingChecks)
     }
 }
 

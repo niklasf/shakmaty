@@ -7,28 +7,33 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
+arbitrary = { version = "1.4.1", features = ["derive"] }
 libfuzzer-sys = "0.4"
-shakmaty = { path = "..", features = ["variant"] }
+shakmaty = { path = "..", features = ["arbitrary", "variant"] }
 
 [workspace]
 members = ["."] # Let fuzz suite not interfere with workspaces
 
 [[bin]]
-name = "fen"
-path = "fuzz_targets/fen.rs"
+name = "fen_from_ascii"
+path = "fuzz_targets/fen_from_ascii.rs"
 
 [[bin]]
-name = "san"
-path = "fuzz_targets/san.rs"
+name = "fen_from_setup"
+path = "fuzz_targets/fen_from_setup.rs"
 
 [[bin]]
-name = "uci"
-path = "fuzz_targets/uci.rs"
+name = "san_from_ascii"
+path = "fuzz_targets/san_from_ascii.rs"
 
 [[bin]]
-name = "square"
-path = "fuzz_targets/square.rs"
+name = "uci_from_ascii"
+path = "fuzz_targets/uci_from_ascii.rs"
 
 [[bin]]
-name = "packed_setup"
-path = "fuzz_targets/packed_setup.rs"
+name = "packed_setup_from_bytes"
+path = "fuzz_targets/packed_setup_from_bytes.rs"
+
+[[bin]]
+name = "packed_setup_from_setup"
+path = "fuzz_targets/packed_setup_from_setup.rs"
