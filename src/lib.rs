@@ -74,10 +74,8 @@ extern crate std;
 
 #[macro_use]
 mod util;
-mod bootstrap;
 mod castling_side;
 mod color;
-mod magics;
 mod movelist;
 mod perft;
 mod position;
