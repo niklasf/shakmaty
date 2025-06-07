@@ -1,6 +1,7 @@
 //! Piece positions on a board.
 
-use core::{fmt, fmt::Write, iter::FusedIterator};
+use core::{error, fmt, fmt::Write, iter::FusedIterator};
+use std::fmt::Display;
 
 use crate::{attacks, bitboard, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 
@@ -69,11 +70,17 @@ impl Board {
 
     /// Creates a board from bitboard constituents.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the bitboards are inconsistent.
-    #[track_caller]
-    pub const fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
+    /// Errors if the bitboards are inconsistent:
+    ///
+    /// * Roles overlap.
+    /// * Colors overlap.
+    /// * The union of all roles does not match the union of both colors.
+    pub const fn try_from_bitboards(
+        by_role: ByRole<Bitboard>,
+        by_color: ByColor<Bitboard>,
+    ) -> Result<Board, InconsistentBitboardsError> {
         let occupied = by_role
             .pawn
             .with_const(by_role.knight)
@@ -82,32 +89,36 @@ impl Board {
             .with_const(by_role.queen)
             .with_const(by_role.king);
 
-        assert!(
-            occupied.count()
-                == by_role.pawn.count()
-                    + by_role.knight.count()
-                    + by_role.bishop.count()
-                    + by_role.rook.count()
-                    + by_role.queen.count()
-                    + by_role.king.count(),
-            "by_role not disjoint"
-        );
+        if occupied.count()
+            != by_role.pawn.count()
+                + by_role.knight.count()
+                + by_role.bishop.count()
+                + by_role.rook.count()
+                + by_role.queen.count()
+                + by_role.king.count()
+        {
+            return Err(InconsistentBitboardsError {
+                kind: InconsistentBitboardsErrorKind::RolesOverlap,
+            });
+        }
 
-        assert!(
-            by_color.black.is_disjoint_const(by_color.white),
-            "by_color not disjoint"
-        );
+        if by_color.black.intersect_const(by_color.white).any() {
+            return Err(InconsistentBitboardsError {
+                kind: InconsistentBitboardsErrorKind::ColorsOverlap,
+            });
+        }
 
-        assert!(
-            occupied.0 == by_color.black.0 | by_color.white.0,
-            "by_role does not match by_color"
-        );
+        if occupied.0 != by_color.black.with_const(by_color.white).0 {
+            return Err(InconsistentBitboardsError {
+                kind: InconsistentBitboardsErrorKind::RolesColorsMismatch,
+            });
+        }
 
-        Board {
+        Ok(Board {
             by_role,
             by_color,
             occupied,
-        }
+        })
     }
 
     pub const fn into_bitboards(self) -> (ByRole<Bitboard>, ByColor<Bitboard>) {
@@ -478,6 +489,35 @@ impl FromIterator<(Square, Piece)> for Board {
     }
 }
 
+/// Error when trying to create a [`Board`] from inconsistent bitboards.
+#[derive(Debug, Clone)]
+pub struct InconsistentBitboardsError {
+    kind: InconsistentBitboardsErrorKind,
+}
+
+impl Display for InconsistentBitboardsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self.kind {
+            InconsistentBitboardsErrorKind::RolesOverlap => "inconsistent bitboards: roles overlap",
+            InconsistentBitboardsErrorKind::ColorsOverlap => {
+                "inconsistent bitboards: colors overlap"
+            }
+            InconsistentBitboardsErrorKind::RolesColorsMismatch => {
+                "inconsistent bitboards: roles and colors do not match"
+            }
+        })
+    }
+}
+
+impl error::Error for InconsistentBitboardsError {}
+
+#[derive(Debug, Clone)]
+enum InconsistentBitboardsErrorKind {
+    RolesOverlap,
+    ColorsOverlap,
+    RolesColorsMismatch,
+}
+
 /// Iterator over the pieces of a [`Board`].
 #[derive(Debug, Clone)]
 pub struct Iter<'a> {
@@ -666,6 +706,9 @@ mod tests {
     #[test]
     fn test_from_bitboards() {
         let (by_role, by_color) = Board::default().into_bitboards();
-        assert_eq!(Board::default(), Board::from_bitboards(by_role, by_color));
+        assert_eq!(
+            Board::default(),
+            Board::try_from_bitboards(by_role, by_color).expect("consistent")
+        );
     }
 }
