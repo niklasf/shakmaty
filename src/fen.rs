@@ -56,6 +56,8 @@ use core::{
     str::FromStr,
 };
 
+use bitflags::bitflags;
+
 use crate::{
     util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
     FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
@@ -113,22 +115,31 @@ fn append_pockets<W: AppendAscii>(
     f.append_ascii(']')
 }
 
-fn append_epd<W: AppendAscii>(f: &mut W, setup: &Setup) -> Result<(), W::Error> {
+fn append_epd<W: AppendAscii>(
+    f: &mut W,
+    board: &Board,
+    promoted: Bitboard,
+    pockets: &Option<ByColor<ByRole<u8>>>,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    remaining_checks: &Option<ByColor<RemainingChecks>>,
+) -> Result<(), W::Error> {
     f.reserve(21);
-    setup.board.board_fen(setup.promoted).append_to(f)?;
-    if let Some(ref pockets) = setup.pockets {
+    BoardFen { board, promoted }.append_to(f)?;
+    if let Some(ref pockets) = pockets {
         append_pockets(f, pockets)?;
     }
     f.append_ascii(' ')?;
-    f.append_ascii(setup.turn.char())?;
+    f.append_ascii(turn.char())?;
     f.append_ascii(' ')?;
-    append_castling(f, &setup.board, setup.castling_rights)?;
+    append_castling(f, board, castling_rights)?;
     f.append_ascii(' ')?;
-    match setup.ep_square {
-        Some(ref ep_square) => ep_square.append_to(f)?,
+    match ep_square {
+        Some(ep_square) => ep_square.append_to(f)?,
         None => f.append_ascii('-')?,
     }
-    if let Some(ref remaining_checks) = setup.remaining_checks {
+    if let Some(remaining_checks) = remaining_checks {
         f.append_ascii(' ')?;
         remaining_checks.append_to(f)?;
     }
@@ -246,21 +257,84 @@ fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
     Some(result)
 }
 
+bitflags! {
+    /// Reasons for a [`Setup`] not being representable as a [`Fen`].
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct LossyFenErrorKinds: u32 {
+        /// Set of squares with promoted pieces does not match pieces
+        /// on the board.
+        const PROMOTED = 1 << 0;
+
+        /// Too many castling rights or castling rights not on the backrank.
+        const CASTLING_RIGHTS = 1 << 1;
+    }
+}
+
+/// Error when trying to create a [`Fen`] from a [`Setup`] that cannot be
+/// losslessly represented.
+///
+/// See [`LossyFenErrorKinds`] for possible reasons.
+#[derive(Debug, Clone)]
+pub struct LossyFenError<F> {
+    fen: F,
+    errors: LossyFenErrorKinds,
+}
+
+impl<F> LossyFenError<F> {
+    /// Returns the reasons for this error.
+    pub fn kinds(&self) -> LossyFenErrorKinds {
+        self.errors
+    }
+
+    /// Ignores all information that cannot be losslessly represented.
+    pub fn ignore(self) -> F {
+        self.fen
+    }
+}
+
 impl Board {
     pub fn from_ascii_board_fen(board_fen: &[u8]) -> Result<Board, ParseFenError> {
-        Ok(parse_board_fen(board_fen)?.0)
+        let (board, _promoted) = parse_board_fen(board_fen)?;
+        Ok(board)
     }
 
     /// Create a board FEN such as
     /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
     ///
-    /// Promoted pieces are marked like `Q~`.
-    ///
     /// Returns a [`BoardFen`] which implements [`Display`].
-    pub const fn board_fen(&self, promoted: Bitboard) -> BoardFen<'_> {
+    pub const fn board_fen(&self) -> BoardFen<'_> {
         BoardFen {
             board: self,
+            promoted: Bitboard::EMPTY,
+        }
+    }
+
+    /// Create a board FEN such as
+    /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQ~KBNR`, marking
+    /// the given promoted pieces like `Q~`.
+    ///
+    /// Returns a [`BoardFen`] which implements [`Display`].
+    ///
+    /// # Errors
+    ///
+    /// Errors if `promoted` is not a subset of the occupied squares of the
+    /// board.
+    pub const fn board_fen_with_promoted(
+        &self,
+        promoted: Bitboard,
+    ) -> Result<BoardFen<'_>, LossyFenError<BoardFen<'_>>> {
+        let fen = BoardFen {
+            board: self,
             promoted,
+        };
+
+        if promoted.is_subset_const(self.occupied()) {
+            Ok(fen)
+        } else {
+            Err(LossyFenError {
+                fen,
+                errors: LossyFenErrorKinds::PROMOTED,
+            })
         }
     }
 }
@@ -275,7 +349,7 @@ impl FromStr for Board {
 
 impl Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.board_fen(Bitboard(0)).append_to(f)
+        self.board_fen().append_to(f)
     }
 }
 
@@ -341,12 +415,37 @@ impl Display for BoardFen<'_> {
 
 /// A FEN like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct Fen(pub Setup);
+pub struct Fen {
+    setup: Setup,
+}
 
 impl Fen {
     /// The FEN of the empty position `8/8/8/8/8/8/8/8 w - - 0 1`.
     pub const fn empty() -> Fen {
-        Fen(Setup::empty())
+        Fen {
+            setup: Setup::empty(),
+        }
+    }
+
+    #[allow(clippy::result_large_err)] // Ok variant is also large
+    pub fn try_from_setup(setup: Setup) -> Result<Fen, LossyFenError<Fen>> {
+        let mut errors = LossyFenErrorKinds::empty();
+        if !setup.promoted.is_subset(setup.board.occupied()) {
+            errors |= LossyFenErrorKinds::PROMOTED;
+        }
+        if !setup.castling_rights.is_subset(Bitboard::BACKRANKS)
+            || (setup.castling_rights & Rank::First).count() > 2
+            || (setup.castling_rights & Rank::Eighth).count() > 2
+        {
+            errors |= LossyFenErrorKinds::CASTLING_RIGHTS;
+        }
+
+        let fen = Fen::from_setup_unchecked(setup);
+        if errors.is_empty() {
+            Ok(fen)
+        } else {
+            Err(LossyFenError { fen, errors })
+        }
     }
 
     /// Parses a FEN or EPD.
@@ -368,7 +467,7 @@ impl Fen {
     /// # Ok::<_, shakmaty::fen::ParseFenError>(())
     /// ```
     pub fn from_ascii(fen: &[u8]) -> Result<Fen, ParseFenError> {
-        let mut result = Setup::empty();
+        let mut setup = Setup::empty();
         let mut parts = fen
             .split(|ch| *ch == b' ' || *ch == b'_')
             .filter(|s| !s.is_empty());
@@ -399,14 +498,14 @@ impl Fen {
         };
 
         let (board, promoted) = parse_board_fen(board_part)?;
-        result.board = board;
-        result.promoted = promoted;
+        setup.board = board;
+        setup.promoted = promoted;
 
         if let Some(pocket_part) = pocket_part {
-            result.pockets = Some(parse_pockets(pocket_part).ok_or(ParseFenError::InvalidPocket)?);
+            setup.pockets = Some(parse_pockets(pocket_part).ok_or(ParseFenError::InvalidPocket)?);
         }
 
-        result.turn = match parts.next() {
+        setup.turn = match parts.next() {
             Some(b"w") | None => Color::White,
             Some(b"b") => Color::Black,
             Some(_) => return Err(ParseFenError::InvalidTurn),
@@ -415,21 +514,21 @@ impl Fen {
         match parts.next() {
             Some(b"-") | None => (),
             Some(castling_part) => {
-                result.castling_rights = castling_part
+                setup.castling_rights = castling_part
                     .iter()
                     .map(|ch| {
                         let color = Color::from_white(ch.is_ascii_uppercase());
-                        let rooks_and_kings = result.board.by_color(color)
-                            & (result.board.rooks() | result.board.kings())
+                        let rooks_and_kings = setup.board.by_color(color)
+                            & (setup.board.rooks() | setup.board.kings())
                             & color.backrank();
                         Ok(match ch.to_ascii_lowercase() {
                             b'k' => rooks_and_kings
                                 .last()
-                                .filter(|sq| result.board.rooks().contains(*sq))
+                                .filter(|sq| setup.board.rooks().contains(*sq))
                                 .unwrap_or_else(|| Square::from_coords(File::H, color.backrank())),
                             b'q' => rooks_and_kings
                                 .first()
-                                .filter(|sq| result.board.rooks().contains(*sq))
+                                .filter(|sq| setup.board.rooks().contains(*sq))
                                 .unwrap_or_else(|| Square::from_coords(File::A, color.backrank())),
                             file => Square::from_coords(
                                 File::from_char(char::from(file))
@@ -441,7 +540,7 @@ impl Fen {
                     .collect::<Result<_, ParseFenError>>()?;
 
                 for color in Color::ALL {
-                    if (result.castling_rights & color.backrank()).count() > 2 {
+                    if (setup.castling_rights & color.backrank()).count() > 2 {
                         return Err(ParseFenError::InvalidCastling);
                     }
                 }
@@ -451,14 +550,14 @@ impl Fen {
         match parts.next() {
             Some(b"-") | None => (),
             Some(ep_part) => {
-                result.ep_square =
+                setup.ep_square =
                     Some(Square::from_ascii(ep_part).map_err(|_| ParseFenError::InvalidEpSquare)?);
             }
         }
 
         let halfmoves_part = if let Some(checks_part) = parts.next() {
             if let Some(remaining_checks) = parse_remaining_checks(checks_part) {
-                result.remaining_checks = Some(remaining_checks);
+                setup.remaining_checks = Some(remaining_checks);
                 parts.next()
             } else {
                 Some(checks_part)
@@ -468,21 +567,21 @@ impl Fen {
         };
 
         if let Some(halfmoves_part) = halfmoves_part {
-            result.halfmoves = btoi::btou_saturating(halfmoves_part)
+            setup.halfmoves = btoi::btou_saturating(halfmoves_part)
                 .map_err(|_| ParseFenError::InvalidHalfmoveClock)?;
         }
 
         if let Some(fullmoves_part) = parts.next() {
             let fullmoves = btoi::btou_saturating(fullmoves_part)
                 .map_err(|_| ParseFenError::InvalidFullmoves)?;
-            result.fullmoves = NonZeroU32::new(fullmoves).unwrap_or(NonZeroU32::MIN);
+            setup.fullmoves = NonZeroU32::new(fullmoves).unwrap_or(NonZeroU32::MIN);
         }
 
         let last_part = if let Some(checks_part) = parts.next() {
-            if result.remaining_checks.is_some() {
+            if setup.remaining_checks.is_some() {
                 Some(checks_part) // got checks earlier
             } else if let Some(remaining_checks) = parse_remaining_checks(checks_part) {
-                result.remaining_checks = Some(remaining_checks);
+                setup.remaining_checks = Some(remaining_checks);
                 parts.next()
             } else {
                 Some(checks_part)
@@ -494,24 +593,24 @@ impl Fen {
         if last_part.is_some() {
             Err(ParseFenError::InvalidFen)
         } else {
-            Ok(Fen(result))
+            Ok(Fen { setup })
         }
     }
 
-    pub const fn from_setup(setup: Setup) -> Fen {
-        Fen(setup)
+    const fn from_setup_unchecked(setup: Setup) -> Fen {
+        Fen { setup }
     }
 
     pub fn from_position<P: Position>(pos: &P, mode: EnPassantMode) -> Fen {
-        Fen(pos.to_setup(mode))
+        Fen::from_setup_unchecked(pos.to_setup(mode))
     }
 
     pub const fn as_setup(&self) -> &Setup {
-        &self.0
+        &self.setup
     }
 
     pub const fn into_setup(self) -> Setup {
-        self.0
+        self.setup
     }
 
     /// Set up a [`Position`]. See [`FromSetup`].
@@ -521,15 +620,24 @@ impl Fen {
     /// Returns [`PositionError`] if the setup does not meet basic validity
     /// requirements.
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
-        P::from_setup(self.0, mode)
+        P::from_setup(self.setup, mode)
     }
 
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
-        append_epd(f, &self.0)?;
+        append_epd(
+            f,
+            &self.setup.board,
+            self.setup.promoted,
+            &self.setup.pockets,
+            self.setup.turn,
+            self.setup.castling_rights,
+            self.setup.ep_square,
+            &self.setup.remaining_checks,
+        )?;
         f.append_ascii(' ')?;
-        f.append_u32(self.0.halfmoves)?;
+        f.append_u32(self.setup.halfmoves)?;
         f.append_ascii(' ')?;
-        f.append_u32(u32::from(self.0.fullmoves))
+        f.append_u32(u32::from(self.setup.fullmoves))
     }
 
     #[cfg(feature = "alloc")]
@@ -543,9 +651,17 @@ impl Fen {
     }
 }
 
-impl From<Setup> for Fen {
-    fn from(setup: Setup) -> Fen {
-        Fen::from_setup(setup)
+impl TryFrom<Setup> for Fen {
+    type Error = LossyFenError<Fen>;
+
+    fn try_from(setup: Setup) -> Result<Fen, LossyFenError<Fen>> {
+        Fen::try_from_setup(setup)
+    }
+}
+
+impl From<Epd> for Fen {
+    fn from(epd: Epd) -> Fen {
+        Fen::from_setup_unchecked(epd.into_setup())
     }
 }
 
@@ -609,34 +725,77 @@ impl<'de> serde::Deserialize<'de> for Fen {
 }
 
 /// An EPD like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -`.
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct Epd(Setup);
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub struct Epd {
+    board: Board,
+    promoted: Bitboard,
+    pockets: Option<ByColor<ByRole<u8>>>,
+    turn: Color,
+    castling_rights: Bitboard,
+    ep_square: Option<Square>,
+    remaining_checks: Option<ByColor<RemainingChecks>>,
+}
 
 impl Epd {
     pub const fn empty() -> Epd {
-        Epd(Setup::empty())
+        Epd {
+            board: Board::empty(),
+            promoted: Bitboard::EMPTY,
+            pockets: None,
+            turn: Color::White,
+            castling_rights: Bitboard::EMPTY,
+            ep_square: None,
+            remaining_checks: None,
+        }
+    }
+
+    const fn from_setup_unchecked(setup: Setup) -> Epd {
+        Epd {
+            board: setup.board,
+            promoted: setup.promoted,
+            pockets: setup.pockets,
+            turn: setup.turn,
+            castling_rights: setup.castling_rights,
+            ep_square: setup.ep_square,
+            remaining_checks: setup.remaining_checks,
+        }
+    }
+
+    pub const fn from_fen(fen: Fen) -> Epd {
+        Epd::from_setup_unchecked(fen.setup)
+    }
+
+    #[allow(clippy::result_large_err)] // Ok variant also large
+    pub fn try_from_setup(setup: Setup) -> Result<Epd, LossyFenError<Epd>> {
+        match Fen::try_from_setup(setup) {
+            Ok(fen) => Ok(Epd::from_fen(fen)),
+            Err(LossyFenError { fen, errors }) => Err(LossyFenError {
+                fen: Epd::from_fen(fen),
+                errors,
+            }),
+        }
     }
 
     pub fn from_ascii(epd: &[u8]) -> Result<Epd, ParseFenError> {
-        Ok(Epd::from_setup(Fen::from_ascii(epd)?.into_setup()))
-    }
-
-    pub const fn from_setup(mut setup: Setup) -> Epd {
-        setup.halfmoves = 0;
-        setup.fullmoves = NonZeroU32::MIN;
-        Epd(setup)
+        Ok(Epd::from_fen(Fen::from_ascii(epd)?))
     }
 
     pub fn from_position<P: Position>(pos: &P, mode: EnPassantMode) -> Epd {
-        Epd::from_setup(pos.to_setup(mode))
-    }
-
-    pub const fn as_setup(&self) -> &Setup {
-        &self.0
+        Epd::from_setup_unchecked(pos.to_setup(mode))
     }
 
     pub const fn into_setup(self) -> Setup {
-        self.0
+        Setup {
+            board: self.board,
+            promoted: self.promoted,
+            pockets: self.pockets,
+            turn: self.turn,
+            castling_rights: self.castling_rights,
+            ep_square: self.ep_square,
+            remaining_checks: self.remaining_checks,
+            halfmoves: 0,
+            fullmoves: NonZeroU32::MIN,
+        }
     }
 
     pub fn into_position<P: FromSetup>(self, mode: CastlingMode) -> Result<P, PositionError<P>> {
@@ -644,7 +803,16 @@ impl Epd {
     }
 
     fn append_to<W: AppendAscii>(&self, f: &mut W) -> Result<(), W::Error> {
-        append_epd(f, &self.0)
+        append_epd(
+            f,
+            &self.board,
+            self.promoted,
+            &self.pockets,
+            self.turn,
+            self.castling_rights,
+            self.ep_square,
+            &self.remaining_checks,
+        )
     }
 
     #[cfg(feature = "alloc")]
@@ -658,9 +826,31 @@ impl Epd {
     }
 }
 
-impl From<Setup> for Epd {
-    fn from(setup: Setup) -> Epd {
-        Epd::from_setup(setup)
+impl Default for Epd {
+    fn default() -> Epd {
+        Epd {
+            board: Board::default(),
+            promoted: Bitboard::EMPTY,
+            pockets: None,
+            turn: Color::White,
+            castling_rights: Bitboard::CORNERS,
+            ep_square: None,
+            remaining_checks: None,
+        }
+    }
+}
+
+impl TryFrom<Setup> for Epd {
+    type Error = LossyFenError<Epd>;
+
+    fn try_from(setup: Setup) -> Result<Epd, LossyFenError<Epd>> {
+        Epd::try_from_setup(setup)
+    }
+}
+
+impl From<Fen> for Epd {
+    fn from(fen: Fen) -> Epd {
+        Epd::from_fen(fen)
     }
 }
 
@@ -734,10 +924,7 @@ mod tests {
 
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
-        assert_eq!(
-            Epd::from(fen.clone().into_setup()).to_string(),
-            original_epd
-        );
+        assert_eq!(Epd::from(fen.clone()).to_string(), original_epd);
 
         // The en passant square is not actually legal.
         let pos: crate::Chess = fen
@@ -855,17 +1042,16 @@ mod tests {
     fn test_castling_right_without_rook() {
         use alloc::string::ToString as _;
 
-        let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
+        let fen = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
             .parse::<Fen>()
-            .expect("valid fen")
-            .into_setup();
+            .expect("valid fen");
         assert_eq!(
-            setup.castling_rights,
+            fen.as_setup().castling_rights,
             Bitboard::from_iter([Square::A1, Square::H1])
         );
 
         assert_eq!(
-            Fen(setup).to_string(),
+            fen.to_string(),
             "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA - 0 1"
         );
     }

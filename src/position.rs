@@ -3687,7 +3687,7 @@ mod tests {
             .expect("valid position");
         let swapped = pos.swap_turn().expect("swap turn");
         assert_eq!(
-            Fen(swapped.to_setup(EnPassantMode::Always)).to_string(),
+            Fen::from_position(&swapped, EnPassantMode::Always).to_string(),
             "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 3"
         );
     }
