@@ -1,9 +1,6 @@
 use core::{array, convert::identity, mem, ops};
 
-use crate::{
-    color::Color,
-    square::{File, Square},
-};
+use crate::{Color, File, Square};
 
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]

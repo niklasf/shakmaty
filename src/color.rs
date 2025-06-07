@@ -2,12 +2,7 @@
 
 use core::{array, convert::identity, error, fmt, mem, num, ops, str::FromStr};
 
-use crate::{
-    role::{ByRole, Role},
-    square::Rank,
-    types::Piece,
-    util::out_of_range_error,
-};
+use crate::{util::out_of_range_error, ByRole, Piece, Rank, Role};
 
 /// `White` or `Black`.
 #[allow(missing_docs)]

@@ -1,4 +1,4 @@
-use crate::position::Position;
+use crate::Position;
 
 /// Counts legal move paths of a given length.
 ///

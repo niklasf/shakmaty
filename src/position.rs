@@ -9,11 +9,11 @@ use bitflags::bitflags;
 
 use crate::{
     attacks,
-    bitboard::{Bitboard, Direction},
-    setup::{Castles, EnPassant, Setup},
-    Board, ByColor, ByRole, CastlingMode, CastlingSide, Color,
+    bitboard::Direction,
+    setup::EnPassant,
+    Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color,
     Color::{Black, White},
-    EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Square,
+    EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square,
 };
 
 /// Outcome of a game.

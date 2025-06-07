@@ -1,6 +1,6 @@
 use core::{array, convert::identity, num, ops, ptr};
 
-use crate::{color::Color, types::Piece, util::out_of_range_error};
+use crate::{util::out_of_range_error, Color, Piece};
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 ///

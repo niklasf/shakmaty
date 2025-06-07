@@ -2,7 +2,7 @@
 
 use core::{fmt, fmt::Write, iter::FusedIterator, ops};
 
-use crate::square::{File, Rank, Square};
+use crate::{File, Rank, Square};
 
 /// A set of [squares](super::Square) represented by a 64 bit
 /// integer mask.
