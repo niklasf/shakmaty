@@ -76,7 +76,7 @@ extern crate std;
 mod util;
 mod castling_side;
 mod color;
-mod movelist;
+mod m;
 mod perft;
 mod position;
 mod role;
@@ -100,7 +100,7 @@ pub use bitboard::Bitboard;
 pub use board::Board;
 pub use castling_side::{ByCastlingSide, CastlingSide};
 pub use color::{ByColor, Color, ParseColorError};
-pub use movelist::MoveList;
+pub use m::{Move, MoveList};
 pub use perft::perft;
 pub use position::{
     Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
@@ -109,7 +109,7 @@ pub use position::{
 pub use role::{ByRole, Role};
 pub use setup::{Castles, Setup};
 pub use square::{File, ParseSquareError, Rank, Square};
-pub use types::{CastlingMode, EnPassantMode, Move, Piece, RemainingChecks};
+pub use types::{CastlingMode, EnPassantMode, Piece, RemainingChecks};
 
 #[cfg(feature = "nohash-hasher")]
 impl nohash_hasher::IsEnabled for File {}
