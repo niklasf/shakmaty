@@ -102,7 +102,7 @@ impl Board {
             });
         }
 
-        if by_color.black.intersect_const(by_color.white).any() {
+        if by_color.black.intersects_const(by_color.white) {
             return Err(InconsistentBitboardsError {
                 kind: InconsistentBitboardsErrorKind::ColorsOverlap,
             });

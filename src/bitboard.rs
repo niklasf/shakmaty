@@ -112,7 +112,7 @@ impl Bitboard {
     /// Tests if `self` contains the given square.
     #[inline]
     pub const fn contains(self, sq: Square) -> bool {
-        self.intersect_const(Bitboard::from_square(sq)).any()
+        self.intersects_const(Bitboard::from_square(sq))
     }
 
     /// Adds `squares`.
@@ -214,6 +214,17 @@ impl Bitboard {
         Bitboard(self.0 & squares.0)
     }
 
+    /// Tests if `self` and `squares` intersect.
+    #[inline]
+    pub fn intersects<T: Into<Bitboard>>(self, squares: T) -> bool {
+        self.intersects_const(squares.into())
+    }
+
+    #[inline]
+    pub const fn intersects_const(self, squares: Bitboard) -> bool {
+        self.intersect_const(squares).any()
+    }
+
     /// Returns the union of `self` and `squares`. Equivalent to bitwise `|`.
     #[doc(alias = "union")]
     #[must_use]
@@ -269,7 +280,7 @@ impl Bitboard {
     /// Same as the `is_disjoint` method, but usable in `const` contexts.
     #[inline]
     pub const fn is_disjoint_const(self, other: Bitboard) -> bool {
-        self.intersect_const(other).is_empty()
+        !self.intersects_const(other)
     }
 
     /// Tests if `self` is a subset of `other`.
