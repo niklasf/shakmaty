@@ -453,8 +453,49 @@ mod tests {
     use super::*;
     use crate::{fen::Fen, Chess};
 
+    #[cfg(feature = "alloc")]
     #[test]
-    pub fn test_uci_to_en_passant() {
+    fn from_to_str() {
+        use alloc::string::ToString as _;
+
+        // Normal (no promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                let uci = UciMove::Normal {
+                    from,
+                    to,
+                    promotion: None,
+                };
+                assert_eq!(uci.to_string().parse::<UciMove>().expect("roundtrip"), uci);
+            }
+        }
+
+        // Normal (promotion)
+        for from in Square::ALL {
+            for to in Square::ALL {
+                for role in Role::ALL {
+                    let uci = UciMove::Normal {
+                        from,
+                        to,
+                        promotion: Some(role),
+                    };
+                    assert_eq!(uci.to_string().parse::<UciMove>().expect("roundtrip"), uci);
+                }
+            }
+        }
+
+        // Null
+        assert_eq!(
+            UciMove::Null
+                .to_string()
+                .parse::<UciMove>()
+                .expect("roundtrip"),
+            UciMove::Null
+        );
+    }
+
+    #[test]
+    fn test_uci_to_en_passant() {
         let mut pos = Chess::default();
         let e4 = "e2e4"
             .parse::<UciMove>()
@@ -490,7 +531,7 @@ mod tests {
 
     #[cfg(feature = "variant")]
     #[test]
-    pub fn test_uci_to_crazyhouse() {
+    fn test_uci_to_crazyhouse() {
         use crate::position::variant::Crazyhouse;
 
         let mut pos = Crazyhouse::default();
