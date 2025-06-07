@@ -94,10 +94,7 @@ impl Setup {
             ep_square: None,
             remaining_checks: None,
             halfmoves: 0,
-            fullmoves: match NonZeroU32::new(1) {
-                Some(num) => num,
-                _ => unreachable!(),
-            },
+            fullmoves: NonZeroU32::MIN,
         }
     }
 

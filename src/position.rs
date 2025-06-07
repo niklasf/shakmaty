@@ -716,10 +716,7 @@ impl Chess {
             castles: Castles::new(),
             ep_square: None,
             halfmoves: 0,
-            fullmoves: match NonZeroU32::new(1) {
-                Some(num) => num,
-                _ => unreachable!(),
-            },
+            fullmoves: NonZeroU32::MIN,
         }
     }
 }
@@ -1046,10 +1043,7 @@ pub(crate) mod variant {
                 castles: Castles::new(),
                 ep_square: None,
                 halfmoves: 0,
-                fullmoves: match NonZeroU32::new(1) {
-                    Some(num) => num,
-                    _ => unreachable!(),
-                },
+                fullmoves: NonZeroU32::MIN,
             }
         }
     }
@@ -1341,10 +1335,7 @@ pub(crate) mod variant {
                 castles: Castles::empty(CastlingMode::Standard),
                 ep_square: None,
                 halfmoves: 0,
-                fullmoves: match NonZeroU32::new(1) {
-                    Some(num) => num,
-                    _ => unreachable!(),
-                },
+                fullmoves: NonZeroU32::MIN,
             }
         }
     }
@@ -2101,10 +2092,7 @@ pub(crate) mod variant {
                 turn: White,
                 castles: Castles::empty(CastlingMode::Standard),
                 halfmoves: 0,
-                fullmoves: match NonZeroU32::new(1) {
-                    Some(num) => num,
-                    _ => unreachable!(),
-                },
+                fullmoves: NonZeroU32::MIN,
             }
         }
     }
@@ -2338,7 +2326,7 @@ pub(crate) mod variant {
                 castles,
                 ep_square: None,
                 halfmoves: 0,
-                fullmoves: NonZeroU32::new(1).unwrap(),
+                fullmoves: NonZeroU32::MIN,
             }
         }
     }

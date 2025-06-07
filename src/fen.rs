@@ -623,10 +623,7 @@ impl Epd {
 
     pub const fn from_setup(mut setup: Setup) -> Epd {
         setup.halfmoves = 0;
-        setup.fullmoves = match NonZeroU32::new(1) {
-            Some(num) => num,
-            _ => unreachable!(),
-        };
+        setup.fullmoves = NonZeroU32::MIN;
         Epd(setup)
     }
 
