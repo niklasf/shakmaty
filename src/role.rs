@@ -15,6 +15,7 @@ use crate::{color::Color, types::Piece, util::out_of_range_error};
 /// ```
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum Role {
     Pawn = 1,
     Knight = 2,
@@ -161,6 +162,7 @@ try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 
 /// Container with values for each [`Role`].
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[repr(C)]
 pub struct ByRole<T> {
     pub pawn: T,

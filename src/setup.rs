@@ -1,5 +1,8 @@
 use core::{convert::identity, num::NonZeroU32};
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+
 use crate::{
     attacks, Bitboard, Board, ByCastlingSide, ByColor, ByRole, CastlingMode, CastlingSide, Color,
     File, FromSetup, PositionError, Rank, RemainingChecks, Square,
@@ -12,6 +15,7 @@ use crate::{
 /// [`Hash`](core::hash::Hash), [`PartialEq`], and
 /// [`Eq`] are implemented in terms of structural equality.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct Setup {
     /// Piece positions on the board.
     pub board: Board,

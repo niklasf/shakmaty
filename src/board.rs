@@ -1,6 +1,15 @@
 //! Piece positions on a board.
 
-use core::{fmt, fmt::Write, iter::FusedIterator};
+use core::{
+    fmt,
+    fmt::{Display, Formatter, Write},
+    iter::FusedIterator,
+};
+
+#[cfg(feature = "proptest")]
+use proptest::bits::u64::masked;
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
 
 use crate::{attacks, bitboard, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
 
@@ -29,6 +38,38 @@ pub struct Board {
     by_color: ByColor<Bitboard>,
     occupied: Bitboard,
 }
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
+pub enum InconsistentBitboardsError {
+    /// One or more of the provided [`Bitboard`]s in the [`ByRole`] struct intersect.
+    ByRoleIntersects,
+    /// One or more of the provided [`Bitboard`]s in the [`ByColor`] struct intersect.
+    ByColorIntersects,
+    /// The [`ByRole`] [`Bitboard`] union does not match the union of the [`ByColor`] [`Bitboard`].
+    ByRoleDoesNotMatchByColor,
+}
+
+impl InconsistentBitboardsError {
+    /// Gets the error string.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            InconsistentBitboardsError::ByRoleIntersects => "by_role bitboards intersect",
+            InconsistentBitboardsError::ByColorIntersects => "by_color bitboards intersect",
+            InconsistentBitboardsError::ByRoleDoesNotMatchByColor => {
+                "union of by_role bitboards does not match union of by_color bitboards"
+            }
+        }
+    }
+}
+
+impl Display for InconsistentBitboardsError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl core::error::Error for InconsistentBitboardsError {}
 
 impl Board {
     pub const fn new() -> Board {
@@ -71,9 +112,25 @@ impl Board {
     ///
     /// # Panics
     ///
-    /// Panics if the bitboards are inconsistent.
+    /// Panics if [`Board::from_bitboards_maybe`] errors.
     #[track_caller]
     pub const fn from_bitboards(by_role: ByRole<Bitboard>, by_color: ByColor<Bitboard>) -> Board {
+        match Board::from_bitboards_maybe(by_role, by_color) {
+            Ok(board) => board,
+            Err(err) => panic!("{}", err.as_str()),
+        }
+    }
+
+    /// Creates a board from bitboard constituents.
+    ///
+    /// # Errors
+    ///
+    /// See [`InconsistentBitboardsError`].
+    #[track_caller]
+    pub const fn from_bitboards_maybe(
+        by_role: ByRole<Bitboard>,
+        by_color: ByColor<Bitboard>,
+    ) -> Result<Board, InconsistentBitboardsError> {
         let occupied = by_role
             .pawn
             .with_const(by_role.knight)
@@ -82,32 +139,30 @@ impl Board {
             .with_const(by_role.queen)
             .with_const(by_role.king);
 
-        assert!(
-            occupied.count()
-                == by_role.pawn.count()
-                    + by_role.knight.count()
-                    + by_role.bishop.count()
-                    + by_role.rook.count()
-                    + by_role.queen.count()
-                    + by_role.king.count(),
-            "by_role not disjoint"
-        );
+        if occupied.count()
+            != by_role.pawn.count()
+                + by_role.knight.count()
+                + by_role.bishop.count()
+                + by_role.rook.count()
+                + by_role.queen.count()
+                + by_role.king.count()
+        {
+            return Err(InconsistentBitboardsError::ByRoleIntersects);
+        }
 
-        assert!(
-            by_color.black.is_disjoint_const(by_color.white),
-            "by_color not disjoint"
-        );
+        if !by_color.black.is_disjoint_const(by_color.white) {
+            return Err(InconsistentBitboardsError::ByColorIntersects);
+        }
 
-        assert!(
-            occupied.0 == by_color.black.0 | by_color.white.0,
-            "by_role does not match by_color"
-        );
+        if occupied.0 != (by_color.black.0 | by_color.white.0) {
+            return Err(InconsistentBitboardsError::ByRoleDoesNotMatchByColor);
+        }
 
-        Board {
+        Ok(Board {
             by_role,
             by_color,
             occupied,
-        }
+        })
     }
 
     pub const fn into_bitboards(self) -> (ByRole<Bitboard>, ByColor<Bitboard>) {
@@ -598,6 +653,66 @@ impl IntoIterator for Board {
 
     fn into_iter(self) -> IntoIter {
         IntoIter { inner: self }
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl Arbitrary for Board {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        // Random u64 (Bitboard)
+        any::<u64>()
+            .prop_flat_map(|pawn| {
+                // Random Bitboard but it doesn't intersect with pawn
+                masked(!pawn).prop_flat_map(move |knight| {
+                    // pk = pawn and knight union
+                    let pk = pawn | knight;
+
+                    // Random Bitboard but it doesn't intersect with either pawn or knight
+                    masked(!pk).prop_flat_map(move |bishop| {
+                        // Repeat
+                        let pkb = pk | bishop;
+
+                        masked(!pkb).prop_flat_map(move |rook| {
+                            let pkbr = pkb | rook;
+
+                            masked(!pkbr).prop_flat_map(move |queen| {
+                                let pkbrq = pkbr | queen;
+
+                                masked(!pkbrq).prop_flat_map(move |king| {
+                                    // We're done with by_role, now we need this
+                                    let by_role_union = pkbrq | king;
+
+                                    // by_color union must equal by_role union
+                                    // Black is generated within by_role union
+                                    masked(by_role_union).prop_map(move |black| {
+                                        // White is by_role union except black
+                                        let white = by_role_union ^ black;
+
+                                        Board::from_bitboards(
+                                            ByRole {
+                                                pawn: Bitboard(pawn),
+                                                knight: Bitboard(knight),
+                                                bishop: Bitboard(bishop),
+                                                rook: Bitboard(rook),
+                                                queen: Bitboard(queen),
+                                                king: Bitboard(king),
+                                            },
+                                            ByColor {
+                                                black: Bitboard(black),
+                                                white: Bitboard(white),
+                                            },
+                                        )
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+            .boxed()
     }
 }
 

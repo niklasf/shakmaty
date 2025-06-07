@@ -56,6 +56,9 @@ use core::{
     str::FromStr,
 };
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+
 use crate::{
     util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
     FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
@@ -137,6 +140,7 @@ fn append_epd<W: AppendAscii>(f: &mut W, setup: &Setup) -> Result<(), W::Error> 
 
 /// Errors that can occur when parsing a FEN.
 #[derive(Clone, Eq, PartialEq, Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum ParseFenError {
     InvalidFen,
     InvalidBoard,
@@ -341,6 +345,7 @@ impl Display for BoardFen<'_> {
 
 /// A FEN like `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1`.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct Fen(pub Setup);
 
 impl Fen {
@@ -723,15 +728,28 @@ impl<'de> serde::Deserialize<'de> for Epd {
     }
 }
 
+#[cfg(feature = "proptest")]
+impl Arbitrary for Epd {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        Setup::arbitrary().prop_map(Epd::from_setup).boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "alloc")]
+    use alloc::string::ToString;
+    #[cfg(feature = "alloc")]
+    use alloc::vec::Vec;
+
     use super::*;
 
     #[cfg(feature = "alloc")]
     #[test]
     fn test_legal_ep_square() {
-        use alloc::string::ToString as _;
-
         let original_epd = "4k3/8/8/8/3Pp3/8/8/3KR3 b - d3";
         let fen: Fen = original_epd.parse().expect("valid fen");
         assert_eq!(
@@ -853,8 +871,6 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_castling_right_without_rook() {
-        use alloc::string::ToString as _;
-
         let setup = "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA"
             .parse::<Fen>()
             .expect("valid fen")
@@ -868,5 +884,78 @@ mod tests {
             Fen(setup).to_string(),
             "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA - 0 1"
         );
+    }
+
+    #[cfg(all(feature = "proptest", feature = "alloc"))]
+    prop_compose! {
+        fn fen_strategy()
+            (moves in 0u32..500)
+            (position in crate::Chess::new().strategy(moves))
+            -> Fen {
+            Fen(position.to_setup(EnPassantMode::Always))
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    proptest! {
+        /// Tests that the display implementation of a [`Fen`] can always be converted
+        /// back to the same [`Fen`].
+        ///
+        /// Uses standard Chess positions.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn fen_to_str_from_chess(fen in fen_strategy()) {
+            let mut buf = Vec::with_capacity(60);
+            fen.append_ascii_to(&mut buf);
+
+            match Fen::from_ascii(&buf) {
+                Ok(parsed) => assert_eq!(parsed, fen),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 FEN");
+
+                    panic!("{s} should be a valid FEN but could not be parsed due to: {e}")
+                }
+            }
+        }
+
+        /// Tests that the display implementation of a [`Fen`] can always be converted
+        /// back to the same [`Fen`].
+        ///
+        /// Uses standard Chess positions.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn fen_to_str_from_str_setup(fen in any::<Fen>()) {
+            let mut buf = Vec::with_capacity(60);
+            fen.append_ascii_to(&mut buf);
+
+            match Fen::from_ascii(&buf) {
+                Ok(parsed) => assert_eq!(parsed, fen),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 FEN");
+
+                    panic!("{s} should be a valid FEN but could not be parsed due to: {e}")
+                }
+            }
+        }
+
+        /// Tests that the display implementation of a [`BoardFen`] can always be converted
+        /// back to the same [`BoardFen`].
+        ///
+        /// `promoted` [`Bitboard`] is always empty.
+        #[cfg(feature = "alloc")]
+        #[test]
+        fn board_fen_to_str_from_str(board in any::<Board>()) {
+            let mut buf = Vec::with_capacity(43);
+            board.board_fen(Bitboard::EMPTY).append_ascii_to(&mut buf);
+
+            match parse_board_fen(&buf) {
+                Ok((parsed, _)) => assert_eq!(parsed, board),
+                Err(e) => {
+                    let s = alloc::string::String::from_utf8(buf).expect("valid UTF-8 board FEN");
+
+                    panic!("{s} should be a valid board FEN but could not be parsed due to: {e}")
+                }
+            }
+        }
     }
 }

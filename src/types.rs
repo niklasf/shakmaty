@@ -3,6 +3,11 @@ use core::{
     num,
 };
 
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
+#[cfg(feature = "proptest")]
+use proptest_derive::Arbitrary;
+
 use crate::{
     castling_side::CastlingSide,
     color::{ByColor, Color},
@@ -14,6 +19,7 @@ use crate::{
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(Arbitrary))]
 pub struct Piece {
     pub color: Color,
     pub role: Role,
@@ -43,6 +49,7 @@ impl Piece {
 /// is available for context, it is more common to use [SAN](crate::san)
 /// (for human interfaces) or [UCI](crate::uci) (for text-based protocols).
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "proptest", derive(Arbitrary))]
 pub enum Move {
     /// A normal move, e.g., `Bd3xh7`.
     Normal {
@@ -237,6 +244,7 @@ impl Display for Move {
 
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(Arbitrary))]
 pub enum CastlingMode {
     /// Castling notation and validity requirements for standard chess.
     ///
@@ -289,6 +297,7 @@ impl CastlingMode {
 
 /// When to include the en passant square.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "proptest", derive(Arbitrary))]
 pub enum EnPassantMode {
     /// Only if there is a fully legal en passant move.
     Legal,
@@ -344,6 +353,16 @@ mod tests {
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Hash)]
 pub struct RemainingChecks(u32);
+
+#[cfg(feature = "proptest")]
+impl Arbitrary for RemainingChecks {
+    type Parameters = ();
+    type Strategy = proptest::strategy::Map<core::ops::RangeInclusive<u32>, fn(u32) -> Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        (0u32..=3).prop_map(Self)
+    }
+}
 
 impl Default for RemainingChecks {
     fn default() -> RemainingChecks {

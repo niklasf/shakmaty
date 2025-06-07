@@ -6,6 +6,8 @@ use core::{
 };
 
 use bitflags::bitflags;
+#[cfg(feature = "proptest")]
+use proptest::prelude::*;
 
 use crate::{
     attacks,
@@ -18,6 +20,7 @@ use crate::{
 
 /// Outcome of a game.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum Outcome {
     Decisive { winner: Color },
     Draw,
@@ -65,6 +68,7 @@ impl fmt::Display for Outcome {
 
 /// Error when parsing the outcome of a game.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub enum ParseOutcomeError {
     /// Got `*`.
     Unknown,
@@ -93,6 +97,7 @@ impl FromStr for Outcome {
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct PlayError<P> {
     /// The move that was not played.
     pub m: Move,
@@ -638,6 +643,41 @@ pub trait Position {
         let mut setup = self.to_setup(EnPassantMode::Always);
         setup.swap_turn();
         Self::from_setup(setup, mode)
+    }
+
+    /// Generates a strategy that produces a random position by playing up to the specified amount
+    /// of random, legal moves on the current position.
+    ///
+    /// Stops playing moves if there are no legal moves remaining.
+    #[cfg(feature = "proptest")]
+    fn strategy(self, moves: u32) -> BoxedStrategy<Self>
+    where
+        Self: Clone + fmt::Debug + 'static,
+    {
+        let mut pos = Just(self).boxed();
+
+        for _ in 0..moves {
+            // `moves` many times, map previous position to a new position with one more legal move
+            pos = pos
+                .prop_flat_map(|prev_pos| {
+                    let legal = prev_pos.legal_moves();
+
+                    if legal.is_empty() {
+                        Just(prev_pos).boxed()
+                    } else {
+                        proptest::sample::select(legal.to_vec())
+                            .prop_map(move |mv| {
+                                let mut next_pos = prev_pos.clone();
+                                next_pos.play_unchecked(mv);
+                                next_pos
+                            })
+                            .boxed()
+                    }
+                })
+                .boxed();
+        }
+
+        pos
     }
 }
 

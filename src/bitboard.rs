@@ -23,6 +23,7 @@ use crate::square::{File, Rank, Square};
 /// // . 1 . . . 1 . .
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 pub struct Bitboard(pub u64);
 
 impl Bitboard {
