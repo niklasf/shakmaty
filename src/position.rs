@@ -17,6 +17,7 @@ use crate::{
 };
 
 /// Outcome of a game.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Outcome {
     Decisive { winner: Color },
