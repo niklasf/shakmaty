@@ -50,9 +50,10 @@
 //! ```
 
 use core::{
-    char, error,
+    char,
+    cmp::min,
+    error,
     fmt::{self, Display},
-    iter,
     num::NonZeroU32,
     str::FromStr,
 };
@@ -61,7 +62,7 @@ use bitflags::bitflags;
 
 use crate::{
     util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
-    FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Role, Setup, Square,
+    FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Setup, Square,
 };
 
 fn append_castling<W: AppendAscii>(
@@ -78,11 +79,7 @@ fn append_castling<W: AppendAscii>(
 
         let candidates = board.by_piece(color.rook()) & color.backrank();
 
-        for rook in (castling_rights & color.backrank())
-            .into_iter()
-            .rev()
-            .take(2)
-        {
+        for rook in (castling_rights & color.backrank()).into_iter().rev() {
             f.append_ascii(
                 if Some(rook) == candidates.first() && king.is_some_and(|k| rook < k) {
                     color.fold_wb('Q', 'q')
@@ -109,17 +106,13 @@ fn append_pockets<W: AppendAscii>(
     pockets: &ByColor<ByRole<u8>>,
 ) -> Result<(), W::Error> {
     f.append_ascii('[')?;
-    for c in Color::ALL
-        .into_iter()
-        .flat_map(move |color| {
-            Role::ALL.into_iter().flat_map(move |role| {
-                let piece = Piece { role, color };
-                iter::repeat(piece.char()).take(usize::from(*pockets.piece(piece)))
-            })
-        })
-        .take(64)
-    {
-        f.append_ascii(c)?;
+    for (color, side) in pockets.zip_color() {
+        for (role, count) in side.zip_role() {
+            let piece = Piece { color, role };
+            for _ in 0..count {
+                f.append_ascii(piece.char())?;
+            }
+        }
     }
     f.append_ascii(']')
 }
@@ -266,6 +259,33 @@ fn parse_pockets(s: &[u8]) -> Option<ByColor<ByRole<u8>>> {
     Some(result)
 }
 
+fn representable_promoted(board: &Board, promoted: Bitboard) -> Bitboard {
+    promoted & board.occupied()
+}
+
+fn representable_pockets(pockets: &ByColor<ByRole<u8>>) -> ByColor<ByRole<u8>> {
+    let mut remaining = 64;
+    ByColor::new_with(|color| {
+        ByRole::new_with(|role| {
+            let selected = min(pockets[color][role], remaining);
+            remaining -= selected;
+            selected
+        })
+    })
+}
+
+fn representable_castling_rights(castling_rights: Bitboard) -> Bitboard {
+    let w = (castling_rights & Rank::First)
+        .into_iter()
+        .take(2)
+        .collect::<Bitboard>();
+    let b = (castling_rights & Rank::Eighth)
+        .into_iter()
+        .take(2)
+        .collect::<Bitboard>();
+    w | b
+}
+
 bitflags! {
     /// Reasons for a [`Setup`] not being representable as a [`Fen`].
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -331,16 +351,16 @@ impl Board {
     ///
     /// Errors if `promoted` is not a subset of the occupied squares of the
     /// board.
-    pub const fn board_fen_with_promoted(
+    pub fn board_fen_with_promoted(
         &self,
         promoted: Bitboard,
     ) -> Result<BoardFen<'_>, LossyFenError<BoardFen<'_>>> {
         let fen = BoardFen {
             board: self,
-            promoted,
+            promoted: representable_promoted(self, promoted),
         };
 
-        if promoted.is_subset_const(self.occupied()) {
+        if promoted == fen.promoted {
             Ok(fen)
         } else {
             Err(LossyFenError {
@@ -442,27 +462,29 @@ impl Fen {
     #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn try_from_setup(setup: Setup) -> Result<Fen, LossyFenError<Fen>> {
         let mut errors = LossyFenErrorKinds::empty();
-        if !setup.promoted.is_subset(setup.board.occupied()) {
+
+        let promoted = representable_promoted(&setup.board, setup.promoted);
+        if promoted != setup.promoted {
             errors |= LossyFenErrorKinds::PROMOTED;
         }
-        if !setup.castling_rights.is_subset(Bitboard::BACKRANKS)
-            || (setup.castling_rights & Rank::First).count() > 2
-            || (setup.castling_rights & Rank::Eighth).count() > 2
-        {
-            errors |= LossyFenErrorKinds::CASTLING_RIGHTS;
-        }
-        if let Some(pockets) = setup.pockets {
-            if pockets
-                .into_iter()
-                .flat_map(|side| side.into_iter().map(u32::from))
-                .sum::<u32>()
-                > 64
-            {
-                errors |= LossyFenErrorKinds::POCKETS;
-            }
+
+        let pockets = setup.pockets.as_ref().map(representable_pockets);
+        if pockets != setup.pockets {
+            errors |= LossyFenErrorKinds::POCKETS;
         }
 
-        let fen = Fen::from_setup_unchecked(setup);
+        let castling_rights = representable_castling_rights(setup.castling_rights);
+        if castling_rights != setup.castling_rights {
+            errors |= LossyFenErrorKinds::CASTLING_RIGHTS;
+        }
+
+        let fen = Fen::from_setup_unchecked(Setup {
+            promoted,
+            pockets,
+            castling_rights,
+            ..setup
+        });
+
         if errors.is_empty() {
             Ok(fen)
         } else {
