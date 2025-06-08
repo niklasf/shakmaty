@@ -53,6 +53,8 @@
 //! * `std`: Implies `alloc`. Enabled by default.
 //!   For `no_std` environments, this must be disabled with `default-features = false`.
 //! * `variant`: Enables support for all Lichess variants.
+//! * `arbitrary`: Implements [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
+//!   for vocabulary types.
 //! * `serde`: Implements [`serde::Serialize`](https://docs.rs/serde/1/serde/trait.Serialize.html)
 //!   and [`serde::Deserialize`](https://docs.rs/serde/1/serde/trait.Deserialize.html) for
 //!   types with unique natural representations.
