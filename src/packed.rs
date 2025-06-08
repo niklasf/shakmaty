@@ -269,11 +269,16 @@ impl PackedSetup {
             if pockets.white.king > 0 || pockets.black.king > 0 {
                 return Err(PackSetupError::Pockets);
             }
+            if !setup.promoted.is_subset(setup.board.occupied()) {
+                return Err(PackSetupError::Promoted);
+            }
             if setup.promoted.any() {
                 writer.write_u64(setup.promoted.into());
             }
         } else if setup.pockets.is_some() {
             return Err(PackSetupError::Pockets);
+        } else if setup.promoted.any() {
+            return Err(PackSetupError::Promoted);
         }
 
         if variant == VARIANT_THREECHECK {
@@ -447,19 +452,21 @@ impl error::Error for UnpackSetupError {}
 /// Error when packing an unrepresentable setup.
 #[derive(Debug, Clone)]
 pub enum PackSetupError {
+    Promoted,
+    Pockets,
     EpSquare,
     CastlingRights,
     RemainingChecks,
-    Pockets,
 }
 
 impl Display for PackSetupError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
+            PackSetupError::Promoted => "unrepresentable promoted squares",
+            PackSetupError::Pockets => "unrepresentable pockets",
             PackSetupError::EpSquare => "unrepresentable ep square",
             PackSetupError::CastlingRights => "unrepresentable castling rights",
             PackSetupError::RemainingChecks => "unrepresentable remaining checks",
-            PackSetupError::Pockets => "unrepresentable pockets",
         })
     }
 }
@@ -741,7 +748,7 @@ impl Writer<'_> {
     }
 
     fn write_nibbles(&mut self, lo: u8, hi: u8) -> Result<(), ()> {
-        if lo & 0xf == lo || hi & 0xf == hi {
+        if lo & 0xf == lo && hi & 0xf == hi {
             self.write_nibbles_unchecked(lo, hi);
             Ok(())
         } else {
