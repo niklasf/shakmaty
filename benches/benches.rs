@@ -1,12 +1,12 @@
 use iai::black_box;
 use shakmaty::{
     fen::Fen,
-    packed::PackedUciMove,
+    packed::{PackedSetup, PackedUciMove},
     perft,
     san::San,
     uci::UciMove,
     zobrist::{Zobrist64, ZobristHash},
-    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Square,
+    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
 };
 
 fn bench_shallow_perft() {
@@ -82,6 +82,13 @@ fn bench_fen_roundtrip() -> String {
     buffer
 }
 
+fn bench_packed_setup_roundtrip() {
+    let setup = black_box(Setup::default());
+    let packed = PackedSetup::pack_standard(&setup).expect("representable");
+    let repacked = PackedSetup::try_from_bytes(packed.as_bytes()).expect("repacked");
+    assert_eq!(repacked.unpack_standard().expect("roundtrip"), setup);
+}
+
 fn bench_packed_uci_roundtrip() {
     for from in Square::ALL {
         for to in Square::ALL {
@@ -106,5 +113,6 @@ iai::main!(
     bench_play_sans,
     bench_zobrist_hash,
     bench_fen_roundtrip,
+    bench_packed_setup_roundtrip,
     bench_packed_uci_roundtrip,
 );
