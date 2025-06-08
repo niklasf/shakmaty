@@ -251,23 +251,13 @@ impl PackedSetup {
 
         if variant == VARIANT_CRAZYHOUSE {
             let pockets = setup.pockets.unwrap_or_default();
-            writer
-                .write_nibbles(pockets.white.pawn, pockets.black.pawn)
-                .map_err(|()| PackSetupError::Pockets)?;
-            writer
-                .write_nibbles(pockets.white.knight, pockets.black.knight)
-                .map_err(|()| PackSetupError::Pockets)?;
-            writer
-                .write_nibbles(pockets.white.bishop, pockets.black.bishop)
-                .map_err(|()| PackSetupError::Pockets)?;
-            writer
-                .write_nibbles(pockets.white.rook, pockets.black.rook)
-                .map_err(|()| PackSetupError::Pockets)?;
-            writer
-                .write_nibbles(pockets.white.queen, pockets.black.queen)
-                .map_err(|()| PackSetupError::Pockets)?;
             if pockets.white.king > 0 || pockets.black.king > 0 {
                 return Err(PackSetupError::Pockets);
+            }
+            for by_color in pockets.transpose_piece().into_iter().take(5) {
+                writer
+                    .write_nibbles(by_color.white, by_color.black)
+                    .map_err(|()| PackSetupError::Pockets)?;
             }
             if !setup.promoted.is_subset(setup.board.occupied()) {
                 return Err(PackSetupError::Promoted);

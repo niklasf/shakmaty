@@ -1,6 +1,6 @@
 use core::{array, convert::identity, num, ops, ptr};
 
-use crate::{util::out_of_range_error, Color, Piece};
+use crate::{util::out_of_range_error, ByColor, Color, Piece};
 
 /// Piece types: `Pawn`, `Knight`, `Bishop`, `Rook`, `Queen`, `King`.
 ///
@@ -385,5 +385,54 @@ impl<T> ops::IndexMut<Role> for ByRole<T> {
     #[inline]
     fn index_mut(&mut self, role: Role) -> &mut T {
         self.get_mut(role)
+    }
+}
+
+impl<T> ByRole<ByColor<T>> {
+    #[inline]
+    pub const fn piece(&self, piece: Piece) -> &T {
+        self.get(piece.role).get(piece.color)
+    }
+
+    #[inline]
+    pub const fn piece_mut(&mut self, piece: Piece) -> &mut T {
+        self.get_mut(piece.role).get_mut(piece.color)
+    }
+
+    pub fn transpose_piece(self) -> ByColor<ByRole<T>> {
+        ByColor {
+            white: ByRole {
+                pawn: self.pawn.white,
+                knight: self.knight.white,
+                bishop: self.bishop.white,
+                rook: self.rook.white,
+                queen: self.queen.white,
+                king: self.king.white,
+            },
+            black: ByRole {
+                pawn: self.pawn.black,
+                knight: self.knight.black,
+                bishop: self.bishop.black,
+                rook: self.rook.black,
+                queen: self.queen.black,
+                king: self.king.black,
+            },
+        }
+    }
+}
+
+impl<T> ops::Index<Piece> for ByRole<ByColor<T>> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: Piece) -> &T {
+        self.piece(index)
+    }
+}
+
+impl<T> ops::IndexMut<Piece> for ByRole<ByColor<T>> {
+    #[inline]
+    fn index_mut(&mut self, index: Piece) -> &mut T {
+        self.piece_mut(index)
     }
 }
