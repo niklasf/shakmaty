@@ -16,7 +16,7 @@ default = ["std"]
 alloc = ["serde?/alloc"]
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
-arbitrary = ["dep:arbitrary"]
+arbitrary = ["dep:arbitrary", "std"]
 nohash-hasher = ["dep:nohash-hasher"]
 serde = ["dep:serde"]
 

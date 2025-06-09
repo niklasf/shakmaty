@@ -14,10 +14,10 @@ jobs:
           - "nightly"
         flags:
           - ""
-          - "--features variant,arbitrary,serde"
+          - "--features variant,serde"
           - "--features nohash-hasher,variant"
           - "--features alloc"
-          - "--features alloc,variant,arbitrary,serde"
+          - "--features alloc,variant,serde"
           - "--features std"
           - "--features std,variant,arbitrary,serde"
         include:
