@@ -777,6 +777,14 @@ impl FromSetup for Chess {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl arbitrary::Arbitrary<'_> for Chess {
+    fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Chess> {
+        Chess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+            .map_err(|_| arbitrary::Error::IncorrectFormat)
+    }
+}
+
 impl Position for Chess {
     fn board(&self) -> &Board {
         &self.board
@@ -1121,6 +1129,14 @@ pub(crate) mod variant {
         }
     }
 
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for Atomic {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Atomic> {
+            Atomic::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+    }
+
     impl Position for Atomic {
         fn board(&self) -> &Board {
             &self.board
@@ -1404,6 +1420,14 @@ pub(crate) mod variant {
         }
     }
 
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for Antichess {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Antichess> {
+            Antichess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+    }
+
     impl Position for Antichess {
         fn board(&self) -> &Board {
             &self.board
@@ -1567,6 +1591,14 @@ pub(crate) mod variant {
         }
     }
 
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for KingOfTheHill {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<KingOfTheHill> {
+            KingOfTheHill::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+    }
+
     impl Position for KingOfTheHill {
         fn board(&self) -> &Board {
             self.chess.board()
@@ -1698,6 +1730,14 @@ pub(crate) mod variant {
                 },
             }
             .strict()
+        }
+    }
+
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for ThreeCheck {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<ThreeCheck> {
+            ThreeCheck::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
     }
 
@@ -1917,6 +1957,14 @@ pub(crate) mod variant {
                 },
             }
             .strict()
+        }
+    }
+
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for Crazyhouse {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Crazyhouse> {
+            Crazyhouse::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
     }
 
@@ -2177,6 +2225,14 @@ pub(crate) mod variant {
         }
     }
 
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for RacingKings {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<RacingKings> {
+            RacingKings::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+    }
+
     impl Position for RacingKings {
         fn board(&self) -> &Board {
             &self.board
@@ -2411,6 +2467,14 @@ pub(crate) mod variant {
             }
 
             PositionError { pos, errors }.strict()
+        }
+    }
+
+    #[cfg(feature = "arbitrary")]
+    impl arbitrary::Arbitrary<'_> for Horde {
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Horde> {
+            Horde::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
+                .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
     }
 

@@ -133,6 +133,7 @@ impl nohash_hasher::IsEnabled for Variant {}
 
 /// Dynamically dispatched chess variant [`Position`].
 #[allow(missing_docs)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VariantPosition {
     Chess(Chess),
