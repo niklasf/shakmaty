@@ -43,6 +43,8 @@ A Rust library for chess vocabulary and move generation
 
 - Bitboards and compact fixed shift magic attack tables.
 
+- Fast compact binary encodings for positions and moves.
+
 - Zobrist hash positions.
 
 - Probe Syzygy tablebases with [shakmaty-syzygy](https://crates.io/crates/shakmaty-syzygy).

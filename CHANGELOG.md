@@ -1,5 +1,54 @@
 # Changelog for shakmaty
 
+## Upcoming
+
+New features:
+
+- Introduce `PackedSetup` and `PackedUciMove`, fast and compact binary
+  encodings for chess positions and moves.
+- Add optional feature `arbitrary`, implementing `arbitrary::Arbitrary` for
+  vocabulary types.
+- Many more methods are now `const`. Alternatives are provided for `Bitboard`
+  and `Square` methods that cannot be const due to involvement of traits
+  (`Bitboard::*_const()`, `Square::to_u32()`).
+- Impl `IntoIterator` for `&ByColor`, `&mut ByColor`, `&ByCastlingSide`,
+  `&mut ByCastlingSide`.
+- Add `Bitboard::intersects()`.
+
+Breaking changes:
+
+- `Move` is now `Copy`. Methods accepting `&Move` now accept it by value.
+  Likewise for `UciMove`, `San`, and `SanPlus`.
+- Remove `#[repr(align(4))]` from `Move`.
+- Remove `Position::into_setup()` in favor of `Position::to_setup()`.
+- Remove `Fen::from_setup()` and equivalents in favor of
+  `Fen::try_from_setup()`, which verifies that the `Setup` can be
+  losslessly roundtripped through FEN (guaranteed to be possible for
+  `Position::to_setup()`).
+  Likewise for `Epd`.
+- Remove `Epd::as_setup()`.
+- Remove `Board::from_bitboards()` in favor of `Board::try_from_bitboards()`.
+- Remove `attacks::rook_mask()` and `attacks::bishop_mask()` that are mostly
+  just implementation details of magic bitboards.
+- Remove `write_ascii_to()` methods that are slow unless buffered.
+- Remove deprecrated items:
+  - `ByCastlingSide::into_flipped()` renamed to `into_swapped()`.
+  - `ByColor::flip()` renamed to `swap()`.
+  - `ByColor::into_flipped()` renamed to `into_swapped()`.
+  - `PlayError::into_inner()` replaced with public field `position`.
+  - `PositionErrorKinds::IMPOSSIBLE_MATERIAL` replaced with
+    more accurately named `TOO_MUCH_MATERIAL`.
+  - `PositionError::ignore_impossible_material()` replaced with
+    `ignore_too_much_material()`.
+  - `Uci` renamed to `UciMove`.
+  - `ParseUciError` renamed to `ParseUciMoveError`.
+  - `IllegalUciError` renamed to `IllegalUciMoveError`.
+
+Other changes:
+
+- MSRV is now 1.85.1.
+- Optimized FEN parsing (~10% speedup).
+
 ## v0.27.3
 
 - Implement `serde::{Serialize,Deserialize}` for `Fen`, `Epd`, `San`, `SanPlus`,
