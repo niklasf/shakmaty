@@ -119,7 +119,7 @@ impl FromStr for Nag {
     }
 }
 
-/// A header value.
+/// A tag value.
 ///
 /// Provides helper methods for decoding [backslash
 /// escaped](http://www.saremba.de/chessgml/standards/pgn/pgn-complete.htm#c7)
@@ -129,10 +129,10 @@ impl FromStr for Nag {
 /// > followed by a quote. A backslash inside a string is represented by
 /// > two adjacent backslashes.
 #[derive(Clone, Eq, PartialEq)]
-pub struct RawHeader<'a>(pub &'a [u8]);
+pub struct RawTag<'a>(pub &'a [u8]);
 
-impl<'a> RawHeader<'a> {
-    /// Returns the raw byte representation of the header value.
+impl<'a> RawTag<'a> {
+    /// Returns the raw byte representation of the tag value.
     pub fn as_bytes(&self) -> &[u8] {
         self.0
     }
@@ -159,12 +159,12 @@ impl<'a> RawHeader<'a> {
         }
     }
 
-    /// Tries to decode the header as UTF-8. This is guaranteed to succeed on
+    /// Tries to decode the tag as UTF-8. This is guaranteed to succeed on
     /// valid PGNs.
     ///
     /// # Errors
     ///
-    /// Errors if the header contains an invalid UTF-8 byte sequence.
+    /// Errors if the tag contains an invalid UTF-8 byte sequence.
     pub fn decode_utf8(&self) -> Result<Cow<'a, str>, Utf8Error> {
         Ok(match self.decode() {
             Cow::Borrowed(borrowed) => Cow::Borrowed(str::from_utf8(borrowed)?),
@@ -172,7 +172,7 @@ impl<'a> RawHeader<'a> {
         })
     }
 
-    /// Decodes the header as UTF-8, replacing any invalid byte sequences with
+    /// Decodes the tag as UTF-8, replacing any invalid byte sequences with
     /// the placeholder � U+FFFD.
     pub fn decode_utf8_lossy(&self) -> Cow<'a, str> {
         match self.decode() {
@@ -182,7 +182,7 @@ impl<'a> RawHeader<'a> {
     }
 }
 
-impl<'a> fmt::Debug for RawHeader<'a> {
+impl<'a> fmt::Debug for RawTag<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.decode_utf8_lossy())
     }
@@ -215,14 +215,14 @@ mod tests {
     }
 
     #[test]
-    fn test_raw_header() {
-        let header = RawHeader(b"Hello world");
-        assert_eq!(header.decode().as_ref(), b"Hello world");
+    fn test_raw_tag() {
+        let tag = RawTag(b"Hello world");
+        assert_eq!(tag.decode().as_ref(), b"Hello world");
 
-        let header = RawHeader(b"Hello \\world\\");
-        assert_eq!(header.decode().as_ref(), b"Hello \\world\\");
+        let tag = RawTag(b"Hello \\world\\");
+        assert_eq!(tag.decode().as_ref(), b"Hello \\world\\");
 
-        let header = RawHeader(b"\\Hello \\\"world\\\\");
-        assert_eq!(header.decode().as_ref(), b"\\Hello \"world\\");
+        let tag = RawTag(b"\\Hello \\\"world\\\\");
+        assert_eq!(tag.decode().as_ref(), b"\\Hello \"world\\");
     }
 }

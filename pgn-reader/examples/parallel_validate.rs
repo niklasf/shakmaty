@@ -11,7 +11,7 @@ use std::{
     },
 };
 
-use pgn_reader::{BufferedReader, RawHeader, San, SanPlus, Skip, Visitor};
+use pgn_reader::{BufferedReader, RawTag, San, SanPlus, Skip, Visitor};
 use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 
 struct Game {
@@ -63,14 +63,14 @@ impl Visitor for Validator {
         self.games += 1;
     }
 
-    fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+    fn tag(&mut self, key: &[u8], value: RawTag<'_>) {
         // Support games from a non-standard starting position.
         if key == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
                 Ok(fen) => fen,
                 Err(err) => {
                     eprintln!(
-                        "invalid fen header in game {}: {} ({:?})",
+                        "invalid fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
                     self.game.success = false;
@@ -82,7 +82,7 @@ impl Visitor for Validator {
                 Ok(pos) => pos,
                 Err(err) => {
                     eprintln!(
-                        "illegal fen header in game {}: {} ({:?})",
+                        "illegal fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
                     self.game.success = false;
@@ -92,7 +92,7 @@ impl Visitor for Validator {
         }
     }
 
-    fn end_headers(&mut self) -> Skip {
+    fn end_tags(&mut self) -> Skip {
         Skip(!self.game.success)
     }
 

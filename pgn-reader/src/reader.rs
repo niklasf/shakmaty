@@ -10,7 +10,7 @@ use shakmaty::{
 
 // use slice_deque::SliceDeque;
 use crate::{
-    types::{Nag, RawComment, RawHeader, Skip},
+    types::{Nag, RawComment, RawTag, Skip},
     visitor::{SkipVisitor, Visitor},
 };
 
@@ -121,7 +121,7 @@ trait ReadPgn {
         Ok(())
     }
 
-    fn read_headers<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
+    fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
         while let Some(ch) = self.fill_buffer_and_peek()? {
             match ch {
                 b'[' => {
@@ -171,9 +171,9 @@ trait ReadPgn {
                         }
                     };
 
-                    visitor.header(
+                    visitor.tag(
                         &self.buffer()[..space],
-                        RawHeader(&self.buffer()[value_start..right_quote]),
+                        RawTag(&self.buffer()[value_start..right_quote]),
                     );
                     self.consume(consumed);
                     self.skip_ket()?;
@@ -459,9 +459,9 @@ trait ReadPgn {
         }
 
         visitor.begin_game();
-        visitor.begin_headers();
-        self.read_headers(visitor)?;
-        if let Skip(false) = visitor.end_headers() {
+        visitor.begin_tags();
+        self.read_tags(visitor)?;
+        if let Skip(false) = visitor.end_tags() {
             self.read_movetext(visitor)?;
         } else {
             self.skip_movetext()?;

@@ -1,6 +1,6 @@
 use shakmaty::{san::SanPlus, Outcome};
 
-use crate::types::{Nag, RawComment, RawHeader, Skip};
+use crate::types::{Nag, RawComment, RawTag, Skip};
 
 /// Consumes games from a reader.
 ///
@@ -12,14 +12,14 @@ pub trait Visitor {
     /// Called at the start of the game.
     fn begin_game(&mut self) {}
 
-    /// Called directly before reading game headers.
-    fn begin_headers(&mut self) {}
-    /// Called when parsing a game header like `[White "Deep Blue"]`.
-    fn header(&mut self, _key: &[u8], _value: RawHeader<'_>) {}
-    /// Called after reading the headers of a game. May skip quickly over
+    /// Called directly before reading game tags.
+    fn begin_tags(&mut self) {}
+    /// Called when parsing a game tag pair like `[White "Deep Blue"]`.
+    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {}
+    /// Called after reading the tags of a game. May skip quickly over
     /// the following move text directly to
     /// [`end_game()`](trait.Visitor.html#tymethod.end_game).
-    fn end_headers(&mut self) -> Skip {
+    fn end_tags(&mut self) -> Skip {
         Skip(false)
     }
 
@@ -51,7 +51,7 @@ pub(crate) struct SkipVisitor;
 impl Visitor for SkipVisitor {
     type Result = ();
 
-    fn end_headers(&mut self) -> Skip {
+    fn end_tags(&mut self) -> Skip {
         Skip(true)
     }
     fn begin_variation(&mut self) -> Skip {

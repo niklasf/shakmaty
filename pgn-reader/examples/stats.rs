@@ -3,12 +3,12 @@
 
 use std::{env, fs::File, io};
 
-use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawHeader, SanPlus, Visitor};
+use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Visitor};
 
 #[derive(Debug, Default)]
 struct Stats {
     games: usize,
-    headers: usize,
+    tags: usize,
     sans: usize,
     nags: usize,
     comments: usize,
@@ -25,8 +25,8 @@ impl Stats {
 impl Visitor for Stats {
     type Result = ();
 
-    fn header(&mut self, _key: &[u8], _value: RawHeader<'_>) {
-        self.headers += 1;
+    fn tag(&mut self, _key: &[u8], _value: RawTag<'_>) {
+        self.tags += 1;
     }
 
     fn san(&mut self, _san: SanPlus) {
