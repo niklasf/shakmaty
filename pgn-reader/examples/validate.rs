@@ -31,9 +31,9 @@ impl Visitor for Validator {
         self.success = true;
     }
 
-    fn tag(&mut self, key: &[u8], value: RawTag<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
         // Support games from a non-standard starting position.
-        if key == b"FEN" {
+        if name == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
                 Ok(fen) => fen,
                 Err(err) => {

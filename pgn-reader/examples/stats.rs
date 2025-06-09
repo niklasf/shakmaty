@@ -25,7 +25,7 @@ impl Stats {
 impl Visitor for Stats {
     type Result = ();
 
-    fn tag(&mut self, _key: &[u8], _value: RawTag<'_>) {
+    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {
         self.tags += 1;
     }
 
