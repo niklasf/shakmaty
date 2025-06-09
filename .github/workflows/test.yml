@@ -14,12 +14,12 @@ jobs:
           - "nightly"
         flags:
           - ""
-          - "--features variant,serde"
+          - "--features variant,arbitrary,serde"
           - "--features nohash-hasher,variant"
           - "--features alloc"
-          - "--features alloc,variant,serde"
+          - "--features alloc,variant,arbitrary,serde"
           - "--features std"
-          - "--features std,variant,serde"
+          - "--features std,variant,arbitrary,serde"
         include:
           - toolchain: "nightly"
             flags: "-Z minimal-versions --all-features"
