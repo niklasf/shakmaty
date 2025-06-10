@@ -648,7 +648,7 @@ impl IntoIterator for Board {
 impl arbitrary::Arbitrary<'_> for Board {
     fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Board> {
         let mut board = Board::default();
-        for _ in 0..u.arbitrary_len::<(Square, Piece)>()? {
+        for _ in 0..u.int_in_range(0..=64)? {
             let (sq, piece) = arbitrary::Arbitrary::arbitrary(u)?;
             board.set_piece_at(sq, piece);
         }

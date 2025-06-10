@@ -1,20 +1,17 @@
 #![no_main]
 
-use arbitrary::{Arbitrary, Unstructured};
+use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 use shakmaty::{packed::PackedSetup, variant::Variant, Setup};
 
-#[derive(Arbitrary)]
+#[derive(Arbitrary, Debug)]
 struct VariantSetup {
     setup: Setup,
     variant: Variant,
 }
 
-fuzz_target!(|data: &[u8]| {
-    let mut unstructured = Unstructured::new(data);
-    let Ok(VariantSetup { mut setup, variant }) = VariantSetup::arbitrary(&mut unstructured) else {
-        return;
-    };
+fuzz_target!(|data: VariantSetup| {
+    let VariantSetup { mut setup, variant } = data;
 
     let Ok(packed_setup) = PackedSetup::pack_variant(&setup, variant) else {
         return;
