@@ -167,7 +167,13 @@ impl RemainingChecks {
 #[cfg(feature = "arbitrary")]
 impl arbitrary::Arbitrary<'_> for RemainingChecks {
     fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<RemainingChecks> {
-        u.int_in_range(0..=3).map(RemainingChecks)
+        u.int_in_range::<u8>(0..=3)
+            .map(|n| RemainingChecks(u32::from(n)))
+    }
+
+    #[inline]
+    fn size_hint(_depth: usize) -> (usize, Option<usize>) {
+        (1, Some(1))
     }
 }
 

@@ -783,6 +783,11 @@ impl arbitrary::Arbitrary<'_> for Chess {
         Chess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
             .map_err(|_| arbitrary::Error::IncorrectFormat)
     }
+
+    #[inline]
+    fn size_hint(depth: usize) -> (usize, Option<usize>) {
+        <Setup as arbitrary::Arbitrary>::size_hint(depth)
+    }
 }
 
 impl Position for Chess {
@@ -1135,6 +1140,11 @@ pub(crate) mod variant {
             Atomic::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        }
     }
 
     impl Position for Atomic {
@@ -1426,6 +1436,11 @@ pub(crate) mod variant {
             Antichess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        }
     }
 
     impl Position for Antichess {
@@ -1597,6 +1612,11 @@ pub(crate) mod variant {
             KingOfTheHill::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        }
     }
 
     impl Position for KingOfTheHill {
@@ -1738,6 +1758,11 @@ pub(crate) mod variant {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<ThreeCheck> {
             ThreeCheck::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
         }
     }
 
@@ -1965,6 +1990,11 @@ pub(crate) mod variant {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Crazyhouse> {
             Crazyhouse::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
         }
     }
 
@@ -2231,6 +2261,11 @@ pub(crate) mod variant {
             RacingKings::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
         }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        }
     }
 
     impl Position for RacingKings {
@@ -2475,6 +2510,11 @@ pub(crate) mod variant {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Horde> {
             Horde::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
                 .map_err(|_| arbitrary::Error::IncorrectFormat)
+        }
+
+        #[inline]
+        fn size_hint(depth: usize) -> (usize, Option<usize>) {
+            <Setup as arbitrary::Arbitrary>::size_hint(depth)
         }
     }
 
