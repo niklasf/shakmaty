@@ -78,7 +78,7 @@
 //! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
 //!
-//! use pgn_reader::{Visitor, Skip, RawHeader, BufferedReader, SanPlus};
+//! use pgn_reader::{Visitor, Skip, RawTag, BufferedReader, SanPlus};
 //!
 //! struct LastPosition {
 //!     pos: Chess,
@@ -93,9 +93,9 @@
 //! impl Visitor for LastPosition {
 //!     type Result = Chess;
 //!
-//!     fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
 //!         // Support games from a non-standard starting position.
-//!         if key == b"FEN" {
+//!         if name == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
 //!                 .and_then(|f| f.into_position(CastlingMode::Standard).ok());
 //!
@@ -148,5 +148,5 @@ pub use shakmaty::{
     san::{San, SanPlus},
     CastlingSide, Color, File, Outcome, Rank, Role, Square,
 };
-pub use types::{Nag, RawComment, RawHeader, Skip};
+pub use types::{Nag, RawComment, RawTag, Skip};
 pub use visitor::Visitor;

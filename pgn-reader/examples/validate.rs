@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io, process};
 
-use pgn_reader::{BufferedReader, RawHeader, SanPlus, Skip, Visitor};
+use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
 use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
 
 struct Validator {
@@ -31,14 +31,14 @@ impl Visitor for Validator {
         self.success = true;
     }
 
-    fn header(&mut self, key: &[u8], value: RawHeader<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
         // Support games from a non-standard starting position.
-        if key == b"FEN" {
+        if name == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
                 Ok(fen) => fen,
                 Err(err) => {
                     eprintln!(
-                        "invalid fen header in game {}: {} ({:?})",
+                        "invalid fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
                     self.success = false;
@@ -50,7 +50,7 @@ impl Visitor for Validator {
                 Ok(pos) => pos,
                 Err(err) => {
                     eprintln!(
-                        "illegal fen header in game {}: {} ({:?})",
+                        "illegal fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
                     self.success = false;
@@ -60,7 +60,7 @@ impl Visitor for Validator {
         }
     }
 
-    fn end_headers(&mut self) -> Skip {
+    fn end_tags(&mut self) -> Skip {
         Skip(!self.success)
     }
 

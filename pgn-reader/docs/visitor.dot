@@ -1,12 +1,12 @@
 digraph G {
     S, E [shape=point];
 
-    S -> begin_game -> begin_headers -> header;
-    header [shape=record,label="header|"];
-    header -> header -> end_headers;
+    S -> begin_game -> begin_tags -> tag;
+    tag [shape=record,label="tag|"];
+    tag -> tag -> end_tags;
 
-    end_headers -> end_game [label="Skip(true)",style=dotted];
-    end_headers -> moves [label="Skip(false)"];
+    end_tags -> end_game [label="Skip(true)",style=dotted];
+    end_tags -> moves [label="Skip(false)"];
 
     moves [shape=record,label="san|nag|comment|outcome|<ral> begin_variation|<rar>end_variation|"];
     moves:ral -> moves:rar [taillabel="Skip(true)",style="dotted"];
