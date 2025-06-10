@@ -647,25 +647,42 @@ impl IntoIterator for Board {
 #[cfg(feature = "arbitrary")]
 impl arbitrary::Arbitrary<'_> for Board {
     fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Board> {
-        let mut occupied = Bitboard::EMPTY;
-        let (mut roles, white) = <(ByRole<Bitboard>, Bitboard)>::arbitrary(u)?;
-        for role in &mut roles {
-            role.discard(occupied);
-            occupied.add(*role);
+        #[rustfmt::skip]
+        let nibble_to_piece = |nibble: u8| -> Option<Piece> {
+            Some(match nibble {
+                1 => Piece { color: Color::White, role: Role::Pawn },
+                2 => Piece { color: Color::Black, role: Role::Pawn },
+                3 => Piece { color: Color::White, role: Role::Knight },
+                4 => Piece { color: Color::Black, role: Role::Knight },
+                5 => Piece { color: Color::White, role: Role::Bishop },
+                6 => Piece { color: Color::Black, role: Role::Bishop },
+                7 => Piece { color: Color::White, role: Role::Rook },
+                8 => Piece { color: Color::Black, role: Role::Rook },
+                9 => Piece { color: Color::White, role: Role::Queen },
+                10 => Piece { color: Color::Black, role: Role::Queen },
+                11 => Piece { color: Color::White, role: Role::King },
+                12 => Piece { color: Color::Black, role: Role::King },
+                _ => return None,
+            })
+        };
+
+        let nibbles = <[u8; 32]>::arbitrary(u)?;
+
+        let mut board = Board::empty();
+        for (i, byte) in nibbles.into_iter().enumerate() {
+            if let Some(piece) = nibble_to_piece(byte & 0xf) {
+                board.set_new_piece_at(Square::new(i as u32 * 2), piece);
+            }
+            if let Some(piece) = nibble_to_piece(byte >> 4) {
+                board.set_new_piece_at(Square::new(i as u32 * 2 + 1), piece);
+            }
         }
-        Ok(Board::try_from_bitboards(
-            roles,
-            ByColor {
-                white: occupied & white,
-                black: occupied & !white,
-            },
-        )
-        .expect("consistent"))
+        Ok(board)
     }
 
     #[inline]
     fn size_hint(depth: usize) -> (usize, Option<usize>) {
-        <(ByRole<Bitboard>, Bitboard) as arbitrary::Arbitrary>::size_hint(depth)
+        <[u8; 32] as arbitrary::Arbitrary>::size_hint(depth)
     }
 }
 
