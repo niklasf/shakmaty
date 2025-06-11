@@ -55,33 +55,32 @@ where
     }
 }
 
-// macro for generating tests
-macro_rules! gen_tests {
-    ($($fn_name:ident, $t:ty, $path:tt, $num:expr,)+) => {
-        $(
-            #[test]
-            #[cfg_attr(miri, ignore)]
-            fn $fn_name() {
-                test_perft_file::<$t>($path, $num);
-            }
-        )+
-    }
+#[test]
+#[cfg_attr(miri, ignore)]
+fn test_tricky_perft() {
+    test_perft_file::<Chess>("tests/tricky.perft", 100_000);
 }
 
-gen_tests! {
-    test_tricky,      Chess,       "tests/tricky.perft",        100_000,
-    test_random,      Chess,       "tests/random.perft",         10_000,
-    test_chess960,    Chess,       "tests/chess960.perft",      100_000,
+#[test]
+#[cfg_attr(miri, ignore)]
+fn test_random_perft() {
+    test_perft_file::<Chess>("tests/random.perft", 10_000);
+}
+
+#[test]
+#[cfg_attr(miri, ignore)]
+fn test_chess960_perft() {
+    test_perft_file::<Chess>("tests/chess960.perft", 100_000);
 }
 
 #[cfg(feature = "variant")]
-use shakmaty::variant::{Antichess, Atomic, Crazyhouse, Horde, RacingKings, ThreeCheck};
-#[cfg(feature = "variant")]
-gen_tests! {
-    test_atomic,      Atomic,      "tests/atomic.perft",      1_000_000,
-    test_antichess,   Antichess,   "tests/antichess.perft",   1_000_000,
-    test_crazyhouse,  Crazyhouse,  "tests/crazyhouse.perft",  1_000_000,
-    test_racingkings, RacingKings, "tests/racingkings.perft", 1_000_000,
-    test_horde,       Horde,       "tests/horde.perft",       1_000_000,
-    test_3check,      ThreeCheck,  "tests/3check.perft",      1_000_000,
+#[cfg(test)]
+#[cfg_attr(miri, ignore)]
+fn test_variant_perft() {
+    test_perft_file::<Antichess>("tests/antichess.perft", 1_000_000);
+    test_perft_file::<Atomic>("tests/atomic.perft", 1_000_000);
+    test_perft_file::<Crazyhouse>("tests/crazyhouse.perft", 1_000_000);
+    test_perft_file::<Horde>("tests/horde.perft", 1_000_000);
+    test_perft_file::<RacingKings>("tests/racingkings.perft", 1_000_000);
+    test_perft_file::<ThreeCheck>("tests/3check.perft", 1_000_000);
 }
