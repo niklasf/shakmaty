@@ -47,7 +47,7 @@ Breaking changes:
 Other changes:
 
 - MSRV is now 1.85.1.
-- Optimized FEN parsing (~10% speedup).
+- Optimize FEN parsing (~10% speedup).
 
 ## v0.27.3
 

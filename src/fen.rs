@@ -389,7 +389,7 @@ impl Display for Board {
 /// Displays a board with notation like
 /// `rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR`.
 ///
-/// See [`Board::board_fen`].
+/// See [`Board::board_fen`] and [`Board::board_fen_with_promoted`].
 #[derive(Debug)]
 pub struct BoardFen<'b> {
     board: &'b Board,
@@ -462,7 +462,17 @@ impl Fen {
 
     /// Prepare the FEN representation for a given [`Setup`].
     ///
-    /// # Examples
+    /// # Errors
+    ///
+    /// Errors if the setup can not be losslessly represented as FEN:
+    ///
+    /// * More than two castling rights per side or castling rights not on the
+    ///   backrank.
+    /// * More than 64 Crazyhouse pocket pieces.
+    /// * Set of squares with promoted Crazyhouse pieces does not match the
+    ///   pieces on the board.
+    ///
+    /// # Example
     ///
     /// ```
     /// use shakmaty::{Setup, Square, fen::{Fen, LossyFenError, LossyFenErrorKinds}};
@@ -473,21 +483,11 @@ impl Fen {
     /// setup.castling_rights.add(Square::G1);
     /// assert_eq!(Fen::try_from_setup(setup.clone()).unwrap_err().kinds(), LossyFenErrorKinds::CASTLING_RIGHTS);
     ///
-    /// // Proceed regardless (pick first two castling rights that can be
-    /// // syntactically represented, even illegal ones).
+    /// // Proceed regardless (picks the first two castling rights that can be
+    /// // syntactically represented, even illegal ones)
     /// let fen = Fen::try_from_setup(setup).unwrap_or_else(LossyFenError::ignore);
     /// assert_eq!(fen.to_string(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w GQkq - 0 1");
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// Errors if the setup can not be losslessly represented as FEN:
-    ///
-    /// * More than two castling rights per side or castling rights not on the
-    ///   backrank.
-    /// * More than 64 Crazyhouse pocket pieces.
-    /// * Set of squares with promoted Crazyhouse pieces does not match the
-    ///   pieces on the board.
     #[allow(clippy::result_large_err)] // Ok variant is also large
     pub fn try_from_setup(setup: Setup) -> Result<Fen, LossyFenError<Fen>> {
         let mut errors = LossyFenErrorKinds::empty();
