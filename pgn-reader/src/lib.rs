@@ -111,7 +111,7 @@
 //!
 //!     fn san(&mut self, san_plus: SanPlus) {
 //!         if let Ok(m) = san_plus.san.to_move(&self.pos) {
-//!             self.pos.play_unchecked(&m);
+//!             self.pos.play_unchecked(m);
 //!         }
 //!     }
 //!
@@ -135,7 +135,7 @@
 //!
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![doc(html_root_url = "https://docs.rs/pgn-reader/0.26.0")]
+#![doc(html_root_url = "https://docs.rs/pgn-reader/0.27.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 

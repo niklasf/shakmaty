@@ -30,7 +30,7 @@ impl Game {
                     Err(_) => return false,
                 };
 
-                self.pos.play_unchecked(&m);
+                self.pos.play_unchecked(m);
             }
             true
         }
@@ -158,7 +158,7 @@ fn main() {
                     for game in recv {
                         let index = game.index;
                         if !game.validate() {
-                            eprintln!("illegal move in game {}", index);
+                            eprintln!("illegal move in game {index}");
                             success.store(false, Ordering::SeqCst);
                         }
                     }

@@ -665,14 +665,9 @@ mod tests {
 
     struct _AssertObjectSafe<R>(Box<BufferedReader<R>>);
 
+    #[derive(Default)]
     struct GameCounter {
         count: usize,
-    }
-
-    impl Default for GameCounter {
-        fn default() -> GameCounter {
-            GameCounter { count: 0 }
-        }
     }
 
     impl Visitor for GameCounter {

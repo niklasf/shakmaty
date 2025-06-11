@@ -71,7 +71,7 @@ impl Visitor for Validator {
     fn san(&mut self, san_plus: SanPlus) {
         if self.success {
             match san_plus.san.to_move(&self.pos) {
-                Ok(m) => self.pos.play_unchecked(&m),
+                Ok(m) => self.pos.play_unchecked(m),
                 Err(err) => {
                     eprintln!("error in game {}: {} {}", self.games, err, san_plus);
                     self.success = false;

@@ -76,7 +76,7 @@ fn main() -> Result<(), io::Error> {
 
         let mut stats = Stats::new();
         reader.read_all(&mut stats)?;
-        println!("{}: {:?}", arg, stats);
+        println!("{arg}: {stats:?}");
     }
 
     Ok(())
