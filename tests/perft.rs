@@ -77,10 +77,12 @@ fn test_chess960_perft() {
 #[cfg(test)]
 #[cfg_attr(miri, ignore)]
 fn test_variant_perft() {
-    test_perft_file::<Antichess>("tests/antichess.perft", 1_000_000);
-    test_perft_file::<Atomic>("tests/atomic.perft", 1_000_000);
-    test_perft_file::<Crazyhouse>("tests/crazyhouse.perft", 1_000_000);
-    test_perft_file::<Horde>("tests/horde.perft", 1_000_000);
-    test_perft_file::<RacingKings>("tests/racingkings.perft", 1_000_000);
-    test_perft_file::<ThreeCheck>("tests/3check.perft", 1_000_000);
+    use shakmaty::variant;
+
+    test_perft_file::<variant::Antichess>("tests/antichess.perft", 1_000_000);
+    test_perft_file::<variant::Atomic>("tests/atomic.perft", 1_000_000);
+    test_perft_file::<variant::Crazyhouse>("tests/crazyhouse.perft", 1_000_000);
+    test_perft_file::<variant::Horde>("tests/horde.perft", 1_000_000);
+    test_perft_file::<variant::RacingKings>("tests/racingkings.perft", 1_000_000);
+    test_perft_file::<variant::ThreeCheck>("tests/3check.perft", 1_000_000);
 }

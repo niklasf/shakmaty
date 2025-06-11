@@ -23,10 +23,6 @@ name = "fen_from_setup"
 path = "fuzz_targets/fen_from_setup.rs"
 
 [[bin]]
-name = "san"
-path = "fuzz_targets/san.rs"
-
-[[bin]]
 name = "san_from_ascii"
 path = "fuzz_targets/san_from_ascii.rs"
 
