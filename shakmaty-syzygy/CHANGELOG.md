@@ -1,5 +1,9 @@
 # Changelog for shakmaty-syzygy
 
+## v0.26.0
+
+- Update shakmaty to `0.28`.
+
 ## v0.25.3
 
 - Optimize reads from the block lengths table.
