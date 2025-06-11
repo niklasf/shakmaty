@@ -853,4 +853,95 @@ mod tests {
         );
         assert_eq!(san.to_string(), "6h8");
     }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn test_from_to_str() {
+        use alloc::string::ToString as _;
+
+        // Normal
+        for role in Role::ALL {
+            for file in [
+                None,
+                Some(File::A),
+                Some(File::B),
+                Some(File::C),
+                Some(File::D),
+                Some(File::E),
+                Some(File::F),
+                Some(File::G),
+                Some(File::H),
+            ] {
+                for rank in [
+                    None,
+                    Some(Rank::First),
+                    Some(Rank::Second),
+                    Some(Rank::Third),
+                    Some(Rank::Fourth),
+                    Some(Rank::Fifth),
+                    Some(Rank::Sixth),
+                    Some(Rank::Seventh),
+                    Some(Rank::Eighth),
+                ] {
+                    for capture in [false, true] {
+                        for to in Square::ALL {
+                            for promotion in [
+                                None,
+                                Some(Role::Pawn),
+                                Some(Role::Knight),
+                                Some(Role::Bishop),
+                                Some(Role::Rook),
+                                Some(Role::Queen),
+                                Some(Role::King),
+                            ] {
+                                for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
+                                    let san = SanPlus {
+                                        san: San::Normal {
+                                            role,
+                                            file,
+                                            rank,
+                                            capture,
+                                            to,
+                                            promotion,
+                                        },
+                                        suffix,
+                                    };
+
+                                    assert_eq!(
+                                        san.to_string().parse::<SanPlus>().expect("roundtrip"),
+                                        san
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Put
+        for role in Role::ALL {
+            for to in Square::ALL {
+                for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
+                    let san = SanPlus {
+                        san: San::Put { role, to },
+                        suffix,
+                    };
+
+                    assert_eq!(san.to_string().parse::<SanPlus>().expect("roundtrip"), san);
+                }
+            }
+        }
+
+        // Null
+        for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
+            let san = SanPlus {
+                san: San::Null,
+                suffix,
+            };
+
+            assert_eq!(san.to_string().parse::<SanPlus>().expect("roundtrip"), san);
+        }
+    }
 }
