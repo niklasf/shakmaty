@@ -1,6 +1,6 @@
 # Changelog for shakmaty
 
-## Upcoming
+## v0.28.0
 
 New features:
 
