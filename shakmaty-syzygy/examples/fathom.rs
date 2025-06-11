@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let mut pos: Chess = opt.fen.into_position(CastlingMode::Chess960)?;
-    let fen = Fen::from_position(pos.clone(), EnPassantMode::Legal);
+    let fen = Fen::from_position(&pos, EnPassantMode::Legal);
 
     let material = Material::from_board(pos.board());
     let wdl = tablebase.probe_wdl(&pos)?;
@@ -86,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => (),
         }
 
-        movetext.push(SanPlus::from_move_and_play_unchecked(&mut pos, &bestmove).to_string());
+        movetext.push(SanPlus::from_move_and_play_unchecked(&mut pos, bestmove).to_string());
         force_movenumber = false;
     }
 

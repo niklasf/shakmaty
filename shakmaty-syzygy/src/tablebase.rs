@@ -320,7 +320,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .into_iter()
             .map(|m| {
                 let mut after = pos.clone();
-                after.play_unchecked(&m);
+                after.play_unchecked(m);
                 WithAfter { m, after }
             })
             .collect::<ArrayVec<_, 256>>();
@@ -330,7 +330,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             .iter()
             .map(|e| {
                 Ok(WithWdlEntry {
-                    m: e.m.clone(),
+                    m: e.m,
                     entry: self.probe(&e.after)?,
                 })
             })
@@ -353,7 +353,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                     immediate_loss: dtz.ignore_rounding() == Dtz(-1)
                         && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
                     zeroing: a.m.is_zeroing(),
-                    m: a.m.clone(),
+                    m: a.m,
                     dtz,
                 })
             })
@@ -433,7 +433,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         let legals = pos.legal_moves();
 
-        for m in legals.iter().filter(|m| m.is_capture()) {
+        for m in legals.iter().copied().filter(|m| m.is_capture()) {
             let mut after = pos.clone();
             after.play_unchecked(m);
             let v = -self.probe_ab_no_ep(&after, Wdl::Loss, -best_capture)?;
@@ -513,7 +513,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         for m in pos.capture_moves() {
             let mut after = pos.clone();
-            after.play_unchecked(&m);
+            after.play_unchecked(m);
             let v = -self.probe_ab_no_ep(&after, -beta, -alpha)?;
             if v >= beta {
                 return Ok(v);
@@ -562,7 +562,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
             for threat in pos.legal_moves() {
                 if threat.role() != Role::Pawn {
                     let mut after = pos.clone();
-                    after.play_unchecked(&threat);
+                    after.play_unchecked(threat);
 
                     if let Some(v_plus) = self.probe_captures(&after, -beta, -alpha)? {
                         let v = -v_plus;
@@ -602,7 +602,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
         for m in pos.capture_moves() {
             let mut after = pos.clone();
-            after.play_unchecked(&m);
+            after.play_unchecked(m);
 
             let (v_plus, _) = self.probe_compulsory_captures(&after, -beta, -alpha, false)?;
             let v = -v_plus;
@@ -690,7 +690,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             let mut pawn_advances = self.pos.legal_moves();
             pawn_advances.retain(|m| !m.is_capture() && m.role() == Role::Pawn);
 
-            for m in &pawn_advances {
+            for m in pawn_advances {
                 let mut after = self.pos.clone();
                 after.play_unchecked(m);
                 let v = -self.tablebase.probe_wdl_after_zeroing(&after)?;
@@ -717,7 +717,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
             Some(MaybeRounded::Precise(Dtz::before_zeroing(wdl.into())))
         };
 
-        for m in &moves {
+        for m in moves {
             let mut after = self.pos.clone();
             after.play_unchecked(m);
             let v = -self.tablebase.probe_dtz(&after)?;

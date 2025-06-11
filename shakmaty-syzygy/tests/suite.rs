@@ -43,16 +43,16 @@ where
             .into_position(CastlingMode::Chess960)
             .expect("legal");
 
-        println!("{} | wdl: {} | dtz: {}", fen, expected_wdl, expected_dtz);
+        println!("{fen} | wdl: {expected_wdl} | dtz: {expected_dtz}");
 
         match tables.probe_wdl_after_zeroing(&pos) {
             Ok(wdl) => assert_eq!(i8::from(wdl), expected_wdl),
-            Err(err) => panic!("probe wdl: {}", err),
+            Err(err) => panic!("probe wdl: {err}"),
         }
 
         match tables.probe_dtz(&pos) {
             Ok(dtz) => assert_eq!(i32::from(dtz.ignore_rounding()), expected_dtz),
-            Err(err) => panic!("probe dtz: {}", err),
+            Err(err) => panic!("probe dtz: {err}"),
         }
     }
 }
