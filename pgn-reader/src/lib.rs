@@ -14,7 +14,7 @@
 //!
 //! Visitor methods are called in this order:
 //!
-//! <img src="https://github.com/tigerros/rust-pgn-reader/blob/clearer-phases/docs/visitor.svg?raw=true" alt="Flow" width="500"/>
+//! ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
 //!
 //! # Examples
 //!
