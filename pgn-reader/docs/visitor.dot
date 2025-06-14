@@ -1,5 +1,6 @@
 digraph G {
     splines=line;
+    graph [ dpi = 175 ];
     S, E [shape=point];
 
     S -> begin_tags -> tag;
