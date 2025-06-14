@@ -1,2 +1,2 @@
-visitor.svg: visitor.d2
-	d2 visitor.d2 visitor.svg --layout elk
+visitor.png: visitor.d2
+	d2 visitor.d2 visitor.png --layout elk
