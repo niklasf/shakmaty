@@ -1,0 +1,25 @@
+S: {label: ""; shape: circle; style.fill: black; width: 10; height: 10}
+E: {label: ""; shape: circle; style.fill: black; width: 10; height: 10}
+
+S -> begin_tags -> tag -> begin_movetext
+
+tag -> tag: {style.stroke-dash: 3}
+
+variation: {
+  san
+  nag
+  comment
+  outcome
+  begin_variation -> end_variation: Skip(true) {style.stroke-dash: 3}
+  begin_variation -> subvariation: Skip(false)
+  subvariation -> end_variation
+}
+
+begin_movetext -> end_game: Skip(true)
+begin_movetext -> variation: Skip(false)
+
+variation -> variation: {style.stroke-dash: 3}
+
+variation -> end_game -> E
+
+variation.begin_variation -> end_game: Skip(true) {style.stroke-dash: 3}

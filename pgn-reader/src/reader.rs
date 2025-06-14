@@ -458,10 +458,9 @@ trait ReadPgn {
             return Ok(None);
         }
 
-        visitor.begin_game();
         visitor.begin_tags();
         self.read_tags(visitor)?;
-        if let Skip(false) = visitor.end_tags() {
+        if let Skip(false) = visitor.begin_movetext() {
             self.read_movetext(visitor)?;
         } else {
             self.skip_movetext()?;

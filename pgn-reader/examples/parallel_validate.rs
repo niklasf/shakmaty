@@ -59,7 +59,7 @@ impl Validator {
 impl Visitor for Validator {
     type Result = Game;
 
-    fn begin_game(&mut self) {
+    fn begin_tags(&mut self) {
         self.games += 1;
     }
 
@@ -92,7 +92,7 @@ impl Visitor for Validator {
         }
     }
 
-    fn end_tags(&mut self) -> Skip {
+    fn begin_movetext(&mut self) -> Skip {
         Skip(!self.game.success)
     }
 
