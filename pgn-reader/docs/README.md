@@ -1,0 +1,1 @@
+To generate the chart, you need to install [D2](https://github.com/terrastruct/d2/blob/master/docs/INSTALL.md).

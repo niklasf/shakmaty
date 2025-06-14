@@ -4,7 +4,7 @@ use crate::types::{Nag, RawComment, RawTag, Skip};
 
 /// Consumes games from a reader.
 ///
-/// ![Flow](https://github.com/tigerros/rust-pgn-reader/blob/clearer-phases/docs/visitor.svg?raw=true)
+/// <img src="https://github.com/tigerros/rust-pgn-reader/blob/clearer-phases/docs/visitor.svg?raw=true" alt="Flow" width="500"/>
 pub trait Visitor {
     /// Value produced by the visitor after reading a game.
     type Result;
