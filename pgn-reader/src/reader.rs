@@ -33,15 +33,11 @@ trait ReadPgn {
     fn invalid_data() -> Self::Err;
 
     fn peek(&self) -> Option<u8> {
-        self.buffer().first().cloned()
+        self.buffer().first().copied()
     }
 
-    fn bump(&mut self) -> Option<u8> {
-        let head = self.peek();
-        if head.is_some() {
-            self.consume(1);
-        }
-        head
+    fn bump(&mut self) {
+        self.consume(1);
     }
 
     fn remaining(&self) -> usize {
@@ -617,7 +613,7 @@ impl<R: Read> ReadPgn for BufferedReader<R> {
             self.buffer.inner.fill(size);
         }
 
-        Ok(self.buffer.inner.data().first().cloned())
+        Ok(self.buffer.inner.data().first().copied())
     }
 
     fn invalid_data() -> io::Error {
