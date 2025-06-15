@@ -63,9 +63,10 @@ impl Buffer {
     }
 
     pub fn backshift(&mut self) {
-        self.buf.copy_within(self.pos..self.filled, 0);
-        self.filled -= self.pos;
+        let range = self.pos..self.filled;
         self.pos = 0;
+        self.filled = range.len();
+        self.buf.copy_within(range, 0);
     }
 }
 
