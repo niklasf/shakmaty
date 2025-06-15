@@ -400,7 +400,7 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                 }
                 b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
-                | b'Q' | b'K' | b'@' | b'-' => {
+                | b'Q' | b'K' | b'@' | b'-' | b'O' => {
                     let token_end = self.find_token_end(1);
                     if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
                         visitor.san(san);
