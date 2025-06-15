@@ -6,7 +6,7 @@ use std::{
 };
 
 /// Tell the reader to skip over a game or variation.
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 #[must_use]
 pub struct Skip(pub bool);
 
@@ -88,7 +88,7 @@ impl From<u8> for Nag {
 }
 
 /// Error when parsing an invalid NAG.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct InvalidNag {
     _priv: (),
 }
@@ -128,7 +128,7 @@ impl FromStr for Nag {
 /// > A quote inside a string is represented by the backslash immediately
 /// > followed by a quote. A backslash inside a string is represented by
 /// > two adjacent backslashes.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct RawTag<'a>(pub &'a [u8]);
 
 impl<'a> RawTag<'a> {
@@ -189,7 +189,7 @@ impl<'a> fmt::Debug for RawTag<'a> {
 }
 
 /// A comment, excluding the braces.
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct RawComment<'a>(pub &'a [u8]);
 
 impl<'a> RawComment<'a> {
