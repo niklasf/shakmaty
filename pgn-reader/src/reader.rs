@@ -230,26 +230,31 @@ impl<R: Read> BufferedReader<R> {
     }
 
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
-        while let &[ch, ..] = self
-            .buffer
-            .ensure_bytes(self.max_comment_length, &mut self.reader)?
-        {
+        while let &[ch, ..] = self.buffer.ensure_bytes(10, &mut self.reader)? {
             match ch {
                 b'{' => {
                     self.buffer.bump();
 
                     let right_brace =
                         if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
-                            right_brace
+                            Some(right_brace)
                         } else {
-                            self.buffer.discard_data();
-                            self.skip_until(b'}')?;
-                            self.buffer.bump();
-                            return Err(io::Error::new(
-                                io::ErrorKind::InvalidData,
-                                "unterminated comment",
-                            ));
+                            let skip = self.buffer.data().len();
+                            self.buffer
+                                .ensure_bytes(self.max_comment_length, &mut self.reader)?;
+                            memchr::memchr(b'}', &self.buffer.data()[skip..])
+                                .map(|right_brace| right_brace + skip)
                         };
+
+                    let Some(right_brace) = right_brace else {
+                        self.buffer.discard_data();
+                        self.skip_until(b'}')?;
+                        self.buffer.bump();
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "comment unterminated or too long",
+                        ));
+                    };
 
                     visitor.comment(RawComment(&self.buffer.data()[..right_brace]));
                     self.buffer.consume(right_brace + 1);
