@@ -1,15 +1,22 @@
 digraph G {
+    splines=line;
+    graph [ dpi = 175 ];
     S, E [shape=point];
 
-    S -> begin_game -> begin_tags -> tag;
-    tag [shape=record,label="tag|"];
-    tag -> tag -> end_tags;
+    S -> begin_tags -> tag;
+    tag [shape=record,label="tag"];
+    tag -> tag -> begin_movetext;
 
-    end_tags -> end_game [label="Skip(true)",style=dotted];
-    end_tags -> moves [label="Skip(false)"];
+    begin_movetext -> end_game [label="Skip(true)",style=dotted];
+    begin_movetext -> moves [label="Skip(false)"];
 
-    moves [shape=record,label="san|nag|comment|outcome|<ral> begin_variation|<rar>end_variation|"];
-    moves:ral -> moves:rar [taillabel="Skip(true)",style="dotted"];
+    moves [shape=record,label="san|nag|comment|outcome|<beginvar>begin_variation"];
+    subvariation [shape=record];
+    moves:beginvar -> subvariation [label="Skip(false)"];
+    end_variation [shape=record];
+    subvariation -> end_variation;
+    moves:beginvar -> end_variation [label="Skip(true)",style=dotted];
+    moves:beginvar -> end_game [label="Skip(true)",style=dotted];
     moves -> moves;
 
     moves -> end_game -> E;

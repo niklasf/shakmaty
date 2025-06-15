@@ -44,7 +44,7 @@ impl MoveCounter {
 impl Visitor for MoveCounter {
     type Result = usize;
 
-    fn begin_game(&mut self) {
+    fn begin_tags(&mut self) {
         self.moves = 0;
     }
 

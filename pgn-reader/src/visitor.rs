@@ -9,17 +9,14 @@ pub trait Visitor {
     /// Value produced by the visitor after reading a game.
     type Result;
 
-    /// Called at the start of the game.
-    fn begin_game(&mut self) {}
-
-    /// Called directly before reading game tags.
+    /// Called at the start of the game; directly before reading game tags.
     fn begin_tags(&mut self) {}
     /// Called when parsing a game tag pair like `[White "Deep Blue"]`.
     fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {}
-    /// Called after reading the tags of a game. May skip quickly over
-    /// the following move text directly to
+    /// Called after reading the tags of a game; before reading the movetext.
+    /// May skip over the following movetext directly to
     /// [`end_game()`](trait.Visitor.html#tymethod.end_game).
-    fn end_tags(&mut self) -> Skip {
+    fn begin_movetext(&mut self) -> Skip {
         Skip(false)
     }
 
@@ -51,7 +48,7 @@ pub(crate) struct SkipVisitor;
 impl Visitor for SkipVisitor {
     type Result = ();
 
-    fn end_tags(&mut self) -> Skip {
+    fn begin_movetext(&mut self) -> Skip {
         Skip(true)
     }
     fn begin_variation(&mut self) -> Skip {
