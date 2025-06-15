@@ -138,6 +138,7 @@
 #![doc(html_root_url = "https://docs.rs/pgn-reader/0.27.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
+#![warn(missing_copy_implementations)]
 
 mod reader;
 mod types;

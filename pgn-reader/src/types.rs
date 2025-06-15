@@ -6,12 +6,12 @@ use std::{
 };
 
 /// Tell the reader to skip over a game or variation.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 #[must_use]
 pub struct Skip(pub bool);
 
 /// A numeric annotation glyph like `?`, `!!` or `$42`.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Nag(pub u8);
 
 impl Nag {
@@ -88,7 +88,7 @@ impl From<u8> for Nag {
 }
 
 /// Error when parsing an invalid NAG.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct InvalidNag {
     _priv: (),
 }
@@ -128,7 +128,7 @@ impl FromStr for Nag {
 /// > A quote inside a string is represented by the backslash immediately
 /// > followed by a quote. A backslash inside a string is represented by
 /// > two adjacent backslashes.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct RawTag<'a>(pub &'a [u8]);
 
 impl<'a> RawTag<'a> {
@@ -189,7 +189,7 @@ impl<'a> fmt::Debug for RawTag<'a> {
 }
 
 /// A comment, excluding the braces.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct RawComment<'a>(pub &'a [u8]);
 
 impl<'a> RawComment<'a> {
