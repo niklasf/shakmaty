@@ -320,8 +320,12 @@ impl<R: Read> BufferedReader<R> {
                         visitor.outcome(Some(Outcome::Draw));
                     } else {
                         self.buffer.bump();
-                        while let Some(b'0'..=b'9') = self.buffer.peek() {
-                            self.buffer.bump();
+                        while let Some(ch) = self.buffer.peek() {
+                            if b'0' <= ch && ch <= b'9' {
+                                self.buffer.bump();
+                            } else {
+                                break;
+                            }
                         }
                         while let Some(b'.') = self.buffer.peek() {
                             self.buffer.bump();
@@ -330,8 +334,12 @@ impl<R: Read> BufferedReader<R> {
                 }
                 b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => {
                     self.buffer.bump();
-                    while let Some(b'0'..=b'9') = self.buffer.peek() {
-                        self.buffer.bump();
+                    while let Some(ch) = self.buffer.peek() {
+                        if b'0' <= ch && ch <= b'9' {
+                            self.buffer.bump();
+                        } else {
+                            break;
+                        }
                     }
                     while let Some(b'.') = self.buffer.peek() {
                         self.buffer.bump();
