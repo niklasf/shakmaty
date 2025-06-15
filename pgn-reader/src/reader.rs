@@ -377,15 +377,13 @@ impl<R: Read> BufferedReader<R> {
                     visitor.outcome(None);
                     self.buffer.bump();
                 }
-                b' ' | b'\t' | b'\r' | b'P' | b'.' => {
+                b'2'..=b'9' | b' ' | b'\t' | b'\r' | b'P' | b'.' => {
                     self.buffer.bump();
                 }
                 _ => {
                     let token_end = self.find_token_end(1);
-                    if ch > b'9' || ch == b'-' {
-                        if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
-                            visitor.san(san);
-                        }
+                    if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
+                        visitor.san(san);
                     }
                     self.buffer.consume(token_end);
                 }
