@@ -14,7 +14,6 @@ edition = "2021"
 memchr = "2.2"
 btoi = "0.5"
 shakmaty = "0.28"
-circular = "0.3"
 
 [dev-dependencies]
 crossbeam = "0.8"

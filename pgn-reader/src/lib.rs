@@ -60,7 +60,7 @@
 //!                 { game paused due to bad weather }
 //!                 2... Nf6 *";
 //!
-//!     let mut reader = BufferedReader::new_cursor(&pgn[..]);
+//!     let mut reader = BufferedReader::new(io::Cursor::new(&pgn));
 //!
 //!     let mut counter = MoveCounter::new();
 //!     let moves = reader.read_game(&mut counter)?;
@@ -123,7 +123,7 @@
 //! fn main() -> io::Result<()> {
 //!     let pgn = b"1. f3 e5 2. g4 Qh4#";
 //!
-//!     let mut reader = BufferedReader::new_cursor(&pgn[..]);
+//!     let mut reader = BufferedReader::new(io::Cursor::new(&pgn));
 //!
 //!     let mut visitor = LastPosition::new();
 //!     let pos = reader.read_game(&mut visitor)?;
@@ -139,6 +139,7 @@
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 
+mod buffer;
 mod reader;
 mod types;
 mod visitor;

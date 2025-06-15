@@ -10,102 +10,87 @@ use shakmaty::{
 
 // use slice_deque::SliceDeque;
 use crate::{
+    buffer::Buffer,
     types::{Nag, RawComment, RawTag, Skip},
     visitor::{SkipVisitor, Visitor},
 };
 
-const MIN_BUFFER_SIZE: usize = 8192;
+#[derive(Debug, Clone)]
+pub struct BufferedReader<R> {
+    reader: R,
+    buffer: Buffer,
+    max_tag_line_length: usize,
+    max_comment_length: usize,
+}
 
-trait ReadPgn {
-    type Err;
-
-    /// Fill the buffer. The buffer must then contain at least MIN_BUFFER_SIZE
-    /// bytes or all remaining bytes until the end of the source.
-    fn fill_buffer_and_peek(&mut self) -> Result<Option<u8>, Self::Err>;
-
-    /// Returns the current buffer.
-    fn buffer(&self) -> &[u8];
-
-    /// Consume n bytes from the buffer.
-    fn consume(&mut self, n: usize);
-
-    /// Constructs a parser error.
-    fn invalid_data() -> Self::Err;
-
-    fn peek(&self) -> Option<u8> {
-        self.buffer().first().copied()
+impl<R: Read> BufferedReader<R> {
+    pub fn new(reader: R) -> BufferedReader<R> {
+        BufferedReader {
+            reader,
+            buffer: Buffer::with_capacity(1 << 14),
+            max_tag_line_length: 1024,
+            max_comment_length: 4096,
+        }
     }
 
-    fn bump(&mut self) {
-        self.consume(1);
-    }
-
-    fn remaining(&self) -> usize {
-        self.buffer().len()
-    }
-
-    fn consume_all(&mut self) {
-        let remaining = self.remaining();
-        self.consume(remaining);
-    }
-
-    fn skip_bom(&mut self) -> Result<(), Self::Err> {
-        self.fill_buffer_and_peek()?;
-        if self.buffer().starts_with(b"\xef\xbb\xbf") {
-            self.consume(3);
+    fn skip_bom(&mut self) -> io::Result<()> {
+        if self
+            .buffer
+            .ensure_bytes(3, &mut self.reader)?
+            .starts_with(b"\xef\xbb\xbf")
+        {
+            self.buffer.consume(3);
         }
         Ok(())
     }
 
-    fn skip_until(&mut self, needle: u8) -> Result<(), Self::Err> {
-        while self.fill_buffer_and_peek()?.is_some() {
-            if let Some(pos) = memchr::memchr(needle, self.buffer()) {
-                self.consume(pos);
+    fn skip_until(&mut self, needle: u8) -> io::Result<()> {
+        while !self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
+            if let Some(pos) = memchr::memchr(needle, self.buffer.data()) {
+                self.buffer.consume(pos);
                 return Ok(());
             } else {
-                self.consume_all();
+                self.buffer.discard_data();
             }
         }
-
         Ok(())
     }
 
-    fn skip_line(&mut self) -> Result<(), Self::Err> {
+    fn skip_line(&mut self) -> io::Result<()> {
         self.skip_until(b'\n')?;
-        self.bump();
+        self.buffer.bump();
         Ok(())
     }
 
-    fn skip_whitespace(&mut self) -> Result<(), Self::Err> {
-        while let Some(ch) = self.fill_buffer_and_peek()? {
+    fn skip_whitespace(&mut self) -> io::Result<()> {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b'\n' => {
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b'%' => {
-                    self.bump();
+                    self.buffer.bump();
                     self.skip_line()?;
                 }
                 _ => return Ok(()),
             }
         }
-
         Ok(())
     }
 
-    fn skip_ket(&mut self) -> Result<(), Self::Err> {
-        while let Some(ch) = self.fill_buffer_and_peek()? {
+    fn skip_ket(&mut self) -> io::Result<()> {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b']' => {
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b'%' => {
-                    self.bump();
+                    self.buffer.bump();
                     self.skip_line()?;
                     return Ok(());
                 }
                 b'\n' => {
-                    self.bump();
+                    self.buffer.bump();
                     return Ok(());
                 }
                 _ => {
@@ -117,27 +102,33 @@ trait ReadPgn {
         Ok(())
     }
 
-    fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
-        while let Some(ch) = self.fill_buffer_and_peek()? {
+    fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+        while let &[ch, ..] = self
+            .buffer
+            .ensure_bytes(self.max_tag_line_length, &mut self.reader)?
+        {
             match ch {
                 b'[' => {
-                    self.bump();
+                    self.buffer.bump();
 
-                    let left_quote = match memchr::memchr3(b'"', b'\n', b']', self.buffer()) {
-                        Some(left_quote) if self.buffer()[left_quote] == b'"' => left_quote,
+                    let left_quote = match memchr::memchr3(b'"', b'\n', b']', self.buffer.data()) {
+                        Some(left_quote) if self.buffer.data()[left_quote] == b'"' => left_quote,
                         Some(eol) => {
-                            self.consume(eol + 1);
+                            self.buffer.consume(eol + 1);
                             self.skip_ket()?;
                             continue;
                         }
                         None => {
-                            self.consume_all();
+                            self.buffer.discard_data();
                             self.skip_line()?;
-                            return Err(Self::invalid_data());
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                "unterminated tag",
+                            ));
                         }
                     };
 
-                    let space = if left_quote > 0 && self.buffer()[left_quote - 1] == b' ' {
+                    let space = if left_quote > 0 && self.buffer.data()[left_quote - 1] == b' ' {
                         left_quote - 1
                     } else {
                         left_quote
@@ -146,70 +137,78 @@ trait ReadPgn {
                     let value_start = left_quote + 1;
                     let mut right_quote = value_start;
                     let consumed = loop {
-                        match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer()[right_quote..]) {
-                            Some(delta) if self.buffer()[right_quote + delta] == b'"' => {
+                        match memchr::memchr3(
+                            b'\\',
+                            b'"',
+                            b'\n',
+                            &self.buffer.data()[right_quote..],
+                        ) {
+                            Some(delta) if self.buffer.data()[right_quote + delta] == b'"' => {
                                 right_quote += delta;
                                 break right_quote + 1;
                             }
-                            Some(delta) if self.buffer()[right_quote + delta] == b'\n' => {
+                            Some(delta) if self.buffer.data()[right_quote + delta] == b'\n' => {
                                 right_quote += delta;
                                 break right_quote;
                             }
                             Some(delta) => {
                                 // Skip escaped character.
-                                right_quote = min(right_quote + delta + 2, self.remaining());
+                                right_quote =
+                                    min(right_quote + delta + 2, self.buffer.data().len());
                             }
                             None => {
-                                self.consume_all();
+                                self.buffer.discard_data();
                                 self.skip_line()?;
-                                return Err(Self::invalid_data());
+                                return Err(io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    "unterminated tag",
+                                ));
                             }
                         }
                     };
 
                     visitor.tag(
-                        &self.buffer()[..space],
-                        RawTag(&self.buffer()[value_start..right_quote]),
+                        &self.buffer.data()[..space],
+                        RawTag(&self.buffer.data()[value_start..right_quote]),
                     );
-                    self.consume(consumed);
+                    self.buffer.consume(consumed);
                     self.skip_ket()?;
                 }
                 b'%' => self.skip_line()?,
                 _ => return Ok(()),
             }
         }
-
         Ok(())
     }
 
-    fn skip_movetext(&mut self) -> Result<(), Self::Err> {
-        while let Some(ch) = self.fill_buffer_and_peek()? {
-            self.bump();
+    fn skip_movetext(&mut self) -> io::Result<()> {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
+            self.buffer.bump();
 
             match ch {
                 b'{' => {
                     self.skip_until(b'}')?;
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b';' => {
                     self.skip_until(b'\n')?;
                 }
-                b'\n' => match self.peek() {
+                b'\n' => match self.buffer.peek() {
                     Some(b'%') => self.skip_until(b'\n')?,
                     Some(b'\n') | Some(b'[') => break,
                     Some(b'\r') => {
-                        self.bump();
-                        if let Some(b'\n') = self.peek() {
+                        self.buffer.bump();
+                        if let Some(b'\n') = self.buffer.peek() {
                             break;
                         }
                     }
                     _ => continue,
                 },
                 _ => {
-                    if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer()) {
-                        self.consume(consumed);
+                    if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer.data()) {
+                        self.buffer.consume(consumed);
                     } else {
-                        self.consume_all();
+                        self.buffer.discard_data();
                     }
                 }
             }
@@ -220,7 +219,7 @@ trait ReadPgn {
 
     fn find_token_end(&mut self, start: usize) -> usize {
         let mut end = start;
-        for &ch in &self.buffer()[start..] {
+        for &ch in &self.buffer.data()[start..] {
             match ch {
                 b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$'
                 | b';' | b'.' => break,
@@ -230,39 +229,45 @@ trait ReadPgn {
         end
     }
 
-    fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> Result<(), Self::Err> {
-        while let Some(ch) = self.fill_buffer_and_peek()? {
+    fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+        while let &[ch, ..] = self
+            .buffer
+            .ensure_bytes(self.max_comment_length, &mut self.reader)?
+        {
             match ch {
                 b'{' => {
-                    self.bump();
+                    self.buffer.bump();
 
-                    let right_brace = if let Some(right_brace) = memchr::memchr(b'}', self.buffer())
-                    {
-                        right_brace
-                    } else {
-                        self.consume_all();
-                        self.skip_until(b'}')?;
-                        self.bump();
-                        return Err(Self::invalid_data());
-                    };
+                    let right_brace =
+                        if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
+                            right_brace
+                        } else {
+                            self.buffer.discard_data();
+                            self.skip_until(b'}')?;
+                            self.buffer.bump();
+                            return Err(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                "unterminated comment",
+                            ));
+                        };
 
-                    visitor.comment(RawComment(&self.buffer()[..right_brace]));
-                    self.consume(right_brace + 1);
+                    visitor.comment(RawComment(&self.buffer.data()[..right_brace]));
+                    self.buffer.consume(right_brace + 1);
                 }
                 b'\n' => {
-                    self.bump();
+                    self.buffer.bump();
 
-                    match self.peek() {
+                    match self.buffer.peek() {
                         Some(b'%') => {
-                            self.bump();
+                            self.buffer.bump();
                             self.skip_line()?;
                         }
                         Some(b'[') | Some(b'\n') => {
                             break;
                         }
                         Some(b'\r') => {
-                            self.bump();
-                            if self.peek() == Some(b'\n') {
+                            self.buffer.bump();
+                            if self.buffer.peek() == Some(b'\n') {
                                 break;
                             }
                         }
@@ -270,41 +275,41 @@ trait ReadPgn {
                     }
                 }
                 b';' => {
-                    self.bump();
+                    self.buffer.bump();
                     self.skip_until(b'\n')?;
                 }
                 b'1' => {
-                    self.bump();
-                    if self.buffer().starts_with(b"-0") {
-                        self.consume(2);
+                    self.buffer.bump();
+                    if self.buffer.data().starts_with(b"-0") {
+                        self.buffer.consume(2);
                         visitor.outcome(Some(Outcome::Decisive {
                             winner: Color::White,
                         }));
-                    } else if self.buffer().starts_with(b"/2-1/2") {
-                        self.consume(6);
+                    } else if self.buffer.data().starts_with(b"/2-1/2") {
+                        self.buffer.consume(6);
                         visitor.outcome(Some(Outcome::Draw));
                     } else {
                         let token_end = self.find_token_end(0);
-                        self.consume(token_end);
+                        self.buffer.consume(token_end);
                     }
                 }
                 b'0' => {
-                    self.bump();
-                    if self.buffer().starts_with(b"-1") {
-                        self.consume(2);
+                    self.buffer.bump();
+                    if self.buffer.data().starts_with(b"-1") {
+                        self.buffer.consume(2);
                         visitor.outcome(Some(Outcome::Decisive {
                             winner: Color::Black,
                         }));
-                    } else if self.buffer().starts_with(b"-0") {
+                    } else if self.buffer.data().starts_with(b"-0") {
                         // Castling notation with zeros.
-                        self.consume(2);
-                        let side = if self.buffer().starts_with(b"-0") {
-                            self.consume(2);
+                        self.buffer.consume(2);
+                        let side = if self.buffer.data().starts_with(b"-0") {
+                            self.buffer.consume(2);
                             CastlingSide::QueenSide
                         } else {
                             CastlingSide::KingSide
                         };
-                        let suffix = match self.peek() {
+                        let suffix = match self.buffer.peek() {
                             Some(b'+') => Some(Suffix::Check),
                             Some(b'#') => Some(Suffix::Checkmate),
                             _ => None,
@@ -315,36 +320,36 @@ trait ReadPgn {
                         });
                     } else {
                         let token_end = self.find_token_end(0);
-                        self.consume(token_end);
+                        self.buffer.consume(token_end);
                     }
                 }
                 b'(' => {
-                    self.bump();
+                    self.buffer.bump();
                     if let Skip(true) = visitor.begin_variation() {
                         self.skip_variation()?;
                     }
                 }
                 b')' => {
-                    self.bump();
+                    self.buffer.bump();
                     visitor.end_variation();
                 }
                 b'$' => {
-                    self.bump();
+                    self.buffer.bump();
                     let token_end = self.find_token_end(0);
-                    if let Ok(nag) = btoi::btou(&self.buffer()[..token_end]) {
+                    if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
                         visitor.nag(Nag(nag));
                     }
-                    self.consume(token_end);
+                    self.buffer.consume(token_end);
                 }
                 b'!' => {
-                    self.bump();
-                    match self.peek() {
+                    self.buffer.bump();
+                    match self.buffer.peek() {
                         Some(b'!') => {
-                            self.bump();
+                            self.buffer.bump();
                             visitor.nag(Nag::BRILLIANT_MOVE);
                         }
                         Some(b'?') => {
-                            self.bump();
+                            self.buffer.bump();
                             visitor.nag(Nag::SPECULATIVE_MOVE);
                         }
                         _ => {
@@ -353,14 +358,14 @@ trait ReadPgn {
                     }
                 }
                 b'?' => {
-                    self.bump();
-                    match self.peek() {
+                    self.buffer.bump();
+                    match self.buffer.peek() {
                         Some(b'!') => {
-                            self.bump();
+                            self.buffer.bump();
                             visitor.nag(Nag::DUBIOUS_MOVE);
                         }
                         Some(b'?') => {
-                            self.bump();
+                            self.buffer.bump();
                             visitor.nag(Nag::BLUNDER);
                         }
                         _ => {
@@ -370,19 +375,19 @@ trait ReadPgn {
                 }
                 b'*' => {
                     visitor.outcome(None);
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b' ' | b'\t' | b'\r' | b'P' | b'.' => {
-                    self.bump();
+                    self.buffer.bump();
                 }
                 _ => {
                     let token_end = self.find_token_end(1);
                     if ch > b'9' || ch == b'-' {
-                        if let Ok(san) = SanPlus::from_ascii(&self.buffer()[..token_end]) {
+                        if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
                             visitor.san(san);
                         }
                     }
-                    self.consume(token_end);
+                    self.buffer.consume(token_end);
                 }
             }
         }
@@ -390,36 +395,36 @@ trait ReadPgn {
         Ok(())
     }
 
-    fn skip_variation(&mut self) -> Result<(), Self::Err> {
+    fn skip_variation(&mut self) -> io::Result<()> {
         let mut depth = 0usize;
 
-        while let Some(ch) = self.fill_buffer_and_peek()? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             match ch {
                 b'(' => {
                     depth += 1;
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b')' => {
                     if let Some(d) = depth.checked_sub(1) {
-                        self.bump();
+                        self.buffer.bump();
                         depth = d;
                     } else {
                         break;
                     }
                 }
                 b'{' => {
-                    self.bump();
+                    self.buffer.bump();
                     self.skip_until(b'}')?;
-                    self.bump();
+                    self.buffer.bump();
                 }
                 b';' => {
-                    self.bump();
+                    self.buffer.bump();
                     self.skip_until(b'\n')?;
                 }
                 b'\n' => {
-                    match self.buffer().get(1).cloned() {
+                    match self.buffer.data().get(1).cloned() {
                         Some(b'%') => {
-                            self.consume(2);
+                            self.buffer.consume(2);
                             self.skip_until(b'\n')?;
                         }
                         Some(b'[') | Some(b'\n') => {
@@ -428,17 +433,17 @@ trait ReadPgn {
                         }
                         Some(b'\r') => {
                             // Do not consume the first or second line break.
-                            if self.buffer().get(2).cloned() == Some(b'\n') {
+                            if self.buffer.data().get(2).cloned() == Some(b'\n') {
                                 break;
                             }
                         }
                         _ => {
-                            self.bump();
+                            self.buffer.bump();
                         }
                     }
                 }
                 _ => {
-                    self.bump();
+                    self.buffer.bump();
                 }
             }
         }
@@ -446,11 +451,11 @@ trait ReadPgn {
         Ok(())
     }
 
-    fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> Result<Option<V::Result>, Self::Err> {
+    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
         self.skip_bom()?;
         self.skip_whitespace()?;
 
-        if self.fill_buffer_and_peek()?.is_none() {
+        if self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             return Ok(None);
         }
 
@@ -466,94 +471,8 @@ trait ReadPgn {
         Ok(Some(visitor.end_game()))
     }
 
-    fn skip_game(&mut self) -> Result<bool, Self::Err> {
+    pub fn skip_game(&mut self) -> io::Result<bool> {
         self.read_game(&mut SkipVisitor).map(|r| r.is_some())
-    }
-}
-
-/// Internal read ahead buffer.
-#[derive(Debug, Clone)]
-pub struct Buffer {
-    inner: circular::Buffer,
-}
-
-impl Buffer {
-    fn new() -> Buffer {
-        Buffer {
-            inner: circular::Buffer::with_capacity(MIN_BUFFER_SIZE * 2),
-        }
-    }
-}
-
-impl AsRef<[u8]> for Buffer {
-    fn as_ref(&self) -> &[u8] {
-        self.inner.data()
-    }
-}
-
-/// A buffered PGN reader.
-#[derive(Debug)]
-pub struct BufferedReader<R> {
-    inner: R,
-    buffer: Buffer,
-}
-
-impl<T: AsRef<[u8]>> BufferedReader<Cursor<T>> {
-    /// Create a new reader by wrapping a byte slice in a [`Cursor`].
-    ///
-    /// ```
-    /// use pgn_reader::BufferedReader;
-    ///
-    /// let pgn = b"1. e4 e5 *";
-    /// let reader = BufferedReader::new_cursor(&pgn[..]);
-    /// ```
-    ///
-    /// [`Cursor`]: https://doc.rust-lang.org/std/io/struct.Cursor.html
-    pub fn new_cursor(inner: T) -> BufferedReader<Cursor<T>> {
-        BufferedReader::new(Cursor::new(inner))
-    }
-}
-
-impl<R: Read> BufferedReader<R> {
-    /// Create a new buffered PGN reader.
-    ///
-    /// ```
-    /// # use std::io;
-    /// # fn try_main() -> io::Result<()> {
-    /// use std::fs::File;
-    /// use pgn_reader::BufferedReader;
-    ///
-    /// let file = File::open("example.pgn")?;
-    /// let reader = BufferedReader::new(file);
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub fn new(inner: R) -> BufferedReader<R> {
-        BufferedReader {
-            inner,
-            buffer: Buffer::new(),
-        }
-    }
-
-    /// Read a single game, if any, and returns the result produced by the
-    /// visitor. Returns Ok(None) if the underlying reader is empty.
-    ///
-    /// # Errors
-    ///
-    /// * I/O error from the underlying reader.
-    /// * Irrecoverable parser errors.
-    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
-        ReadPgn::read_game(self, visitor)
-    }
-
-    /// Skip a single game, if any.
-    ///
-    /// # Errors
-    ///
-    /// * I/O error from the underlying reader.
-    /// * Irrecoverable parser errors.
-    pub fn skip_game<V: Visitor>(&mut self) -> io::Result<bool> {
-        ReadPgn::skip_game(self)
     }
 
     /// Read all games.
@@ -582,7 +501,7 @@ impl<R: Read> BufferedReader<R> {
 
     /// Gets the remaining bytes in the buffer and the underlying reader.
     pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
-        Cursor::new(self.buffer).chain(self.inner)
+        Cursor::new(self.buffer).chain(self.reader)
     }
 
     /// Returns whether the reader has another game to parse, but does not
@@ -594,42 +513,7 @@ impl<R: Read> BufferedReader<R> {
     pub fn has_more(&mut self) -> io::Result<bool> {
         self.skip_bom()?;
         self.skip_whitespace()?;
-        Ok(self.fill_buffer_and_peek()?.is_some())
-    }
-}
-
-impl<R: Read> ReadPgn for BufferedReader<R> {
-    type Err = io::Error;
-
-    fn fill_buffer_and_peek(&mut self) -> io::Result<Option<u8>> {
-        while self.buffer.inner.available_data() < MIN_BUFFER_SIZE {
-            let remainder = self.buffer.inner.space();
-            let size = self.inner.read(remainder)?;
-
-            if size == 0 {
-                break;
-            }
-
-            self.buffer.inner.fill(size);
-        }
-
-        Ok(self.buffer.inner.data().first().copied())
-    }
-
-    fn invalid_data() -> io::Error {
-        io::Error::from(io::ErrorKind::InvalidData)
-    }
-
-    fn buffer(&self) -> &[u8] {
-        self.buffer.inner.data()
-    }
-
-    fn consume(&mut self, bytes: usize) {
-        self.buffer.inner.consume(bytes);
-    }
-
-    fn peek(&self) -> Option<u8> {
-        self.buffer.inner.data().first().cloned()
+        Ok(!self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty())
     }
 }
 
