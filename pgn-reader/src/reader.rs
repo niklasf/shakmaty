@@ -278,21 +278,6 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                     self.skip_until(b'\n')?;
                 }
-                b'1' => {
-                    self.buffer.bump();
-                    if self.buffer.data().starts_with(b"-0") {
-                        self.buffer.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive {
-                            winner: Color::White,
-                        }));
-                    } else if self.buffer.data().starts_with(b"/2-1/2") {
-                        self.buffer.consume(6);
-                        visitor.outcome(Some(Outcome::Draw));
-                    } else {
-                        let token_end = self.find_token_end(0);
-                        self.buffer.consume(token_end);
-                    }
-                }
                 b'0' => {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-1") {
@@ -321,6 +306,35 @@ impl<R: Read> BufferedReader<R> {
                     } else {
                         let token_end = self.find_token_end(0);
                         self.buffer.consume(token_end);
+                    }
+                }
+                b'1' => {
+                    self.buffer.bump();
+                    if self.buffer.data().starts_with(b"-0") {
+                        self.buffer.consume(2);
+                        visitor.outcome(Some(Outcome::Decisive {
+                            winner: Color::White,
+                        }));
+                    } else if self.buffer.data().starts_with(b"/2-1/2") {
+                        self.buffer.consume(6);
+                        visitor.outcome(Some(Outcome::Draw));
+                    } else {
+                        self.buffer.bump();
+                        while let Some(b'0'..=b'9') = self.buffer.peek() {
+                            self.buffer.bump();
+                        }
+                        while let Some(b'.') = self.buffer.peek() {
+                            self.buffer.bump();
+                        }
+                    }
+                }
+                b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => {
+                    self.buffer.bump();
+                    while let Some(b'0'..=b'9') = self.buffer.peek() {
+                        self.buffer.bump();
+                    }
+                    while let Some(b'.') = self.buffer.peek() {
+                        self.buffer.bump();
                     }
                 }
                 b'(' => {
@@ -377,21 +391,13 @@ impl<R: Read> BufferedReader<R> {
                     visitor.outcome(None);
                     self.buffer.bump();
                 }
-                b'a'..=b'h' | b'N' | b'B' | b'R' | b'Q' | b'K' | b'@' | b'-' => {
+                b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
+                | b'Q' | b'K' | b'@' | b'-' => {
                     let token_end = self.find_token_end(1);
                     if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
                         visitor.san(san);
                     }
                     self.buffer.consume(token_end);
-                }
-                b'1'..=b'9' => {
-                    self.buffer.bump();
-                    while let Some(b'0'..=b'9') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
-                    while let Some(b'.') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
                 }
                 _ => {
                     self.buffer.bump();
