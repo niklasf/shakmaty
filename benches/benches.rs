@@ -4,6 +4,7 @@ use shakmaty::{
     packed::{PackedSetup, PackedUciMove},
     perft,
     san::San,
+    san::SanPlus,
     uci::UciMove,
     zobrist::{Zobrist64, ZobristHash},
     CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
@@ -57,7 +58,7 @@ fn bench_play_sans() -> Chess {
     ];
 
     let mut pos = black_box(Chess::default());
-    for san in black_box(pgn).iter() {
+    for san in black_box(pgn) {
         let m = san
             .parse::<San>()
             .expect("valid san")
@@ -67,6 +68,22 @@ fn bench_play_sans() -> Chess {
         pos.play_unchecked(m);
     }
     pos
+}
+
+fn bench_san_roundtrip() {
+    let pgn = [
+        "Nf3", "g6", "d4", "d5", "c4", "c6", "cxd5", "cxd5", "Nc3", "Nf6", "Bf4", "Nc6", "e3",
+        "Bg7", "Be2", "O-O", "Ne5", "Ne4", "Nxe4", "dxe4", "Nxc6", "bxc6", "O-O", "b3", "c5",
+        "Rc1", "cxd4", "exd4", "Qxd4", "Be3", "Qxd1", "Rfxd1", "a5", "Rc7", "a4", "Rxe7", "axb3",
+        "axb3", "Bxb3", "Re1", "Be6", "h3", "Rfe8", "Rc7", "Rec8", "Rcc1", "Rxc1", "Rxc1", "Ra1",
+        "Bd2", "Rxe1+", "Bxe1", "Bd4", "Kf1", "f5", "f3", "e3", "f4", "Kg7", "g3", "Bd5", "h4",
+        "Kf6", "Bb4", "h5", "Be1", "Ke6", "Bb4", "Be4", "Ba5", "Kd5", "Bb4", "Bc5", "Be1", "Kd4",
+        "Ba5", "Bd3", "Be1", "Ke4", "Bc3", "Bd4", "Be1", "Bxe2+", "Kxe2", "Bc5", "Bc3", "Bd4",
+        "Be1", "Bb4", "Be7",
+    ];
+    for san in black_box(pgn) {
+        assert_eq!(san.parse::<SanPlus>().expect("valid san").to_string(), san);
+    }
 }
 
 fn bench_zobrist_hash() -> Zobrist64 {
@@ -112,6 +129,7 @@ iai::main!(
     bench_play_unchecked,
     bench_play_sans,
     bench_zobrist_hash,
+    bench_san_roundtrip,
     bench_fen_roundtrip,
     bench_packed_setup_roundtrip,
     bench_packed_uci_roundtrip,
