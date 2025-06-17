@@ -676,92 +676,87 @@ impl Reader<'_> {
     }
 
     fn read_san(&mut self) -> Option<San> {
-        Some(match self.peek()? {
-            b'-' => {
+        let role = match self.peek()? {
+            b'N' => {
                 self.bump();
-                if self.eat(b'-') {
-                    San::Null
-                } else {
-                    return None;
-                }
+                Role::Knight
+            }
+            b'B' => {
+                self.bump();
+                Role::Bishop
+            }
+            b'R' => {
+                self.bump();
+                Role::Rook
+            }
+            b'Q' => {
+                self.bump();
+                Role::Queen
+            }
+            b'K' => {
+                self.bump();
+                Role::King
             }
             b'O' => {
                 self.bump();
                 if !self.eat(b'-') || !self.eat(b'O') {
                     return None;
                 }
-                San::Castle(CastlingSide::from_queen_side(
+                return Some(San::Castle(CastlingSide::from_queen_side(
                     self.eat(b'-') && self.eat(b'O'),
-                ))
+                )));
             }
-            ch => {
-                let role = match ch {
-                    b'N' => {
-                        self.bump();
-                        Role::Knight
-                    }
-                    b'B' => {
-                        self.bump();
-                        Role::Bishop
-                    }
-                    b'R' => {
-                        self.bump();
-                        Role::Rook
-                    }
-                    b'Q' => {
-                        self.bump();
-                        Role::Queen
-                    }
-                    b'K' => {
-                        self.bump();
-                        Role::King
-                    }
-                    _ => Role::Pawn,
-                };
-
-                if self.eat(b'@') {
-                    San::Put {
-                        role,
-                        to: self.read_square()?,
-                    }
+            b'-' => {
+                self.bump();
+                if self.eat(b'-') {
+                    return Some(San::Null);
                 } else {
-                    let file = File::from_char(char::from(self.peek()?));
-                    if file.is_some() {
-                        self.bump();
-                    }
-
-                    let rank = Rank::from_char(char::from(self.peek()?));
-                    if rank.is_some() {
-                        self.bump();
-                    }
-
-                    let (file, rank, capture, to) = if self.eat(b'x') {
-                        (file, rank, true, self.read_square()?)
-                    } else if let Some(to_file) =
-                        self.peek().and_then(|ch| File::from_char(char::from(ch)))
-                    {
-                        self.bump();
-                        let to_rank = Rank::from_char(char::from(self.next()?))?;
-                        (file, rank, false, Square::from_coords(to_file, to_rank))
-                    } else {
-                        (None, None, false, Square::from_coords(file?, rank?))
-                    };
-
-                    let promotion = if self.eat(b'=') {
-                        Some(Role::from_char(char::from(self.next()?))?)
-                    } else {
-                        None
-                    };
-
-                    San::Normal {
-                        role,
-                        file,
-                        rank,
-                        capture,
-                        to,
-                        promotion,
-                    }
+                    return None;
                 }
+            }
+            _ => Role::Pawn,
+        };
+
+        Some(if self.eat(b'@') {
+            San::Put {
+                role,
+                to: self.read_square()?,
+            }
+        } else {
+            let file = File::from_char(char::from(self.peek()?));
+            if file.is_some() {
+                self.bump();
+            }
+
+            let rank = Rank::from_char(char::from(self.peek()?));
+            if rank.is_some() {
+                self.bump();
+            }
+
+            let (file, rank, capture, to) = if self.eat(b'x') {
+                (file, rank, true, self.read_square()?)
+            } else if let Some(to_file) = self.peek().and_then(|ch| File::from_char(char::from(ch)))
+            {
+                self.bump();
+                let to_rank = Rank::from_char(char::from(self.next()?))?;
+                (file, rank, false, Square::from_coords(to_file, to_rank))
+            } else {
+                (None, None, false, Square::from_coords(file?, rank?))
+            };
+
+            let promotion = if self.eat(b'=') {
+                Some(Role::from_char(char::from(self.next()?))?)
+            } else {
+                None
+            };
+
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
             }
         })
     }
