@@ -454,14 +454,16 @@ impl Square {
     /// ```
     #[inline]
     pub const fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
-        if s.len() == 2 {
-            match (File::from_ascii_byte(s[0]), Rank::from_ascii_byte(s[1])) {
-                (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
-                _ => Err(ParseSquareError),
-            }
-        } else {
-            Err(ParseSquareError)
+        if s.len() != 2 {
+            return Err(ParseSquareError);
         }
+        let Some(file) = File::from_ascii_byte(s[0]) else {
+            return Err(ParseSquareError);
+        };
+        let Some(rank) = Rank::from_ascii_byte(s[1]) else {
+            return Err(ParseSquareError);
+        };
+        Ok(Square::from_coords(file, rank))
     }
 
     /// Gets the file.
