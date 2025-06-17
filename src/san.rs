@@ -117,8 +117,7 @@ impl San {
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
     pub fn from_ascii(san: &[u8]) -> Result<San, ParseSanError> {
-        let SanPlus { san, .. } = SanPlus::from_ascii(san)?;
-        Ok(san)
+        SanPlus::from_ascii(san).map(|san_plus| san_plus.san)
     }
 
     /// Converts a move to Standard Algebraic Notation.
@@ -537,7 +536,7 @@ impl SanPlus {
         let san = match reader.peek().ok_or(ParseSanError)? {
             b'-' => {
                 reader.bump();
-                if reader.next() == Some(b'-') {
+                if reader.eat(b'-') {
                     San::Null
                 } else {
                     return Err(ParseSanError);
@@ -545,14 +544,11 @@ impl SanPlus {
             }
             b'O' => {
                 reader.bump();
-                if reader.next() != Some(b'-') {
-                    return Err(ParseSanError);
-                }
-                if reader.next() != Some(b'O') {
+                if !reader.eat(b'-') || !reader.eat(b'O') {
                     return Err(ParseSanError);
                 }
                 San::Castle(CastlingSide::from_queen_side(
-                    reader.next_n_if(2, |s| s == b"-O").is_some(),
+                    reader.eat(b'-') && reader.eat(b'O'),
                 ))
             }
             b'@' => {
@@ -564,14 +560,31 @@ impl SanPlus {
                 }
             }
             ch => {
-                let role = if ch.is_ascii_uppercase() {
-                    reader.bump();
-                    Role::from_char(char::from(ch)).ok_or(ParseSanError)?
-                } else {
-                    Role::Pawn
+                let role = match ch {
+                    b'N' => {
+                        reader.bump();
+                        Role::Knight
+                    }
+                    b'B' => {
+                        reader.bump();
+                        Role::Bishop
+                    }
+                    b'R' => {
+                        reader.bump();
+                        Role::Rook
+                    }
+                    b'Q' => {
+                        reader.bump();
+                        Role::Queen
+                    }
+                    b'K' => {
+                        reader.bump();
+                        Role::King
+                    }
+                    _ => Role::Pawn,
                 };
 
-                if reader.next_if(|ch| ch == b'@').is_some() {
+                if reader.eat(b'@') {
                     San::Put {
                         role,
                         to: Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
@@ -588,38 +601,40 @@ impl SanPlus {
                         reader.bump();
                     }
 
-                    let (capture, file, rank, to) = match reader.peek() {
-                        Some(b'x') => {
-                            reader.bump();
-                            (
-                                true,
-                                file,
-                                rank,
-                                Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
-                                    .map_err(|_| ParseSanError)?,
-                            )
-                        }
-                        Some(b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h') => (
-                            false,
+                    let (file, rank, capture, to) = if reader.eat(b'x') {
+                        (
                             file,
                             rank,
+                            true,
                             Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
                                 .map_err(|_| ParseSanError)?,
-                        ),
-                        _ => (
+                        )
+                    } else if let Some(to_file) =
+                        reader.peek().and_then(|ch| File::from_char(char::from(ch)))
+                    {
+                        reader.bump();
+                        let to_rank = reader
+                            .next()
+                            .and_then(|ch| Rank::from_char(char::from(ch)))
+                            .ok_or(ParseSanError)?;
+                        (file, rank, false, Square::from_coords(to_file, to_rank))
+                    } else {
+                        (
+                            None,
+                            None,
                             false,
-                            None,
-                            None,
                             Square::from_coords(
                                 file.ok_or(ParseSanError)?,
                                 rank.ok_or(ParseSanError)?,
                             ),
-                        ),
+                        )
                     };
 
-                    let promotion = if reader.next_if(|ch| ch == b'=').is_some() {
+                    let promotion = if reader.eat(b'=') {
                         Some(
-                            Role::from_char(char::from(reader.next().ok_or(ParseSanError)?))
+                            reader
+                                .next()
+                                .and_then(|ch| Role::from_char(char::from(ch)))
                                 .ok_or(ParseSanError)?,
                         )
                     } else {
@@ -748,36 +763,30 @@ impl Reader<'_> {
     }
 
     #[inline]
-    fn next_n_if<P>(&mut self, n: usize, pred: P) -> Option<&[u8]>
-    where
-        P: FnOnce(&[u8]) -> bool,
-    {
-        match self.bytes.split_at_checked(n) {
-            Some((prefix, tail)) if pred(prefix) => {
-                self.bytes = tail;
-                Some(prefix)
-            }
-            _ => None,
+    fn eat(&mut self, byte: u8) -> bool {
+        if self.peek() == Some(byte) {
+            self.bump();
+            true
+        } else {
+            false
         }
     }
 
     #[inline]
-    fn next_n(&mut self, n: usize) -> Option<&[u8]> {
-        self.next_n_if(n, |_| true)
-    }
-
-    #[inline]
-    fn next_if<P>(&mut self, pred: P) -> Option<u8>
-    where
-        P: FnOnce(u8) -> bool,
-    {
-        self.next_n_if(1, |slice| pred(slice[0]))
-            .map(|slice| slice[0])
-    }
-
-    #[inline]
     fn next(&mut self) -> Option<u8> {
-        self.next_if(|_| true)
+        let byte = self.peek();
+        self.bump();
+        byte
+    }
+
+    #[inline]
+    fn next_n(&mut self, n: usize) -> Option<&[u8]> {
+        if let Some((head, tail)) = self.bytes.split_at_checked(n) {
+            self.bytes = tail;
+            Some(head)
+        } else {
+            None
+        }
     }
 
     #[inline]
