@@ -70,17 +70,32 @@ impl File {
 
     #[inline]
     pub const fn from_char(ch: char) -> Option<File> {
-        match ch {
-            'a' => Some(File::A),
-            'b' => Some(File::B),
-            'c' => Some(File::C),
-            'd' => Some(File::D),
-            'e' => Some(File::E),
-            'f' => Some(File::F),
-            'g' => Some(File::G),
-            'h' => Some(File::H),
-            _ => None,
-        }
+        Some(match ch {
+            'a' => File::A,
+            'b' => File::B,
+            'c' => File::C,
+            'd' => File::D,
+            'e' => File::E,
+            'f' => File::F,
+            'g' => File::G,
+            'h' => File::H,
+            _ => return None,
+        })
+    }
+
+    #[inline]
+    pub const fn from_ascii_byte(byte: u8) -> Option<File> {
+        Some(match byte {
+            b'a' => File::A,
+            b'b' => File::B,
+            b'c' => File::C,
+            b'd' => File::D,
+            b'e' => File::E,
+            b'f' => File::F,
+            b'g' => File::G,
+            b'h' => File::H,
+            _ => return None,
+        })
     }
 
     #[inline]
@@ -228,17 +243,32 @@ impl Rank {
 
     #[inline]
     pub const fn from_char(ch: char) -> Option<Rank> {
-        match ch {
-            '1' => Some(Rank::First),
-            '2' => Some(Rank::Second),
-            '3' => Some(Rank::Third),
-            '4' => Some(Rank::Fourth),
-            '5' => Some(Rank::Fifth),
-            '6' => Some(Rank::Sixth),
-            '7' => Some(Rank::Seventh),
-            '8' => Some(Rank::Eighth),
-            _ => None,
-        }
+        Some(match ch {
+            '1' => Rank::First,
+            '2' => Rank::Second,
+            '3' => Rank::Third,
+            '4' => Rank::Fourth,
+            '5' => Rank::Fifth,
+            '6' => Rank::Sixth,
+            '7' => Rank::Seventh,
+            '8' => Rank::Eighth,
+            _ => return None,
+        })
+    }
+
+    #[inline]
+    pub const fn from_ascii_byte(byte: u8) -> Option<Rank> {
+        Some(match byte {
+            b'1' => Rank::First,
+            b'2' => Rank::Second,
+            b'3' => Rank::Third,
+            b'4' => Rank::Fourth,
+            b'5' => Rank::Fifth,
+            b'6' => Rank::Sixth,
+            b'7' => Rank::Seventh,
+            b'8' => Rank::Eighth,
+            _ => return None,
+        })
     }
 
     #[inline]
@@ -425,7 +455,7 @@ impl Square {
     #[inline]
     pub const fn from_ascii(s: &[u8]) -> Result<Square, ParseSquareError> {
         if s.len() == 2 {
-            match (File::from_char(s[0] as char), Rank::from_char(s[1] as char)) {
+            match (File::from_ascii_byte(s[0]), Rank::from_ascii_byte(s[1])) {
                 (Some(file), Some(rank)) => Ok(Square::from_coords(file, rank)),
                 _ => Err(ParseSquareError),
             }

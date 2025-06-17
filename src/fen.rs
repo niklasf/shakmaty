@@ -604,7 +604,7 @@ impl Fen {
                                 .filter(|sq| setup.board.rooks().contains(*sq))
                                 .unwrap_or_else(|| Square::from_coords(File::A, color.backrank())),
                             file => Square::from_coords(
-                                File::from_char(char::from(file))
+                                File::from_ascii_byte(file)
                                     .ok_or(ParseFenError::InvalidCastling)?,
                                 color.backrank(),
                             ),

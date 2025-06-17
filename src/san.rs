@@ -591,12 +591,12 @@ impl SanPlus {
                             .map_err(|_| ParseSanError)?,
                     }
                 } else {
-                    let file = reader.peek().and_then(|ch| File::from_char(char::from(ch)));
+                    let file = reader.peek().and_then(File::from_ascii_byte);
                     if file.is_some() {
                         reader.bump();
                     }
 
-                    let rank = reader.peek().and_then(|ch| Rank::from_char(char::from(ch)));
+                    let rank = reader.peek().and_then(Rank::from_ascii_byte);
                     if rank.is_some() {
                         reader.bump();
                     }
@@ -609,13 +609,11 @@ impl SanPlus {
                             Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
                                 .map_err(|_| ParseSanError)?,
                         )
-                    } else if let Some(to_file) =
-                        reader.peek().and_then(|ch| File::from_char(char::from(ch)))
-                    {
+                    } else if let Some(to_file) = reader.peek().and_then(File::from_ascii_byte) {
                         reader.bump();
                         let to_rank = reader
                             .next()
-                            .and_then(|ch| Rank::from_char(char::from(ch)))
+                            .and_then(Rank::from_ascii_byte)
                             .ok_or(ParseSanError)?;
                         (file, rank, false, Square::from_coords(to_file, to_rank))
                     } else {
