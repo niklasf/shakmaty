@@ -92,6 +92,80 @@ impl FromStr for Outcome {
     }
 }
 
+/// Like [`Outcome`], but with an additional variant; [`Unknown`](OpenOutcome::Unknown).
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum OpenOutcome {
+    Definitive(Outcome),
+    /// `*` - Game in progress, game abandoned, or result otherwise unknown.
+    Unknown,
+}
+
+impl OpenOutcome {
+    pub const fn winner(self) -> Option<Color> {
+        match self {
+            Self::Definitive(outcome) => outcome.winner(),
+            Self::Unknown => None,
+        }
+    }
+
+    pub const fn definitive(self) -> Option<Outcome> {
+        match self {
+            Self::Definitive(outcome) => Some(outcome),
+            Self::Unknown => None,
+        }
+    }
+
+    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOpenOutcomeError> {
+        if let Ok(outcome) = Outcome::from_ascii(bytes) {
+            return Ok(Self::Definitive(outcome));
+        }
+
+        match bytes {
+            b"*" => Ok(Self::Unknown),
+            _ => Err(ParseOpenOutcomeError),
+        }
+    }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Definitive(outcome) => outcome.as_str(),
+            Self::Unknown => "*",
+        }
+    }
+}
+
+impl From<Outcome> for OpenOutcome {
+    fn from(outcome: Outcome) -> Self {
+        Self::Definitive(outcome)
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+/// Error when parsing an [`OpenOutcome`].
+///
+/// The string didn't match any of:
+/// - `1-0`
+/// - `0-1`
+/// - `1-2/1-2`
+/// - `*`
+pub struct ParseOpenOutcomeError;
+
+impl fmt::Display for ParseOpenOutcomeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid outcome")
+    }
+}
+
+impl error::Error for ParseOpenOutcomeError {}
+
+impl FromStr for OpenOutcome {
+    type Err = ParseOpenOutcomeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::from_ascii(s.as_bytes())
+    }
+}
+
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
 pub struct PlayError<P> {

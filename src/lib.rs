@@ -106,8 +106,8 @@ pub use color::{ByColor, Color, ParseColorError};
 pub use m::{Move, MoveList};
 pub use perft::perft;
 pub use position::{
-    Chess, FromSetup, Outcome, ParseOutcomeError, PlayError, Position, PositionError,
-    PositionErrorKinds,
+    Chess, FromSetup, OpenOutcome, Outcome, ParseOpenOutcomeError, ParseOutcomeError, PlayError,
+    Position, PositionError, PositionErrorKinds,
 };
 pub use role::{ByRole, Role};
 pub use setup::{Castles, Setup};
