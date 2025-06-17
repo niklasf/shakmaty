@@ -735,21 +735,21 @@ impl Reader<'_> {
                         to: self.read_square()?,
                     }
                 } else {
-                    let file = File::from_ascii_byte(self.peek());
+                    let file = File::from_char(char::from(self.peek()));
                     if file.is_some() {
                         self.bump();
                     }
 
-                    let rank = Rank::from_ascii_byte(self.peek());
+                    let rank = Rank::from_char(char::from(self.peek()));
                     if rank.is_some() {
                         self.bump();
                     }
 
                     let (file, rank, capture, to) = if self.eat(b'x') {
                         (file, rank, true, self.read_square()?)
-                    } else if let Some(to_file) = File::from_ascii_byte(self.peek()) {
+                    } else if let Some(to_file) = File::from_char(char::from(self.peek())) {
                         self.bump();
-                        let to_rank = Rank::from_ascii_byte(self.next())?;
+                        let to_rank = Rank::from_char(char::from(self.next()))?;
                         (file, rank, false, Square::from_coords(to_file, to_rank))
                     } else {
                         (None, None, false, Square::from_coords(file?, rank?))

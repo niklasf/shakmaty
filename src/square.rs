@@ -84,21 +84,6 @@ impl File {
     }
 
     #[inline]
-    pub const fn from_ascii_byte(byte: u8) -> Option<File> {
-        Some(match byte {
-            b'a' => File::A,
-            b'b' => File::B,
-            b'c' => File::C,
-            b'd' => File::D,
-            b'e' => File::E,
-            b'f' => File::F,
-            b'g' => File::G,
-            b'h' => File::H,
-            _ => return None,
-        })
-    }
-
-    #[inline]
     pub const fn char(self) -> char {
         match self {
             File::A => 'a',
@@ -252,21 +237,6 @@ impl Rank {
             '6' => Rank::Sixth,
             '7' => Rank::Seventh,
             '8' => Rank::Eighth,
-            _ => return None,
-        })
-    }
-
-    #[inline]
-    pub const fn from_ascii_byte(byte: u8) -> Option<Rank> {
-        Some(match byte {
-            b'1' => Rank::First,
-            b'2' => Rank::Second,
-            b'3' => Rank::Third,
-            b'4' => Rank::Fourth,
-            b'5' => Rank::Fifth,
-            b'6' => Rank::Sixth,
-            b'7' => Rank::Seventh,
-            b'8' => Rank::Eighth,
             _ => return None,
         })
     }
@@ -457,10 +427,10 @@ impl Square {
         if s.len() != 2 {
             return Err(ParseSquareError);
         }
-        let Some(file) = File::from_ascii_byte(s[0]) else {
+        let Some(file) = File::from_char(s[0] as char) else {
             return Err(ParseSquareError);
         };
-        let Some(rank) = Rank::from_ascii_byte(s[1]) else {
+        let Some(rank) = Rank::from_char(s[1] as char) else {
             return Err(ParseSquareError);
         };
         Ok(Square::from_coords(file, rank))
