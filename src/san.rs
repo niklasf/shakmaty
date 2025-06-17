@@ -694,13 +694,6 @@ impl Reader<'_> {
                     self.eat(b'-') && self.eat(b'O'),
                 ))
             }
-            b'@' => {
-                self.bump();
-                San::Put {
-                    role: Role::Pawn,
-                    to: self.read_square()?,
-                }
-            }
             ch => {
                 let role = match ch {
                     b'N' => {
