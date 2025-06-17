@@ -530,141 +530,9 @@ pub struct SanPlus {
 }
 
 impl SanPlus {
-    pub fn from_ascii_prefix(san: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
-        let mut reader = Reader::new(san);
-
-        let san = match reader.peek().ok_or(ParseSanError)? {
-            b'-' => {
-                reader.bump();
-                if reader.eat(b'-') {
-                    San::Null
-                } else {
-                    return Err(ParseSanError);
-                }
-            }
-            b'O' => {
-                reader.bump();
-                if !reader.eat(b'-') || !reader.eat(b'O') {
-                    return Err(ParseSanError);
-                }
-                San::Castle(CastlingSide::from_queen_side(
-                    reader.eat(b'-') && reader.eat(b'O'),
-                ))
-            }
-            b'@' => {
-                reader.bump();
-                San::Put {
-                    role: Role::Pawn,
-                    to: Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
-                        .map_err(|_| ParseSanError)?,
-                }
-            }
-            ch => {
-                let role = match ch {
-                    b'N' => {
-                        reader.bump();
-                        Role::Knight
-                    }
-                    b'B' => {
-                        reader.bump();
-                        Role::Bishop
-                    }
-                    b'R' => {
-                        reader.bump();
-                        Role::Rook
-                    }
-                    b'Q' => {
-                        reader.bump();
-                        Role::Queen
-                    }
-                    b'K' => {
-                        reader.bump();
-                        Role::King
-                    }
-                    _ => Role::Pawn,
-                };
-
-                if reader.eat(b'@') {
-                    San::Put {
-                        role,
-                        to: Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
-                            .map_err(|_| ParseSanError)?,
-                    }
-                } else {
-                    let file = reader.peek().and_then(File::from_ascii_byte);
-                    if file.is_some() {
-                        reader.bump();
-                    }
-
-                    let rank = reader.peek().and_then(Rank::from_ascii_byte);
-                    if rank.is_some() {
-                        reader.bump();
-                    }
-
-                    let (file, rank, capture, to) = if reader.eat(b'x') {
-                        (
-                            file,
-                            rank,
-                            true,
-                            Square::from_ascii(reader.next_n(2).ok_or(ParseSanError)?)
-                                .map_err(|_| ParseSanError)?,
-                        )
-                    } else if let Some(to_file) = reader.peek().and_then(File::from_ascii_byte) {
-                        reader.bump();
-                        let to_rank = reader
-                            .next()
-                            .and_then(Rank::from_ascii_byte)
-                            .ok_or(ParseSanError)?;
-                        (file, rank, false, Square::from_coords(to_file, to_rank))
-                    } else {
-                        (
-                            None,
-                            None,
-                            false,
-                            Square::from_coords(
-                                file.ok_or(ParseSanError)?,
-                                rank.ok_or(ParseSanError)?,
-                            ),
-                        )
-                    };
-
-                    let promotion = if reader.eat(b'=') {
-                        Some(
-                            reader
-                                .next()
-                                .and_then(|ch| Role::from_char(char::from(ch)))
-                                .ok_or(ParseSanError)?,
-                        )
-                    } else {
-                        None
-                    };
-
-                    San::Normal {
-                        role,
-                        file,
-                        rank,
-                        capture,
-                        to,
-                        promotion,
-                    }
-                }
-            }
-        };
-
-        let suffix = match reader.peek() {
-            Some(b'+') => {
-                reader.bump();
-                Some(Suffix::Check)
-            }
-            Some(b'#') => {
-                reader.bump();
-                Some(Suffix::Checkmate)
-            }
-            _ => None,
-        };
-
-        Ok((SanPlus { san, suffix }, reader.position()))
-    }
+    //pub fn from_ascii_prefix(san: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
+    //    let mut reader = Reader::new(san);
+    //}
 
     /// Parses a SAN and possible check and checkmate suffix.
     ///
@@ -672,11 +540,12 @@ impl SanPlus {
     ///
     /// Returns [`ParseSanError`] if `san` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<SanPlus, ParseSanError> {
-        let (san, len) = SanPlus::from_ascii_prefix(ascii)?;
-        if ascii.len() != len {
+        let mut reader = Reader::new(ascii);
+        let san_plus = reader.read_san_plus()?;
+        if !reader.is_empty() {
             return Err(ParseSanError);
         }
-        Ok(san)
+        Ok(san_plus)
     }
 
     /// Converts a move to Standard Algebraic Notation including possible
@@ -738,16 +607,17 @@ impl SanPlus {
 
 struct Reader<'a> {
     bytes: &'a [u8],
-    original_len: usize,
 }
 
 impl Reader<'_> {
     #[inline]
     fn new(bytes: &[u8]) -> Reader {
-        Reader {
-            bytes,
-            original_len: bytes.len(),
-        }
+        Reader { bytes }
+    }
+
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.bytes.is_empty()
     }
 
     #[inline]
@@ -787,9 +657,137 @@ impl Reader<'_> {
         }
     }
 
-    #[inline]
-    fn position(&self) -> usize {
-        self.original_len - self.bytes.len()
+    fn read_san_plus(&mut self) -> Result<SanPlus, ParseSanError> {
+        let san = match self.peek().ok_or(ParseSanError)? {
+            b'-' => {
+                self.bump();
+                if self.eat(b'-') {
+                    San::Null
+                } else {
+                    return Err(ParseSanError);
+                }
+            }
+            b'O' => {
+                self.bump();
+                if !self.eat(b'-') || !self.eat(b'O') {
+                    return Err(ParseSanError);
+                }
+                San::Castle(CastlingSide::from_queen_side(
+                    self.eat(b'-') && self.eat(b'O'),
+                ))
+            }
+            b'@' => {
+                self.bump();
+                San::Put {
+                    role: Role::Pawn,
+                    to: Square::from_ascii(self.next_n(2).ok_or(ParseSanError)?)
+                        .map_err(|_| ParseSanError)?,
+                }
+            }
+            ch => {
+                let role = match ch {
+                    b'N' => {
+                        self.bump();
+                        Role::Knight
+                    }
+                    b'B' => {
+                        self.bump();
+                        Role::Bishop
+                    }
+                    b'R' => {
+                        self.bump();
+                        Role::Rook
+                    }
+                    b'Q' => {
+                        self.bump();
+                        Role::Queen
+                    }
+                    b'K' => {
+                        self.bump();
+                        Role::King
+                    }
+                    _ => Role::Pawn,
+                };
+
+                if self.eat(b'@') {
+                    San::Put {
+                        role,
+                        to: Square::from_ascii(self.next_n(2).ok_or(ParseSanError)?)
+                            .map_err(|_| ParseSanError)?,
+                    }
+                } else {
+                    let file = self.peek().and_then(File::from_ascii_byte);
+                    if file.is_some() {
+                        self.bump();
+                    }
+
+                    let rank = self.peek().and_then(Rank::from_ascii_byte);
+                    if rank.is_some() {
+                        self.bump();
+                    }
+
+                    let (file, rank, capture, to) = if self.eat(b'x') {
+                        (
+                            file,
+                            rank,
+                            true,
+                            Square::from_ascii(self.next_n(2).ok_or(ParseSanError)?)
+                                .map_err(|_| ParseSanError)?,
+                        )
+                    } else if let Some(to_file) = self.peek().and_then(File::from_ascii_byte) {
+                        self.bump();
+                        let to_rank = self
+                            .next()
+                            .and_then(Rank::from_ascii_byte)
+                            .ok_or(ParseSanError)?;
+                        (file, rank, false, Square::from_coords(to_file, to_rank))
+                    } else {
+                        (
+                            None,
+                            None,
+                            false,
+                            Square::from_coords(
+                                file.ok_or(ParseSanError)?,
+                                rank.ok_or(ParseSanError)?,
+                            ),
+                        )
+                    };
+
+                    let promotion = if self.eat(b'=') {
+                        Some(
+                            self.next()
+                                .and_then(|ch| Role::from_char(char::from(ch)))
+                                .ok_or(ParseSanError)?,
+                        )
+                    } else {
+                        None
+                    };
+
+                    San::Normal {
+                        role,
+                        file,
+                        rank,
+                        capture,
+                        to,
+                        promotion,
+                    }
+                }
+            }
+        };
+
+        let suffix = match self.peek() {
+            Some(b'+') => {
+                self.bump();
+                Some(Suffix::Check)
+            }
+            Some(b'#') => {
+                self.bump();
+                Some(Suffix::Checkmate)
+            }
+            _ => None,
+        };
+
+        Ok(SanPlus { san, suffix })
     }
 }
 
