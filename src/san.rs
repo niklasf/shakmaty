@@ -635,20 +635,18 @@ impl Reader<'_> {
     }
 
     #[inline]
-    fn peek(&self) -> u8 {
-        self.bytes.first().copied().unwrap_or(0)
+    fn peek(&self) -> Option<u8> {
+        self.bytes.first().copied()
     }
 
     #[inline]
     fn bump(&mut self) {
-        if !self.bytes.is_empty() {
-            self.bytes = &self.bytes[1..];
-        }
+        self.bytes = &self.bytes[1..];
     }
 
     #[inline]
     fn eat(&mut self, byte: u8) -> bool {
-        if self.peek() == byte {
+        if self.peek() == Some(byte) {
             self.bump();
             true
         } else {
@@ -657,20 +655,19 @@ impl Reader<'_> {
     }
 
     #[inline]
-    fn next(&mut self) -> u8 {
+    fn next(&mut self) -> Option<u8> {
         let byte = self.peek();
-        self.bump();
+        if byte.is_some() {
+            self.bump();
+        }
         byte
     }
 
     #[inline]
     fn next_n(&mut self, n: usize) -> Option<&[u8]> {
-        if let Some((head, tail)) = self.bytes.split_at_checked(n) {
-            self.bytes = tail;
-            Some(head)
-        } else {
-            None
-        }
+        let (head, tail) = self.bytes.split_at_checked(n)?;
+        self.bytes = tail;
+        Some(head)
     }
 
     fn read_square(&mut self) -> Option<Square> {
@@ -679,7 +676,7 @@ impl Reader<'_> {
     }
 
     fn read_san(&mut self) -> Option<San> {
-        Some(match self.peek() {
+        Some(match self.peek()? {
             b'-' => {
                 self.bump();
                 if self.eat(b'-') {
@@ -735,28 +732,30 @@ impl Reader<'_> {
                         to: self.read_square()?,
                     }
                 } else {
-                    let file = File::from_char(char::from(self.peek()));
+                    let file = File::from_char(char::from(self.peek()?));
                     if file.is_some() {
                         self.bump();
                     }
 
-                    let rank = Rank::from_char(char::from(self.peek()));
+                    let rank = Rank::from_char(char::from(self.peek()?));
                     if rank.is_some() {
                         self.bump();
                     }
 
                     let (file, rank, capture, to) = if self.eat(b'x') {
                         (file, rank, true, self.read_square()?)
-                    } else if let Some(to_file) = File::from_char(char::from(self.peek())) {
+                    } else if let Some(to_file) =
+                        self.peek().and_then(|ch| File::from_char(char::from(ch)))
+                    {
                         self.bump();
-                        let to_rank = Rank::from_char(char::from(self.next()))?;
+                        let to_rank = Rank::from_char(char::from(self.next()?))?;
                         (file, rank, false, Square::from_coords(to_file, to_rank))
                     } else {
                         (None, None, false, Square::from_coords(file?, rank?))
                     };
 
                     let promotion = if self.eat(b'=') {
-                        Some(Role::from_char(char::from(self.next()))?)
+                        Some(Role::from_char(char::from(self.next()?))?)
                     } else {
                         None
                     };
@@ -778,11 +777,11 @@ impl Reader<'_> {
         let san = self.read_san()?;
 
         let suffix = match self.peek() {
-            b'+' => {
+            Some(b'+') => {
                 self.bump();
                 Some(Suffix::Check)
             }
-            b'#' => {
+            Some(b'#') => {
                 self.bump();
                 Some(Suffix::Checkmate)
             }
