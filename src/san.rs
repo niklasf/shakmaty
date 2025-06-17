@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! Parse and write SANs:
+//! Parse and write SAN:
 //!
 //! ```
 //! use shakmaty::{Chess, Position, san::San};
@@ -36,7 +36,7 @@
 //! # Ok::<_, CommonError>(())
 //! ```
 //!
-//! Back to a (possibly disambiguated) SAN:
+//! Back to (possibly disambiguated) SAN:
 //!
 //! ```
 //! # use shakmaty::{Chess, Position, Role, san::{ParseSanError, San, SanError}};
@@ -111,11 +111,12 @@ pub enum San {
 }
 
 impl San {
-    /// Parses a SAN. Ignores a possible check or checkmate suffix.
+    /// Parses the given ASCII bytes as a move in SAN. Ignores a possible check
+    /// or checkmate suffix.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
+    /// Returns [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<San, ParseSanError> {
         let mut reader = Reader::new(ascii);
         let san = reader.read_san().ok_or(ParseSanError)?;
@@ -126,6 +127,21 @@ impl San {
         Ok(san)
     }
 
+    /// Parses a move in SAN from the start of the given ASCII bytes. Does not
+    /// consume a check or checkmate suffix.
+    ///
+    /// Every byte that might continue a move in SAN is eagerly consumed without
+    /// backtracking.
+    ///
+    /// Returns the parsed SAN and the number of bytes consumed.
+    ///
+    /// # Errors
+    ///
+    /// Errors with [`ParseSanError`] if `ascii` does not start with a
+    /// syntactically valid SAN or if backtracking would be required to parse it.
+    ///
+    /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
+    /// to `Nf3=` and then fails on `X`.
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(San, usize), ParseSanError> {
         let mut reader = Reader::new(ascii);
         let san = reader.read_san().ok_or(ParseSanError)?;
@@ -542,11 +558,12 @@ pub struct SanPlus {
 }
 
 impl SanPlus {
-    /// Parses a SAN and possible check and checkmate suffix.
+    /// Parses the given ASCII bytes as a move in SAN and possible check or
+    /// checkmate suffix.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
+    /// Errors with [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<SanPlus, ParseSanError> {
         let mut reader = Reader::new(ascii);
         let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
@@ -556,6 +573,21 @@ impl SanPlus {
         Ok(san_plus)
     }
 
+    /// Parses a move in SAN and possible check and checkmate suffix from the
+    /// start of the given ASCII bytes.
+    ///
+    /// Every byte that might continue a move in SAN is eagerly consumed without
+    /// backtracking.
+    ///
+    /// Returns the parsed SAN and the number of bytes consumed.
+    ///
+    /// # Errors
+    ///
+    /// Errors with [`ParseSanError`] if `ascii` does not start with a
+    /// syntactically valid SAN or if backtracking would be required to parse it.
+    ///
+    /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
+    /// to `Nf3=` and then fails on `X`.
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
         let mut reader = Reader::new(ascii);
         let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
