@@ -981,6 +981,16 @@ mod tests {
     fn test_from_to_str() {
         use alloc::string::ToString as _;
 
+        let check_san = |san: SanPlus| {
+            assert_eq!(
+                san.to_string()
+                    .parse::<SanPlus>()
+                    .map_err(|_| san)
+                    .expect("roundtrip"),
+                san
+            );
+        };
+
         // Normal
         for role in Role::ALL {
             for file in [
@@ -1017,7 +1027,7 @@ mod tests {
                                 Some(Role::King),
                             ] {
                                 for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
-                                    let san = SanPlus {
+                                    check_san(SanPlus {
                                         san: San::Normal {
                                             role,
                                             file,
@@ -1027,15 +1037,7 @@ mod tests {
                                             promotion,
                                         },
                                         suffix,
-                                    };
-
-                                    assert_eq!(
-                                        san.to_string()
-                                            .parse::<SanPlus>()
-                                            .map_err(|_| san)
-                                            .expect("roundtrip"),
-                                        san
-                                    );
+                                    });
                                 }
                             }
                         }
@@ -1044,40 +1046,34 @@ mod tests {
             }
         }
 
+        // Castle
+        for castling_side in CastlingSide::ALL {
+            for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
+                check_san(SanPlus {
+                    san: San::Castle(castling_side),
+                    suffix,
+                });
+            }
+        }
+
         // Put
         for role in Role::ALL {
             for to in Square::ALL {
                 for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
-                    let san = SanPlus {
+                    check_san(SanPlus {
                         san: San::Put { role, to },
                         suffix,
-                    };
-
-                    assert_eq!(
-                        san.to_string()
-                            .parse::<SanPlus>()
-                            .map_err(|_| san)
-                            .expect("roundtrip"),
-                        san
-                    );
+                    });
                 }
             }
         }
 
         // Null
         for suffix in [None, Some(Suffix::Check), Some(Suffix::Checkmate)] {
-            let san = SanPlus {
+            check_san(SanPlus {
                 san: San::Null,
                 suffix,
-            };
-
-            assert_eq!(
-                san.to_string()
-                    .parse::<SanPlus>()
-                    .map_err(|_| san)
-                    .expect("roundtrip"),
-                san
-            );
+            });
         }
     }
 }
