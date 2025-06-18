@@ -2,7 +2,7 @@
 //!
 //! # Examples
 //!
-//! Parse and write SANs:
+//! Parse and write SAN:
 //!
 //! ```
 //! use shakmaty::{Chess, Position, san::San};
@@ -36,7 +36,7 @@
 //! # Ok::<_, CommonError>(())
 //! ```
 //!
-//! Back to a (possibly disambiguated) SAN:
+//! Back to (possibly disambiguated) SAN:
 //!
 //! ```
 //! # use shakmaty::{Chess, Position, Role, san::{ParseSanError, San, SanError}};
@@ -111,110 +111,41 @@ pub enum San {
 }
 
 impl San {
-    /// Parses a SAN. Ignores a possible check or checkmate suffix.
+    /// Parses the given ASCII bytes as a move in SAN. Ignores a possible check
+    /// or checkmate suffix.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    pub fn from_ascii(mut san: &[u8]) -> Result<San, ParseSanError> {
-        if san.ends_with(b"#") || san.ends_with(b"+") {
-            san = &san[0..(san.len() - 1)];
+    /// Returns [`ParseSanError`] if `ascii` is not syntactically valid.
+    pub fn from_ascii(ascii: &[u8]) -> Result<San, ParseSanError> {
+        let mut reader = Reader::new(ascii);
+        let san = reader.read_san().ok_or(ParseSanError)?;
+        let _ = reader.eat(b'+') || reader.eat(b'#');
+        if reader.remaining() != 0 {
+            return Err(ParseSanError);
         }
+        Ok(san)
+    }
 
-        if san == b"--" {
-            Ok(San::Null)
-        } else if san == b"O-O" {
-            Ok(San::Castle(CastlingSide::KingSide))
-        } else if san == b"O-O-O" {
-            Ok(San::Castle(CastlingSide::QueenSide))
-        } else if san.len() == 3 && san[0] == b'@' {
-            Ok(San::Put {
-                role: Role::Pawn,
-                to: Square::from_ascii(&san[1..]).map_err(|_| ParseSanError)?,
-            })
-        } else if san.len() == 4 && san[1] == b'@' {
-            Ok(San::Put {
-                role: Role::from_char(char::from(san[0])).ok_or(ParseSanError)?,
-                to: Square::from_ascii(&san[2..]).map_err(|_| ParseSanError)?,
-            })
-        } else {
-            let mut chars = san.iter().copied();
-
-            let ch = chars.next().ok_or(ParseSanError)?;
-            let (role, next) = if ch.is_ascii_uppercase() {
-                (
-                    Role::from_char(char::from(ch)).ok_or(ParseSanError)?,
-                    chars.next().ok_or(ParseSanError)?,
-                )
-            } else {
-                (Role::Pawn, ch)
-            };
-
-            let (file, next) = if let Some(file) = File::from_char(char::from(next)) {
-                (Some(file), chars.next().ok_or(ParseSanError)?)
-            } else {
-                (None, next)
-            };
-
-            let (rank, next) = if let Some(rank) = Rank::from_char(char::from(next)) {
-                (Some(rank), chars.next())
-            } else {
-                (None, Some(next))
-            };
-
-            // This section is safe, because coordinates are already validated
-            // by file_from_char or rank_from_char.
-            let (capture, file, rank, to, next) = if let Some(next) = next {
-                if next == b'x' {
-                    let to_file = chars
-                        .next()
-                        .and_then(|ch| File::from_char(char::from(ch)))
-                        .ok_or(ParseSanError)?;
-                    let to_rank = chars
-                        .next()
-                        .and_then(|ch| Rank::from_char(char::from(ch)))
-                        .ok_or(ParseSanError)?;
-                    let square = Square::from_coords(to_file, to_rank);
-                    (true, file, rank, square, chars.next())
-                } else if next == b'=' {
-                    let square =
-                        Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
-                    (false, None, None, square, Some(b'='))
-                } else {
-                    let to_file = File::from_char(char::from(next)).ok_or(ParseSanError)?;
-                    let to_rank = chars
-                        .next()
-                        .and_then(|ch| Rank::from_char(char::from(ch)))
-                        .ok_or(ParseSanError)?;
-                    let square = Square::from_coords(to_file, to_rank);
-                    (false, file, rank, square, chars.next())
-                }
-            } else {
-                let square =
-                    Square::from_coords(file.ok_or(ParseSanError)?, rank.ok_or(ParseSanError)?);
-                (false, None, None, square, None)
-            };
-
-            let promotion = match next {
-                Some(b'=') => Some(
-                    chars
-                        .next()
-                        .and_then(|r| Role::from_char(char::from(r)))
-                        .ok_or(ParseSanError)?,
-                ),
-                Some(_) => return Err(ParseSanError),
-                None => None,
-            };
-
-            Ok(San::Normal {
-                role,
-                file,
-                rank,
-                capture,
-                to,
-                promotion,
-            })
-        }
+    /// Parses a move in SAN from the start of the given ASCII bytes. Does not
+    /// consume a check or checkmate suffix.
+    ///
+    /// Every byte that might continue a move in SAN is eagerly consumed without
+    /// backtracking.
+    ///
+    /// Returns the parsed SAN and the number of bytes consumed.
+    ///
+    /// # Errors
+    ///
+    /// Errors with [`ParseSanError`] if `ascii` does not start with a
+    /// syntactically valid SAN or if backtracking would be required to parse it.
+    ///
+    /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
+    /// to `Nf3=` and then fails on `X`.
+    pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(San, usize), ParseSanError> {
+        let mut reader = Reader::new(ascii);
+        let san = reader.read_san().ok_or(ParseSanError)?;
+        Ok((san, ascii.len() - reader.remaining()))
     }
 
     /// Converts a move to Standard Algebraic Notation.
@@ -627,19 +558,40 @@ pub struct SanPlus {
 }
 
 impl SanPlus {
-    /// Parses a SAN and possible check and checkmate suffix.
+    /// Parses the given ASCII bytes as a move in SAN and possible check or
+    /// checkmate suffix.
     ///
     /// # Errors
     ///
-    /// Returns [`ParseSanError`] if `san` is not syntactically valid.
-    pub fn from_ascii(san: &[u8]) -> Result<SanPlus, ParseSanError> {
-        San::from_ascii(san).map(|result| SanPlus {
-            san: result,
-            suffix: san
-                .last()
-                .copied()
-                .and_then(|ch| Suffix::from_char(char::from(ch))),
-        })
+    /// Errors with [`ParseSanError`] if `ascii` is not syntactically valid.
+    pub fn from_ascii(ascii: &[u8]) -> Result<SanPlus, ParseSanError> {
+        let mut reader = Reader::new(ascii);
+        let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
+        if reader.remaining() != 0 {
+            return Err(ParseSanError);
+        }
+        Ok(san_plus)
+    }
+
+    /// Parses a move in SAN and possible check and checkmate suffix from the
+    /// start of the given ASCII bytes.
+    ///
+    /// Every byte that might continue a move in SAN is eagerly consumed without
+    /// backtracking.
+    ///
+    /// Returns the parsed SAN and the number of bytes consumed.
+    ///
+    /// # Errors
+    ///
+    /// Errors with [`ParseSanError`] if `ascii` does not start with a
+    /// syntactically valid SAN or if backtracking would be required to parse it.
+    ///
+    /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
+    /// to `Nf3=` and then fails on `X`.
+    pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
+        let mut reader = Reader::new(ascii);
+        let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
+        Ok((san_plus, ascii.len() - reader.remaining()))
     }
 
     /// Converts a move to Standard Algebraic Notation including possible
@@ -696,6 +648,171 @@ impl SanPlus {
     #[cfg(feature = "alloc")]
     pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
         let _ = self.append_to(buf);
+    }
+}
+
+struct Reader<'a> {
+    bytes: &'a [u8],
+}
+
+impl Reader<'_> {
+    #[inline]
+    fn new(bytes: &[u8]) -> Reader {
+        Reader { bytes }
+    }
+
+    #[inline]
+    fn remaining(&self) -> usize {
+        self.bytes.len()
+    }
+
+    #[inline]
+    fn peek(&self) -> Option<u8> {
+        self.bytes.first().copied()
+    }
+
+    #[inline]
+    fn bump(&mut self) {
+        self.bytes = &self.bytes[1..];
+    }
+
+    #[inline]
+    fn eat(&mut self, byte: u8) -> bool {
+        if self.peek() == Some(byte) {
+            self.bump();
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline]
+    fn next(&mut self) -> Option<u8> {
+        let byte = self.peek();
+        if byte.is_some() {
+            self.bump();
+        }
+        byte
+    }
+
+    #[inline]
+    fn next_n(&mut self, n: usize) -> Option<&[u8]> {
+        let (head, tail) = self.bytes.split_at_checked(n)?;
+        self.bytes = tail;
+        Some(head)
+    }
+
+    fn read_square(&mut self) -> Option<Square> {
+        self.next_n(2)
+            .and_then(|bytes| Square::from_ascii(bytes).ok())
+    }
+
+    fn read_san(&mut self) -> Option<San> {
+        let role = match self.peek()? {
+            b'N' => {
+                self.bump();
+                Role::Knight
+            }
+            b'B' => {
+                self.bump();
+                Role::Bishop
+            }
+            b'R' => {
+                self.bump();
+                Role::Rook
+            }
+            b'Q' => {
+                self.bump();
+                Role::Queen
+            }
+            b'K' => {
+                self.bump();
+                Role::King
+            }
+            b'O' => {
+                self.bump();
+                if !self.eat(b'-') || !self.eat(b'O') {
+                    return None;
+                }
+                if !self.eat(b'-') {
+                    return Some(San::Castle(CastlingSide::KingSide));
+                }
+                if !self.eat(b'O') {
+                    return None;
+                }
+                return Some(San::Castle(CastlingSide::QueenSide));
+            }
+            b'-' => {
+                self.bump();
+                if self.eat(b'-') {
+                    return Some(San::Null);
+                } else {
+                    return None;
+                }
+            }
+            _ => Role::Pawn,
+        };
+
+        Some(if self.eat(b'@') {
+            San::Put {
+                role,
+                to: self.read_square()?,
+            }
+        } else {
+            let file = File::from_char(char::from(self.peek()?));
+            if file.is_some() {
+                self.bump();
+            }
+
+            let rank = Rank::from_char(char::from(self.peek()?));
+            if rank.is_some() {
+                self.bump();
+            }
+
+            let (file, rank, capture, to) = if self.eat(b'x') {
+                (file, rank, true, self.read_square()?)
+            } else if let Some(to_file) = self.peek().and_then(|ch| File::from_char(char::from(ch)))
+            {
+                self.bump();
+                let to_rank = Rank::from_char(char::from(self.next()?))?;
+                (file, rank, false, Square::from_coords(to_file, to_rank))
+            } else {
+                (None, None, false, Square::from_coords(file?, rank?))
+            };
+
+            let promotion = if self.eat(b'=') {
+                Some(Role::from_char(char::from(self.next()?))?)
+            } else {
+                None
+            };
+
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture,
+                to,
+                promotion,
+            }
+        })
+    }
+
+    fn read_san_plus(&mut self) -> Option<SanPlus> {
+        let san = self.read_san()?;
+
+        let suffix = match self.peek() {
+            Some(b'+') => {
+                self.bump();
+                Some(Suffix::Check)
+            }
+            Some(b'#') => {
+                self.bump();
+                Some(Suffix::Checkmate)
+            }
+            _ => None,
+        };
+
+        Some(SanPlus { san, suffix })
     }
 }
 
@@ -771,12 +888,16 @@ mod tests {
     #[cfg(feature = "alloc")]
     #[test]
     fn test_read_write() {
-        for san in &[
+        for san in [
             "a1", "a8", "h1", "h8", "e4", "b6", "e4=Q", "f1=N#", "hxg7", "bxc1", "axe4", "bxc1+",
             "bxa8=R+", "Nf3", "Ba5", "Qh8", "Kh1", "Qh1=K", "Ba5", "Bba5", "N2c4", "Red3", "Qh1=K",
             "d1=N", "@e4#", "K@b3", "Ba5", "Bba5", "Ra1a8", "--", "O-O", "O-O-O+",
         ] {
-            let result = san.parse::<SanPlus>().expect("valid san").to_string();
+            let result = san
+                .parse::<SanPlus>()
+                .map_err(|_| san)
+                .expect("valid san")
+                .to_string();
             assert_eq!(*san, result, "read {san} write {result}");
         }
     }
@@ -909,7 +1030,10 @@ mod tests {
                                     };
 
                                     assert_eq!(
-                                        san.to_string().parse::<SanPlus>().expect("roundtrip"),
+                                        san.to_string()
+                                            .parse::<SanPlus>()
+                                            .map_err(|_| san)
+                                            .expect("roundtrip"),
                                         san
                                     );
                                 }
@@ -929,7 +1053,13 @@ mod tests {
                         suffix,
                     };
 
-                    assert_eq!(san.to_string().parse::<SanPlus>().expect("roundtrip"), san);
+                    assert_eq!(
+                        san.to_string()
+                            .parse::<SanPlus>()
+                            .map_err(|_| san)
+                            .expect("roundtrip"),
+                        san
+                    );
                 }
             }
         }
@@ -941,7 +1071,13 @@ mod tests {
                 suffix,
             };
 
-            assert_eq!(san.to_string().parse::<SanPlus>().expect("roundtrip"), san);
+            assert_eq!(
+                san.to_string()
+                    .parse::<SanPlus>()
+                    .map_err(|_| san)
+                    .expect("roundtrip"),
+                san
+            );
         }
     }
 }
