@@ -734,9 +734,13 @@ impl Reader<'_> {
                 if !self.eat(b'-') || !self.eat(b'O') {
                     return None;
                 }
-                return Some(San::Castle(CastlingSide::from_queen_side(
-                    self.eat(b'-') && self.eat(b'O'),
-                )));
+                if !self.eat(b'-') {
+                    return Some(San::Castle(CastlingSide::KingSide));
+                }
+                if !self.eat(b'O') {
+                    return None;
+                }
+                return Some(San::Castle(CastlingSide::QueenSide));
             }
             b'-' => {
                 self.bump();
