@@ -390,7 +390,7 @@ impl Position for VariantPosition {
         self.borrow().has_insufficient_material(color)
     }
 
-    fn variant_outcome(&self) -> Option<Outcome> {
+    fn variant_outcome(&self) -> Outcome {
         self.borrow().variant_outcome()
     }
 
