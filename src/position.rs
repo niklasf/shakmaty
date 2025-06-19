@@ -672,7 +672,7 @@ pub trait Position {
         self.is_variant_end() || self.legal_moves().is_empty() || self.is_insufficient_material()
     }
 
-    /// The outcome of the game, or `None` if the game is not over.
+    /// The outcome of the game, or [`Outcome::Unknown`] if the game is not over.
     fn outcome(&self) -> Outcome /* FINAL */ {
         let variant_outcome = self.variant_outcome();
 
