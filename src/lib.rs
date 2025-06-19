@@ -34,12 +34,12 @@
 //! Detect game end conditions:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position};
+//! # use shakmaty::{Chess, Position, Outcome};
 //! # let pos = Chess::default();
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
 //! assert!(!pos.is_insufficient_material());
-//! assert_eq!(pos.outcome(), None); // no winner yet
+//! assert_eq!(pos.outcome(), Outcome::Unknown); // no winner yet
 //! ```
 //!
 //! Also supports [FEN](fen), [SAN](san) and
