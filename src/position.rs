@@ -172,6 +172,12 @@ impl FromStr for Outcome {
     }
 }
 
+impl fmt::Display for Outcome {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
 pub struct PlayError<P> {
@@ -1099,9 +1105,12 @@ impl Position for Chess {
         true
     }
 
+    /// Always returns `false`.
     fn is_variant_end(&self) -> bool {
         false
     }
+
+    /// Always returns [`Outcome::Unknown`].
     fn variant_outcome(&self) -> Outcome {
         Outcome::Unknown
     }
