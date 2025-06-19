@@ -16,49 +16,51 @@ use crate::{
     EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square,
 };
 
-/// Outcome of a game.
+/// A definitive outcome of a game.
+///
+/// See also [`Outcome`].
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub enum Outcome {
+pub enum KnownOutcome {
     Decisive { winner: Color },
     Draw,
 }
 
-impl Outcome {
-    pub const fn from_winner(winner: Option<Color>) -> Outcome {
+impl KnownOutcome {
+    pub const fn from_winner(winner: Option<Color>) -> KnownOutcome {
         match winner {
-            Some(winner) => Outcome::Decisive { winner },
-            None => Outcome::Draw,
+            Some(winner) => KnownOutcome::Decisive { winner },
+            None => KnownOutcome::Draw,
         }
     }
 
     pub const fn winner(self) -> Option<Color> {
         match self {
-            Outcome::Decisive { winner } => Some(winner),
-            Outcome::Draw => None,
+            KnownOutcome::Decisive { winner } => Some(winner),
+            KnownOutcome::Draw => None,
         }
     }
 
-    pub const fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+    pub const fn from_ascii(bytes: &[u8]) -> Result<KnownOutcome, ParseKnownOutcomeError> {
         Ok(match bytes {
-            b"1-0" => Outcome::Decisive { winner: White },
-            b"0-1" => Outcome::Decisive { winner: Black },
-            b"1/2-1/2" => Outcome::Draw,
-            b"*" => return Err(ParseOutcomeError::Unknown),
-            _ => return Err(ParseOutcomeError::Invalid),
+            b"1-0" => KnownOutcome::Decisive { winner: White },
+            b"0-1" => KnownOutcome::Decisive { winner: Black },
+            b"1/2-1/2" => KnownOutcome::Draw,
+            b"*" => return Err(ParseKnownOutcomeError::Unknown),
+            _ => return Err(ParseKnownOutcomeError::Invalid),
         })
     }
 
     pub const fn as_str(self) -> &'static str {
         match self {
-            Outcome::Decisive { winner: White } => "1-0",
-            Outcome::Decisive { winner: Black } => "0-1",
-            Outcome::Draw => "1/2-1/2",
+            KnownOutcome::Decisive { winner: White } => "1-0",
+            KnownOutcome::Decisive { winner: Black } => "0-1",
+            KnownOutcome::Draw => "1/2-1/2",
         }
     }
 }
 
-impl fmt::Display for Outcome {
+impl fmt::Display for KnownOutcome {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.as_str())
     }
@@ -66,19 +68,97 @@ impl fmt::Display for Outcome {
 
 /// Error when parsing the outcome of a game.
 #[derive(Debug, Clone)]
-pub enum ParseOutcomeError {
+pub enum ParseKnownOutcomeError {
     /// Got `*`.
     Unknown,
-    /// Got a string other than `1-0`, `0-1`, `1/2-1/2`, or `*`.
+    /// Got a string other than `1-0`, `0-1`, or `1/2-1/2`.
     Invalid,
 }
 
-impl fmt::Display for ParseOutcomeError {
+impl fmt::Display for ParseKnownOutcomeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match *self {
-            ParseOutcomeError::Unknown => "unknown outcome: *",
-            ParseOutcomeError::Invalid => "invalid outcome",
+            ParseKnownOutcomeError::Unknown => "unknown outcome: *; consider using Outcome instead",
+            ParseKnownOutcomeError::Invalid => "invalid outcome",
         })
+    }
+}
+
+impl error::Error for ParseKnownOutcomeError {}
+
+impl FromStr for KnownOutcome {
+    type Err = ParseKnownOutcomeError;
+
+    fn from_str(s: &str) -> Result<KnownOutcome, ParseKnownOutcomeError> {
+        KnownOutcome::from_ascii(s.as_bytes())
+    }
+}
+
+/// Outcome of a game, if any.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Outcome {
+    Known(KnownOutcome),
+    /// `*` - Game in progress, game abandoned, or result otherwise unknown.
+    Unknown,
+}
+
+impl Outcome {
+    pub const fn winner(self) -> Option<Color> {
+        match self {
+            Self::Known(outcome) => outcome.winner(),
+            Self::Unknown => None,
+        }
+    }
+
+    pub const fn known(self) -> Option<KnownOutcome> {
+        match self {
+            Self::Known(outcome) => Some(outcome),
+            Self::Unknown => None,
+        }
+    }
+
+    pub const fn is_known(self) -> bool {
+        matches!(self, Self::Known(_))
+    }
+
+    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOutcomeError> {
+        if let Ok(outcome) = KnownOutcome::from_ascii(bytes) {
+            return Ok(Self::Known(outcome));
+        }
+
+        match bytes {
+            b"*" => Ok(Self::Unknown),
+            _ => Err(ParseOutcomeError),
+        }
+    }
+
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Known(outcome) => outcome.as_str(),
+            Self::Unknown => "*",
+        }
+    }
+}
+
+impl From<KnownOutcome> for Outcome {
+    fn from(outcome: KnownOutcome) -> Self {
+        Self::Known(outcome)
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+/// Error when parsing an [`Outcome`].
+///
+/// The string didn't match any of:
+/// - `1-0`
+/// - `0-1`
+/// - `1-2/1-2`
+/// - `*`
+pub struct ParseOutcomeError;
+
+impl fmt::Display for ParseOutcomeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid outcome")
     }
 }
 
@@ -86,80 +166,6 @@ impl error::Error for ParseOutcomeError {}
 
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
-
-    fn from_str(s: &str) -> Result<Outcome, ParseOutcomeError> {
-        Outcome::from_ascii(s.as_bytes())
-    }
-}
-
-/// Like [`Outcome`], but with an additional variant; [`Unknown`](OpenOutcome::Unknown).
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum OpenOutcome {
-    Definitive(Outcome),
-    /// `*` - Game in progress, game abandoned, or result otherwise unknown.
-    Unknown,
-}
-
-impl OpenOutcome {
-    pub const fn winner(self) -> Option<Color> {
-        match self {
-            Self::Definitive(outcome) => outcome.winner(),
-            Self::Unknown => None,
-        }
-    }
-
-    pub const fn definitive(self) -> Option<Outcome> {
-        match self {
-            Self::Definitive(outcome) => Some(outcome),
-            Self::Unknown => None,
-        }
-    }
-
-    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOpenOutcomeError> {
-        if let Ok(outcome) = Outcome::from_ascii(bytes) {
-            return Ok(Self::Definitive(outcome));
-        }
-
-        match bytes {
-            b"*" => Ok(Self::Unknown),
-            _ => Err(ParseOpenOutcomeError),
-        }
-    }
-
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Definitive(outcome) => outcome.as_str(),
-            Self::Unknown => "*",
-        }
-    }
-}
-
-impl From<Outcome> for OpenOutcome {
-    fn from(outcome: Outcome) -> Self {
-        Self::Definitive(outcome)
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-/// Error when parsing an [`OpenOutcome`].
-///
-/// The string didn't match any of:
-/// - `1-0`
-/// - `0-1`
-/// - `1-2/1-2`
-/// - `*`
-pub struct ParseOpenOutcomeError;
-
-impl fmt::Display for ParseOpenOutcomeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("invalid outcome")
-    }
-}
-
-impl error::Error for ParseOpenOutcomeError {}
-
-impl FromStr for OpenOutcome {
-    type Err = ParseOpenOutcomeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_ascii(s.as_bytes())
@@ -548,7 +554,7 @@ pub trait Position {
     fn has_insufficient_material(&self, color: Color) -> bool;
 
     /// Tests special variant winning, losing and drawing conditions.
-    fn variant_outcome(&self) -> Option<Outcome>;
+    fn variant_outcome(&self) -> Outcome;
 
     /// Plays a move. It is the callers responsibility to ensure the move is
     /// legal.
@@ -661,22 +667,26 @@ pub trait Position {
     }
 
     /// The outcome of the game, or `None` if the game is not over.
-    fn outcome(&self) -> Option<Outcome> /* FINAL */ {
-        self.variant_outcome().or_else(|| {
-            if self.legal_moves().is_empty() {
-                Some(if self.is_check() {
-                    Outcome::Decisive {
-                        winner: !self.turn(),
-                    }
-                } else {
-                    Outcome::Draw // Stalemate
+    fn outcome(&self) -> Outcome /* FINAL */ {
+        let variant_outcome = self.variant_outcome();
+
+        if variant_outcome.is_known() {
+            return variant_outcome;
+        }
+
+        if self.legal_moves().is_empty() {
+            if self.is_check() {
+                Outcome::Known(KnownOutcome::Decisive {
+                    winner: !self.turn(),
                 })
-            } else if self.is_insufficient_material() {
-                Some(Outcome::Draw)
             } else {
-                None
+                Outcome::Known(KnownOutcome::Draw) // Stalemate
             }
-        })
+        } else if self.is_insufficient_material() {
+            Outcome::Known(KnownOutcome::Draw)
+        } else {
+            Outcome::Unknown
+        }
     }
 
     /// Plays a move.
@@ -1092,8 +1102,8 @@ impl Position for Chess {
     fn is_variant_end(&self) -> bool {
         false
     }
-    fn variant_outcome(&self) -> Option<Outcome> {
-        None
+    fn variant_outcome(&self) -> Outcome {
+        Outcome::Unknown
     }
 }
 
@@ -1346,7 +1356,7 @@ pub(crate) mod variant {
         }
 
         fn is_variant_end(&self) -> bool {
-            self.variant_outcome().is_some()
+            self.variant_outcome().is_known()
         }
 
         fn has_insufficient_material(&self, color: Color) -> bool {
@@ -1406,13 +1416,13 @@ pub(crate) mod variant {
             false
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             for color in Color::ALL {
                 if (self.board().by_color(color) & self.board().kings()).is_empty() {
-                    return Some(Outcome::Decisive { winner: !color });
+                    return Outcome::Known(KnownOutcome::Decisive { winner: !color });
                 }
             }
-            None
+            Outcome::Unknown
         }
     }
 
@@ -1641,13 +1651,13 @@ pub(crate) mod variant {
             }
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             if self.us().is_empty() || self.is_stalemate() {
-                Some(Outcome::Decisive {
+                Outcome::Known(KnownOutcome::Decisive {
                     winner: self.turn(),
                 })
             } else {
-                None
+                Outcome::Unknown
             }
         }
     }
@@ -1775,13 +1785,13 @@ pub(crate) mod variant {
             (self.chess.board().kings() & Bitboard::CENTER).any()
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             for color in Color::ALL {
                 if (self.board().by_color(color) & self.board().kings() & Bitboard::CENTER).any() {
-                    return Some(Outcome::Decisive { winner: color });
+                    return Outcome::Known(KnownOutcome::Decisive { winner: color });
                 }
             }
-            None
+            Outcome::Unknown
         }
     }
 
@@ -1933,10 +1943,12 @@ pub(crate) mod variant {
                 .any(|remaining| remaining.is_zero())
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             self.remaining_checks
                 .find(|remaining| remaining.is_zero())
-                .map(|winner| Outcome::Decisive { winner })
+                .map_or(Outcome::Unknown, |winner| {
+                    Outcome::Known(KnownOutcome::Decisive { winner })
+                })
         }
     }
 
@@ -2223,8 +2235,8 @@ pub(crate) mod variant {
         fn is_variant_end(&self) -> bool {
             false
         }
-        fn variant_outcome(&self) -> Option<Outcome> {
-            None
+        fn variant_outcome(&self) -> Outcome {
+            Outcome::Unknown
         }
     }
 
@@ -2453,19 +2465,19 @@ pub(crate) mod variant {
             true
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             if self.is_variant_end() {
                 let in_goal = self.board().kings() & Rank::Eighth;
                 if (in_goal & self.board().white()).any() && (in_goal & self.board().black()).any()
                 {
-                    Some(Outcome::Draw)
+                    Outcome::Known(KnownOutcome::Draw)
                 } else if (in_goal & self.board().white()).any() {
-                    Some(Outcome::Decisive { winner: White })
+                    Outcome::Known(KnownOutcome::Decisive { winner: White })
                 } else {
-                    Some(Outcome::Decisive { winner: Black })
+                    Outcome::Known(KnownOutcome::Decisive { winner: Black })
                 }
             } else {
-                None
+                Outcome::Unknown
             }
         }
     }
@@ -2934,15 +2946,15 @@ pub(crate) mod variant {
             true
         }
 
-        fn variant_outcome(&self) -> Option<Outcome> {
+        fn variant_outcome(&self) -> Outcome {
             if self.board().occupied().is_empty() {
-                Some(Outcome::Draw)
+                Outcome::Known(KnownOutcome::Draw)
             } else if self.board().white().is_empty() {
-                Some(Outcome::Decisive { winner: Black })
+                Outcome::Known(KnownOutcome::Decisive { winner: Black })
             } else if self.board().black().is_empty() {
-                Some(Outcome::Decisive { winner: White })
+                Outcome::Known(KnownOutcome::Decisive { winner: White })
             } else {
-                None
+                Outcome::Unknown
             }
         }
     }
@@ -3560,13 +3572,19 @@ mod tests {
         for (fen, outcome) in [
             (
                 "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                None,
+                Outcome::Unknown,
             ),
-            ("2k5/8/8/8/8/8/8/3KB3 w - - 0 1", Some(Outcome::Draw)),
-            ("8/8/8/8/8/Q1K5/8/1k6 b - - 0 1", Some(Outcome::Draw)),
+            (
+                "2k5/8/8/8/8/8/8/3KB3 w - - 0 1",
+                Outcome::Known(KnownOutcome::Draw),
+            ),
+            (
+                "8/8/8/8/8/Q1K5/8/1k6 b - - 0 1",
+                Outcome::Known(KnownOutcome::Draw),
+            ),
             (
                 "8/8/8/8/8/Q7/2K5/k7 b - - 0 1",
-                Some(Outcome::Decisive { winner: White }),
+                Outcome::Known(KnownOutcome::Decisive { winner: White }),
             ),
         ] {
             let pos: Chess = setup_fen(fen);
@@ -3748,7 +3766,7 @@ mod tests {
 
         assert_eq!(
             pos.outcome(),
-            Some(Outcome::Decisive {
+            Outcome::Known(KnownOutcome::Decisive {
                 winner: Color::White
             })
         );
@@ -3762,28 +3780,28 @@ mod tests {
         // Both players reached the backrank.
         let pos: RacingKings = setup_fen("kr3NK1/1q2R3/8/8/8/5n2/2N5/1rb2B1R w - - 11 14");
         assert!(pos.is_variant_end());
-        assert_eq!(pos.variant_outcome(), Some(Outcome::Draw));
+        assert_eq!(pos.variant_outcome(), Outcome::Known(KnownOutcome::Draw));
 
         // White to move is lost because black reached the backrank.
         let pos: RacingKings = setup_fen("1k6/6K1/8/8/8/8/8/8 w - - 0 1");
         assert!(pos.is_variant_end());
         assert_eq!(
             pos.variant_outcome(),
-            Some(Outcome::Decisive {
+            Outcome::Known(KnownOutcome::Decisive {
                 winner: Color::Black
             })
         );
 
         // Black is given a chance to catch up.
         let pos: RacingKings = setup_fen("1K6/7k/8/8/8/8/8/8 b - - 0 1");
-        assert_eq!(pos.variant_outcome(), None);
+        assert_eq!(pos.variant_outcome(), Outcome::Unknown);
 
         // Black near backrank but cannot move there.
         let pos: RacingKings = setup_fen("2KR4/k7/2Q5/4q3/8/8/8/2N5 b - - 0 1");
         assert!(pos.is_variant_end());
         assert_eq!(
             pos.variant_outcome(),
-            Some(Outcome::Decisive {
+            Outcome::Known(KnownOutcome::Decisive {
                 winner: Color::White
             })
         );

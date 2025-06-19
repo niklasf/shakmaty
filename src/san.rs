@@ -55,7 +55,8 @@
 use core::{error, fmt, str::FromStr};
 
 use crate::{
-    util::AppendAscii, CastlingSide, File, Move, MoveList, Outcome, Position, Rank, Role, Square,
+    util::AppendAscii, CastlingSide, File, KnownOutcome, Move, MoveList, Outcome, Position, Rank,
+    Role, Square,
 };
 
 /// Error when parsing a syntactically invalid SAN.
@@ -533,7 +534,7 @@ impl Suffix {
     }
 
     pub fn from_position<P: Position>(pos: &P) -> Option<Suffix> {
-        if matches!(pos.outcome(), Some(Outcome::Decisive { .. })) {
+        if matches!(pos.outcome(), Outcome::Known(KnownOutcome::Decisive { .. })) {
             Some(Suffix::Checkmate)
         } else if pos.checkers().any() {
             Some(Suffix::Check)
