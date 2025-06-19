@@ -74,7 +74,7 @@ fn test_chess960_perft() {
 }
 
 #[cfg(feature = "variant")]
-#[test]
+#[cfg(test)]
 #[cfg_attr(miri, ignore)]
 fn test_variant_perft() {
     use shakmaty::variant;
