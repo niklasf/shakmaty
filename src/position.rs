@@ -41,13 +41,12 @@ impl KnownOutcome {
         }
     }
 
-    pub const fn from_ascii(bytes: &[u8]) -> Result<KnownOutcome, ParseKnownOutcomeError> {
+    pub const fn from_ascii(bytes: &[u8]) -> Result<KnownOutcome, ParseOutcomeError> {
         Ok(match bytes {
             b"1-0" => KnownOutcome::Decisive { winner: White },
             b"0-1" => KnownOutcome::Decisive { winner: Black },
             b"1/2-1/2" => KnownOutcome::Draw,
-            b"*" => return Err(ParseKnownOutcomeError::Unknown),
-            _ => return Err(ParseKnownOutcomeError::Invalid),
+            _ => return Err(ParseOutcomeError),
         })
     }
 
@@ -66,30 +65,10 @@ impl fmt::Display for KnownOutcome {
     }
 }
 
-/// Error when parsing the outcome of a game.
-#[derive(Debug, Clone)]
-pub enum ParseKnownOutcomeError {
-    /// Got `*`.
-    Unknown,
-    /// Got a string other than `1-0`, `0-1`, or `1/2-1/2`.
-    Invalid,
-}
-
-impl fmt::Display for ParseKnownOutcomeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match *self {
-            ParseKnownOutcomeError::Unknown => "unknown outcome: *; consider using Outcome instead",
-            ParseKnownOutcomeError::Invalid => "invalid outcome",
-        })
-    }
-}
-
-impl error::Error for ParseKnownOutcomeError {}
-
 impl FromStr for KnownOutcome {
-    type Err = ParseKnownOutcomeError;
+    type Err = ParseOutcomeError;
 
-    fn from_str(s: &str) -> Result<KnownOutcome, ParseKnownOutcomeError> {
+    fn from_str(s: &str) -> Result<KnownOutcome, ParseOutcomeError> {
         KnownOutcome::from_ascii(s.as_bytes())
     }
 }
@@ -97,16 +76,17 @@ impl FromStr for KnownOutcome {
 /// Outcome of a game, if any.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Outcome {
+    /// `1-0`, `0-1`, or `1/2-1/2`.
     Known(KnownOutcome),
     /// `*` - Game in progress, game abandoned, or result otherwise unknown.
     Unknown,
 }
 
 impl Outcome {
-    pub const fn winner(self) -> Option<Color> {
-        match self {
-            Self::Known(outcome) => outcome.winner(),
-            Self::Unknown => None,
+    pub const fn from_known(outcome: Option<KnownOutcome>) -> Outcome {
+        match outcome {
+            Some(outcome) => Self::Known(outcome),
+            None => Self::Unknown,
         }
     }
 
@@ -121,14 +101,22 @@ impl Outcome {
         matches!(self, Self::Known(_))
     }
 
-    pub const fn from_ascii(bytes: &[u8]) -> Result<Self, ParseOutcomeError> {
-        if let Ok(outcome) = KnownOutcome::from_ascii(bytes) {
-            return Ok(Self::Known(outcome));
-        }
+    pub const fn is_unknown(self) -> bool {
+        matches!(self, Self::Unknown)
+    }
 
-        match bytes {
-            b"*" => Ok(Self::Unknown),
-            _ => Err(ParseOutcomeError),
+    pub const fn winner(self) -> Option<Color> {
+        match self {
+            Self::Known(outcome) => outcome.winner(),
+            Self::Unknown => None,
+        }
+    }
+
+    pub fn from_ascii(bytes: &[u8]) -> Result<Outcome, ParseOutcomeError> {
+        if bytes == b"*" {
+            Ok(Self::Unknown)
+        } else {
+            KnownOutcome::from_ascii(bytes).map(Self::Known)
         }
     }
 
@@ -146,24 +134,6 @@ impl From<KnownOutcome> for Outcome {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-/// Error when parsing an [`Outcome`].
-///
-/// The string didn't match any of:
-/// - `1-0`
-/// - `0-1`
-/// - `1-2/1-2`
-/// - `*`
-pub struct ParseOutcomeError;
-
-impl fmt::Display for ParseOutcomeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("invalid outcome")
-    }
-}
-
-impl error::Error for ParseOutcomeError {}
-
 impl FromStr for Outcome {
     type Err = ParseOutcomeError;
 
@@ -177,6 +147,18 @@ impl fmt::Display for Outcome {
         f.write_str(self.as_str())
     }
 }
+
+/// Error when parsing an [`Outcome`] or [`KnownOutcome`].
+#[derive(Clone, Debug)]
+pub struct ParseOutcomeError;
+
+impl fmt::Display for ParseOutcomeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("invalid outcome")
+    }
+}
+
+impl error::Error for ParseOutcomeError {}
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]
