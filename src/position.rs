@@ -74,6 +74,7 @@ impl FromStr for KnownOutcome {
 }
 
 /// Outcome of a game, if any.
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum Outcome {
     /// `1-0`, `0-1`, or `1/2-1/2`.
