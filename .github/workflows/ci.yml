@@ -35,11 +35,9 @@ jobs:
   test:
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            download_syzygy_test_tables: ./download-test-tables.sh
-          - os: windows-latest
-            download_syzygy_test_tables: .\download-test-tables.ps1
+        os:
+          - ubuntu-latest
+          - windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - uses: dtolnay/rust-toolchain@stable
@@ -53,7 +51,9 @@ jobs:
         with:
           path: shakmaty-syzygy/tables
           key: ${{ hashFiles('shakmaty-syzygy/tables/*/TEST-SOURCE.txt') }}
-      - run: ${{ matrix.download_syzygy_test_tables }}
+          enableCrossOsArchive: true
+      - run: ./download-test-tables.sh
+        shell: bash
         working-directory: shakmaty-syzygy
       - run: cargo hack test --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features
         name: test
