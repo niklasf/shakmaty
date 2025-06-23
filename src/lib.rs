@@ -34,12 +34,12 @@
 //! Detect game end conditions:
 //!
 //! ```
-//! # use shakmaty::{Chess, Position};
+//! # use shakmaty::{Chess, Position, Outcome};
 //! # let pos = Chess::default();
 //! assert!(!pos.is_checkmate());
 //! assert!(!pos.is_stalemate());
 //! assert!(!pos.is_insufficient_material());
-//! assert_eq!(pos.outcome(), None); // no winner yet
+//! assert_eq!(pos.outcome(), Outcome::Unknown); // no winner yet
 //! ```
 //!
 //! Also supports [FEN](fen), [SAN](san) and
@@ -106,7 +106,7 @@ pub use color::{ByColor, Color, ParseColorError};
 pub use m::{Move, MoveList};
 pub use perft::perft;
 pub use position::{
-    Chess, FromSetup, OpenOutcome, Outcome, ParseOpenOutcomeError, ParseOutcomeError, PlayError,
+    Chess, FromSetup, KnownOutcome, Outcome, ParseKnownOutcomeError, ParseOutcomeError, PlayError,
     Position, PositionError, PositionErrorKinds,
 };
 pub use role::{ByRole, Role};
