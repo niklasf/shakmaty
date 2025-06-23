@@ -12,9 +12,6 @@ jobs:
           - "1.85.1" # remember to update rust-version in Cargo.toml
           - "stable"
           - "nightly"
-        include:
-          - toolchain: "nightly"
-            flags: "-Z minimal-versions"
     runs-on: ubuntu-latest
     steps:
       - uses: dtolnay/rust-toolchain@master
@@ -23,9 +20,9 @@ jobs:
           targets: thumbv6m-none-eabi
       - uses: taiki-e/install-action@cargo-hack
       - uses: actions/checkout@v4
-      - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets ${{ matrix.flags }}
+      - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets
         name: check
-      - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi ${{ matrix.flags }}
+      - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi
         name: check no-std
   doc:
     runs-on: ubuntu-latest
@@ -36,15 +33,30 @@ jobs:
       - run: cargo hack doc --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features
         name: doc
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            download_syzygy_test_tables: ./download-test-tables.sh
+          - os: windows-latest
+            download_syzygy_test_tables: .\download-test-tables.ps1
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@valgrind
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+      - run: choco install wget --no-progress --confirm
+        if: ${{ matrix.os == 'windows-latest' }}
       - uses: actions/checkout@v4
-      - run: cargo test
-  bench:
-    runs-on: ubuntu-latest
-    steps:
-      - run: sudo apt-get update && sudo apt-get install -y valgrind
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/cache@v4
+        with:
+          path: shakmaty-syzygy/tables
+          key: ${{ hashFiles('shakmaty-syzygy/tables/*/TEST-SOURCE.txt') }}
+      - run: ${{ matrix.download_syzygy_test_tables }}
+        working-directory: shakmaty-syzygy
+      - run: cargo hack test --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features
+        name: test
       - run: cargo bench
+        name: bench
+        if: ${{ matrix.os == 'ubuntu-latest' }}

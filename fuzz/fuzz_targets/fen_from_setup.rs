@@ -1,7 +1,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use shakmaty::{fen::Fen, Setup};
+use shakmaty::{Setup, fen::Fen};
 
 fuzz_target!(|setup: Setup| {
     let Ok(fen) = Fen::try_from_setup(setup.clone()) else {

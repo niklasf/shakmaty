@@ -2,7 +2,7 @@ use std::{error::Error, path::PathBuf};
 
 use clap::{builder::PathBufValueParser, Parser};
 use shakmaty::{
-    fen::Fen, san::SanPlus, CastlingMode, Chess, Color, EnPassantMode, Outcome, Position,
+    fen::Fen, san::SanPlus, CastlingMode, Chess, Color, EnPassantMode, KnownOutcome, Position,
 };
 use shakmaty_syzygy::{Material, MaybeRounded, Tablebase};
 
@@ -90,7 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         force_movenumber = false;
     }
 
-    let result = pos.outcome().unwrap_or(Outcome::Draw);
+    let result = pos.outcome().known().unwrap_or(KnownOutcome::Draw);
 
     movetext.push(result.to_string());
 

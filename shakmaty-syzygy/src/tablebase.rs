@@ -351,7 +351,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 let dtz = a.entry.dtz()?;
                 Ok(WithDtz {
                     immediate_loss: dtz.ignore_rounding() == Dtz(-1)
-                        && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_some()),
+                        && (a.entry.pos.is_checkmate() || a.entry.pos.variant_outcome().is_known()),
                     zeroing: a.m.is_zeroing(),
                     m: a.m,
                     dtz,
@@ -416,7 +416,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
                 wdl: v,
                 state,
             });
-        } else if let Some(outcome) = pos.variant_outcome() {
+        } else if let Some(outcome) = pos.variant_outcome().known() {
             // Handle game-end postions of chess variants.
             return Ok(WdlEntry {
                 tablebase: self,
@@ -534,7 +534,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
     ) -> SyzygyResult<(Wdl, ProbeState)> {
         assert!(S::CAPTURES_COMPULSORY);
 
-        if let Some(outcome) = pos.variant_outcome() {
+        if let Some(outcome) = pos.variant_outcome().known() {
             return Ok((
                 Wdl::from_outcome(outcome, pos.turn()),
                 ProbeState::ZeroingBestMove,
@@ -622,7 +622,7 @@ impl<S: Position + Clone + Syzygy> Tablebase<S> {
 
     fn probe_wdl_table(&self, pos: &S) -> SyzygyResult<Wdl> {
         // Variant game end.
-        if let Some(outcome) = pos.variant_outcome() {
+        if let Some(outcome) = pos.variant_outcome().known() {
             return Ok(Wdl::from_outcome(outcome, pos.turn()));
         }
 

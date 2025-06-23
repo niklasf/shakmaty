@@ -1,7 +1,7 @@
 use std::{fmt, ops::Neg};
 
 use arrayvec::ArrayVec;
-use shakmaty::{Chess, Color, Outcome, Piece};
+use shakmaty::{Chess, Color, KnownOutcome, Piece};
 
 /// File extension and magic header bytes of Syzygy tables.
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -231,11 +231,11 @@ pub enum Wdl {
 
 impl Wdl {
     /// Converts `outcome` to a `Wdl` from the given point of view.
-    pub fn from_outcome(outcome: Outcome, pov: Color) -> Wdl {
+    pub fn from_outcome(outcome: KnownOutcome, pov: Color) -> Wdl {
         match outcome {
-            Outcome::Draw => Wdl::Draw,
-            Outcome::Decisive { winner } if winner == pov => Wdl::Win,
-            Outcome::Decisive { .. } => Wdl::Loss,
+            KnownOutcome::Draw => Wdl::Draw,
+            KnownOutcome::Decisive { winner } if winner == pov => Wdl::Win,
+            KnownOutcome::Decisive { .. } => Wdl::Loss,
         }
     }
 

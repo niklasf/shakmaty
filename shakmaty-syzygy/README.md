@@ -1,7 +1,7 @@
 shakmaty-syzygy
 ===============
 
-A Rust library to probe Syzygy endgame tablebases, based on [shakmaty](https://github.com/niklasf/shakmaty).
+Probe Syzygy endgame tablebases, based on [shakmaty](https://github.com/niklasf/shakmaty).
 
 [![crates.io](https://img.shields.io/crates/v/shakmaty-syzygy.svg)](https://crates.io/crates/shakmaty-syzygy)
 [![docs.rs](https://docs.rs/shakmaty-syzygy/badge.svg)](https://docs.rs/shakmaty-syzygy)

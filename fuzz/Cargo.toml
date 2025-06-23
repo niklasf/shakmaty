@@ -10,6 +10,7 @@ cargo-fuzz = true
 arbitrary = { version = "1.4.1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 shakmaty = { path = "../shakmaty", features = ["arbitrary", "variant"] }
+shakmaty-syzygy = { path = "../shakmaty-syzygy" }
 
 [[bin]]
 name = "fen_from_ascii"
@@ -44,5 +45,11 @@ bench = false
 [[bin]]
 name = "packed_setup_from_setup"
 path = "fuzz_targets/packed_setup_from_setup.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "syzygy_pawnful"
+path = "fuzz_targets/syzygy_pawnful.rs"
 test = false
 bench = false

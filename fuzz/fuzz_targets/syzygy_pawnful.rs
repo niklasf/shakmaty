@@ -7,10 +7,10 @@ use std::{
 };
 
 use libfuzzer_sys::fuzz_target;
-use shakmaty::{fen::Fen, CastlingMode, Chess};
+use shakmaty::{CastlingMode, Chess, fen::Fen};
 use shakmaty_syzygy::{
-    filesystem::{Filesystem, RandomAccessFile, ReadHint},
     Tablebase,
+    filesystem::{Filesystem, RandomAccessFile, ReadHint},
 };
 
 struct FakeFilesystem {
