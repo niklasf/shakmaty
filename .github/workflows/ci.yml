@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  check:
+    strategy:
+      matrix:
+        toolchain:
+          - "1.85.1" # remember to update rust-version in Cargo.toml
+          - "stable"
+          - "nightly"
+        include:
+          - toolchain: "nightly"
+            flags: "-Z minimal-versions"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: thumbv6m-none-eabi
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: actions/checkout@v4
+      - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets ${{ matrix.flags }}
+        name: check
+      - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi ${{ matrix.flags }}
+        name: check no-std
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@cargo-hack
+      - uses: actions/checkout@v4
+      - run: cargo hack doc --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features
+        name: doc
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - run: cargo test
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - run: sudo apt-get update && sudo apt-get install -y valgrind
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo bench
