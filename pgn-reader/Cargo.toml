@@ -17,7 +17,7 @@ shakmaty = "0.28"
 
 [dev-dependencies]
 crossbeam = "0.8"
-bzip2 = "0.5"
+bzip2 = "0.6"
 xz2 = "0.1"
 flate2 = "1.0"
 lz4 = "1.23"
