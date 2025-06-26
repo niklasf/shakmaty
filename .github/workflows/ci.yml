@@ -51,7 +51,6 @@ jobs:
         with:
           path: shakmaty-syzygy/tables
           key: ${{ hashFiles('shakmaty-syzygy/tables/*/TEST-SOURCE.txt') }}
-          enableCrossOsArchive: true
       - run: ./download-test-tables.sh
         shell: bash
         working-directory: shakmaty-syzygy
