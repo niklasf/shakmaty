@@ -1,9 +1,9 @@
 #![no_main]
 
-use libfuzzer_sys::fuzz_target;
-
-use pgn_reader::{BufferedReader, Visitor};
 use std::io::Cursor;
+
+use libfuzzer_sys::fuzz_target;
+use pgn_reader::{BufferedReader, Visitor};
 
 struct MyVisitor;
 

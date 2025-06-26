@@ -682,7 +682,7 @@ impl PairsData {
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
         ensure!(block_size <= MAX_BLOCK_SIZE as u32);
         let span = u!(1u32.checked_shl(u32::from(header[2])));
-        let sparse_index_size = ((tb_size + u64::from(span) - 1) / u64::from(span)) as u32;
+        let sparse_index_size = tb_size.div_ceil(u64::from(span)) as u32;
         let padding = header[3];
         let blocks_num = LE::read_u32(&header[4..]);
         let block_length_size = u!(blocks_num.checked_add(u32::from(padding)));

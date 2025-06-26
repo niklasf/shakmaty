@@ -658,7 +658,7 @@ struct Reader<'a> {
 
 impl Reader<'_> {
     #[inline]
-    fn new(bytes: &[u8]) -> Reader {
+    fn new(bytes: &[u8]) -> Reader<'_> {
         Reader { bytes }
     }
 
