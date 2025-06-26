@@ -61,8 +61,8 @@ use core::{
 use bitflags::bitflags;
 
 use crate::{
-    util::AppendAscii, Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File,
-    FromSetup, Piece, Position, PositionError, Rank, RemainingChecks, Setup, Square,
+    Bitboard, Board, ByColor, ByRole, CastlingMode, Color, EnPassantMode, File, FromSetup, Piece,
+    Position, PositionError, Rank, RemainingChecks, Setup, Square, util::AppendAscii,
 };
 
 fn append_castling<W: AppendAscii>(
@@ -129,7 +129,7 @@ fn append_epd<W: AppendAscii>(
 ) -> Result<(), W::Error> {
     f.reserve(21);
     BoardFen { board, promoted }.append_to(f)?;
-    if let Some(ref pockets) = pockets {
+    if let Some(pockets) = pockets {
         append_pockets(f, pockets)?;
     }
     f.append_ascii(' ')?;

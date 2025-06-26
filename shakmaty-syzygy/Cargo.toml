@@ -2,15 +2,14 @@
 name = "shakmaty-syzygy"
 version = "0.26.0" # remember to update changelog and html_root_url
 description = "Probe Syzygy endgame tablebases"
-repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
-license = "GPL-3.0+"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games"]
 keywords = ["chess", "syzygy", "tablebase"]
 exclude = ["tables/**/*.*tb*"]
-edition = "2021"
-rust-version = "1.77"
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [[bench]]
 name = "benches"
@@ -43,5 +42,5 @@ variant = ["shakmaty/variant"]
 all-features = true
 rustdoc-args = ["--cfg", "docs_rs"]
 
-[lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }
+[lints]
+workspace = true

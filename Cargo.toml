@@ -8,3 +8,12 @@ members = [
     # Internal
     "fuzz",
 ]
+
+[workspace.package]
+repository = "https://github.com/niklasf/shakmaty"
+license = "GPL-3.0-or-later"
+edition = "2024"
+rust-version = "1.85.1" # remember to update test.yml
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }

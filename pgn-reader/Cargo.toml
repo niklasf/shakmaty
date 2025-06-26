@@ -2,13 +2,13 @@
 name = "pgn-reader"
 version = "0.27.0" # remember to update html_root_url and benchmarks
 description = "Fast non-allocating and streaming reader for chess games in PGN notation"
-repository = "https://github.com/niklasf/shakmaty"
 readme = "README.md"
-license = "GPL-3.0+"
-authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 categories = ["games", "parser-implementations"]
 keywords = ["chess", "pgn"]
-edition = "2021"
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 memchr = "2.2"
@@ -22,3 +22,6 @@ xz2 = "0.1"
 flate2 = "1.0"
 lz4 = "1.23"
 zstd = "0.13"
+
+[lints]
+workspace = true
