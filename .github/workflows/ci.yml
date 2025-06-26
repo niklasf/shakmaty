@@ -51,7 +51,7 @@ jobs:
           path: shakmaty-syzygy/tables
           key: ${{ hashFiles('shakmaty-syzygy/tables/*/TEST-SOURCE.txt') }}
       - run: choco install wget --no-progress --confirm
-        if: matrix.os == 'windows-latest' and steps.cache.outputs.cache-hit != 'true'
+        if: matrix.os == 'windows-latest' && steps.cache.outputs.cache-hit != 'true'
       - run: ./download-test-tables.sh
         shell: bash
         working-directory: shakmaty-syzygy
