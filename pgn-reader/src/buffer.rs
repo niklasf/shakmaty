@@ -1,5 +1,7 @@
-use std::cmp;
-use std::io::{self, Read};
+use std::{
+    cmp,
+    io::{self, Read},
+};
 
 #[derive(Debug, Clone)]
 pub struct Buffer {
