@@ -33,6 +33,50 @@ impl<R: Read> BufferedReader<R> {
         }
     }
 
+    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`BufferedReader`].
+    ///
+    /// Since [`Buffer`] is private, you can only use use this to create a [`BufferedReader`]
+    /// from [`BufferedReader::into_inner`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use std::io::Cursor;
+    /// # use shakmaty::san::SanPlus;
+    /// # use pgn_reader::{BufferedReader, Visitor};
+    /// let mut reader = BufferedReader::new(Cursor::new("1. e4 e5\n\n1. d4"));
+    /// reader.skip_game().unwrap();
+    /// let inner = reader.into_inner();
+    /// // do something with inner
+    /// let (buffer, r) = inner.into_inner();
+    /// reader = BufferedReader::from_buffer(buffer.into_inner(), r);
+    ///
+    /// #[derive(Default)]
+    /// struct LastMove(Option<SanPlus>);
+    ///
+    /// impl Visitor for LastMove {
+    ///     type Result = Option<SanPlus>;
+    ///
+    ///     fn san(&mut self, san_plus: SanPlus) {
+    ///         self.0 = Some(san_plus);
+    ///     }
+    ///
+    ///     fn end_game(&mut self) -> Self::Result {
+    ///         std::mem::replace(&mut self.0, None)
+    ///     }
+    /// }
+    ///
+    /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
+    /// ```
+    pub fn from_buffer(buffer: Buffer, reader: R) -> BufferedReader<R> {
+        BufferedReader {
+            reader,
+            buffer,
+            max_tag_line_length: 1024,
+            max_comment_length: 4096,
+        }
+    }
+
     fn skip_bom(&mut self) -> io::Result<()> {
         if self
             .buffer
