@@ -135,7 +135,6 @@
 //!
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![doc(html_root_url = "https://docs.rs/pgn-reader/0.27.0")]
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![warn(missing_copy_implementations)]
@@ -148,8 +147,8 @@ mod visitor;
 pub use buffer::Buffer;
 pub use reader::{BufferedReader, IntoIter};
 pub use shakmaty::{
-    san::{San, SanPlus},
     CastlingSide, Color, File, KnownOutcome, Outcome, Rank, Role, Square,
+    san::{San, SanPlus},
 };
 pub use types::{Nag, RawComment, RawTag, Skip};
 pub use visitor::Visitor;
