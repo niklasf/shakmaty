@@ -1,0 +1,18 @@
+[package]
+name = "pgn-reader-fuzz"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+pgn-reader = { path = ".." }
+
+[workspace]
+members = ["."] # Let fuzz suite not interfere with workspaces
+
+[[bin]]
+name = "pgn"
+path = "fuzzers/pgn.rs"
