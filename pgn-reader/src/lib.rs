@@ -145,6 +145,7 @@ mod reader;
 mod types;
 mod visitor;
 
+pub use buffer::Buffer;
 pub use reader::{BufferedReader, IntoIter};
 pub use shakmaty::{
     san::{San, SanPlus},
