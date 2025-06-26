@@ -1,6 +1,6 @@
 # shakmaty
 
-A Rust library for chess and chess variant rules and operations
+Chess and chess variant rules and operations
 
 [![crates.io](https://img.shields.io/crates/v/shakmaty.svg)](https://crates.io/crates/shakmaty)
 [![docs.rs](https://docs.rs/shakmaty/badge.svg)](https://docs.rs/shakmaty)

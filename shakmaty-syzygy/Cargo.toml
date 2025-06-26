@@ -1,0 +1,47 @@
+[package]
+name = "shakmaty-syzygy"
+version = "0.26.0" # remember to update changelog and html_root_url
+description = "Probe Syzygy endgame tablebases"
+repository = "https://github.com/niklasf/shakmaty"
+readme = "README.md"
+license = "GPL-3.0+"
+authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
+categories = ["games"]
+keywords = ["chess", "syzygy", "tablebase"]
+exclude = ["tables/**/*.*tb*"]
+edition = "2021"
+rust-version = "1.77"
+
+[[bench]]
+name = "benches"
+harness = false
+
+[dependencies]
+arrayvec = "0.7"
+bitflags = "2"
+shakmaty = { version = "0.28", path = "../shakmaty" }
+byteorder = "1.2"
+rustc-hash = "2"
+once_cell = "1.12"
+tracing = "0.1"
+memmap2 = { version = "0.9", optional = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2" # for optional posix_fadvise
+
+[dev-dependencies]
+csv = "1"
+bencher = "0.1"
+clap = { version = "4", features = ["derive", "deprecated"] }
+
+[features]
+default = []
+mmap = ["memmap2"]
+variant = ["shakmaty/variant"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docs_rs"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }

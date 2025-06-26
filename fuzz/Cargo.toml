@@ -1,7 +1,7 @@
 [package]
-name = "shakmaty-fuzz"
+name = "fuzz"
 publish = false
-edition = "2021"
+edition = "2024"
 
 [package.metadata]
 cargo-fuzz = true
@@ -9,31 +9,54 @@ cargo-fuzz = true
 [dependencies]
 arbitrary = { version = "1.4.1", features = ["derive"] }
 libfuzzer-sys = "0.4"
-shakmaty = { path = "..", features = ["arbitrary", "variant"] }
-
-[workspace]
-members = ["."] # Let fuzz suite not interfere with workspaces
+shakmaty = { path = "../shakmaty", features = ["arbitrary", "variant"] }
+shakmaty-syzygy = { path = "../shakmaty-syzygy" }
+pgn-reader = { path = "../pgn-reader" }
 
 [[bin]]
 name = "fen_from_ascii"
 path = "fuzz_targets/fen_from_ascii.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "fen_from_setup"
 path = "fuzz_targets/fen_from_setup.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "san_from_ascii"
 path = "fuzz_targets/san_from_ascii.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "uci_from_ascii"
 path = "fuzz_targets/uci_from_ascii.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "packed_setup_from_bytes"
 path = "fuzz_targets/packed_setup_from_bytes.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "packed_setup_from_setup"
 path = "fuzz_targets/packed_setup_from_setup.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "syzygy_pawnful"
+path = "fuzz_targets/syzygy_pawnful.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "pgn"
+path = "fuzz_targets/pgn.rs"
+test = false
+bench = false

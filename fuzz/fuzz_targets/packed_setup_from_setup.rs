@@ -2,7 +2,7 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use shakmaty::{packed::PackedSetup, variant::Variant, Setup};
+use shakmaty::{Setup, packed::PackedSetup, variant::Variant};
 
 #[derive(Arbitrary, Debug)]
 struct VariantSetup {
