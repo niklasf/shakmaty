@@ -148,7 +148,7 @@ mod visitor;
 pub use reader::{BufferedReader, IntoIter};
 pub use shakmaty::{
     san::{San, SanPlus},
-    CastlingSide, Color, File, Outcome, Rank, Role, Square,
+    CastlingSide, Color, File, KnownOutcome, Outcome, Rank, Role, Square,
 };
 pub use types::{Nag, RawComment, RawTag, Skip};
 pub use visitor::Visitor;

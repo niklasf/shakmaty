@@ -11,6 +11,7 @@ arbitrary = { version = "1.4.1", features = ["derive"] }
 libfuzzer-sys = "0.4"
 shakmaty = { path = "../shakmaty", features = ["arbitrary", "variant"] }
 shakmaty-syzygy = { path = "../shakmaty-syzygy" }
+pgn-reader = { path = "../pgn-reader" }
 
 [[bin]]
 name = "fen_from_ascii"
@@ -51,5 +52,11 @@ bench = false
 [[bin]]
 name = "syzygy_pawnful"
 path = "fuzz_targets/syzygy_pawnful.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "pgn"
+path = "fuzz_targets/pgn.rs"
 test = false
 bench = false

@@ -13,7 +13,7 @@ edition = "2021"
 [dependencies]
 memchr = "2.2"
 btoi = "0.5"
-shakmaty = "0.28"
+shakmaty = { version = "0.28", path = "../shakmaty" }
 
 [dev-dependencies]
 crossbeam = "0.8"

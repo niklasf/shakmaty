@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "shakmaty",
     "shakmaty-syzygy",
+    "pgn-reader",
 
     # Internal
     "fuzz",

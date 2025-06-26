@@ -45,7 +45,7 @@ impl Visitor for Stats {
         self.variations += 1;
     }
 
-    fn outcome(&mut self, _outcome: Option<Outcome>) {
+    fn outcome(&mut self, _outcome: Outcome) {
         self.outcomes += 1;
     }
 

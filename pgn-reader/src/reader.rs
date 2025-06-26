@@ -5,7 +5,7 @@ use std::{
 
 use shakmaty::{
     san::{San, SanPlus, Suffix},
-    CastlingSide, Color, Outcome,
+    CastlingSide, Color, KnownOutcome, Outcome,
 };
 
 // use slice_deque::SliceDeque;
@@ -326,7 +326,7 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-1") {
                         self.buffer.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive {
+                        visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
                             winner: Color::Black,
                         }));
                     } else if self.buffer.data().starts_with(b"-0") {
@@ -356,12 +356,12 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-0") {
                         self.buffer.consume(2);
-                        visitor.outcome(Some(Outcome::Decisive {
+                        visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
                             winner: Color::White,
                         }));
                     } else if self.buffer.data().starts_with(b"/2-1/2") {
                         self.buffer.consume(6);
-                        visitor.outcome(Some(Outcome::Draw));
+                        visitor.outcome(Outcome::Known(KnownOutcome::Draw));
                     } else {
                         self.buffer.bump();
                         while let Some(ch) = self.buffer.peek() {
@@ -440,7 +440,7 @@ impl<R: Read> BufferedReader<R> {
                     }
                 }
                 b'*' => {
-                    visitor.outcome(None);
+                    visitor.outcome(Outcome::Unknown);
                     self.buffer.bump();
                 }
                 b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
