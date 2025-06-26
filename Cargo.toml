@@ -13,7 +13,7 @@ members = [
 repository = "https://github.com/niklasf/shakmaty"
 license = "GPL-3.0-or-later"
 edition = "2024"
-rust-version = "1.85.1" # remember to update test.yml
+rust-version = "1.85.1" # remember to update ci.yml
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }
