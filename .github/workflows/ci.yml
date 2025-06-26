@@ -27,11 +27,11 @@ jobs:
   doc:
     runs-on: ubuntu-latest
     steps:
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: dtolnay/rust-toolchain@nigthly
       - uses: actions/checkout@v4
-      - run: cargo hack doc --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features
-        name: doc
+      - run: cargo doc --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings --cfg docs_rs"
   test:
     strategy:
       matrix:
