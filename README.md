@@ -49,7 +49,8 @@ A Rust library for chess and chess variant rules and operations
 
 - Probe Syzygy tablebases with [shakmaty-syzygy](https://crates.io/crates/shakmaty-syzygy).
 
-- Parse PGN files with [pgn-reader](https://crates.io/crates/pgn-reader).
+- Parse PGN files with [pgn-reader](https://crates.io/crates/pgn-reader)
+  (experimental).
 
 ## Documentation
 
