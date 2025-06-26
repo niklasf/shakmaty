@@ -54,7 +54,9 @@ A Rust library for chess and chess variant rules and operations
 
 ## Documentation
 
-[Read the documentation](https://docs.rs/shakmaty)
+* [shakmaty](https://docs.rs/shakmaty)
+* [shakmaty-syzygy](https://docs.rs/shakmaty-syzygy)
+* [pgn-reader](https://docs.rs/pgn-reader)
 
 ## Benchmarks
 
