@@ -574,7 +574,7 @@ impl<R: Read> Reader<R> {
     }
 }
 
-/// Iterator returned by [`Read::into_iter()`].
+/// Iterator returned by [`Reader::into_iter()`].
 #[derive(Debug)]
 #[must_use]
 pub struct IntoIter<'a, V: 'a, R> {
