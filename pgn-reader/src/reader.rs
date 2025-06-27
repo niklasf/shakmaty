@@ -16,16 +16,16 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct BufferedReader<R> {
+pub struct Reader<R> {
     reader: R,
     buffer: Buffer,
     max_tag_line_length: usize,
     max_comment_length: usize,
 }
 
-impl<R: Read> BufferedReader<R> {
-    pub fn new(reader: R) -> BufferedReader<R> {
-        BufferedReader {
+impl<R: Read> Reader<R> {
+    pub fn new(reader: R) -> Reader<R> {
+        Reader {
             reader,
             buffer: Buffer::with_capacity(1 << 14),
             max_tag_line_length: 1024,
@@ -33,23 +33,23 @@ impl<R: Read> BufferedReader<R> {
         }
     }
 
-    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`BufferedReader`].
+    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`Reader`].
     ///
-    /// Since [`Buffer`] is private, you can only use use this to create a [`BufferedReader`]
-    /// from [`BufferedReader::into_inner`].
+    /// Since [`Buffer`] is private, you can only use use this to create a [`Reader`]
+    /// from [`Reader::into_inner`].
     ///
     /// # Examples
     ///
     /// ```rust
     /// # use std::io::Cursor;
     /// # use shakmaty::san::SanPlus;
-    /// # use pgn_reader::{BufferedReader, Visitor};
-    /// let mut reader = BufferedReader::new(Cursor::new("1. e4 e5\n\n1. d4"));
+    /// # use pgn_reader::{Reader, Visitor};
+    /// let mut reader = Reader::new(Cursor::new("1. e4 e5\n\n1. d4"));
     /// reader.skip_game().unwrap();
     /// let inner = reader.into_inner();
     /// // do something with inner
     /// let (buffer, r) = inner.into_inner();
-    /// reader = BufferedReader::from_buffer(buffer.into_inner(), r);
+    /// reader = Reader::from_buffer(buffer.into_inner(), r);
     ///
     /// #[derive(Default)]
     /// struct LastMove(Option<SanPlus>);
@@ -68,8 +68,8 @@ impl<R: Read> BufferedReader<R> {
     ///
     /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
     /// ```
-    pub fn from_buffer(buffer: Buffer, reader: R) -> BufferedReader<R> {
-        BufferedReader {
+    pub fn from_buffer(buffer: Buffer, reader: R) -> Reader<R> {
+        Reader {
             reader,
             buffer,
             max_tag_line_length: 1024,
@@ -574,13 +574,12 @@ impl<R: Read> BufferedReader<R> {
     }
 }
 
-/// Iterator returned by
-/// [`BufferedReader::into_iter()`](struct.BufferedReader.html#method.into_iter).
+/// Iterator returned by [`Read::into_iter()`].
 #[derive(Debug)]
 #[must_use]
 pub struct IntoIter<'a, V: 'a, R> {
     visitor: &'a mut V,
-    reader: BufferedReader<R>,
+    reader: Reader<R>,
 }
 
 impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
@@ -599,7 +598,7 @@ impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
 mod tests {
     use super::*;
 
-    struct _AssertObjectSafe<R>(Box<BufferedReader<R>>);
+    struct _AssertObjectSafe<R>(Box<Reader<R>>);
 
     #[derive(Default)]
     struct GameCounter {
@@ -617,7 +616,7 @@ mod tests {
     #[test]
     fn test_empty_game() -> Result<(), io::Error> {
         let mut counter = GameCounter::default();
-        let mut reader = BufferedReader::new(io::Cursor::new(b"  "));
+        let mut reader = Reader::new(io::Cursor::new(b"  "));
         reader.read_game(&mut counter)?;
         assert_eq!(counter.count, 0);
         Ok(())
@@ -626,7 +625,7 @@ mod tests {
     #[test]
     fn test_trailing_space() -> Result<(), io::Error> {
         let mut counter = GameCounter::default();
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
+        let mut reader = Reader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
         reader.read_game(&mut counter)?;
         assert_eq!(counter.count, 1);
         reader.read_game(&mut counter)?;
@@ -651,7 +650,7 @@ mod tests {
         }
 
         let mut collector = NagCollector { nags: Vec::new() };
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
+        let mut reader = Reader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
         reader.read_game(&mut collector)?;
         assert_eq!(
             collector.nags,
@@ -677,7 +676,7 @@ mod tests {
         }
 
         let mut collector = SanCollector { sans: Vec::new() };
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
+        let mut reader = Reader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
         reader.read_game(&mut collector)?;
         assert_eq!(collector.sans.len(), 6);
         assert_ne!(collector.sans[0], San::Null);
