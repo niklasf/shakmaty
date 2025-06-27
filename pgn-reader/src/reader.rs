@@ -15,6 +15,8 @@ use crate::{
     visitor::{SkipVisitor, Visitor},
 };
 
+/// A buffered PGN reader.
+/// It's redundant and discouraged to wrap this in a [`BufReader`](std::io::BufReader).
 #[derive(Debug, Clone)]
 pub struct Reader<R> {
     reader: R,
