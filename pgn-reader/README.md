@@ -29,7 +29,7 @@ mainline of each game.
 
 ```rust
 use std::io;
-use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
+use pgn_reader::{Visitor, Skip, Reader, SanPlus};
 
 struct MoveCounter {
     moves: usize,
@@ -66,7 +66,7 @@ fn main() -> io::Result<()> {
                 { game paused due to bad weather }
                 2... Nf6 *";
 
-    let mut reader = BufferedReader::new_cursor(&pgn[..]);
+    let mut reader = Reader::new_cursor(&pgn[..]);
 
     let mut counter = MoveCounter::new();
     let moves = reader.read_game(&mut counter)?;

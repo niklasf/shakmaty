@@ -3,7 +3,7 @@
 use std::io::Cursor;
 
 use libfuzzer_sys::fuzz_target;
-use pgn_reader::{BufferedReader, Visitor};
+use pgn_reader::{Reader, Visitor};
 
 struct MyVisitor;
 
@@ -14,5 +14,5 @@ impl Visitor for MyVisitor {
 
 fuzz_target!(|data: &[u8]| {
     let mut visitor = MyVisitor;
-    let _ = BufferedReader::new(Cursor::new(data)).read_all(&mut visitor);
+    let _ = Reader::new(Cursor::new(data)).read_all(&mut visitor);
 });

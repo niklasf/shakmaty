@@ -1,6 +1,6 @@
 //! A fast non-allocating and streaming reader for chess games in PGN notation.
 //!
-//! [`BufferedReader`] parses games and calls methods of a user provided
+//! [`Reader`] parses games and calls methods of a user provided
 //! [`Visitor`]. Implementing custom visitors allows for maximum flexibility:
 //!
 //! * The reader itself does not allocate (besides a single fixed-size buffer).
@@ -23,7 +23,7 @@
 //!
 //! ```
 //! use std::io;
-//! use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
+//! use pgn_reader::{Visitor, Skip, Reader, SanPlus};
 //!
 //! struct MoveCounter {
 //!     moves: usize,
@@ -60,7 +60,7 @@
 //!                 { game paused due to bad weather }
 //!                 2... Nf6 *";
 //!
-//!     let mut reader = BufferedReader::new(io::Cursor::new(&pgn));
+//!     let mut reader = Reader::new(io::Cursor::new(&pgn));
 //!
 //!     let mut counter = MoveCounter::new();
 //!     let moves = reader.read_game(&mut counter)?;
@@ -78,7 +78,7 @@
 //! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
 //!
-//! use pgn_reader::{Visitor, Skip, RawTag, BufferedReader, SanPlus};
+//! use pgn_reader::{Visitor, Skip, RawTag, Reader, SanPlus};
 //!
 //! struct LastPosition {
 //!     pos: Chess,
@@ -123,7 +123,7 @@
 //! fn main() -> io::Result<()> {
 //!     let pgn = b"1. f3 e5 2. g4 Qh4#";
 //!
-//!     let mut reader = BufferedReader::new(io::Cursor::new(&pgn));
+//!     let mut reader = Reader::new(io::Cursor::new(&pgn));
 //!
 //!     let mut visitor = LastPosition::new();
 //!     let pos = reader.read_game(&mut visitor)?;
@@ -145,7 +145,7 @@ mod types;
 mod visitor;
 
 pub use buffer::Buffer;
-pub use reader::{BufferedReader, IntoIter};
+pub use reader::{Reader, IntoIter};
 pub use shakmaty::{
     CastlingSide, Color, File, KnownOutcome, Outcome, Rank, Role, Square,
     san::{San, SanPlus},
