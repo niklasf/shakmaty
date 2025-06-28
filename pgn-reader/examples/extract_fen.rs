@@ -82,13 +82,8 @@ fn main() -> anyhow::Result<()> {
         loop {
             match reader.read_game(&mut validator)? {
                 None => break,
-                Some(Ok(fen)) => {
-                    println!("{arg} #{i}: {fen}");
-                }
-                Some(Err(e)) => {
-                    eprintln!("{e}");
-                    reader.skip_game()?;
-                }
+                Some(Ok(fen)) => println!("{arg} #{i}: {fen}"),
+                Some(Err(e)) => eprintln!("{e}"),
             }
 
             i += 1;

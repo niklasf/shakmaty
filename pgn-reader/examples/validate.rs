@@ -153,7 +153,6 @@ fn main() -> io::Result<()> {
                     eprintln!("{e}");
                     file_ok = false;
                     all_ok = false;
-                    reader.skip_game()?;
                 }
             }
         }
