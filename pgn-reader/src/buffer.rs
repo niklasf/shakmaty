@@ -19,18 +19,16 @@ pub struct Buffer {
     end: usize,
 }
 
-impl Default for Buffer {
+impl Buffer {
     /// Creates a new [`Buffer`] that can hold [`CAPACITY`] many elements.
-    fn default() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             buffer: vec![0; CAPACITY].into_boxed_slice(),
             start: 0,
             end: 0,
         }
     }
-}
-
-impl Buffer {
+    
     /// Equivalent to [`self.data_range().len()`](Self::data_range), but faster.
     #[inline]
     fn data_len(&self) -> usize {
@@ -47,7 +45,7 @@ impl Buffer {
 
     /// Gets the valid data in the buffer.
     #[inline]
-    pub fn data(&self) -> &[u8] {
+    pub(crate) fn data(&self) -> &[u8] {
         debug_assert!(self.start <= self.end && self.end <= CAPACITY);
 
         // SAFETY: self.start <= self.end <= CAPACITY
@@ -56,34 +54,34 @@ impl Buffer {
 
     /// Returns the first item in [`Self::data`].
     #[inline]
-    pub fn peek(&self) -> Option<u8> {
+    pub(crate) fn peek(&self) -> Option<u8> {
         self.buffer.get(self.start).copied()
     }
 
     /// Clears the buffer.
     #[inline]
-    pub fn clear(&mut self) {
+    pub(crate) fn clear(&mut self) {
         self.start = 0;
         self.end = 0;
     }
 
     /// Discards `n` many bytes at the front of [`Self::data`].
     #[inline]
-    pub fn consume(&mut self, n: usize) {
+    pub(crate) fn consume(&mut self, n: usize) {
         self.start = cmp::min(self.start + n, self.end);
     }
 
     /// Like [`self.consume(1)`](Self::consume).
     #[inline]
-    pub fn bump(&mut self) {
+    pub(crate) fn bump(&mut self) {
         self.consume(1);
     }
 
-    /// Ensures that [`N`] amount of bytes are in the buffer and returns the data.
+    /// Ensures that `N` amount of bytes are in the buffer and returns the data.
     ///
-    /// The only situation where the returned slice does not have [`N`] elements is if EOF was
+    /// The only situation where the returned slice does not have `N` elements is if EOF was
     /// encountered.
-    pub fn ensure_bytes<const N: usize>(&mut self, mut r: impl Read) -> io::Result<&[u8]> {
+    pub(crate) fn ensure_bytes<const N: usize>(&mut self, mut r: impl Read) -> io::Result<&[u8]> {
         const {
             debug_assert!(N <= CAPACITY);
         }
@@ -122,7 +120,7 @@ impl AsRef<[u8]> for Buffer {
 }
 
 #[derive(Debug, Clone)]
-pub struct BufferWithReader<R> {
+pub(crate) struct BufferWithReader<R> {
     buffer: Buffer,
     reader: R,
 }
@@ -131,7 +129,7 @@ impl<R: Read> BufferWithReader<R> {
     /// Creates a new [`BufferWithReader`] that can hold [`CAPACITY`] many elements.
     pub fn new(reader: R) -> Self {
         Self {
-            buffer: Buffer::default(),
+            buffer: Buffer::new(),
             reader,
         }
     }

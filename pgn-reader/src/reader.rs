@@ -24,6 +24,7 @@ const _: () = {
     assert!(MAX_COMMENT_LENGTH <= buffer::CAPACITY);
 };
 
+/// A buffered PGN reader.
 #[derive(Debug, Clone)]
 pub struct BufferedReader<R> {
     buffer: BufferWithReader<R>,
