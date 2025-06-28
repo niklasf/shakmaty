@@ -42,6 +42,7 @@ impl<R: Read> BufferedReader<R> {
     /// # Examples
     ///
     /// ```rust
+    /// # use std::convert::Infallible;
     /// # use std::io::Cursor;
     /// # use shakmaty::san::SanPlus;
     /// # use pgn_reader::{BufferedReader, Visitor};
@@ -56,18 +57,21 @@ impl<R: Read> BufferedReader<R> {
     /// struct LastMove(Option<SanPlus>);
     ///
     /// impl Visitor for LastMove {
-    ///     type Result = Option<SanPlus>;
+    ///     type Output = Option<SanPlus>;
+    ///     type Error = Infallible;
     ///
-    ///     fn san(&mut self, san_plus: SanPlus) {
+    ///     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
     ///         self.0 = Some(san_plus);
+    /// 
+    ///         Ok(())
     ///     }
     ///
-    ///     fn end_game(&mut self) -> Self::Result {
+    ///     fn end_game(&mut self) -> Self::Output {
     ///         std::mem::replace(&mut self.0, None)
     ///     }
     /// }
     ///
-    /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
+    /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
     /// ```
     pub fn from_buffer(buffer: Buffer, reader: R) -> BufferedReader<R> {
         BufferedReader {
