@@ -6,34 +6,32 @@ use std::{
     fs::File,
     io, mem,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
 };
 
 use pgn_reader::{BufferedReader, RawTag, San, SanPlus, Skip, Visitor};
-use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Game {
     index: usize,
     pos: Chess,
     sans: Vec<San>,
-    success: bool,
 }
 
 impl Game {
-    fn validate(mut self) -> bool {
-        self.success && {
-            for san in self.sans {
-                let m = match san.to_move(&self.pos) {
-                    Ok(m) => m,
-                    Err(_) => return false,
-                };
+    fn validate(&mut self) -> bool {
+        for san in &self.sans {
+            let m = match san.to_move(&self.pos) {
+                Ok(m) => m,
+                Err(_) => return false,
+            };
 
-                self.pos.play_unchecked(m);
-            }
-            true
+            self.pos.play_unchecked(m);
         }
+
+        true
     }
 }
 
@@ -50,70 +48,49 @@ impl Validator {
                 index: 0,
                 pos: Chess::default(),
                 sans: Vec::new(),
-                success: true,
             },
         }
     }
 }
 
 impl Visitor for Validator {
-    type Result = Game;
+    type Output = Game;
+    type Error = anyhow::Error;
 
-    fn begin_tags(&mut self) {
+    fn begin_tags(&mut self) -> Result<(), Self::Error> {
         self.games += 1;
+
+        Ok(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
-            let fen = match Fen::from_ascii(value.as_bytes()) {
-                Ok(fen) => fen,
-                Err(err) => {
-                    eprintln!(
-                        "invalid fen tag in game {}: {} ({:?})",
-                        self.games, err, value
-                    );
-                    self.game.success = false;
-                    return;
-                }
-            };
+            let fen = Fen::from_ascii(value.as_bytes())?;
 
-            self.game.pos = match fen.into_position(CastlingMode::Chess960) {
-                Ok(pos) => pos,
-                Err(err) => {
-                    eprintln!(
-                        "illegal fen tag in game {}: {} ({:?})",
-                        self.games, err, value
-                    );
-                    self.game.success = false;
-                    return;
-                }
-            };
+            self.game.pos = fen.into_position(CastlingMode::Chess960)?;
         }
+
+        Ok(())
     }
 
-    fn begin_movetext(&mut self) -> Skip {
-        Skip(!self.game.success)
+    fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
+        self.game.sans.push(san_plus.san);
+
+        Ok(())
     }
 
-    fn begin_variation(&mut self) -> Skip {
-        Skip(true) // stay in the mainline
+    fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+        Ok(Skip(true)) // stay in the mainline
     }
 
-    fn san(&mut self, san_plus: SanPlus) {
-        if self.game.success {
-            self.game.sans.push(san_plus.san);
-        }
-    }
-
-    fn end_game(&mut self) -> Self::Result {
+    fn end_game(&mut self) -> Self::Output {
         mem::replace(
             &mut self.game,
             Game {
                 index: self.games,
                 pos: Chess::default(),
                 sans: Vec::with_capacity(80),
-                success: true,
             },
         )
     }
@@ -156,10 +133,14 @@ fn main() {
                 let success = success.clone();
                 scope.spawn(move |_| {
                     for game in recv {
-                        let index = game.index;
-                        if !game.validate() {
-                            eprintln!("illegal move in game {index}");
-                            success.store(false, Ordering::SeqCst);
+                        match game {
+                            Ok(mut game) => {
+                                if !game.validate() {
+                                    eprintln!("illegal move in game {}", game.index);
+                                    success.store(false, Ordering::SeqCst);
+                                }
+                            }
+                            Err(error) => eprintln!("{error}"),
                         }
                     }
                 });

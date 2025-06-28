@@ -1,6 +1,6 @@
 #![no_main]
 
-use std::io::Cursor;
+use std::{convert::Infallible, io::Cursor};
 
 use libfuzzer_sys::fuzz_target;
 use pgn_reader::{BufferedReader, Visitor};
@@ -8,7 +8,8 @@ use pgn_reader::{BufferedReader, Visitor};
 struct MyVisitor;
 
 impl Visitor for MyVisitor {
-    type Result = ();
+    type Output = ();
+    type Error = Infallible;
     fn end_game(&mut self) {}
 }
 

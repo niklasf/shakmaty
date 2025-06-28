@@ -14,6 +14,7 @@ rust-version.workspace = true
 memchr = "2.2"
 btoi = "0.5"
 shakmaty = { version = "0.28", path = "../shakmaty" }
+anyhow = "1.0.98"
 
 [dev-dependencies]
 crossbeam = "0.8"
