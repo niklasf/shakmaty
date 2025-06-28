@@ -1,88 +1,122 @@
 // Validates moves in PGNs.
 // Usage: cargo run --release --example validate -- [PGN]...
 
-use std::{env, fs::File, io, process};
+use std::{
+    env,
+    fmt::{Display, Formatter},
+    fs::File,
+    io, process,
+};
 
 use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
-use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
+use shakmaty::{
+    CastlingMode, Chess, Position, PositionError,
+    fen::{Fen, ParseFenError},
+    san::SanError,
+};
 
 struct Validator {
     games: usize,
     pos: Chess,
-    success: bool,
 }
 
 impl Validator {
-    fn new() -> Validator {
-        Validator {
+    fn new() -> Self {
+        Self {
             games: 0,
             pos: Chess::default(),
-            success: true,
+        }
+    }
+}
+
+#[derive(Debug)]
+enum ValidatorError {
+    InvalidFen {
+        game: usize,
+        fen: String,
+        error: ParseFenError,
+    },
+    IllegalFen {
+        game: usize,
+        fen: Fen,
+        error: Box<PositionError<Chess>>,
+    },
+    IllegalSan {
+        game: usize,
+        san: String,
+        error: SanError,
+    },
+}
+
+impl Display for ValidatorError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InvalidFen { game, fen, error } => {
+                write!(f, "invalid fen tag in game {}: {} ({})", game, fen, error)
+            }
+            Self::IllegalFen { game, fen, error } => {
+                write!(f, "illegal fen tag in game {}: {} ({})", game, fen, error)
+            }
+            Self::IllegalSan { game, san, error } => {
+                write!(f, "illegal san in game {}: {} ({})", game, san, error)
+            }
         }
     }
 }
 
 impl Visitor for Validator {
-    type Result = bool;
+    type Output = ();
+    type Error = ValidatorError;
 
-    fn begin_tags(&mut self) {
+    fn begin_tags(&mut self) -> Result<(), Self::Error> {
         self.games += 1;
         self.pos = Chess::default();
-        self.success = true;
+
+        Ok(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
-            let fen = match Fen::from_ascii(value.as_bytes()) {
-                Ok(fen) => fen,
-                Err(err) => {
-                    eprintln!(
-                        "invalid fen tag in game {}: {} ({:?})",
-                        self.games, err, value
-                    );
-                    self.success = false;
-                    return;
-                }
-            };
+            let fen =
+                Fen::from_ascii(value.as_bytes()).map_err(|error| ValidatorError::InvalidFen {
+                    game: self.games,
+                    fen: String::from_utf8_lossy(value.as_bytes()).into_owned(),
+                    error,
+                })?;
 
-            self.pos = match fen.into_position(CastlingMode::Chess960) {
-                Ok(pos) => pos,
-                Err(err) => {
-                    eprintln!(
-                        "illegal fen tag in game {}: {} ({:?})",
-                        self.games, err, value
-                    );
-                    self.success = false;
-                    return;
-                }
-            };
+            self.pos = fen
+                .clone()
+                .into_position(CastlingMode::Chess960)
+                .map_err(|error| ValidatorError::IllegalFen {
+                    game: self.games,
+                    fen,
+                    error: Box::new(error),
+                })?;
         }
+
+        Ok(())
     }
 
-    fn begin_movetext(&mut self) -> Skip {
-        Skip(!self.success)
+    fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
+        let m = san_plus
+            .san
+            .to_move(&self.pos)
+            .map_err(|error| ValidatorError::IllegalSan {
+                game: self.games,
+                san: san_plus.san.to_string(),
+                error,
+            })?;
+        self.pos.play_unchecked(m);
+
+        Ok(())
     }
 
-    fn begin_variation(&mut self) -> Skip {
-        Skip(true) // stay in the mainline
+    fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+        Ok(Skip(true)) // stay in the mainline
     }
 
-    fn san(&mut self, san_plus: SanPlus) {
-        if self.success {
-            match san_plus.san.to_move(&self.pos) {
-                Ok(m) => self.pos.play_unchecked(m),
-                Err(err) => {
-                    eprintln!("error in game {}: {} {}", self.games, err, san_plus);
-                    self.success = false;
-                }
-            }
-        }
-    }
-
-    fn end_game(&mut self) -> Self::Result {
-        self.success
-    }
+    fn end_game(&mut self) -> Self::Output {}
 }
 
 fn main() -> io::Result<()> {
@@ -110,12 +144,21 @@ fn main() -> io::Result<()> {
         let mut reader = BufferedReader::new(uncompressed);
 
         let mut validator = Validator::new();
-        while let Some(ok) = reader.read_game(&mut validator)? {
-            file_ok &= ok;
+
+        loop {
+            match reader.read_game(&mut validator)? {
+                None => break,
+                Some(Ok(())) => (),
+                Some(Err(e)) => {
+                    eprintln!("{e}");
+                    file_ok = false;
+                    all_ok = false;
+                    reader.skip_game()?;
+                }
+            }
         }
 
-        println!("{}: {}", arg, if file_ok { "success" } else { "errors" });
-        all_ok &= file_ok;
+        println!("{arg}: {}", if file_ok { "success" } else { "errors" });
     }
 
     if !all_ok {

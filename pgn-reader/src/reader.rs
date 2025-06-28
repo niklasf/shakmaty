@@ -1,11 +1,12 @@
 use std::{
     cmp::min,
+    fmt::Debug,
     io::{self, Chain, Cursor, Read},
 };
 
 use shakmaty::{
-    san::{San, SanPlus, Suffix},
     CastlingSide, Color, KnownOutcome, Outcome,
+    san::{San, SanPlus, Suffix},
 };
 
 // use slice_deque::SliceDeque;
@@ -146,7 +147,7 @@ impl<R: Read> BufferedReader<R> {
         Ok(())
     }
 
-    fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+    fn read_tags<V: Visitor>(&mut self, visitor: &mut Result<&mut V, V::Error>) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
             .ensure_bytes(self.max_tag_line_length, &mut self.reader)?
@@ -211,10 +212,15 @@ impl<R: Read> BufferedReader<R> {
                         }
                     };
 
-                    visitor.tag(
-                        &self.buffer.data()[..space],
-                        RawTag(&self.buffer.data()[value_start..right_quote]),
-                    );
+                    if let Ok(visitor_ok) = visitor {
+                        visitor_ok
+                            .tag(
+                                &self.buffer.data()[..space],
+                                RawTag(&self.buffer.data()[value_start..right_quote]),
+                            )
+                            .unwrap_or_else(|e| *visitor = Err(e));
+                    }
+
                     self.buffer.consume(consumed);
                     self.skip_ket()?;
                 }
@@ -273,7 +279,10 @@ impl<R: Read> BufferedReader<R> {
         end
     }
 
-    fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+    fn read_movetext<V: Visitor>(
+        &mut self,
+        visitor: &mut Result<&mut V, V::Error>,
+    ) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
             .ensure_bytes(self.max_comment_length, &mut self.reader)?
@@ -295,7 +304,12 @@ impl<R: Read> BufferedReader<R> {
                             ));
                         };
 
-                    visitor.comment(RawComment(&self.buffer.data()[..right_brace]));
+                    if let Ok(visitor_ok) = visitor {
+                        visitor_ok
+                            .comment(RawComment(&self.buffer.data()[..right_brace]))
+                            .unwrap_or_else(|e| *visitor = Err(e));
+                    }
+
                     self.buffer.consume(right_brace + 1);
                 }
                 b'\n' => {
@@ -326,9 +340,14 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-1") {
                         self.buffer.consume(2);
-                        visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
-                            winner: Color::Black,
-                        }));
+
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok
+                                .outcome(Outcome::Known(KnownOutcome::Decisive {
+                                    winner: Color::Black,
+                                }))
+                                .unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     } else if self.buffer.data().starts_with(b"-0") {
                         // Castling notation with zeros.
                         self.buffer.consume(2);
@@ -343,10 +362,15 @@ impl<R: Read> BufferedReader<R> {
                             Some(b'#') => Some(Suffix::Checkmate),
                             _ => None,
                         };
-                        visitor.san(SanPlus {
-                            san: San::Castle(side),
-                            suffix,
-                        });
+
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok
+                                .san(SanPlus {
+                                    san: San::Castle(side),
+                                    suffix,
+                                })
+                                .unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     } else {
                         let token_end = self.find_token_end(0);
                         self.buffer.consume(token_end);
@@ -356,16 +380,30 @@ impl<R: Read> BufferedReader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-0") {
                         self.buffer.consume(2);
-                        visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
-                            winner: Color::White,
-                        }));
+
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok
+                                .outcome(Outcome::Known(KnownOutcome::Decisive {
+                                    winner: Color::White,
+                                }))
+                                .unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     } else if self.buffer.data().starts_with(b"/2-1/2") {
                         self.buffer.consume(6);
-                        visitor.outcome(Outcome::Known(KnownOutcome::Draw));
+
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok
+                                .outcome(Outcome::Known(KnownOutcome::Draw))
+                                .unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     } else {
                         self.buffer.bump();
-                        while let Some(b'0'..=b'9') = self.buffer.peek() {
-                            self.buffer.bump();
+                        while let Some(ch) = self.buffer.peek() {
+                            if b'0' <= ch && ch <= b'9' {
+                                self.buffer.bump();
+                            } else {
+                                break;
+                            }
                         }
                         while let Some(b'.') = self.buffer.peek() {
                             self.buffer.bump();
@@ -374,8 +412,12 @@ impl<R: Read> BufferedReader<R> {
                 }
                 b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => {
                     self.buffer.bump();
-                    while let Some(b'0'..=b'9') = self.buffer.peek() {
-                        self.buffer.bump();
+                    while let Some(ch) = self.buffer.peek() {
+                        if b'0' <= ch && ch <= b'9' {
+                            self.buffer.bump();
+                        } else {
+                            break;
+                        }
                     }
                     while let Some(b'.') = self.buffer.peek() {
                         self.buffer.bump();
@@ -383,19 +425,33 @@ impl<R: Read> BufferedReader<R> {
                 }
                 b'(' => {
                     self.buffer.bump();
-                    if let Skip(true) = visitor.begin_variation() {
-                        self.skip_variation()?;
+
+                    if let Ok(visitor_ok) = visitor {
+                        if let Ok(Skip(true)) =
+                            visitor_ok.begin_variation().map_err(|e| *visitor = Err(e))
+                        {
+                            self.skip_variation()?;
+                        }
                     }
                 }
                 b')' => {
                     self.buffer.bump();
-                    visitor.end_variation();
+
+                    if let Ok(visitor_ok) = visitor {
+                        visitor_ok
+                            .end_variation()
+                            .unwrap_or_else(|e| *visitor = Err(e));
+                    }
                 }
                 b'$' => {
                     self.buffer.bump();
                     let token_end = self.find_token_end(0);
                     if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
-                        visitor.nag(Nag(nag));
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok
+                                .nag(Nag(nag))
+                                .unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     }
                     self.buffer.consume(token_end);
                 }
@@ -404,14 +460,28 @@ impl<R: Read> BufferedReader<R> {
                     match self.buffer.peek() {
                         Some(b'!') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::BRILLIANT_MOVE);
+
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::BRILLIANT_MOVE)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                         Some(b'?') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::SPECULATIVE_MOVE);
+
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::SPECULATIVE_MOVE)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                         _ => {
-                            visitor.nag(Nag::GOOD_MOVE);
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::GOOD_MOVE)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                     }
                 }
@@ -420,26 +490,47 @@ impl<R: Read> BufferedReader<R> {
                     match self.buffer.peek() {
                         Some(b'!') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::DUBIOUS_MOVE);
+
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::DUBIOUS_MOVE)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                         Some(b'?') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::BLUNDER);
+
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::BLUNDER)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                         _ => {
-                            visitor.nag(Nag::MISTAKE);
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag::MISTAKE)
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
                     }
                 }
                 b'*' => {
-                    visitor.outcome(Outcome::Unknown);
+                    if let Ok(visitor_ok) = visitor {
+                        visitor_ok
+                            .outcome(Outcome::Unknown)
+                            .unwrap_or_else(|e| *visitor = Err(e));
+                    }
+
                     self.buffer.bump();
                 }
                 b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
                 | b'Q' | b'K' | b'@' | b'-' | b'O' => {
                     let token_end = self.find_token_end(1);
                     if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
-                        visitor.san(san);
+                        if let Ok(visitor_ok) = visitor {
+                            visitor_ok.san(san).unwrap_or_else(|e| *visitor = Err(e));
+                        }
                     }
                     self.buffer.consume(token_end);
                 }
@@ -508,7 +599,18 @@ impl<R: Read> BufferedReader<R> {
         Ok(())
     }
 
-    pub fn read_game<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<Option<V::Result>> {
+    /// Read a single game, if any, and returns the result produced by the
+    /// visitor, with a possible error. Returns `Ok(None)` if the underlying reader is empty.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
+    /// * Visitor errors. Note that the rest of the game is consumed even if the visitor errors.
+    pub fn read_game<V: Visitor>(
+        &mut self,
+        visitor: &mut V,
+    ) -> io::Result<Option<Result<V::Output, V::Error>>> {
         self.skip_bom()?;
         self.skip_whitespace()?;
 
@@ -516,18 +618,35 @@ impl<R: Read> BufferedReader<R> {
             return Ok(None);
         }
 
-        visitor.begin_tags();
-        self.read_tags(visitor)?;
-        if let Skip(false) = visitor.begin_movetext() {
-            self.read_movetext(visitor)?;
+        let mut visitor = visitor.begin_tags().map(|_| visitor);
+
+        self.read_tags(&mut visitor)?;
+
+        let skip = if let Ok(ref mut visitor_ok) = visitor {
+            visitor_ok.begin_movetext().unwrap_or_else(|e| {
+                visitor = Err(e);
+                Skip(true)
+            })
         } else {
+            Skip(true)
+        };
+
+        if skip.0 {
             self.skip_movetext()?;
+        } else {
+            self.read_movetext(&mut visitor)?;
         }
 
         self.skip_whitespace()?;
-        Ok(Some(visitor.end_game()))
+        Ok(Some(visitor.map(|v| v.end_game())))
     }
 
+    /// Skip a single game, returns `true` if there was one, `false` otherwise.
+    ///
+    /// # Errors
+    ///
+    /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors.
     pub fn skip_game(&mut self) -> io::Result<bool> {
         self.read_game(&mut SkipVisitor).map(|r| r.is_some())
     }
@@ -546,9 +665,7 @@ impl<R: Read> BufferedReader<R> {
     /// Create an iterator over all games.
     ///
     /// # Errors
-    ///
-    /// * I/O error from the underlying reader.
-    /// * Irrecoverable parser errors.
+    /// See [`Self::read_game`].
     pub fn into_iter<V: Visitor>(self, visitor: &mut V) -> IntoIter<'_, V, R> {
         IntoIter {
             reader: self,
@@ -584,7 +701,7 @@ pub struct IntoIter<'a, V: 'a, R> {
 }
 
 impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
-    type Item = Result<V::Result, io::Error>;
+    type Item = io::Result<Result<V::Output, V::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.reader.read_game(self.visitor) {
@@ -597,6 +714,8 @@ impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
 
 #[cfg(test)]
 mod tests {
+    use std::convert::Infallible;
+
     use super::*;
 
     struct _AssertObjectSafe<R>(Box<BufferedReader<R>>);
@@ -607,15 +726,16 @@ mod tests {
     }
 
     impl Visitor for GameCounter {
-        type Result = ();
+        type Output = ();
+        type Error = Infallible;
 
-        fn end_game(&mut self) {
+        fn end_game(&mut self) -> Self::Output {
             self.count += 1;
         }
     }
 
     #[test]
-    fn test_empty_game() -> Result<(), io::Error> {
+    fn test_empty_game() -> io::Result<()> {
         let mut counter = GameCounter::default();
         let mut reader = BufferedReader::new(io::Cursor::new(b"  "));
         reader.read_game(&mut counter)?;
@@ -624,7 +744,7 @@ mod tests {
     }
 
     #[test]
-    fn test_trailing_space() -> Result<(), io::Error> {
+    fn test_trailing_space() -> io::Result<()> {
         let mut counter = GameCounter::default();
         let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
         reader.read_game(&mut counter)?;
@@ -635,19 +755,22 @@ mod tests {
     }
 
     #[test]
-    fn test_nag() -> Result<(), io::Error> {
+    fn test_nag() -> io::Result<()> {
         struct NagCollector {
             nags: Vec<Nag>,
         }
 
         impl Visitor for NagCollector {
-            type Result = ();
+            type Output = ();
+            type Error = Infallible;
 
-            fn nag(&mut self, nag: Nag) {
+            fn nag(&mut self, nag: Nag) -> Result<(), Self::Error> {
                 self.nags.push(nag);
+
+                Ok(())
             }
 
-            fn end_game(&mut self) {}
+            fn end_game(&mut self) -> Self::Output {}
         }
 
         let mut collector = NagCollector { nags: Vec::new() };
@@ -661,19 +784,22 @@ mod tests {
     }
 
     #[test]
-    fn test_null_moves() -> Result<(), io::Error> {
+    fn test_null_moves() -> io::Result<()> {
         struct SanCollector {
             sans: Vec<San>,
         }
 
         impl Visitor for SanCollector {
-            type Result = ();
+            type Output = ();
+            type Error = Infallible;
 
-            fn san(&mut self, san: SanPlus) {
+            fn san(&mut self, san: SanPlus) -> Result<(), Self::Error> {
                 self.sans.push(san.san);
+
+                Ok(())
             }
 
-            fn end_game(&mut self) {}
+            fn end_game(&mut self) -> Self::Output {}
         }
 
         let mut collector = SanCollector { sans: Vec::new() };
@@ -687,5 +813,62 @@ mod tests {
         assert_eq!(collector.sans[4], San::Null);
         assert_ne!(collector.sans[5], San::Null);
         Ok(())
+    }
+
+    #[test]
+    fn test_error_in_tags() {
+        struct TagErrorer {
+            error_when: usize,
+            now: usize,
+        }
+
+        impl Visitor for TagErrorer {
+            type Output = ();
+            type Error = String;
+
+            fn begin_tags(&mut self) -> Result<(), Self::Error> {
+                self.now = 0;
+
+                Ok(())
+            }
+
+            fn tag(&mut self, _name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
+                if self.now == self.error_when {
+                    return Err(value.decode_utf8_lossy().to_string());
+                }
+
+                self.now += 1;
+
+                Ok(())
+            }
+
+            fn end_game(&mut self) -> Self::Output {
+                ()
+            }
+        }
+
+        let mut errorer = TagErrorer {
+            error_when: 2,
+            now: 0,
+        };
+
+        let mut reader = BufferedReader::new(io::Cursor::new(
+            r#"[Foo "f"]
+[Bar "\"bar"]
+[Err "err"]
+[Qux "q\"\"\"\\ux"]
+        "#,
+        ));
+
+        // reads the whole game even if error occurs
+        assert_eq!(
+            Err("err".to_string()),
+            reader.read_game(&mut errorer).unwrap().unwrap()
+        );
+
+        errorer.error_when = 0;
+
+        // no game left
+        assert_eq!(None, reader.read_game(&mut errorer).unwrap());
     }
 }

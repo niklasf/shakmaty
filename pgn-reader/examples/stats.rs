@@ -1,7 +1,7 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
-use std::{env, fs::File, io};
+use std::{convert::Infallible, env, fs::File, io};
 
 use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Visitor};
 
@@ -23,38 +23,51 @@ impl Stats {
 }
 
 impl Visitor for Stats {
-    type Result = ();
+    type Output = ();
+    type Error = Infallible;
 
-    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {
+    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> Result<(), Self::Error> {
         self.tags += 1;
+
+        Ok(())
     }
 
-    fn san(&mut self, _san: SanPlus) {
+    fn san(&mut self, _san: SanPlus) -> Result<(), Self::Error> {
         self.sans += 1;
+
+        Ok(())
     }
 
-    fn nag(&mut self, _nag: Nag) {
+    fn nag(&mut self, _nag: Nag) -> Result<(), Self::Error> {
         self.nags += 1;
+
+        Ok(())
     }
 
-    fn comment(&mut self, _comment: RawComment<'_>) {
+    fn comment(&mut self, _comment: RawComment<'_>) -> Result<(), Self::Error> {
         self.comments += 1;
+
+        Ok(())
     }
 
-    fn end_variation(&mut self) {
+    fn end_variation(&mut self) -> Result<(), Self::Error> {
         self.variations += 1;
+
+        Ok(())
     }
 
-    fn outcome(&mut self, _outcome: Outcome) {
+    fn outcome(&mut self, _outcome: Outcome) -> Result<(), Self::Error> {
         self.outcomes += 1;
+
+        Ok(())
     }
 
-    fn end_game(&mut self) {
+    fn end_game(&mut self) -> Self::Output {
         self.games += 1;
     }
 }
 
-fn main() -> Result<(), io::Error> {
+fn main() -> io::Result<()> {
     for arg in env::args().skip(1) {
         let file = File::open(&arg)?;
 

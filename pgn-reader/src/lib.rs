@@ -23,6 +23,7 @@
 //!
 //! ```
 //! use std::io;
+//! use std::convert::Infallible;
 //! use pgn_reader::{Visitor, Skip, BufferedReader, SanPlus};
 //!
 //! struct MoveCounter {
@@ -36,21 +37,26 @@
 //! }
 //!
 //! impl Visitor for MoveCounter {
-//!     type Result = usize;
+//!     type Output = usize;
+//!     type Error = Infallible;
 //!
-//!     fn begin_tags(&mut self) {
+//!     fn begin_tags(&mut self) -> Result<(), Self::Error> {
 //!         self.moves = 0;
+//!
+//!         Ok(())
 //!     }
 //!
-//!     fn san(&mut self, _san_plus: SanPlus) {
+//!     fn san(&mut self, _san_plus: SanPlus) -> Result<(), Self::Error> {
 //!         self.moves += 1;
+//!
+//!         Ok(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Skip {
-//!         Skip(true) // stay in the mainline
+//!     fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+//!         Ok(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Result {
+//!     fn end_game(&mut self) -> Self::Output {
 //!         self.moves
 //!     }
 //! }
@@ -65,7 +71,7 @@
 //!     let mut counter = MoveCounter::new();
 //!     let moves = reader.read_game(&mut counter)?;
 //!
-//!     assert_eq!(moves, Some(4));
+//!     assert_eq!(moves, Some(Ok(4)));
 //!     Ok(())
 //! }
 //! ```
@@ -74,6 +80,7 @@
 //!
 //! ```
 //! use std::io;
+//! use std::convert::Infallible;
 //!
 //! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
@@ -91,9 +98,10 @@
 //! }
 //!
 //! impl Visitor for LastPosition {
-//!     type Result = Chess;
+//!     type Output = Chess;
+//!     type Error = Infallible;
 //!
-//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
 //!         // Support games from a non-standard starting position.
 //!         if name == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
@@ -103,19 +111,23 @@
 //!                 self.pos = pos;
 //!             }
 //!         }
+//!
+//!         Ok(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Skip {
-//!         Skip(true) // stay in the mainline
+//!     fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+//!         Ok(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn san(&mut self, san_plus: SanPlus) {
+//!     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
 //!         if let Ok(m) = san_plus.san.to_move(&self.pos) {
 //!             self.pos.play_unchecked(m);
 //!         }
+//!
+//!         Ok(())
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Result {
+//!     fn end_game(&mut self) -> Self::Output {
 //!         ::std::mem::replace(&mut self.pos, Chess::default())
 //!     }
 //! }
@@ -128,7 +140,7 @@
 //!     let mut visitor = LastPosition::new();
 //!     let pos = reader.read_game(&mut visitor)?;
 //!
-//!     assert!(pos.map_or(false, |p| p.is_checkmate()));
+//!     assert!(pos.map_or(false, |p| p.unwrap().is_checkmate()));
 //!     Ok(())
 //! }
 //! ```
