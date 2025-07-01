@@ -6,13 +6,13 @@ use std::{
     fs::File,
     io, mem,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
 };
 
 use pgn_reader::{BufferedReader, RawTag, San, SanPlus, Skip, Visitor};
-use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Game {
     index: usize,

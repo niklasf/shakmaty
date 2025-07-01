@@ -1,19 +1,11 @@
-use criterion::{Criterion, criterion_group, criterion_main};
-use pgn_reader::BufferedReader;
-use pgn_reader::Nag;
-use pgn_reader::Outcome;
-use pgn_reader::RawComment;
-use pgn_reader::RawTag;
-use pgn_reader::SanPlus;
-use pgn_reader::Skip;
-use pgn_reader::Visitor;
 use std::fs::File;
 
-const FIXTURES: [&str; 5] = [
+use criterion::{Criterion, criterion_group, criterion_main};
+use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Skip, Visitor};
+
+const FIXTURES: [&str; 3] = [
     "lichess_db_10k.pgn",
     "lichess_db_100k.pgn",
-    "lichess_db_1m.pgn",
-    "lichess_db_10m.pgn",
     "kasparov_deep_blue_1997.pgn",
 ];
 
