@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io, process};
 
-use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
+use pgn_reader::{RawTag, Reader, SanPlus, Skip, Visitor};
 use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Validator {
@@ -107,7 +107,7 @@ fn main() -> io::Result<()> {
             Box::new(file)
         };
 
-        let mut reader = BufferedReader::new(uncompressed);
+        let mut reader = Reader::new(uncompressed);
 
         let mut validator = Validator::new();
         while let Some(ok) = reader.read_game(&mut validator)? {

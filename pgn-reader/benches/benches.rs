@@ -1,7 +1,7 @@
 use std::fs::File;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Skip, Visitor};
+use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Skip, Visitor};
 
 const FIXTURES: [&str; 3] = [
     "lichess_db_10k.pgn",
@@ -57,7 +57,7 @@ fn bench_stats(c: &mut Criterion) {
         c.bench_function(&format!("stats {fixture}"), |b| {
             b.iter(|| {
                 let mut stats = Stats::default();
-                BufferedReader::new(File::open(format!("benches/{fixture}")).expect("open"))
+                Reader::new(File::open(format!("benches/{fixture}")).expect("open"))
                     .read_all(&mut stats)
                     .expect("read all");
                 stats
@@ -83,7 +83,7 @@ fn bench_skip_all(c: &mut Criterion) {
         c.bench_function(&format!("skip all {fixture}"), |b| {
             b.iter(|| {
                 let mut skip_all = SkipAll;
-                BufferedReader::new(File::open(format!("benches/{fixture}")).expect("open"))
+                Reader::new(File::open(format!("benches/{fixture}")).expect("open"))
                     .read_all(&mut skip_all)
                     .expect("read all");
             })

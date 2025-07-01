@@ -11,7 +11,7 @@ use std::{
     },
 };
 
-use pgn_reader::{BufferedReader, RawTag, San, SanPlus, Skip, Visitor};
+use pgn_reader::{RawTag, Reader, San, SanPlus, Skip, Visitor};
 use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Game {
@@ -146,7 +146,7 @@ fn main() {
 
         crossbeam::scope(|scope| {
             scope.spawn(move |_| {
-                for game in BufferedReader::new(uncompressed).into_iter(&mut validator) {
+                for game in Reader::new(uncompressed).into_iter(&mut validator) {
                     send.send(game.expect("io")).unwrap();
                 }
             });
