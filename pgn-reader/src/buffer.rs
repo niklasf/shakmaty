@@ -86,7 +86,8 @@ impl Buffer {
             debug_assert!(N <= CAPACITY);
         }
 
-        if self.end + N > CAPACITY {
+        // more backshifts but less syscalls - net performance gain
+        if self.start > 0 {
             self.backshift();
         }
 
