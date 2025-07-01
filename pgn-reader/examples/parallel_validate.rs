@@ -5,7 +5,6 @@ use std::{
     env,
     fs::File,
     io, mem,
-    ops::ControlFlow,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -56,39 +55,33 @@ impl Validator {
 
 impl Visitor for Validator {
     type Output = Game;
-    type Break = anyhow::Error;
+    type Error = anyhow::Error;
 
-    fn begin_tags(&mut self) -> ControlFlow<Self::Break> {
+    fn begin_tags(&mut self) -> Result<(), Self::Error> {
         self.games += 1;
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Break> {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
-            let fen = match Fen::from_ascii(value.as_bytes()) {
-                Ok(fen) => fen,
-                Err(e) => return ControlFlow::Break(anyhow::Error::new(e)),
-            };
+            let fen = Fen::from_ascii(value.as_bytes())?;
 
-            self.game.pos = match fen.into_position(CastlingMode::Chess960) {
-                Ok(fen) => fen,
-                Err(e) => return ControlFlow::Break(anyhow::Error::new(e)),
-            };
+            self.game.pos = fen.into_position(CastlingMode::Chess960)?;
         }
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Break> {
+    fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
         self.game.sans.push(san_plus.san);
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn begin_variation(&mut self) -> ControlFlow<Self::Break, Skip> {
-        ControlFlow::Continue(Skip(true)) // stay in the mainline
+    fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+        Ok(Skip(true)) // stay in the mainline
     }
 
     fn end_game(&mut self) -> Self::Output {
@@ -141,13 +134,13 @@ fn main() {
                 scope.spawn(move |_| {
                     for game in recv {
                         match game {
-                            ControlFlow::Continue(mut game) => {
+                            Ok(mut game) => {
                                 if !game.validate() {
                                     eprintln!("illegal move in game {}", game.index);
                                     success.store(false, Ordering::SeqCst);
                                 }
                             }
-                            ControlFlow::Break(error) => eprintln!("{error}"),
+                            Err(error) => eprintln!("{error}"),
                         }
                     }
                 });

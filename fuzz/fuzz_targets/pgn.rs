@@ -9,7 +9,7 @@ struct MyVisitor;
 
 impl Visitor for MyVisitor {
     type Output = ();
-    type Break = Infallible;
+    type Error = Infallible;
     fn end_game(&mut self) {}
 }
 

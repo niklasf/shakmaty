@@ -1,7 +1,7 @@
 // Prints the FEN of the final position of each PGN.
 // Usage: cargo run --release --example extract_fen -- [PGN]...
 
-use std::{env, fs::File, io, ops::ControlFlow};
+use std::{env, fs::File, io};
 
 use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
 use shakmaty::{CastlingMode, Chess, EnPassantMode, Position, fen::Fen};
@@ -20,44 +20,35 @@ impl FenExtractor {
 
 impl Visitor for FenExtractor {
     type Output = Fen;
-    type Break = anyhow::Error;
+    type Error = anyhow::Error;
 
-    fn begin_tags(&mut self) -> ControlFlow<Self::Break> {
+    fn begin_tags(&mut self) -> Result<(), Self::Error> {
         self.pos = Chess::default();
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Break> {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
-            let fen = match Fen::from_ascii(value.as_bytes()) {
-                Ok(fen) => fen,
-                Err(e) => return ControlFlow::Break(e.into()),
-            };
+            let fen = Fen::from_ascii(value.as_bytes())?;
 
-            self.pos = match fen.into_position(CastlingMode::Chess960) {
-                Ok(pos) => pos,
-                Err(e) => return ControlFlow::Break(e.into()),
-            };
+            self.pos = fen.into_position(CastlingMode::Chess960)?;
         }
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Break> {
-        let m = match san_plus.san.to_move(&self.pos) {
-            Ok(m) => m,
-            Err(e) => return ControlFlow::Break(e.into()),
-        };
+    fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
+        let m = san_plus.san.to_move(&self.pos)?;
 
         self.pos.play_unchecked(m);
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn begin_variation(&mut self) -> ControlFlow<Self::Break, Skip> {
-        ControlFlow::Continue(Skip(true)) // stay in the mainline
+    fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+        Ok(Skip(true)) // stay in the mainline
     }
 
     fn end_game(&mut self) -> Self::Output {
@@ -91,8 +82,8 @@ fn main() -> anyhow::Result<()> {
         loop {
             match reader.read_game(&mut validator)? {
                 None => break,
-                Some(ControlFlow::Continue(fen)) => println!("{arg} #{i}: {fen}"),
-                Some(ControlFlow::Break(e)) => eprintln!("{e}"),
+                Some(Ok(fen)) => println!("{arg} #{i}: {fen}"),
+                Some(Err(e)) => eprintln!("{e}"),
             }
 
             i += 1;

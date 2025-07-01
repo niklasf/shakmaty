@@ -5,9 +5,7 @@ use std::{
     env,
     fmt::{Display, Formatter},
     fs::File,
-    io,
-    ops::ControlFlow,
-    process,
+    io, process,
 };
 
 use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
@@ -68,65 +66,54 @@ impl Display for ValidatorError {
 
 impl Visitor for Validator {
     type Output = ();
-    type Break = ValidatorError;
+    type Error = ValidatorError;
 
-    fn begin_tags(&mut self) -> ControlFlow<Self::Break> {
+    fn begin_tags(&mut self) -> Result<(), Self::Error> {
         self.games += 1;
         self.pos = Chess::default();
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Break> {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
-            let fen = match Fen::from_ascii(value.as_bytes()).map_err(|error| {
-                ValidatorError::InvalidFen {
+            let fen =
+                Fen::from_ascii(value.as_bytes()).map_err(|error| ValidatorError::InvalidFen {
                     game: self.games,
                     fen: String::from_utf8_lossy(value.as_bytes()).into_owned(),
                     error,
-                }
-            }) {
-                Ok(fen) => fen,
-                Err(error) => return ControlFlow::Break(error),
-            };
+                })?;
 
-            self.pos = match fen
+            self.pos = fen
                 .clone()
                 .into_position(CastlingMode::Chess960)
                 .map_err(|error| ValidatorError::IllegalFen {
                     game: self.games,
                     fen,
                     error: Box::new(error),
-                }) {
-                Ok(pos) => pos,
-                Err(error) => return ControlFlow::Break(error),
-            };
+                })?;
         }
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Break> {
-        let m = match san_plus
+    fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
+        let m = san_plus
             .san
             .to_move(&self.pos)
             .map_err(|error| ValidatorError::IllegalSan {
                 game: self.games,
                 san: san_plus.san.to_string(),
                 error,
-            }) {
-            Ok(m) => m,
-            Err(error) => return ControlFlow::Break(error),
-        };
-
+            })?;
         self.pos.play_unchecked(m);
 
-        ControlFlow::Continue(())
+        Ok(())
     }
 
-    fn begin_variation(&mut self) -> ControlFlow<Self::Break, Skip> {
-        ControlFlow::Continue(Skip(true)) // stay in the mainline
+    fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+        Ok(Skip(true)) // stay in the mainline
     }
 
     fn end_game(&mut self) -> Self::Output {}
@@ -161,8 +148,8 @@ fn main() -> io::Result<()> {
         loop {
             match reader.read_game(&mut validator)? {
                 None => break,
-                Some(ControlFlow::Continue(())) => (),
-                Some(ControlFlow::Break(e)) => {
+                Some(Ok(())) => (),
+                Some(Err(e)) => {
                     eprintln!("{e}");
                     file_ok = false;
                     all_ok = false;
