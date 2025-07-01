@@ -1,18 +1,22 @@
-use bencher::{benchmark_group, benchmark_main, black_box, Bencher};
-use shakmaty::{fen::Fen, CastlingMode, Chess};
+use std::hint::black_box;
+
+use criterion::{Criterion, criterion_group, criterion_main};
+use shakmaty::{CastlingMode, Chess, fen::Fen};
 use shakmaty_syzygy::{AmbiguousWdl, Tablebase};
 
-fn bench_add_directory(bench: &mut Bencher) {
-    bench.iter(|| {
-        let mut tablebase = Tablebase::<Chess>::new();
-        tablebase
-            .add_directory("tables/chess")
-            .expect("readable directory");
-        tablebase
+fn bench_add_directory(c: &mut Criterion) {
+    c.bench_function("add_directory", |b| {
+        b.iter(|| {
+            let mut tablebase = Tablebase::<Chess>::new();
+            tablebase
+                .add_directory("tables/chess")
+                .expect("readable directory");
+            tablebase
+        })
     });
 }
 
-fn bench_probe_wdl(bench: &mut Bencher) {
+fn bench_probe_wdl(c: &mut Criterion) {
     let mut tb = Tablebase::new();
 
     tb.add_directory("tables/chess")
@@ -24,16 +28,18 @@ fn bench_probe_wdl(bench: &mut Bencher) {
         .into_position::<Chess>(CastlingMode::Chess960)
         .expect("legal position");
 
-    bench.iter(|| {
-        assert!(matches!(
-            tb.probe_wdl(black_box(&pos)),
-            Ok(AmbiguousWdl::BlessedLoss)
-        ));
+    c.bench_function("probe_wdl", |b| {
+        b.iter(|| {
+            assert!(matches!(
+                tb.probe_wdl(black_box(&pos)),
+                Ok(AmbiguousWdl::BlessedLoss)
+            ));
+        })
     });
 }
 
 #[cfg(all(feature = "mmap", target_pointer_width = "64"))]
-fn bench_probe_wdl_mmap(bench: &mut Bencher) {
+fn bench_probe_wdl_mmap(c: &mut Criterion) {
     // Safety: No modifications to table files and I/O errors please.
     // Fingers crossed.
     let mut tb = unsafe { Tablebase::with_mmap_filesystem() };
@@ -47,22 +53,24 @@ fn bench_probe_wdl_mmap(bench: &mut Bencher) {
         .into_position::<Chess>(CastlingMode::Chess960)
         .expect("legal position");
 
-    bench.iter(|| {
-        assert!(matches!(
-            tb.probe_wdl(black_box(&pos)),
-            Ok(AmbiguousWdl::BlessedLoss)
-        ));
+    c.bench_function("probe_wdl_mmap", |b| {
+        b.iter(|| {
+            assert!(matches!(
+                tb.probe_wdl(black_box(&pos)),
+                Ok(AmbiguousWdl::BlessedLoss)
+            ));
+        })
     });
 }
 
 #[cfg(not(all(feature = "mmap", target_pointer_width = "64")))]
-benchmark_group!(benches, bench_add_directory, bench_probe_wdl);
+criterion_group!(benches, bench_add_directory, bench_probe_wdl);
 #[cfg(all(feature = "mmap", target_pointer_width = "64"))]
-benchmark_group!(
+criterion_group!(
     benches,
     bench_add_directory,
     bench_probe_wdl,
     bench_probe_wdl_mmap
 );
 
-benchmark_main!(benches);
+criterion_main!(benches);

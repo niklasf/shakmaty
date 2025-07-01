@@ -55,8 +55,8 @@
 use core::{error, fmt, str::FromStr};
 
 use crate::{
-    util::AppendAscii, CastlingSide, File, KnownOutcome, Move, MoveList, Outcome, Position, Rank,
-    Role, Square,
+    CastlingSide, File, KnownOutcome, Move, MoveList, Outcome, Position, Rank, Role, Square,
+    util::AppendAscii,
 };
 
 /// Error when parsing a syntactically invalid SAN.
@@ -878,7 +878,7 @@ mod tests {
     use core::mem;
 
     use super::*;
-    use crate::{fen::Fen, uci::UciMove, CastlingMode, Chess};
+    use crate::{CastlingMode, Chess, fen::Fen, uci::UciMove};
 
     #[test]
     fn test_size() {

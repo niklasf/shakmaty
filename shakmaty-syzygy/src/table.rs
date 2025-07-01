@@ -2,7 +2,7 @@ use std::{fmt, io, marker::PhantomData};
 
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
-use byteorder::{ByteOrder as _, ReadBytesExt as _, BE, LE};
+use byteorder::{BE, ByteOrder as _, LE, ReadBytesExt as _};
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
 use tracing::{trace, trace_span};
 
@@ -10,7 +10,7 @@ use crate::{
     errors::{ProbeError, ProbeResult},
     filesystem::{RandomAccessFile, ReadHint},
     material::Material,
-    types::{DecisiveWdl, MaybeRounded, Metric, Pieces, Syzygy, Wdl, MAX_PIECES},
+    types::{DecisiveWdl, MAX_PIECES, MaybeRounded, Metric, Pieces, Syzygy, Wdl},
 };
 
 const fn binomial(mut n: u64, k: u64) -> u64 {

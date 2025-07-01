@@ -4,7 +4,7 @@
 use std::{env, fs::File, io, process};
 
 use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
-use shakmaty::{fen::Fen, CastlingMode, Chess, Position};
+use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Validator {
     games: usize,

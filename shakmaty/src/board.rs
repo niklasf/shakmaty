@@ -6,7 +6,7 @@ use core::{
     iter::FusedIterator,
 };
 
-use crate::{attacks, bitboard, Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square};
+use crate::{Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square, attacks, bitboard};
 
 /// [`Piece`] positions on a board.
 ///

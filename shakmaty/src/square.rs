@@ -7,7 +7,7 @@ use core::{
     str,
 };
 
-use crate::util::{out_of_range_error, AppendAscii};
+use crate::util::{AppendAscii, out_of_range_error};
 
 macro_rules! try_from_int_impl {
     ($type:ty, $lower:expr, $upper:expr, $($t:ty)+) => {

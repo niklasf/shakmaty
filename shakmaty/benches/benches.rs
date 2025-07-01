@@ -1,24 +1,25 @@
-use iai::black_box;
+use std::hint::black_box;
+
+use iai_callgrind::{library_benchmark, library_benchmark_group, main};
 use shakmaty::{
+    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
     fen::Fen,
     packed::{PackedSetup, PackedUciMove},
     perft,
     san::{San, SanPlus},
     uci::UciMove,
     zobrist::{Zobrist64, ZobristHash},
-    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
 };
 
-fn bench_shallow_perft() {
+#[library_benchmark]
+#[bench::shallow(4, 197_281)]
+#[bench::deep(5, 4_865_609)]
+fn bench_perft(depth: u32, nodes: u64) {
     let pos = Chess::default();
-    assert_eq!(black_box(perft(black_box(&pos), 4)), 197_281);
+    assert_eq!(black_box(perft(black_box(&pos), depth)), nodes);
 }
 
-fn bench_deep_perft() {
-    let pos = Chess::default();
-    assert_eq!(perft(black_box(&pos), 5), 4_865_609);
-}
-
+#[library_benchmark]
 fn bench_kiwipete() {
     let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
     let pos: Chess = fen
@@ -29,6 +30,7 @@ fn bench_kiwipete() {
     assert_eq!(perft(black_box(&pos), 4), 4_085_603);
 }
 
+#[library_benchmark]
 fn bench_play_unchecked() -> Chess {
     let m = black_box(Move::Normal {
         role: Role::Knight,
@@ -43,6 +45,7 @@ fn bench_play_unchecked() -> Chess {
     pos
 }
 
+#[library_benchmark]
 fn bench_play_sans() -> Chess {
     let pgn = [
         "e4", "e5", "Nf3", "Nc6", "Bc4", "Nf6", "Ng5", "d5", "exd5", "Na5", "Bb5+", "c6", "dxc6",
@@ -69,6 +72,7 @@ fn bench_play_sans() -> Chess {
     pos
 }
 
+#[library_benchmark]
 fn bench_san_roundtrip() {
     let pgn = [
         "Nf3", "g6", "d4", "d5", "c4", "c6", "cxd5", "cxd5", "Nc3", "Nf6", "Bf4", "Nc6", "e3",
@@ -85,10 +89,12 @@ fn bench_san_roundtrip() {
     }
 }
 
+#[library_benchmark]
 fn bench_zobrist_hash() -> Zobrist64 {
     black_box(Chess::default()).zobrist_hash(EnPassantMode::Legal)
 }
 
+#[library_benchmark]
 fn bench_fen_roundtrip() -> String {
     let mut buffer = String::new();
     black_box("rnbqkb1r/1p3ppp/p2p1n2/4p3/3NP3/2N1B3/PPP2PPP/R2QKB1R w KQkq - 0 7")
@@ -98,6 +104,7 @@ fn bench_fen_roundtrip() -> String {
     buffer
 }
 
+#[library_benchmark]
 fn bench_packed_setup_roundtrip() {
     let setup = black_box(Setup::default());
     let packed = PackedSetup::pack_standard(&setup).expect("representable");
@@ -105,6 +112,7 @@ fn bench_packed_setup_roundtrip() {
     assert_eq!(repacked.unpack_standard().expect("roundtrip"), setup);
 }
 
+#[library_benchmark]
 fn bench_packed_uci_roundtrip() {
     for from in Square::ALL {
         for to in Square::ALL {
@@ -121,15 +129,18 @@ fn bench_packed_uci_roundtrip() {
     }
 }
 
-iai::main!(
-    bench_shallow_perft,
-    bench_deep_perft,
-    bench_kiwipete,
-    bench_play_unchecked,
-    bench_play_sans,
-    bench_zobrist_hash,
-    bench_san_roundtrip,
-    bench_fen_roundtrip,
-    bench_packed_setup_roundtrip,
-    bench_packed_uci_roundtrip,
+library_benchmark_group!(
+    name = benches;
+    benchmarks =
+        bench_perft,
+        bench_kiwipete,
+        bench_play_unchecked,
+        bench_play_sans,
+        bench_zobrist_hash,
+        bench_san_roundtrip,
+        bench_fen_roundtrip,
+        bench_packed_setup_roundtrip,
+        bench_packed_uci_roundtrip,
 );
+
+main!(library_benchmark_groups = benches);

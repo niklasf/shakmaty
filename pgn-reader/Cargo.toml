@@ -10,6 +10,10 @@ license.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[[bench]]
+name = "benches"
+harness = false
+
 [dependencies]
 memchr = "2.2"
 btoi = "0.5"
@@ -22,6 +26,7 @@ xz2 = "0.1"
 flate2 = "1.0"
 lz4 = "1.23"
 zstd = "0.13"
+criterion = "0.6.0"
 
 [lints]
 workspace = true
