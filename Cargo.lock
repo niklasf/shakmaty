@@ -826,6 +826,7 @@ version = "0.27.0"
 dependencies = [
  "btoi",
  "bzip2",
+ "criterion",
  "crossbeam",
  "flate2",
  "lz4",
