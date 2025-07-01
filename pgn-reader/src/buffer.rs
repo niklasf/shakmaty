@@ -55,7 +55,7 @@ impl Buffer {
     /// Returns the first item in [`Self::data`].
     #[inline]
     pub(crate) fn peek(&self) -> Option<u8> {
-        self.buffer.get(self.start).copied()
+        self.data().first().copied()
     }
 
     /// Clears the buffer.
