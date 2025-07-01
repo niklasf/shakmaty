@@ -1,5 +1,5 @@
 use std::{
-    cmp::{max, Reverse},
+    cmp::{Reverse, max},
     ffi::OsStr,
     fmt, io,
     path::{Path, PathBuf},
@@ -13,13 +13,13 @@ use shakmaty::{Move, Position, Role};
 use tracing::trace_span;
 
 use crate::{
+    AmbiguousWdl,
     errors::{ProbeResultExt as _, SyzygyError, SyzygyResult},
     filesystem,
     filesystem::Filesystem,
     material::{Material, NormalizedMaterial},
     table::{DtzTable, WdlTable},
     types::{DecisiveWdl, Dtz, MaybeRounded, Metric, Syzygy, Wdl},
-    AmbiguousWdl,
 };
 
 /// Additional probe information from a brief alpha-beta search.
@@ -742,7 +742,7 @@ impl<'a, S: Position + Clone + Syzygy + 'a> WdlEntry<'a, S> {
 
 #[cfg(test)]
 mod tests {
-    use shakmaty::{fen::Fen, CastlingMode, Chess, Square};
+    use shakmaty::{CastlingMode, Chess, Square, fen::Fen};
 
     use super::*;
 
