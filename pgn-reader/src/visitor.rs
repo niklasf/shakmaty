@@ -1,4 +1,4 @@
-use shakmaty::{san::SanPlus, Outcome};
+use shakmaty::{Outcome, san::SanPlus};
 
 use crate::types::{Nag, RawComment, RawTag, Skip};
 

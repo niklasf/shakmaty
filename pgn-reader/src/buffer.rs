@@ -28,7 +28,7 @@ impl Buffer {
             end: 0,
         }
     }
-    
+
     /// Equivalent to [`self.data_range().len()`](Self::data_range), but faster.
     #[inline]
     fn data_len(&self) -> usize {
@@ -133,12 +133,9 @@ impl<R: Read> BufferWithReader<R> {
             reader,
         }
     }
-    
+
     pub fn from_buffer(buffer: Buffer, reader: R) -> Self {
-        Self {
-            buffer,
-            reader
-        }
+        Self { buffer, reader }
     }
 
     /// Gets the remaining bytes in the buffer and the underlying reader.

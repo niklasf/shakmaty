@@ -2,7 +2,7 @@
 
 use core::{array, convert::identity, error, fmt, mem, num, ops, str::FromStr};
 
-use crate::{util::out_of_range_error, ByRole, Piece, Rank, Role};
+use crate::{ByRole, Piece, Rank, Role, util::out_of_range_error};
 
 /// `White` or `Black`.
 #[allow(missing_docs)]
@@ -43,20 +43,12 @@ impl Color {
 
     #[inline]
     pub const fn from_white(white: bool) -> Color {
-        if white {
-            Color::White
-        } else {
-            Color::Black
-        }
+        if white { Color::White } else { Color::Black }
     }
 
     #[inline]
     pub const fn from_black(black: bool) -> Color {
-        if black {
-            Color::Black
-        } else {
-            Color::White
-        }
+        if black { Color::Black } else { Color::White }
     }
 
     #[inline]

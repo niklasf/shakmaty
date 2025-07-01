@@ -1,8 +1,8 @@
 use core::{convert::identity, num::NonZeroU32};
 
 use crate::{
-    attacks, Bitboard, Board, ByCastlingSide, ByColor, ByRole, CastlingMode, CastlingSide, Color,
-    File, FromSetup, PositionError, Rank, RemainingChecks, Square,
+    Bitboard, Board, ByCastlingSide, ByColor, ByRole, CastlingMode, CastlingSide, Color, File,
+    FromSetup, PositionError, Rank, RemainingChecks, Square, attacks,
 };
 
 /// A not necessarily legal position.

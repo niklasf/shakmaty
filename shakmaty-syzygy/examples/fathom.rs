@@ -1,8 +1,8 @@
 use std::{error::Error, path::PathBuf};
 
-use clap::{builder::PathBufValueParser, Parser};
+use clap::{Parser, builder::PathBufValueParser};
 use shakmaty::{
-    fen::Fen, san::SanPlus, CastlingMode, Chess, Color, EnPassantMode, KnownOutcome, Position,
+    CastlingMode, Chess, Color, EnPassantMode, KnownOutcome, Position, fen::Fen, san::SanPlus,
 };
 use shakmaty_syzygy::{Material, MaybeRounded, Tablebase};
 

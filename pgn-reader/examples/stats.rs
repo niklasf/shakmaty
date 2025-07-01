@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io};
 
-use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Visitor};
+use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
 
 #[derive(Debug, Default)]
 struct Stats {
@@ -72,7 +72,7 @@ fn main() -> Result<(), io::Error> {
             Box::new(file)
         };
 
-        let mut reader = BufferedReader::new(uncompressed);
+        let mut reader = Reader::new(uncompressed);
 
         let mut stats = Stats::new();
         reader.read_all(&mut stats)?;

@@ -6,8 +6,8 @@
 use core::{error, fmt, num::NonZeroU32, str, str::FromStr};
 
 pub use crate::position::{
-    variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
     Chess,
+    variant::{Antichess, Atomic, Crazyhouse, Horde, KingOfTheHill, RacingKings, ThreeCheck},
 };
 use crate::{
     Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color, EnPassantMode,
