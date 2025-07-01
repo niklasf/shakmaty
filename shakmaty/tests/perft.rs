@@ -1,9 +1,9 @@
 use std::{
     fs::File,
-    io::{prelude::*, BufReader},
+    io::{BufReader, prelude::*},
 };
 
-use shakmaty::{fen::Fen, perft, CastlingMode, Chess, FromSetup, Position, PositionError};
+use shakmaty::{CastlingMode, Chess, FromSetup, Position, PositionError, fen::Fen, perft};
 
 fn test_perft_file<P>(path: &str, node_limit: u64)
 where

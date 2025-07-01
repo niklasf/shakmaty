@@ -8,12 +8,11 @@ use core::{
 use bitflags::bitflags;
 
 use crate::{
-    attacks,
-    bitboard::Direction,
-    setup::EnPassant,
     Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color,
     Color::{Black, White},
-    EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square,
+    EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square, attacks,
+    bitboard::Direction,
+    setup::EnPassant,
 };
 
 /// A definitive outcome of a game.

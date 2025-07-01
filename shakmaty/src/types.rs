@@ -4,8 +4,8 @@ use core::{
 };
 
 use crate::{
-    util::{out_of_range_error, AppendAscii},
     ByColor, Color, Role,
+    util::{AppendAscii, out_of_range_error},
 };
 
 /// A piece with [`Color`] and [`Role`].

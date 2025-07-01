@@ -2,8 +2,8 @@
 #[test]
 fn white_insufficient_material_in_horde() {
     use serde::Deserialize;
-    use serde_with::{serde_as, DisplayFromStr};
-    use shakmaty::{fen::Fen, variant::Horde, CastlingMode, Color, Position};
+    use serde_with::{DisplayFromStr, serde_as};
+    use shakmaty::{CastlingMode, Color, Position, fen::Fen, variant::Horde};
 
     #[serde_as]
     #[derive(Deserialize)]

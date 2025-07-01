@@ -1,4 +1,4 @@
-use shakmaty::{fen::Fen, CastlingMode, Chess, FromSetup, Position};
+use shakmaty::{CastlingMode, Chess, FromSetup, Position, fen::Fen};
 use shakmaty_syzygy::{Syzygy, Tablebase};
 
 fn test_csv<S>(mut tables: Tablebase<S>, path: &str)

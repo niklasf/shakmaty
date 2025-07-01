@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io};
 
-use pgn_reader::{Reader, Nag, Outcome, RawComment, RawTag, SanPlus, Visitor};
+use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
 
 #[derive(Debug, Default)]
 struct Stats {
