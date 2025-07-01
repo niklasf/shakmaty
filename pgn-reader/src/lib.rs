@@ -40,19 +40,19 @@
 //!     type Output = usize;
 //!     type Error = Infallible;
 //!
-//!     fn begin_tags(&mut self) -> Result<(), Self::Error> {
+//!     fn begin_tags(&mut self) -> Result<(), Self::Break> {
 //!         self.moves = 0;
 //!
 //!         Ok(())
 //!     }
 //!
-//!     fn san(&mut self, _san_plus: SanPlus) -> Result<(), Self::Error> {
+//!     fn san(&mut self, _san_plus: SanPlus) -> Result<(), Self::Break> {
 //!         self.moves += 1;
 //!
 //!         Ok(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+//!     fn begin_variation(&mut self) -> Result<Skip, Self::Break> {
 //!         Ok(Skip(true)) // stay in the mainline
 //!     }
 //!
@@ -101,7 +101,7 @@
 //!     type Output = Chess;
 //!     type Error = Infallible;
 //!
-//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Error> {
+//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> Result<(), Self::Break> {
 //!         // Support games from a non-standard starting position.
 //!         if name == b"FEN" {
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
@@ -115,11 +115,11 @@
 //!         Ok(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Result<Skip, Self::Error> {
+//!     fn begin_variation(&mut self) -> Result<Skip, Self::Break> {
 //!         Ok(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
+//!     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Break> {
 //!         if let Ok(m) = san_plus.san.to_move(&self.pos) {
 //!             self.pos.play_unchecked(m);
 //!         }

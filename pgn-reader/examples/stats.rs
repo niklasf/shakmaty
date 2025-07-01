@@ -1,7 +1,7 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
-use std::{convert::Infallible, env, fs::File, io};
+use std::{convert::Infallible, env, fs::File, io, ops::ControlFlow};
 
 use pgn_reader::{BufferedReader, Nag, Outcome, RawComment, RawTag, SanPlus, Visitor};
 
@@ -24,42 +24,42 @@ impl Stats {
 
 impl Visitor for Stats {
     type Output = ();
-    type Error = Infallible;
+    type Break = Infallible;
 
-    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> Result<(), Self::Error> {
+    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> ControlFlow<Self::Break> {
         self.tags += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn san(&mut self, _san: SanPlus) -> Result<(), Self::Error> {
+    fn san(&mut self, _san: SanPlus) -> ControlFlow<Self::Break> {
         self.sans += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn nag(&mut self, _nag: Nag) -> Result<(), Self::Error> {
+    fn nag(&mut self, _nag: Nag) -> ControlFlow<Self::Break> {
         self.nags += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn comment(&mut self, _comment: RawComment<'_>) -> Result<(), Self::Error> {
+    fn comment(&mut self, _comment: RawComment<'_>) -> ControlFlow<Self::Break> {
         self.comments += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn end_variation(&mut self) -> Result<(), Self::Error> {
+    fn end_variation(&mut self) -> ControlFlow<Self::Break> {
         self.variations += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
-    fn outcome(&mut self, _outcome: Outcome) -> Result<(), Self::Error> {
+    fn outcome(&mut self, _outcome: Outcome) -> ControlFlow<Self::Break> {
         self.outcomes += 1;
 
-        Ok(())
+        ControlFlow::Continue(())
     }
 
     fn end_game(&mut self) -> Self::Output {
