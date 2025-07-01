@@ -4,8 +4,8 @@ use std::{
 };
 
 use shakmaty::{
-    san::{San, SanPlus, Suffix},
     CastlingSide, Color, KnownOutcome, Outcome,
+    san::{San, SanPlus, Suffix},
 };
 
 // use slice_deque::SliceDeque;
@@ -261,16 +261,13 @@ impl<R: Read> BufferedReader<R> {
         Ok(())
     }
 
-    fn find_token_end(&mut self, start: usize) -> usize {
-        let mut end = start;
-        for &ch in &self.buffer.data()[start..] {
-            match ch {
-                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$'
-                | b';' | b'.' => break,
-                _ => end += 1,
-            }
-        }
-        end
+    fn find_token_end(&self) -> usize {
+        self.buffer
+            .data()
+            .iter()
+            .copied()
+            .position(is_token_end)
+            .unwrap_or(self.buffer.data().len())
     }
 
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
@@ -348,8 +345,7 @@ impl<R: Read> BufferedReader<R> {
                             suffix,
                         });
                     } else {
-                        let token_end = self.find_token_end(0);
-                        self.buffer.consume(token_end);
+                        self.buffer.consume(self.find_token_end());
                     }
                 }
                 b'1' => {
@@ -367,17 +363,17 @@ impl<R: Read> BufferedReader<R> {
                         while let Some(b'0'..=b'9') = self.buffer.peek() {
                             self.buffer.bump();
                         }
-                        while let Some(b'.') = self.buffer.peek() {
+                        while let Some(b'.' | b' ') = self.buffer.peek() {
                             self.buffer.bump();
                         }
                     }
                 }
-                b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => {
+                b'2'..=b'9' => {
                     self.buffer.bump();
                     while let Some(b'0'..=b'9') = self.buffer.peek() {
                         self.buffer.bump();
                     }
-                    while let Some(b'.') = self.buffer.peek() {
+                    while let Some(b'.' | b' ') = self.buffer.peek() {
                         self.buffer.bump();
                     }
                 }
@@ -393,7 +389,7 @@ impl<R: Read> BufferedReader<R> {
                 }
                 b'$' => {
                     self.buffer.bump();
-                    let token_end = self.find_token_end(0);
+                    let token_end = self.find_token_end();
                     if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
                         visitor.nag(Nag(nag));
                     }
@@ -435,16 +431,19 @@ impl<R: Read> BufferedReader<R> {
                     visitor.outcome(Outcome::Unknown);
                     self.buffer.bump();
                 }
-                b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
-                | b'Q' | b'K' | b'@' | b'-' | b'O' => {
-                    let token_end = self.find_token_end(1);
-                    if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
-                        visitor.san(san);
-                    }
-                    self.buffer.consume(token_end);
+                b' ' | b'\t' | b'\r' | b'.' => {
+                    self.buffer.bump();
                 }
                 _ => {
-                    self.buffer.bump();
+                    if let Ok((san, bytes)) = SanPlus::from_ascii_prefix(self.buffer.data()) {
+                        self.buffer.consume(bytes);
+                        if self.buffer.peek().is_none_or(is_token_end) {
+                            visitor.san(san);
+                        }
+                    } else {
+                        self.buffer.bump();
+                        self.buffer.consume(self.find_token_end());
+                    }
                 }
             }
         }
@@ -479,7 +478,7 @@ impl<R: Read> BufferedReader<R> {
                     self.skip_until(b'\n')?;
                 }
                 b'\n' => {
-                    match self.buffer.data().get(1).cloned() {
+                    match self.buffer.data().get(1).copied() {
                         Some(b'%') => {
                             self.buffer.consume(2);
                             self.skip_until(b'\n')?;
@@ -490,7 +489,7 @@ impl<R: Read> BufferedReader<R> {
                         }
                         Some(b'\r') => {
                             // Do not consume the first or second line break.
-                            if self.buffer.data().get(2).cloned() == Some(b'\n') {
+                            if self.buffer.data().get(2).copied() == Some(b'\n') {
                                 break;
                             }
                         }
@@ -593,6 +592,26 @@ impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
             Err(err) => Some(Err(err)),
         }
     }
+}
+
+#[inline]
+fn is_token_end(byte: u8) -> bool {
+    matches!(
+        byte,
+        b' ' | b'\t'
+            | b'\n'
+            | b'\r'
+            | b'{'
+            | b'}'
+            | b'('
+            | b')'
+            | b'!'
+            | b'?'
+            | b'$'
+            | b';'
+            | b'.'
+            | b'*'
+    )
 }
 
 #[cfg(test)]
