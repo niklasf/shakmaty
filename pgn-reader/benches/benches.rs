@@ -3,10 +3,11 @@ use std::fs::File;
 use criterion::{Criterion, criterion_group, criterion_main};
 use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Skip, Visitor};
 
-const FIXTURES: [&str; 3] = [
+const FIXTURES: [&str; 4] = [
     "lichess_db_10k.pgn",
     "lichess_db_100k.pgn",
-    "kasparov_deep_blue_1997.pgn",
+    "twic1599_10k.pgn",
+    "twic1599_100k.pgn",
 ];
 
 fn bench_stats(c: &mut Criterion) {
