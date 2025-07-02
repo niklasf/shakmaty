@@ -86,12 +86,12 @@ impl Buffer {
             debug_assert!(N <= CAPACITY);
         }
 
-        // more backshifts but less syscalls - net performance gain
-        if self.start > 0 {
-            self.backshift();
-        }
-
         while self.data_len() < N {
+            // more backshifts but less syscalls - net performance gain
+            if self.start > 0 {
+                self.backshift();
+            }
+            
             let len = r.read(&mut self.buffer[self.end..])?;
 
             // EOF
