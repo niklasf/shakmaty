@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io};
 
-use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
+use pgn_reader::{RawTag, Reader, SanPlus, Skip, Visitor};
 use shakmaty::{CastlingMode, Chess, EnPassantMode, Position, fen::Fen};
 
 struct FenExtractor {
@@ -74,7 +74,7 @@ fn main() -> anyhow::Result<()> {
             Box::new(file)
         };
 
-        let mut reader = BufferedReader::new(uncompressed);
+        let mut reader = Reader::new(uncompressed);
 
         let mut validator = FenExtractor::new();
         let mut i = 0;

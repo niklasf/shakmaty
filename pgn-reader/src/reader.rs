@@ -16,17 +16,19 @@ use crate::{
     visitor::{SkipVisitor, Visitor},
 };
 
+/// A buffered PGN reader.
+/// It's redundant and discouraged to wrap this in a [`BufReader`](std::io::BufReader).
 #[derive(Debug, Clone)]
-pub struct BufferedReader<R> {
+pub struct Reader<R> {
     reader: R,
     buffer: Buffer,
     max_tag_line_length: usize,
     max_comment_length: usize,
 }
 
-impl<R: Read> BufferedReader<R> {
-    pub fn new(reader: R) -> BufferedReader<R> {
-        BufferedReader {
+impl<R: Read> Reader<R> {
+    pub fn new(reader: R) -> Reader<R> {
+        Reader {
             reader,
             buffer: Buffer::with_capacity(1 << 14),
             max_tag_line_length: 1024,
@@ -34,10 +36,10 @@ impl<R: Read> BufferedReader<R> {
         }
     }
 
-    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`BufferedReader`].
+    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`Reader`].
     ///
-    /// Since [`Buffer`] is private, you can only use use this to create a [`BufferedReader`]
-    /// from [`BufferedReader::into_inner`].
+    /// Since [`Buffer`] is private, you can only use use this to create a [`Reader`]
+    /// from [`Reader::into_inner`].
     ///
     /// # Examples
     ///
@@ -45,13 +47,13 @@ impl<R: Read> BufferedReader<R> {
     /// # use std::convert::Infallible;
     /// # use std::io::Cursor;
     /// # use shakmaty::san::SanPlus;
-    /// # use pgn_reader::{BufferedReader, Visitor};
-    /// let mut reader = BufferedReader::new(Cursor::new("1. e4 e5\n\n1. d4"));
+    /// # use pgn_reader::{Reader, Visitor};
+    /// let mut reader = Reader::new(Cursor::new("1. e4 e5\n\n1. d4"));
     /// reader.skip_game().unwrap();
     /// let inner = reader.into_inner();
     /// // do something with inner
     /// let (buffer, r) = inner.into_inner();
-    /// reader = BufferedReader::from_buffer(buffer.into_inner(), r);
+    /// reader = Reader::from_buffer(buffer.into_inner(), r);
     ///
     /// #[derive(Default)]
     /// struct LastMove(Option<SanPlus>);
@@ -62,7 +64,7 @@ impl<R: Read> BufferedReader<R> {
     ///
     ///     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
     ///         self.0 = Some(san_plus);
-    /// 
+    ///
     ///         Ok(())
     ///     }
     ///
@@ -73,8 +75,8 @@ impl<R: Read> BufferedReader<R> {
     ///
     /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
     /// ```
-    pub fn from_buffer(buffer: Buffer, reader: R) -> BufferedReader<R> {
-        BufferedReader {
+    pub fn from_buffer(buffer: Buffer, reader: R) -> Reader<R> {
+        Reader {
             reader,
             buffer,
             max_tag_line_length: 1024,
@@ -271,16 +273,13 @@ impl<R: Read> BufferedReader<R> {
         Ok(())
     }
 
-    fn find_token_end(&mut self, start: usize) -> usize {
-        let mut end = start;
-        for &ch in &self.buffer.data()[start..] {
-            match ch {
-                b' ' | b'\t' | b'\n' | b'\r' | b'{' | b'}' | b'(' | b')' | b'!' | b'?' | b'$'
-                | b';' | b'.' => break,
-                _ => end += 1,
-            }
-        }
-        end
+    fn find_token_end(&self) -> usize {
+        self.buffer
+            .data()
+            .iter()
+            .copied()
+            .position(is_token_end)
+            .unwrap_or(self.buffer.data().len())
     }
 
     fn read_movetext<V: Visitor>(
@@ -376,8 +375,7 @@ impl<R: Read> BufferedReader<R> {
                                 .unwrap_or_else(|e| *visitor = Err(e));
                         }
                     } else {
-                        let token_end = self.find_token_end(0);
-                        self.buffer.consume(token_end);
+                        self.buffer.consume(self.find_token_end());
                     }
                 }
                 b'1' => {
@@ -409,12 +407,12 @@ impl<R: Read> BufferedReader<R> {
                                 break;
                             }
                         }
-                        while let Some(b'.') = self.buffer.peek() {
+                        while let Some(b'.' | b' ') = self.buffer.peek() {
                             self.buffer.bump();
                         }
                     }
                 }
-                b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' => {
+                b'2'..=b'9' => {
                     self.buffer.bump();
                     while let Some(ch) = self.buffer.peek() {
                         if b'0' <= ch && ch <= b'9' {
@@ -423,7 +421,7 @@ impl<R: Read> BufferedReader<R> {
                             break;
                         }
                     }
-                    while let Some(b'.') = self.buffer.peek() {
+                    while let Some(b'.' | b' ') = self.buffer.peek() {
                         self.buffer.bump();
                     }
                 }
@@ -449,7 +447,7 @@ impl<R: Read> BufferedReader<R> {
                 }
                 b'$' => {
                     self.buffer.bump();
-                    let token_end = self.find_token_end(0);
+                    let token_end = self.find_token_end();
                     if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
                         if let Ok(visitor_ok) = visitor {
                             visitor_ok
@@ -528,18 +526,21 @@ impl<R: Read> BufferedReader<R> {
 
                     self.buffer.bump();
                 }
-                b'a' | b'b' | b'c' | b'd' | b'e' | b'f' | b'g' | b'h' | b'N' | b'B' | b'R'
-                | b'Q' | b'K' | b'@' | b'-' | b'O' => {
-                    let token_end = self.find_token_end(1);
-                    if let Ok(san) = SanPlus::from_ascii(&self.buffer.data()[..token_end]) {
-                        if let Ok(visitor_ok) = visitor {
-                            visitor_ok.san(san).unwrap_or_else(|e| *visitor = Err(e));
-                        }
-                    }
-                    self.buffer.consume(token_end);
+                b' ' | b'\t' | b'\r' | b'.' => {
+                    self.buffer.bump();
                 }
                 _ => {
-                    self.buffer.bump();
+                    if let Ok((san, bytes)) = SanPlus::from_ascii_prefix(self.buffer.data()) {
+                        self.buffer.consume(bytes);
+                        if let Ok(visitor_ok) = visitor {
+                            if self.buffer.peek().is_none_or(is_token_end) {
+                                visitor_ok.san(san).unwrap_or_else(|e| *visitor = Err(e));
+                            }
+                        }
+                    } else {
+                        self.buffer.bump();
+                        self.buffer.consume(self.find_token_end());
+                    }
                 }
             }
         }
@@ -574,7 +575,7 @@ impl<R: Read> BufferedReader<R> {
                     self.skip_until(b'\n')?;
                 }
                 b'\n' => {
-                    match self.buffer.data().get(1).cloned() {
+                    match self.buffer.data().get(1).copied() {
                         Some(b'%') => {
                             self.buffer.consume(2);
                             self.skip_until(b'\n')?;
@@ -585,7 +586,7 @@ impl<R: Read> BufferedReader<R> {
                         }
                         Some(b'\r') => {
                             // Do not consume the first or second line break.
-                            if self.buffer.data().get(2).cloned() == Some(b'\n') {
+                            if self.buffer.data().get(2).copied() == Some(b'\n') {
                                 break;
                             }
                         }
@@ -695,13 +696,12 @@ impl<R: Read> BufferedReader<R> {
     }
 }
 
-/// Iterator returned by
-/// [`BufferedReader::into_iter()`](struct.BufferedReader.html#method.into_iter).
+/// Iterator returned by [`Reader::into_iter()`].
 #[derive(Debug)]
 #[must_use]
 pub struct IntoIter<'a, V: 'a, R> {
     visitor: &'a mut V,
-    reader: BufferedReader<R>,
+    reader: Reader<R>,
 }
 
 impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
@@ -716,13 +716,33 @@ impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
     }
 }
 
+#[inline]
+fn is_token_end(byte: u8) -> bool {
+    matches!(
+        byte,
+        b' ' | b'\t'
+            | b'\n'
+            | b'\r'
+            | b'{'
+            | b'}'
+            | b'('
+            | b')'
+            | b'!'
+            | b'?'
+            | b'$'
+            | b';'
+            | b'.'
+            | b'*'
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use std::convert::Infallible;
 
     use super::*;
 
-    struct _AssertObjectSafe<R>(Box<BufferedReader<R>>);
+    struct _AssertObjectSafe<R>(Box<Reader<R>>);
 
     #[derive(Default)]
     struct GameCounter {
@@ -741,7 +761,7 @@ mod tests {
     #[test]
     fn test_empty_game() -> io::Result<()> {
         let mut counter = GameCounter::default();
-        let mut reader = BufferedReader::new(io::Cursor::new(b"  "));
+        let mut reader = Reader::new(io::Cursor::new(b"  "));
         reader.read_game(&mut counter)?;
         assert_eq!(counter.count, 0);
         Ok(())
@@ -750,7 +770,7 @@ mod tests {
     #[test]
     fn test_trailing_space() -> io::Result<()> {
         let mut counter = GameCounter::default();
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
+        let mut reader = Reader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
         reader.read_game(&mut counter)?;
         assert_eq!(counter.count, 1);
         reader.read_game(&mut counter)?;
@@ -778,7 +798,7 @@ mod tests {
         }
 
         let mut collector = NagCollector { nags: Vec::new() };
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
+        let mut reader = Reader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
         reader.read_game(&mut collector)?;
         assert_eq!(
             collector.nags,
@@ -807,7 +827,7 @@ mod tests {
         }
 
         let mut collector = SanCollector { sans: Vec::new() };
-        let mut reader = BufferedReader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
+        let mut reader = Reader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
         reader.read_game(&mut collector)?;
         assert_eq!(collector.sans.len(), 6);
         assert_ne!(collector.sans[0], San::Null);
@@ -856,7 +876,7 @@ mod tests {
             now: 0,
         };
 
-        let mut reader = BufferedReader::new(io::Cursor::new(
+        let mut reader = Reader::new(io::Cursor::new(
             r#"[Foo "f"]
 [Bar "\"bar"]
 [Err "err"]

@@ -66,7 +66,7 @@
 
 use core::{error, fmt, str::FromStr};
 
-use crate::{util::AppendAscii, CastlingMode, CastlingSide, Move, Position, Rank, Role, Square};
+use crate::{CastlingMode, CastlingSide, Move, Position, Rank, Role, Square, util::AppendAscii};
 
 /// Error when parsing an invalid UCI move.
 #[derive(Clone, Debug)]
@@ -451,7 +451,7 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fen::Fen, Chess};
+    use crate::{Chess, fen::Fen};
 
     #[cfg(feature = "alloc")]
     #[test]

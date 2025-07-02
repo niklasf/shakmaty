@@ -8,7 +8,7 @@ use std::{
     io, process,
 };
 
-use pgn_reader::{BufferedReader, RawTag, SanPlus, Skip, Visitor};
+use pgn_reader::{RawTag, Reader, SanPlus, Skip, Visitor};
 use shakmaty::{
     CastlingMode, Chess, Position, PositionError,
     fen::{Fen, ParseFenError},
@@ -141,7 +141,7 @@ fn main() -> io::Result<()> {
             Box::new(file)
         };
 
-        let mut reader = BufferedReader::new(uncompressed);
+        let mut reader = Reader::new(uncompressed);
 
         let mut validator = Validator::new();
 

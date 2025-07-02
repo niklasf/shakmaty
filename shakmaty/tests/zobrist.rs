@@ -3,13 +3,13 @@
 fn test_zobrist_reference() {
     use serde::Deserialize;
     use serde_with::{
-        formats::SpaceSeparator, serde_as, DisplayFromStr, FromInto, StringWithSeparator,
+        DisplayFromStr, FromInto, StringWithSeparator, formats::SpaceSeparator, serde_as,
     };
     use shakmaty::{
+        EnPassantMode, Position as _,
         uci::UciMove,
         variant::{Variant, VariantPosition},
         zobrist::{Zobrist128, ZobristHash as _},
-        EnPassantMode, Position as _,
     };
 
     #[serde_as]

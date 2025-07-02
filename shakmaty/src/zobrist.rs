@@ -1380,7 +1380,7 @@ fn hash_board<V: ZobristValue>(board: &Board) -> V {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fen::Fen, CastlingMode, Chess};
+    use crate::{CastlingMode, Chess, fen::Fen};
 
     #[test]
     fn test_polyglot() {

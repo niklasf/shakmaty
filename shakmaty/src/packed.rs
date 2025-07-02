@@ -12,8 +12,8 @@ use core::{array::TryFromSliceError, error, fmt, fmt::Display, mem, num::NonZero
 #[cfg(feature = "variant")]
 use crate::variant::Variant;
 use crate::{
-    uci::UciMove, util::try_from_slice_error, Bitboard, Board, ByColor, ByRole, Color, Piece, Rank,
-    Role, Setup, Square,
+    Bitboard, Board, ByColor, ByRole, Color, Piece, Rank, Role, Setup, Square, uci::UciMove,
+    util::try_from_slice_error,
 };
 
 /// A compactly encoded board, standard chess setup, or variant setup.
