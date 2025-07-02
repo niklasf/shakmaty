@@ -11,6 +11,9 @@ license.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+bench = false
+
 [[bench]]
 name = "benches"
 harness = false
