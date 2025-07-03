@@ -1,6 +1,6 @@
 use std::{
     cmp::min,
-    io::{self, Chain, Cursor, Read},
+    io::{self, Chain, Cursor, Read, Seek, SeekFrom},
 };
 
 use shakmaty::{
@@ -625,6 +625,46 @@ fn is_token_end(byte: u8) -> bool {
             | b'.'
             | b'*'
     )
+}
+
+impl<R: Seek> Seek for Reader<R> {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+        let result = if let SeekFrom::Current(offset) = pos {
+            let buffered = self.buffer.data_len() as i64;
+            if let Some(offset) = offset.checked_sub(buffered) {
+                self.reader.seek(SeekFrom::Current(offset))?
+            } else {
+                self.reader.seek_relative(-buffered)?;
+                self.buffer.clear();
+                self.reader.seek(SeekFrom::Current(offset))?
+            }
+        } else {
+            self.reader.seek(pos)?
+        };
+        self.buffer.clear();
+        Ok(result)
+    }
+
+    fn seek_relative(&mut self, offset: i64) -> io::Result<()> {
+        let buffered = self.buffer.data_len() as i64;
+        if let Some(offset) = offset.checked_sub(buffered) {
+            self.reader.seek_relative(offset)?;
+            self.buffer.clear();
+            Ok(())
+        } else {
+            self.reader.seek_relative(-buffered)?;
+            self.buffer.clear();
+            self.reader.seek_relative(offset)
+        }
+    }
+
+    fn stream_position(&mut self) -> io::Result<u64> {
+        let buffered = self.buffer.data_len() as u64;
+        self.reader.stream_position().map(|pos| {
+            pos.checked_sub(buffered)
+                .expect("consistent stream position")
+        })
+    }
 }
 
 #[cfg(test)]

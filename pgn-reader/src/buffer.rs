@@ -31,7 +31,7 @@ impl Buffer {
 
     /// Equivalent to [`self.data_range().len()`](Self::data_range), but faster.
     #[inline]
-    fn data_len(&self) -> usize {
+    pub(crate) fn data_len(&self) -> usize {
         self.end - self.start
     }
 
