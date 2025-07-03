@@ -4,26 +4,22 @@ use std::{
     ops::Range,
 };
 
-pub const CAPACITY: usize = 1 << 14;
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Buffer {
-    buffer: Box<[u8]>,
+    buffer: Vec<u8>,
     /// The start of the valid data.
     ///
     /// Never greater than `self.end`.
     start: usize,
     /// The end of the valid data + 1 (not a valid index).
-    ///
-    /// Never greater than [`CAPACITY`].
     end: usize,
 }
 
 impl Buffer {
-    /// Creates a new [`Buffer`] that can hold [`CAPACITY`] many elements.
-    pub(crate) fn new() -> Self {
+    /// Creates a new [`Buffer`] with a capacity in bytes.
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self {
-            buffer: vec![0; CAPACITY].into_boxed_slice(),
+            buffer: vec![0; capacity],
             start: 0,
             end: 0,
         }
@@ -46,9 +42,9 @@ impl Buffer {
     /// Gets the valid data in the buffer.
     #[inline]
     pub(crate) fn data(&self) -> &[u8] {
-        debug_assert!(self.start <= self.end && self.end <= CAPACITY);
+        debug_assert!(self.start <= self.end && self.end <= self.buffer.len());
 
-        // SAFETY: self.start <= self.end <= CAPACITY
+        // SAFETY: self.start <= self.end <= self.buffer.len()
         unsafe { self.buffer.get_unchecked(self.data_range()) }
     }
 
@@ -82,7 +78,7 @@ impl Buffer {
     /// The only situation where the returned slice does not have at least `n`
     /// elements is if EOF was reached.
     pub(crate) fn ensure_bytes(&mut self, n: usize, mut r: impl Read) -> io::Result<&[u8]> {
-        assert!(n <= CAPACITY);
+        debug_assert!(n <= self.buffer.len() / 2);
 
         while self.data_len() < n {
             self.backshift();
