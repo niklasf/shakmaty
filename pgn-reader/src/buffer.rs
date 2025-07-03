@@ -1,7 +1,7 @@
 use std::{
     cmp,
-    io::{self, Chain, Cursor, Read},
-    ops::{Deref, DerefMut, Range},
+    io::{self, Read},
+    ops::Range,
 };
 
 pub const CAPACITY: usize = 1 << 14;
@@ -87,11 +87,10 @@ impl Buffer {
         }
 
         while self.data_len() < N {
-            // more backshifts but less syscalls - net performance gain
             if self.start > 0 {
                 self.backshift();
             }
-            
+
             let len = r.read(&mut self.buffer[self.end..])?;
 
             // EOF
@@ -115,54 +114,8 @@ impl Buffer {
 }
 
 impl AsRef<[u8]> for Buffer {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.buffer[self.start..self.end]
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct BufferWithReader<R> {
-    buffer: Buffer,
-    reader: R,
-}
-
-impl<R: Read> BufferWithReader<R> {
-    /// Creates a new [`BufferWithReader`] that can hold [`CAPACITY`] many elements.
-    pub fn new(reader: R) -> Self {
-        Self {
-            buffer: Buffer::new(),
-            reader,
-        }
-    }
-
-    pub fn from_buffer(buffer: Buffer, reader: R) -> Self {
-        Self { buffer, reader }
-    }
-
-    /// Gets the remaining bytes in the buffer and the underlying reader.
-    pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
-        Cursor::new(self.buffer).chain(self.reader)
-    }
-
-    /// Ensures that [`N`] amount of bytes are in the buffer and returns the data.
-    ///
-    /// The only situation where the returned slice does not have [`N`] elements is if EOF was
-    /// encountered.
-    pub fn ensure_bytes<const N: usize>(&mut self) -> io::Result<&[u8]> {
-        self.buffer.ensure_bytes::<N>(&mut self.reader)
-    }
-}
-
-impl<R> Deref for BufferWithReader<R> {
-    type Target = Buffer;
-
-    fn deref(&self) -> &Buffer {
-        &self.buffer
-    }
-}
-
-impl<R> DerefMut for BufferWithReader<R> {
-    fn deref_mut(&mut self) -> &mut Buffer {
-        &mut self.buffer
+        self.data()
     }
 }
