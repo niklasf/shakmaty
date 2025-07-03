@@ -4,7 +4,7 @@ use std::{
     ops::Range,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     buffer: Vec<u8>,
     /// The start of the valid data.
