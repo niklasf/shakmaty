@@ -77,16 +77,14 @@ impl Buffer {
         self.consume(1);
     }
 
-    /// Ensures that `N` amount of bytes are in the buffer and returns the data.
+    /// Ensures that `n` bytes are in the buffer and returns the data.
     ///
-    /// The only situation where the returned slice does not have `N` elements is if EOF was
-    /// encountered.
-    pub(crate) fn ensure_bytes<const N: usize>(&mut self, mut r: impl Read) -> io::Result<&[u8]> {
-        const {
-            assert!(N <= CAPACITY);
-        }
+    /// The only situation where the returned slice does not have at least `n`
+    /// elements is if EOF was reached.
+    pub(crate) fn ensure_bytes(&mut self, n: usize, mut r: impl Read) -> io::Result<&[u8]> {
+        assert!(n <= CAPACITY);
 
-        while self.data_len() < N {
+        while self.data_len() < n {
             self.backshift();
             let len = r.read(&mut self.buffer[self.end..])?;
 

@@ -81,7 +81,7 @@ impl<R: Read> Reader<R> {
     fn skip_bom(&mut self) -> io::Result<()> {
         if self
             .buffer
-            .ensure_bytes::<3>(&mut self.reader)?
+            .ensure_bytes(3, &mut self.reader)?
             .starts_with(b"\xef\xbb\xbf")
         {
             self.buffer.consume(3);
@@ -90,7 +90,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_until(&mut self, needle: u8) -> io::Result<()> {
-        while !self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty() {
+        while !self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             if let Some(pos) = memchr::memchr(needle, self.buffer.data()) {
                 self.buffer.consume(pos);
                 return Ok(());
@@ -108,7 +108,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_whitespace(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<1>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b'\n' => {
                     self.buffer.bump();
@@ -124,7 +124,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_ket(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<1>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b']' => {
                     self.buffer.bump();
@@ -150,7 +150,7 @@ impl<R: Read> Reader<R> {
     fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes::<MAX_TAG_LINE_LENGTH>(&mut self.reader)?
+            .ensure_bytes(MAX_TAG_LINE_LENGTH, &mut self.reader)?
         {
             match ch {
                 b'[' => {
@@ -227,7 +227,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_movetext(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<3>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             self.buffer.bump();
 
             match ch {
@@ -274,7 +274,7 @@ impl<R: Read> Reader<R> {
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes::<MAX_COMMENT_LENGTH>(&mut self.reader)?
+            .ensure_bytes(MAX_COMMENT_LENGTH, &mut self.reader)?
         {
             match ch {
                 b'{' => {
@@ -455,7 +455,7 @@ impl<R: Read> Reader<R> {
     fn skip_variation(&mut self) -> io::Result<()> {
         let mut depth = 0usize;
 
-        while let &[ch, ..] = self.buffer.ensure_bytes::<3>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             match ch {
                 b'(' => {
                     depth += 1;
@@ -519,7 +519,7 @@ impl<R: Read> Reader<R> {
         self.skip_bom()?;
         self.skip_whitespace()?;
 
-        if self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty() {
+        if self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             return Ok(None);
         }
 
@@ -583,7 +583,7 @@ impl<R: Read> Reader<R> {
     pub fn has_more(&mut self) -> io::Result<bool> {
         self.skip_bom()?;
         self.skip_whitespace()?;
-        Ok(!self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty())
+        Ok(!self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty())
     }
 }
 
