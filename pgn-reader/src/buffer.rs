@@ -83,14 +83,11 @@ impl Buffer {
     /// encountered.
     pub(crate) fn ensure_bytes<const N: usize>(&mut self, mut r: impl Read) -> io::Result<&[u8]> {
         const {
-            debug_assert!(N <= CAPACITY);
+            assert!(N <= CAPACITY);
         }
 
         while self.data_len() < N {
-            if self.start > 0 {
-                self.backshift();
-            }
-
+            self.backshift();
             let len = r.read(&mut self.buffer[self.end..])?;
 
             // EOF
