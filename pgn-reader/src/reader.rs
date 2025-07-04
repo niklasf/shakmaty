@@ -1,6 +1,7 @@
 use std::{
+    cmp::max,
     cmp::min,
-    io::{self, Chain, Cursor, Read, Seek, SeekFrom},
+    io::{self, Read, Seek, SeekFrom},
 };
 
 use shakmaty::{
@@ -9,18 +10,53 @@ use shakmaty::{
 };
 
 use crate::{
-    buffer,
     buffer::Buffer,
     types::{Nag, RawComment, RawTag, Skip},
     visitor::{SkipVisitor, Visitor},
 };
 
-const MAX_TAG_LINE_LENGTH: usize = 1024;
-const MAX_COMMENT_LENGTH: usize = 4096;
-const _: () = {
-    assert!(MAX_TAG_LINE_LENGTH <= buffer::CAPACITY);
-    assert!(MAX_COMMENT_LENGTH <= buffer::CAPACITY);
-};
+#[derive(Debug, Clone)]
+pub struct ReaderBuilder {
+    tag_line_bytes: usize,
+    comment_bytes: usize,
+}
+
+impl Default for ReaderBuilder {
+    fn default() -> ReaderBuilder {
+        ReaderBuilder::new()
+    }
+}
+
+impl ReaderBuilder {
+    pub fn new() -> ReaderBuilder {
+        ReaderBuilder {
+            tag_line_bytes: 255,
+            comment_bytes: 255,
+        }
+    }
+
+    pub fn set_supported_tag_line_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
+        self.tag_line_bytes = max(255, bytes);
+        self
+    }
+
+    pub fn set_supported_comment_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
+        self.comment_bytes = max(255, bytes + 2); // Plus '{' and '}'
+        self
+    }
+
+    pub fn finish<R: Read>(&self, reader: R) -> Reader<R> {
+        Reader {
+            reader,
+            tag_line_bytes: self.tag_line_bytes,
+            comment_bytes: self.comment_bytes,
+            buffer: Buffer::with_capacity(max(
+                1 << 14,
+                max(self.tag_line_bytes, self.comment_bytes).next_power_of_two() * 2,
+            )),
+        }
+    }
+}
 
 /// A buffered PGN reader.
 ///
@@ -29,59 +65,23 @@ const _: () = {
 pub struct Reader<R> {
     buffer: Buffer,
     reader: R,
+    comment_bytes: usize,
+    tag_line_bytes: usize,
 }
 
 impl<R: Read> Reader<R> {
     pub fn new(reader: R) -> Reader<R> {
-        Reader {
-            buffer: Buffer::new(),
-            reader,
-        }
+        ReaderBuilder::new().finish(reader)
     }
 
-    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`Reader`].
-    ///
-    /// Since [`Buffer`] is private, you can only use use this to create a [`Reader`]
-    /// from [`Reader::into_inner`].
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use std::io::Cursor;
-    /// # use shakmaty::san::SanPlus;
-    /// # use pgn_reader::{Reader, Visitor};
-    /// let mut reader = Reader::new(Cursor::new("1. e4 e5\n\n1. d4"));
-    /// reader.skip_game().unwrap();
-    /// let inner = reader.into_inner();
-    /// // do something with inner
-    /// let (buffer, r) = inner.into_inner();
-    /// reader = Reader::from_buffer(buffer.into_inner(), r);
-    ///
-    /// #[derive(Default)]
-    /// struct LastMove(Option<SanPlus>);
-    ///
-    /// impl Visitor for LastMove {
-    ///     type Result = Option<SanPlus>;
-    ///
-    ///     fn san(&mut self, san_plus: SanPlus) {
-    ///         self.0 = Some(san_plus);
-    ///     }
-    ///
-    ///     fn end_game(&mut self) -> Self::Result {
-    ///         std::mem::replace(&mut self.0, None)
-    ///     }
-    /// }
-    ///
-    /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
-    /// ```
-    pub fn from_buffer(buffer: Buffer, reader: R) -> Reader<R> {
-        Reader { buffer, reader }
+    pub fn build() -> ReaderBuilder {
+        ReaderBuilder::new()
     }
 
     fn skip_bom(&mut self) -> io::Result<()> {
         if self
             .buffer
-            .ensure_bytes::<3>(&mut self.reader)?
+            .ensure_bytes(3, &mut self.reader)?
             .starts_with(b"\xef\xbb\xbf")
         {
             self.buffer.consume(3);
@@ -90,7 +90,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_until(&mut self, needle: u8) -> io::Result<()> {
-        while !self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty() {
+        while !self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             if let Some(pos) = memchr::memchr(needle, self.buffer.data()) {
                 self.buffer.consume(pos);
                 return Ok(());
@@ -108,7 +108,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_whitespace(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<1>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b'\n' => {
                     self.buffer.bump();
@@ -124,7 +124,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_ket(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<1>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
                 b' ' | b'\t' | b'\r' | b']' => {
                     self.buffer.bump();
@@ -150,7 +150,7 @@ impl<R: Read> Reader<R> {
     fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes::<MAX_TAG_LINE_LENGTH>(&mut self.reader)?
+            .ensure_bytes(self.tag_line_bytes, &mut self.reader)?
         {
             match ch {
                 b'[' => {
@@ -227,7 +227,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_movetext(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes::<3>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             self.buffer.bump();
 
             match ch {
@@ -274,7 +274,7 @@ impl<R: Read> Reader<R> {
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes::<MAX_COMMENT_LENGTH>(&mut self.reader)?
+            .ensure_bytes(self.comment_bytes, &mut self.reader)?
         {
             match ch {
                 b'{' => {
@@ -455,7 +455,7 @@ impl<R: Read> Reader<R> {
     fn skip_variation(&mut self) -> io::Result<()> {
         let mut depth = 0usize;
 
-        while let &[ch, ..] = self.buffer.ensure_bytes::<3>(&mut self.reader)? {
+        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             match ch {
                 b'(' => {
                     depth += 1;
@@ -519,7 +519,7 @@ impl<R: Read> Reader<R> {
         self.skip_bom()?;
         self.skip_whitespace()?;
 
-        if self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty() {
+        if self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             return Ok(None);
         }
 
@@ -569,9 +569,13 @@ impl<R: Read> Reader<R> {
         }
     }
 
-    /// Gets the remaining bytes in the buffer and the underlying reader.
-    pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
-        Cursor::new(self.buffer).chain(self.reader)
+    pub fn buffer(&self) -> &[u8] {
+        self.buffer.data()
+    }
+
+    /// Discard the remaining bytes in the buffer and get the underlying reader.
+    pub fn into_inner(self) -> R {
+        self.reader
     }
 
     /// Returns whether the reader has another game to parse, but does not
@@ -583,7 +587,7 @@ impl<R: Read> Reader<R> {
     pub fn has_more(&mut self) -> io::Result<bool> {
         self.skip_bom()?;
         self.skip_whitespace()?;
-        Ok(!self.buffer.ensure_bytes::<1>(&mut self.reader)?.is_empty())
+        Ok(!self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty())
     }
 }
 

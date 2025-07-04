@@ -137,7 +137,6 @@
 
 #![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
-#![warn(missing_copy_implementations)]
 
 mod buffer;
 mod reader;
