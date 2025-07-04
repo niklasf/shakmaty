@@ -40,6 +40,48 @@ impl Nag {
         }
     }
 
+    /// Appends the NAG to a string.
+    ///
+    /// ```
+    /// use pgn_reader::Nag;
+    ///
+    /// let mut buf = String::new();
+    /// Nag(255).append_to_string(&mut buf);
+    /// assert_eq!(buf, "$255");
+    /// ```
+    pub fn append_to_string(&self, s: &mut String) {
+        s.reserve(4);
+        s.push('$');
+        if self.0 >= 100 {
+            s.push((b'0' + (self.0 / 100) % 10) as char);
+        }
+        if self.0 >= 10 {
+            s.push((b'0' + (self.0 / 10) % 10) as char);
+        }
+        s.push((b'0' + (self.0 % 10)) as char);
+    }
+
+    /// Appends the NAG as ASCII to a byte buffer.
+    ///
+    /// ```
+    /// use pgn_reader::Nag;
+    ///
+    /// let mut buf = Vec::new();
+    /// Nag(255).append_ascii_to(&mut buf);
+    /// assert_eq!(buf, b"$255");
+    /// ```
+    pub fn append_ascii_to(&self, buf: &mut Vec<u8>) {
+        buf.reserve(4);
+        buf.push(b'$');
+        if self.0 >= 100 {
+            buf.push(b'0' + (self.0 / 100) % 10);
+        }
+        if self.0 >= 10 {
+            buf.push(b'0' + (self.0 / 10) % 10);
+        }
+        buf.push(b'0' + (self.0 % 10));
+    }
+
     /// A good move (`!`).
     pub const GOOD_MOVE: Nag = Nag(1);
 
@@ -102,10 +144,30 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_nag() {
+    fn test_from_ascii() {
         assert_eq!(Nag::from_ascii(b"$1"), Ok(Nag(1)));
         assert_eq!(Nag::from_ascii(b"$12"), Ok(Nag(12)));
         assert_eq!(Nag::from_ascii(b"$123"), Ok(Nag(123)));
         assert_eq!(Nag::from_ascii(b"$1234"), Err(InvalidNag));
+    }
+
+    #[test]
+    fn test_append_to_string() {
+        let mut s = String::new();
+        Nag(0).append_to_string(&mut s);
+        Nag(1).append_to_string(&mut s);
+        Nag(12).append_to_string(&mut s);
+        Nag(123).append_to_string(&mut s);
+        assert_eq!(s, "$0$1$12$123");
+    }
+
+    #[test]
+    fn test_append_ascii_to() {
+        let mut buf = Vec::new();
+        Nag(123).append_ascii_to(&mut buf);
+        Nag(12).append_ascii_to(&mut buf);
+        Nag(1).append_ascii_to(&mut buf);
+        Nag(0).append_ascii_to(&mut buf);
+        assert_eq!(buf, b"$123$12$1$0");
     }
 }
