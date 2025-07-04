@@ -123,10 +123,20 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn skip_line(&mut self) -> io::Result<()> {
-        self.skip_until(b'\n')?;
-        self.buffer.bump();
+    fn skip_until_after(&mut self, needle: u8) -> io::Result<()> {
+        while !self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
+            if let Some(pos) = memchr::memchr(needle, self.buffer.data()) {
+                self.buffer.consume(pos + 1);
+                return Ok(());
+            } else {
+                self.buffer.clear();
+            }
+        }
         Ok(())
+    }
+
+    fn skip_line(&mut self) -> io::Result<()> {
+        self.skip_until_after(b'\n')
     }
 
     fn skip_whitespace(&mut self) -> io::Result<()> {
@@ -284,8 +294,7 @@ impl<R: Read> Reader<R> {
 
             match ch {
                 b'{' => {
-                    self.skip_until(b'}')?;
-                    self.buffer.bump();
+                    self.skip_until_after(b'}')?;
                 }
                 b';' => {
                     self.skip_until(b'\n')?;
@@ -416,7 +425,6 @@ impl<R: Read> Reader<R> {
                             return Ok(cf);
                         }
                     } else {
-                        self.buffer.bump();
                         while let Some(b'0'..=b'9') = self.buffer.peek() {
                             self.buffer.bump();
                         }
@@ -549,8 +557,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'{' => {
                     self.buffer.bump();
-                    self.skip_until(b'}')?;
-                    self.buffer.bump();
+                    self.skip_until_after(b'}')?;
                 }
                 b';' => {
                     self.buffer.bump();
