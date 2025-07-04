@@ -68,7 +68,6 @@
 //! * [pgn-reader](https://docs.rs/pgn-reader)
 
 #![no_std]
-#![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 #![cfg_attr(docs_rs, feature(doc_auto_cfg))]
 #![allow(clippy::too_many_arguments)]

@@ -135,7 +135,6 @@
 //!
 //! [Shakmaty]: ../shakmaty/index.html
 
-#![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(missing_debug_implementations)]
 
 mod buffer;
