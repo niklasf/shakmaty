@@ -82,7 +82,7 @@ fn main() -> Result<(), io::Error> {
         let mut reader = Reader::new(uncompressed);
 
         let mut stats = Stats::new();
-        reader.read_all(&mut stats)?;
+        reader.visit_all_games(&mut stats)?;
         println!("{arg}: {stats:?}");
     }
 

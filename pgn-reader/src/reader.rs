@@ -663,23 +663,24 @@ impl<R: Read> Reader<R> {
         Ok(has_more)
     }
 
-    /// Read all games, ignoring the visitor outputs.
+    /// Iterate over all games, yielding the visitor outputs.
+    #[must_use = "iterator is lazy"]
+    pub fn read_games<'a, V: Visitor>(&'a mut self, visitor: &'a mut V) -> ReadGames<'a, R, V> {
+        ReadGames {
+            reader: self,
+            visitor,
+        }
+    }
+
+    /// Visit all games, ignoring the visitor outputs.
     ///
     /// # Errors
     ///
     /// * I/O error from the underlying reader.
     /// * Irrecoverable parser errors.
-    pub fn read_all<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
+    pub fn visit_all_games<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while self.read_game(visitor)?.is_some() {}
         Ok(())
-    }
-
-    /// Iterate over all games, yielding the visitor outputs.
-    pub fn into_iter<V: Visitor>(self, visitor: &mut V) -> IntoIter<'_, V, R> {
-        IntoIter {
-            reader: self,
-            visitor,
-        }
     }
 
     /// The currently buffered bytes.
@@ -697,12 +698,12 @@ impl<R: Read> Reader<R> {
 /// Iterator returned by [`Reader::into_iter()`].
 #[derive(Debug)]
 #[must_use]
-pub struct IntoIter<'a, V: 'a, R> {
+pub struct ReadGames<'a, R, V> {
+    reader: &'a mut Reader<R>,
     visitor: &'a mut V,
-    reader: Reader<R>,
 }
 
-impl<V: Visitor, R: Read> Iterator for IntoIter<'_, V, R> {
+impl<R: Read, V: Visitor> Iterator for ReadGames<'_, R, V> {
     type Item = Result<V::Output, io::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {

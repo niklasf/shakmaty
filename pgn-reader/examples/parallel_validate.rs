@@ -153,7 +153,7 @@ fn main() {
 
         crossbeam::scope(|scope| {
             scope.spawn(move |_| {
-                for game in Reader::new(uncompressed).into_iter(&mut validator) {
+                for game in Reader::new(uncompressed).read_games(&mut validator) {
                     send.send(game.expect("io")).unwrap();
                 }
             });
