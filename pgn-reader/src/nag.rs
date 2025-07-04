@@ -42,6 +42,8 @@ impl Nag {
 
     /// Appends the NAG to a string.
     ///
+    /// # Examples
+    ///
     /// ```
     /// use pgn_reader::Nag;
     ///
@@ -62,6 +64,8 @@ impl Nag {
     }
 
     /// Appends the NAG as ASCII to a byte buffer.
+    ///
+    /// # Examples
     ///
     /// ```
     /// use pgn_reader::Nag;

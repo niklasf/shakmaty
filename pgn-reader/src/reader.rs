@@ -12,39 +12,45 @@ use crate::{
     RawTag, Skip, Visitor, buffer::Buffer, comment::RawComment, nag::Nag, visitor::SkipVisitor,
 };
 
+/// Build a [`Reader`] with custom settings.
 #[derive(Debug, Clone)]
-pub struct ReaderBuilder {
+pub struct ReaderBuilder<R> {
+    reader: R,
     tag_line_bytes: usize,
     movetext_token_bytes: usize,
 }
 
-impl Default for ReaderBuilder {
-    fn default() -> ReaderBuilder {
-        ReaderBuilder::new()
-    }
-}
-
-impl ReaderBuilder {
-    pub fn new() -> ReaderBuilder {
+impl<R: Read> ReaderBuilder<R> {
+    /// Create a [`ReaderBuilder`] with default settings based on the PGN
+    /// standard.
+    pub fn new(reader: R) -> Self {
         ReaderBuilder {
+            reader,
             tag_line_bytes: 255,
             movetext_token_bytes: 255,
         }
     }
 
-    pub fn set_supported_tag_line_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
+    /// Configure the buffer to support *at least* the given tag line length.
+    ///
+    /// Defaults to `255` bytes.
+    pub fn set_supported_tag_line_length(mut self, bytes: usize) -> Self {
         self.tag_line_bytes = max(255, bytes);
         self
     }
 
-    pub fn set_supported_comment_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
-        self.movetext_token_bytes = max(255, bytes + 2); // Plus '{' and '}'
+    /// Configure the buffer to support *at least* the given comment length.
+    ///
+    /// Defaults to `255` bytes.
+    pub fn set_supported_comment_length(mut self, bytes: usize) -> Self {
+        self.movetext_token_bytes = max(255, bytes) + 2; // Plus '{' and '}'
         self
     }
 
-    pub fn finish<R: Read>(&self, reader: R) -> Reader<R> {
+    /// Finalize and create a [`Reader`].
+    pub fn finish(self) -> Reader<R> {
         Reader {
-            reader,
+            reader: self.reader,
             tag_line_bytes: self.tag_line_bytes,
             movetext_token_bytes: self.movetext_token_bytes,
             buffer: Buffer::with_capacity(max(
@@ -55,9 +61,11 @@ impl ReaderBuilder {
     }
 }
 
-/// A buffered PGN reader.
+/// Reads a PGN and calls [`Visitor`] methods.
 ///
-/// It's redundant and discouraged to wrap this in a [`BufReader`](std::io::BufReader).
+/// Buffers the underlying reader with an appropriate strategy, so it's *not*
+/// recommended to add an additional layer of buffering like
+/// [`BufReader`](std::io::BufReader).
 #[derive(Debug, Clone)]
 pub struct Reader<R> {
     buffer: Buffer,
@@ -67,12 +75,25 @@ pub struct Reader<R> {
 }
 
 impl<R: Read> Reader<R> {
+    /// Create a reader with default settings based on the PGN standard.
     pub fn new(reader: R) -> Reader<R> {
-        ReaderBuilder::new().finish(reader)
+        ReaderBuilder::new(reader).finish()
     }
 
-    pub fn build() -> ReaderBuilder {
-        ReaderBuilder::new()
+    /// Build a reader with custom settings.
+    ///
+    /// ```no_run
+    /// use std::fs::File;
+    /// use pgn_reader::Reader;
+    ///
+    /// let reader = Reader::build(File::open("example.pgn")?)
+    ///     .set_supported_tag_line_length(1000)
+    ///     .set_supported_comment_length(4000)
+    ///     .finish();
+    /// # Ok::<_, std::io::Error>(())
+    /// ```
+    pub fn build(reader: R) -> ReaderBuilder<R> {
+        ReaderBuilder::new(reader)
     }
 
     fn skip_bom(&mut self) -> io::Result<()> {
@@ -515,8 +536,10 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    /// Read a single game, if any, and returns the result produced by the
-    /// visitor. Returns `Ok(None)` if the underlying reader is empty.
+    /// Read a single game, if any, and return the result produced by the
+    /// visitor.
+    ///
+    /// Returns `Ok(None)` if the underlying reader is empty.
     ///
     /// # Errors
     ///
@@ -544,6 +567,8 @@ impl<R: Read> Reader<R> {
 
     /// Skip a single game, if any.
     ///
+    /// Returns `Ok(true)` if a game found and skipped.
+    ///
     /// # Errors
     ///
     /// * I/O error from the underlying reader.
@@ -563,12 +588,7 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    /// Create an iterator over all games.
-    ///
-    /// # Errors
-    ///
-    /// * I/O error from the underlying reader.
-    /// * Irrecoverable parser errors.
+    /// Convert to an iterator over all visitor results.
     pub fn into_iter<V: Visitor>(self, visitor: &mut V) -> IntoIter<'_, V, R> {
         IntoIter {
             reader: self,
@@ -576,11 +596,13 @@ impl<R: Read> Reader<R> {
         }
     }
 
+    /// The currently buffered bytes.
     pub fn buffer(&self) -> &[u8] {
         self.buffer.data()
     }
 
-    /// Discard the remaining bytes in the buffer and get the underlying reader.
+    /// Discard the remaining bytes in the buffer ([`Reader::buffer()`]) and
+    /// get the underlying reader.
     pub fn into_inner(self) -> R {
         self.reader
     }
