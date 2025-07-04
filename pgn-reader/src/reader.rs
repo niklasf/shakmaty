@@ -181,7 +181,7 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_token(&mut self) -> io::Result<()> {
-        while let &[_, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
+        while !self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty() {
             if let Some(end) = self.find_token_end() {
                 self.buffer.consume(end);
                 break;
@@ -303,7 +303,10 @@ impl<R: Read> Reader<R> {
                         return Ok(cf);
                     }
                 }
-                b'%' => self.skip_line()?,
+                b'%' => {
+                    self.buffer.bump();
+                    self.skip_line()?;
+                }
                 _ => return Ok(ControlFlow::Continue(())),
             }
         }
@@ -322,7 +325,10 @@ impl<R: Read> Reader<R> {
                     self.skip_until(b'\n')?;
                 }
                 b'\n' => match self.buffer.peek() {
-                    Some(b'%') => self.skip_until(b'\n')?,
+                    Some(b'%') => {
+                        self.buffer.bump();
+                        self.skip_until(b'\n')?;
+                    }
                     Some(b'\n' | b'[') => break,
                     Some(b'\r') => {
                         self.buffer.bump();
@@ -580,8 +586,8 @@ impl<R: Read> Reader<R> {
         while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
             match ch {
                 b'(' => {
-                    depth += 1;
                     self.buffer.bump();
+                    depth += 1;
                 }
                 b')' => {
                     if let Some(d) = depth.checked_sub(1) {
@@ -609,11 +615,9 @@ impl<R: Read> Reader<R> {
                             // Do not consume the first or second line break.
                             break;
                         }
-                        Some(b'\r') => {
+                        Some(b'\r') if self.buffer.data().get(2).copied() == Some(b'\n') => {
                             // Do not consume the first or second line break.
-                            if self.buffer.data().get(2).copied() == Some(b'\n') {
-                                break;
-                            }
+                            break;
                         }
                         _ => {
                             self.buffer.bump();
@@ -859,7 +863,7 @@ mod tests {
             name: &[u8],
             value: RawTag<'_>,
         ) -> ControlFlow<Self::Output> {
-            tags.push(Token::Tag(name.to_owned(), value.as_bytes().to_owned()));
+            tags.push(Token::Tag(name.to_owned(), value.decode().into_owned()));
             ControlFlow::Continue(())
         }
 
@@ -924,6 +928,21 @@ mod tests {
 
     #[test]
     fn test_empty() -> io::Result<()> {
+        let pgn = b"";
+
+        assert!(
+            Reader::new(io::Cursor::new(pgn))
+                .read_game(&mut CollectTokens)?
+                .is_none()
+        );
+
+        assert!(!Reader::new(io::Cursor::new(pgn)).skip_game()?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_whitespace() -> io::Result<()> {
         let pgn = b"\xef\xbb\xbf  \n\r\t \n\n ";
 
         assert!(
@@ -965,7 +984,7 @@ mod tests {
             game,
             &[
                 Token::BeginTags,
-                Token::Tag(b"White".into(), b"hello\\\" ".into()),
+                Token::Tag(b"White".into(), b"hello\" ".into()),
                 Token::Tag(b"Black".into(), b"world".into()),
                 Token::BeginMovetext,
                 Token::San(SanPlus {

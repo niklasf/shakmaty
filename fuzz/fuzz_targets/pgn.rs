@@ -1,34 +1,186 @@
 #![no_main]
 
-use std::ops::ControlFlow;
+use std::{io, mem, ops::ControlFlow};
 
+use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use pgn_reader::{Reader, Visitor};
+use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Skip, Visitor};
 
-struct NoopVisitor;
-
-impl Visitor for NoopVisitor {
-    type Tags = ();
-    type Movetext = ();
-    type Output = ();
-
-    fn begin_tags(&mut self) -> std::ops::ControlFlow<Self::Output, Self::Tags> {
-        ControlFlow::Continue(())
-    }
-
-    fn begin_movetext(&mut self, _tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
-        ControlFlow::Continue(())
-    }
-
-    fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {}
+#[derive(Debug, Eq, PartialEq)]
+enum Token {
+    BeginTags,
+    Tag(Vec<u8>, Vec<u8>),
+    BeginMovetext,
+    San(SanPlus),
+    Nag(Nag),
+    Comment(Vec<u8>),
+    BeginVariation,
+    EndVariation,
+    Outcome(Outcome),
+    EndGame,
 }
 
-fuzz_target!(|data: &[u8]| {
-    // Test reading
-    let mut reader = Reader::new(data);
-    while matches!(reader.read_game(&mut NoopVisitor), Err(_) | Ok(Some(_))) {}
+#[derive(Debug, Arbitrary, Clone)]
+struct BreakOnToken {
+    begin_tags: bool,
+    tag: bool,
+    begin_movetext: bool,
+    san: bool,
+    nag: bool,
+    comment: bool,
+    begin_variation: bool,
+    end_variation: bool,
+    outcome: bool,
 
-    // Test skipping
-    let mut reader = Reader::new(data);
-    while matches!(reader.skip_game(), Err(_) | Ok(true)) {}
+    skip_variation: bool,
+}
+
+impl Visitor for BreakOnToken {
+    type Tags = Vec<Token>;
+    type Movetext = Vec<Token>;
+    type Output = Vec<Token>;
+
+    fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+        let tags = vec![Token::BeginTags];
+        if self.begin_tags {
+            ControlFlow::Break(tags)
+        } else {
+            ControlFlow::Continue(tags)
+        }
+    }
+
+    fn tag(
+        &mut self,
+        tags: &mut Self::Tags,
+        name: &[u8],
+        value: RawTag<'_>,
+    ) -> ControlFlow<Self::Output> {
+        tags.push(Token::Tag(name.to_owned(), value.decode().into_owned()));
+        if self.tag {
+            ControlFlow::Break(mem::take(tags))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn begin_movetext(
+        &mut self,
+        mut tags: Self::Tags,
+    ) -> ControlFlow<Self::Output, Self::Movetext> {
+        tags.push(Token::BeginMovetext);
+        if self.begin_movetext {
+            ControlFlow::Break(tags)
+        } else {
+            ControlFlow::Continue(tags)
+        }
+    }
+
+    fn san(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        san_plus: SanPlus,
+    ) -> ControlFlow<Self::Output> {
+        movetext.push(Token::San(san_plus));
+        if self.san {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn nag(&mut self, movetext: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
+        movetext.push(Token::Nag(nag));
+        if self.nag {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn comment(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        comment: RawComment<'_>,
+    ) -> ControlFlow<Self::Output> {
+        movetext.push(Token::Comment(comment.as_bytes().to_owned()));
+        if self.comment {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn begin_variation(
+        &mut self,
+        movetext: &mut Self::Movetext,
+    ) -> ControlFlow<Self::Output, Skip> {
+        movetext.push(Token::BeginVariation);
+        if self.begin_variation {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(Skip(self.skip_variation))
+        }
+    }
+
+    fn end_variation(&mut self, movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
+        movetext.push(Token::EndVariation);
+        if self.end_variation {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn outcome(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        outcome: Outcome,
+    ) -> ControlFlow<Self::Output> {
+        movetext.push(Token::Outcome(outcome));
+        if self.outcome {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn end_game(&mut self, mut movetext: Self::Movetext) -> Self::Output {
+        movetext.push(Token::EndGame);
+        movetext
+    }
+}
+
+#[derive(Debug, Arbitrary)]
+struct TestCase {
+    pgn: Vec<u8>,
+    left_visitor: BreakOnToken,
+    right_visitor: BreakOnToken,
+}
+
+fuzz_target!(|data: TestCase| {
+    let mut data = data;
+    let mut left_reader = Reader::new(io::Cursor::new(&data.pgn));
+    let mut right_reader = Reader::new(io::Cursor::new(&data.pgn));
+
+    // Read first game with different visitors
+    if left_reader.read_game(&mut data.left_visitor).is_err() {
+        return;
+    }
+    if right_reader.read_game(&mut data.right_visitor).is_err() {
+        return;
+    }
+
+    // Results must be equal when continuing with just one of the visitors,
+    // unless there was an I/O error (io::ErrorKind::InvalidData may go
+    // unnoticed depending on the buffer state).
+    let mut visitor = data.left_visitor;
+    loop {
+        let Ok(Some(left_game)) = left_reader.read_game(&mut visitor) else {
+            break;
+        };
+        let Ok(Some(right_game)) = right_reader.read_game(&mut visitor) else {
+            break;
+        };
+        assert_eq!(left_game, right_game);
+    }
 });
