@@ -12,9 +12,18 @@
 //!
 //! # Flow
 //!
-//! Visitor methods are called in this order:
+//! Visitor methods are called in these phases:
 //!
-//! ![Flow](https://github.com/niklasf/rust-pgn-reader/blob/master/docs/visitor.png?raw=true)
+//! 1. [`Visitor::begin_tags()`]
+//!    - [`Visitor::tag()`]
+//! 2. [`Visitor::begin_movetext()`]
+//!    - [`Visitor::san()`]
+//!    - [`Visitor::nag()`]
+//!    - [`Visitor::comment()`]
+//!    - [`Visitor::begin_variation()`]
+//!    - [`Visitor::end_variation()`]
+//!    - [`Visitor::outcome()`]
+//! 3. [`Visitor::end_game()`]
 //!
 //! # Examples
 //!

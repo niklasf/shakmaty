@@ -6,9 +6,20 @@ use std::ops::ControlFlow;
 #[must_use]
 pub struct Skip(pub bool);
 
-/// Consumes games from a reader.
+/// Visits games from a [`Reader`](crate::Reader).
 ///
-/// ![Flow](https://github.com/niklasf/shakmaty/blob/master/pgn-reader/docs/visitor.png?raw=true)
+/// Visitor methods are called in these phases:
+///
+/// 1. [`Visitor::begin_tags()`]
+///    - [`Visitor::tag()`]
+/// 2. [`Visitor::begin_movetext()`]
+///    - [`Visitor::san()`]
+///    - [`Visitor::nag()`]
+///    - [`Visitor::comment()`]
+///    - [`Visitor::begin_variation()`]
+///    - [`Visitor::end_variation()`]
+///    - [`Visitor::outcome()`]
+/// 3. [`Visitor::end_game()`]
 pub trait Visitor {
     /// Produced by [`Visitor::begin_tags()`].
     type Tags;

@@ -741,7 +741,7 @@ impl<R: Read> Reader<R> {
     }
 }
 
-/// Iterator returned by [`Reader::into_iter()`].
+/// Iterator returned by [`Reader::read_games()`].
 #[derive(Debug)]
 #[must_use]
 pub struct ReadGames<'a, R, V> {
