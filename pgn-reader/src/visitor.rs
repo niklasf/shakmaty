@@ -1,5 +1,6 @@
-use crate::{Nag, Outcome, RawComment, RawTag, SanPlus};
 use std::ops::ControlFlow;
+
+use crate::{Nag, Outcome, RawComment, RawTag, SanPlus};
 
 /// Tell the reader to skip over a variation.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]

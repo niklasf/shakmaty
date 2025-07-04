@@ -1,8 +1,7 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
-use std::ops::ControlFlow;
-use std::{env, fs::File, io};
+use std::{env, fs::File, io, ops::ControlFlow};
 
 use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
 
