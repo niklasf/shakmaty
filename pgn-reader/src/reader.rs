@@ -17,7 +17,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct ReaderBuilder {
     tag_line_bytes: usize,
-    comment_bytes: usize,
+    movetext_token_bytes: usize,
 }
 
 impl Default for ReaderBuilder {
@@ -30,7 +30,7 @@ impl ReaderBuilder {
     pub fn new() -> ReaderBuilder {
         ReaderBuilder {
             tag_line_bytes: 255,
-            comment_bytes: 255,
+            movetext_token_bytes: 255,
         }
     }
 
@@ -40,7 +40,7 @@ impl ReaderBuilder {
     }
 
     pub fn set_supported_comment_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
-        self.comment_bytes = max(255, bytes + 2); // Plus '{' and '}'
+        self.movetext_token_bytes = max(255, bytes + 2); // Plus '{' and '}'
         self
     }
 
@@ -48,10 +48,10 @@ impl ReaderBuilder {
         Reader {
             reader,
             tag_line_bytes: self.tag_line_bytes,
-            comment_bytes: self.comment_bytes,
+            movetext_token_bytes: self.movetext_token_bytes,
             buffer: Buffer::with_capacity(max(
                 1 << 14,
-                max(self.tag_line_bytes, self.comment_bytes).next_power_of_two() * 2,
+                max(self.tag_line_bytes, self.movetext_token_bytes).next_power_of_two() * 2,
             )),
         }
     }
@@ -64,8 +64,8 @@ impl ReaderBuilder {
 pub struct Reader<R> {
     buffer: Buffer,
     reader: R,
-    comment_bytes: usize,
     tag_line_bytes: usize,
+    movetext_token_bytes: usize,
 }
 
 impl<R: Read> Reader<R> {
@@ -279,7 +279,7 @@ impl<R: Read> Reader<R> {
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes(self.comment_bytes, &mut self.reader)?
+            .ensure_bytes(self.movetext_token_bytes, &mut self.reader)?
         {
             match ch {
                 b'{' => {
