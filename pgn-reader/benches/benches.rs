@@ -1,7 +1,7 @@
-use std::fs::File;
+use std::{fs::File, ops::ControlFlow};
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Skip, Visitor};
+use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
 
 const FIXTURES: [&str; 6] = [
     "lichess_db_10k.pgn",
@@ -25,30 +25,36 @@ fn bench_stats(c: &mut Criterion) {
     }
 
     impl Visitor for Stats {
-        type Result = ();
+        type Output = ();
 
-        fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {
+        fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> ControlFlow<()> {
             self.tags += 1;
+            ControlFlow::Continue(())
         }
 
-        fn san(&mut self, _san: SanPlus) {
+        fn san(&mut self, _san: SanPlus) -> ControlFlow<()> {
             self.sans += 1;
+            ControlFlow::Continue(())
         }
 
-        fn nag(&mut self, _nag: Nag) {
+        fn nag(&mut self, _nag: Nag) -> ControlFlow<()> {
             self.nags += 1;
+            ControlFlow::Continue(())
         }
 
-        fn comment(&mut self, _comment: RawComment<'_>) {
+        fn comment(&mut self, _comment: RawComment<'_>) -> ControlFlow<()> {
             self.comments += 1;
+            ControlFlow::Continue(())
         }
 
-        fn end_variation(&mut self) {
+        fn end_variation(&mut self) -> ControlFlow<()> {
             self.variations += 1;
+            ControlFlow::Continue(())
         }
 
-        fn outcome(&mut self, _outcome: Outcome) {
+        fn outcome(&mut self, _outcome: Outcome) -> ControlFlow<()> {
             self.outcomes += 1;
+            ControlFlow::Continue(())
         }
 
         fn end_game(&mut self) {
@@ -70,25 +76,12 @@ fn bench_stats(c: &mut Criterion) {
 }
 
 fn bench_skip_all(c: &mut Criterion) {
-    struct SkipAll;
-
-    impl Visitor for SkipAll {
-        type Result = ();
-
-        fn end_game(&mut self) {}
-
-        fn begin_movetext(&mut self) -> Skip {
-            Skip(true)
-        }
-    }
-
     for fixture in FIXTURES {
         c.bench_function(&format!("skip all {fixture}"), |b| {
             b.iter(|| {
-                let mut skip_all = SkipAll;
-                Reader::new(File::open(format!("benches/{fixture}")).expect("open"))
-                    .read_all(&mut skip_all)
-                    .expect("read all");
+                let mut reader =
+                    Reader::new(File::open(format!("benches/{fixture}")).expect("open"));
+                while reader.skip_game().expect("skip game") {}
             })
         });
     }

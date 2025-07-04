@@ -5,6 +5,7 @@ use std::{
     env,
     fs::File,
     io, mem,
+    ops::ControlFlow,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -24,6 +25,15 @@ struct Game {
 }
 
 impl Game {
+    fn new_with_index(index: usize) -> Game {
+        Game {
+            index,
+            pos: Chess::new(),
+            sans: Vec::with_capacity(80),
+            success: true,
+        }
+    }
+
     fn validate(mut self) -> bool {
         self.success && {
             for san in self.sans {
@@ -59,13 +69,14 @@ impl Validator {
 }
 
 impl Visitor for Validator {
-    type Result = Game;
+    type Output = Game;
 
-    fn begin_tags(&mut self) {
+    fn begin_tags(&mut self) -> ControlFlow<Self::Output> {
         self.games += 1;
+        ControlFlow::Continue(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Output> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
@@ -76,7 +87,10 @@ impl Visitor for Validator {
                         self.games, err, value
                     );
                     self.game.success = false;
-                    return;
+                    return ControlFlow::Break(mem::replace(
+                        &mut self.game,
+                        Game::new_with_index(self.games),
+                    ));
                 }
             };
 
@@ -88,36 +102,27 @@ impl Visitor for Validator {
                         self.games, err, value
                     );
                     self.game.success = false;
-                    return;
+                    return ControlFlow::Break(mem::replace(
+                        &mut self.game,
+                        Game::new_with_index(self.games),
+                    ));
                 }
             };
         }
+        ControlFlow::Continue(())
     }
 
-    fn begin_movetext(&mut self) -> Skip {
-        Skip(!self.game.success)
+    fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+        ControlFlow::Continue(Skip(true)) // stay in the mainline
     }
 
-    fn begin_variation(&mut self) -> Skip {
-        Skip(true) // stay in the mainline
+    fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+        self.game.sans.push(san_plus.san);
+        ControlFlow::Continue(())
     }
 
-    fn san(&mut self, san_plus: SanPlus) {
-        if self.game.success {
-            self.game.sans.push(san_plus.san);
-        }
-    }
-
-    fn end_game(&mut self) -> Self::Result {
-        mem::replace(
-            &mut self.game,
-            Game {
-                index: self.games,
-                pos: Chess::default(),
-                sans: Vec::with_capacity(80),
-                success: true,
-            },
-        )
+    fn end_game(&mut self) -> Self::Output {
+        mem::replace(&mut self.game, Game::new_with_index(self.games))
     }
 }
 

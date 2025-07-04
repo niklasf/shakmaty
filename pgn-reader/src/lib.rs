@@ -22,7 +22,7 @@
 //! of each game.
 //!
 //! ```
-//! use std::io;
+//! use std::{io, ops::ControlFlow};
 //! use pgn_reader::{Visitor, Skip, Reader, SanPlus};
 //!
 //! struct MoveCounter {
@@ -36,21 +36,23 @@
 //! }
 //!
 //! impl Visitor for MoveCounter {
-//!     type Result = usize;
+//!     type Output = usize;
 //!
-//!     fn begin_tags(&mut self) {
+//!     fn begin_tags(&mut self) -> ControlFlow<Self::Output> {
 //!         self.moves = 0;
+//!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn san(&mut self, _san_plus: SanPlus) {
+//!     fn san(&mut self, _san_plus: SanPlus) -> ControlFlow<Self::Output> {
 //!         self.moves += 1;
+//!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Skip {
-//!         Skip(true) // stay in the mainline
+//!     fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+//!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Result {
+//!     fn end_game(&mut self) -> Self::Output {
 //!         self.moves
 //!     }
 //! }
@@ -73,7 +75,7 @@
 //! A visitor that returns the final position using [`shakmaty`].
 //!
 //! ```
-//! use std::io;
+//! use std::{error::Error, io, mem, ops::ControlFlow};
 //!
 //! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
@@ -91,11 +93,15 @@
 //! }
 //!
 //! impl Visitor for LastPosition {
-//!     type Result = Chess;
+//!     type Output = Result<Chess, Box<dyn Error>>;
 //!
-//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Output> {
 //!         // Support games from a non-standard starting position.
 //!         if name == b"FEN" {
+//!             let fen = match Fen::from_ascii(value.as_bytes()) {
+//!                 Ok(fen) => fen,
+//!                 Err(err) => return ControlFlow::Break(Err(err.into())),
+//!             };
 //!             let pos = Fen::from_ascii(value.as_bytes()).ok()
 //!                 .and_then(|f| f.into_position(CastlingMode::Standard).ok());
 //!
@@ -103,20 +109,25 @@
 //!                 self.pos = pos;
 //!             }
 //!         }
+//!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> Skip {
-//!         Skip(true) // stay in the mainline
+//!     fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+//!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn san(&mut self, san_plus: SanPlus) {
-//!         if let Ok(m) = san_plus.san.to_move(&self.pos) {
-//!             self.pos.play_unchecked(m);
+//!     fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+//!         match san_plus.san.to_move(&self.pos) {
+//!             Ok(m) => {
+//!                 self.pos.play_unchecked(m);
+//!                 ControlFlow::Continue(())
+//!             }
+//!             Err(err) => ControlFlow::Break(Err(err.into()))
 //!         }
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Result {
-//!         ::std::mem::replace(&mut self.pos, Chess::default())
+//!     fn end_game(&mut self) -> Self::Output {
+//!         Ok(mem::replace(&mut self.pos, Chess::default()))
 //!     }
 //! }
 //!
@@ -126,9 +137,13 @@
 //!     let mut reader = Reader::new(io::Cursor::new(&pgn));
 //!
 //!     let mut visitor = LastPosition::new();
-//!     let pos = reader.read_game(&mut visitor)?;
 //!
-//!     assert!(pos.map_or(false, |p| p.is_checkmate()));
+//!     let pos = reader
+//!        .read_game(&mut visitor)?
+//!        .expect("game found")
+//!        .expect("valid");
+//!
+//!     assert!(pos.is_checkmate());
 //!     Ok(())
 //! }
 //! ```

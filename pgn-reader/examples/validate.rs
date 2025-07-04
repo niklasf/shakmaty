@@ -1,7 +1,7 @@
 // Validates moves in PGNs.
 // Usage: cargo run --release --example validate -- [PGN]...
 
-use std::{env, fs::File, io, process};
+use std::{env, fs::File, io, ops::ControlFlow, process};
 
 use pgn_reader::{RawTag, Reader, SanPlus, Skip, Visitor};
 use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
@@ -9,7 +9,6 @@ use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 struct Validator {
     games: usize,
     pos: Chess,
-    success: bool,
 }
 
 impl Validator {
@@ -17,21 +16,20 @@ impl Validator {
         Validator {
             games: 0,
             pos: Chess::default(),
-            success: true,
         }
     }
 }
 
 impl Visitor for Validator {
-    type Result = bool;
+    type Output = bool;
 
-    fn begin_tags(&mut self) {
+    fn begin_tags(&mut self) -> ControlFlow<Self::Output> {
         self.games += 1;
         self.pos = Chess::default();
-        self.success = true;
+        ControlFlow::Continue(())
     }
 
-    fn tag(&mut self, name: &[u8], value: RawTag<'_>) {
+    fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Output> {
         // Support games from a non-standard starting position.
         if name == b"FEN" {
             let fen = match Fen::from_ascii(value.as_bytes()) {
@@ -41,8 +39,7 @@ impl Visitor for Validator {
                         "invalid fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
-                    self.success = false;
-                    return;
+                    return ControlFlow::Break(false);
                 }
             };
 
@@ -53,35 +50,30 @@ impl Visitor for Validator {
                         "illegal fen tag in game {}: {} ({:?})",
                         self.games, err, value
                     );
-                    self.success = false;
-                    return;
+                    return ControlFlow::Break(false);
                 }
             };
         }
+        ControlFlow::Continue(())
     }
 
-    fn begin_movetext(&mut self) -> Skip {
-        Skip(!self.success)
+    fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+        ControlFlow::Continue(Skip(true))
     }
 
-    fn begin_variation(&mut self) -> Skip {
-        Skip(true) // stay in the mainline
-    }
-
-    fn san(&mut self, san_plus: SanPlus) {
-        if self.success {
-            match san_plus.san.to_move(&self.pos) {
-                Ok(m) => self.pos.play_unchecked(m),
-                Err(err) => {
-                    eprintln!("error in game {}: {} {}", self.games, err, san_plus);
-                    self.success = false;
-                }
+    fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+        match san_plus.san.to_move(&self.pos) {
+            Ok(m) => self.pos.play_unchecked(m),
+            Err(err) => {
+                eprintln!("error in game {}: {} {}", self.games, err, san_plus);
+                return ControlFlow::Break(false);
             }
         }
+        ControlFlow::Continue(())
     }
 
-    fn end_game(&mut self) -> Self::Result {
-        self.success
+    fn end_game(&mut self) -> Self::Output {
+        true
     }
 }
 

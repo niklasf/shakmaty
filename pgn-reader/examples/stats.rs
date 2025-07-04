@@ -1,6 +1,7 @@
 // Counts games, moves and other tokens in PGNs.
 // Usage: cargo run --release --example stats -- [PGN]...
 
+use std::ops::ControlFlow;
 use std::{env, fs::File, io};
 
 use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
@@ -23,30 +24,36 @@ impl Stats {
 }
 
 impl Visitor for Stats {
-    type Result = ();
+    type Output = ();
 
-    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) {
+    fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> ControlFlow<()> {
         self.tags += 1;
+        ControlFlow::Continue(())
     }
 
-    fn san(&mut self, _san: SanPlus) {
+    fn san(&mut self, _san: SanPlus) -> ControlFlow<()> {
         self.sans += 1;
+        ControlFlow::Continue(())
     }
 
-    fn nag(&mut self, _nag: Nag) {
+    fn nag(&mut self, _nag: Nag) -> ControlFlow<()> {
         self.nags += 1;
+        ControlFlow::Continue(())
     }
 
-    fn comment(&mut self, _comment: RawComment<'_>) {
+    fn comment(&mut self, _comment: RawComment<'_>) -> ControlFlow<()> {
         self.comments += 1;
+        ControlFlow::Continue(())
     }
 
-    fn end_variation(&mut self) {
+    fn end_variation(&mut self) -> ControlFlow<()> {
         self.variations += 1;
+        ControlFlow::Continue(())
     }
 
-    fn outcome(&mut self, _outcome: Outcome) {
+    fn outcome(&mut self, _outcome: Outcome) -> ControlFlow<()> {
         self.outcomes += 1;
+        ControlFlow::Continue(())
     }
 
     fn end_game(&mut self) {
