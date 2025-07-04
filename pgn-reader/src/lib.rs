@@ -143,7 +143,6 @@ mod reader;
 mod types;
 mod visitor;
 
-pub use buffer::Buffer;
 pub use reader::{IntoIter, Reader};
 pub use shakmaty::{
     CastlingSide, Color, File, KnownOutcome, Outcome, Rank, Role, Square,

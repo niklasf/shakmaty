@@ -198,8 +198,7 @@ impl<R: Read> Reader<R> {
                             }
                             Some(delta) => {
                                 // Skip escaped character.
-                                right_quote =
-                                    min(right_quote + delta + 2, self.buffer.data().len());
+                                right_quote = min(right_quote + delta + 2, self.buffer.len());
                             }
                             None => {
                                 self.buffer.clear();
@@ -268,7 +267,7 @@ impl<R: Read> Reader<R> {
             .iter()
             .copied()
             .position(is_token_end)
-            .unwrap_or(self.buffer.data().len())
+            .unwrap_or(self.buffer.len())
     }
 
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
@@ -634,7 +633,7 @@ fn is_token_end(byte: u8) -> bool {
 impl<R: Seek> Seek for Reader<R> {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         let result = if let SeekFrom::Current(offset) = pos {
-            let buffered = self.buffer.data_len() as i64;
+            let buffered = self.buffer.len() as i64;
             if let Some(offset) = offset.checked_sub(buffered) {
                 self.reader.seek(SeekFrom::Current(offset))?
             } else {
@@ -650,7 +649,7 @@ impl<R: Seek> Seek for Reader<R> {
     }
 
     fn seek_relative(&mut self, offset: i64) -> io::Result<()> {
-        let buffered = self.buffer.data_len() as i64;
+        let buffered = self.buffer.len() as i64;
         if let Some(offset) = offset.checked_sub(buffered) {
             self.reader.seek_relative(offset)?;
             self.buffer.clear();
@@ -663,7 +662,7 @@ impl<R: Seek> Seek for Reader<R> {
     }
 
     fn stream_position(&mut self) -> io::Result<u64> {
-        let buffered = self.buffer.data_len() as u64;
+        let buffered = self.buffer.len() as u64;
         self.reader.stream_position().map(|pos| {
             pos.checked_sub(buffered)
                 .expect("consistent stream position")
