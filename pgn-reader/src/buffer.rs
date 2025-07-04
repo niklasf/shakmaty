@@ -1,7 +1,4 @@
-use std::{
-    cmp::min,
-    io::{self, Read},
-};
+use std::io::{self, Read};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Buffer {
@@ -50,8 +47,8 @@ impl Buffer {
 
     #[inline]
     pub fn consume(&mut self, n: usize) {
-        // Cap at self.end to maintain safety invariant
-        self.start = min(self.start + n, self.end);
+        assert!(self.start + n <= self.end); // Maintain safety invariant
+        self.start += n;
     }
 
     #[inline]

@@ -1,6 +1,5 @@
 use std::{
-    cmp::max,
-    cmp::min,
+    cmp::{max, min},
     io::{self, Read, Seek, SeekFrom},
 };
 
