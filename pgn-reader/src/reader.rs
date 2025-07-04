@@ -9,9 +9,7 @@ use shakmaty::{
 };
 
 use crate::{
-    buffer::Buffer,
-    types::{Nag, RawComment, RawTag, Skip},
-    visitor::{SkipVisitor, Visitor},
+    RawTag, Skip, Visitor, buffer::Buffer, comment::RawComment, nag::Nag, visitor::SkipVisitor,
 };
 
 #[derive(Debug, Clone)]

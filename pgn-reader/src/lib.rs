@@ -70,7 +70,7 @@
 //! }
 //! ```
 //!
-//! A visitor that returns the final position using [Shakmaty].
+//! A visitor that returns the final position using [`shakmaty`].
 //!
 //! ```
 //! use std::io;
@@ -132,20 +132,19 @@
 //!     Ok(())
 //! }
 //! ```
-//!
-//! [Shakmaty]: ../shakmaty/index.html
 
 #![warn(missing_debug_implementations)]
 
 mod buffer;
-mod reader;
-mod types;
+pub mod comment;
+pub mod nag;
+pub mod reader;
+mod tag;
 mod visitor;
 
-pub use reader::{IntoIter, Reader};
-pub use shakmaty::{
-    CastlingSide, Color, File, KnownOutcome, Outcome, Rank, Role, Square,
-    san::{San, SanPlus},
-};
-pub use types::{Nag, RawComment, RawTag, Skip};
-pub use visitor::Visitor;
+pub use comment::RawComment;
+pub use nag::Nag;
+pub use reader::Reader;
+pub use shakmaty::{self, KnownOutcome, Outcome, san::SanPlus};
+pub use tag::RawTag;
+pub use visitor::{Skip, Visitor};

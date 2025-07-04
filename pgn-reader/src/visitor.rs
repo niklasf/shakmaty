@@ -1,6 +1,9 @@
-use shakmaty::{Outcome, san::SanPlus};
+use crate::{Nag, Outcome, RawComment, RawTag, SanPlus};
 
-use crate::types::{Nag, RawComment, RawTag, Skip};
+/// Tell the reader to skip over a game or variation.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[must_use]
+pub struct Skip(pub bool);
 
 /// Consumes games from a reader.
 ///

@@ -11,8 +11,10 @@ use std::{
     },
 };
 
-use pgn_reader::{RawTag, Reader, San, SanPlus, Skip, Visitor};
-use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
+use pgn_reader::{
+    RawTag, Reader, SanPlus, Skip, Visitor,
+    shakmaty::{CastlingMode, Chess, Position, fen::Fen, san::San},
+};
 
 struct Game {
     index: usize,
