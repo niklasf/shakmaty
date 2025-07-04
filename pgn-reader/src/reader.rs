@@ -1,5 +1,6 @@
 use std::{
     cmp::{max, min},
+    convert::Infallible,
     io::{self, Read, Seek, SeekFrom},
     mem,
     ops::ControlFlow,
@@ -199,15 +200,35 @@ impl<R: Read> Reader<R> {
         struct IgnoreTagsVisitor;
 
         impl Visitor for IgnoreTagsVisitor {
-            type Output = ();
-            fn end_game(&mut self) {}
+            type Tags = ();
+            type Movetext = Infallible;
+            type Output = Infallible;
+
+            fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+                ControlFlow::Continue(())
+            }
+
+            fn begin_movetext(
+                &mut self,
+                _tags: Self::Tags,
+            ) -> ControlFlow<Self::Output, Self::Movetext> {
+                unreachable!()
+            }
+
+            fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {
+                unreachable!()
+            }
         }
 
-        let _ = self.read_tags(&mut IgnoreTagsVisitor)?;
+        let _ = self.read_tags(&mut IgnoreTagsVisitor, &mut ())?;
         Ok(())
     }
 
-    fn read_tags<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<ControlFlow<V::Output>> {
+    fn read_tags<V: Visitor>(
+        &mut self,
+        visitor: &mut V,
+        tags: &mut V::Tags,
+    ) -> io::Result<ControlFlow<V::Output>> {
         while let &[ch, ..] = self
             .buffer
             .ensure_bytes(self.tag_line_bytes, &mut self.reader)?
@@ -272,6 +293,7 @@ impl<R: Read> Reader<R> {
                     };
 
                     let cf = visitor.tag(
+                        tags,
                         &self.buffer.data()[..space],
                         RawTag(&self.buffer.data()[value_start..right_quote]),
                     );
@@ -323,7 +345,11 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<ControlFlow<V::Output>> {
+    fn read_movetext<V: Visitor>(
+        &mut self,
+        visitor: &mut V,
+        movetext: &mut V::Movetext,
+    ) -> io::Result<ControlFlow<V::Output>> {
         while let &[ch, ..] = self
             .buffer
             .ensure_bytes(self.movetext_token_bytes, &mut self.reader)?
@@ -343,7 +369,8 @@ impl<R: Read> Reader<R> {
                             ));
                         };
 
-                    let cf = visitor.comment(RawComment(&self.buffer.data()[..right_brace]));
+                    let cf =
+                        visitor.comment(movetext, RawComment(&self.buffer.data()[..right_brace]));
                     self.buffer.consume(right_brace + 1);
                     if cf.is_break() {
                         return Ok(cf);
@@ -377,9 +404,12 @@ impl<R: Read> Reader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-1") {
                         self.buffer.consume(2);
-                        let cf = visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
-                            winner: Color::Black,
-                        }));
+                        let cf = visitor.outcome(
+                            movetext,
+                            Outcome::Known(KnownOutcome::Decisive {
+                                winner: Color::Black,
+                            }),
+                        );
                         if cf.is_break() {
                             return Ok(cf);
                         }
@@ -397,10 +427,13 @@ impl<R: Read> Reader<R> {
                             Some(b'#') => Some(Suffix::Checkmate),
                             _ => None,
                         };
-                        let cf = visitor.san(SanPlus {
-                            san: San::Castle(side),
-                            suffix,
-                        });
+                        let cf = visitor.san(
+                            movetext,
+                            SanPlus {
+                                san: San::Castle(side),
+                                suffix,
+                            },
+                        );
                         if cf.is_break() {
                             return Ok(cf);
                         }
@@ -412,15 +445,18 @@ impl<R: Read> Reader<R> {
                     self.buffer.bump();
                     if self.buffer.data().starts_with(b"-0") {
                         self.buffer.consume(2);
-                        let cf = visitor.outcome(Outcome::Known(KnownOutcome::Decisive {
-                            winner: Color::White,
-                        }));
+                        let cf = visitor.outcome(
+                            movetext,
+                            Outcome::Known(KnownOutcome::Decisive {
+                                winner: Color::White,
+                            }),
+                        );
                         if cf.is_break() {
                             return Ok(cf);
                         }
                     } else if self.buffer.data().starts_with(b"/2-1/2") {
                         self.buffer.consume(6);
-                        let cf = visitor.outcome(Outcome::Known(KnownOutcome::Draw));
+                        let cf = visitor.outcome(movetext, Outcome::Known(KnownOutcome::Draw));
                         if cf.is_break() {
                             return Ok(cf);
                         }
@@ -444,7 +480,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'(' => {
                     self.buffer.bump();
-                    match visitor.begin_variation() {
+                    match visitor.begin_variation(movetext) {
                         ControlFlow::Continue(Skip(true)) => self.skip_variation()?,
                         ControlFlow::Continue(Skip(false)) => (),
                         ControlFlow::Break(output) => {
@@ -454,7 +490,7 @@ impl<R: Read> Reader<R> {
                 }
                 b')' => {
                     self.buffer.bump();
-                    let cf = visitor.end_variation();
+                    let cf = visitor.end_variation(movetext);
                     if cf.is_break() {
                         return Ok(cf);
                     }
@@ -463,7 +499,7 @@ impl<R: Read> Reader<R> {
                     self.buffer.bump();
                     if let Some(token_end) = self.find_token_end() {
                         if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
-                            let cf = visitor.nag(Nag(nag));
+                            let cf = visitor.nag(movetext, Nag(nag));
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -479,13 +515,13 @@ impl<R: Read> Reader<R> {
                     let cf = match self.buffer.peek() {
                         Some(b'!') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::BRILLIANT_MOVE)
+                            visitor.nag(movetext, Nag::BRILLIANT_MOVE)
                         }
                         Some(b'?') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::SPECULATIVE_MOVE)
+                            visitor.nag(movetext, Nag::SPECULATIVE_MOVE)
                         }
-                        _ => visitor.nag(Nag::GOOD_MOVE),
+                        _ => visitor.nag(movetext, Nag::GOOD_MOVE),
                     };
                     if cf.is_break() {
                         return Ok(cf);
@@ -496,13 +532,13 @@ impl<R: Read> Reader<R> {
                     let cf = match self.buffer.peek() {
                         Some(b'!') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::DUBIOUS_MOVE)
+                            visitor.nag(movetext, Nag::DUBIOUS_MOVE)
                         }
                         Some(b'?') => {
                             self.buffer.bump();
-                            visitor.nag(Nag::BLUNDER)
+                            visitor.nag(movetext, Nag::BLUNDER)
                         }
-                        _ => visitor.nag(Nag::MISTAKE),
+                        _ => visitor.nag(movetext, Nag::MISTAKE),
                     };
                     if cf.is_break() {
                         return Ok(cf);
@@ -510,7 +546,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'*' => {
                     self.buffer.bump();
-                    let cf = visitor.outcome(Outcome::Unknown);
+                    let cf = visitor.outcome(movetext, Outcome::Unknown);
                     if cf.is_break() {
                         return Ok(cf);
                     }
@@ -522,7 +558,7 @@ impl<R: Read> Reader<R> {
                     if let Ok((san, bytes)) = SanPlus::from_ascii_prefix(self.buffer.data()) {
                         self.buffer.consume(bytes);
                         if self.buffer.peek().is_none_or(is_token_end) {
-                            let cf = visitor.san(san);
+                            let cf = visitor.san(movetext, san);
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -620,21 +656,31 @@ impl<R: Read> Reader<R> {
             return Ok(None);
         }
 
-        if let ControlFlow::Break(output) = visitor.begin_tags() {
+        let mut tags = match visitor.begin_tags() {
+            ControlFlow::Break(output) => {
+                self.pending_skip_tags = true;
+                self.pending_skip_movetext = true;
+                return Ok(Some(output));
+            }
+            ControlFlow::Continue(tags) => tags,
+        };
+        if let ControlFlow::Break(output) = self.read_tags(visitor, &mut tags)? {
             self.pending_skip_tags = true;
             self.pending_skip_movetext = true;
             return Ok(Some(output));
         }
-        if let ControlFlow::Break(output) = self.read_tags(visitor)? {
-            self.pending_skip_tags = true;
+        let mut movetext = match visitor.begin_movetext(tags) {
+            ControlFlow::Break(output) => {
+                self.pending_skip_movetext = true;
+                return Ok(Some(output));
+            }
+            ControlFlow::Continue(movetext) => movetext,
+        };
+        if let ControlFlow::Break(output) = self.read_movetext(visitor, &mut movetext)? {
             self.pending_skip_movetext = true;
             return Ok(Some(output));
-        }
-        if let ControlFlow::Break(output) = self.read_movetext(visitor)? {
-            self.pending_skip_movetext = true;
-            return Ok(Some(output));
-        }
-        Ok(Some(visitor.end_game()))
+        };
+        Ok(Some(visitor.end_game(movetext)))
     }
 
     /// Returns whether the reader has another game to parse, but does not
@@ -787,9 +833,19 @@ mod tests {
     }
 
     impl Visitor for GameCounter {
+        type Movetext = ();
+        type Tags = ();
         type Output = ();
 
-        fn end_game(&mut self) {
+        fn begin_tags(&mut self) -> ControlFlow<(), Self::Tags> {
+            ControlFlow::Continue(())
+        }
+
+        fn begin_movetext(&mut self, _tags: Self::Tags) -> ControlFlow<(), Self::Movetext> {
+            ControlFlow::Continue(())
+        }
+
+        fn end_game(&mut self, _movetext: Self::Movetext) {
             self.count += 1;
         }
     }
@@ -816,58 +872,95 @@ mod tests {
 
     #[test]
     fn test_nag() -> Result<(), io::Error> {
-        struct NagCollector {
-            nags: Vec<Nag>,
-        }
+        struct NagCollector;
 
         impl Visitor for NagCollector {
-            type Output = ();
+            type Tags = ();
+            type Movetext = Vec<Nag>;
+            type Output = Vec<Nag>;
 
-            fn nag(&mut self, nag: Nag) -> ControlFlow<()> {
-                self.nags.push(nag);
+            fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
                 ControlFlow::Continue(())
             }
 
-            fn end_game(&mut self) {}
+            fn begin_movetext(
+                &mut self,
+                _tags: Self::Tags,
+            ) -> ControlFlow<Self::Output, Self::Movetext> {
+                ControlFlow::Continue(Vec::new())
+            }
+
+            fn nag(
+                &mut self,
+                movetext: &mut Self::Movetext,
+                nag: Nag,
+            ) -> ControlFlow<Self::Output> {
+                movetext.push(nag);
+                ControlFlow::Continue(())
+            }
+
+            fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
+                movetext
+            }
         }
 
-        let mut collector = NagCollector { nags: Vec::new() };
         let mut reader = Reader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
-        reader.read_game(&mut collector)?;
+        let nags = reader.read_game(&mut NagCollector)?;
         assert_eq!(
-            collector.nags,
-            vec![Nag::GOOD_MOVE, Nag(71), Nag::BLUNDER, Nag::SPECULATIVE_MOVE]
+            nags,
+            Some(vec![
+                Nag::GOOD_MOVE,
+                Nag(71),
+                Nag::BLUNDER,
+                Nag::SPECULATIVE_MOVE
+            ])
         );
         Ok(())
     }
 
     #[test]
     fn test_null_moves() -> Result<(), io::Error> {
-        struct SanCollector {
-            sans: Vec<San>,
-        }
+        struct SanCollector;
 
         impl Visitor for SanCollector {
-            type Output = ();
+            type Tags = ();
+            type Movetext = Vec<San>;
+            type Output = Vec<San>;
 
-            fn san(&mut self, san: SanPlus) -> ControlFlow<()> {
-                self.sans.push(san.san);
+            fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
                 ControlFlow::Continue(())
             }
 
-            fn end_game(&mut self) {}
+            fn begin_movetext(
+                &mut self,
+                _tags: Self::Tags,
+            ) -> ControlFlow<Self::Output, Self::Movetext> {
+                ControlFlow::Continue(Vec::new())
+            }
+
+            fn san(
+                &mut self,
+                movetext: &mut Self::Movetext,
+                san_plus: SanPlus,
+            ) -> ControlFlow<Self::Output> {
+                movetext.push(san_plus.san);
+                ControlFlow::Continue(())
+            }
+
+            fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
+                movetext
+            }
         }
 
-        let mut collector = SanCollector { sans: Vec::new() };
         let mut reader = Reader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
-        reader.read_game(&mut collector)?;
-        assert_eq!(collector.sans.len(), 6);
-        assert_ne!(collector.sans[0], San::Null);
-        assert_eq!(collector.sans[1], San::Null);
-        assert_ne!(collector.sans[2], San::Null);
-        assert_eq!(collector.sans[3], San::Null);
-        assert_eq!(collector.sans[4], San::Null);
-        assert_ne!(collector.sans[5], San::Null);
+        let sans = reader.read_game(&mut SanCollector)?.expect("game found");
+        assert_eq!(sans.len(), 6);
+        assert_ne!(sans[0], San::Null);
+        assert_eq!(sans[1], San::Null);
+        assert_ne!(sans[2], San::Null);
+        assert_eq!(sans[3], San::Null);
+        assert_eq!(sans[4], San::Null);
+        assert_ne!(sans[5], San::Null);
         Ok(())
     }
 }

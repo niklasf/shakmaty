@@ -25,35 +25,32 @@
 //! use std::{io, ops::ControlFlow};
 //! use pgn_reader::{Visitor, Skip, Reader, SanPlus};
 //!
-//! struct MoveCounter {
-//!     moves: usize,
-//! }
-//!
-//! impl MoveCounter {
-//!     fn new() -> MoveCounter {
-//!         MoveCounter { moves: 0 }
-//!     }
-//! }
+//! struct MoveCounter;
 //!
 //! impl Visitor for MoveCounter {
+//!     type Tags = ();
+//!     type Movetext = usize;
 //!     type Output = usize;
 //!
-//!     fn begin_tags(&mut self) -> ControlFlow<Self::Output> {
-//!         self.moves = 0;
+//!     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
 //!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn san(&mut self, _san_plus: SanPlus) -> ControlFlow<Self::Output> {
-//!         self.moves += 1;
+//!     fn begin_movetext(&mut self, _tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
+//!         ControlFlow::Continue(0)
+//!     }
+//!
+//!     fn san(&mut self, movetext: &mut Self::Movetext, _san_plus: SanPlus) -> ControlFlow<Self::Output> {
+//!         *movetext += 1;
 //!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+//!     fn begin_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
 //!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Output {
-//!         self.moves
+//!     fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
+//!         movetext
 //!     }
 //! }
 //!
@@ -64,10 +61,9 @@
 //!
 //!     let mut reader = Reader::new(io::Cursor::new(&pgn));
 //!
-//!     let mut counter = MoveCounter::new();
-//!     let moves = reader.read_game(&mut counter)?;
-//!
+//!     let moves = reader.read_game(&mut MoveCounter)?;
 //!     assert_eq!(moves, Some(4));
+//!
 //!     Ok(())
 //! }
 //! ```
@@ -82,52 +78,53 @@
 //!
 //! use pgn_reader::{Visitor, Skip, RawTag, Reader, SanPlus};
 //!
-//! struct LastPosition {
-//!     pos: Chess,
-//! }
-//!
-//! impl LastPosition {
-//!     fn new() -> LastPosition {
-//!         LastPosition { pos: Chess::default() }
-//!     }
-//! }
+//! struct LastPosition;
 //!
 //! impl Visitor for LastPosition {
+//!     type Tags = Option<Chess>;
+//!     type Movetext = Chess;
 //!     type Output = Result<Chess, Box<dyn Error>>;
 //!
-//!     fn tag(&mut self, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Output> {
+//!     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+//!         ControlFlow::Continue(None)
+//!     }
+//!
+//!     fn tag(&mut self, tags: &mut Self::Tags, name: &[u8], value: RawTag<'_>) -> ControlFlow<Self::Output> {
 //!         // Support games from a non-standard starting position.
 //!         if name == b"FEN" {
 //!             let fen = match Fen::from_ascii(value.as_bytes()) {
 //!                 Ok(fen) => fen,
 //!                 Err(err) => return ControlFlow::Break(Err(err.into())),
 //!             };
-//!             let pos = Fen::from_ascii(value.as_bytes()).ok()
-//!                 .and_then(|f| f.into_position(CastlingMode::Standard).ok());
-//!
-//!             if let Some(pos) = pos {
-//!                 self.pos = pos;
-//!             }
+//!             let pos = match fen.into_position(CastlingMode::Standard) {
+//!                 Ok(pos) => pos,
+//!                 Err(err) => return ControlFlow::Break(Err(err.into())),
+//!             };
+//!             tags.replace(pos);
 //!         }
 //!         ControlFlow::Continue(())
 //!     }
 //!
-//!     fn begin_variation(&mut self) -> ControlFlow<Self::Output, Skip> {
+//!     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
+//!         ControlFlow::Continue(tags.unwrap_or_default())
+//!     }
+//!
+//!     fn begin_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
 //!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
-//!     fn san(&mut self, san_plus: SanPlus) -> ControlFlow<Self::Output> {
-//!         match san_plus.san.to_move(&self.pos) {
+//!     fn san(&mut self, movetext: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+//!         match san_plus.san.to_move(movetext) {
 //!             Ok(m) => {
-//!                 self.pos.play_unchecked(m);
+//!                 movetext.play_unchecked(m);
 //!                 ControlFlow::Continue(())
 //!             }
 //!             Err(err) => ControlFlow::Break(Err(err.into()))
 //!         }
 //!     }
 //!
-//!     fn end_game(&mut self) -> Self::Output {
-//!         Ok(mem::replace(&mut self.pos, Chess::default()))
+//!     fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
+//!         Ok(movetext)
 //!     }
 //! }
 //!
@@ -136,12 +133,10 @@
 //!
 //!     let mut reader = Reader::new(io::Cursor::new(&pgn));
 //!
-//!     let mut visitor = LastPosition::new();
-//!
 //!     let pos = reader
-//!        .read_game(&mut visitor)?
+//!        .read_game(&mut LastPosition)?
 //!        .expect("game found")
-//!        .expect("valid");
+//!        .expect("valid and legal");
 //!
 //!     assert!(pos.is_checkmate());
 //!     Ok(())

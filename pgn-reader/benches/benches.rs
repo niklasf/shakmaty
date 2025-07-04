@@ -25,39 +25,69 @@ fn bench_stats(c: &mut Criterion) {
     }
 
     impl Visitor for Stats {
+        type Tags = ();
+        type Movetext = ();
         type Output = ();
 
-        fn tag(&mut self, _name: &[u8], _value: RawTag<'_>) -> ControlFlow<()> {
+        fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+            ControlFlow::Continue(())
+        }
+
+        fn tag(
+            &mut self,
+            _tags: &mut Self::Tags,
+            _name: &[u8],
+            _value: RawTag<'_>,
+        ) -> ControlFlow<Self::Output> {
             self.tags += 1;
             ControlFlow::Continue(())
         }
 
-        fn san(&mut self, _san: SanPlus) -> ControlFlow<()> {
+        fn begin_movetext(
+            &mut self,
+            _tags: Self::Tags,
+        ) -> ControlFlow<Self::Output, Self::Movetext> {
+            ControlFlow::Continue(())
+        }
+
+        fn san(
+            &mut self,
+            _movetext: &mut Self::Movetext,
+            _san: SanPlus,
+        ) -> ControlFlow<Self::Output> {
             self.sans += 1;
             ControlFlow::Continue(())
         }
 
-        fn nag(&mut self, _nag: Nag) -> ControlFlow<()> {
+        fn nag(&mut self, _movetext: &mut Self::Movetext, _nag: Nag) -> ControlFlow<Self::Output> {
             self.nags += 1;
             ControlFlow::Continue(())
         }
 
-        fn comment(&mut self, _comment: RawComment<'_>) -> ControlFlow<()> {
+        fn comment(
+            &mut self,
+            _movetext: &mut Self::Movetext,
+            _comment: RawComment<'_>,
+        ) -> ControlFlow<Self::Output> {
             self.comments += 1;
             ControlFlow::Continue(())
         }
 
-        fn end_variation(&mut self) -> ControlFlow<()> {
+        fn end_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
             self.variations += 1;
             ControlFlow::Continue(())
         }
 
-        fn outcome(&mut self, _outcome: Outcome) -> ControlFlow<()> {
+        fn outcome(
+            &mut self,
+            _movetext: &mut Self::Movetext,
+            _outcome: Outcome,
+        ) -> ControlFlow<Self::Output> {
             self.outcomes += 1;
             ControlFlow::Continue(())
         }
 
-        fn end_game(&mut self) {
+        fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {
             self.games += 1;
         }
     }
@@ -67,8 +97,8 @@ fn bench_stats(c: &mut Criterion) {
             b.iter(|| {
                 let mut stats = Stats::default();
                 Reader::new(File::open(format!("benches/{fixture}")).expect("open"))
-                    .read_all(&mut stats)
-                    .expect("read all");
+                    .visit_all_games(&mut stats)
+                    .expect("visit all");
                 stats
             })
         });
