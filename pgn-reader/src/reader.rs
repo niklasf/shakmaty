@@ -260,13 +260,20 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn find_token_end(&self) -> usize {
-        self.buffer
-            .data()
-            .iter()
-            .copied()
-            .position(is_token_end)
-            .unwrap_or(self.buffer.len())
+    fn skip_token(&mut self) -> io::Result<()> {
+        while let &[_, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
+            if let Some(end) = self.find_token_end() {
+                self.buffer.consume(end);
+                break;
+            } else {
+                self.buffer.clear();
+            }
+        }
+        Ok(())
+    }
+
+    fn find_token_end(&self) -> Option<usize> {
+        self.buffer.data().iter().copied().position(is_token_end)
     }
 
     fn read_movetext<V: Visitor>(&mut self, visitor: &mut V) -> io::Result<()> {
@@ -344,7 +351,7 @@ impl<R: Read> Reader<R> {
                             suffix,
                         });
                     } else {
-                        self.buffer.consume(self.find_token_end());
+                        self.skip_token()?;
                     }
                 }
                 b'1' => {
@@ -388,11 +395,15 @@ impl<R: Read> Reader<R> {
                 }
                 b'$' => {
                     self.buffer.bump();
-                    let token_end = self.find_token_end();
-                    if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
-                        visitor.nag(Nag(nag));
+                    if let Some(token_end) = self.find_token_end() {
+                        if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
+                            visitor.nag(Nag(nag));
+                        }
+                        self.buffer.consume(token_end);
+                    } else {
+                        self.buffer.clear();
+                        self.skip_token()?;
                     }
-                    self.buffer.consume(token_end);
                 }
                 b'!' => {
                     self.buffer.bump();
@@ -441,7 +452,7 @@ impl<R: Read> Reader<R> {
                         }
                     } else {
                         self.buffer.bump();
-                        self.buffer.consume(self.find_token_end());
+                        self.skip_token()?;
                     }
                 }
             }
