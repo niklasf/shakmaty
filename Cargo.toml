@@ -16,4 +16,4 @@ edition = "2024"
 rust-version = "1.85.1" # remember to update ci.yml
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)', 'cfg(fuzzing)'] }
