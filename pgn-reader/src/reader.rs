@@ -1,7 +1,7 @@
 use std::{
-    cmp::min,
+    cmp::{max, min},
     fmt::Debug,
-    io::{self, Chain, Cursor, Read},
+    io::{self, Read, Seek, SeekFrom},
 };
 
 use shakmaty::{
@@ -9,79 +9,73 @@ use shakmaty::{
     san::{San, SanPlus, Suffix},
 };
 
-// use slice_deque::SliceDeque;
 use crate::{
     buffer::Buffer,
     types::{Nag, RawComment, RawTag, Skip},
     visitor::{SkipVisitor, Visitor},
 };
 
+#[derive(Debug, Clone)]
+pub struct ReaderBuilder {
+    tag_line_bytes: usize,
+    movetext_token_bytes: usize,
+}
+
+impl Default for ReaderBuilder {
+    fn default() -> ReaderBuilder {
+        ReaderBuilder::new()
+    }
+}
+
+impl ReaderBuilder {
+    pub fn new() -> ReaderBuilder {
+        ReaderBuilder {
+            tag_line_bytes: 255,
+            movetext_token_bytes: 255,
+        }
+    }
+
+    pub fn set_supported_tag_line_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
+        self.tag_line_bytes = max(255, bytes);
+        self
+    }
+
+    pub fn set_supported_comment_length(&mut self, bytes: usize) -> &mut ReaderBuilder {
+        self.movetext_token_bytes = max(255, bytes + 2); // Plus '{' and '}'
+        self
+    }
+
+    pub fn finish<R: Read>(&self, reader: R) -> Reader<R> {
+        Reader {
+            reader,
+            tag_line_bytes: self.tag_line_bytes,
+            movetext_token_bytes: self.movetext_token_bytes,
+            buffer: Buffer::with_capacity(max(
+                1 << 14,
+                max(self.tag_line_bytes, self.movetext_token_bytes).next_power_of_two() * 2,
+            )),
+        }
+    }
+}
+
 /// A buffered PGN reader.
+///
 /// It's redundant and discouraged to wrap this in a [`BufReader`](std::io::BufReader).
 #[derive(Debug, Clone)]
 pub struct Reader<R> {
-    reader: R,
     buffer: Buffer,
-    max_tag_line_length: usize,
-    max_comment_length: usize,
+    reader: R,
+    tag_line_bytes: usize,
+    movetext_token_bytes: usize,
 }
 
 impl<R: Read> Reader<R> {
     pub fn new(reader: R) -> Reader<R> {
-        Reader {
-            reader,
-            buffer: Buffer::with_capacity(1 << 14),
-            max_tag_line_length: 1024,
-            max_comment_length: 4096,
-        }
+        ReaderBuilder::new().finish(reader)
     }
 
-    /// Converts a [`Read`] value along with the internal [`Buffer`] to a [`Reader`].
-    ///
-    /// Since [`Buffer`] is private, you can only use use this to create a [`Reader`]
-    /// from [`Reader::into_inner`].
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use std::convert::Infallible;
-    /// # use std::io::Cursor;
-    /// # use shakmaty::san::SanPlus;
-    /// # use pgn_reader::{Reader, Visitor};
-    /// let mut reader = Reader::new(Cursor::new("1. e4 e5\n\n1. d4"));
-    /// reader.skip_game().unwrap();
-    /// let inner = reader.into_inner();
-    /// // do something with inner
-    /// let (buffer, r) = inner.into_inner();
-    /// reader = Reader::from_buffer(buffer.into_inner(), r);
-    ///
-    /// #[derive(Default)]
-    /// struct LastMove(Option<SanPlus>);
-    ///
-    /// impl Visitor for LastMove {
-    ///     type Output = Option<SanPlus>;
-    ///     type Error = Infallible;
-    ///
-    ///     fn san(&mut self, san_plus: SanPlus) -> Result<(), Self::Error> {
-    ///         self.0 = Some(san_plus);
-    ///
-    ///         Ok(())
-    ///     }
-    ///
-    ///     fn end_game(&mut self) -> Self::Output {
-    ///         std::mem::replace(&mut self.0, None)
-    ///     }
-    /// }
-    ///
-    /// assert_eq!(reader.read_game(&mut LastMove::default()).unwrap().unwrap().unwrap(), Some(SanPlus::from_ascii(b"d4").unwrap()));
-    /// ```
-    pub fn from_buffer(buffer: Buffer, reader: R) -> Reader<R> {
-        Reader {
-            reader,
-            buffer,
-            max_tag_line_length: 1024,
-            max_comment_length: 4096,
-        }
+    pub fn build() -> ReaderBuilder {
+        ReaderBuilder::new()
     }
 
     fn skip_bom(&mut self) -> io::Result<()> {
@@ -101,7 +95,7 @@ impl<R: Read> Reader<R> {
                 self.buffer.consume(pos);
                 return Ok(());
             } else {
-                self.buffer.discard_data();
+                self.buffer.clear();
             }
         }
         Ok(())
@@ -156,7 +150,7 @@ impl<R: Read> Reader<R> {
     fn read_tags<V: Visitor>(&mut self, visitor: &mut Result<&mut V, V::Error>) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes(self.max_tag_line_length, &mut self.reader)?
+            .ensure_bytes(self.tag_line_bytes, &mut self.reader)?
         {
             match ch {
                 b'[' => {
@@ -170,7 +164,7 @@ impl<R: Read> Reader<R> {
                             continue;
                         }
                         None => {
-                            self.buffer.discard_data();
+                            self.buffer.clear();
                             self.skip_line()?;
                             return Err(io::Error::new(
                                 io::ErrorKind::InvalidData,
@@ -204,11 +198,10 @@ impl<R: Read> Reader<R> {
                             }
                             Some(delta) => {
                                 // Skip escaped character.
-                                right_quote =
-                                    min(right_quote + delta + 2, self.buffer.data().len());
+                                right_quote = min(right_quote + delta + 2, self.buffer.len());
                             }
                             None => {
-                                self.buffer.discard_data();
+                                self.buffer.clear();
                                 self.skip_line()?;
                                 return Err(io::Error::new(
                                     io::ErrorKind::InvalidData,
@@ -251,7 +244,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'\n' => match self.buffer.peek() {
                     Some(b'%') => self.skip_until(b'\n')?,
-                    Some(b'\n') | Some(b'[') => break,
+                    Some(b'\n' | b'[') => break,
                     Some(b'\r') => {
                         self.buffer.bump();
                         if let Some(b'\n') = self.buffer.peek() {
@@ -264,7 +257,7 @@ impl<R: Read> Reader<R> {
                     if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer.data()) {
                         self.buffer.consume(consumed);
                     } else {
-                        self.buffer.discard_data();
+                        self.buffer.clear();
                     }
                 }
             }
@@ -273,13 +266,20 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn find_token_end(&self) -> usize {
-        self.buffer
-            .data()
-            .iter()
-            .copied()
-            .position(is_token_end)
-            .unwrap_or(self.buffer.data().len())
+    fn skip_token(&mut self) -> io::Result<()> {
+        while let &[_, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
+            if let Some(end) = self.find_token_end() {
+                self.buffer.consume(end);
+                break;
+            } else {
+                self.buffer.clear();
+            }
+        }
+        Ok(())
+    }
+
+    fn find_token_end(&self) -> Option<usize> {
+        self.buffer.data().iter().copied().position(is_token_end)
     }
 
     fn read_movetext<V: Visitor>(
@@ -288,7 +288,7 @@ impl<R: Read> Reader<R> {
     ) -> io::Result<()> {
         while let &[ch, ..] = self
             .buffer
-            .ensure_bytes(self.max_comment_length, &mut self.reader)?
+            .ensure_bytes(self.movetext_token_bytes, &mut self.reader)?
         {
             match ch {
                 b'{' => {
@@ -298,7 +298,7 @@ impl<R: Read> Reader<R> {
                         if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
                             right_brace
                         } else {
-                            self.buffer.discard_data();
+                            self.buffer.clear();
                             self.skip_until(b'}')?;
                             self.buffer.bump();
                             return Err(io::Error::new(
@@ -323,7 +323,7 @@ impl<R: Read> Reader<R> {
                             self.buffer.bump();
                             self.skip_line()?;
                         }
-                        Some(b'[') | Some(b'\n') => {
+                        Some(b'[' | b'\n') => {
                             break;
                         }
                         Some(b'\r') => {
@@ -375,7 +375,7 @@ impl<R: Read> Reader<R> {
                                 .unwrap_or_else(|e| *visitor = Err(e));
                         }
                     } else {
-                        self.buffer.consume(self.find_token_end());
+                        self.skip_token()?;
                     }
                 }
                 b'1' => {
@@ -400,12 +400,8 @@ impl<R: Read> Reader<R> {
                         }
                     } else {
                         self.buffer.bump();
-                        while let Some(ch) = self.buffer.peek() {
-                            if b'0' <= ch && ch <= b'9' {
-                                self.buffer.bump();
-                            } else {
-                                break;
-                            }
+                        while let Some(b'0'..=b'9') = self.buffer.peek() {
+                            self.buffer.bump();
                         }
                         while let Some(b'.' | b' ') = self.buffer.peek() {
                             self.buffer.bump();
@@ -414,12 +410,8 @@ impl<R: Read> Reader<R> {
                 }
                 b'2'..=b'9' => {
                     self.buffer.bump();
-                    while let Some(ch) = self.buffer.peek() {
-                        if b'0' <= ch && ch <= b'9' {
-                            self.buffer.bump();
-                        } else {
-                            break;
-                        }
+                    while let Some(b'0'..=b'9') = self.buffer.peek() {
+                        self.buffer.bump();
                     }
                     while let Some(b'.' | b' ') = self.buffer.peek() {
                         self.buffer.bump();
@@ -447,15 +439,19 @@ impl<R: Read> Reader<R> {
                 }
                 b'$' => {
                     self.buffer.bump();
-                    let token_end = self.find_token_end();
-                    if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
-                        if let Ok(visitor_ok) = visitor {
-                            visitor_ok
-                                .nag(Nag(nag))
-                                .unwrap_or_else(|e| *visitor = Err(e));
+                    if let Some(token_end) = self.find_token_end() {
+                        if let Ok(nag) = btoi::btou(&self.buffer.data()[..token_end]) {
+                            if let Ok(visitor_ok) = visitor {
+                                visitor_ok
+                                    .nag(Nag(nag))
+                                    .unwrap_or_else(|e| *visitor = Err(e));
+                            }
                         }
+                        self.buffer.consume(token_end);
+                    } else {
+                        self.buffer.clear();
+                        self.skip_token()?;
                     }
-                    self.buffer.consume(token_end);
                 }
                 b'!' => {
                     self.buffer.bump();
@@ -539,7 +535,7 @@ impl<R: Read> Reader<R> {
                         }
                     } else {
                         self.buffer.bump();
-                        self.buffer.consume(self.find_token_end());
+                        self.skip_token()?;
                     }
                 }
             }
@@ -580,7 +576,7 @@ impl<R: Read> Reader<R> {
                             self.buffer.consume(2);
                             self.skip_until(b'\n')?;
                         }
-                        Some(b'[') | Some(b'\n') => {
+                        Some(b'[' | b'\n') => {
                             // Do not consume the first or second line break.
                             break;
                         }
@@ -646,7 +642,7 @@ impl<R: Read> Reader<R> {
         Ok(Some(visitor.map(|v| v.end_game())))
     }
 
-    /// Skip a single game, returns `true` if there was one, `false` otherwise.
+    /// Skip a single game. Returns `true` if there was one.
     ///
     /// # Errors
     ///
@@ -678,9 +674,13 @@ impl<R: Read> Reader<R> {
         }
     }
 
-    /// Gets the remaining bytes in the buffer and the underlying reader.
-    pub fn into_inner(self) -> Chain<Cursor<Buffer>, R> {
-        Cursor::new(self.buffer).chain(self.reader)
+    pub fn buffer(&self) -> &[u8] {
+        self.buffer.data()
+    }
+
+    /// Discard the remaining bytes in the buffer and get the underlying reader.
+    pub fn into_inner(self) -> R {
+        self.reader
     }
 
     /// Returns whether the reader has another game to parse, but does not
@@ -704,7 +704,7 @@ pub struct IntoIter<'a, V: 'a, R> {
     reader: Reader<R>,
 }
 
-impl<'a, V: Visitor, R: Read> Iterator for IntoIter<'a, V, R> {
+impl<V: Visitor, R: Read> Iterator for IntoIter<'_, V, R> {
     type Item = io::Result<Result<V::Output, V::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -734,6 +734,46 @@ fn is_token_end(byte: u8) -> bool {
             | b'.'
             | b'*'
     )
+}
+
+impl<R: Seek> Seek for Reader<R> {
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
+        let result = if let SeekFrom::Current(offset) = pos {
+            let buffered = self.buffer.len() as i64;
+            if let Some(offset) = offset.checked_sub(buffered) {
+                self.reader.seek(SeekFrom::Current(offset))?
+            } else {
+                self.reader.seek_relative(-buffered)?;
+                self.buffer.clear();
+                self.reader.seek(SeekFrom::Current(offset))?
+            }
+        } else {
+            self.reader.seek(pos)?
+        };
+        self.buffer.clear();
+        Ok(result)
+    }
+
+    fn seek_relative(&mut self, offset: i64) -> io::Result<()> {
+        let buffered = self.buffer.len() as i64;
+        if let Some(offset) = offset.checked_sub(buffered) {
+            self.reader.seek_relative(offset)?;
+            self.buffer.clear();
+            Ok(())
+        } else {
+            self.reader.seek_relative(-buffered)?;
+            self.buffer.clear();
+            self.reader.seek_relative(offset)
+        }
+    }
+
+    fn stream_position(&mut self) -> io::Result<u64> {
+        let buffered = self.buffer.len() as u64;
+        self.reader.stream_position().map(|pos| {
+            pos.checked_sub(buffered)
+                .expect("consistent stream position")
+        })
+    }
 }
 
 #[cfg(test)]
@@ -866,9 +906,7 @@ mod tests {
                 Ok(())
             }
 
-            fn end_game(&mut self) -> Self::Output {
-                ()
-            }
+            fn end_game(&mut self) -> Self::Output {}
         }
 
         let mut errorer = TagErrorer {
