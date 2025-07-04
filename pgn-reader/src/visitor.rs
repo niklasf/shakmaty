@@ -17,7 +17,7 @@ pub struct Skip(pub bool);
 ///    - [`Visitor::san()`]
 ///    - [`Visitor::nag()`]
 ///    - [`Visitor::comment()`]
-///    - [`Visitor::begin_variation()`]
+///    - [`Visitor::begin_variation()`] or skip
 ///    - [`Visitor::end_variation()`]
 ///    - [`Visitor::outcome()`]
 /// 3. [`Visitor::end_game()`]
@@ -47,8 +47,6 @@ pub trait Visitor {
     }
 
     /// Called after reading the tags of a game, before reading the movetext.
-    /// May skip over the following movetext directly to
-    /// [`Visitor::end_game()`].
     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext>;
 
     /// Called for each move, like `Nf3+`.
@@ -80,10 +78,11 @@ pub trait Visitor {
         ControlFlow::Continue(())
     }
 
-    /// Called for each `(`. May skip over the following variation directly
-    /// to [`Visitor::end_variation()`] (or to
-    /// [`Visitor::end_game()`] if no matching `)`
-    /// follows before the end of the game.
+    /// Called for each `(`.
+    ///
+    /// May skip over the following variation directly to
+    /// [`Visitor::end_variation()`] (or to [`Visitor::end_game()`] if no
+    /// matching `)` follows before the end of the game.
     fn begin_variation(
         &mut self,
         movetext: &mut Self::Movetext,

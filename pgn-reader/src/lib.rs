@@ -20,7 +20,7 @@
 //!    - [`Visitor::san()`]
 //!    - [`Visitor::nag()`]
 //!    - [`Visitor::comment()`]
-//!    - [`Visitor::begin_variation()`]
+//!    - [`Visitor::begin_variation()`] or skip
 //!    - [`Visitor::end_variation()`]
 //!    - [`Visitor::outcome()`]
 //! 3. [`Visitor::end_game()`]
