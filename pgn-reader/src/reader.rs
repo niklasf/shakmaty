@@ -824,143 +824,209 @@ impl<R: Seek> Seek for Reader<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::shakmaty::{Role, Square};
 
     struct _AssertObjectSafe<R>(Box<Reader<R>>);
 
-    #[derive(Default)]
-    struct GameCounter {
-        count: usize,
+    #[derive(Debug, Eq, PartialEq)]
+    enum Token {
+        BeginTags,
+        Tag(Vec<u8>, Vec<u8>),
+        BeginMovetext,
+        San(SanPlus),
+        Nag(Nag),
+        Comment(Vec<u8>),
+        BeginVariation,
+        EndVariation,
+        Outcome(Outcome),
+        EndGame,
     }
 
-    impl Visitor for GameCounter {
-        type Movetext = ();
-        type Tags = ();
-        type Output = ();
+    struct CollectTokens;
 
-        fn begin_tags(&mut self) -> ControlFlow<(), Self::Tags> {
+    impl Visitor for CollectTokens {
+        type Tags = Vec<Token>;
+        type Movetext = Vec<Token>;
+        type Output = Vec<Token>;
+
+        fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+            ControlFlow::Continue(vec![Token::BeginTags])
+        }
+
+        fn tag(
+            &mut self,
+            tags: &mut Self::Tags,
+            name: &[u8],
+            value: RawTag<'_>,
+        ) -> ControlFlow<Self::Output> {
+            tags.push(Token::Tag(name.to_owned(), value.as_bytes().to_owned()));
             ControlFlow::Continue(())
         }
 
-        fn begin_movetext(&mut self, _tags: Self::Tags) -> ControlFlow<(), Self::Movetext> {
+        fn begin_movetext(
+            &mut self,
+            mut tags: Self::Tags,
+        ) -> ControlFlow<Self::Output, Self::Movetext> {
+            tags.push(Token::BeginMovetext);
+            ControlFlow::Continue(tags)
+        }
+
+        fn san(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            san_plus: SanPlus,
+        ) -> ControlFlow<Self::Output> {
+            movetext.push(Token::San(san_plus));
             ControlFlow::Continue(())
         }
 
-        fn end_game(&mut self, _movetext: Self::Movetext) {
-            self.count += 1;
+        fn nag(&mut self, movetext: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
+            movetext.push(Token::Nag(nag));
+            ControlFlow::Continue(())
+        }
+
+        fn comment(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            comment: RawComment<'_>,
+        ) -> ControlFlow<Self::Output> {
+            movetext.push(Token::Comment(comment.as_bytes().to_owned()));
+            ControlFlow::Continue(())
+        }
+
+        fn begin_variation(
+            &mut self,
+            movetext: &mut Self::Movetext,
+        ) -> ControlFlow<Self::Output, Skip> {
+            movetext.push(Token::BeginVariation);
+            ControlFlow::Continue(Skip(false))
+        }
+
+        fn end_variation(&mut self, movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
+            movetext.push(Token::EndVariation);
+            ControlFlow::Continue(())
+        }
+
+        fn outcome(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            outcome: Outcome,
+        ) -> ControlFlow<Self::Output> {
+            movetext.push(Token::Outcome(outcome));
+            ControlFlow::Continue(())
+        }
+
+        fn end_game(&mut self, mut movetext: Self::Movetext) -> Self::Output {
+            movetext.push(Token::EndGame);
+            movetext
         }
     }
 
     #[test]
-    fn test_empty_game() -> Result<(), io::Error> {
-        let mut counter = GameCounter::default();
-        let mut reader = Reader::new(io::Cursor::new(b"  "));
-        reader.read_game(&mut counter)?;
-        assert_eq!(counter.count, 0);
-        Ok(())
-    }
+    fn test_empty() -> io::Result<()> {
+        let pgn = b"\xef\xbb\xbf  \n\r\t \n\n ";
 
-    #[test]
-    fn test_trailing_space() -> Result<(), io::Error> {
-        let mut counter = GameCounter::default();
-        let mut reader = Reader::new(io::Cursor::new(b"1. e4 1-0\n\n\n\n\n  \n"));
-        reader.read_game(&mut counter)?;
-        assert_eq!(counter.count, 1);
-        reader.read_game(&mut counter)?;
-        assert_eq!(counter.count, 1);
-        Ok(())
-    }
-
-    #[test]
-    fn test_nag() -> Result<(), io::Error> {
-        struct NagCollector;
-
-        impl Visitor for NagCollector {
-            type Tags = ();
-            type Movetext = Vec<Nag>;
-            type Output = Vec<Nag>;
-
-            fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
-                ControlFlow::Continue(())
-            }
-
-            fn begin_movetext(
-                &mut self,
-                _tags: Self::Tags,
-            ) -> ControlFlow<Self::Output, Self::Movetext> {
-                ControlFlow::Continue(Vec::new())
-            }
-
-            fn nag(
-                &mut self,
-                movetext: &mut Self::Movetext,
-                nag: Nag,
-            ) -> ControlFlow<Self::Output> {
-                movetext.push(nag);
-                ControlFlow::Continue(())
-            }
-
-            fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
-                movetext
-            }
-        }
-
-        let mut reader = Reader::new(io::Cursor::new(b"1.f3! e5$71 2.g4?? Qh4#!?"));
-        let nags = reader.read_game(&mut NagCollector)?;
-        assert_eq!(
-            nags,
-            Some(vec![
-                Nag::GOOD_MOVE,
-                Nag(71),
-                Nag::BLUNDER,
-                Nag::SPECULATIVE_MOVE
-            ])
+        assert!(
+            Reader::new(io::Cursor::new(pgn))
+                .read_game(&mut CollectTokens)?
+                .is_none()
         );
+
+        assert!(!Reader::new(io::Cursor::new(pgn)).skip_game()?);
+
         Ok(())
     }
 
     #[test]
-    fn test_null_moves() -> Result<(), io::Error> {
-        struct SanCollector;
+    fn test_trailing_space() -> io::Result<()> {
+        let pgn = b"1. e4 1-0\n\n\n\n\n  \n";
 
-        impl Visitor for SanCollector {
-            type Tags = ();
-            type Movetext = Vec<San>;
-            type Output = Vec<San>;
+        let mut reader = Reader::new(io::Cursor::new(pgn));
+        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(reader.read_game(&mut CollectTokens)?.is_none());
 
-            fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
-                ControlFlow::Continue(())
-            }
+        let mut reader = Reader::new(io::Cursor::new(pgn));
+        assert!(reader.skip_game()?);
+        assert!(!reader.skip_game()?);
 
-            fn begin_movetext(
-                &mut self,
-                _tags: Self::Tags,
-            ) -> ControlFlow<Self::Output, Self::Movetext> {
-                ControlFlow::Continue(Vec::new())
-            }
+        Ok(())
+    }
 
-            fn san(
-                &mut self,
-                movetext: &mut Self::Movetext,
-                san_plus: SanPlus,
-            ) -> ControlFlow<Self::Output> {
-                movetext.push(san_plus.san);
-                ControlFlow::Continue(())
-            }
+    #[test]
+    fn test_movetext() -> io::Result<()> {
+        let pgn =
+            br#"[White "hello\" "][Black "world"]1.f3! e5$71 2.g4 ?? (-- {}) O-O O-O-O#!?0-1"#;
 
-            fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
-                movetext
-            }
-        }
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens)?
+            .expect("found game");
 
-        let mut reader = Reader::new(io::Cursor::new(b"1. e4 -- 2. Nf3 -- 3. -- e5"));
-        let sans = reader.read_game(&mut SanCollector)?.expect("game found");
-        assert_eq!(sans.len(), 6);
-        assert_ne!(sans[0], San::Null);
-        assert_eq!(sans[1], San::Null);
-        assert_ne!(sans[2], San::Null);
-        assert_eq!(sans[3], San::Null);
-        assert_eq!(sans[4], San::Null);
-        assert_ne!(sans[5], San::Null);
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::Tag(b"White".into(), b"hello\\\" ".into()),
+                Token::Tag(b"Black".into(), b"world".into()),
+                Token::BeginMovetext,
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::F3,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Nag(Nag::GOOD_MOVE),
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::E5,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Nag(Nag(71)),
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::G4,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Nag(Nag::BLUNDER),
+                Token::BeginVariation,
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: None
+                }),
+                Token::Comment(vec![]),
+                Token::EndVariation,
+                Token::San(SanPlus {
+                    san: San::Castle(CastlingSide::KingSide),
+                    suffix: None,
+                }),
+                Token::San(SanPlus {
+                    san: San::Castle(CastlingSide::QueenSide),
+                    suffix: Some(Suffix::Checkmate),
+                }),
+                Token::Nag(Nag::SPECULATIVE_MOVE),
+                Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::Black
+                })),
+                Token::EndGame,
+            ]
+        );
+
         Ok(())
     }
 }
