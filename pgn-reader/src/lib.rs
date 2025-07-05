@@ -7,8 +7,8 @@
 //!   The visitor can decide if and how to represent games in memory.
 //! * The reader does not validate move legality. This allows implementing
 //!   support for custom chess variants, or delaying move validation.
-//! * The visitor can signal to the reader that it does not care about a game
-//!   or variation.
+//! * The visitor can short-circuit and let the reader use a fast path for
+//!   skipping games or variations.
 //!
 //! # Flow
 //!

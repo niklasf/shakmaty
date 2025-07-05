@@ -1,6 +1,6 @@
 [package]
 name = "pgn-reader"
-version = "0.27.0" # remember to update benchmarks
+version = "0.28.0" # remember to update benchmarks
 description = "Fast non-allocating and streaming reader for chess games in PGN notation"
 readme = "README.md"
 categories = ["games", "parser-implementations"]
@@ -20,14 +20,10 @@ harness = false
 [dependencies]
 memchr = "2.2"
 btoi = "0.5"
-shakmaty = { version = "0.28", path = "../shakmaty" }
+shakmaty = { version = "0.29", path = "../shakmaty" }
 
 [dev-dependencies]
 crossbeam = "0.8"
-bzip2 = "0.6"
-xz2 = "0.1"
-flate2 = "1.0"
-lz4 = "1.23"
 zstd = "0.13"
 criterion = "0.6.0"
 

@@ -1,5 +1,10 @@
 # Changelog for shakmaty
 
+## v0.29.0
+
+- Former `Outcome` is now `KnownOutcome`, introduce `Outcome::Unknown`.
+- Add `{San,SanPlus}::from_ascii_prefix()`.
+
 ## v0.28.0
 
 New features:

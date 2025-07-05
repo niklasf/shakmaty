@@ -200,7 +200,7 @@ impl<R: Read> Reader<R> {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     #[inline]
@@ -209,7 +209,7 @@ impl<R: Read> Reader<R> {
             self.buffer.consume(bytes.len());
             return true;
         }
-        return false;
+        false
     }
 
     fn skip_tags(&mut self) -> io::Result<()> {
