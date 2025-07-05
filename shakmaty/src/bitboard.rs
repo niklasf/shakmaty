@@ -1076,6 +1076,29 @@ impl IntoIterator for Bitboard {
     }
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::Encode for Bitboard {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        self.0.to_le_bytes().encode(encoder)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for Bitboard {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        let bytes = <[u8; 8]>::decode(decoder)?;
+        Ok(Bitboard(u64::from_le_bytes(bytes)))
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Bitboard);
+
 /// Iterator over the squares of a [`Bitboard`].
 #[derive(Debug, Default, Clone)]
 pub struct IntoIter(Bitboard);
@@ -1256,5 +1279,19 @@ mod tests {
     #[test]
     fn test_binary() {
         assert_eq!(format!("{:#0b}", Bitboard(42)), format!("{:#0b}", 42));
+    }
+
+    #[cfg(feature = "bincode")]
+    #[test]
+    fn test_bincode() {
+        let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+
+        let mut buffer = [0; 8];
+        let config = bincode::config::standard();
+        let n = bincode::encode_into_slice(bitboard, &mut buffer, config).unwrap();
+        assert_eq!(n, 8);
+
+        let (decoded, n): (Bitboard, usize) = bincode::decode_from_slice(&buffer, config).unwrap();
+        assert_eq!((bitboard, 8), (decoded, n));
     }
 }

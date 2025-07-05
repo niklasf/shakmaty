@@ -441,6 +441,29 @@ impl UciMove {
     }
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::Encode for UciMove {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        crate::packed::PackedUciMove::pack(*self).encode(encoder)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for UciMove {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        let packed = crate::packed::PackedUciMove::decode(decoder)?;
+        Ok(packed.unpack())
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(UciMove);
+
 impl Move {
     /// See [`UciMove::from_move()`].
     pub fn to_uci(self, mode: CastlingMode) -> UciMove {

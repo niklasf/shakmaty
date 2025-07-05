@@ -33,6 +33,58 @@ impl Piece {
     }
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::Encode for Piece {
+    #[rustfmt::skip]
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        u8::encode(
+            &match *self {
+                Piece { role: Role::Pawn, color: Color::White } => 0,
+                Piece { role: Role::Pawn, color: Color::Black } => 1,
+                Piece { role: Role::Knight, color: Color::White } => 2,
+                Piece { role: Role::Knight, color: Color::Black } => 3,
+                Piece { role: Role::Bishop, color: Color::White } => 4,
+                Piece { role: Role::Bishop, color: Color::Black } => 5,
+                Piece { role: Role::Rook, color: Color::White } => 6,
+                Piece { role: Role::Rook, color: Color::Black } => 7,
+                Piece { role: Role::Queen, color: Color::White } => 8,
+                Piece { role: Role::Queen, color: Color::Black } => 9,
+                Piece { role: Role::King, color: Color::White } => 10,
+                Piece { role: Role::King, color: Color::Black } => 11,
+            },
+            encoder,
+        )
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for Piece {
+    #[rustfmt::skip]
+    fn decode<D: bincode::de::Decoder>(decoder: &mut D) -> Result<Self, bincode::error::DecodeError> {
+        Ok(match u8::decode(decoder)? {
+            0 => Piece { role: Role::Pawn, color: Color::White },
+            1 => Piece { role: Role::Pawn, color: Color::Black },
+            2 => Piece { role: Role::Knight, color: Color::White },
+            3 => Piece { role: Role::Knight, color: Color::Black },
+            4 => Piece { role: Role::Bishop, color: Color::White },
+            5 => Piece { role: Role::Bishop, color: Color::Black },
+            6 => Piece { role: Role::Rook, color: Color::White },
+            7 => Piece { role: Role::Rook, color: Color::Black },
+            8 => Piece { role: Role::Queen, color: Color::White },
+            9 => Piece { role: Role::Queen, color: Color::Black },
+            10 => Piece { role: Role::King, color: Color::White },
+            11 => Piece { role: Role::King, color: Color::Black },
+            _ => return Err(bincode::error::DecodeError::Other("invalid Piece")),
+        })
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Piece);
+
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingMode {
@@ -223,3 +275,26 @@ impl Display for ByColor<RemainingChecks> {
         self.append_to(f)
     }
 }
+
+#[cfg(feature = "bincode")]
+impl bincode::Encode for RemainingChecks {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        u8::from(*self).encode(encoder)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for RemainingChecks {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        RemainingChecks::try_from(u8::decode(decoder)?)
+            .map_err(|_| bincode::error::DecodeError::Other("invalid RemainingChecks"))
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(RemainingChecks);

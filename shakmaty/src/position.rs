@@ -72,6 +72,32 @@ impl FromStr for KnownOutcome {
     }
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::Encode for KnownOutcome {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        Outcome::Known(*self).encode(encoder)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for KnownOutcome {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Outcome::decode(decoder).and_then(|outcome| {
+            outcome
+                .known()
+                .ok_or(bincode::error::DecodeError::Other("invalid KnownOutcome"))
+        })
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(KnownOutcome);
+
 /// Outcome of a game, if any.
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -159,6 +185,50 @@ impl fmt::Display for ParseOutcomeError {
 }
 
 impl error::Error for ParseOutcomeError {}
+
+#[cfg(feature = "bincode")]
+impl bincode::Encode for Outcome {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        u8::encode(
+            &match self {
+                Outcome::Unknown => 0,
+                Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::White,
+                }) => 1,
+                Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::Black,
+                }) => 2,
+                Outcome::Known(KnownOutcome::Draw) => 3,
+            },
+            encoder,
+        )
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for Outcome {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        Ok(match u8::decode(decoder)? {
+            0 => Outcome::Unknown,
+            1 => Outcome::Known(KnownOutcome::Decisive {
+                winner: Color::White,
+            }),
+            2 => Outcome::Known(KnownOutcome::Decisive {
+                winner: Color::Black,
+            }),
+            3 => Outcome::Known(KnownOutcome::Draw),
+            _ => return Err(bincode::error::DecodeError::Other("invalid Outcome")),
+        })
+    }
+}
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Outcome);
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]

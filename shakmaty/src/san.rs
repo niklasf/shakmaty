@@ -511,6 +511,7 @@ impl<'de> serde::Deserialize<'de> for San {
 
 /// Check (`+`) or checkmate (`#`) suffix.
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 pub enum Suffix {
     Check,

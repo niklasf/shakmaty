@@ -9,9 +9,16 @@ cargo-fuzz = true
 [dependencies]
 arbitrary = { version = "1.4.1", features = ["derive"] }
 libfuzzer-sys = "0.4"
-shakmaty = { path = "../shakmaty", features = ["arbitrary", "variant"] }
+shakmaty = { path = "../shakmaty", features = ["arbitrary", "bincode", "variant"] }
 shakmaty-syzygy = { path = "../shakmaty-syzygy" }
 pgn-reader = { path = "../pgn-reader" }
+bincode = { version = "2.0.1", features = ["derive"] }
+
+[[bin]]
+name = "bincode_roundtrip"
+path = "fuzz_targets/bincode_roundtrip.rs"
+test = false
+bench = false
 
 [[bin]]
 name = "fen_from_ascii"

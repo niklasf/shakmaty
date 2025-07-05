@@ -4,6 +4,7 @@ use crate::{Color, File, Square};
 
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingSide {
     KingSide,
@@ -100,6 +101,7 @@ impl ops::BitXorAssign<bool> for CastlingSide {
 
 /// Container with values for each [`CastlingSide`].
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByCastlingSide<T> {
