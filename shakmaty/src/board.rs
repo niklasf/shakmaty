@@ -522,7 +522,7 @@ enum InconsistentBitboardsErrorKind {
 }
 
 #[cfg(feature = "bincode")]
-impl bincode::enc::Encode for Board {
+impl bincode::Encode for Board {
     fn encode<E: bincode::enc::Encoder>(
         &self,
         encoder: &mut E,
@@ -537,7 +537,7 @@ impl bincode::enc::Encode for Board {
 }
 
 #[cfg(feature = "bincode")]
-impl<Config> bincode::de::Decode<Config> for Board {
+impl<Config> bincode::Decode<Config> for Board {
     fn decode<D: bincode::de::Decoder>(
         decoder: &mut D,
     ) -> Result<Self, bincode::error::DecodeError> {

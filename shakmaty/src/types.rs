@@ -225,7 +225,7 @@ impl Display for ByColor<RemainingChecks> {
 }
 
 #[cfg(feature = "bincode")]
-impl bincode::enc::Encode for RemainingChecks {
+impl bincode::Encode for RemainingChecks {
     fn encode<E: bincode::enc::Encoder>(
         &self,
         encoder: &mut E,
@@ -235,7 +235,7 @@ impl bincode::enc::Encode for RemainingChecks {
 }
 
 #[cfg(feature = "bincode")]
-impl<Config> bincode::de::Decode<Config> for RemainingChecks {
+impl<Config> bincode::Decode<Config> for RemainingChecks {
     fn decode<D: bincode::de::Decoder>(
         decoder: &mut D,
     ) -> Result<Self, bincode::error::DecodeError> {
