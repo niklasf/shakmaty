@@ -521,6 +521,42 @@ enum InconsistentBitboardsErrorKind {
     RolesColorsMismatch,
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::enc::Encode for Board {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        use bincode::enc::write::Writer;
+
+        let packed = crate::packed::PackedSetup::pack_board(self);
+        encoder
+            .writer()
+            .write(&packed.inner[..(8 + self.occupied().count().div_ceil(2))])
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::de::Decode<Config> for Board {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        use bincode::de::read::Reader;
+
+        let mut packed = crate::packed::PackedSetup::empty();
+        decoder.reader().read(&mut packed.inner[..8])?;
+
+        let piece_bytes = packed.unpack_occupied().count().div_ceil(2);
+        decoder
+            .reader()
+            .read(&mut packed.inner[8..(8 + piece_bytes)])?;
+
+        packed
+            .unpack_board()
+            .map_err(|_| bincode::error::DecodeError::Other("invalid Board"))
+    }
+}
+
 /// Iterator over the pieces of a [`Board`].
 #[derive(Debug, Clone)]
 pub struct Iter<'a> {
@@ -755,5 +791,19 @@ mod tests {
             Board::default(),
             Board::try_from_bitboards(by_role, by_color).expect("consistent")
         );
+    }
+
+    #[cfg(feature = "bincode")]
+    #[test]
+    fn test_bincode() {
+        let board = Board::default();
+
+        let mut buffer = [0; crate::packed::PackedSetup::MAX_BYTES];
+        let config = bincode::config::standard();
+        let encoded_bytes = bincode::encode_into_slice(&board, &mut buffer, config).unwrap();
+
+        let (decoded, decoded_bytes): (Board, usize) =
+            bincode::decode_from_slice(&buffer, config).unwrap();
+        assert_eq!((&board, encoded_bytes), (&decoded, decoded_bytes));
     }
 }

@@ -54,7 +54,7 @@ use crate::{
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PackedSetup {
-    inner: [u8; PackedSetup::MAX_BYTES],
+    pub(crate) inner: [u8; PackedSetup::MAX_BYTES],
 }
 
 impl PackedSetup {
@@ -422,6 +422,12 @@ impl PackedSetup {
         }
 
         Ok((setup, variant))
+    }
+
+    /// Unpack the set of occupied squares.
+    pub fn unpack_occupied(&self) -> Bitboard {
+        let mut reader = Reader::new(&self.inner);
+        Bitboard(reader.read_u64())
     }
 }
 
