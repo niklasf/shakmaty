@@ -30,6 +30,7 @@ macro_rules! try_from_int_impl {
 /// A file of the chessboard.
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum File {
@@ -188,6 +189,7 @@ try_from_int_impl! { File, 0, 8, u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize i
 /// A rank of the chessboard.
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum Rank {
@@ -345,6 +347,7 @@ impl error::Error for ParseSquareError {}
 #[rustfmt::skip]
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[repr(u8)]
 pub enum Square {
@@ -779,5 +782,24 @@ mod tests {
         let mut hasher = nohash_hasher::NoHashHasher::<Square>::default();
         Square::H1.hash(&mut hasher);
         assert_eq!(hasher.finish(), 7);
+    }
+
+    #[cfg(feature = "bincode")]
+    #[test]
+    fn test_bincode_sizes() {
+        let mut buf = [0; 8];
+        let config = bincode::config::standard();
+        assert_eq!(
+            bincode::encode_into_slice(&File::H, &mut buf[..], config).unwrap(),
+            1
+        );
+        assert_eq!(
+            bincode::encode_into_slice(&Rank::Eighth, &mut buf[..], config).unwrap(),
+            1
+        );
+        assert_eq!(
+            bincode::encode_into_slice(&Square::H8, &mut buf[..], config).unwrap(),
+            1
+        );
     }
 }

@@ -17,6 +17,7 @@ std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 variant = []
 arbitrary = ["dep:arbitrary", "std"]
 nohash-hasher = ["dep:nohash-hasher"]
+bincode = ["dep:bincode"]
 serde = ["dep:serde"]
 
 [[bench]]
@@ -30,6 +31,7 @@ bench = false
 [dependencies]
 arbitrary = { version = "1.4.1", features = ["derive"], optional = true } # version linked in lib.rs
 arrayvec = { version = "0.7", default-features = false }
+bincode = { version = "2.0.1", features = ["derive"], default-features = false, optional = true } # version linked in lib.rs
 bitflags = "2.0.0"
 btoi = { version = "0.5", default-features = false }
 nohash-hasher = { version = "0.2", default-features = false, optional = true } # version linked in lib.rs
