@@ -95,6 +95,9 @@ impl<Config> bincode::Decode<Config> for KnownOutcome {
     }
 }
 
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(KnownOutcome);
+
 /// Outcome of a game, if any.
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -223,6 +226,9 @@ impl<Config> bincode::Decode<Config> for Outcome {
         })
     }
 }
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Outcome);
 
 /// Error when trying to play an illegal move.
 #[derive(Debug)]

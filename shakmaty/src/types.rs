@@ -82,6 +82,9 @@ impl<Config> bincode::Decode<Config> for Piece {
     }
 }
 
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Piece);
+
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingMode {
@@ -292,3 +295,6 @@ impl<Config> bincode::Decode<Config> for RemainingChecks {
             .map_err(|_| bincode::error::DecodeError::Other("invalid RemainingChecks"))
     }
 }
+
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(RemainingChecks);

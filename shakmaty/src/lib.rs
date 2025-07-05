@@ -57,6 +57,10 @@
 //!   for vocabulary types.
 //! * `bincode`: Implements [`bincode`](https://docs.rs/bincode/2)
 //!   encoding/decoding for vocabulary types.
+//!
+//!   Changing encodings is considered a semver breaking change and will be
+//!   noted in the changelog. But note that in such a case a migration
+//!   by unpacking with the previous version may be required.
 //! * `serde`: Implements [`serde`](https://docs.rs/serde/1)
 //!   serialization/deserialization for types with unique natural
 //!   representations.

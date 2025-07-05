@@ -557,6 +557,9 @@ impl<Config> bincode::Decode<Config> for Board {
     }
 }
 
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(Board);
+
 /// Iterator over the pieces of a [`Board`].
 #[derive(Debug, Clone)]
 pub struct Iter<'a> {

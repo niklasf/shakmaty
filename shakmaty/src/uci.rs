@@ -461,6 +461,9 @@ impl<Config> bincode::Decode<Config> for UciMove {
     }
 }
 
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(UciMove);
+
 impl Move {
     /// See [`UciMove::from_move()`].
     pub fn to_uci(self, mode: CastlingMode) -> UciMove {

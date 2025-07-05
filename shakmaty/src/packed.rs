@@ -585,6 +585,9 @@ impl<Config> bincode::Decode<Config> for PackedSetup {
     }
 }
 
+#[cfg(feature = "bincode")]
+bincode::impl_borrow_decode!(PackedSetup);
+
 /// A move encoded as exactly 2 bytes.
 ///
 /// # Packing
