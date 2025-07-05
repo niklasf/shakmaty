@@ -136,13 +136,17 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn skip_whitespace(&mut self) -> io::Result<()> {
+    fn skip_whitespace(&mut self, mut is_new_line: bool) -> io::Result<()> {
         while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
-                b' ' | b'\t' | b'\r' | b'\n' => {
+                b' ' | b'\t' | b'\r' => {
                     self.buffer.bump();
                 }
-                b'%' => {
+                b'\n' => {
+                    is_new_line = true;
+                    self.buffer.bump();
+                }
+                b'%' if is_new_line => {
                     self.buffer.bump();
                     self.skip_until_after(b'\n')?;
                 }
@@ -155,24 +159,22 @@ impl<R: Read> Reader<R> {
     fn skip_ket(&mut self) -> io::Result<()> {
         while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
-                b' ' | b'\t' | b'\r' | b']' => {
+                b' ' | b'\t' | b'\r' => {
                     self.buffer.bump();
                 }
-                b'%' => {
+                b']' => {
                     self.buffer.bump();
-                    self.skip_until_after(b'\n')?;
-                    return Ok(());
+                    return self.skip_whitespace(false);
                 }
                 b'\n' => {
                     self.buffer.bump();
-                    return Ok(());
+                    return self.skip_whitespace(true);
                 }
                 _ => {
                     return Ok(());
                 }
             }
         }
-
         Ok(())
     }
 
@@ -211,8 +213,8 @@ impl<R: Read> Reader<R> {
                 unreachable!()
             }
 
-            fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {
-                unreachable!()
+            fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
+                match movetext {}
             }
         }
 
@@ -225,85 +227,71 @@ impl<R: Read> Reader<R> {
         visitor: &mut V,
         tags: &mut V::Tags,
     ) -> io::Result<ControlFlow<V::Output>> {
-        while let &[ch, ..] = self
+        while let &[b'[', ..] = self
             .buffer
             .ensure_bytes(self.tag_line_bytes, &mut self.reader)?
         {
-            match ch {
-                b'[' => {
-                    self.buffer.bump();
+            self.buffer.bump();
 
-                    let left_quote = match memchr::memchr3(b'"', b'\n', b']', self.buffer.data()) {
-                        Some(left_quote) if self.buffer.data()[left_quote] == b'"' => left_quote,
-                        Some(eol) => {
-                            self.buffer.consume(eol + 1);
-                            self.skip_ket()?;
-                            continue;
-                        }
-                        None => {
-                            self.buffer.clear();
-                            self.skip_until_after(b'\n')?;
-                            return Err(io::Error::new(
-                                io::ErrorKind::InvalidData,
-                                "unterminated tag",
-                            ));
-                        }
-                    };
-
-                    let space = if left_quote > 0 && self.buffer.data()[left_quote - 1] == b' ' {
-                        left_quote - 1
-                    } else {
-                        left_quote
-                    };
-
-                    let value_start = left_quote + 1;
-                    let mut right_quote = value_start;
-                    let consumed = loop {
-                        match memchr::memchr3(
-                            b'\\',
-                            b'"',
-                            b'\n',
-                            &self.buffer.data()[right_quote..],
-                        ) {
-                            Some(delta) if self.buffer.data()[right_quote + delta] == b'"' => {
-                                right_quote += delta;
-                                break right_quote + 1;
-                            }
-                            Some(delta) if self.buffer.data()[right_quote + delta] == b'\n' => {
-                                right_quote += delta;
-                                break right_quote;
-                            }
-                            Some(delta) => {
-                                // Skip escaped character.
-                                right_quote = min(right_quote + delta + 2, self.buffer.len());
-                            }
-                            None => {
-                                self.buffer.clear();
-                                self.skip_until_after(b'\n')?;
-                                return Err(io::Error::new(
-                                    io::ErrorKind::InvalidData,
-                                    "unterminated tag",
-                                ));
-                            }
-                        }
-                    };
-
-                    let cf = visitor.tag(
-                        tags,
-                        &self.buffer.data()[..space],
-                        RawTag(&self.buffer.data()[value_start..right_quote]),
-                    );
-                    self.buffer.consume(consumed);
+            let left_quote = match memchr::memchr3(b'"', b'\n', b']', self.buffer.data()) {
+                Some(left_quote) if self.buffer.data()[left_quote] == b'"' => left_quote,
+                Some(eol) => {
+                    self.buffer.consume(eol + 1);
                     self.skip_ket()?;
-                    if cf.is_break() {
-                        return Ok(cf);
+                    continue;
+                }
+                None => {
+                    self.buffer.clear();
+                    self.skip_until_after(b'\n')?;
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "unterminated tag",
+                    ));
+                }
+            };
+
+            let space = if left_quote > 0 && self.buffer.data()[left_quote - 1] == b' ' {
+                left_quote - 1
+            } else {
+                left_quote
+            };
+
+            let value_start = left_quote + 1;
+            let mut right_quote = value_start;
+            let consumed = loop {
+                match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer.data()[right_quote..]) {
+                    Some(delta) if self.buffer.data()[right_quote + delta] == b'"' => {
+                        right_quote += delta;
+                        break right_quote + 1;
+                    }
+                    Some(delta) if self.buffer.data()[right_quote + delta] == b'\n' => {
+                        right_quote += delta;
+                        break right_quote;
+                    }
+                    Some(delta) => {
+                        // Skip escaped character.
+                        right_quote = min(right_quote + delta + 2, self.buffer.len());
+                    }
+                    None => {
+                        self.buffer.clear();
+                        self.skip_until_after(b'\n')?;
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "unterminated tag",
+                        ));
                     }
                 }
-                b'%' => {
-                    self.buffer.bump();
-                    self.skip_until_after(b'\n')?;
-                }
-                _ => return Ok(ControlFlow::Continue(())),
+            };
+
+            let cf = visitor.tag(
+                tags,
+                &self.buffer.data()[..space],
+                RawTag(&self.buffer.data()[value_start..right_quote]),
+            );
+            self.buffer.consume(consumed);
+            self.skip_ket()?;
+            if cf.is_break() {
+                return Ok(cf);
             }
         }
         Ok(ControlFlow::Continue(()))
@@ -637,7 +625,7 @@ impl<R: Read> Reader<R> {
             self.skip_movetext()?;
         }
         self.skip_bom()?;
-        self.skip_whitespace()
+        self.skip_whitespace(true)
     }
 
     /// Read a single game, if any, and return the result produced by the
@@ -986,6 +974,49 @@ mod tests {
 
         assert!(reader.read_game(&mut CollectTokens)?.is_none());
         assert!(!skip_reader.skip_game()?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_tag_movetext_transition() -> io::Result<()> {
+        let pgn = br#"
+            [One "1"] [Two "2"]
+%[Three "%"]
+[Three "3"]
+
+
+            [Four "4"]*
+
+            [Five "5"]"#;
+
+        let mut reader = Reader::new(io::Cursor::new(pgn));
+
+        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::Tag(b"One".into(), b"1".into()),
+                Token::Tag(b"Two".into(), b"2".into()),
+                Token::Tag(b"Three".into(), b"3".into()),
+                Token::Tag(b"Four".into(), b"4".into()),
+                Token::BeginMovetext,
+                Token::Outcome(Outcome::Unknown),
+                Token::EndGame,
+            ]
+        );
+
+        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::Tag(b"Five".into(), b"5".into()),
+                Token::BeginMovetext,
+                Token::EndGame,
+            ]
+        );
 
         Ok(())
     }
