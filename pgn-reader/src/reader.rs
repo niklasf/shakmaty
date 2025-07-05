@@ -136,10 +136,6 @@ impl<R: Read> Reader<R> {
         Ok(())
     }
 
-    fn skip_line(&mut self) -> io::Result<()> {
-        self.skip_until_after(b'\n')
-    }
-
     fn skip_whitespace(&mut self) -> io::Result<()> {
         while let &[ch, ..] = self.buffer.ensure_bytes(1, &mut self.reader)? {
             match ch {
@@ -148,7 +144,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'%' => {
                     self.buffer.bump();
-                    self.skip_line()?;
+                    self.skip_until_after(b'\n')?;
                 }
                 _ => return Ok(()),
             }
@@ -164,7 +160,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'%' => {
                     self.buffer.bump();
-                    self.skip_line()?;
+                    self.skip_until_after(b'\n')?;
                     return Ok(());
                 }
                 b'\n' => {
@@ -246,7 +242,7 @@ impl<R: Read> Reader<R> {
                         }
                         None => {
                             self.buffer.clear();
-                            self.skip_line()?;
+                            self.skip_until_after(b'\n')?;
                             return Err(io::Error::new(
                                 io::ErrorKind::InvalidData,
                                 "unterminated tag",
@@ -283,7 +279,7 @@ impl<R: Read> Reader<R> {
                             }
                             None => {
                                 self.buffer.clear();
-                                self.skip_line()?;
+                                self.skip_until_after(b'\n')?;
                                 return Err(io::Error::new(
                                     io::ErrorKind::InvalidData,
                                     "unterminated tag",
@@ -305,7 +301,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'%' => {
                     self.buffer.bump();
-                    self.skip_line()?;
+                    self.skip_until_after(b'\n')?;
                 }
                 _ => return Ok(ControlFlow::Continue(())),
             }
@@ -388,7 +384,7 @@ impl<R: Read> Reader<R> {
                     match self.buffer.peek() {
                         Some(b'%') => {
                             self.buffer.bump();
-                            self.skip_line()?;
+                            self.skip_until(b'\n')?;
                         }
                         Some(b'[' | b'\n') => {
                             break;
@@ -693,6 +689,8 @@ impl<R: Read> Reader<R> {
     /// # Errors
     ///
     /// * I/O error from the underlying reader.
+    /// * Irrecoverable parser errors (while trying to read previous
+    ///   unfinished game to completion).
     pub fn has_more(&mut self) -> io::Result<bool> {
         self.before_game()?;
         Ok(!self.buffer.ensure_bytes(1, &mut self.reader)?.is_empty())
@@ -967,6 +965,27 @@ mod tests {
         let mut reader = Reader::new(io::Cursor::new(pgn));
         assert!(reader.skip_game()?);
         assert!(!reader.skip_game()?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_rest_of_line_comment() -> io::Result<()> {
+        let pgn = b";\n%\n\nX";
+
+        let mut reader = Reader::new(io::Cursor::new(pgn));
+        let mut skip_reader = Reader::new(io::Cursor::new(pgn));
+
+        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(skip_reader.skip_game()?);
+        assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
+
+        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(skip_reader.skip_game()?);
+        assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
+
+        assert!(reader.read_game(&mut CollectTokens)?.is_none());
+        assert!(!skip_reader.skip_game()?);
 
         Ok(())
     }

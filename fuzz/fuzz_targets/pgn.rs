@@ -1,6 +1,6 @@
 #![no_main]
 
-use std::{io, mem, ops::ControlFlow};
+use std::{fmt, io, io::Seek as _, mem, ops::ControlFlow};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
@@ -150,11 +150,21 @@ impl Visitor for BreakOnToken {
     }
 }
 
-#[derive(Debug, Arbitrary)]
+#[derive(Arbitrary)]
 struct TestCase {
     pgn: Vec<u8>,
     left_visitor: BreakOnToken,
     right_visitor: BreakOnToken,
+}
+
+impl fmt::Debug for TestCase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TestCase")
+            .field("pgn", &String::from_utf8_lossy(&self.pgn))
+            .field("left_visitor", &self.left_visitor)
+            .field("right_visitor", &self.right_visitor)
+            .finish()
+    }
 }
 
 fuzz_target!(|data: TestCase| {
@@ -162,13 +172,21 @@ fuzz_target!(|data: TestCase| {
     let mut left_reader = Reader::new(io::Cursor::new(&data.pgn));
     let mut right_reader = Reader::new(io::Cursor::new(&data.pgn));
 
-    // Read first game with different visitors
+    // Read first game with different visitors.
     if left_reader.read_game(&mut data.left_visitor).is_err() {
         return;
     }
     if right_reader.read_game(&mut data.right_visitor).is_err() {
         return;
     }
+
+    // Process any pending skips. Then the positions in the stream must be
+    // equal.
+    assert_eq!(left_reader.has_more().ok(), right_reader.has_more().ok());
+    assert_eq!(
+        left_reader.stream_position().expect("cursor i/o"),
+        right_reader.stream_position().expect("cursor i/o")
+    );
 
     // Results must be equal when continuing with just one of the visitors,
     // unless there was an I/O error (io::ErrorKind::InvalidData may go
