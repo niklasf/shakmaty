@@ -194,6 +194,24 @@ impl<R: Read> Reader<R> {
         self.buffer.data().iter().copied().position(is_token_end)
     }
 
+    fn eat_dash(&mut self) -> bool {
+        for dash in [b"-", "–".as_bytes(), "—".as_bytes()] {
+            if self.eat(dash) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    #[inline]
+    fn eat(&mut self, bytes: &[u8]) -> bool {
+        if self.buffer.data().starts_with(bytes) {
+            self.buffer.consume(bytes.len());
+            return true;
+        }
+        return false;
+    }
+
     fn skip_tags(&mut self) -> io::Result<()> {
         struct IgnoreTagsVisitor;
 
@@ -392,60 +410,63 @@ impl<R: Read> Reader<R> {
                 }
                 b'0' => {
                     self.buffer.bump();
-                    if self.buffer.data().starts_with(b"-1") {
-                        self.buffer.consume(2);
-                        let cf = visitor.outcome(
-                            movetext,
-                            Outcome::Known(KnownOutcome::Decisive {
-                                winner: Color::Black,
-                            }),
-                        );
-                        if cf.is_break() {
-                            return Ok(cf);
+                    if self.eat_dash() {
+                        if self.eat(b"1") {
+                            let cf = visitor.outcome(
+                                movetext,
+                                Outcome::Known(KnownOutcome::Decisive {
+                                    winner: Color::Black,
+                                }),
+                            );
+                            if cf.is_break() {
+                                return Ok(cf);
+                            }
+                        } else if self.eat(b"0") {
+                            // Castling notation with zeros.
+                            let side = if self.eat_dash() && self.eat(b"0") {
+                                CastlingSide::QueenSide
+                            } else {
+                                CastlingSide::KingSide
+                            };
+                            let suffix = match self.buffer.peek() {
+                                Some(b'+') => {
+                                    self.buffer.bump();
+                                    Some(Suffix::Check)
+                                }
+                                Some(b'#') => {
+                                    self.buffer.bump();
+                                    Some(Suffix::Checkmate)
+                                }
+                                _ => None,
+                            };
+                            let cf = visitor.san(
+                                movetext,
+                                SanPlus {
+                                    san: San::Castle(side),
+                                    suffix,
+                                },
+                            );
+                            if cf.is_break() {
+                                return Ok(cf);
+                            }
                         }
-                    } else if self.buffer.data().starts_with(b"-0") {
-                        // Castling notation with zeros.
-                        self.buffer.consume(2);
-                        let side = if self.buffer.data().starts_with(b"-0") {
-                            self.buffer.consume(2);
-                            CastlingSide::QueenSide
-                        } else {
-                            CastlingSide::KingSide
-                        };
-                        let suffix = match self.buffer.peek() {
-                            Some(b'+') => Some(Suffix::Check),
-                            Some(b'#') => Some(Suffix::Checkmate),
-                            _ => None,
-                        };
-                        let cf = visitor.san(
-                            movetext,
-                            SanPlus {
-                                san: San::Castle(side),
-                                suffix,
-                            },
-                        );
-                        if cf.is_break() {
-                            return Ok(cf);
-                        }
-                    } else {
-                        self.skip_token()?;
                     }
                 }
                 b'1' => {
                     self.buffer.bump();
-                    if self.buffer.data().starts_with(b"-0") {
-                        self.buffer.consume(2);
-                        let cf = visitor.outcome(
-                            movetext,
-                            Outcome::Known(KnownOutcome::Decisive {
-                                winner: Color::White,
-                            }),
-                        );
-                        if cf.is_break() {
-                            return Ok(cf);
+                    if self.eat_dash() {
+                        if self.eat(b"0") {
+                            let cf = visitor.outcome(
+                                movetext,
+                                Outcome::Known(KnownOutcome::Decisive {
+                                    winner: Color::White,
+                                }),
+                            );
+                            if cf.is_break() {
+                                return Ok(cf);
+                            }
                         }
-                    } else if self.buffer.data().starts_with(b"/2-1/2") {
-                        self.buffer.consume(6);
+                    } else if self.eat(b"/2") && self.eat_dash() && self.eat(b"1/2") {
                         let cf = visitor.outcome(movetext, Outcome::Known(KnownOutcome::Draw));
                         if cf.is_break() {
                             return Ok(cf);
@@ -456,6 +477,16 @@ impl<R: Read> Reader<R> {
                         }
                         while let Some(b'.' | b' ') = self.buffer.peek() {
                             self.buffer.bump();
+                        }
+                    }
+                }
+                b'\xc2' => {
+                    // ½-½
+                    self.buffer.bump();
+                    if self.eat(b"\xbd") && self.eat_dash() && self.eat("½".as_bytes()) {
+                        let cf = visitor.outcome(movetext, Outcome::Known(KnownOutcome::Draw));
+                        if cf.is_break() {
+                            return Ok(cf);
                         }
                     }
                 }
@@ -1092,6 +1123,40 @@ mod tests {
                 Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
                     winner: Color::Black
                 })),
+                Token::EndGame,
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_outcomes() -> io::Result<()> {
+        let pgn = "1-0 0-1 1/2-1/2 1–0 0–1 ½–½".as_bytes();
+
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens)?
+            .expect("found game");
+
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::BeginMovetext,
+                Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::White
+                })),
+                Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::Black
+                })),
+                Token::Outcome(Outcome::Known(KnownOutcome::Draw)),
+                Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::White
+                })),
+                Token::Outcome(Outcome::Known(KnownOutcome::Decisive {
+                    winner: Color::Black
+                })),
+                Token::Outcome(Outcome::Known(KnownOutcome::Draw)),
                 Token::EndGame,
             ]
         );
