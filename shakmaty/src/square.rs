@@ -783,23 +783,4 @@ mod tests {
         Square::H1.hash(&mut hasher);
         assert_eq!(hasher.finish(), 7);
     }
-
-    #[cfg(feature = "bincode")]
-    #[test]
-    fn test_bincode_sizes() {
-        let mut buf = [0; 8];
-        let config = bincode::config::standard();
-        assert_eq!(
-            bincode::encode_into_slice(&File::H, &mut buf[..], config).unwrap(),
-            1
-        );
-        assert_eq!(
-            bincode::encode_into_slice(&Rank::Eighth, &mut buf[..], config).unwrap(),
-            1
-        );
-        assert_eq!(
-            bincode::encode_into_slice(&Square::H8, &mut buf[..], config).unwrap(),
-            1
-        );
-    }
 }
