@@ -544,6 +544,41 @@ impl<'de> serde::Deserialize<'de> for PackedSetup {
     }
 }
 
+#[cfg(feature = "bincode")]
+impl bincode::Encode for PackedSetup {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        use bincode::enc::write::Writer;
+
+        let bytes = self.as_bytes();
+        encoder.writer().write(&[bytes.len() as u8])?;
+        encoder.writer().write(bytes)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::Decode<Config> for PackedSetup {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        use bincode::de::read::Reader;
+
+        let mut len = [0; 1];
+        decoder.reader().read(&mut len)?;
+
+        let len = usize::from(len[0]);
+        if len > PackedSetup::MAX_BYTES {
+            return Err(bincode::error::DecodeError::Other("invalid PackedSetup"));
+        }
+
+        let mut packed = PackedSetup::empty();
+        decoder.reader().read(&mut packed.inner[..len])?;
+        Ok(packed)
+    }
+}
+
 /// A move encoded as exactly 2 bytes.
 ///
 /// # Packing
@@ -578,6 +613,7 @@ impl<'de> serde::Deserialize<'de> for PackedSetup {
 /// let packed = PackedUciMove::from_bytes(bytes);
 /// assert_eq!(packed.unpack(), m);
 /// ```
+#[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct PackedUciMove {
     inner: [u8; 2],
@@ -942,5 +978,19 @@ mod tests {
 
         // Null
         assert_eq!(PackedUciMove::pack(UciMove::Null).unpack(), UciMove::Null);
+    }
+
+    #[cfg(feature = "bincode")]
+    #[test]
+    fn test_bincode() {
+        let packed_setup = PackedSetup::pack_board(&Board::default());
+
+        let mut buffer = [0; PackedSetup::MAX_BYTES];
+        let config = bincode::config::standard();
+        let encoded_bytes = bincode::encode_into_slice(&packed_setup, &mut buffer, config).unwrap();
+
+        let (decoded, decoded_bytes): (PackedSetup, usize) =
+            bincode::decode_from_slice(&buffer, config).unwrap();
+        assert_eq!((&packed_setup, encoded_bytes), (&decoded, decoded_bytes));
     }
 }

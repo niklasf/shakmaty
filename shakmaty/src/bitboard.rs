@@ -1281,11 +1281,13 @@ mod tests {
     #[cfg(feature = "bincode")]
     #[test]
     fn test_bincode() {
+        let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+
         let mut buffer = [0; 8];
         let config = bincode::config::standard();
-        let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
-        let n = bincode::encode_into_slice(&bitboard, &mut buffer, config).unwrap();
+        let n = bincode::encode_into_slice(bitboard, &mut buffer, config).unwrap();
         assert_eq!(n, 8);
+
         let (decoded, n): (Bitboard, usize) = bincode::decode_from_slice(&buffer, config).unwrap();
         assert_eq!((bitboard, 8), (decoded, n));
     }
