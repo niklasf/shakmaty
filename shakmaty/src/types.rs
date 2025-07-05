@@ -223,3 +223,23 @@ impl Display for ByColor<RemainingChecks> {
         self.append_to(f)
     }
 }
+
+#[cfg(feature = "bincode")]
+impl bincode::enc::Encode for RemainingChecks {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        u8::from(*self).encode(encoder)
+    }
+}
+
+#[cfg(feature = "bincode")]
+impl<Config> bincode::de::Decode<Config> for RemainingChecks {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        RemainingChecks::try_from(u8::decode(decoder)?)
+            .map_err(|_| bincode::error::DecodeError::Other("invalid RemainingChecks"))
+    }
+}
