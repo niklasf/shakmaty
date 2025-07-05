@@ -58,22 +58,24 @@ Chess and chess variant rules and operations
 * [shakmaty-syzygy](https://docs.rs/shakmaty-syzygy)
 * [pgn-reader](https://docs.rs/pgn-reader)
 
-## Benchmarks
+## Performance
 
-Simple [perft](https://www.chessprogramming.org/Perft) of the initial
-position. No hashtables. i7-6850K CPU @ 3.60GHz.
+Expect move generation performance in the ballpark of the world's best chess
+engines.
+
+Simple [perft](https://www.chessprogramming.org/Perft) speed
+can give a rough indication, but only that -- for example, Stockfish maintains
+additional data structures for evaluation (and newer Stockfish versions
+put even less emphasis on perft speed).
+
+Here is a snapshot at a point in time. No hashtables. i7-6850K CPU @ 3.60GHz.
 
 | perft                                                    | 4      | 5       |
-| -------------------------------------------------------- | ------ | ------- |
+| -------------------------------------------------------- | -----: | ------: |
 | shakmaty 0.16.0                                          | 1.0 ms | 24.1 ms |
 | [jordanbray/chess](https://crates.io/crates/chess) 3.1.1 | 0.8 ms | 18.6 ms |
 | Stockfish 8 (x86-64-bmi2)                                | 4 ms   | 33 ms   |
 
-It should be noted that Stockfish is not optimized for perft speed and also
-maintains additional data structures for evaluation. Newer versions of
-Stockfish put even less emphasis on this.
-
 ## License
 
-Shakmaty is licensed under the GPL-3.0 (or any later version at your option).
-See the COPYING file for the full license text.
+shakmaty is licensed under the GPL-3.0 (or any later version at your option).

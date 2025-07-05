@@ -16,9 +16,10 @@ In this order:
    (linear time complexity).
 2. Correct on valid PGNs.
 3. Performance. One of the fastest PGN parsers in any language.
-4. Reasonable behavior on invalid PGNs.
-5. Usability. Barrier to entry can be quite high when you have to bring your
-   own in-memory representation for games.
+4. Reasonable behavior on invalid PGNs. Common quirks may be supported, but
+   only if there is essentially no performance cost.
+5. Usability. Basic operation can be quite verbose and users need to bring
+   their own in-memory representation for games.
 
 Introduction
 ------------
@@ -104,13 +105,12 @@ compiled with Rust 1.88.0:
 
 Benchmark | Time | Throuhput (games) | Throughput (data)
 --- | ---: | ---: | ---:
-examples/stats.rs | 50.6 | 489,814 /s | 994 MiB/s
-examples/validate.rs | 116.8 | 212,197 /s | 431 MiB/s
-examples/parallel_validate.rs (1 + 3 threads) | 62.5 | 396,554 /s | 805 MiB/s
-`grep -F "[Event " -c` | 24.0 | 1,032,691 /s | 2,096 MiB/s
+examples/stats.rs | 50.6 s | 489,814 /s | 994 MiB/s
+examples/validate.rs | 116.8 s | 212,197 /s | 431 MiB/s
+examples/parallel_validate.rs (1 + 3 threads) | 62.5 s | 396,554 /s | 805 MiB/s
+`grep -F "[Event " -c` | 24.0 s | 1,032,691 /s | 2,096 MiB/s
 
 License
 -------
 
 pgn-reader is licensed under the GPL-3.0 (or any later version at your option).
-See the COPYING file for the full license text.

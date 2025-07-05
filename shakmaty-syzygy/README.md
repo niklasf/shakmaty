@@ -66,4 +66,4 @@ License
 -------
 
 shakmaty-syzygy is licensed under the GPL-3.0 (or any later version at your
-option). See the COPYING file for the full license text.
+option).
