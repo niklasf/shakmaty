@@ -55,9 +55,11 @@
 //! * `variant`: Enables support for all Lichess variants.
 //! * `arbitrary`: Implements [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
 //!   for vocabulary types.
-//! * `serde`: Implements [`serde::Serialize`](https://docs.rs/serde/1/serde/trait.Serialize.html)
-//!   and [`serde::Deserialize`](https://docs.rs/serde/1/serde/trait.Deserialize.html) for
-//!   types with unique natural representations.
+//! * `bincode`: Implements [`bincode`](https://docs.rs/bincode/2)
+//!   encoding/decoding for vocabulary types.
+//! * `serde`: Implements [`serde`](https://docs.rs/serde/1)
+//!   serialization/deserialization for types with unique natural
+//!   representations.
 //! * `nohash-hasher`: Implements
 //!   [`nohash_hasher::IsEnabled`](https://docs.rs/nohash-hasher/0.2/nohash_hasher/trait.IsEnabled.html)
 //!   for sensible types.
