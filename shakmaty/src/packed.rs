@@ -119,7 +119,7 @@ impl PackedSetup {
     pub fn pack_board(board: &Board) -> PackedSetup {
         PackedSetup::pack_standard(&Setup {
             board: board.clone(),
-            ..Setup::default()
+            ..Setup::empty()
         })
         .expect("all boards representable")
     }
@@ -892,6 +892,17 @@ mod tests {
     #[test]
     fn test_read_write_board() {
         let board = Board::default();
+
+        let roundtripped = PackedSetup::pack_board(&board)
+            .unpack_board()
+            .expect("roundtrip");
+
+        assert_eq!(roundtripped, board);
+    }
+
+    #[test]
+    fn test_read_write_empty_board() {
+        let board = Board::empty();
 
         let roundtripped = PackedSetup::pack_board(&board)
             .unpack_board()
