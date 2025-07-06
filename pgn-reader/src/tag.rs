@@ -65,6 +65,35 @@ impl<'a> RawTag<'a> {
             Cow::Owned(owned) => Cow::Owned(String::from_utf8_lossy(&owned).into_owned()),
         }
     }
+
+    /// Encodes quotes into escaped quotes.
+    /// Allocates only when the the value actually contains quotes.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use pgn_reader::RawTag;
+    /// // " -> \"
+    /// assert_eq!(RawTag(b"\"Hello\"").encode().as_ref(), b"\\\"Hello\\\"");
+    /// ```
+    pub fn encode(&self) -> Cow<'a, [u8]> {
+        let mut head = 0;
+        let mut encoded = Vec::new();
+
+        for quote in memchr::memchr_iter(b'"', self.0) {
+            encoded.extend_from_slice(&self.0[head..quote]);
+            encoded.extend([b'\\', self.0[quote]]);
+            head = quote + 1;
+        }
+
+        if head == 0 {
+            Cow::Borrowed(self.0)
+        } else {
+            encoded.extend_from_slice(&self.0[head..]);
+
+            Cow::Owned(encoded)
+        }
+    }
 }
 
 impl<'a> fmt::Debug for RawTag<'a> {
@@ -87,5 +116,24 @@ mod tests {
 
         let tag = RawTag(b"\\Hello \\\"world\\\\");
         assert_eq!(tag.decode().as_ref(), b"\\Hello \"world\\");
+    }
+
+    #[test]
+    fn encode() {
+        let tag = RawTag(b"\"gary\"");
+        assert_eq!(tag.encode().as_ref(), b"\\\"gary\\\"");
+        assert!(matches!(tag.encode(), Cow::Owned(_)));
+
+        let tag = RawTag(b"chess\"\"\"");
+        assert_eq!(tag.encode().as_ref(), b"chess\\\"\\\"\\\"");
+        assert!(matches!(tag.encode(), Cow::Owned(_)));
+
+        let tag = RawTag(b"\\bobby");
+        assert_eq!(tag.encode().as_ref(), b"\\bobby");
+        assert!(matches!(tag.encode(), Cow::Borrowed(_)));
+
+        let tag = RawTag(b"");
+        assert_eq!(tag.encode().as_ref(), b"");
+        assert!(matches!(tag.encode(), Cow::Borrowed(_)));
     }
 }
