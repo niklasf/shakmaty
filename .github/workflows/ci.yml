@@ -29,9 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
-
+      - uses: taiki-e/install-action@cargo-hack
       # exclude private crates and dev targets
-      - run: cargo +nightly check --workspace --all-features --lib --exclude fuzz -Zdirect-minimal-versions
+      - run: cargo +nightly hack check --workspace --all-features --lib --no-private --no-dev-deps -Zdirect-minimal-versions
         name: check z-direct-minimal-versions
   doc:
     runs-on: ubuntu-latest

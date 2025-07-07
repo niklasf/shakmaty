@@ -18,7 +18,7 @@ name = "benches"
 harness = false
 
 [dependencies]
-memchr = "2.3"
+memchr = "2.2"
 btoi = "0.5"
 shakmaty = { version = "0.29", path = "../shakmaty" }
 
