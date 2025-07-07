@@ -18,13 +18,13 @@ name = "benches"
 harness = false
 
 [dependencies]
-memchr = "2.2"
+memchr = "2.3"
 btoi = "0.5"
 shakmaty = { version = "0.29", path = "../shakmaty" }
 
 [dev-dependencies]
-crossbeam = "0.8"
-zstd = "0.13"
+crossbeam = "0.8.4"
+zstd = "0.13.3"
 criterion = "0.6.0"
 
 [lints]
