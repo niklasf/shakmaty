@@ -1,12 +1,13 @@
 use std::num::NonZeroUsize;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Config {
+pub struct Config<Skip> {
     /// Whether to skip variations.
-    /// This only dictates what the [`Writer`](super::Writer) returns in [`Visitor::begin_variation`](crate::Visitor::begin_variation).
+    /// This dictates what the [`Writer`](super::Writer) returns in [`Visitor::begin_variation`](crate::Visitor::begin_variation)
+    /// and whether it does anything.
     ///
-    /// Defaults to `false`.
-    pub skip_variations: bool,
+    /// Defaults to `|| false`.
+    pub skip_variations: Skip,
     /// Defaults to `1`.
     pub starting_move_number: NonZeroUsize,
     /// Whether to always include move numbers,
@@ -31,11 +32,11 @@ pub struct Config {
     pub space_around_comments: bool,
 }
 
-impl Config {
+impl Config<fn() -> bool> {
     /// A space optimized [`Config`]. Not recommended as it won't make much of a difference
     /// and might break certain parsers.
     pub const COMPACT: Self = Self {
-        skip_variations: false,
+        skip_variations: || false,
         starting_move_number: NonZeroUsize::new(1).unwrap(),
         always_include_move_number: false,
         space_after_move_number: false,
@@ -44,11 +45,11 @@ impl Config {
     };
 }
 
-impl Default for Config {
+impl Default for Config<fn() -> bool> {
     /// Optimized for compatibility.
     fn default() -> Self {
         Self {
-            skip_variations: false,
+            skip_variations: || false,
             starting_move_number: NonZeroUsize::MIN,
             always_include_move_number: false,
             space_after_move_number: true,

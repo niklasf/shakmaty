@@ -20,10 +20,10 @@ struct Variation {
 
 /// Write a PGN using the [`Visitor`] implementation.
 #[derive(Debug)]
-pub struct Writer<W> {
+pub struct Writer<W, Skip> {
     pub writer: W,
-    config: Config,
-    scheduled_config: Config,
+    config: Config<Skip>,
+    scheduled_config: Config<Skip>,
     /// Resets to `0` every [`Visitor::begin_tags`], `total_bytes_written` doesn't.
     bytes_written: usize,
     total_bytes_written: usize,
@@ -39,10 +39,11 @@ pub struct Writer<W> {
     written_san: bool,
 }
 
-impl<W> Writer<W> {
-    pub fn new(writer: W) -> Self {
-        let config = Config::default();
-
+impl<W, Skip> Writer<W, Skip>
+where
+    Skip: Copy,
+{
+    pub fn new(writer: W, config: Config<Skip>) -> Self {
         Self {
             writer,
             config,
@@ -61,7 +62,9 @@ impl<W> Writer<W> {
             written_san: false,
         }
     }
+}
 
+impl<W, Skip> Writer<W, Skip> {
     /// Gets the amount of bytes written this game. 0 if no game is being visited.
     pub fn bytes_written(&self) -> usize {
         self.bytes_written
@@ -78,7 +81,7 @@ impl<W> Writer<W> {
     }
 
     /// The config currently in use.
-    pub fn config(&self) -> &Config {
+    pub fn config(&self) -> &Config<Skip> {
         &self.config
     }
 
@@ -86,12 +89,12 @@ impl<W> Writer<W> {
     ///
     /// The reason it's like this is to prevent changing the config while visiting a game, which
     /// could damage the output.
-    pub fn scheduled_config(&self) -> &Config {
+    pub fn scheduled_config(&self) -> &Config<Skip> {
         &self.scheduled_config
     }
 
     /// See [`Self::scheduled_config`].
-    pub fn scheduled_config_mut(&mut self) -> &mut Config {
+    pub fn scheduled_config_mut(&mut self) -> &mut Config<Skip> {
         &mut self.scheduled_config
     }
 
@@ -101,7 +104,7 @@ impl<W> Writer<W> {
     }
 }
 
-impl<W> Writer<W>
+impl<W, Skip> Writer<W, Skip>
 where
     W: Write,
 {
@@ -145,9 +148,10 @@ pub struct TagWriter(());
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MovetextWriter(());
 
-impl<W> Visitor for Writer<W>
+impl<W, Skip> Visitor for Writer<W, Skip>
 where
     W: Write,
+    Skip: Copy + Fn() -> bool,
 {
     type Tags = TagWriter;
     type Movetext = MovetextWriter;
@@ -320,7 +324,10 @@ where
     }
 
     /// Writes an open parenthesis (`(`).
-    fn begin_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
+    fn begin_variation(
+        &mut self,
+        _: &mut Self::Movetext,
+    ) -> ControlFlow<Self::Output, crate::Skip> {
         if self.current_variation.has_outcome {
             return ControlFlow::Break(Err(Error::WritingAfterOutcome));
         }
@@ -329,7 +336,7 @@ where
             return ControlFlow::Break(Err(Error::ImmediateVariation));
         }
 
-        if self.config.skip_variations {
+        if (self.config.skip_variations)() {
             return ControlFlow::Continue(Skip(true));
         }
 
@@ -390,7 +397,7 @@ mod tests {
 
     #[test]
     fn tag() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let mut tags = writer.begin_tags().continue_value().unwrap();
 
         writer
@@ -410,7 +417,7 @@ mod tests {
 
     #[test]
     fn san_plus() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -428,7 +435,7 @@ mod tests {
 
         writer.writer.clear();
 
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         writer.config.always_include_move_number = true;
         let mut movetext = MovetextWriter(());
 
@@ -447,7 +454,7 @@ mod tests {
 
     #[test]
     fn longer() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -495,7 +502,7 @@ mod tests {
 
     #[test]
     fn longer_variation_later() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -543,7 +550,7 @@ mod tests {
 
     #[test]
     fn variation_immediately() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -555,7 +562,7 @@ mod tests {
 
     #[test]
     fn writing_after_outcome() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -634,7 +641,7 @@ mod tests {
 
     #[test]
     fn deep_variation() {
-        let mut writer = Writer::new(Vec::new());
+        let mut writer = Writer::new(Vec::new(), Config::default());
         writer.scheduled_config_mut().always_include_move_number = true;
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();

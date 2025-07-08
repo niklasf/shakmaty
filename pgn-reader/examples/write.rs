@@ -1,9 +1,10 @@
 use std::ops::ControlFlow;
-use pgn_reader::{writer, Nag, RawComment, RawTag, Visitor, Writer};
+
+use pgn_reader::{Nag, RawComment, RawTag, Visitor, Writer, writer};
 use shakmaty::{Color, KnownOutcome, Outcome, san::SanPlus};
 
 fn main() {
-    let mut writer = Writer::new(Vec::new());
+    let mut writer = Writer::new(Vec::new(), writer::Config::default());
     // guaranteed to continue
     let mut tags = writer.begin_tags().continue_value().unwrap();
 

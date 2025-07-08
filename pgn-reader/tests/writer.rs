@@ -4,7 +4,7 @@ use shakmaty::{Color, KnownOutcome, Outcome, san::SanPlus};
 /// Normal usage of the writer.
 #[test]
 fn normal() {
-    fn routine(mut writer: Writer<Vec<u8>>) -> Writer<Vec<u8>> {
+    fn routine(mut writer: Writer<Vec<u8>, fn() -> bool>) -> Writer<Vec<u8>, fn() -> bool> {
         let mut tags = writer.begin_tags().continue_value().unwrap();
 
         writer
@@ -66,7 +66,7 @@ fn normal() {
         writer
     }
 
-    let mut writer = Writer::new(Vec::new());
+    let mut writer = Writer::new(Vec::new(), writer::Config::default());
     writer = routine(writer);
 
     let correct1 = "[Event \"Testing\\\"\"]\n[Site \"#[test]\"]\n\n1. exd4 b2 ( Qxg1 2. Ke1# { brilliant discovered mate } $3 ) 1-0 \n\n";
@@ -94,7 +94,7 @@ fn normal() {
 /// User tries to break the writer.
 #[test]
 fn attempt_breakage() {
-    let mut writer = Writer::new(Vec::new());
+    let mut writer = Writer::new(Vec::new(), writer::Config::default());
     let tags = writer.begin_tags().continue_value().unwrap();
     let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
