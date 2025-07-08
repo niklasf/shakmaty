@@ -3,7 +3,7 @@ use std::num::NonZeroUsize;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Config<Skip> {
     /// Whether to skip variations.
-    /// This dictates what the [`Writer`](super::Writer) returns in [`Visitor::begin_variation`](crate::Visitor::begin_variation)
+    /// This dictates what's returned in [`Writer::begin_variation`](super::Writer::begin_variation)
     /// and whether it does anything.
     ///
     /// Defaults to `|| false`.
