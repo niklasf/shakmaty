@@ -59,7 +59,9 @@ fn normal() {
             )
             .continue_value()
             .unwrap();
-        writer.end_game(movetext).unwrap();
+        let bytes_written = writer.end_game(movetext).unwrap();
+
+        assert_eq!(bytes_written, writer.bytes_written());
 
         writer
     }
@@ -117,11 +119,12 @@ fn attempt_breakage() {
         .continue_value()
         .unwrap();
 
-    writer.end_game(movetext).unwrap();
+    let bytes_written = writer.end_game(movetext).unwrap();
 
     let correct1 = "1. Nc3 ( ( ( ) ) ) \n\n";
 
     assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct1);
+    assert_eq!(bytes_written, correct1.len());
     assert_eq!(writer.bytes_written(), correct1.len());
     assert_eq!(writer.total_bytes_written(), correct1.len());
 
@@ -140,13 +143,14 @@ fn attempt_breakage() {
         .continue_value()
         .unwrap();
 
-    writer.end_game(movetext).unwrap();
+    let bytes_written = writer.end_game(movetext).unwrap();
 
     let correct2 = r##"
 
 "##;
 
     assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct2);
+    assert_eq!(bytes_written, correct2.len());
     assert_eq!(writer.bytes_written(), correct2.len());
     assert_eq!(
         writer.total_bytes_written(),

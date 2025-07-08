@@ -1,4 +1,5 @@
-use pgn_reader::{Nag, RawComment, RawTag, Visitor, Writer};
+use std::ops::ControlFlow;
+use pgn_reader::{writer, Nag, RawComment, RawTag, Visitor, Writer};
 use shakmaty::{Color, KnownOutcome, Outcome, san::SanPlus};
 
 fn main() {
@@ -77,15 +78,18 @@ fn main() {
         .continue_value()
         .unwrap();
 
+    // we can't write after an outcome! only end_variation and end_game
+    assert!(matches!(
+        writer.comment(&mut movetext, RawComment(b"sneaky")),
+        ControlFlow::Break(Err(writer::Error::WritingAfterOutcome))
+    ));
+
     writer.end_game(movetext).unwrap();
 
-    let target = r#"[Event "Annual Horde Championship"]
-[Site "Mongolian Steppe"]
-[Annotator "Ben Finegold"]
-
-1. h5 e6 ( g6 ) 2. f6 { never play f6! } $4 0-1
-
-"#;
+    let target = "[Event \"Annual Horde Championship\"]\n\
+[Site \"Mongolian Steppe\"]\n\
+[Annotator \"Ben Finegold\"]\n\n\
+1. h5 e6 ( g6 ) 2. f6 { never play f6! } $4 0-1 \n\n";
 
     assert_eq!(str::from_utf8(&writer.writer).unwrap(), target);
 

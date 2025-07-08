@@ -1,11 +1,22 @@
 mod config;
+mod error;
 
 use std::{io, io::Write, ops::ControlFlow};
 
 pub use config::Config;
+pub use error::Error;
 use shakmaty::{Outcome, san::SanPlus};
 
 use crate::{Nag, RawComment, RawTag, Skip, Visitor};
+
+#[derive(Debug)]
+struct Variation {
+    /// The move *index* of the last move.
+    /// Starts at `starting_move_number - 1`.
+    move_index: usize,
+    /// Whether this variation has an outcome.
+    has_outcome: bool,
+}
 
 /// Write a PGN using the [`Visitor`] implementation.
 #[derive(Debug)]
@@ -19,17 +30,10 @@ pub struct Writer<W> {
     buffer: Vec<u8>,
     /// Buffer for making an ASCII usize.
     usize_buffer: [u8; 20],
-    /// The move *index* of the last move.
-    /// Starts at `starting_move_number - 1`.
-    move_index: usize,
-    /// A stack of move indices in variations parent to the current one.
-    ///
-    /// If `self.move_index` is `7` and `self.move_indices_below` is `[4, 9]`, this means that:
-    /// - There are 3 variations.
-    /// - The current variation is at move `7`.
-    /// - The parent variation of the current variation is at move `9`.
-    /// - The root variation is at move `4`.
-    move_indices_below: Vec<usize>,
+    current_variation: Variation,
+    /// All parent variations.
+    /// Contains the move index of each variation and whether it has an outcome.
+    parent_variations: Vec<Variation>,
     /// Whether at least one SAN was written.
     /// Necessary in order to prevent starting a variation before any SAN is written.
     written_san: bool,
@@ -49,8 +53,11 @@ impl<W> Writer<W> {
             // to exceed 200 bytes
             buffer: Vec::with_capacity(200),
             usize_buffer: [0; 20],
-            move_index: config.starting_move_number.get() - 1,
-            move_indices_below: Vec::new(),
+            current_variation: Variation {
+                move_index: config.starting_move_number.get() - 1,
+                has_outcome: false,
+            },
+            parent_variations: Vec::new(),
             written_san: false,
         }
     }
@@ -110,7 +117,7 @@ where
     ///
     /// Returns `true` if there was a previous open parenthesis (`(`).
     fn write_end_variation(&mut self) -> io::Result<bool> {
-        if self.move_indices_below.is_empty() {
+        if self.parent_variations.is_empty() {
             return Ok(false);
         }
 
@@ -122,9 +129,9 @@ where
             })
             .map(|n| self.increment_bytes_written(n))?;
 
-        if let Some(move_index) = self.move_indices_below.pop() {
-            self.move_index = move_index;
-        }
+        // guaranteed since we assert that it isn't empty
+        // we can't pop at the beginning because we need to make sure ) is written
+        self.current_variation = self.parent_variations.pop().unwrap();
 
         Ok(true)
     }
@@ -146,24 +153,23 @@ where
     type Movetext = MovetextWriter;
     /// How many bytes were written.
     ///
-    /// # Errors
-    ///
-    /// The only errors are from [`W::write`].
-    type Output = io::Result<usize>;
+    /// Equivalent to calling [`Writer::bytes_written`] right after [`Writer::end_game`].
+    type Output = Result<usize, Error>;
 
     /// Doesn't write anything, only resets the state. Guaranteed to continue.
     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
         self.config = self.scheduled_config;
         self.bytes_written = 0;
-        self.move_index = self.config.starting_move_number.get() - 1;
-        self.move_indices_below.clear();
+        self.current_variation = Variation {
+            move_index: self.config.starting_move_number.get() - 1,
+            has_outcome: false,
+        };
+        self.parent_variations.clear();
 
         ControlFlow::Continue(TagWriter(()))
     }
 
-    /// Writes a tag like `[White "Garry Kasparov"]`.
-    ///
-    /// Includes a newline (`\n`) character.
+    /// Writes a tag line like `[White "Garry Kasparov"]`.
     fn tag(
         &mut self,
         _: &mut Self::Tags,
@@ -180,11 +186,11 @@ where
 
         match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
-    /// Writes a newline (`\n`) if no bytes were written; that is, if no tags were written.
+    /// Writes a newline (`\n`) if no tags were written.
     fn begin_movetext(&mut self, _: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
         if self.bytes_written == 0 {
             return ControlFlow::Continue(MovetextWriter(()));
@@ -196,19 +202,24 @@ where
 
                 ControlFlow::Continue(MovetextWriter(()))
             }
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
     /// Writes a [`SanPlus`].
     fn san(&mut self, _: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+        if self.current_variation.has_outcome {
+            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        }
+
         self.buffer.clear();
 
         if self.config.always_include_move_number
-            || (self.move_index % 2 == (self.config.starting_move_number.get() - 1) % 2)
+            || (self.current_variation.move_index % 2
+                == (self.config.starting_move_number.get() - 1) % 2)
         {
             let mut pos = 20;
-            let mut n = 1 + (self.move_index / 2);
+            let mut n = 1 + (self.current_variation.move_index / 2);
 
             while n > 0 {
                 pos -= 1;
@@ -229,16 +240,20 @@ where
 
         match self.write_buffer() {
             Ok(()) => {
-                self.move_index += 1;
+                self.current_variation.move_index += 1;
                 self.written_san = true;
                 ControlFlow::Continue(())
             }
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
     /// Writes a [`Nag`].
     fn nag(&mut self, _: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
+        if self.current_variation.has_outcome {
+            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        }
+
         self.buffer.clear();
 
         nag.append_ascii_to(&mut self.buffer);
@@ -246,7 +261,7 @@ where
 
         match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
@@ -256,6 +271,10 @@ where
         _: &mut Self::Movetext,
         comment: RawComment,
     ) -> ControlFlow<Self::Output> {
+        if self.current_variation.has_outcome {
+            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        }
+
         self.buffer.clear();
 
         self.buffer.extend(if self.config.space_around_comments {
@@ -272,32 +291,42 @@ where
 
         match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
-    // TODO: allow only one last marker per variation
+    /// Writes an [`Outcome`].
+    ///
+    /// After this is called, you can only call [`Self::end_variation`]
+    /// and [`Self::end_game`]. Otherwise, the method you call will error with [`Error::WritingAfterOutcome`].
     fn outcome(&mut self, _: &mut Self::Movetext, outcome: Outcome) -> ControlFlow<Self::Output> {
+        if self.current_variation.has_outcome {
+            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        }
+
         self.buffer.clear();
 
         self.buffer.extend(outcome.as_str().as_bytes());
         self.buffer.push(b' ');
 
         match self.write_buffer() {
-            Ok(()) => ControlFlow::Continue(()),
-            Err(e) => ControlFlow::Break(Err(e)),
+            Ok(()) => {
+                self.current_variation.has_outcome = true;
+
+                ControlFlow::Continue(())
+            }
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
     /// Writes an open parenthesis (`(`).
-    /// Errors with [`io::ErrorKind::InvalidData`] if no SAN was previously written.
-    /// Variations have to come after SANs.
     fn begin_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
+        if self.current_variation.has_outcome {
+            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        }
+
         if !self.written_san {
-            return ControlFlow::Break(Err(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "no SAN written before opening a variation",
-            )));
+            return ControlFlow::Break(Err(Error::ImmediateVariation));
         }
 
         if self.config.skip_variations {
@@ -314,16 +343,19 @@ where
             .map(|n| self.increment_bytes_written(n))
         {
             Ok(()) => {
-                self.move_indices_below.push(self.move_index);
-                self.move_index = self
+                self.parent_variations.push(Variation {
+                    move_index: self.current_variation.move_index,
+                    has_outcome: false,
+                });
+                self.current_variation.move_index = self
                     .config
                     .starting_move_number
                     .get()
-                    .max(self.move_index.saturating_sub(1));
+                    .max(self.current_variation.move_index.saturating_sub(1));
 
                 ControlFlow::Continue(Skip(false))
             }
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
@@ -331,21 +363,22 @@ where
     fn end_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output> {
         match self.write_end_variation() {
             Ok(_) => ControlFlow::Continue(()),
-            Err(e) => ControlFlow::Break(Err(e)),
+            Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
     /// Closes all variations (see [`Self::end_variation`]) and writes two newlines (`\n`).
     fn end_game(&mut self, _: Self::Movetext) -> Self::Output {
-        let mut unclosed_parenthesis = self.write_end_variation()?;
+        let mut unclosed_parenthesis = self.write_end_variation().map_err(Error::Io)?;
 
         while unclosed_parenthesis {
-            unclosed_parenthesis = self.write_end_variation()?;
+            unclosed_parenthesis = self.write_end_variation().map_err(Error::Io)?;
         }
 
         self.writer
             .write(b"\n\n")
-            .map(|n| self.increment_bytes_written(n))?;
+            .map(|n| self.increment_bytes_written(n))
+            .map_err(Error::Io)?;
 
         Ok(self.bytes_written)
     }
@@ -515,10 +548,88 @@ mod tests {
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
         assert!(matches!(
-            writer
-                .begin_variation(&mut movetext),
-            ControlFlow::Break(Err(err)) if err.kind() == io::ErrorKind::InvalidData && err.to_string() == "no SAN written before opening a variation"
+            writer.begin_variation(&mut movetext),
+            ControlFlow::Break(Err(Error::ImmediateVariation))
         ));
+    }
+
+    #[test]
+    fn writing_after_outcome() {
+        let mut writer = Writer::new(Vec::new());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        let _ = writer
+            .begin_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"d4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .outcome(&mut movetext, Outcome::Unknown)
+            .continue_value()
+            .unwrap();
+
+        assert!(matches!(
+            writer.san(&mut movetext, SanPlus::from_ascii(b"d5").unwrap()),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        assert!(matches!(
+            writer.nag(&mut movetext, Nag::BLUNDER),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        assert!(matches!(
+            writer.begin_variation(&mut movetext),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        assert!(matches!(
+            writer.comment(&mut movetext, RawComment(b"")),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        writer
+            .end_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e5").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .outcome(&mut movetext, Outcome::Unknown)
+            .continue_value()
+            .unwrap();
+
+        assert!(matches!(
+            writer.san(&mut movetext, SanPlus::from_ascii(b"d5").unwrap()),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        assert!(matches!(
+            writer.nag(&mut movetext, Nag::BLUNDER),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        assert!(matches!(
+            writer.begin_variation(&mut movetext),
+            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+        ));
+
+        writer.end_game(movetext).unwrap();
     }
 
     #[test]
