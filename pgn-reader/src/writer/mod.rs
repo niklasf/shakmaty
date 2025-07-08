@@ -125,11 +125,7 @@ where
         }
 
         self.writer
-            .write(if self.config.space_around_variation {
-                b") ".as_slice()
-            } else {
-                b")"
-            })
+            .write(b") ")
             .map(|n| self.increment_bytes_written(n))?;
 
         // guaranteed since we assert that it isn't empty
@@ -218,9 +214,7 @@ where
 
         self.buffer.clear();
 
-        if self.config.always_include_move_number
-            || (self.current_variation.move_index % 2
-                == (self.config.starting_move_number.get() - 1) % 2)
+        if self.current_variation.move_index % 2 == (self.config.starting_move_number.get() - 1) % 2
         {
             let mut pos = 20;
             let mut n = 1 + (self.current_variation.move_index / 2);
@@ -232,11 +226,7 @@ where
             }
 
             self.buffer.extend(&self.usize_buffer[pos..]);
-            self.buffer.extend(if self.config.space_after_move_number {
-                b". ".as_slice()
-            } else {
-                b"."
-            });
+            self.buffer.extend(b". ");
         }
 
         san_plus.append_ascii_to(&mut self.buffer);
@@ -281,17 +271,9 @@ where
 
         self.buffer.clear();
 
-        self.buffer.extend(if self.config.space_around_comments {
-            b"{ ".as_slice()
-        } else {
-            b"{"
-        });
+        self.buffer.extend(b"{ ");
         self.buffer.extend(comment.0);
-        self.buffer.extend(if self.config.space_around_comments {
-            b" } ".as_slice()
-        } else {
-            b"}"
-        });
+        self.buffer.extend(b" } ");
 
         match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
@@ -342,11 +324,7 @@ where
 
         match self
             .writer
-            .write(if self.config.space_around_variation {
-                b"( ".as_slice()
-            } else {
-                b"("
-            })
+            .write(b"( ")
             .map(|n| self.increment_bytes_written(n))
         {
             Ok(()) => {
@@ -433,23 +411,11 @@ mod tests {
             .unwrap();
         assert_eq!(writer.writer, b"1. e4 Nd2xf3# ");
 
-        writer.writer.clear();
-
-        let mut writer = Writer::new(Vec::new(), Config::default());
-        writer.config.always_include_move_number = true;
-        let mut movetext = MovetextWriter(());
-
         writer
-            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .san(&mut movetext, SanPlus::from_ascii(b"Ke2#").unwrap())
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ");
-
-        writer
-            .san(&mut movetext, SanPlus::from_ascii(b"Nd2xf3#").unwrap())
-            .continue_value()
-            .unwrap();
-        assert_eq!(writer.writer, b"1. e4 1. Nd2xf3# ");
+        assert_eq!(writer.writer, b"1. e4 Nd2xf3# 2. Ke2# ");
     }
 
     #[test]
@@ -642,7 +608,6 @@ mod tests {
     #[test]
     fn deep_variation() {
         let mut writer = Writer::new(Vec::new(), Config::default());
-        writer.scheduled_config_mut().always_include_move_number = true;
         let tags = writer.begin_tags().continue_value().unwrap();
         let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
@@ -662,33 +627,33 @@ mod tests {
             .san(&mut movetext, SanPlus::from_ascii(b"d4").unwrap())
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ");
 
         let _ = writer
             .begin_variation(&mut movetext)
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ( ");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ");
 
         let _ = writer
             .begin_variation(&mut movetext)
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ( ( ");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ");
 
         let _ = writer
             .begin_variation(&mut movetext)
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ( ( ( ");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ");
 
         writer
             .end_variation(&mut movetext)
             .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ( ( ( ) ");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ");
 
         writer.end_game(movetext).unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( 1. d4 ( ( ( ) ) ) ) \n\n");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ) ) ) \n\n");
     }
 }
