@@ -464,13 +464,15 @@ where
     }
 
     /// Writes two newlines (`\n`).
-    fn end_game(&mut self, _: Self::Movetext) -> Self::Output {
+    fn end_game(&mut self, mut movetext: Self::Movetext) -> Self::Output {
         if !self.allowed_tokens.contains(MovetextToken::END_GAME) {
             return Err(Error::InvalidToken {
                 token: MovetextToken::END_GAME,
                 allowed: self.allowed_tokens,
             });
         }
+
+        while let ControlFlow::Continue(()) = self.end_variation(&mut movetext) {}
 
         self.writer
             .write(b"\n\n")
@@ -844,6 +846,6 @@ mod tests {
         assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ");
 
         writer.end_game(movetext).unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) \n\n");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ) ) ) \n\n");
     }
 }
