@@ -1,6 +1,6 @@
 use std::ops::ControlFlow;
 
-use pgn_reader::{Nag, RawComment, RawTag, Visitor, Writer, writer};
+use pgn_reader::{Nag, RawComment, RawTag, Visitor, Writer, writer, writer::MovetextToken};
 use shakmaty::{Color, KnownOutcome, Outcome, san::SanPlus};
 
 fn main() {
@@ -82,7 +82,10 @@ fn main() {
     // we can't write after an outcome! only end_variation and end_game
     assert!(matches!(
         writer.comment(&mut movetext, RawComment(b"sneaky")),
-        ControlFlow::Break(Err(writer::Error::WritingAfterOutcome))
+        ControlFlow::Break(Err(writer::Error::InvalidToken {
+            token,
+            allowed
+        })) if token == MovetextToken::COMMENT && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
     ));
 
     writer.end_game(movetext).unwrap();

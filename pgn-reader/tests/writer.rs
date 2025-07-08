@@ -100,6 +100,7 @@ fn attempt_breakage() {
 
     let bytes_written = writer.end_game(movetext).unwrap();
 
+    // TODO: should unclosed variations be allowed?
     let correct1 = "1. Nc3 ( ( ( ) ) ) \n\n";
 
     assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct1);

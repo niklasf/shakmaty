@@ -3,19 +3,26 @@ mod error;
 
 use std::{io, io::Write, ops::ControlFlow};
 
+use bitflags::bitflags;
 pub use config::Config;
 pub use error::Error;
 use shakmaty::{Outcome, san::SanPlus};
 
 use crate::{Nag, RawComment, RawTag, Skip, Visitor};
 
-#[derive(Debug)]
-struct Variation {
-    /// The move *index* of the last move.
-    /// Starts at `starting_move_number - 1`.
-    move_index: usize,
-    /// Whether this variation has an outcome.
-    has_outcome: bool,
+bitflags! {
+    /// Used to check which movetext tokens ([`Visitor`] methods) are allowed.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+    pub struct MovetextToken: u8 {
+        const SAN = 1 << 0;
+        const NAG = 1 << 1;
+        const COMMENT = 1 << 2;
+        const BEGIN_VARIATION = 1 << 3;
+        const END_VARIATION = 1 << 4;
+        const OUTCOME = 1 << 5;
+        /// Always allowed.
+        const END_GAME = 1 << 6;
+    }
 }
 
 /// Write a PGN using the [`Visitor`] implementation.
@@ -30,13 +37,18 @@ pub struct Writer<W, Skip> {
     buffer: Vec<u8>,
     /// Buffer for making an ASCII usize.
     usize_buffer: [u8; 20],
-    current_variation: Variation,
-    /// All parent variations.
-    /// Contains the move index of each variation and whether it has an outcome.
-    parent_variations: Vec<Variation>,
-    /// Whether at least one SAN was written.
-    /// Necessary in order to prevent starting a variation before any SAN is written.
-    written_san: bool,
+    /// The move *index* of the last move.
+    /// Starts at `starting_move_number - 1`.
+    move_index: usize,
+    /// Move indices of each parent variation.
+    ///
+    /// The first one is the root variation, last one is the parent variation of the current variation.
+    parent_variation_move_indices: Vec<usize>,
+    /// What token (visitor method) is allowed next.
+    allowed_tokens: MovetextToken,
+    /// What move index is the last NAG attached to.
+    /// Used for checking for two NAGs in a row, even if they are separated by other tokens.
+    last_nag_move_index: Option<usize>,
 }
 
 impl<W, Skip> Writer<W, Skip>
@@ -54,12 +66,10 @@ where
             // to exceed 200 bytes
             buffer: Vec::with_capacity(200),
             usize_buffer: [0; 20],
-            current_variation: Variation {
-                move_index: config.starting_move_number.get() - 1,
-                has_outcome: false,
-            },
-            parent_variations: Vec::new(),
-            written_san: false,
+            move_index: config.starting_move_number.get() - 1,
+            parent_variation_move_indices: Vec::new(),
+            allowed_tokens: MovetextToken::SAN | MovetextToken::COMMENT | MovetextToken::END_GAME,
+            last_nag_move_index: None,
         }
     }
 }
@@ -114,26 +124,6 @@ where
             .write(&self.buffer)
             .map(|n| self.increment_bytes_written(n))
     }
-
-    /// Writes a closed parenthesis (`)`) if there was a previous open parenthesis (`(`)
-    /// and updates the state.
-    ///
-    /// Returns `true` if there was a previous open parenthesis (`(`).
-    fn write_end_variation(&mut self) -> io::Result<bool> {
-        if self.parent_variations.is_empty() {
-            return Ok(false);
-        }
-
-        self.writer
-            .write(b") ")
-            .map(|n| self.increment_bytes_written(n))?;
-
-        // guaranteed since we assert that it isn't empty
-        // we can't pop at the beginning because we need to make sure ) is written
-        self.current_variation = self.parent_variations.pop().unwrap();
-
-        Ok(true)
-    }
 }
 
 /// You can only get this with [`Writer::begin_tags`] to prevent misuse.
@@ -160,11 +150,9 @@ where
     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
         self.config = self.scheduled_config;
         self.bytes_written = 0;
-        self.current_variation = Variation {
-            move_index: self.config.starting_move_number.get() - 1,
-            has_outcome: false,
-        };
-        self.parent_variations.clear();
+        self.move_index = self.config.starting_move_number.get() - 1;
+        self.parent_variation_move_indices.clear();
+        self.allowed_tokens = MovetextToken::SAN | MovetextToken::COMMENT | MovetextToken::END_GAME;
 
         ControlFlow::Continue(TagWriter(()))
     }
@@ -208,16 +196,18 @@ where
 
     /// Writes a [`SanPlus`].
     fn san(&mut self, _: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
-        if self.current_variation.has_outcome {
-            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        if !self.allowed_tokens.contains(MovetextToken::SAN) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::SAN,
+                allowed: self.allowed_tokens,
+            }));
         }
 
         self.buffer.clear();
 
-        if self.current_variation.move_index % 2 == (self.config.starting_move_number.get() - 1) % 2
-        {
+        if self.move_index % 2 == (self.config.starting_move_number.get() - 1) % 2 {
             let mut pos = 20;
-            let mut n = 1 + (self.current_variation.move_index / 2);
+            let mut n = 1 + (self.move_index / 2);
 
             while n > 0 {
                 pos -= 1;
@@ -234,8 +224,9 @@ where
 
         match self.write_buffer() {
             Ok(()) => {
-                self.current_variation.move_index += 1;
-                self.written_san = true;
+                self.move_index += 1;
+                self.allowed_tokens = MovetextToken::all();
+
                 ControlFlow::Continue(())
             }
             Err(e) => ControlFlow::Break(Err(Error::Io(e))),
@@ -244,8 +235,23 @@ where
 
     /// Writes a [`Nag`].
     fn nag(&mut self, _: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
-        if self.current_variation.has_outcome {
-            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        if self
+            .last_nag_move_index
+            .is_some_and(|nag_move_index| nag_move_index == self.move_index)
+        {
+            self.allowed_tokens.remove(MovetextToken::NAG);
+
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::NAG,
+                allowed: self.allowed_tokens,
+            }));
+        }
+
+        if !self.allowed_tokens.contains(MovetextToken::NAG) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::NAG,
+                allowed: self.allowed_tokens,
+            }));
         }
 
         self.buffer.clear();
@@ -254,7 +260,13 @@ where
         self.buffer.push(b' ');
 
         match self.write_buffer() {
-            Ok(()) => ControlFlow::Continue(()),
+            Ok(()) => {
+                self.allowed_tokens = MovetextToken::all();
+                self.allowed_tokens.remove(MovetextToken::NAG);
+                self.last_nag_move_index = Some(self.move_index);
+
+                ControlFlow::Continue(())
+            }
             Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
@@ -265,8 +277,11 @@ where
         _: &mut Self::Movetext,
         comment: RawComment,
     ) -> ControlFlow<Self::Output> {
-        if self.current_variation.has_outcome {
-            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        if !self.allowed_tokens.contains(MovetextToken::COMMENT) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::COMMENT,
+                allowed: self.allowed_tokens,
+            }));
         }
 
         self.buffer.clear();
@@ -276,18 +291,22 @@ where
         self.buffer.extend(b" } ");
 
         match self.write_buffer() {
-            Ok(()) => ControlFlow::Continue(()),
+            Ok(()) => {
+                self.allowed_tokens = MovetextToken::all();
+
+                ControlFlow::Continue(())
+            }
             Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
     /// Writes an [`Outcome`].
-    ///
-    /// After this is called, you can only call [`Self::end_variation`]
-    /// and [`Self::end_game`]. Otherwise, the method you call will error with [`Error::WritingAfterOutcome`].
     fn outcome(&mut self, _: &mut Self::Movetext, outcome: Outcome) -> ControlFlow<Self::Output> {
-        if self.current_variation.has_outcome {
-            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
+        if !self.allowed_tokens.contains(MovetextToken::OUTCOME) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::OUTCOME,
+                allowed: self.allowed_tokens,
+            }));
         }
 
         self.buffer.clear();
@@ -297,7 +316,9 @@ where
 
         match self.write_buffer() {
             Ok(()) => {
-                self.current_variation.has_outcome = true;
+                // per the PGN standard, the termination marker is the last element in the movetext
+                // while variations aren't mentioned, it's common to include an outcome in a variation
+                self.allowed_tokens = MovetextToken::END_VARIATION | MovetextToken::END_GAME;
 
                 ControlFlow::Continue(())
             }
@@ -310,12 +331,11 @@ where
         &mut self,
         _: &mut Self::Movetext,
     ) -> ControlFlow<Self::Output, crate::Skip> {
-        if self.current_variation.has_outcome {
-            return ControlFlow::Break(Err(Error::WritingAfterOutcome));
-        }
-
-        if !self.written_san {
-            return ControlFlow::Break(Err(Error::ImmediateVariation));
+        if !self.allowed_tokens.contains(MovetextToken::BEGIN_VARIATION) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::BEGIN_VARIATION,
+                allowed: self.allowed_tokens,
+            }));
         }
 
         if (self.config.skip_variations)() {
@@ -328,15 +348,14 @@ where
             .map(|n| self.increment_bytes_written(n))
         {
             Ok(()) => {
-                self.parent_variations.push(Variation {
-                    move_index: self.current_variation.move_index,
-                    has_outcome: false,
-                });
-                self.current_variation.move_index = self
+                self.parent_variation_move_indices.push(self.move_index);
+                self.move_index = self
                     .config
                     .starting_move_number
                     .get()
-                    .max(self.current_variation.move_index.saturating_sub(1));
+                    .max(self.move_index.saturating_sub(1));
+                self.allowed_tokens = MovetextToken::all();
+                self.allowed_tokens.remove(MovetextToken::NAG);
 
                 ControlFlow::Continue(Skip(false))
             }
@@ -344,20 +363,45 @@ where
         }
     }
 
-    /// Writes a closed parenthesis (`(`) if there was a previous open parenthesis (`(`).
+    /// Writes a closed parenthesis (`)`).
     fn end_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output> {
-        match self.write_end_variation() {
-            Ok(_) => ControlFlow::Continue(()),
+        if self.parent_variation_move_indices.is_empty() {
+            self.allowed_tokens.remove(MovetextToken::END_VARIATION);
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::END_VARIATION,
+                allowed: self.allowed_tokens,
+            }));
+        }
+
+        if !self.allowed_tokens.contains(MovetextToken::END_VARIATION) {
+            return ControlFlow::Break(Err(Error::InvalidToken {
+                token: MovetextToken::END_VARIATION,
+                allowed: self.allowed_tokens,
+            }));
+        }
+
+        match self
+            .writer
+            .write(b") ")
+            .map(|n| self.increment_bytes_written(n))
+        {
+            Ok(_) => {
+                self.allowed_tokens = MovetextToken::all();
+                self.move_index = self.parent_variation_move_indices.pop().unwrap();
+
+                ControlFlow::Continue(())
+            }
             Err(e) => ControlFlow::Break(Err(Error::Io(e))),
         }
     }
 
-    /// Closes all variations (see [`Self::end_variation`]) and writes two newlines (`\n`).
+    /// Writes two newlines (`\n`).
     fn end_game(&mut self, _: Self::Movetext) -> Self::Output {
-        let mut unclosed_parenthesis = self.write_end_variation().map_err(Error::Io)?;
-
-        while unclosed_parenthesis {
-            unclosed_parenthesis = self.write_end_variation().map_err(Error::Io)?;
+        if !self.allowed_tokens.contains(MovetextToken::END_GAME) {
+            return Err(Error::InvalidToken {
+                token: MovetextToken::END_GAME,
+                allowed: self.allowed_tokens,
+            });
         }
 
         self.writer
@@ -416,6 +460,60 @@ mod tests {
             .continue_value()
             .unwrap();
         assert_eq!(writer.writer, b"1. e4 Nd2xf3# 2. Ke2# ");
+    }
+
+    #[test]
+    fn nag() {
+        let mut writer = Writer::new(Vec::new(), Config::default());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .nag(&mut movetext, Nag::BRILLIANT_MOVE)
+            .continue_value()
+            .unwrap();
+
+        let _ = writer
+            .begin_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"d4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .end_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .comment(
+                &mut movetext,
+                RawComment(b"hmm yes that variation was very positional and sophisticated"),
+            )
+            .continue_value()
+            .unwrap();
+
+        assert_eq!(
+            writer.writer,
+            b"1. e4 $3 ( d4 ) { hmm yes that variation was very positional and sophisticated } "
+        );
+
+        assert!(matches!(writer
+            .nag(&mut movetext, Nag::BLUNDER), // now e4 just seems primitive
+            // oh no, we already used a NAG!
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::NAG && allowed == MovetextToken::SAN | MovetextToken::COMMENT | MovetextToken::BEGIN_VARIATION | MovetextToken::END_VARIATION | MovetextToken::OUTCOME | MovetextToken::END_GAME
+        ));
     }
 
     #[test]
@@ -522,7 +620,10 @@ mod tests {
 
         assert!(matches!(
             writer.begin_variation(&mut movetext),
-            ControlFlow::Break(Err(Error::ImmediateVariation))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::BEGIN_VARIATION && allowed == MovetextToken::SAN | MovetextToken::COMMENT | MovetextToken::END_GAME
         ));
     }
 
@@ -554,22 +655,34 @@ mod tests {
 
         assert!(matches!(
             writer.san(&mut movetext, SanPlus::from_ascii(b"d5").unwrap()),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::SAN && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         assert!(matches!(
             writer.nag(&mut movetext, Nag::BLUNDER),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::NAG && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         assert!(matches!(
             writer.begin_variation(&mut movetext),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::BEGIN_VARIATION && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         assert!(matches!(
             writer.comment(&mut movetext, RawComment(b"")),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::COMMENT && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         writer
@@ -589,17 +702,26 @@ mod tests {
 
         assert!(matches!(
             writer.san(&mut movetext, SanPlus::from_ascii(b"d5").unwrap()),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::SAN && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         assert!(matches!(
             writer.nag(&mut movetext, Nag::BLUNDER),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::NAG && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         assert!(matches!(
             writer.begin_variation(&mut movetext),
-            ControlFlow::Break(Err(Error::WritingAfterOutcome))
+            ControlFlow::Break(Err(Error::InvalidToken {
+                token,
+                allowed
+            })) if token == MovetextToken::BEGIN_VARIATION && allowed == MovetextToken::END_VARIATION | MovetextToken::END_GAME
         ));
 
         writer.end_game(movetext).unwrap();
@@ -654,6 +776,6 @@ mod tests {
         assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ");
 
         writer.end_game(movetext).unwrap();
-        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) ) ) ) \n\n");
+        assert_eq!(writer.writer, b"1. e4 ( d4 ( ( ( ) \n\n");
     }
 }
