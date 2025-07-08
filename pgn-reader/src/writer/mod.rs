@@ -1,66 +1,11 @@
-use std::{io, io::Write, num::NonZeroUsize, ops::ControlFlow};
+mod config;
 
+use std::{io, io::Write, ops::ControlFlow};
+
+pub use config::Config;
 use shakmaty::{Outcome, san::SanPlus};
 
 use crate::{Nag, RawComment, RawTag, Skip, Visitor};
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Config {
-    /// Whether to skip variations.
-    /// This only dictates what the [`Writer`] returns in [`Visitor::begin_variation`].
-    ///
-    /// Defaults to `false`.
-    pub skip_variations: bool,
-    /// Defaults to `1`.
-    pub starting_move_number: NonZeroUsize,
-    /// Whether to always include move numbers,
-    /// even if the parity does not match the starting move number parity.
-    ///
-    /// For example, if the starting move number is 1 (odd), a move number is even, and
-    /// this is set to `true`, that move number will be included.
-    ///
-    /// Defaults to `false`.
-    pub always_include_move_number: bool,
-    /// Whether to include a space after a move number (`"1. e4"` if `true`, `"1.e4"` otherwise).
-    ///
-    /// Defaults to `true`.
-    pub space_after_move_number: bool,
-    /// Whether to include spaces around variation parentheses (`"( "` and `") "` if `true`, `"("` and `")"` otherwise).
-    ///
-    /// Defaults to `true`.
-    pub space_around_variation: bool,
-    /// Whether to include spaces around comment braces (`"{ "` and `" } "` if `true`, `"{"` and `"}"` otherwise).
-    ///
-    /// Defaults to `true`.
-    pub space_around_comments: bool,
-}
-
-impl Config {
-    /// A space optimized [`Config`]. Not recommended as it won't make much of a difference
-    /// and might break certain parsers.
-    pub const COMPACT: Self = Self {
-        skip_variations: false,
-        starting_move_number: NonZeroUsize::new(1).unwrap(),
-        always_include_move_number: false,
-        space_after_move_number: false,
-        space_around_variation: false,
-        space_around_comments: false,
-    };
-}
-
-impl Default for Config {
-    /// Optimized for compatibility.
-    fn default() -> Self {
-        Self {
-            skip_variations: false,
-            starting_move_number: NonZeroUsize::MIN,
-            always_include_move_number: false,
-            space_after_move_number: true,
-            space_around_variation: true,
-            space_around_comments: true,
-        }
-    }
-}
 
 /// Write a PGN using the [`Visitor`] implementation.
 #[derive(Debug)]
@@ -255,7 +200,7 @@ where
         }
     }
 
-    /// Writes a SAN.
+    /// Writes a [`SanPlus`].
     fn san(&mut self, _: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
         self.buffer.clear();
 
@@ -292,6 +237,7 @@ where
         }
     }
 
+    /// Writes a [`Nag`].
     fn nag(&mut self, _: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
         self.buffer.clear();
 
@@ -304,6 +250,7 @@ where
         }
     }
 
+    /// Writes a [`RawComment`] surrounded by braces.
     fn comment(
         &mut self,
         _: &mut Self::Movetext,
