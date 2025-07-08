@@ -62,6 +62,7 @@ impl Default for Config {
     }
 }
 
+/// Write a PGN using the [`Visitor`] implementation.
 #[derive(Debug)]
 pub struct Writer<W> {
     pub writer: W,
@@ -73,16 +74,20 @@ pub struct Writer<W> {
     buffer: Vec<u8>,
     /// Buffer for making an ASCII usize.
     usize_buffer: [u8; 20],
-    /// The move number of the last move.
-    move_number: usize,
-    /// A stack of move numbers in variations parent to the current one.
+    /// The move *index* of the last move.
+    /// Starts at `starting_move_number - 1`.
+    move_index: usize,
+    /// A stack of move indices in variations parent to the current one.
     ///
-    /// If `self.move_number` is `7` and `self.move_numbers_below` is `[4, 9]`, this means that:
+    /// If `self.move_index` is `7` and `self.move_indices_below` is `[4, 9]`, this means that:
     /// - There are 3 variations.
     /// - The current variation is at move `7`.
     /// - The parent variation of the current variation is at move `9`.
     /// - The root variation is at move `4`.
-    move_numbers_below: Vec<usize>,
+    move_indices_below: Vec<usize>,
+    /// Whether at least one SAN was written.
+    /// Necessary in order to prevent starting a variation before any SAN is written.
+    written_san: bool,
 }
 
 impl<W> Writer<W> {
@@ -96,12 +101,28 @@ impl<W> Writer<W> {
             bytes_written: 0,
             total_bytes_written: 0,
             // the longest thing this will be used for is a tag line, which is likely not going
-            // to exceed this
+            // to exceed 200 bytes
             buffer: Vec::with_capacity(200),
             usize_buffer: [0; 20],
-            move_number: config.starting_move_number.get(),
-            move_numbers_below: Vec::new(),
+            move_index: config.starting_move_number.get() - 1,
+            move_indices_below: Vec::new(),
+            written_san: false,
         }
+    }
+
+    /// Gets the amount of bytes written this game. 0 if no game is being visited.
+    pub fn bytes_written(&self) -> usize {
+        self.bytes_written
+    }
+
+    /// Gets the total amount of bytes written.
+    pub fn total_bytes_written(&self) -> usize {
+        self.total_bytes_written
+    }
+
+    /// Sets [`Self::total_bytes_written`] to 0.
+    pub fn reset_total_bytes_written(&mut self) {
+        self.total_bytes_written = 0;
     }
 
     /// The config currently in use.
@@ -128,183 +149,49 @@ impl<W> Writer<W> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub struct TagWriter(());
-
-impl TagWriter {
-    /// Writes a tag to the specifier writer and updates the state.
-    ///
-    /// Includes a newline (`\n`) character.
-    fn write_tag(
-        &mut self,
-        name: &[u8],
-        value: RawTag<'_>,
-        writer: &mut Writer<impl Write>,
-    ) -> io::Result<()> {
-        writer.buffer.clear();
-
-        // maybe use a fixed size buffer but I'm not sure it would be much faster
-        writer.buffer.push(b'[');
-        writer.buffer.extend(name);
-        writer.buffer.extend(b" \"");
-        writer.buffer.extend(value.encode().as_ref());
-        writer.buffer.extend(b"\"]\n");
-
-        writer
-            .writer
-            .write(&writer.buffer)
-            .map(|n| writer.increment_bytes_written(n))
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash)]
-pub struct MovetextWriter(());
-
-impl MovetextWriter {
-    /// Writes a SAN to the specified writer and updates the state.
-    fn write_san_plus(
-        &mut self,
-        san_plus: SanPlus,
-        writer: &mut Writer<impl Write>,
-    ) -> io::Result<()> {
-        writer.buffer.clear();
-
-        if writer.config.always_include_move_number
-            || (writer.move_number % 2 == writer.config.starting_move_number.get() % 2)
-        {
-            let mut pos = 20;
-            let mut n = writer.move_number;
-
-            while n > 0 {
-                pos -= 1;
-                writer.usize_buffer[pos] = b'0' + (n % 10) as u8;
-                n /= 10;
-            }
-
-            writer.buffer.extend(&writer.usize_buffer[pos..]);
-            writer
-                .buffer
-                .extend(if writer.config.space_after_move_number {
-                    b". ".as_slice()
-                } else {
-                    b"."
-                });
-        }
-
-        san_plus.append_ascii_to(&mut writer.buffer);
-        writer.buffer.push(b' ');
-
-        writer
-            .writer
-            .write(&writer.buffer)
-            .map(|n| writer.increment_bytes_written(n))?;
-
-        writer.move_number += 1;
-
-        Ok(())
-    }
-
-    /// Writes a NAG and updates the state.
-    fn write_nag(&mut self, nag: Nag, writer: &mut Writer<impl Write>) -> io::Result<()> {
-        writer.buffer.clear();
-
-        nag.append_ascii_to(&mut writer.buffer);
-        writer.buffer.push(b' ');
-
-        writer
-            .writer
-            .write(&writer.buffer)
-            .map(|n| writer.increment_bytes_written(n))
-    }
-
-    /// Writes a comment and updates the state.
-    fn write_comment(
-        &mut self,
-        comment: RawComment,
-        writer: &mut Writer<impl Write>,
-    ) -> io::Result<()> {
-        writer.buffer.clear();
-
-        writer
-            .buffer
-            .extend(if writer.config.space_around_comments {
-                b"{ ".as_slice()
-            } else {
-                b"{"
-            });
-        writer.buffer.extend(comment.0);
-        writer
-            .buffer
-            .extend(if writer.config.space_around_comments {
-                b" } ".as_slice()
-            } else {
-                b"}"
-            });
-
-        writer
-            .writer
-            .write(&writer.buffer)
-            .map(|n| writer.increment_bytes_written(n))
-    }
-
-    /// Writes an outcome and updates the state.
-    fn write_outcome(
-        &mut self,
-        outcome: Outcome,
-        writer: &mut Writer<impl Write>,
-    ) -> io::Result<()> {
-        writer
-            .writer
-            .write(outcome.as_str().as_bytes())
-            .map(|n| writer.increment_bytes_written(n))
-    }
-
-    /// Writes an opening parenthesis (`(`) and updates the state.
-    fn write_begin_variation(&mut self, writer: &mut Writer<impl Write>) -> io::Result<()> {
-        writer
-            .writer
-            .write(if writer.config.space_around_variation {
-                b"( ".as_slice()
-            } else {
-                b"("
-            })
-            .map(|n| writer.increment_bytes_written(n))?;
-
-        writer.move_number = writer
-            .config
-            .starting_move_number
-            .get()
-            .max(writer.move_number.saturating_sub(1));
-        writer.move_numbers_below.push(writer.move_number);
-
-        Ok(())
+impl<W> Writer<W>
+where
+    W: Write,
+{
+    /// Writes `self.buffer` to `self.writer` and updates bytes written.
+    fn write_buffer(&mut self) -> io::Result<()> {
+        self.writer
+            .write(&self.buffer)
+            .map(|n| self.increment_bytes_written(n))
     }
 
     /// Writes a closed parenthesis (`)`) if there was a previous open parenthesis (`(`)
     /// and updates the state.
     ///
     /// Returns `true` if there was a previous open parenthesis (`(`).
-    fn write_end_variation(&mut self, writer: &mut Writer<impl Write>) -> io::Result<bool> {
-        if writer.move_numbers_below.is_empty() {
+    fn write_end_variation(&mut self) -> io::Result<bool> {
+        if self.move_indices_below.is_empty() {
             return Ok(false);
         }
 
-        writer
-            .writer
-            .write(if writer.config.space_around_variation {
+        self.writer
+            .write(if self.config.space_around_variation {
                 b") ".as_slice()
             } else {
                 b")"
             })
-            .map(|n| writer.increment_bytes_written(n))?;
+            .map(|n| self.increment_bytes_written(n))?;
 
-        if let Some(move_number) = writer.move_numbers_below.pop() {
-            writer.move_number = move_number;
+        if let Some(move_index) = self.move_indices_below.pop() {
+            self.move_index = move_index;
         }
 
         Ok(true)
     }
 }
+
+/// You can only get this with [`Writer::begin_tags`] to prevent misuse.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct TagWriter(());
+
+/// You can only get this with [`Writer::begin_movetext`] to prevent misuse.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MovetextWriter(());
 
 impl<W> Visitor for Writer<W>
 where
@@ -319,23 +206,34 @@ where
     /// The only errors are from [`W::write`].
     type Output = io::Result<usize>;
 
-    /// Guaranteed to continue.
+    /// Doesn't write anything, only resets the state. Guaranteed to continue.
     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
         self.config = self.scheduled_config;
         self.bytes_written = 0;
-        self.move_number = self.config.starting_move_number.get();
-        self.move_numbers_below.clear();
+        self.move_index = self.config.starting_move_number.get() - 1;
+        self.move_indices_below.clear();
 
         ControlFlow::Continue(TagWriter(()))
     }
 
+    /// Writes a tag like `[White "Garry Kasparov"]`.
+    ///
+    /// Includes a newline (`\n`) character.
     fn tag(
         &mut self,
-        tags: &mut Self::Tags,
+        _: &mut Self::Tags,
         name: &[u8],
         value: RawTag<'_>,
     ) -> ControlFlow<Self::Output> {
-        match tags.write_tag(name, value, self) {
+        self.buffer.clear();
+
+        self.buffer.push(b'[');
+        self.buffer.extend(name);
+        self.buffer.extend(b" \"");
+        self.buffer.extend(value.encode().as_ref());
+        self.buffer.extend(b"\"]\n");
+
+        match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
             Err(e) => ControlFlow::Break(Err(e)),
         }
@@ -357,19 +255,50 @@ where
         }
     }
 
-    fn san(
-        &mut self,
-        movetext: &mut Self::Movetext,
-        san_plus: SanPlus,
-    ) -> ControlFlow<Self::Output> {
-        match movetext.write_san_plus(san_plus, self) {
-            Ok(()) => ControlFlow::Continue(()),
+    /// Writes a SAN.
+    fn san(&mut self, _: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
+        self.buffer.clear();
+
+        if self.config.always_include_move_number
+            || (self.move_index % 2 == (self.config.starting_move_number.get() - 1) % 2)
+        {
+            let mut pos = 20;
+            let mut n = 1 + (self.move_index / 2);
+
+            while n > 0 {
+                pos -= 1;
+                self.usize_buffer[pos] = b'0' + (n % 10) as u8;
+                n /= 10;
+            }
+
+            self.buffer.extend(&self.usize_buffer[pos..]);
+            self.buffer.extend(if self.config.space_after_move_number {
+                b". ".as_slice()
+            } else {
+                b"."
+            });
+        }
+
+        san_plus.append_ascii_to(&mut self.buffer);
+        self.buffer.push(b' ');
+
+        match self.write_buffer() {
+            Ok(()) => {
+                self.move_index += 1;
+                self.written_san = true;
+                ControlFlow::Continue(())
+            }
             Err(e) => ControlFlow::Break(Err(e)),
         }
     }
 
-    fn nag(&mut self, movetext: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
-        match movetext.write_nag(nag, self) {
+    fn nag(&mut self, _: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
+        self.buffer.clear();
+
+        nag.append_ascii_to(&mut self.buffer);
+        self.buffer.push(b' ');
+
+        match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
             Err(e) => ControlFlow::Break(Err(e)),
         }
@@ -377,53 +306,94 @@ where
 
     fn comment(
         &mut self,
-        movetext: &mut Self::Movetext,
+        _: &mut Self::Movetext,
         comment: RawComment,
     ) -> ControlFlow<Self::Output> {
-        match movetext.write_comment(comment, self) {
+        self.buffer.clear();
+
+        self.buffer.extend(if self.config.space_around_comments {
+            b"{ ".as_slice()
+        } else {
+            b"{"
+        });
+        self.buffer.extend(comment.0);
+        self.buffer.extend(if self.config.space_around_comments {
+            b" } ".as_slice()
+        } else {
+            b"}"
+        });
+
+        match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
             Err(e) => ControlFlow::Break(Err(e)),
         }
     }
 
-    fn outcome(
-        &mut self,
-        movetext: &mut Self::Movetext,
-        outcome: Outcome,
-    ) -> ControlFlow<Self::Output> {
-        match movetext.write_outcome(outcome, self) {
+    // TODO: allow only one last marker per variation
+    fn outcome(&mut self, _: &mut Self::Movetext, outcome: Outcome) -> ControlFlow<Self::Output> {
+        self.buffer.clear();
+
+        self.buffer.extend(outcome.as_str().as_bytes());
+        self.buffer.push(b' ');
+
+        match self.write_buffer() {
             Ok(()) => ControlFlow::Continue(()),
             Err(e) => ControlFlow::Break(Err(e)),
         }
     }
 
-    fn begin_variation(
-        &mut self,
-        movetext: &mut Self::Movetext,
-    ) -> ControlFlow<Self::Output, Skip> {
+    /// Writes an open parenthesis (`(`).
+    /// Errors with [`io::ErrorKind::InvalidData`] if no SAN was previously written.
+    /// Variations have to come after SANs.
+    fn begin_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
+        if !self.written_san {
+            return ControlFlow::Break(Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "no SAN written before opening a variation",
+            )));
+        }
+
         if self.config.skip_variations {
             return ControlFlow::Continue(Skip(true));
         }
 
-        match movetext.write_begin_variation(self) {
-            Ok(()) => ControlFlow::Continue(Skip(false)),
+        match self
+            .writer
+            .write(if self.config.space_around_variation {
+                b"( ".as_slice()
+            } else {
+                b"("
+            })
+            .map(|n| self.increment_bytes_written(n))
+        {
+            Ok(()) => {
+                self.move_indices_below.push(self.move_index);
+                self.move_index = self
+                    .config
+                    .starting_move_number
+                    .get()
+                    .max(self.move_index.saturating_sub(1));
+
+                ControlFlow::Continue(Skip(false))
+            }
             Err(e) => ControlFlow::Break(Err(e)),
         }
     }
 
-    fn end_variation(&mut self, movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
-        match movetext.write_end_variation(self) {
+    /// Writes a closed parenthesis (`(`) if there was a previous open parenthesis (`(`).
+    fn end_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output> {
+        match self.write_end_variation() {
             Ok(_) => ControlFlow::Continue(()),
             Err(e) => ControlFlow::Break(Err(e)),
         }
     }
 
-    /// Closes all variations and writes two newlines (`\n`).
-    fn end_game(&mut self, mut movetext: Self::Movetext) -> Self::Output {
-        let mut unclosed_parenthesis = movetext.write_end_variation(self)?;
+    /// Closes all variations (see [`Self::end_variation`]) and writes two newlines (`\n`).
+    fn end_game(&mut self, _: Self::Movetext) -> Self::Output {
+        let mut unclosed_parenthesis = self.write_end_variation()?;
 
         while unclosed_parenthesis {
-            unclosed_parenthesis = movetext.write_end_variation(self)?;
+            unclosed_parenthesis = self.write_end_variation()?;
         }
 
         self.writer
@@ -441,31 +411,38 @@ mod tests {
     #[test]
     fn tag() {
         let mut writer = Writer::new(Vec::new());
-        let mut tags = TagWriter(());
+        let mut tags = writer.begin_tags().continue_value().unwrap();
 
-        tags.write_tag(b"Event", RawTag(b"Unit testing \"\\ \""), &mut writer)
+        writer
+            .tag(&mut tags, b"Event", RawTag(b"Unit testing \"\\ \""))
+            .continue_value()
             .unwrap();
         assert_eq!(writer.writer, b"[Event \"Unit testing \\\"\\ \\\"\"]\n");
 
         writer.writer.clear();
 
-        tags.write_tag(b"", RawTag(b""), &mut writer).unwrap();
+        writer
+            .tag(&mut tags, b"", RawTag(b""))
+            .continue_value()
+            .unwrap();
         assert_eq!(writer.writer, b"[ \"\"]\n");
     }
 
     #[test]
     fn san_plus() {
-        // this API is not available to users
         let mut writer = Writer::new(Vec::new());
-        let mut movetext = MovetextWriter(());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
 
-        movetext
-            .write_san_plus(SanPlus::from_ascii(b"e4").unwrap(), &mut writer)
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
             .unwrap();
         assert_eq!(writer.writer, b"1. e4 ");
 
-        movetext
-            .write_san_plus(SanPlus::from_ascii(b"Nd2xf3#").unwrap(), &mut writer)
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nd2xf3#").unwrap())
+            .continue_value()
             .unwrap();
         assert_eq!(writer.writer, b"1. e4 Nd2xf3# ");
 
@@ -475,19 +452,130 @@ mod tests {
         writer.config.always_include_move_number = true;
         let mut movetext = MovetextWriter(());
 
-        movetext
-            .write_san_plus(SanPlus::from_ascii(b"e4").unwrap(), &mut writer)
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
             .unwrap();
         assert_eq!(writer.writer, b"1. e4 ");
 
-        movetext
-            .write_san_plus(SanPlus::from_ascii(b"Nd2xf3#").unwrap(), &mut writer)
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nd2xf3#").unwrap())
+            .continue_value()
             .unwrap();
-        assert_eq!(writer.writer, b"1. e4 2. Nd2xf3# ");
+        assert_eq!(writer.writer, b"1. e4 1. Nd2xf3# ");
     }
 
     #[test]
-    fn variation() {
+    fn longer() {
+        let mut writer = Writer::new(Vec::new());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        let _ = writer
+            .begin_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"d4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .end_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e5").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nf3").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nc6").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer.end_game(movetext).unwrap();
+        assert_eq!(
+            str::from_utf8(&writer.writer).unwrap(),
+            "1. e4 ( d4 ) e5 2. Nf3 Nc6 \n\n"
+        );
+    }
+
+    #[test]
+    fn longer_variation_later() {
+        let mut writer = Writer::new(Vec::new());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e4").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"e5").unwrap())
+            .continue_value()
+            .unwrap();
+
+        let _ = writer
+            .begin_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"d5").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .end_variation(&mut movetext)
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nf3").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer
+            .san(&mut movetext, SanPlus::from_ascii(b"Nc6").unwrap())
+            .continue_value()
+            .unwrap();
+
+        writer.end_game(movetext).unwrap();
+        assert_eq!(
+            str::from_utf8(&writer.writer).unwrap(),
+            "1. e4 e5 ( d5 ) 2. Nf3 Nc6 \n\n"
+        );
+    }
+
+    #[test]
+    fn variation_immediately() {
+        let mut writer = Writer::new(Vec::new());
+        let tags = writer.begin_tags().continue_value().unwrap();
+        let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+
+        assert!(matches!(
+            writer
+                .begin_variation(&mut movetext),
+            ControlFlow::Break(Err(err)) if err.kind() == io::ErrorKind::InvalidData && err.to_string() == "no SAN written before opening a variation"
+        ));
+    }
+
+    #[test]
+    fn deep_variation() {
         let mut writer = Writer::new(Vec::new());
         writer.scheduled_config_mut().always_include_move_number = true;
         let tags = writer.begin_tags().continue_value().unwrap();
