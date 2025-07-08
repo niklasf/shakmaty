@@ -10,11 +10,7 @@ pub struct Config<Skip> {
     pub skip_variations: Skip,
     /// Defaults to `1`.
     pub starting_move_number: NonZeroUsize,
-    /// Whether to always include move numbers,
-    /// even if the parity does not match the starting move number parity.
-    ///
-    /// For example, if the starting move number is 1 (odd), a move number is even, and
-    /// this is set to `true`, that move number will be included.
+    /// Whether to always include move numbers.
     ///
     /// Defaults to `false`.
     pub always_include_move_number: bool,
