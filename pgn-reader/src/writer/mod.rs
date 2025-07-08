@@ -178,7 +178,13 @@ where
         }
     }
 
-    /// Writes a newline (`\n`) if no tags were written.
+    /// Writes a newline (`\n`) if any tags were written.
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::comment`]
+    /// - [`Self::end_game`]
     fn begin_movetext(&mut self, _: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
         if self.bytes_written == 0 {
             return ControlFlow::Continue(MovetextWriter(()));
@@ -195,6 +201,16 @@ where
     }
 
     /// Writes a [`SanPlus`].
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::nag`]
+    /// - [`Self::comment`]
+    /// - [`Self::begin_variation`]
+    /// - [`Self::end_variation`]
+    /// - [`Self::outcome`]
+    /// - [`Self::end_game`]
     fn san(&mut self, _: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {
         if !self.allowed_tokens.contains(MovetextToken::SAN) {
             return ControlFlow::Break(Err(Error::InvalidToken {
@@ -234,6 +250,20 @@ where
     }
 
     /// Writes a [`Nag`].
+    ///
+    /// # Errors
+    ///
+    /// Apart from the usual (see [`Error`]), also errors if the last [`Self::nag`] was called on the same
+    /// move as this call.
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::comment`]
+    /// - [`Self::begin_variation`]
+    /// - [`Self::end_variation`]
+    /// - [`Self::outcome`]
+    /// - [`Self::end_game`]
     fn nag(&mut self, _: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
         if self
             .last_nag_move_index
@@ -272,6 +302,16 @@ where
     }
 
     /// Writes a [`RawComment`] surrounded by braces.
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::nag`]
+    /// - [`Self::comment`]
+    /// - [`Self::begin_variation`]
+    /// - [`Self::end_variation`]
+    /// - [`Self::outcome`]
+    /// - [`Self::end_game`]
     fn comment(
         &mut self,
         _: &mut Self::Movetext,
@@ -301,6 +341,11 @@ where
     }
 
     /// Writes an [`Outcome`].
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::end_variation`]
+    /// - [`Self::end_game`]
     fn outcome(&mut self, _: &mut Self::Movetext, outcome: Outcome) -> ControlFlow<Self::Output> {
         if !self.allowed_tokens.contains(MovetextToken::OUTCOME) {
             return ControlFlow::Break(Err(Error::InvalidToken {
@@ -327,6 +372,14 @@ where
     }
 
     /// Writes an open parenthesis (`(`).
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::comment`]
+    /// - [`Self::begin_variation`]
+    /// - [`Self::end_variation`]
+    /// - [`Self::end_game`]
     fn begin_variation(
         &mut self,
         _: &mut Self::Movetext,
@@ -356,6 +409,7 @@ where
                     .max(self.move_index.saturating_sub(1));
                 self.allowed_tokens = MovetextToken::all();
                 self.allowed_tokens.remove(MovetextToken::NAG);
+                self.allowed_tokens.remove(MovetextToken::OUTCOME);
 
                 ControlFlow::Continue(Skip(false))
             }
@@ -364,6 +418,20 @@ where
     }
 
     /// Writes a closed parenthesis (`)`).
+    ///
+    /// # Errors
+    ///
+    /// Apart from the usual (see [`Error`]), also errors if there is no corresponding open variation.
+    ///
+    /// # Methods allowed afterwards
+    ///
+    /// - [`Self::san`]
+    /// - [`Self::nag`]
+    /// - [`Self::comment`]
+    /// - [`Self::begin_variation`]
+    /// - [`Self::end_variation`]
+    /// - [`Self::outcome`]
+    /// - [`Self::end_game`]
     fn end_variation(&mut self, _: &mut Self::Movetext) -> ControlFlow<Self::Output> {
         if self.parent_variation_move_indices.is_empty() {
             self.allowed_tokens.remove(MovetextToken::END_VARIATION);
