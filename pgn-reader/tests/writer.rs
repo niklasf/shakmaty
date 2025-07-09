@@ -65,7 +65,7 @@ fn normal() {
 
     let correct = "[Event \"Testing\\\"\"]\n[Site \"#[test]\"]\n\n1. exd4 b2 ( Qxg1 2. Ke1# { brilliant discovered mate } $3 ) 1-0 \n\n";
 
-    assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct);
+    assert_eq!(std::str::from_utf8(&writer.writer).unwrap(), correct);
     assert_eq!(writer.bytes_written(), correct.len());
     assert_eq!(writer.total_bytes_written(), correct.len());
 }
@@ -102,7 +102,7 @@ fn attempt_breakage() {
 
     let correct1 = "1. Nc3 ( ( ( ) ) ) \n\n";
 
-    assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct1);
+    assert_eq!(std::str::from_utf8(&writer.writer).unwrap(), correct1);
     assert_eq!(bytes_written, correct1.len());
     assert_eq!(writer.bytes_written(), correct1.len());
     assert_eq!(writer.total_bytes_written(), correct1.len());
@@ -110,30 +110,30 @@ fn attempt_breakage() {
     writer.writer.clear();
 
     // TODO: Should end_variation do nothing if there is nothing to close?
-//     let tags = writer.begin_tags().continue_value().unwrap();
-//     let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
-//
-//     writer
-//         .end_variation(&mut movetext)
-//         .continue_value()
-//         .unwrap();
-//
-//     writer
-//         .end_variation(&mut movetext)
-//         .continue_value()
-//         .unwrap();
-//
-//     let bytes_written = writer.end_game(movetext).unwrap();
-//
-//     let correct2 = r##"
-//
-// "##;
-//
-//     assert_eq!(str::from_utf8(&writer.writer).unwrap(), correct2);
-//     assert_eq!(bytes_written, correct2.len());
-//     assert_eq!(writer.bytes_written(), correct2.len());
-//     assert_eq!(
-//         writer.total_bytes_written(),
-//         correct1.len() + correct2.len()
-//     );
+    //     let tags = writer.begin_tags().continue_value().unwrap();
+    //     let mut movetext = writer.begin_movetext(tags).continue_value().unwrap();
+    //
+    //     writer
+    //         .end_variation(&mut movetext)
+    //         .continue_value()
+    //         .unwrap();
+    //
+    //     writer
+    //         .end_variation(&mut movetext)
+    //         .continue_value()
+    //         .unwrap();
+    //
+    //     let bytes_written = writer.end_game(movetext).unwrap();
+    //
+    //     let correct2 = r##"
+    //
+    // "##;
+    //
+    //     assert_eq!(std::str::from_utf8(&writer.writer).unwrap(), correct2);
+    //     assert_eq!(bytes_written, correct2.len());
+    //     assert_eq!(writer.bytes_written(), correct2.len());
+    //     assert_eq!(
+    //         writer.total_bytes_written(),
+    //         correct1.len() + correct2.len()
+    //     );
 }

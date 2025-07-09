@@ -95,7 +95,7 @@ fn main() {
 [Annotator \"Ben Finegold\"]\n\n\
 1. h5 e6 ( g6 ) 2. f6 { never play f6! } $4 0-1 \n\n";
 
-    assert_eq!(str::from_utf8(&writer.writer).unwrap(), target);
+    assert_eq!(std::str::from_utf8(&writer.writer).unwrap(), target);
 
     // this count resets every begin_tags
     assert_eq!(writer.bytes_written(), target.len());

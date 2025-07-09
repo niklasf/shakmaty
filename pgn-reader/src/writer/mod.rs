@@ -629,7 +629,7 @@ mod tests {
 
         writer.end_game(movetext).unwrap();
         assert_eq!(
-            str::from_utf8(&writer.writer).unwrap(),
+            std::str::from_utf8(&writer.writer).unwrap(),
             "1. e4 ( d4 ) e5 2. Nf3 Nc6 \n\n"
         );
     }
@@ -677,7 +677,7 @@ mod tests {
 
         writer.end_game(movetext).unwrap();
         assert_eq!(
-            str::from_utf8(&writer.writer).unwrap(),
+            std::str::from_utf8(&writer.writer).unwrap(),
             "1. e4 e5 ( d5 ) 2. Nf3 Nc6 \n\n"
         );
     }
