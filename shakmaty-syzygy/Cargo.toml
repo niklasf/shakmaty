@@ -25,15 +25,15 @@ shakmaty = { version = "0.29", path = "../shakmaty" }
 byteorder = "1.2"
 rustc-hash = "2"
 once_cell = "1.12"
-tracing = "0.1"
+tracing = "0.1.6"
 memmap2 = { version = "0.9", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libc = "0.2" # for optional posix_fadvise
+libc = "0.2.143" # for optional posix_fadvise
 
 [dev-dependencies]
-csv = "1"
-clap = { version = "4", features = ["derive", "deprecated"] }
+csv = "1.3.1"
+clap = { version = "4.5.40", features = ["derive", "deprecated"] }
 criterion = "0.6.0"
 
 [features]

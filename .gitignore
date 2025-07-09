@@ -1,2 +1,3 @@
 target
 shakmaty-syzygy/tables/*/*.[rags]tb[wz]
+Cargo.lock
