@@ -30,10 +30,10 @@ pub trait Visitor {
     /// `ControlFlow::Break(_)` returned from any of the other methods.
     type Output;
 
-    /// Called at the start of the game, directly before reading game tags.
+    /// Called at the start of the game, directly before game tags.
     fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags>;
 
-    /// Called when parsing a game tag pair, like `[White "Deep Blue"]`.
+    /// Called when visiting a game tag pair, like `[White "Deep Blue"]`.
     fn tag(
         &mut self,
         tags: &mut Self::Tags,
@@ -46,7 +46,7 @@ pub trait Visitor {
         ControlFlow::Continue(())
     }
 
-    /// Called after reading the tags of a game, before reading the movetext.
+    /// Called after visiting the tags of a game, before visiting the movetext.
     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext>;
 
     /// Called for each move, like `Nf3+`.
@@ -109,6 +109,6 @@ pub trait Visitor {
         ControlFlow::Continue(())
     }
 
-    /// Called after parsing a game.
+    /// Called after visiting a game.
     fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output;
 }
