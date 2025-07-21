@@ -39,7 +39,7 @@ serde = { version = "1.0.197", default-features = false, optional = true } # ver
 
 [dev-dependencies]
 csv = "1.3.1"
-iai-callgrind = "0.15.2" # update iai-callgrind-runner in ci.yml
+iai-callgrind = "0.16.0" # update iai-callgrind-runner in ci.yml
 serde = { version = "1.0.197", features = ["derive"] }
 serde_with = "3.14.0"
 
