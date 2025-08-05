@@ -18,7 +18,9 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           targets: thumbv6m-none-eabi
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
       - uses: actions/checkout@v4
       - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets
         name: check
@@ -29,7 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
       # exclude private crates and dev targets
       - run: cargo +nightly hack check --workspace --all-features --lib --no-private --no-dev-deps -Zdirect-minimal-versions
         name: check z-direct-minimal-versions
@@ -50,10 +54,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@cargo-hack
-      - uses: taiki-e/install-action@valgrind
-        if: matrix.os == 'ubuntu-latest'
-      - run: cargo install iai-callgrind-runner@0.16.1
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: iai-callgrind-runner@0.16.1,valgrind
         if: matrix.os == 'ubuntu-latest'
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
