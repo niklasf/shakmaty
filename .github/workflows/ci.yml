@@ -53,7 +53,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-hack
       - uses: taiki-e/install-action@valgrind
         if: matrix.os == 'ubuntu-latest'
-      - run: cargo install iai-callgrind-runner@0.15.2
+      - run: cargo install iai-callgrind-runner@0.16.1
         if: matrix.os == 'ubuntu-latest'
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
