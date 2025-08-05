@@ -185,6 +185,16 @@ impl Bitboard {
     }
 
     /// Adds `square`, returning whether the square was newly added.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Square};
+    ///
+    /// let mut bitboard = Bitboard::EMPTY;
+    /// assert_eq!(bitboard.insert(Square::A1), true);
+    /// assert_eq!(bitboard.insert(Square::A1), false);
+    /// ```
     #[must_use = "use Bitboard::add() if return value is not needed"]
     #[inline]
     pub const fn insert(&mut self, square: Square) -> bool {
@@ -348,6 +358,25 @@ impl Bitboard {
     }
 
     /// Returns `self` without the first square.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert_eq!(Bitboard::EMPTY.without_first(), Bitboard::EMPTY);
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.without_first(), Bitboard(0x1e22_2212_0e0a_1220));
+    /// // . 1 1 1 1 . . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 1 1 . . . .
+    /// // . 1 . 1 . . . .
+    /// // . 1 . . 1 . . .
+    /// // . 0 . . . 1 . .
+    /// ```
     #[must_use]
     #[inline]
     pub const fn without_first(self) -> Bitboard {
@@ -356,6 +385,25 @@ impl Bitboard {
     }
 
     /// Returns the bitboard with only the first square of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert_eq!(Bitboard::EMPTY.isolate_first(), Bitboard::EMPTY);
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.isolate_first(), Bitboard(0x0000_0000_0000_0002));
+    /// // . 0 0 0 0 . . .
+    /// // . 0 . . . 0 . .
+    /// // . 0 . . . 0 . .
+    /// // . 0 . . 0 . . .
+    /// // . 0 0 0 . . . .
+    /// // . 0 . 0 . . . .
+    /// // . 0 . . 0 . . .
+    /// // . 1 . . . 0 . .
+    /// ```
     #[must_use]
     #[inline]
     pub const fn isolate_first(self) -> Bitboard {
@@ -386,27 +434,61 @@ impl Bitboard {
     /// Discards the last square.
     #[inline]
     pub const fn discard_last(&mut self) {
-        if let Some(last) = self.last() {
-            self.toggle_const(Bitboard::from_square(last));
-        }
+        *self = self.without_last();
     }
 
     /// Returns `self` without the last square.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert_eq!(Bitboard::EMPTY.without_last(), Bitboard::EMPTY);
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.without_last(), Bitboard(0x0e22_2212_0e0a_1222));
+    /// // . 1 1 1 0 . . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . . 1 . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 1 1 . . . .
+    /// // . 1 . 1 . . . .
+    /// // . 1 . . 1 . . .
+    /// // . 1 . . . 1 . .
+    /// ```
     #[must_use]
     #[inline]
-    pub const fn without_last(mut self) -> Bitboard {
-        self.discard_last();
-        self
+    pub const fn without_last(self) -> Bitboard {
+        let Bitboard(mask) = self;
+        Bitboard(mask & !((1u64 << 63).wrapping_shr(mask.leading_zeros())))
     }
 
     /// Returns the bitboard with only the last square of `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::Bitboard;
+    ///
+    /// assert_eq!(Bitboard::EMPTY.isolate_last(), Bitboard::EMPTY);
+    ///
+    /// let bitboard = Bitboard(0x1e22_2212_0e0a_1222);
+    /// assert_eq!(bitboard.isolate_last(), Bitboard(0x1000_0000_0000_0000));
+    /// // . 0 0 0 1 . . .
+    /// // . 0 . . . 0 . .
+    /// // . 0 . . . 0 . .
+    /// // . 0 . . 0 . . .
+    /// // . 0 0 0 . . . .
+    /// // . 0 . 0 . . . .
+    /// // . 0 . . 0 . . .
+    /// // . 0 . . . 0 . .
+    /// ```
     #[must_use]
     #[inline]
     pub const fn isolate_last(self) -> Bitboard {
-        match self.last() {
-            Some(square) => Bitboard::from_square(square),
-            None => Bitboard::EMPTY,
-        }
+        let Bitboard(mask) = self;
+        Bitboard(mask & ((1u64 << 63).wrapping_shr(mask.leading_zeros())))
     }
 
     /// Returns the number of squares in `self`.
