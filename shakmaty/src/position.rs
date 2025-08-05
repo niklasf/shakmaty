@@ -3280,16 +3280,6 @@ fn gen_castling_moves<P: Position>(
         }
 
         let king_to = side.king_to(pos.turn());
-        let king_path = attacks::between(king, king_to).with(king);
-        for sq in king_path {
-            if pos
-                .king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king)
-                .any()
-            {
-                return;
-            }
-        }
-
         if pos
             .king_attackers(
                 king_to,
@@ -3299,6 +3289,16 @@ fn gen_castling_moves<P: Position>(
             .any()
         {
             return;
+        }
+
+        let king_path = attacks::between(king, king_to).with(king);
+        for sq in king_path {
+            if pos
+                .king_attackers(sq, !pos.turn(), pos.board().occupied() ^ king)
+                .any()
+            {
+                return;
+            }
         }
 
         moves.push(Move::Castle { king, rook });
