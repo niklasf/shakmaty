@@ -3311,8 +3311,8 @@ trait Stepper {
     fn attacks(from: Square) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) {
-            for to in Self::attacks(from) & target {
+        pos.our(Self::ROLE).for_each(|from| {
+            (Self::attacks(from) & target).for_each(|to| {
                 moves.push(Move::Normal {
                     role: Self::ROLE,
                     from,
@@ -3320,8 +3320,8 @@ trait Stepper {
                     to,
                     promotion: None,
                 });
-            }
-        }
+            });
+        });
     }
 }
 
@@ -3330,8 +3330,8 @@ trait Slider {
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
-        for from in pos.our(Self::ROLE) {
-            for to in Self::attacks(from, pos.board().occupied()) & target {
+        pos.our(Self::ROLE).for_each(|from| {
+            (Self::attacks(from, pos.board().occupied()) & target).for_each(|to| {
                 moves.push(Move::Normal {
                     role: Self::ROLE,
                     from,
@@ -3339,8 +3339,8 @@ trait Slider {
                     to,
                     promotion: None,
                 });
-            }
-        }
+            });
+        });
     }
 }
 

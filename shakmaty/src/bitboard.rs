@@ -567,6 +567,18 @@ impl Bitboard {
         }
     }
 
+    #[inline]
+    pub fn for_each<F>(self, mut f: F)
+    where
+        F: FnMut(Square),
+    {
+        let Bitboard(mut mask) = self;
+        while mask != 0 {
+            f(Square::new(mask.trailing_zeros()));
+            mask = mask & mask.wrapping_sub(1);
+        }
+    }
+
     /// Mirror the bitboard vertically.
     ///
     /// # Examples
@@ -1223,6 +1235,20 @@ impl Iterator for IntoIter {
     #[inline]
     fn last(self) -> Option<Square> {
         self.0.last()
+    }
+
+    #[inline]
+    fn fold<B, F>(self, init: B, mut f: F) -> B
+    where
+        F: FnMut(B, Square) -> B,
+    {
+        let mut accum = init;
+        let Bitboard(mut mask) = self.0;
+        while mask != 0 {
+            accum = f(accum, Square::new(mask.trailing_zeros()));
+            mask = mask & mask.wrapping_sub(1);
+        }
+        accum
     }
 }
 
