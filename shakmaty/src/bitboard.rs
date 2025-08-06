@@ -342,6 +342,15 @@ impl Bitboard {
     }
 
     /// Returns the first square, if any.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Square};
+    ///
+    /// assert_eq!(Bitboard::EMPTY.first(), None);
+    /// assert_eq!(Bitboard::FULL.first(), Some(Square::A1));
+    /// ```
     #[inline]
     pub const fn first(self) -> Option<Square> {
         if self.is_empty() {
@@ -414,20 +423,27 @@ impl Bitboard {
     /// Removes and returns the last square, if any.
     #[inline]
     pub const fn pop_back(&mut self) -> Option<Square> {
-        let maybe_square = self.last();
-        if let Some(square) = maybe_square {
-            self.toggle_const(Bitboard::from_square(square));
-        }
-        maybe_square
+        let square = self.last();
+        self.discard_last();
+        square
     }
 
     /// Returns the last square.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Square};
+    ///
+    /// assert_eq!(Bitboard::EMPTY.last(), None);
+    /// assert_eq!(Bitboard::FULL.last(), Some(Square::H8));
+    /// ```
     #[inline]
     pub const fn last(self) -> Option<Square> {
-        if self.is_empty() {
-            None
+        if let Some(index) = self.0.checked_ilog2() {
+            Some(Square::new(index))
         } else {
-            Some(Square::new(63 - self.0.leading_zeros()))
+            None
         }
     }
 
