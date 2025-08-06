@@ -473,7 +473,7 @@ impl Bitboard {
     /// // . 1 . . 1 . . .
     /// // . 1 . . . 1 . .
     /// ```
-    #[must_use]
+    #[must_use = "use Bitboard::discard_last() if return value is not needed"]
     #[inline]
     pub const fn without_last(self) -> Bitboard {
         let Bitboard(mask) = self;
