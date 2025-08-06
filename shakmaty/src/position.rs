@@ -1097,7 +1097,7 @@ impl Position for Chess {
                     _ => {}
                 }
 
-                for from in piece_from & self.our(role) {
+                (piece_from & self.our(role)).for_each(|from| {
                     moves.push(Move::Normal {
                         role,
                         from,
@@ -1105,7 +1105,7 @@ impl Position for Chess {
                         to,
                         promotion: None,
                     });
-                }
+                });
             }
         } else {
             evasions(self, king, checkers, &mut moves);
@@ -3233,7 +3233,7 @@ fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
 }
 
 fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &mut MoveList) {
-    for to in attacks::king_attacks(king) & target {
+    (attacks::king_attacks(king) & target).for_each(|to| {
         if pos
             .board()
             .attacks_to(to, !pos.turn(), pos.board().occupied())
@@ -3247,16 +3247,16 @@ fn gen_safe_king<P: Position>(pos: &P, king: Square, target: Bitboard, moves: &m
                 promotion: None,
             });
         }
-    }
+    });
 }
 
 fn evasions<P: Position>(pos: &P, king: Square, checkers: Bitboard, moves: &mut MoveList) {
     let sliders = checkers & pos.board().sliders();
 
     let mut attacked = Bitboard(0);
-    for checker in sliders {
+    sliders.for_each(|checker| {
         attacked |= attacks::ray(checker, king) ^ checker;
-    }
+    });
 
     gen_safe_king(pos, king, !pos.us() & !attacked, moves);
 
@@ -3327,6 +3327,7 @@ trait Stepper {
 
 trait Slider {
     const ROLE: Role;
+
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard;
 
     fn gen_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
@@ -3351,6 +3352,8 @@ enum QueenTag {}
 
 impl Stepper for KnightTag {
     const ROLE: Role = Role::Knight;
+
+    #[inline]
     fn attacks(from: Square) -> Bitboard {
         attacks::knight_attacks(from)
     }
@@ -3358,6 +3361,8 @@ impl Stepper for KnightTag {
 
 impl Slider for BishopTag {
     const ROLE: Role = Role::Bishop;
+
+    #[inline]
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
         attacks::bishop_attacks(from, occupied)
     }
@@ -3365,6 +3370,8 @@ impl Slider for BishopTag {
 
 impl Slider for RookTag {
     const ROLE: Role = Role::Rook;
+
+    #[inline]
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
         attacks::rook_attacks(from, occupied)
     }
@@ -3372,6 +3379,8 @@ impl Slider for RookTag {
 
 impl Slider for QueenTag {
     const ROLE: Role = Role::Queen;
+
+    #[inline]
     fn attacks(from: Square, occupied: Bitboard) -> Bitboard {
         attacks::queen_attacks(from, occupied)
     }
@@ -3392,7 +3401,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     ) {
         let captures = dir.translate(pos.our(Role::Pawn)) & pos.them() & target;
 
-        for to in captures & !Bitboard::BACKRANKS {
+        (captures & !Bitboard::BACKRANKS).for_each(|to| {
             // Safety: See above.
             let from = unsafe { to.offset_unchecked(-dir.offset()) };
             moves.push(Move::Normal {
@@ -3402,13 +3411,13 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
                 to,
                 promotion: None,
             });
-        }
+        });
 
-        for to in captures & Bitboard::BACKRANKS {
+        (captures & Bitboard::BACKRANKS).for_each(|to| {
             // Safety: See above.
             let from = unsafe { to.offset_unchecked(-dir.offset()) };
             push_promotions(moves, from, to, pos.board().role_at(to));
-        }
+        });
     }
     gen_pawn_captures(
         pos,
@@ -3429,7 +3438,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
     let single_moves =
         pos.our(Role::Pawn).shift(pos.turn().fold_wb(8, -8)) & !pos.board().occupied();
 
-    for to in single_moves & target & !Bitboard::BACKRANKS {
+    (single_moves & target & !Bitboard::BACKRANKS).for_each(|to| {
         // Safety: See above.
         let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-8, 8)) };
         moves.push(Move::Normal {
@@ -3439,20 +3448,20 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
             to,
             promotion: None,
         });
-    }
+    });
 
-    for to in single_moves & target & Bitboard::BACKRANKS {
+    (single_moves & target & Bitboard::BACKRANKS).for_each(|to| {
         // Safety: See above.
         let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-8, 8)) };
         push_promotions(moves, from, to, None);
-    }
+    });
 
     // Generate double-step advances.
     let double_moves = single_moves.shift(pos.turn().fold_wb(8, -8))
         & pos.turn().fold_wb(Bitboard::SOUTH, Bitboard::NORTH)
         & !pos.board().occupied();
 
-    for to in double_moves & target {
+    (double_moves & target).for_each(|to| {
         // Safety: See above.
         let from = unsafe { to.offset_unchecked(pos.turn().fold_wb(-16, 16)) };
         moves.push(Move::Normal {
@@ -3462,7 +3471,7 @@ fn gen_pawn_moves<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) 
             to,
             promotion: None,
         });
-    }
+    });
 }
 
 fn push_promotions(moves: &mut MoveList, from: Square, to: Square, capture: Option<Role>) {
@@ -3486,10 +3495,12 @@ fn gen_en_passant(
     let mut found = false;
 
     if let Some(EnPassant(to)) = ep_square {
-        for from in board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to) {
-            moves.push(Move::EnPassant { from, to });
-            found = true;
-        }
+        (board.pawns() & board.by_color(turn) & attacks::pawn_attacks(!turn, to)).for_each(
+            |from| {
+                moves.push(Move::EnPassant { from, to });
+                found = true;
+            },
+        );
     }
 
     found
@@ -3500,14 +3511,12 @@ fn slider_blockers(board: &Board, enemy: Bitboard, king: Square) -> Bitboard {
         | (attacks::bishop_attacks(king, Bitboard(0)) & board.bishops_and_queens());
 
     let mut blockers = Bitboard(0);
-
-    for sniper in snipers & enemy {
+    (snipers & enemy).for_each(|sniper| {
         let b = attacks::between(king, sniper) & board.occupied();
-
         if !b.more_than_one() {
             blockers.add(b);
         }
-    }
+    });
 
     blockers
 }
