@@ -1,5 +1,14 @@
 # Changelog for shakmaty
 
+## v0.29.1
+
+- Fix `PackedSetup::pack_board()` panics if any rook moved from its default
+  position.
+- Add `Bitboard::for_each()`.
+- Optionally implement `bincode::{Encode, Decode}` for vocabulary types.
+- Sligthly optimize `Bitboard::{last,without_last,discard_last,isolate_last}()`,
+  nested/chained bitboard iterators, and move generation.
+
 ## v0.29.0
 
 - Former `Outcome` is now `KnownOutcome`, introduce `Outcome::Unknown`.
