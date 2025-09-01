@@ -21,7 +21,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets
         name: check
       - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi
@@ -29,7 +29,7 @@ jobs:
   check-z-direct-minimal-versions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@nightly
       - uses: taiki-e/install-action@v2
         with:
@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: cargo doc --all-features
         env:
           RUSTDOCFLAGS: "-D warnings --cfg docs_rs"
@@ -61,7 +61,7 @@ jobs:
         with:
           tool: iai-callgrind-runner@0.16.1,valgrind
         if: matrix.os == 'ubuntu-latest'
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/cache@v4
         id: cache
         with:
