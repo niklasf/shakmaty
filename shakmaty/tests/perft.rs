@@ -5,9 +5,10 @@ use std::{
 
 use shakmaty::{CastlingMode, Chess, FromSetup, Position, PositionError, fen::Fen, perft};
 
-fn test_perft_file<P>(path: &str, node_limit: u64)
+fn test_perft_file_impl<P, F>(path: &str, node_limit: u64, handle_error: F)
 where
     P: Position + FromSetup + Default + Clone,
+    F: Fn(PositionError<P>) -> P,
 {
     let file = File::open(path).expect("failed to open test suite");
     let reader = BufReader::new(file);
@@ -28,8 +29,7 @@ where
                     .parse::<Fen>()
                     .expect("invalid fen")
                     .into_position(CastlingMode::Chess960)
-                    .or_else(PositionError::ignore_impossible_check)
-                    .expect("illegal fen");
+                    .unwrap_or_else(|err| handle_error(err));
             }
             Some("perft") => {
                 let mut params = slices.next().expect("missing perft params").splitn(2, ' ');
@@ -55,10 +55,19 @@ where
     }
 }
 
+fn test_perft_file<P>(path: &str, node_limit: u64)
+where
+    P: Position + FromSetup + Default + Clone,
+{
+    test_perft_file_impl::<P, _>(path, node_limit, |err| panic!("illegal epd: {}", err));
+}
+
 #[test]
 #[cfg_attr(miri, ignore)]
 fn test_tricky_perft() {
-    test_perft_file::<Chess>("tests/tricky.perft", 100_000);
+    test_perft_file_impl::<Chess, _>("tests/tricky.perft", 100_000, |err| {
+        err.ignore_impossible_check().expect("illegal epd")
+    });
 }
 
 #[test]
