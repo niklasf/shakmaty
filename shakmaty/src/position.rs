@@ -260,7 +260,7 @@ bitflags! {
     /// chess software (in particular Stockfish and Lichess) able to correctly
     /// handle the position, and are they likely to continue to do so in future
     /// versions?
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct PositionErrorKinds: u32 {
         /// There are no pieces on the board.
         const EMPTY_BOARD = 1 << 0;
@@ -3193,6 +3193,11 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
         }
     }
 
+    // Multiple steppers cannot be checkers.
+    if (checkers & pos.board().steppers()).more_than_one() {
+        errors |= PositionErrorKinds::IMPOSSIBLE_CHECK;
+    }
+
     errors
 }
 
@@ -3556,7 +3561,7 @@ fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fen::Fen;
+    use crate::fen::{Epd, Fen};
 
     #[cfg(feature = "alloc")]
     struct _AssertObjectSafe(alloc::boxed::Box<dyn Position>);
@@ -3996,5 +4001,56 @@ mod tests {
             role: Role::Pawn,
             to: Square::D4
         }));
+    }
+
+    #[test]
+    fn test_from_setup() {
+        for (epd, expected_error_kinds) in [
+            (
+                "1rrrrrk1/1PPPPPPP/8/8/8/8/8/6K1 b - -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
+                "1rrrrrk1/PPPPPPPP/8/8/8/8/8/6K1 b - -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
+                "1rrrrrkr/PPPPPPPP/8/8/8/8/8/6K1 b - -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
+                "1q4k1/3r1Ppp/5NP1/pP6/8/1Q6/3B4/2K2R2 b - -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
+                "2b5/1nbn4/n3n3/1kn5/n3n3/1n1n4/5RQ1/2KQ1R2 w K -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
+                "1n1b1Q2/1b4rp/1q5P/2Pppr2/p2kP1pR/2NP4/P2Bq1K1/RQ3Br1 w - -",
+                PositionErrorKinds::default(),
+            ),
+            (
+                "1n1b1Q2/1b4rp/1q5P/2Pppr2/p2kP1pR/2NP4/P2Bq1K1/RQ3Bq1 w - -",
+                PositionErrorKinds::default(),
+            ),
+            (
+                "1n1b1Q2/qb4rp/7P/2Pppr2/p2kP1p1/2NP4/P2Bq1KR/RQ3Br1 w - -",
+                PositionErrorKinds::default(),
+            ),
+            (
+                "1n1b1Q2/qb4rp/7P/2Pppr2/p2kP1p1/2NP4/P2Bq1KR/RQ3Bq1 w - -",
+                PositionErrorKinds::default(),
+            ),
+        ] {
+            let error_kinds = epd
+                .parse::<Epd>()
+                .expect("valid epd")
+                .into_position::<Chess>(CastlingMode::Chess960)
+                .map_err(|err| err.kinds())
+                .err()
+                .unwrap_or_default();
+            assert_eq!(error_kinds, expected_error_kinds, "epd: {epd}");
+        }
     }
 }

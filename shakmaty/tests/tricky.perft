@@ -153,6 +153,25 @@ perft 1 2
 perft 2 92
 perft 3 2528
 
+id two-pawn-checkers
+epd 1rrrrrk1/1PPPPPPP/8/8/8/8/8/6K1 b - -
+perft 1 3
+perft 2 131
+perft 3 1919
+
+id two-stepper-checkers
+epd 1q4k1/3r1Ppp/5NP1/pP6/8/1Q6/3B4/2K2R2 b - -
+perft 1 2
+perft 2 98
+perft 3 2826
+
+id two-knight-checkers
+epd 2b5/1nbn4/n3n3/1kn5/n3n3/1n1n4/5RQ1/2KQ1R2 w K -
+perft 1 2
+perft 2 104
+perft 3 3382
+
+
 #
 # Impossible castling rights
 #
