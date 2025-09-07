@@ -183,3 +183,19 @@ perft 2 206
 perft 3 3672
 perft 4 64639
 perft 5 1320962
+
+#
+# Large number of legal moves via
+# https://www.chess.com/forum/view/fun-with-chess/what-chess-position-has-the-most-number-of-possible-moves
+#
+
+id max-legals
+epd R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - -
+perft 1 218
+perft 2 99
+perft 3 19073
+
+id max-legals-too-much-material
+epd kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
+perft 1 270
+perft 2 0

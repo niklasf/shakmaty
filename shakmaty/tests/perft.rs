@@ -66,7 +66,9 @@ where
 #[cfg_attr(miri, ignore)]
 fn test_tricky_perft() {
     test_perft_file_impl::<Chess, _>("tests/tricky.perft", 100_000, |err| {
-        err.ignore_impossible_check().expect("illegal epd")
+        err.ignore_impossible_check()
+            .or_else(PositionError::ignore_too_much_material)
+            .expect("illegal epd")
     });
 }
 

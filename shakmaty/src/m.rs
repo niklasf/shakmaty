@@ -229,11 +229,12 @@ pub type MoveList = ArrayVec<
     {
         #[cfg(feature = "variant")]
         {
-            512
+            270 + 6 * 6 * 5
         }
         #[cfg(not(feature = "variant"))]
         {
-            256
+            // kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
+            270
         }
     },
 >;
