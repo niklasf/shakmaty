@@ -291,9 +291,10 @@ bitflags! {
         /// The player not to move is in check.
         const OPPOSITE_CHECK = 1 << 6;
 
-        /// There are impossibly many checkers, two sliding checkers are
-        /// aligned, or check is not possible because the en passant square
-        /// implies that the last move was a double pawn push.
+        /// There are impossibly many checkers, two stepping checkers,
+        /// two sliding checkers are aligned, or check is not possible because
+        /// the en passant square implies that the last move was a double
+        /// pawn push.
         ///
         /// Unlike [`PositionErrorKinds::OPPOSITE_CHECK`], this can be ignored
         /// using [`PositionError::ignore_impossible_check()`], but note that

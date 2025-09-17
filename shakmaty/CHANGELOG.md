@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## v0.29.2
+
+- Fix `MoveList` capacity insufficient when ignoring
+  `PositionErrorKinds::TOO_MUCH_MATERIAL` (and not using `variant` feature).
+- Treat positions with multiple stepping checkers as invalid with
+  `PositionErrorKinds::IMPOSSIBLE_CHECK`.
+
 ## v0.29.1
 
 - Fix `PackedSetup::pack_board()` panics if any rook moved from its default
@@ -209,7 +216,7 @@ Other changes:
 ## v0.20.6
 
 - Fix parsing of empty string as `Fen`.
-- Fix `PositionErrorKings::MISSING_KING` given for too many kings.
+- Fix `PositionErrorKinds::MISSING_KING` given for too many kings.
 - Fix minimum required `bitflags` version (`-Z minimal-versions`).
 - Tighten `PositionErrorKinds::IMPOSSIBLE_MATERIAL`.
 
