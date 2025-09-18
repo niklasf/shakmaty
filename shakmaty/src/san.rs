@@ -752,6 +752,10 @@ impl Reader<'_> {
                     return None;
                 }
             }
+            b'P' => {
+                self.bump();
+                Role::Pawn
+            }
             _ => Role::Pawn,
         };
 
