@@ -752,6 +752,10 @@ impl Reader<'_> {
                     return None;
                 }
             }
+            b'P' => {
+                self.bump();
+                Role::Pawn
+            }
             _ => Role::Pawn,
         };
 
@@ -975,6 +979,44 @@ mod tests {
             }
         );
         assert_eq!(san.to_string(), "6h8");
+    }
+
+    #[test]
+    fn test_pawn_move_with_p() {
+        let san = "Pe4".parse::<San>().expect("short san with P");
+        assert_eq!(
+            san,
+            San::Normal {
+                role: Role::Pawn,
+                file: None,
+                rank: None,
+                capture: false,
+                to: Square::E4,
+                promotion: None,
+            }
+        );
+
+        let san = "Pe1xh7=Q".parse::<San>().expect("long san with P");
+        assert_eq!(
+            san,
+            San::Normal {
+                role: Role::Pawn,
+                file: Some(File::E),
+                rank: Some(Rank::First),
+                capture: true,
+                to: Square::H7,
+                promotion: Some(Role::Queen),
+            }
+        );
+
+        let san = "P@f2".parse::<San>().expect("put san with P");
+        assert_eq!(
+            san,
+            San::Put {
+                role: Role::Pawn,
+                to: Square::F2,
+            }
+        );
     }
 
     #[cfg(feature = "alloc")]
