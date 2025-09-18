@@ -1548,7 +1548,7 @@ pub(crate) mod variant {
             let ep_square = match EnPassant::from_setup(&setup) {
                 Ok(ep_square) => ep_square,
                 Err(()) => {
-                    errors |= PositionErrorKinds::INVALID_CASTLING_RIGHTS;
+                    errors |= PositionErrorKinds::INVALID_EP_SQUARE;
                     None
                 }
             };
