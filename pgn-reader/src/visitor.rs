@@ -50,6 +50,7 @@ pub trait Visitor {
     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext>;
 
     /// Called for each move, like `Nf3+`.
+    /// Not called for moves in variations.
     fn san(
         &mut self,
         movetext: &mut Self::Movetext,
@@ -89,6 +90,17 @@ pub trait Visitor {
     ) -> ControlFlow<Self::Output, Skip> {
         let _movetext = movetext;
         ControlFlow::Continue(Skip(false))
+    }
+
+    /// Called for each move within variation text.
+    fn variation_san(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        san_plus: SanPlus,
+    ) -> ControlFlow<Self::Output> {
+        let _movetext = movetext;
+        let _san_plus = san_plus;
+        ControlFlow::Continue(())
     }
 
     /// Called for each `)`. It is *not* guaranteed that there was a

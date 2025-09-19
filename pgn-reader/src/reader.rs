@@ -60,6 +60,7 @@ impl<R: Read> ReaderBuilder<R> {
             )),
             pending_skip_tags: false,
             pending_skip_movetext: false,
+            in_variation: false,
         }
     }
 }
@@ -77,6 +78,7 @@ pub struct Reader<R> {
     movetext_token_bytes: usize,
     pending_skip_tags: bool,
     pending_skip_movetext: bool,
+    in_variation: bool,
 }
 
 impl<R: Read> Reader<R> {
@@ -439,13 +441,23 @@ impl<R: Read> Reader<R> {
                                 }
                                 _ => None,
                             };
-                            let cf = visitor.san(
-                                movetext,
-                                SanPlus {
-                                    san: San::Castle(side),
-                                    suffix,
-                                },
-                            );
+                            let cf = if self.in_variation {
+                                visitor.variation_san(
+                                    movetext,
+                                    SanPlus {
+                                        san: San::Castle(side),
+                                        suffix,
+                                    },
+                                )
+                            } else {
+                                visitor.san(
+                                    movetext,
+                                    SanPlus {
+                                        san: San::Castle(side),
+                                        suffix,
+                                    },
+                                )
+                            };
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -503,7 +515,9 @@ impl<R: Read> Reader<R> {
                     self.buffer.bump();
                     match visitor.begin_variation(movetext) {
                         ControlFlow::Continue(Skip(true)) => self.skip_variation()?,
-                        ControlFlow::Continue(Skip(false)) => (),
+                        ControlFlow::Continue(Skip(false)) => {
+                            self.in_variation = true;
+                        }
                         ControlFlow::Break(output) => {
                             return Ok(ControlFlow::Break(output));
                         }
@@ -511,6 +525,7 @@ impl<R: Read> Reader<R> {
                 }
                 b')' => {
                     self.buffer.bump();
+                    self.in_variation = false;
                     let cf = visitor.end_variation(movetext);
                     if cf.is_break() {
                         return Ok(cf);
@@ -579,7 +594,11 @@ impl<R: Read> Reader<R> {
                     if let Ok((san, bytes)) = SanPlus::from_ascii_prefix(self.buffer.data()) {
                         self.buffer.consume(bytes);
                         if self.buffer.peek().is_none_or(is_token_end) {
-                            let cf = visitor.san(movetext, san);
+                            let cf = if self.in_variation {
+                                visitor.variation_san(movetext, san)
+                            } else {
+                                visitor.san(movetext, san)
+                            };
                             if cf.is_break() {
                                 return Ok(cf);
                             }
