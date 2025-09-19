@@ -1124,10 +1124,6 @@ mod tests {
                 }),
                 Token::Nag(Nag::BLUNDER),
                 Token::BeginVariation,
-                Token::San(SanPlus {
-                    san: San::Null,
-                    suffix: None
-                }),
                 Token::Comment(vec![]),
                 Token::EndVariation,
                 Token::San(SanPlus {

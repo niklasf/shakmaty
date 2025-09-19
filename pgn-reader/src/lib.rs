@@ -21,6 +21,7 @@
 //!    - [`Visitor::nag()`]
 //!    - [`Visitor::comment()`]
 //!    - [`Visitor::begin_variation()`] or skip
+//!      - [`Visitor::variation_san()`]
 //!    - [`Visitor::end_variation()`]
 //!    - [`Visitor::outcome()`]
 //! 3. [`Visitor::end_game()`]
