@@ -883,7 +883,10 @@ mod tests {
         EndGame,
     }
 
-    struct CollectTokens;
+    #[derive(Default)]
+    struct CollectTokens {
+        skip_variations: bool,
+    }
 
     impl Visitor for CollectTokens {
         type Tags = Vec<Token>;
@@ -940,7 +943,7 @@ mod tests {
             movetext: &mut Self::Movetext,
         ) -> ControlFlow<Self::Output, Skip> {
             movetext.push(Token::BeginVariation);
-            ControlFlow::Continue(Skip(false))
+            ControlFlow::Continue(Skip(self.skip_variations))
         }
 
         fn variation_san(
@@ -978,7 +981,7 @@ mod tests {
 
         assert!(
             Reader::new(io::Cursor::new(pgn))
-                .read_game(&mut CollectTokens)?
+                .read_game(&mut CollectTokens::default())?
                 .is_none()
         );
 
@@ -993,7 +996,7 @@ mod tests {
 
         assert!(
             Reader::new(io::Cursor::new(pgn))
-                .read_game(&mut CollectTokens)?
+                .read_game(&mut CollectTokens::default())?
                 .is_none()
         );
 
@@ -1007,8 +1010,8 @@ mod tests {
         let pgn = b"1. e4 1-0\n\n\n\n\n  \n";
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
-        assert!(reader.read_game(&mut CollectTokens)?.is_none());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_none());
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
         assert!(reader.skip_game()?);
@@ -1024,15 +1027,15 @@ mod tests {
         let mut reader = Reader::new(io::Cursor::new(pgn));
         let mut skip_reader = Reader::new(io::Cursor::new(pgn));
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
         assert!(skip_reader.skip_game()?);
         assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
         assert!(skip_reader.skip_game()?);
         assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_none());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_none());
         assert!(!skip_reader.skip_game()?);
 
         Ok(())
@@ -1052,7 +1055,9 @@ mod tests {
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
 
-        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        let game = reader
+            .read_game(&mut CollectTokens::default())?
+            .expect("found game");
         assert_eq!(
             game,
             &[
@@ -1067,7 +1072,9 @@ mod tests {
             ]
         );
 
-        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        let game = reader
+            .read_game(&mut CollectTokens::default())?
+            .expect("found game");
         assert_eq!(
             game,
             &[
@@ -1087,7 +1094,7 @@ mod tests {
             br#"[White "hello\" "][Black "world"]1.f3! e5$71 2.g4 ?? (-- {}) O-O O-O-O#!?0-1"#;
 
         let game = Reader::new(io::Cursor::new(pgn))
-            .read_game(&mut CollectTokens)?
+            .read_game(&mut CollectTokens::default())?
             .expect("found game");
 
         assert_eq!(
@@ -1160,11 +1167,61 @@ mod tests {
     }
 
     #[test]
+    fn test_skip_variations() -> io::Result<()> {
+        let pgn = "1. d4 { [%eval 0.87] [%clk 0:05:00] } 1... f5?? { (0.87 → 3.26) Blunder. d5 was best. } { [%eval 3.26] [%clk 0:05:00] } (1... d5 2. Bf4 g6 3. e3 Nf6 4. Nc3 Bg7 5. Nge2 h6 6. Ng3)".as_bytes();
+
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens {
+                skip_variations: true,
+            })?
+            .expect("found game");
+
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::BeginMovetext,
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::D4,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Comment(b" [%eval 0.87] [%clk 0:05:00] ".to_vec()),
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::F5,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Nag(Nag::BLUNDER),
+                Token::Comment(" (0.87 → 3.26) Blunder. d5 was best. ".as_bytes().to_vec()),
+                Token::Comment(b" [%eval 3.26] [%clk 0:05:00] ".to_vec()),
+                Token::BeginVariation,
+                Token::EndVariation,
+                Token::EndGame
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn test_outcomes() -> io::Result<()> {
         let pgn = "1-0 0-1 1/2-1/2 1–0 0–1 ½–½".as_bytes();
 
         let game = Reader::new(io::Cursor::new(pgn))
-            .read_game(&mut CollectTokens)?
+            .read_game(&mut CollectTokens::default())?
             .expect("found game");
 
         assert_eq!(
