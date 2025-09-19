@@ -877,6 +877,7 @@ mod tests {
         Nag(Nag),
         Comment(Vec<u8>),
         BeginVariation,
+        VariationSan(SanPlus),
         EndVariation,
         Outcome(Outcome),
         EndGame,
@@ -940,6 +941,15 @@ mod tests {
         ) -> ControlFlow<Self::Output, Skip> {
             movetext.push(Token::BeginVariation);
             ControlFlow::Continue(Skip(false))
+        }
+
+        fn variation_san(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            san_plus: SanPlus,
+        ) -> ControlFlow<Self::Output> {
+            movetext.push(Token::VariationSan(san_plus));
+            ControlFlow::Continue(())
         }
 
         fn end_variation(&mut self, movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
@@ -1124,6 +1134,10 @@ mod tests {
                 }),
                 Token::Nag(Nag::BLUNDER),
                 Token::BeginVariation,
+                Token::VariationSan(SanPlus {
+                    san: San::Null,
+                    suffix: None
+                }),
                 Token::Comment(vec![]),
                 Token::EndVariation,
                 Token::San(SanPlus {
