@@ -1,5 +1,13 @@
 # Changelog for shakmaty
 
+## v0.29.3
+
+- Fix `Antichess::from_setup()` fails with
+  `PositionErrorKinds::INVALID_CASTLING_RIGHTS` where
+  `PositionErrorKinds::INVALID_EP_SQUARE` is expected.
+- Fix parsing SAN with explicit `P` for pawn (in particular Crazyhouse drops
+  like `P@f7`).
+
 ## v0.29.2
 
 - Fix `MoveList` capacity insufficient when ignoring
