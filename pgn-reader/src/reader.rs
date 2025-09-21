@@ -60,6 +60,7 @@ impl<R: Read> ReaderBuilder<R> {
             )),
             pending_skip_tags: false,
             pending_skip_movetext: false,
+            in_variation: false,
         }
     }
 }
@@ -77,6 +78,7 @@ pub struct Reader<R> {
     movetext_token_bytes: usize,
     pending_skip_tags: bool,
     pending_skip_movetext: bool,
+    in_variation: bool,
 }
 
 impl<R: Read> Reader<R> {
@@ -439,13 +441,23 @@ impl<R: Read> Reader<R> {
                                 }
                                 _ => None,
                             };
-                            let cf = visitor.san(
-                                movetext,
-                                SanPlus {
-                                    san: San::Castle(side),
-                                    suffix,
-                                },
-                            );
+                            let cf = if self.in_variation {
+                                visitor.variation_san(
+                                    movetext,
+                                    SanPlus {
+                                        san: San::Castle(side),
+                                        suffix,
+                                    },
+                                )
+                            } else {
+                                visitor.san(
+                                    movetext,
+                                    SanPlus {
+                                        san: San::Castle(side),
+                                        suffix,
+                                    },
+                                )
+                            };
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -503,7 +515,9 @@ impl<R: Read> Reader<R> {
                     self.buffer.bump();
                     match visitor.begin_variation(movetext) {
                         ControlFlow::Continue(Skip(true)) => self.skip_variation()?,
-                        ControlFlow::Continue(Skip(false)) => (),
+                        ControlFlow::Continue(Skip(false)) => {
+                            self.in_variation = true;
+                        }
                         ControlFlow::Break(output) => {
                             return Ok(ControlFlow::Break(output));
                         }
@@ -511,6 +525,7 @@ impl<R: Read> Reader<R> {
                 }
                 b')' => {
                     self.buffer.bump();
+                    self.in_variation = false;
                     let cf = visitor.end_variation(movetext);
                     if cf.is_break() {
                         return Ok(cf);
@@ -579,7 +594,11 @@ impl<R: Read> Reader<R> {
                     if let Ok((san, bytes)) = SanPlus::from_ascii_prefix(self.buffer.data()) {
                         self.buffer.consume(bytes);
                         if self.buffer.peek().is_none_or(is_token_end) {
-                            let cf = visitor.san(movetext, san);
+                            let cf = if self.in_variation {
+                                visitor.variation_san(movetext, san)
+                            } else {
+                                visitor.san(movetext, san)
+                            };
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -858,12 +877,16 @@ mod tests {
         Nag(Nag),
         Comment(Vec<u8>),
         BeginVariation,
+        VariationSan(SanPlus),
         EndVariation,
         Outcome(Outcome),
         EndGame,
     }
 
-    struct CollectTokens;
+    #[derive(Default)]
+    struct CollectTokens {
+        skip_variations: bool,
+    }
 
     impl Visitor for CollectTokens {
         type Tags = Vec<Token>;
@@ -920,7 +943,16 @@ mod tests {
             movetext: &mut Self::Movetext,
         ) -> ControlFlow<Self::Output, Skip> {
             movetext.push(Token::BeginVariation);
-            ControlFlow::Continue(Skip(false))
+            ControlFlow::Continue(Skip(self.skip_variations))
+        }
+
+        fn variation_san(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            san_plus: SanPlus,
+        ) -> ControlFlow<Self::Output> {
+            movetext.push(Token::VariationSan(san_plus));
+            ControlFlow::Continue(())
         }
 
         fn end_variation(&mut self, movetext: &mut Self::Movetext) -> ControlFlow<Self::Output> {
@@ -949,7 +981,7 @@ mod tests {
 
         assert!(
             Reader::new(io::Cursor::new(pgn))
-                .read_game(&mut CollectTokens)?
+                .read_game(&mut CollectTokens::default())?
                 .is_none()
         );
 
@@ -964,7 +996,7 @@ mod tests {
 
         assert!(
             Reader::new(io::Cursor::new(pgn))
-                .read_game(&mut CollectTokens)?
+                .read_game(&mut CollectTokens::default())?
                 .is_none()
         );
 
@@ -978,8 +1010,8 @@ mod tests {
         let pgn = b"1. e4 1-0\n\n\n\n\n  \n";
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
-        assert!(reader.read_game(&mut CollectTokens)?.is_none());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_none());
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
         assert!(reader.skip_game()?);
@@ -995,15 +1027,15 @@ mod tests {
         let mut reader = Reader::new(io::Cursor::new(pgn));
         let mut skip_reader = Reader::new(io::Cursor::new(pgn));
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
         assert!(skip_reader.skip_game()?);
         assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_some());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_some());
         assert!(skip_reader.skip_game()?);
         assert_eq!(reader.stream_position()?, skip_reader.stream_position()?);
 
-        assert!(reader.read_game(&mut CollectTokens)?.is_none());
+        assert!(reader.read_game(&mut CollectTokens::default())?.is_none());
         assert!(!skip_reader.skip_game()?);
 
         Ok(())
@@ -1023,7 +1055,9 @@ mod tests {
 
         let mut reader = Reader::new(io::Cursor::new(pgn));
 
-        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        let game = reader
+            .read_game(&mut CollectTokens::default())?
+            .expect("found game");
         assert_eq!(
             game,
             &[
@@ -1038,7 +1072,9 @@ mod tests {
             ]
         );
 
-        let game = reader.read_game(&mut CollectTokens)?.expect("found game");
+        let game = reader
+            .read_game(&mut CollectTokens::default())?
+            .expect("found game");
         assert_eq!(
             game,
             &[
@@ -1058,7 +1094,7 @@ mod tests {
             br#"[White "hello\" "][Black "world"]1.f3! e5$71 2.g4 ?? (-- {}) O-O O-O-O#!?0-1"#;
 
         let game = Reader::new(io::Cursor::new(pgn))
-            .read_game(&mut CollectTokens)?
+            .read_game(&mut CollectTokens::default())?
             .expect("found game");
 
         assert_eq!(
@@ -1105,7 +1141,7 @@ mod tests {
                 }),
                 Token::Nag(Nag::BLUNDER),
                 Token::BeginVariation,
-                Token::San(SanPlus {
+                Token::VariationSan(SanPlus {
                     san: San::Null,
                     suffix: None
                 }),
@@ -1131,11 +1167,61 @@ mod tests {
     }
 
     #[test]
+    fn test_skip_variations() -> io::Result<()> {
+        let pgn = "1. d4 { [%eval 0.87] [%clk 0:05:00] } 1... f5?? { (0.87 → 3.26) Blunder. d5 was best. } { [%eval 3.26] [%clk 0:05:00] } (1... d5 2. Bf4 g6 3. e3 Nf6 4. Nc3 Bg7 5. Nge2 h6 6. Ng3)".as_bytes();
+
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens {
+                skip_variations: true,
+            })?
+            .expect("found game");
+
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::BeginMovetext,
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::D4,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Comment(b" [%eval 0.87] [%clk 0:05:00] ".to_vec()),
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::F5,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
+                Token::Nag(Nag::BLUNDER),
+                Token::Comment(" (0.87 → 3.26) Blunder. d5 was best. ".as_bytes().to_vec()),
+                Token::Comment(b" [%eval 3.26] [%clk 0:05:00] ".to_vec()),
+                Token::BeginVariation,
+                Token::EndVariation,
+                Token::EndGame
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn test_outcomes() -> io::Result<()> {
         let pgn = "1-0 0-1 1/2-1/2 1–0 0–1 ½–½".as_bytes();
 
         let game = Reader::new(io::Cursor::new(pgn))
-            .read_game(&mut CollectTokens)?
+            .read_game(&mut CollectTokens::default())?
             .expect("found game");
 
         assert_eq!(
