@@ -81,6 +81,22 @@ impl Move {
         )
     }
 
+    /// Checks if the move converts to a different material configuration
+    /// (capture, promotion, Crazyhouse drop).
+    pub const fn is_conversion(self) -> bool {
+        matches!(
+            self,
+            Move::Normal {
+                capture: Some(_),
+                ..
+            } | Move::Normal {
+                promotion: Some(_),
+                ..
+            } | Move::EnPassant { .. }
+                | Move::Put { .. }
+        )
+    }
+
     /// Checks if the move is en passant.
     pub const fn is_en_passant(self) -> bool {
         matches!(self, Move::EnPassant { .. })
