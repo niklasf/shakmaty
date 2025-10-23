@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## v0.29.4
+
+- Add `Move::is_conversion()`.
+- Add `UciMove::{is_normal,is_put,is_null,from,to,promotion,is_promotion}()`.
+- Restore compatibility with nightly builds on docs.rs after `doc_auto_cfg`
+  was merged into `doc_cfg`.
+
 ## v0.29.3
 
 - Fix `Antichess::from_setup()` fails with
