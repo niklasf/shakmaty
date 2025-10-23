@@ -29,7 +29,7 @@ where
                     .parse::<Fen>()
                     .expect("invalid fen")
                     .into_position(CastlingMode::Chess960)
-                    .unwrap_or_else(|err| handle_error(err));
+                    .unwrap_or_else(&handle_error);
             }
             Some("perft") => {
                 let mut params = slices.next().expect("missing perft params").splitn(2, ' ');
