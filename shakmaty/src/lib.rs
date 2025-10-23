@@ -75,7 +75,7 @@
 
 #![no_std]
 #![warn(missing_debug_implementations)]
-#![cfg_attr(docs_rs, feature(doc_auto_cfg))]
+#![cfg_attr(docs_rs, feature(doc_cfg))]
 #![allow(clippy::too_many_arguments)]
 
 #[cfg(feature = "alloc")]

@@ -38,7 +38,7 @@
 
 #![warn(missing_debug_implementations)]
 #![warn(missing_docs)]
-#![cfg_attr(docs_rs, feature(doc_auto_cfg))]
+#![cfg_attr(docs_rs, feature(doc_cfg))]
 
 #[macro_use]
 mod errors;
