@@ -163,6 +163,49 @@ impl<'de> serde::Deserialize<'de> for UciMove {
 }
 
 impl UciMove {
+    pub const fn is_normal(self) -> bool {
+        matches!(self, UciMove::Normal { .. })
+    }
+
+    pub const fn is_put(self) -> bool {
+        matches!(self, UciMove::Put { .. })
+    }
+
+    pub const fn is_null(self) -> bool {
+        matches!(self, UciMove::Null)
+    }
+
+    pub const fn from(self) -> Option<Square> {
+        match self {
+            UciMove::Normal { from, .. } => Some(from),
+            UciMove::Put { .. } | UciMove::Null => None,
+        }
+    }
+
+    pub const fn to(self) -> Option<Square> {
+        match self {
+            UciMove::Normal { to, .. } | UciMove::Put { to, .. } => Some(to),
+            UciMove::Null => None,
+        }
+    }
+
+    pub const fn promotion(self) -> Option<Role> {
+        match self {
+            UciMove::Normal { promotion, .. } => promotion,
+            UciMove::Put { .. } | UciMove::Null => None,
+        }
+    }
+
+    pub const fn is_promotion(self) -> bool {
+        matches!(
+            self,
+            UciMove::Normal {
+                promotion: Some(_),
+                ..
+            }
+        )
+    }
+
     /// Parses a move in UCI notation.
     ///
     /// # Errors
