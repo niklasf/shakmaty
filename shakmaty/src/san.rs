@@ -752,6 +752,14 @@ impl Reader<'_> {
                     return None;
                 }
             }
+            b'Z' => {
+                self.bump();
+                if self.eat(b'0') {
+                    return Some(San::Null);
+                } else {
+                    return None;
+                }
+            }
             b'P' => {
                 self.bump();
                 Role::Pawn
