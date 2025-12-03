@@ -1029,6 +1029,14 @@ mod tests {
 
     #[cfg(feature = "alloc")]
     #[test]
+    fn test_z0_null_move() {
+        let san = "Z0".parse::<San>().expect("Z0 as null move");
+        assert_eq!(san, San::Null);
+        assert_eq!(san.to_string(), "--");
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
     #[cfg_attr(miri, ignore)]
     fn test_from_to_str() {
         use alloc::string::ToString as _;
