@@ -752,6 +752,14 @@ impl Reader<'_> {
                     return None;
                 }
             }
+            b'Z' => {
+                self.bump();
+                if self.eat(b'0') {
+                    return Some(San::Null);
+                } else {
+                    return None;
+                }
+            }
             b'P' => {
                 self.bump();
                 Role::Pawn
@@ -1017,6 +1025,14 @@ mod tests {
                 to: Square::F2,
             }
         );
+    }
+
+    #[cfg(feature = "alloc")]
+    #[test]
+    fn test_z0_null_move() {
+        let san = "Z0".parse::<San>().expect("Z0 as null move");
+        assert_eq!(san, San::Null);
+        assert_eq!(san.to_string(), "--");
     }
 
     #[cfg(feature = "alloc")]
