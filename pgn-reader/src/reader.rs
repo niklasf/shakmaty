@@ -1163,4 +1163,48 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_null_moves() -> io::Result<()> {
+        let pgn = "-- Z0 --+ Z0+ --# Z0#".as_bytes();
+
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens)?
+            .expect("found game");
+
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::BeginMovetext,
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: None
+                }),
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: None
+                }),
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: Some(Suffix::Check),
+                }),
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: Some(Suffix::Check),
+                }),
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: Some(Suffix::Checkmate),
+                }),
+                Token::San(SanPlus {
+                    san: San::Null,
+                    suffix: Some(Suffix::Checkmate),
+                }),
+                Token::EndGame,
+            ]
+        );
+
+        Ok(())
+    }
 }
