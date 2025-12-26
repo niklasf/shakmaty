@@ -920,16 +920,84 @@ impl FromSetup for Chess {
     }
 }
 
+#[cfg(any(feature = "arbitrary", feature = "proptest"))]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
+#[derive(Debug)]
+enum PositionMutation {
+    LegalMove(u8),
+    DiscardPieceAt(Square),
+    SetPieceAt(Square, Piece),
+}
+
+#[cfg(any(feature = "arbitrary", feature = "proptest"))]
+fn try_arbitrary_position<P, E>(
+    mutations: impl IntoIterator<Item = Result<PositionMutation, E>>,
+) -> Result<P, E>
+where
+    P: Position + Default + FromSetup,
+{
+    let mut pos = P::default();
+    for mutation in mutations {
+        let mutation = mutation?;
+        match mutation {
+            PositionMutation::LegalMove(idx) => {
+                let moves = pos.legal_moves();
+                if let Some(idx) = usize::from(idx).checked_rem(moves.len()) {
+                    let m = moves[usize::from(idx) % moves.len()];
+                    pos.play_unchecked(m);
+                }
+            }
+            PositionMutation::DiscardPieceAt(sq) => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.board.discard_piece_at(sq);
+                if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::SetPieceAt(sq, piece) => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.board.set_new_piece_at(sq, piece);
+                if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
+                    pos = updated_pos;
+                }
+            }
+        }
+    }
+    Ok(pos)
+}
+
+#[cfg(feature = "proptest")]
+fn arbitrary_position<P>(mutations: impl IntoIterator<Item = PositionMutation>) -> P
+where
+    P: Position + Default + FromSetup,
+{
+    match try_arbitrary_position(mutations.into_iter().map(Ok::<_, std::convert::Infallible>)) {
+        Ok(pos) => pos,
+    }
+}
+
 #[cfg(feature = "arbitrary")]
 impl arbitrary::Arbitrary<'_> for Chess {
-    fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Chess> {
-        Chess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-            .map_err(|_| arbitrary::Error::IncorrectFormat)
+    fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+        try_arbitrary_position(u.arbitrary_iter()?)
     }
 
-    #[inline]
-    fn size_hint(depth: usize) -> (usize, Option<usize>) {
-        <Setup as arbitrary::Arbitrary>::size_hint(depth)
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+        try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl proptest::arbitrary::Arbitrary for Chess {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        use proptest::strategy::Strategy as _;
+        proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+            .prop_map(arbitrary_position)
+            .boxed()
     }
 }
 
@@ -1282,14 +1350,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Atomic {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Atomic> {
-            Atomic::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for Atomic {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -1578,14 +1657,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Antichess {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Antichess> {
-            Antichess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for Antichess {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -1754,14 +1844,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for KingOfTheHill {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<KingOfTheHill> {
-            KingOfTheHill::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for KingOfTheHill {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -1901,14 +2002,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for ThreeCheck {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<ThreeCheck> {
-            ThreeCheck::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for ThreeCheck {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -2135,14 +2247,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Crazyhouse {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Crazyhouse> {
-            Crazyhouse::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for Crazyhouse {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -2405,14 +2528,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for RacingKings {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<RacingKings> {
-            RacingKings::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for RacingKings {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
@@ -2655,14 +2789,25 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Horde {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Horde> {
-            Horde::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            try_arbitrary_position(u.arbitrary_take_rest_iter()?)
+        }
+    }
+
+    #[cfg(feature = "proptest")]
+    impl proptest::arbitrary::Arbitrary for Horde {
+        type Parameters = ();
+        type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            use proptest::strategy::Strategy as _;
+            proptest::arbitrary::any::<alloc::vec::Vec<PositionMutation>>()
+                .prop_map(arbitrary_position)
+                .boxed()
         }
     }
 
