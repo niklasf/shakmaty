@@ -725,6 +725,23 @@ impl arbitrary::Arbitrary<'_> for Board {
     }
 }
 
+#[cfg(feature = "proptest")]
+impl proptest::arbitrary::Arbitrary for Board {
+    type Parameters = ();
+    type Strategy = proptest::strategy::BoxedStrategy<Self>;
+
+    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        use proptest::strategy::Strategy as _;
+        proptest::collection::hash_map(
+            proptest::arbitrary::any::<Square>(),
+            proptest::arbitrary::any::<Piece>(),
+            0..=64,
+        )
+        .prop_map(Board::from_iter)
+        .boxed()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

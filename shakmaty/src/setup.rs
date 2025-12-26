@@ -12,6 +12,7 @@ use crate::{
 /// [`Hash`](core::hash::Hash), [`PartialEq`], and
 /// [`Eq`] are implemented in terms of structural equality.
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Setup {
     /// Piece positions on the board.

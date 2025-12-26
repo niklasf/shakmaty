@@ -233,11 +233,11 @@ impl arbitrary::Arbitrary<'_> for RemainingChecks {
 #[cfg(feature = "proptest")]
 impl proptest::arbitrary::Arbitrary for RemainingChecks {
     type Parameters = ();
-    type Strategy = proptest::strategy::Map<core::ops::Range<u32>, fn(u32) -> Self>;
+    type Strategy = proptest::strategy::Map<core::ops::RangeInclusive<u32>, fn(u32) -> Self>;
 
     fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
         use proptest::strategy::Strategy as _;
-        (0..4).prop_map(RemainingChecks)
+        (0..=3).prop_map(RemainingChecks)
     }
 }
 
