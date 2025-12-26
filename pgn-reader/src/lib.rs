@@ -160,6 +160,7 @@ pub mod nag;
 pub mod reader;
 mod tag;
 mod visitor;
+pub mod writer;
 
 pub use comment::RawComment;
 pub use nag::Nag;
@@ -167,3 +168,4 @@ pub use reader::Reader;
 pub use shakmaty::{self, KnownOutcome, Outcome, san::SanPlus};
 pub use tag::RawTag;
 pub use visitor::{Skip, Visitor};
+pub use writer::Writer;

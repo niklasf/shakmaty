@@ -21,6 +21,7 @@ harness = false
 memchr = "2.2"
 btoi = "0.5"
 shakmaty = { version = "0.29", path = "../shakmaty" }
+bitflags = "2"
 
 [dev-dependencies]
 crossbeam = "0.8.4"
