@@ -29,7 +29,7 @@ tracing = "0.1.6"
 memmap2 = { version = "0.9", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-libc = "0.2.143" # for optional posix_fadvise
+libc = "0.2.154" # for optional posix_fadvise
 
 [dev-dependencies]
 csv = "1.3.1"
