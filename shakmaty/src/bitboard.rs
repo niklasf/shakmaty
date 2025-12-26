@@ -23,7 +23,7 @@ use crate::{File, Rank, Square};
 /// // . 1 . . . 1 . .
 /// ```
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
-#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))] // TODO: bitset?
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
 
