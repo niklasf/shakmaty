@@ -15,6 +15,7 @@ use crate::{CastlingSide, Role, Square};
 /// is available for context, it is more common to use [SAN](crate::san)
 /// (for human interfaces) or [UCI](crate::uci) (for text-based protocols).
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Move {
     /// A normal move, e.g., `Bd3xh7`.

@@ -5,6 +5,7 @@ use crate::{Color, File, Square};
 /// `KingSide` (O-O) or `QueenSide` (O-O-O).
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub enum CastlingSide {
     KingSide,

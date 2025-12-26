@@ -11,6 +11,7 @@ use crate::{
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
