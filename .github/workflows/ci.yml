@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v6
       - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets
         name: check
-      - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi
+      - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary,proptest --target thumbv6m-none-eabi
         name: check no-std
   check-z-direct-minimal-versions:
     runs-on: ubuntu-latest

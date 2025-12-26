@@ -18,6 +18,7 @@ use crate::{
 /// Discriminant of [`VariantPosition`].
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Debug, Eq, PartialEq, Hash, Clone, Copy, Default)]
 pub enum Variant {
     /// See [`Chess`].
@@ -135,6 +136,7 @@ impl nohash_hasher::IsEnabled for Variant {}
 /// Dynamically dispatched chess variant [`Position`].
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum VariantPosition {
     Chess(Chess),

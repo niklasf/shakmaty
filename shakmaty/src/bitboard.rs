@@ -23,6 +23,7 @@ use crate::{File, Rank, Square};
 /// // . 1 . . . 1 . .
 /// ```
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct Bitboard(pub u64);
 
@@ -1417,5 +1418,17 @@ mod tests {
 
         let (decoded, n): (Bitboard, usize) = bincode::decode_from_slice(&buffer, config).unwrap();
         assert_eq!((bitboard, 8), (decoded, n));
+    }
+
+    #[cfg(feature = "proptest")]
+    #[proptest::property_test]
+    fn test_is_superset(a: Bitboard, b: Bitboard) {
+        assert!((a | b).is_superset(b));
+    }
+
+    #[cfg(feature = "proptest")]
+    #[proptest::property_test]
+    fn test_is_subset(a: Bitboard, b: Bitboard) {
+        assert!((a & b).is_subset(b));
     }
 }

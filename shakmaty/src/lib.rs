@@ -55,6 +55,8 @@
 //! * `variant`: Enables support for all Lichess variants.
 //! * `arbitrary`: Implements [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
 //!   for vocabulary types.
+//! * `proptest`: Implements [`proptest`](https://docs.rs/proptest/1)
+//!   strategies for vocabulary types.
 //! * `bincode`: Implements [`bincode`](https://docs.rs/bincode/2)
 //!   encoding/decoding for vocabulary types.
 //!

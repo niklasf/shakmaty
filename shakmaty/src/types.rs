@@ -11,6 +11,7 @@ use crate::{
 /// A piece with [`Color`] and [`Role`].
 #[allow(missing_docs)]
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct Piece {
     pub color: Color,
@@ -226,6 +227,17 @@ impl arbitrary::Arbitrary<'_> for RemainingChecks {
     #[inline]
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
         (1, Some(1))
+    }
+}
+
+#[cfg(feature = "proptest")]
+impl proptest::arbitrary::Arbitrary for RemainingChecks {
+    type Parameters = ();
+    type Strategy = proptest::strategy::Map<core::ops::RangeInclusive<u32>, fn(u32) -> Self>;
+
+    fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+        use proptest::strategy::Strategy as _;
+        (0..=3).prop_map(RemainingChecks)
     }
 }
 
