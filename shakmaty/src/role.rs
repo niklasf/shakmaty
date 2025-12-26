@@ -165,6 +165,7 @@ try_role_from_int_impl! { u8 i8 u16 i16 u32 i32 u64 i64 u128 i128 usize isize }
 /// Container with values for each [`Role`].
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByRole<T> {

@@ -103,6 +103,7 @@ impl ops::BitXorAssign<bool> for CastlingSide {
 /// Container with values for each [`CastlingSide`].
 #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 #[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
+#[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Copy, Clone, Default, Eq, PartialEq, Debug, Hash)]
 #[repr(C)]
 pub struct ByCastlingSide<T> {
