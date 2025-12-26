@@ -925,9 +925,9 @@ impl FromSetup for Chess {
 #[cfg_attr(feature = "proptest", derive(proptest_derive::Arbitrary))]
 #[derive(Debug)]
 enum PositionMutation {
-    LegalMove(u8),
-    DiscardPieceAt(Square),
-    SetPieceAt(Square, Piece),
+    LegalMove { idx: u8 },
+    DiscardPieceAt { sq: Square },
+    SetPieceAt { sq: Square, piece: Piece },
 }
 
 #[cfg(any(feature = "arbitrary", feature = "proptest"))]
@@ -941,21 +941,21 @@ where
     for mutation in mutations {
         let mutation = mutation?;
         match mutation {
-            PositionMutation::LegalMove(idx) => {
+            PositionMutation::LegalMove { idx } => {
                 let moves = pos.legal_moves();
                 if let Some(idx) = usize::from(idx).checked_rem(moves.len()) {
                     let m = moves[usize::from(idx) % moves.len()];
                     pos.play_unchecked(m);
                 }
             }
-            PositionMutation::DiscardPieceAt(sq) => {
+            PositionMutation::DiscardPieceAt { sq } => {
                 let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
                 setup.board.discard_piece_at(sq);
                 if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
                     pos = updated_pos;
                 }
             }
-            PositionMutation::SetPieceAt(sq, piece) => {
+            PositionMutation::SetPieceAt { sq, piece } => {
                 let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
                 setup.board.set_new_piece_at(sq, piece);
                 if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
@@ -4198,5 +4198,13 @@ mod tests {
                 .unwrap_or_default();
             assert_eq!(error_kinds, expected_error_kinds, "epd: {epd}");
         }
+    }
+
+    #[cfg(all(feature = "proptest", feature = "variant"))]
+    #[proptest::property_test]
+    fn test_is_legal(pos: crate::variant::VariantPosition, candidate: Move) {
+        let legals = pos.legal_moves();
+        assert!(legals.iter().all(|&m| pos.is_legal(m)));
+        assert_eq!(legals.contains(&candidate), pos.is_legal(candidate));
     }
 }

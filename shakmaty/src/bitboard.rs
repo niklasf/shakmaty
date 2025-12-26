@@ -1419,4 +1419,16 @@ mod tests {
         let (decoded, n): (Bitboard, usize) = bincode::decode_from_slice(&buffer, config).unwrap();
         assert_eq!((bitboard, 8), (decoded, n));
     }
+
+    #[cfg(feature = "proptest")]
+    #[proptest::property_test]
+    fn test_is_superset(a: Bitboard, b: Bitboard) {
+        assert!((a | b).is_superset(b));
+    }
+
+    #[cfg(feature = "proptest")]
+    #[proptest::property_test]
+    fn test_is_subset(a: Bitboard, b: Bitboard) {
+        assert!((a & b).is_subset(b));
+    }
 }

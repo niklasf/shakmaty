@@ -1128,4 +1128,20 @@ mod tests {
             "rRpppppp/8/8/8/8/8/PPPPPPBN/PPRQKBNR w KA - 0 1"
         );
     }
+
+    #[cfg(feature = "proptest")]
+    #[proptest::property_test]
+    fn test_board_fen_roundtrip(board: Board) {
+        use alloc::string::ToString as _;
+        assert_eq!(
+            board
+                .board_fen()
+                .to_string()
+                .parse::<Fen>()
+                .expect("valid fen")
+                .into_setup()
+                .board,
+            board
+        );
+    }
 }
