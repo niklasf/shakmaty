@@ -68,6 +68,12 @@ pub trait Visitor {
     }
 
     /// Called for each `{ comment }`.
+    ///
+    /// If the length of a comment exceeds the size of the reader's movetext
+    /// token buffer (configurable via
+    /// [`ReaderBuilder::set_supported_comment_length`](crate::reader::ReaderBuilder::set_supported_comment_length)),
+    /// this method will be called multiple times consecutively. The reader will
+    /// avoid splitting multibyte UTF-8 sequences across chunk boundaries.
     fn comment(
         &mut self,
         movetext: &mut Self::Movetext,
