@@ -67,3 +67,9 @@ name = "pgn"
 path = "fuzz_targets/pgn.rs"
 test = false
 bench = false
+
+[[bin]]
+name = "legals_are_legal"
+path = "fuzz_targets/legals_are_legal.rs"
+test = false
+bench = false
