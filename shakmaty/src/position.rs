@@ -807,8 +807,7 @@ where
             PositionMutation::LegalMove { idx } => {
                 let moves = pos.legal_moves();
                 if let Some(idx) = usize::from(idx).checked_rem(moves.len()) {
-                    let m = moves[usize::from(idx) % moves.len()];
-                    pos.play_unchecked(m);
+                    pos.play_unchecked(moves[idx]);
                 }
             }
             PositionMutation::DiscardPieceAt { sq } => {
