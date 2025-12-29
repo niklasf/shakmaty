@@ -27,6 +27,12 @@ use crate::{Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square, a
 ///
 /// assert_eq!(board.piece_at(Square::E8), Some(Black.king()));
 /// ```
+///
+/// # Arbitrary
+///
+/// Optionally implements
+/// [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
+/// without any restrictions with regard to piece positions and numbers.
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Board {
     by_role: ByRole<Bitboard>,
