@@ -785,6 +785,59 @@ pub trait Position {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+#[derive(arbitrary::Arbitrary)]
+enum PositionMutation {
+    LegalMove { idx: u8 },
+    DiscardPieceAt { sq: Square },
+    SetPieceAt { sq: Square, piece: Piece },
+}
+
+#[cfg(feature = "arbitrary")]
+fn arbitrary_position<P>(
+    mutations: impl IntoIterator<Item = arbitrary::Result<PositionMutation>>,
+) -> arbitrary::Result<P>
+where
+    P: Position + FromSetup + Default,
+{
+    let mut pos = P::default();
+    for mutation in mutations {
+        let mutation = mutation?;
+        match mutation {
+            PositionMutation::LegalMove { idx } => {
+                let moves = pos.legal_moves();
+                if let Some(idx) = usize::from(idx).checked_rem(moves.len()) {
+                    let m = moves[usize::from(idx) % moves.len()];
+                    pos.play_unchecked(m);
+                }
+            }
+            PositionMutation::DiscardPieceAt { sq } => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.board.discard_piece_at(sq);
+                if let Ok(updated_pos) = setup
+                    .position(pos.castles().mode())
+                    .or_else(PositionError::ignore_invalid_castling_rights)
+                    .or_else(PositionError::ignore_invalid_ep_square)
+                {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::SetPieceAt { sq, piece } => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.board.set_piece_at(sq, piece);
+                if let Ok(updated_pos) = setup
+                    .position(pos.castles().mode())
+                    .or_else(PositionError::ignore_invalid_castling_rights)
+                    .or_else(PositionError::ignore_invalid_ep_square)
+                {
+                    pos = updated_pos;
+                }
+            }
+        }
+    }
+    Ok(pos)
+}
+
 /// A standard Chess position.
 ///
 /// # Equality
@@ -922,14 +975,12 @@ impl FromSetup for Chess {
 
 #[cfg(feature = "arbitrary")]
 impl arbitrary::Arbitrary<'_> for Chess {
-    fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Chess> {
-        Chess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-            .map_err(|_| arbitrary::Error::IncorrectFormat)
+    fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+        arbitrary_position(u.arbitrary_iter()?)
     }
 
-    #[inline]
-    fn size_hint(depth: usize) -> (usize, Option<usize>) {
-        <Setup as arbitrary::Arbitrary>::size_hint(depth)
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+        arbitrary_position(u.arbitrary_take_rest_iter()?)
     }
 }
 
@@ -1282,14 +1333,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Atomic {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Atomic> {
-            Atomic::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -1578,14 +1627,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Antichess {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Antichess> {
-            Antichess::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -1754,14 +1801,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for KingOfTheHill {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<KingOfTheHill> {
-            KingOfTheHill::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -1901,14 +1946,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for ThreeCheck {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<ThreeCheck> {
-            ThreeCheck::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -2135,14 +2178,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Crazyhouse {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Crazyhouse> {
-            Crazyhouse::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -2405,14 +2446,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for RacingKings {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<RacingKings> {
-            RacingKings::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
@@ -2655,14 +2694,12 @@ pub(crate) mod variant {
 
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Horde {
-        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Horde> {
-            Horde::from_setup(Setup::arbitrary(u)?, CastlingMode::Chess960)
-                .map_err(|_| arbitrary::Error::IncorrectFormat)
+        fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_iter()?)
         }
 
-        #[inline]
-        fn size_hint(depth: usize) -> (usize, Option<usize>) {
-            <Setup as arbitrary::Arbitrary>::size_hint(depth)
+        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(u.arbitrary_take_rest_iter()?)
         }
     }
 
