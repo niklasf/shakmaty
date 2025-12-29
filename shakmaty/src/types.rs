@@ -87,6 +87,7 @@ bincode::impl_borrow_decode!(Piece);
 
 /// `Standard` or `Chess960`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum CastlingMode {
     /// Castling notation and validity requirements for standard chess.
     ///
@@ -139,6 +140,7 @@ impl CastlingMode {
 
 /// When to include the en passant square.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub enum EnPassantMode {
     /// Only if there is a fully legal en passant move.
     Legal,

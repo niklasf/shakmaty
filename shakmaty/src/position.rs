@@ -471,6 +471,13 @@ pub trait FromSetup: Sized {
 /// but specifically *ignoring* halfmove and fullmove counters.
 ///
 /// Use [`Setup`] for structural equality.
+///
+/// # Arbitrary
+///
+/// All provided variants optionally implement
+/// [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html),
+/// such that all standard and Chess960 positions that meet all basic validity
+/// requirements of [`FromSetup`] can be generated.
 pub trait Position {
     /// Piece positions on the board.
     fn board(&self) -> &Board;
@@ -791,6 +798,7 @@ enum PositionMutation {
     LegalMove { idx: u8 },
     DiscardPieceAt { sq: Square },
     SetPieceAt { sq: Square, piece: Piece },
+    ToggleCastles { rooks: Bitboard, mode: CastlingMode },
 }
 
 #[cfg(feature = "arbitrary")]
@@ -826,6 +834,17 @@ where
                 setup.board.set_piece_at(sq, piece);
                 if let Ok(updated_pos) = setup
                     .position(pos.castles().mode())
+                    .or_else(PositionError::ignore_invalid_castling_rights)
+                    .or_else(PositionError::ignore_invalid_ep_square)
+                {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::ToggleCastles { rooks, mode } => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.castling_rights.toggle(rooks);
+                if let Ok(updated_pos) = setup
+                    .position(mode)
                     .or_else(PositionError::ignore_invalid_castling_rights)
                     .or_else(PositionError::ignore_invalid_ep_square)
                 {
