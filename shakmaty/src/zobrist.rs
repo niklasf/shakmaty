@@ -48,6 +48,7 @@ macro_rules! zobrist_value_impl {
         #[doc = "A [`ZobristValue`] with "]
         #[doc = stringify!($bits)]
         #[doc = " bits."]
+        #[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
         pub struct $t(pub $proxy);
 
         impl From<$proxy> for $t {
