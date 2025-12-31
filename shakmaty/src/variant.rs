@@ -411,6 +411,24 @@ impl Position for VariantPosition {
             VariantPosition::Horde(pos) => pos.zobrist_hash(mode),
         }
     }
+
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        current: V,
+        m: Move,
+        mode: EnPassantMode,
+    ) -> Option<V> {
+        match self {
+            VariantPosition::Chess(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Atomic(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Antichess(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::KingOfTheHill(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::ThreeCheck(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Crazyhouse(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::RacingKings(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Horde(pos) => pos.update_zobrist_hash(current, m, mode),
+        }
+    }
 }
 
 #[cfg(test)]

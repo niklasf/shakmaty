@@ -837,6 +837,27 @@ pub trait Position {
 
         zobrist
     }
+
+    /// Incrementally computes the Zobrist hash of the position after playing
+    /// the legal move `m`, assuming that the current position has the Zobrist
+    /// hash `current`.
+    ///
+    /// May return `None` if an efficient incremental update is not implemented
+    /// for the given situation.
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        current: V,
+        m: Move,
+        mode: EnPassantMode,
+    ) -> Option<V>
+    where
+        Self: Sized,
+    {
+        let _current = current;
+        let _m = m;
+        let _mode = mode;
+        None
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -1282,6 +1303,36 @@ impl Position for Chess {
     /// Always returns [`Outcome::Unknown`].
     fn variant_outcome(&self) -> Outcome {
         Outcome::Unknown
+    }
+
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        mut current: V,
+        m: Move,
+        _mode: EnPassantMode,
+    ) -> Option<V> {
+        if self.ep_square.is_none()
+            && let Move::Normal {
+                role,
+                from,
+                capture,
+                to,
+                promotion,
+            } = m
+            && (role != Role::Pawn || from.distance(to) != 2)
+            && !self.castles.castling_rights().contains(from)
+            && !self.castles.castling_rights().contains(to)
+        {
+            current ^= V::zobrist_for_white_turn();
+            current ^= V::zobrist_for_piece(from, role.of(self.turn));
+            current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+            if let Some(capture) = capture {
+                current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
+            }
+            Some(current)
+        } else {
+            None
+        }
     }
 }
 
@@ -1964,6 +2015,18 @@ pub(crate) mod variant {
                 }
             }
             Outcome::Unknown
+        }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            current: V,
+            m: Move,
+            mode: EnPassantMode,
+        ) -> Option<V>
+        where
+            Self: Sized,
+        {
+            self.chess.update_zobrist_hash(current, m, mode)
         }
     }
 

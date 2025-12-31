@@ -33,6 +33,12 @@ test = false
 bench = false
 
 [[bin]]
+name = "incremental_zobrist"
+path = "fuzz_targets/incremental_zobrist.rs"
+test = false
+bench = false
+
+[[bin]]
 name = "san_from_ascii"
 path = "fuzz_targets/san_from_ascii.rs"
 test = false
