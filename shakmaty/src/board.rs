@@ -1,8 +1,9 @@
 //! Piece positions on a board.
 
 use core::{
-    error, fmt,
-    fmt::{Display, Write},
+    error,
+    fmt::{self, Display, Write},
+    hash::{Hash, Hasher},
     iter::FusedIterator,
 };
 
@@ -33,7 +34,7 @@ use crate::{Bitboard, ByColor, ByRole, Color, File, Piece, Rank, Role, Square, a
 /// Optionally implements
 /// [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
 /// without any restrictions with regard to piece positions and numbers.
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq)]
 pub struct Board {
     by_role: ByRole<Bitboard>,
     by_color: ByColor<Bitboard>,
@@ -456,6 +457,23 @@ impl Board {
 
     pub fn iter(&self) -> Iter<'_> {
         self.into_iter()
+    }
+}
+
+impl PartialEq for Board {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        // We could omit comparning by_color.black, but it's more SIMD-friendly
+        // to compare eight bitboards than seven.
+        self.by_role == other.by_role && self.by_color == other.by_color
+    }
+}
+
+impl Hash for Board {
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.by_role.hash(state);
+        self.by_color.white.hash(state);
     }
 }
 
