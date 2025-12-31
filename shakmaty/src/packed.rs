@@ -753,6 +753,21 @@ impl<'de> serde::Deserialize<'de> for PackedUciMove {
     }
 }
 
+#[cfg(feature = "arbitrary")]
+impl arbitrary::Arbitrary<'_> for PackedUciMove {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+        Ok(PackedUciMove::pack(UciMove::arbitrary(u)?))
+    }
+
+    fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+        Ok(PackedUciMove::pack(UciMove::arbitrary_take_rest(u)?))
+    }
+
+    fn size_hint(depth: usize) -> (usize, Option<usize>) {
+        UciMove::size_hint(depth)
+    }
+}
+
 struct Writer<'a> {
     inner: &'a mut [u8],
 }
