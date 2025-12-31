@@ -1320,6 +1320,7 @@ impl Position for Chess {
                 promotion,
             } = m
             && (role != Role::Pawn || from.distance(to) != 2)
+            && role != Role::King
             && !self.castles.castling_rights().contains(from)
             && !self.castles.castling_rights().contains(to)
         {
