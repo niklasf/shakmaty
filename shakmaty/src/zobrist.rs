@@ -14,7 +14,7 @@
 //! # Examples
 //!
 //! ```
-//! use shakmaty::{Chess, EnPassantMode, zobrist::{Zobrist64, ZobristHash}};
+//! use shakmaty::{Chess, EnPassantMode, Position, zobrist::Zobrist64};
 //!
 //! let pos = Chess::default();
 //! assert_eq!(pos.zobrist_hash::<Zobrist64>(EnPassantMode::Legal), Zobrist64(0x463b96181691fc9c));
@@ -27,8 +27,8 @@ use core::{
 };
 
 use crate::{
-    Board, ByCastlingSide, ByColor, ByRole, CastlingSide, Color, EnPassantMode, File, Piece,
-    Position, RemainingChecks, Role, Square,
+    Board, ByCastlingSide, ByColor, ByRole, CastlingSide, Color, File, Piece, RemainingChecks,
+    Role, Square,
 };
 
 /// Integer type that can be returned as a Zobrist hash.
@@ -1307,74 +1307,26 @@ impl From<Zobrist16> for Zobrist8 {
     }
 }
 
-/// Supports Zobrist hashing.
-pub trait ZobristHash {
-    /// Computes the Zobrist hash of the position from scratch. The hash
-    /// includes the position, except halfmove clock and fullmove number.
-    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V;
-}
-
-impl<P: Position> ZobristHash for P {
-    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V {
-        let mut zobrist = hash_board(self.board());
-
-        for sq in self.promoted() {
-            zobrist ^= V::zobrist_for_promoted(sq);
-        }
-
-        if let Some(pockets) = self.pockets() {
-            for (color, pocket) in pockets.zip_color() {
-                for (role, pieces) in pocket.zip_role() {
-                    zobrist ^= V::zobrist_for_pocket(color, role, pieces);
+impl Board {
+    pub(crate) fn board_zobrist_hash<V: ZobristValue>(&self) -> V {
+        // Order optimized for cache efficiency.
+        let mut zobrist = V::default();
+        for role in Role::ALL {
+            for color in [Color::Black, Color::White] {
+                let piece = role.of(color);
+                for sq in self.by_piece(piece) {
+                    zobrist ^= V::zobrist_for_piece(sq, piece);
                 }
             }
         }
-
-        if self.turn() == Color::White {
-            zobrist ^= V::zobrist_for_white_turn();
-        }
-
-        let castles = self.castles();
-        for color in Color::ALL {
-            for side in CastlingSide::ALL {
-                if castles.has(color, side) {
-                    zobrist ^= V::zobrist_for_castling_right(color, side);
-                }
-            }
-        }
-
-        if let Some(sq) = self.ep_square(mode) {
-            zobrist ^= V::zobrist_for_en_passant_file(sq.file());
-        }
-
-        if let Some(remaining_checks) = self.remaining_checks() {
-            for (color, remaining) in remaining_checks.zip_color() {
-                zobrist ^= V::zobrist_for_remaining_checks(color, remaining);
-            }
-        }
-
         zobrist
     }
-}
-
-fn hash_board<V: ZobristValue>(board: &Board) -> V {
-    // Order optimized for cache efficiency.
-    let mut zobrist = V::default();
-    for role in Role::ALL {
-        for color in [Color::Black, Color::White] {
-            let piece = role.of(color);
-            for sq in board.by_piece(piece) {
-                zobrist ^= V::zobrist_for_piece(sq, piece);
-            }
-        }
-    }
-    zobrist
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CastlingMode, Chess, fen::Fen};
+    use crate::{CastlingMode, Chess, EnPassantMode, Position, fen::Fen};
 
     #[test]
     fn test_polyglot() {

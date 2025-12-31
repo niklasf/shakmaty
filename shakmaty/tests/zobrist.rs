@@ -9,7 +9,7 @@ fn test_zobrist_reference() {
         EnPassantMode, Position as _,
         uci::UciMove,
         variant::{Variant, VariantPosition},
-        zobrist::{Zobrist128, ZobristHash as _},
+        zobrist::Zobrist128,
     };
 
     #[serde_as]

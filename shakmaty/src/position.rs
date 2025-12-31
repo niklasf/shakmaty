@@ -13,6 +13,7 @@ use crate::{
     EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square, attacks,
     bitboard::Direction,
     setup::EnPassant,
+    zobrist::ZobristValue,
 };
 
 /// A definitive outcome of a game.
@@ -789,6 +790,52 @@ pub trait Position {
         let mut setup = self.to_setup(EnPassantMode::Always);
         setup.swap_turn();
         Self::from_setup(setup, mode)
+    }
+
+    /// Computes the Zobrist hash of the position from scratch. The hash
+    /// includes the position, except halfmove clock and fullmove number.
+    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V
+    where
+        Self: Sized, /* FINAL */
+    {
+        let mut zobrist = self.board().board_zobrist_hash();
+
+        for sq in self.promoted() {
+            zobrist ^= V::zobrist_for_promoted(sq);
+        }
+
+        if let Some(pockets) = self.pockets() {
+            for (color, pocket) in pockets.zip_color() {
+                for (role, pieces) in pocket.zip_role() {
+                    zobrist ^= V::zobrist_for_pocket(color, role, pieces);
+                }
+            }
+        }
+
+        if self.turn() == Color::White {
+            zobrist ^= V::zobrist_for_white_turn();
+        }
+
+        let castles = self.castles();
+        for color in Color::ALL {
+            for side in CastlingSide::ALL {
+                if castles.has(color, side) {
+                    zobrist ^= V::zobrist_for_castling_right(color, side);
+                }
+            }
+        }
+
+        if let Some(sq) = self.ep_square(mode) {
+            zobrist ^= V::zobrist_for_en_passant_file(sq.file());
+        }
+
+        if let Some(remaining_checks) = self.remaining_checks() {
+            for (color, remaining) in remaining_checks.zip_color() {
+                zobrist ^= V::zobrist_for_remaining_checks(color, remaining);
+            }
+        }
+
+        zobrist
     }
 }
 
