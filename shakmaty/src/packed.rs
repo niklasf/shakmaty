@@ -625,10 +625,12 @@ bincode::impl_borrow_decode!(PackedSetup);
 #[cfg_attr(feature = "bincode", derive(bincode::Encode, bincode::Decode))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct PackedUciMove {
-    inner: [u8; 2],
+    inner: [u8; Self::BYTES],
 }
 
 impl PackedUciMove {
+    pub const BYTES: usize = 2;
+
     /// Compactly pack the given move.
     pub fn pack(m: UciMove) -> PackedUciMove {
         let (from, to, role, special) = match m {
@@ -677,13 +679,13 @@ impl PackedUciMove {
 
     /// Wrap a given byte representation.
     #[inline]
-    pub fn from_bytes(bytes: [u8; 2]) -> PackedUciMove {
+    pub fn from_bytes(bytes: [u8; Self::BYTES]) -> PackedUciMove {
         PackedUciMove { inner: bytes }
     }
 
     /// Unwrap the packed byte representation.
     #[inline]
-    pub fn to_bytes(self) -> [u8; 2] {
+    pub fn to_bytes(self) -> [u8; Self::BYTES] {
         self.inner
     }
 }
@@ -702,16 +704,16 @@ impl From<PackedUciMove> for UciMove {
     }
 }
 
-impl From<[u8; 2]> for PackedUciMove {
+impl From<[u8; Self::BYTES]> for PackedUciMove {
     #[inline]
-    fn from(bytes: [u8; 2]) -> PackedUciMove {
+    fn from(bytes: [u8; Self::BYTES]) -> PackedUciMove {
         PackedUciMove::from_bytes(bytes)
     }
 }
 
-impl From<PackedUciMove> for [u8; 2] {
+impl From<PackedUciMove> for [u8; PackedUciMove::BYTES] {
     #[inline]
-    fn from(packed: PackedUciMove) -> [u8; 2] {
+    fn from(packed: PackedUciMove) -> [u8; PackedUciMove::BYTES] {
         packed.inner
     }
 }
