@@ -65,7 +65,7 @@ jobs:
           tool: iai-callgrind-runner@0.16.1,valgrind
         if: matrix.os == 'ubuntu-latest'
       - uses: actions/checkout@v6
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         id: cache
         with:
           path: shakmaty-syzygy/tables
