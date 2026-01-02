@@ -1311,28 +1311,31 @@ impl Position for Chess {
         m: Move,
         _mode: EnPassantMode,
     ) -> Option<V> {
-        if self.ep_square.is_none()
-            && let Move::Normal {
+        if self.ep_square.is_some() {
+            return None;
+        }
+
+        match m {
+            Move::Normal {
                 role,
                 from,
                 capture,
                 to,
                 promotion,
-            } = m
-            && (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-            && role != Role::King
-            && !self.castles.castling_rights().contains(from)
-            && !self.castles.castling_rights().contains(to)
-        {
-            current ^= V::zobrist_for_white_turn();
-            current ^= V::zobrist_for_piece(from, role.of(self.turn));
-            current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
-            if let Some(capture) = capture {
-                current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
+            } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+                && role != Role::King
+                && !self.castles.castling_rights().contains(from)
+                && !self.castles.castling_rights().contains(to) =>
+            {
+                current ^= V::zobrist_for_white_turn();
+                current ^= V::zobrist_for_piece(from, role.of(self.turn));
+                current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                if let Some(capture) = capture {
+                    current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
+                }
+                Some(current)
             }
-            Some(current)
-        } else {
-            None
+            _ => None,
         }
     }
 }
@@ -2469,6 +2472,63 @@ pub(crate) mod variant {
         }
         fn variant_outcome(&self) -> Outcome {
             Outcome::Unknown
+        }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            if self.chess.ep_square.is_some() {
+                return None;
+            }
+
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture,
+                    to,
+                    promotion,
+                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+                    && role != Role::King
+                    && !self.castles().castling_rights().contains(from)
+                    && !self.castles().castling_rights().contains(to) =>
+                {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn()));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn()));
+                    if let Some(capture) = capture {
+                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn()));
+                        let capture = if self.promoted.contains(to) {
+                            current ^= V::zobrist_for_promoted(to);
+                            Role::Pawn
+                        } else {
+                            capture
+                        };
+                        let pocket_pieces = self.pockets[self.turn()][capture];
+                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces);
+                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces + 1);
+                    }
+                    if self.promoted.contains(from) {
+                        current ^= V::zobrist_for_promoted(from);
+                    }
+                    if self.promoted.contains(from) || promotion.is_some() {
+                        current ^= V::zobrist_for_promoted(to);
+                    }
+                    Some(current)
+                }
+                Move::Put { role, to } => {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(to, role.of(self.turn()));
+                    let pocket_pieces = self.pockets[self.turn()][role];
+                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces);
+                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces - 1);
+                    Some(current)
+                }
+                _ => None,
+            }
         }
     }
 
