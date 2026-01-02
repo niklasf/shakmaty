@@ -1307,36 +1307,11 @@ impl Position for Chess {
 
     fn update_zobrist_hash<V: ZobristValue>(
         &self,
-        mut current: V,
+        current: V,
         m: Move,
         _mode: EnPassantMode,
     ) -> Option<V> {
-        if self.ep_square.is_some() {
-            return None;
-        }
-
-        match m {
-            Move::Normal {
-                role,
-                from,
-                capture,
-                to,
-                promotion,
-            } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-                && role != Role::King
-                && !self.castles.castling_rights().contains(from)
-                && !self.castles.castling_rights().contains(to) =>
-            {
-                current ^= V::zobrist_for_white_turn();
-                current ^= V::zobrist_for_piece(from, role.of(self.turn));
-                current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
-                if let Some(capture) = capture {
-                    current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
-                }
-                Some(current)
-            }
-            _ => None,
-        }
+        do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
     }
 }
 
@@ -1923,36 +1898,11 @@ pub(crate) mod variant {
 
         fn update_zobrist_hash<V: ZobristValue>(
             &self,
-            mut current: V,
+            current: V,
             m: Move,
             _mode: EnPassantMode,
         ) -> Option<V> {
-            if self.ep_square.is_some() {
-                return None;
-            }
-
-            match m {
-                Move::Normal {
-                    role,
-                    from,
-                    capture,
-                    to,
-                    promotion,
-                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-                    && role != Role::King
-                    && !self.castles.castling_rights().contains(from)
-                    && !self.castles.castling_rights().contains(to) =>
-                {
-                    current ^= V::zobrist_for_white_turn();
-                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
-                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
-                    if let Some(capture) = capture {
-                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
-                    }
-                    Some(current)
-                }
-                _ => None,
-            }
+            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
         }
     }
 
@@ -3310,6 +3260,15 @@ pub(crate) mod variant {
                 Outcome::Unknown
             }
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+        }
     }
 
     fn add_king_promotions(moves: &mut MoveList) {
@@ -3490,6 +3449,41 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
     }
 
     errors
+}
+
+fn do_update_zobrist_hash<V: ZobristValue>(
+    mut current: V,
+    m: Move,
+    turn: Color,
+    castles: &Castles,
+    ep_square: Option<EnPassant>,
+) -> Option<V> {
+    if ep_square.is_some() {
+        return None;
+    }
+
+    match m {
+        Move::Normal {
+            role,
+            from,
+            capture,
+            to,
+            promotion,
+        } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+            && role != Role::King
+            && !castles.castling_rights().contains(from)
+            && !castles.castling_rights().contains(to) =>
+        {
+            current ^= V::zobrist_for_white_turn();
+            current ^= V::zobrist_for_piece(from, role.of(turn));
+            current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(turn));
+            if let Some(capture) = capture {
+                current ^= V::zobrist_for_piece(to, capture.of(!turn));
+            }
+            Some(current)
+        }
+        _ => None,
+    }
 }
 
 const fn is_standard_material(board: &Board, color: Color) -> bool {
