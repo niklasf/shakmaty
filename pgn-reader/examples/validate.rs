@@ -3,7 +3,7 @@
 
 use std::{env, fs::File, io, ops::ControlFlow, process};
 
-use pgn_reader::{RawTag, Reader, SanPlus, Skip, Visitor};
+use pgn_reader::{RawTag, Reader, SanPlus, Visitor};
 use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 struct Validator {
@@ -61,13 +61,6 @@ impl Visitor for Validator {
 
     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
         ControlFlow::Continue(tags.unwrap_or_default())
-    }
-
-    fn begin_variation(
-        &mut self,
-        _movetext: &mut Self::Movetext,
-    ) -> ControlFlow<Self::Output, Skip> {
-        ControlFlow::Continue(Skip(true))
     }
 
     fn san(

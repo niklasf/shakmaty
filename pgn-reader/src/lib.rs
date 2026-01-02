@@ -32,7 +32,7 @@
 //!
 //! ```
 //! use std::{io, ops::ControlFlow};
-//! use pgn_reader::{Visitor, Skip, Reader, SanPlus};
+//! use pgn_reader::{Visitor, Reader, SanPlus};
 //!
 //! struct MoveCounter;
 //!
@@ -52,10 +52,6 @@
 //!     fn san(&mut self, movetext: &mut Self::Movetext, _san_plus: SanPlus) -> ControlFlow<Self::Output> {
 //!         *movetext += 1;
 //!         ControlFlow::Continue(())
-//!     }
-//!
-//!     fn begin_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
-//!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
 //!     fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {
@@ -85,7 +81,7 @@
 //! use shakmaty::{CastlingMode, Chess, Position};
 //! use shakmaty::fen::Fen;
 //!
-//! use pgn_reader::{Visitor, Skip, RawTag, Reader, SanPlus};
+//! use pgn_reader::{Visitor, RawTag, Reader, SanPlus};
 //!
 //! struct LastPosition;
 //!
@@ -116,10 +112,6 @@
 //!
 //!     fn begin_movetext(&mut self, tags: Self::Tags) -> ControlFlow<Self::Output, Self::Movetext> {
 //!         ControlFlow::Continue(tags.unwrap_or_default())
-//!     }
-//!
-//!     fn begin_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
-//!         ControlFlow::Continue(Skip(true)) // stay in the mainline
 //!     }
 //!
 //!     fn san(&mut self, movetext: &mut Self::Movetext, san_plus: SanPlus) -> ControlFlow<Self::Output> {

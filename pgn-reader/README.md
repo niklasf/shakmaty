@@ -43,7 +43,7 @@ mainline of each game.
 
 ```rust
 use std::{io, ops::ControlFlow};
-use pgn_reader::{Visitor, Skip, Reader, SanPlus};
+use pgn_reader::{Visitor, Reader, SanPlus};
 
 struct MoveCounter;
 
@@ -63,10 +63,6 @@ impl Visitor for MoveCounter {
     fn san(&mut self, movetext: &mut Self::Movetext, _san_plus: SanPlus) -> ControlFlow<Self::Output> {
         *movetext += 1;
         ControlFlow::Continue(())
-    }
-
-    fn begin_variation(&mut self, _movetext: &mut Self::Movetext) -> ControlFlow<Self::Output, Skip> {
-        ControlFlow::Continue(Skip(true)) // stay in the mainline
     }
 
     fn end_game(&mut self, movetext: Self::Movetext) -> Self::Output {

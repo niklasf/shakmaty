@@ -80,7 +80,7 @@ pub trait Visitor {
 
     /// Called for each `(`.
     ///
-    /// May skip over the following variation directly to
+    /// Defaults to skip over the following variation directly to
     /// [`Visitor::end_variation()`] (or to [`Visitor::end_game()`] if no
     /// matching `)` follows before the end of the game.
     fn begin_variation(
@@ -88,7 +88,7 @@ pub trait Visitor {
         movetext: &mut Self::Movetext,
     ) -> ControlFlow<Self::Output, Skip> {
         let _movetext = movetext;
-        ControlFlow::Continue(Skip(false))
+        ControlFlow::Continue(Skip(true))
     }
 
     /// Called for each `)`. It is *not* guaranteed that there was a

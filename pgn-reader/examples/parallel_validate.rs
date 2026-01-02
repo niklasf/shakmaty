@@ -14,7 +14,7 @@ use std::{
 };
 
 use pgn_reader::{
-    RawTag, Reader, SanPlus, Skip, Visitor,
+    RawTag, Reader, SanPlus, Visitor,
     shakmaty::{CastlingMode, Chess, Position, fen::Fen, san::San},
 };
 
@@ -82,13 +82,6 @@ impl Visitor for Validator {
             fen: tags,
             sans: Vec::with_capacity(80),
         })
-    }
-
-    fn begin_variation(
-        &mut self,
-        _movetext: &mut Self::Movetext,
-    ) -> ControlFlow<Self::Output, Skip> {
-        ControlFlow::Continue(Skip(true)) // stay in the mainline
     }
 
     fn san(
