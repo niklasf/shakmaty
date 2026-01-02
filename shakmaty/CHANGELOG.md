@@ -1,5 +1,34 @@
 # Changelog for shakmaty
 
+## v0.30.0
+
+Breaking changes:
+
+- Replace `ZobristHash` trait with `Position::zobrist_hash()`.
+
+Bugfixes:
+
+- Fix `PackedSetup::unpack_*()` should fail when unpacking Crazyhouse position
+  with invalid `promoted` mask.
+
+New features:
+
+- Add `Position::update_zobrist_hash()` for incremental Zobrist hashing.
+- Impl `Ord` and `PartialOrd` for `Zobrist{8,16,32,64,128}`.
+- Impl `Arbitrary` for `Zobrist{8,16,32,64,128}`, `PackedUciMove`,
+  `EnPassantMode`, and `CastlingMode`.
+- Add `PackedUciMove::BYTES` constant.
+- Add `Square::abs_diff()`.
+
+Other changes:
+
+- MSRV is now `1.88`.
+- Now accepting `Z0` as notation for `San::Null`.
+- Optimize `PartialEq` and `Hash` impls for `Board`.
+- Ensure `Arbitrary` for positions (`Chess`, ..., `VariantPosition`) creates
+  many valid positions even in blackbox fuzzing. Document the behavior on
+  `Board` and `Position`.
+
 ## v0.29.4
 
 - Add `Move::is_conversion()`.
