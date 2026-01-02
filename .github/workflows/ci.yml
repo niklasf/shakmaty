@@ -81,3 +81,20 @@ jobs:
       - run: cargo bench
         name: bench
         if: matrix.os == 'ubuntu-latest'
+  fuzz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-fuzz
+      - uses: actions/checkout@v6
+      - run: cargo fuzz run bincode_roundtrip -- -max_total_time=60s
+      - run: cargo fuzz run fen_from_ascii -- -max_total_time=10s
+      - run: cargo fuzz run fen_from_setup -- -max_total_time=10s
+      - run: cargo fuzz run incremental_zobrist -- -max_total_time=60s
+      - run: cargo fuzz run legals_are_legal -- -max_total_time=60s
+      - run: cargo fuzz run packed_setup_from_bytes -- -max_total_time=30s
+      - run: cargo fuzz run packed_setup_from_setup -- -max_total_time=30s
+      - run: cargo fuzz run pgn -- -max_total_time=60s
+      - run: cargo fuzz run san_from_ascii -- -max_total_time=10s
+      - run: cargo fuzz run syzygy_pawnful -- -max_total_time=60s
+      - run: cargo fuzz run uci_from_ascii -- -max_total_time=10s
