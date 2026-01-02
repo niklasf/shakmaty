@@ -1655,6 +1655,37 @@ pub(crate) mod variant {
             }
             Outcome::Unknown
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            if self.ep_square.is_some() {
+                return None;
+            }
+
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture: None, // Do not try to resolve explosions
+                    to,
+                    promotion,
+                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+                    && role != Role::King
+                    && !self.castles.castling_rights().contains(from)
+                    && !self.castles.castling_rights().contains(to) =>
+                {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                    Some(current)
+                }
+                _ => None,
+            }
+        }
     }
 
     /// An Antichess position. Antichess is also known as Giveaway, but players
