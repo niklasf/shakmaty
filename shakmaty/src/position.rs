@@ -844,6 +844,10 @@ pub trait Position {
     ///
     /// May return `None` if an efficient incremental update is not implemented
     /// for the given situation.
+    ///
+    /// # Panics
+    ///
+    /// May or may not panic if the move is not legal.
     fn update_zobrist_hash<V: ZobristValue>(
         &self,
         current: V,
