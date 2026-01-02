@@ -384,6 +384,7 @@ impl<R: Read> Reader<R> {
                             let trimmed = trim_partial_utf8(self.buffer.data());
                             let cf = visitor.partial_comment(movetext, RawComment(trimmed));
                             if cf.is_break() {
+                                self.skip_until_after(b'}')?;
                                 return Ok(cf);
                             }
                             self.buffer.consume(trimmed.len());
