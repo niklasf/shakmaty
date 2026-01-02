@@ -42,8 +42,11 @@ impl<R: Read> ReaderBuilder<R> {
 
     /// Configure the buffer to support *at least* the given comment length.
     ///
-    /// Defaults to `255` bytes. Longer comments will be split into multiple
-    /// consecutive calls to [`Visitor::comment`].
+    /// Longer comments will be split into one or more
+    /// calls to [`Visitor::partial_comment()`] followed by a final call to
+    /// [`Visitor::comment()`].
+    ///
+    /// Defaults to `255` bytes.
     pub fn set_supported_comment_length(mut self, bytes: usize) -> Self {
         self.movetext_token_bytes = max(255, bytes) + 2; // Plus '{' and '}'
         self
