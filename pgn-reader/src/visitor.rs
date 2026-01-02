@@ -16,6 +16,7 @@ pub struct Skip(pub bool);
 /// 2. [`Visitor::begin_movetext()`]
 ///    - [`Visitor::san()`]
 ///    - [`Visitor::nag()`]
+///    - [`Visitor::partial_comment()`]
 ///    - [`Visitor::comment()`]
 ///    - [`Visitor::begin_variation()`] or skip
 ///    - [`Visitor::end_variation()`]
@@ -65,6 +66,30 @@ pub trait Visitor {
         let _movetext = movetext;
         let _nag = nag;
         ControlFlow::Continue(())
+    }
+
+    /// Called for `{ comment }`s which exceed the size of the reader's movetext
+    /// token buffer.
+    ///
+    /// This method will be called once for every buffer-sized chunk of the
+    /// comment, except for the last one in which the closing `}` is finally
+    /// encountered, for which [`Visitor::comment()`] will be called
+    /// instead. This method's default implementation simply forwards its
+    /// arguments to `comment()`, so if you don't override it, long comments
+    /// will look like a series of several short ones.
+    ///
+    /// The reader will avoid splitting chunks in the middle of a multibyte
+    /// UTF-8 sequence, therefore it's guaranteed that if the comment is valid
+    /// UTF-8, then so is every chunk.
+    ///
+    /// Buffer size is configurable via
+    /// [`ReaderBuilder::set_supported_comment_length()`](crate::reader::ReaderBuilder::set_supported_comment_length).
+    fn partial_comment(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        comment: RawComment<'_>,
+    ) -> ControlFlow<Self::Output> {
+        self.comment(movetext, comment)
     }
 
     /// Called for each `{ comment }`.

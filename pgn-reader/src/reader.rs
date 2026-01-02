@@ -42,6 +42,10 @@ impl<R: Read> ReaderBuilder<R> {
 
     /// Configure the buffer to support *at least* the given comment length.
     ///
+    /// Longer comments will be split into one or more
+    /// calls to [`Visitor::partial_comment()`] followed by a final call to
+    /// [`Visitor::comment()`].
+    ///
     /// Defaults to `255` bytes.
     pub fn set_supported_comment_length(mut self, bytes: usize) -> Self {
         self.movetext_token_bytes = max(255, bytes) + 2; // Plus '{' and '}'
@@ -365,23 +369,31 @@ impl<R: Read> Reader<R> {
             match ch {
                 b'{' => {
                     self.buffer.bump();
-
-                    let right_brace =
-                        if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
-                            right_brace
-                        } else {
-                            self.buffer.clear();
+                    loop {
+                        if self.buffer.len() == 0 {
                             return Err(io::Error::new(
                                 io::ErrorKind::InvalidData,
                                 "unterminated comment",
                             ));
-                        };
-
-                    let cf =
-                        visitor.comment(movetext, RawComment(&self.buffer.data()[..right_brace]));
-                    self.buffer.consume(right_brace + 1);
-                    if cf.is_break() {
-                        return Ok(cf);
+                        } else if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
+                            let cf = visitor
+                                .comment(movetext, RawComment(&self.buffer.data()[..right_brace]));
+                            self.buffer.consume(right_brace + 1);
+                            if cf.is_break() {
+                                return Ok(cf);
+                            }
+                            break;
+                        } else {
+                            let trimmed = trim_partial_utf8(self.buffer.data());
+                            let cf = visitor.partial_comment(movetext, RawComment(trimmed));
+                            if cf.is_break() {
+                                self.skip_until_after(b'}')?;
+                                return Ok(cf);
+                            }
+                            self.buffer.consume(trimmed.len());
+                            self.buffer
+                                .ensure_bytes(self.movetext_token_bytes, &mut self.reader)?;
+                        }
                     }
                 }
                 b'\n' => {
@@ -842,6 +854,45 @@ impl<R: Seek> Seek for Reader<R> {
     }
 }
 
+// Helper function for handling comments that don't fit in the movetext token
+// buffer. When we encounter these, we'll call `Vistor::comment` several times
+// with roughly buffer-sized chunks, but we want to avoid putting chunk
+// boundaries in the middle of a multibyte UTF-8 sequence. We don't assume or
+// require that the PGN is UTF-8 encoded at all. To prevent an infinite loop,
+// we avoid ever turning a non-empty slice into an empty one.
+fn trim_partial_utf8(buf: &[u8]) -> &[u8] {
+    let scan_start = buf.len().saturating_sub(4);
+    let Some(last_start_byte) = (scan_start..buf.len())
+        .rev()
+        .find(|b| !is_utf8_continuation(buf[*b]))
+    else {
+        return buf;
+    };
+
+    if last_start_byte == 0 || buf.len() - last_start_byte >= utf8_start_width(buf[last_start_byte])
+    {
+        buf
+    } else {
+        &buf[..last_start_byte]
+    }
+}
+
+#[inline]
+fn is_utf8_continuation(b: u8) -> bool {
+    (b & 0b1100_0000) == 0b1000_0000
+}
+
+#[inline]
+fn utf8_start_width(b: u8) -> usize {
+    match b {
+        0x00..=0x7F => 1, // ASCII
+        0xC2..=0xDF => 2, // 2-byte lead (exclude C0/C1 overlong)
+        0xE0..=0xEF => 3, // 3-byte lead
+        0xF0..=0xF4 => 4, // 4-byte lead (UTF-8 valid range)
+        _ => 0,           // continuation byte or invalid lead
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1006,6 +1057,28 @@ mod tests {
         assert!(reader.read_game(&mut CollectTokens)?.is_none());
         assert!(!skip_reader.skip_game()?);
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_long_comment() -> io::Result<()> {
+        // This repeats a four-byte sequence 257 times, and the buffer is 255+2
+        // bytes. Since 4 is relatively prime to 257, this ensures that we test
+        // splitting the sequence no matter where the beginning of the comment
+        // occurs.
+        let crabs: String = std::iter::repeat_n('🦀', 257).collect();
+        let pgn = format!("1. e4 {{{}}}", &crabs).into_bytes();
+        let mut reader = Reader::new(io::Cursor::new(pgn.as_slice()));
+        let tokens = reader.read_game(&mut CollectTokens)?.expect("found game");
+        let mut rebuilt = String::new();
+        for token in tokens {
+            if let Token::Comment(bytes) = token {
+                let s = core::str::from_utf8(bytes.as_slice())
+                    .expect("reader preserves UTF-8 validity");
+                rebuilt.push_str(s);
+            }
+        }
+        assert_eq!(rebuilt, crabs);
         Ok(())
     }
 

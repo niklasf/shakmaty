@@ -13,6 +13,7 @@ enum Token {
     BeginMovetext,
     San(SanPlus),
     Nag(Nag),
+    PartialComment(Vec<u8>),
     Comment(Vec<u8>),
     BeginVariation,
     EndVariation,
@@ -27,6 +28,7 @@ struct BreakOnToken {
     begin_movetext: bool,
     san: bool,
     nag: bool,
+    partial_comment: bool,
     comment: bool,
     begin_variation: bool,
     end_variation: bool,
@@ -91,6 +93,19 @@ impl Visitor for BreakOnToken {
     fn nag(&mut self, movetext: &mut Self::Movetext, nag: Nag) -> ControlFlow<Self::Output> {
         movetext.push(Token::Nag(nag));
         if self.nag {
+            ControlFlow::Break(mem::take(movetext))
+        } else {
+            ControlFlow::Continue(())
+        }
+    }
+
+    fn partial_comment(
+        &mut self,
+        movetext: &mut Self::Movetext,
+        comment: RawComment<'_>,
+    ) -> ControlFlow<Self::Output> {
+        movetext.push(Token::PartialComment(comment.as_bytes().to_owned()));
+        if self.partial_comment {
             ControlFlow::Break(mem::take(movetext))
         } else {
             ControlFlow::Continue(())
