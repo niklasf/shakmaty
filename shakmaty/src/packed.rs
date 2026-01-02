@@ -411,6 +411,9 @@ impl PackedSetup {
                 },
             });
             setup.promoted = Bitboard(reader.read_u64());
+            if !setup.promoted.is_subset(setup.board.occupied()) {
+                return Err(UnpackSetupError { _priv: () });
+            }
         }
 
         if variant == VARIANT_THREECHECK {
