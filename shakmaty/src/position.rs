@@ -2785,6 +2785,32 @@ pub(crate) mod variant {
                 Outcome::Unknown
             }
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture,
+                    to,
+                    promotion,
+                } => {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                    if let Some(capture) = capture {
+                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
+                    }
+                    Some(current)
+                }
+                _ => None,
+            }
+        }
     }
 
     /// A Horde position.
