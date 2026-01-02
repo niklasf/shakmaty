@@ -382,7 +382,7 @@ impl<R: Read> Reader<R> {
                             break;
                         } else {
                             let trimmed = trim_partial_utf8(self.buffer.data());
-                            let cf = visitor.comment(movetext, RawComment(trimmed));
+                            let cf = visitor.partial_comment(movetext, RawComment(trimmed));
                             if cf.is_break() {
                                 return Ok(cf);
                             }
