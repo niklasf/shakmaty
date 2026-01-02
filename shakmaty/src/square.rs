@@ -673,6 +673,11 @@ impl Square {
         }
     }
 
+    #[inline]
+    pub const fn abs_diff(self, other: Square) -> u32 {
+        self.to_u32().abs_diff(other.to_u32())
+    }
+
     #[must_use]
     #[inline]
     pub const fn to_u32(self) -> u32 {
