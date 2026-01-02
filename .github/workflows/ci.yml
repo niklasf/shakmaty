@@ -85,9 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-fuzz
+      - run: cargo install cargo-fuzz
       - uses: actions/checkout@v6
       - run: cargo fuzz run bincode_roundtrip -- -max_total_time=60s
       - run: cargo fuzz run fen_from_ascii -- -max_total_time=10s
