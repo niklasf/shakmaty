@@ -868,9 +868,9 @@ fn trim_partial_utf8(buf: &[u8]) -> &[u8] {
 
     if last_start_byte == 0 || buf.len() - last_start_byte >= utf8_start_width(buf[last_start_byte])
     {
-        return buf;
+        buf
     } else {
-        return &buf[..last_start_byte];
+        &buf[..last_start_byte]
     }
 }
 
