@@ -12,7 +12,7 @@ pub use crate::position::{
 use crate::{
     Bitboard, Board, ByColor, ByRole, Castles, CastlingMode, CastlingSide, Color, EnPassantMode,
     FromSetup, Move, MoveList, Outcome, Position, PositionError, RemainingChecks, Role, Setup,
-    Square,
+    Square, zobrist::ZobristValue,
 };
 
 /// Discriminant of [`VariantPosition`].
@@ -397,6 +397,37 @@ impl Position for VariantPosition {
 
     fn play_unchecked(&mut self, m: Move) {
         self.borrow_mut().play_unchecked(m);
+    }
+
+    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V {
+        match self {
+            VariantPosition::Chess(pos) => pos.zobrist_hash(mode),
+            VariantPosition::Atomic(pos) => pos.zobrist_hash(mode),
+            VariantPosition::Antichess(pos) => pos.zobrist_hash(mode),
+            VariantPosition::KingOfTheHill(pos) => pos.zobrist_hash(mode),
+            VariantPosition::ThreeCheck(pos) => pos.zobrist_hash(mode),
+            VariantPosition::Crazyhouse(pos) => pos.zobrist_hash(mode),
+            VariantPosition::RacingKings(pos) => pos.zobrist_hash(mode),
+            VariantPosition::Horde(pos) => pos.zobrist_hash(mode),
+        }
+    }
+
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        current: V,
+        m: Move,
+        mode: EnPassantMode,
+    ) -> Option<V> {
+        match self {
+            VariantPosition::Chess(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Atomic(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Antichess(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::KingOfTheHill(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::ThreeCheck(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Crazyhouse(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::RacingKings(pos) => pos.update_zobrist_hash(current, m, mode),
+            VariantPosition::Horde(pos) => pos.update_zobrist_hash(current, m, mode),
+        }
     }
 }
 

@@ -13,6 +13,7 @@ use crate::{
     EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square, attacks,
     bitboard::Direction,
     setup::EnPassant,
+    zobrist::ZobristValue,
 };
 
 /// A definitive outcome of a game.
@@ -790,6 +791,77 @@ pub trait Position {
         setup.swap_turn();
         Self::from_setup(setup, mode)
     }
+
+    /// Computes the Zobrist hash of the position from scratch. The hash
+    /// includes the position, except halfmove clock and fullmove number.
+    fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V
+    where
+        Self: Sized, /* FINAL */
+    {
+        let mut zobrist = self.board().board_zobrist_hash();
+
+        for sq in self.promoted() {
+            zobrist ^= V::zobrist_for_promoted(sq);
+        }
+
+        if let Some(pockets) = self.pockets() {
+            for (color, pocket) in pockets.zip_color() {
+                for (role, pieces) in pocket.zip_role() {
+                    zobrist ^= V::zobrist_for_pocket(color, role, pieces);
+                }
+            }
+        }
+
+        if self.turn() == Color::White {
+            zobrist ^= V::zobrist_for_white_turn();
+        }
+
+        let castles = self.castles();
+        for color in Color::ALL {
+            for side in CastlingSide::ALL {
+                if castles.has(color, side) {
+                    zobrist ^= V::zobrist_for_castling_right(color, side);
+                }
+            }
+        }
+
+        if let Some(sq) = self.ep_square(mode) {
+            zobrist ^= V::zobrist_for_en_passant_file(sq.file());
+        }
+
+        if let Some(remaining_checks) = self.remaining_checks() {
+            for (color, remaining) in remaining_checks.zip_color() {
+                zobrist ^= V::zobrist_for_remaining_checks(color, remaining);
+            }
+        }
+
+        zobrist
+    }
+
+    /// Incrementally computes the Zobrist hash of the position after playing
+    /// the legal move `m`, assuming that the current position has the Zobrist
+    /// hash `current`.
+    ///
+    /// May return `None` if an efficient incremental update is not implemented
+    /// for the given situation.
+    ///
+    /// # Panics
+    ///
+    /// May or may not panic if the move is not legal.
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        current: V,
+        m: Move,
+        mode: EnPassantMode,
+    ) -> Option<V>
+    where
+        Self: Sized,
+    {
+        let _current = current;
+        let _m = m;
+        let _mode = mode;
+        None
+    }
 }
 
 #[cfg(feature = "arbitrary")]
@@ -1236,6 +1308,15 @@ impl Position for Chess {
     fn variant_outcome(&self) -> Outcome {
         Outcome::Unknown
     }
+
+    fn update_zobrist_hash<V: ZobristValue>(
+        &self,
+        current: V,
+        m: Move,
+        _mode: EnPassantMode,
+    ) -> Option<V> {
+        do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+    }
 }
 
 #[cfg(feature = "variant")]
@@ -1553,6 +1634,37 @@ pub(crate) mod variant {
             }
             Outcome::Unknown
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            if self.ep_square.is_some() {
+                return None;
+            }
+
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture: None, // Do not try to resolve explosions
+                    to,
+                    promotion,
+                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+                    && role != Role::King
+                    && !self.castles.castling_rights().contains(from)
+                    && !self.castles.castling_rights().contains(to) =>
+                {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                    Some(current)
+                }
+                _ => None,
+            }
+        }
     }
 
     /// An Antichess position. Antichess is also known as Giveaway, but players
@@ -1787,6 +1899,15 @@ pub(crate) mod variant {
                 Outcome::Unknown
             }
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+        }
     }
 
     /// A King of the Hill position.
@@ -1917,6 +2038,18 @@ pub(crate) mod variant {
                 }
             }
             Outcome::Unknown
+        }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            current: V,
+            m: Move,
+            mode: EnPassantMode,
+        ) -> Option<V>
+        where
+            Self: Sized,
+        {
+            self.chess.update_zobrist_hash(current, m, mode)
         }
     }
 
@@ -2359,6 +2492,63 @@ pub(crate) mod variant {
         fn variant_outcome(&self) -> Outcome {
             Outcome::Unknown
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            if self.chess.ep_square.is_some() {
+                return None;
+            }
+
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture,
+                    to,
+                    promotion,
+                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+                    && role != Role::King
+                    && !self.castles().castling_rights().contains(from)
+                    && !self.castles().castling_rights().contains(to) =>
+                {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn()));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn()));
+                    if let Some(capture) = capture {
+                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn()));
+                        let capture = if self.promoted.contains(to) {
+                            current ^= V::zobrist_for_promoted(to);
+                            Role::Pawn
+                        } else {
+                            capture
+                        };
+                        let pocket_pieces = self.pockets[self.turn()][capture];
+                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces);
+                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces + 1);
+                    }
+                    if self.promoted.contains(from) {
+                        current ^= V::zobrist_for_promoted(from);
+                    }
+                    if self.promoted.contains(from) || promotion.is_some() {
+                        current ^= V::zobrist_for_promoted(to);
+                    }
+                    Some(current)
+                }
+                Move::Put { role, to } => {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(to, role.of(self.turn()));
+                    let pocket_pieces = self.pockets[self.turn()][role];
+                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces);
+                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces - 1);
+                    Some(current)
+                }
+                _ => None,
+            }
+        }
     }
 
     /// A Racing Kings position.
@@ -2597,6 +2787,32 @@ pub(crate) mod variant {
                 }
             } else {
                 Outcome::Unknown
+            }
+        }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            mut current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            match m {
+                Move::Normal {
+                    role,
+                    from,
+                    capture,
+                    to,
+                    promotion,
+                } => {
+                    current ^= V::zobrist_for_white_turn();
+                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                    if let Some(capture) = capture {
+                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn));
+                    }
+                    Some(current)
+                }
+                _ => None,
             }
         }
     }
@@ -3074,6 +3290,15 @@ pub(crate) mod variant {
                 Outcome::Unknown
             }
         }
+
+        fn update_zobrist_hash<V: ZobristValue>(
+            &self,
+            current: V,
+            m: Move,
+            _mode: EnPassantMode,
+        ) -> Option<V> {
+            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+        }
     }
 
     fn add_king_promotions(moves: &mut MoveList) {
@@ -3207,13 +3432,12 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
         }
     }
 
-    if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-        if pos
+    if let Some(their_king) = pos.board().king_of(!pos.turn())
+        && pos
             .king_attackers(their_king, pos.turn(), pos.board().occupied())
             .any()
-        {
-            errors |= PositionErrorKinds::OPPOSITE_CHECK;
-        }
+    {
+        errors |= PositionErrorKinds::OPPOSITE_CHECK;
     }
 
     let checkers = pos.checkers();
@@ -3255,6 +3479,41 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
     }
 
     errors
+}
+
+fn do_update_zobrist_hash<V: ZobristValue>(
+    mut current: V,
+    m: Move,
+    turn: Color,
+    castles: &Castles,
+    ep_square: Option<EnPassant>,
+) -> Option<V> {
+    if ep_square.is_some() {
+        return None;
+    }
+
+    match m {
+        Move::Normal {
+            role,
+            from,
+            capture,
+            to,
+            promotion,
+        } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
+            && role != Role::King
+            && !castles.castling_rights().contains(from)
+            && !castles.castling_rights().contains(to) =>
+        {
+            current ^= V::zobrist_for_white_turn();
+            current ^= V::zobrist_for_piece(from, role.of(turn));
+            current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(turn));
+            if let Some(capture) = capture {
+                current ^= V::zobrist_for_piece(to, capture.of(!turn));
+            }
+            Some(current)
+        }
+        _ => None,
+    }
 }
 
 const fn is_standard_material(board: &Board, color: Color) -> bool {

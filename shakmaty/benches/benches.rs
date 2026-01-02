@@ -8,7 +8,7 @@ use shakmaty::{
     perft,
     san::{San, SanPlus},
     uci::UciMove,
-    zobrist::{Zobrist64, ZobristHash},
+    zobrist::Zobrist64,
 };
 
 #[library_benchmark]

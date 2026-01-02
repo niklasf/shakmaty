@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - "1.85.1" # remember to update rust-version in Cargo.toml
+          - "1.88" # remember to update rust-version in Cargo.toml
           - "stable"
           - "nightly"
     runs-on: ubuntu-latest
