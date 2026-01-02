@@ -3318,13 +3318,12 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
         }
     }
 
-    if let Some(their_king) = pos.board().king_of(!pos.turn()) {
-        if pos
+    if let Some(their_king) = pos.board().king_of(!pos.turn())
+        && pos
             .king_attackers(their_king, pos.turn(), pos.board().occupied())
             .any()
-        {
-            errors |= PositionErrorKinds::OPPOSITE_CHECK;
-        }
+    {
+        errors |= PositionErrorKinds::OPPOSITE_CHECK;
     }
 
     let checkers = pos.checkers();

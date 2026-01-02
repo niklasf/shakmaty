@@ -651,7 +651,7 @@ impl Square {
     /// ```
     #[inline]
     pub const fn is_dark(self) -> bool {
-        (self.rank().to_u32() + self.file().to_u32()) % 2 == 0
+        (self.rank().to_u32() + self.file().to_u32()).is_multiple_of(2)
     }
 
     /// The distance between the two squares, i.e. the number of king steps
