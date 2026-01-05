@@ -32,16 +32,35 @@ fn bench_kiwipete() {
 
 #[library_benchmark]
 fn bench_play_unchecked() -> Chess {
-    let m = black_box(Move::Normal {
-        role: Role::Knight,
-        from: Square::G1,
-        capture: None,
-        to: Square::F3,
-        promotion: None,
-    });
-
     let mut pos = black_box(Chess::default());
-    pos.play_unchecked(m);
+    pos.play_unchecked(black_box(Move::Normal {
+        role: Role::Pawn,
+        from: Square::E2,
+        capture: None,
+        to: Square::E4,
+        promotion: None,
+    }));
+    pos.play_unchecked(black_box(Move::Normal {
+        role: Role::Pawn,
+        from: Square::D7,
+        capture: None,
+        to: Square::D5,
+        promotion: None,
+    }));
+    pos.play_unchecked(black_box(Move::Normal {
+        role: Role::Pawn,
+        from: Square::E4,
+        capture: Some(Role::Pawn),
+        to: Square::D5,
+        promotion: None,
+    }));
+    pos.play_unchecked(black_box(Move::Normal {
+        role: Role::Queen,
+        from: Square::D8,
+        capture: Some(Role::Pawn),
+        to: Square::D5,
+        promotion: None,
+    }));
     pos
 }
 
