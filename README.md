@@ -38,8 +38,7 @@ A Rust library for chess and chess variant rules and operations
 - Read and write FEN, SAN and UCI notation.
 
 - Supports all Lichess variants: Standard chess, Chess960, Antichess, Atomic,
-  King of the Hill, Three-Check, Crazyhouse, Racing Kings and Horde. Provides
-  vocabulary to implement other variants.
+  King of the Hill, Three-Check, Crazyhouse, Racing Kings and Horde.
 
 - Bitboards and compact fixed shift magic attack tables.
 
