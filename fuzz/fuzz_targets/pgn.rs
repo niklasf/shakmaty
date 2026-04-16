@@ -207,13 +207,9 @@ fuzz_target!(|data: TestCase| {
     // unless there was an I/O error (io::ErrorKind::InvalidData may go
     // unnoticed depending on the buffer state).
     let mut visitor = data.left_visitor;
-    loop {
-        let Ok(Some(left_game)) = left_reader.read_game(&mut visitor) else {
-            break;
-        };
-        let Ok(Some(right_game)) = right_reader.read_game(&mut visitor) else {
-            break;
-        };
+    while let Ok(Some(left_game)) = left_reader.read_game(&mut visitor)
+        && let Ok(Some(right_game)) = right_reader.read_game(&mut visitor)
+    {
         assert_eq!(left_game, right_game);
     }
 });

@@ -1,4 +1,4 @@
-use std::{fmt, io, marker::PhantomData};
+use std::{fmt, io, iter, marker::PhantomData};
 
 use arrayvec::ArrayVec;
 use bitflags::bitflags;
@@ -1403,16 +1403,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         // Encode remaining pawns.
         let mut remaining_pawns =
             material.by_color.white.has_pawns() && material.by_color.black.has_pawns();
-        let mut next = 1;
         let mut group_sq = side.groups.lens[0];
-        for lens in side.groups.lens.iter().copied().skip(1) {
+        for (&len, &factor) in iter::zip(&side.groups.lens[1..], &side.groups.factors[1..]) {
             let (prev_squares, group_squares) = squares.split_at_mut(group_sq);
-            let group_squares = &mut group_squares[..lens];
+            let group_squares = &mut group_squares[..len];
             group_squares.sort_unstable();
 
             let mut n = 0;
-
-            for (i, &group_square) in group_squares.iter().enumerate().take(lens) {
+            for (i, &group_square) in group_squares.iter().enumerate().take(len) {
                 let adjust = prev_squares[..group_sq]
                     .iter()
                     .filter(|sq| group_square > **sq)
@@ -1424,9 +1422,8 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
 
             remaining_pawns = false;
-            idx += n * side.groups.factors[next];
-            group_sq += side.groups.lens[next];
-            next += 1;
+            idx += n * factor;
+            group_sq += len;
         }
 
         Ok(Some((side, idx)))
