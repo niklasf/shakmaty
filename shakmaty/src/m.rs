@@ -243,14 +243,9 @@ impl Display for Move {
 pub type MoveList = ArrayVec<
     Move,
     {
-        #[cfg(feature = "variant")]
-        {
-            270 + 6 * 6 * 5
-        }
-        #[cfg(not(feature = "variant"))]
-        {
-            // kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
-            270
+        cfg_select! {
+            feature = "variant" => 270 + 6 * 6 * 5,
+            _ => 270, // kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
         }
     },
 >;

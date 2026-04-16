@@ -63,14 +63,22 @@ fn bench_probe_wdl_mmap(c: &mut Criterion) {
     });
 }
 
-#[cfg(not(all(feature = "mmap", target_pointer_width = "64")))]
-criterion_group!(benches, bench_add_directory, bench_probe_wdl);
-#[cfg(all(feature = "mmap", target_pointer_width = "64"))]
-criterion_group!(
-    benches,
-    bench_add_directory,
-    bench_probe_wdl,
-    bench_probe_wdl_mmap
-);
+cfg_select! {
+    all(feature = "mmap", target_pointer_width = "64") => {
+        criterion_group!(
+            benches,
+            bench_add_directory,
+            bench_probe_wdl,
+            bench_probe_wdl_mmap
+        );
+    }
+    _ => {
+        criterion_group!(
+            benches,
+            bench_add_directory,
+            bench_probe_wdl
+        );
+    }
+}
 
 criterion_main!(benches);
