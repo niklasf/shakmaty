@@ -25,6 +25,26 @@ impl Piece {
         }
     }
 
+    /// Gets the Unicode character for the piece. Assume a light background.
+    ///
+    /// If printing on a dark background, consider `piece.role.of(piece.color.other()).unicode_char()`.
+    pub const fn unicode_char(self) -> char {
+        match (self.color, self.role) {
+            (Color::White, Role::Rook) => '♖',
+            (Color::Black, Role::Rook) => '♜',
+            (Color::White, Role::Knight) => '♘',
+            (Color::Black, Role::Knight) => '♞',
+            (Color::White, Role::Bishop) => '♗',
+            (Color::Black, Role::Bishop) => '♝',
+            (Color::White, Role::Queen) => '♕',
+            (Color::Black, Role::Queen) => '♛',
+            (Color::White, Role::King) => '♔',
+            (Color::Black, Role::King) => '♚',
+            (Color::White, Role::Pawn) => '♙',
+            (Color::Black, Role::Pawn) => '♟',
+        }
+    }
+
     pub const fn from_char(ch: char) -> Option<Piece> {
         let Some(role) = Role::from_char(ch) else {
             return None;
@@ -166,6 +186,27 @@ mod tests {
         assert!(Role::Bishop < Role::Rook);
         assert!(Role::Rook < Role::Queen);
         assert!(Role::Queen < Role::King);
+    }
+
+    #[test]
+    fn test_unicode() {
+        let tests = [
+            ('R', '♖'),
+            ('r', '♜'),
+            ('N', '♘'),
+            ('n', '♞'),
+            ('B', '♗'),
+            ('b', '♝'),
+            ('Q', '♕'),
+            ('q', '♛'),
+            ('K', '♔'),
+            ('k', '♚'),
+            ('P', '♙'),
+            ('p', '♟'),
+        ];
+        for (ch, unicode) in tests {
+            assert_eq!(Piece::from_char(ch).unwrap().unicode_char(), unicode);
+        }
     }
 }
 
