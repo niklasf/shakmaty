@@ -857,6 +857,23 @@ impl Bitboard {
     /// ```
     pub const CORNERS: Bitboard = Bitboard(0x8100_0000_0000_0081);
 
+    /// The edges of the board.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::EDGES;
+    /// // 1 1 1 1 1 1 1 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 1 1 1 1 1 1 1
+    /// ```
+    pub const EDGES: Bitboard = Bitboard(0xff81_8181_8181_81ff);
+
     /// The backranks.
     ///
     /// ```
