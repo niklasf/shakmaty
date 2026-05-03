@@ -18,6 +18,17 @@ pub struct Piece {
 }
 
 impl Piece {
+    /// Gets the English letter for the piece, e.g., 'K' for a white king.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Color, Role, Piece};
+    ///
+    /// let piece = Piece { color: Color::White, role: Role::King };
+    /// assert_eq!(piece.char(), 'K');
+    /// assert_eq!(piece.role.of(piece.color.other()).char(), 'k');
+    /// ```
     pub const fn char(self) -> char {
         match self.color {
             Color::White => self.role.upper_char(),
@@ -25,9 +36,18 @@ impl Piece {
         }
     }
 
-    /// Gets the Unicode character for the piece. Assume a light background.
+    /// Gets the Unicode character for the piece, e.g., '♔' aka
+    /// `WHITE CHESS KING U+2654`.
     ///
-    /// If printing on a dark background, consider `piece.role.of(piece.color.other()).unicode_char()`.
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Color, Role, Piece};
+    ///
+    /// let piece = Piece { color: Color::White, role: Role::King };
+    /// assert_eq!(piece.unicode_char(), '♔');
+    /// assert_eq!(piece.role.of(piece.color.other()).unicode_char(), '♚');
+    /// ```
     pub const fn unicode_char(self) -> char {
         match (self.color, self.role) {
             (Color::White, Role::Rook) => '♖',
