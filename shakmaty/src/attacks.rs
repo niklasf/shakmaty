@@ -528,10 +528,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_rook_attacks() {
+    fn test_sliding_attacks_examples() {
+        assert_eq!(
+            bishop_attacks(Square::D6, Bitboard(0x3f7f_2880_2826_f5b9)),
+            Bitboard(0x0014_0014_2201_0000)
+        );
         assert_eq!(
             rook_attacks(Square::D6, Bitboard(0x3f7f_2880_2826_f5b9)),
             Bitboard(0x0008_3708_0800_0000)
         );
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn test_sliding_attacks_exhaustive() {
+        for (role, deltas) in [
+            (Role::Bishop, &[-7, 7, -9, 9]),
+            (Role::Rook, &[-1, 1, -8, 8]),
+        ] {
+            for sq in Square::ALL {
+                let range = Bitboard(sliding_attacks(i32::from(sq), 0, deltas));
+                for subset in range.carry_rippler() {
+                    assert_eq!(
+                        attacks(sq, role.of(Color::White), subset),
+                        Bitboard(sliding_attacks(i32::from(sq), subset.0, deltas))
+                    );
+                }
+            }
+        }
     }
 }
