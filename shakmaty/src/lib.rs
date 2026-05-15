@@ -54,8 +54,9 @@
 //!   (e.g. FEN string rendering).
 //! * `std`: Implies `alloc`. Enabled by default.
 //!   For `no_std` environments, this must be disabled with `default-features = false`.
-//! * `magics`: Allow precomputing large attack tables (currently 694 KiB)
-//!   at compile time. Enabled by default.
+//! * `magics`: Allow using large attack tables (currently 694 KiB precomputed
+//!   at compile time). Gains ~20% perft speed on x86, ~5% on ARM, but generally
+//!   much less outside of tight benchmark scenarios. Enabled by default.
 //! * `variant`: Enables support for all Lichess variants.
 //!
 //! Optional dependencies:

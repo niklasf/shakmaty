@@ -345,6 +345,9 @@ mod hyperbola_quintessence {
 
         #[inline]
         const fn non_rank_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
+            // Equivalent to general_hyperbola() if range has at most one
+            // square per rank. Faster on x86 where no fast bit reversal
+            // is available.
             let o = occupied.0 & range;
             let fwd = o.wrapping_sub(1u64 << sq.to_u32());
             let rev = o.swap_bytes().wrapping_sub(1u64 << (sq.to_u32() ^ 0x38));
