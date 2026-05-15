@@ -11,7 +11,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [features]
-default = ["std"]
+default = ["std", "magics"]
 alloc = ["serde?/alloc"]
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
 magics = []
