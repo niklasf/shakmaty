@@ -338,25 +338,6 @@ mod hyperbola_quintessence {
                 other_range: sliding_attacks(sq, 0, &[-1, 1]),
             }
         }
-
-        #[inline]
-        const fn non_rank_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
-            // Equivalent to general_hyperbola() if range has at most one
-            // square per rank. Faster on x86 where no fast bit reversal
-            // is available.
-            let o = occupied.0 & range;
-            let fwd = o.wrapping_sub(1u64 << sq.to_u32());
-            let rev = o.swap_bytes().wrapping_sub(1u64 << (sq.to_u32() ^ 0x38));
-            Bitboard((fwd ^ rev.swap_bytes()) & range)
-        }
-
-        #[inline]
-        const fn general_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
-            let o = occupied.0 & range;
-            let fwd = o.wrapping_sub(1u64 << sq.to_u32());
-            let rev = o.reverse_bits().wrapping_sub(1u64 << (63 - sq.to_u32()));
-            Bitboard((fwd ^ rev.reverse_bits()) & range)
-        }
     }
 
     static PREPARED_BISHOP: [Prepared; 64] = {
@@ -379,18 +360,43 @@ mod hyperbola_quintessence {
         table
     };
 
+    #[inline]
+    const fn non_rank_hyperbola(sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
+        // Equivalent to general_hyperbola() if range has at most one
+        // square per rank. Faster on x86 where no bit reversal instruction
+        // is available.
+        let o = occupied.0 & range;
+        let fwd = o.wrapping_sub(1u64 << sq.to_u32());
+        let rev = o.swap_bytes().wrapping_sub(1u64 << (sq.to_u32() ^ 0x38));
+        Bitboard((fwd ^ rev.swap_bytes()) & range)
+    }
+
+    #[inline]
+    const fn general_hyperbola(sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
+        let o = occupied.0 & range;
+        let fwd = o.wrapping_sub(1u64 << sq.to_u32());
+        let rev = o.reverse_bits().wrapping_sub(1u64 << (63 - sq.to_u32()));
+        Bitboard((fwd ^ rev.reverse_bits()) & range)
+    }
+
     /// Looks up attacks for a bishop on `sq` with `occupied` squares.
     pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_BISHOP[sq.to_usize()];
-        p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
-            .with_const(p.non_rank_hyperbola(sq, occupied, p.other_range))
+        non_rank_hyperbola(sq, occupied, p.non_rank_range).with_const(non_rank_hyperbola(
+            sq,
+            occupied,
+            p.other_range,
+        ))
     }
 
     /// Looks up attacks for a rook on `sq` with `occupied` squares.
     pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_ROOK[sq.to_usize()];
-        p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
-            .with_const(p.general_hyperbola(sq, occupied, p.other_range))
+        non_rank_hyperbola(sq, occupied, p.non_rank_range).with_const(general_hyperbola(
+            sq,
+            occupied,
+            p.other_range,
+        ))
     }
 }
 
