@@ -347,9 +347,7 @@ mod hyperbola_quintessence {
         const fn non_rank_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
             let o = occupied.0 & range;
             let fwd = o.wrapping_sub(1u64 << sq.to_u32());
-            let rev = o
-                .swap_bytes()
-                .wrapping_sub((1u64 << sq.to_u32()).swap_bytes());
+            let rev = o.swap_bytes().wrapping_sub(1u64 << (sq.to_u32() ^ 0x38));
             Bitboard((fwd ^ rev.swap_bytes()) & range)
         }
 
@@ -357,9 +355,7 @@ mod hyperbola_quintessence {
         const fn general_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
             let o = occupied.0 & range;
             let fwd = o.wrapping_sub(1u64 << sq.to_u32());
-            let rev = o
-                .reverse_bits()
-                .wrapping_sub((1u64 << sq.to_u32()).reverse_bits());
+            let rev = o.reverse_bits().wrapping_sub(1u64 << (63 - sq.to_u32()));
             Bitboard((fwd ^ rev.reverse_bits()) & range)
         }
     }
