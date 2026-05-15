@@ -891,6 +891,23 @@ impl Bitboard {
     /// ```
     pub const BACKRANKS: Bitboard = Bitboard(0xff00_0000_0000_00ff);
 
+    /// The sides.
+    ///
+    /// ```
+    /// # use shakmaty::Bitboard;
+    /// #
+    /// # let bitboard = Bitboard::SIDES;
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// // 1 . . . . . . 1
+    /// ```
+    pub const SIDES: Bitboard = Bitboard(0x8181_8181_8181_8181);
+
     /// The four center squares.
     ///
     /// ```
@@ -1387,6 +1404,15 @@ mod tests {
     #[test]
     fn test_rank() {
         assert_eq!(Bitboard::from_rank(Rank::Fourth), Bitboard(0xff00_0000));
+    }
+
+    #[test]
+    fn test_edges() {
+        assert_eq!(Bitboard::SIDES | Bitboard::BACKRANKS, Bitboard::EDGES);
+        assert_eq!(
+            Bitboard::SIDES ^ Bitboard::BACKRANKS ^ Bitboard::CORNERS,
+            Bitboard::EDGES
+        );
     }
 
     #[test]
