@@ -53,18 +53,14 @@ const fn sliding_attacks(square: i32, occupied: u64, deltas: &[i32]) -> u64 {
     attack
 }
 
-const fn bootstrap_sliding_attacks(occupied: u64, deltas: &[i32]) -> [u64; 64] {
+const fn bootstrap_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
     let mut table = [0; 64];
     let mut sq = 0;
     while sq < 64 {
-        table[sq] = sliding_attacks(sq as i32, occupied, deltas);
+        table[sq] = sliding_attacks(sq as i32, !0, deltas);
         sq += 1;
     }
     table
-}
-
-const fn bootstrap_stepping_attacks(deltas: &[i32]) -> [u64; 64] {
-    bootstrap_sliding_attacks(!0, deltas)
 }
 
 static KNIGHT_ATTACKS: [u64; 64] = bootstrap_stepping_attacks(&KNIGHT_DELTAS);
@@ -383,12 +379,14 @@ mod hyperbola_quintessence {
         table
     };
 
+    /// Looks up attacks for a bishop on `sq` with `occupied` squares.
     pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_BISHOP[sq.to_usize()];
         p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
             .with_const(p.non_rank_hyperbola(sq, occupied, p.other_range))
     }
 
+    /// Looks up attacks for a rook on `sq` with `occupied` squares.
     pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_ROOK[sq.to_usize()];
         p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
