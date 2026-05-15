@@ -40,7 +40,8 @@ Chess and chess variant rules and operations
 - Supports all Lichess variants: Standard chess, Chess960, Antichess, Atomic,
   King of the Hill, Three-Check, Crazyhouse, Racing Kings and Horde.
 
-- Bitboards and compact fixed shift magic attack tables.
+- Bitboards and attack generation with compact fixed shift magic attack tables
+  or Hyperbola Quintessence.
 
 - Fast compact binary encodings for positions and moves.
 

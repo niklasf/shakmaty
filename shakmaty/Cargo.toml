@@ -11,9 +11,10 @@ edition.workspace = true
 rust-version.workspace = true
 
 [features]
-default = ["std"]
+default = ["std", "magics"]
 alloc = ["serde?/alloc"]
 std = ["alloc", "btoi/std", "nohash-hasher?/std"]
+magics = []
 variant = []
 arbitrary = ["dep:arbitrary", "std"]
 nohash-hasher = ["dep:nohash-hasher"]

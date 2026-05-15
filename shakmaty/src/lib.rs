@@ -47,12 +47,20 @@
 //!
 //! # Feature flags
 //!
+//! Inherent features:
+//!
 //! * `alloc`: Enables APIs which require the
 //!   [`alloc`](https://doc.rust-lang.org/stable/alloc/index.html) crate
 //!   (e.g. FEN string rendering).
 //! * `std`: Implies `alloc`. Enabled by default.
 //!   For `no_std` environments, this must be disabled with `default-features = false`.
+//! * `magics`: Allows using large attack tables (currently 694 KiB precomputed
+//!   at compile time). Gains ~20% perft speed on x86, ~5% on ARM, but generally
+//!   much less outside of tight benchmark scenarios. Enabled by default.
 //! * `variant`: Enables support for all Lichess variants.
+//!
+//! Optional dependencies:
+//!
 //! * `arbitrary`: Implements [`arbitrary::Arbitrary`](https://docs.rs/arbitrary/1/arbitrary/trait.Arbitrary.html)
 //!   for vocabulary types.
 //! * `bincode`: Implements [`bincode`](https://docs.rs/bincode/2)
