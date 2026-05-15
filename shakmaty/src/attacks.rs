@@ -319,8 +319,6 @@ mod hyperbola_quintessence {
     struct Prepared {
         non_rank_range: u64,
         other_range: u64,
-        bb: u64,
-        bb_rev: u64,
     }
 
     impl Prepared {
@@ -328,8 +326,6 @@ mod hyperbola_quintessence {
             Prepared {
                 non_rank_range: 0,
                 other_range: 0,
-                bb: 0,
-                bb_rev: 0,
             }
         }
 
@@ -337,8 +333,6 @@ mod hyperbola_quintessence {
             Prepared {
                 non_rank_range: sliding_attacks(sq, 0, &[-9, 9]),
                 other_range: sliding_attacks(sq, 0, &[-7, 7]),
-                bb: 1u64 << sq,
-                bb_rev: (1u64 << sq).swap_bytes(),
             }
         }
 
@@ -346,22 +340,26 @@ mod hyperbola_quintessence {
             Prepared {
                 non_rank_range: sliding_attacks(sq, 0, &[-8, 8]),
                 other_range: sliding_attacks(sq, 0, &[-1, 1]),
-                bb: 1u64 << sq,
-                bb_rev: (1u64 << sq).reverse_bits(),
             }
         }
 
-        const fn non_rank_hyperbola(&self, occupied: Bitboard, range: u64) -> Bitboard {
+        #[inline]
+        const fn non_rank_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
             let o = occupied.0 & range;
-            let fwd = o.wrapping_sub(self.bb);
-            let rev = o.swap_bytes().wrapping_sub(self.bb_rev);
+            let fwd = o.wrapping_sub(1u64 << sq.to_u32());
+            let rev = o
+                .swap_bytes()
+                .wrapping_sub((1u64 << sq.to_u32()).swap_bytes());
             Bitboard((fwd ^ rev.swap_bytes()) & range)
         }
 
-        const fn general_hyperbola(&self, occupied: Bitboard, range: u64) -> Bitboard {
+        #[inline]
+        const fn general_hyperbola(&self, sq: Square, occupied: Bitboard, range: u64) -> Bitboard {
             let o = occupied.0 & range;
-            let fwd = o.wrapping_sub(self.bb);
-            let rev = o.reverse_bits().wrapping_sub(self.bb_rev);
+            let fwd = o.wrapping_sub(1u64 << sq.to_u32());
+            let rev = o
+                .reverse_bits()
+                .wrapping_sub((1u64 << sq.to_u32()).reverse_bits());
             Bitboard((fwd ^ rev.reverse_bits()) & range)
         }
     }
@@ -388,14 +386,14 @@ mod hyperbola_quintessence {
 
     pub const fn bishop_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_BISHOP[sq.to_usize()];
-        p.non_rank_hyperbola(occupied, p.non_rank_range)
-            .with_const(p.non_rank_hyperbola(occupied, p.other_range))
+        p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
+            .with_const(p.non_rank_hyperbola(sq, occupied, p.other_range))
     }
 
     pub const fn rook_attacks(sq: Square, occupied: Bitboard) -> Bitboard {
         let p = &PREPARED_ROOK[sq.to_usize()];
-        p.non_rank_hyperbola(occupied, p.non_rank_range)
-            .with_const(p.general_hyperbola(occupied, p.other_range))
+        p.non_rank_hyperbola(sq, occupied, p.non_rank_range)
+            .with_const(p.general_hyperbola(sq, occupied, p.other_range))
     }
 }
 
