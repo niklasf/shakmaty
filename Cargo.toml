@@ -17,3 +17,6 @@ rust-version = "1.95" # remember to update ci.yml
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docs_rs)', 'cfg(fuzzing)'] }
+
+[profile.bench]
+debug = true # needed for gungraun
