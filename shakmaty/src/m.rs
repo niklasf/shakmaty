@@ -103,7 +103,7 @@ impl Move {
     }
 
     /// Checks if the move is a Crazyhouse drop.
-    pub const fn is_drop(self) -> bool {
+    pub const fn is_put(self) -> bool {
         matches!(self, Move::Put { .. })
     }
 
