@@ -102,6 +102,11 @@ impl Move {
         matches!(self, Move::EnPassant { .. })
     }
 
+    /// Checks if the move is a Crazyhouse drop.
+    pub const fn is_drop(self) -> bool {
+        matches!(self, Move::Put { .. })
+    }
+
     /// Checks if the move zeros the half-move clock.
     pub const fn is_zeroing(self) -> bool {
         matches!(
