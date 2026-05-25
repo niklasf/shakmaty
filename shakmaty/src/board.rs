@@ -135,6 +135,120 @@ impl Board {
         (self.by_role, self.by_color)
     }
 
+    /// Returns the Chess960 starting position for the given index in
+    /// Sharnagl's indexing scheme.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `sharnagl` is not in `0..960`.
+    pub const fn chess960(sharnagl: u32) -> Board {
+        assert!(sharnagl < 960);
+
+        let bw = sharnagl % 4;
+        let n = sharnagl / 4;
+        let bb = n % 4;
+        let n = n / 4;
+        let q = n % 6;
+        let n = n / 6;
+
+        let mut n1 = 0;
+        let mut n2 = 0;
+        while n1 < 4 {
+            n2 = n + (3 - n1) * (4 - n1) / 2 - 5;
+            if n1 < n2 && 1 <= n2 && n2 <= 4 {
+                break;
+            }
+            n1 += 1;
+        }
+        debug_assert!(n1 < n2);
+
+        // Bishops
+        let bw_file = bw * 2 + 1;
+        let bb_file = bb * 2;
+
+        // Queens
+        let mut q_file = q;
+        q_file += (if bw_file < bb_file { bw_file } else { bb_file } <= q_file) as u32;
+        q_file += (if bw_file < bb_file { bb_file } else { bw_file } <= q_file) as u32;
+
+        // Knights
+        let mut n1_file = 0;
+        loop {
+            if n1_file != bw_file && n1_file != bb_file && n1_file != q_file {
+                n2 -= 1;
+                if n1 == 0 {
+                    break;
+                }
+                n1 -= 1;
+            }
+            n1_file += 1;
+        }
+        let mut n2_file = n1_file + 1;
+        loop {
+            if n2_file != bw_file && n2_file != bb_file && n2_file != q_file {
+                if n2 == 0 {
+                    break;
+                }
+                n2 -= 1;
+            }
+            n2_file += 1;
+        }
+
+        // Rook, king, rook
+        let mut r1_file = 0;
+        while r1_file == bw_file
+            || r1_file == bb_file
+            || r1_file == q_file
+            || r1_file == n1_file
+            || r1_file == n2_file
+        {
+            r1_file += 1;
+        }
+        let mut k_file = 0;
+        while k_file == bw_file
+            || k_file == bb_file
+            || k_file == q_file
+            || k_file == n1_file
+            || k_file == n2_file
+            || k_file == r1_file
+        {
+            k_file += 1;
+        }
+        let mut r2_file = 0;
+        while r2_file == bw_file
+            || r2_file == bb_file
+            || r2_file == q_file
+            || r2_file == n1_file
+            || r2_file == n2_file
+            || r2_file == r1_file
+            || r2_file == k_file
+        {
+            r2_file += 1;
+        }
+
+        Board {
+            by_role: ByRole {
+                pawn: Bitboard(0x00ff_0000_0000_ff00),
+                knight: Bitboard::from_file(File::new(n1_file))
+                    .with_const(Bitboard::from_file(File::new(n2_file)))
+                    .intersect_const(Bitboard::BACKRANKS),
+                bishop: Bitboard::from_file(File::new(bw_file))
+                    .with_const(Bitboard::from_file(File::new(bb_file)))
+                    .intersect_const(Bitboard::BACKRANKS),
+                rook: Bitboard::from_file(File::new(r1_file))
+                    .with_const(Bitboard::from_file(File::new(r2_file)))
+                    .intersect_const(Bitboard::BACKRANKS),
+                queen: Bitboard::from_file(File::new(q_file)).intersect_const(Bitboard::BACKRANKS),
+                king: Bitboard::from_file(File::new(k_file)).intersect_const(Bitboard::BACKRANKS),
+            },
+            by_color: ByColor {
+                black: Bitboard(0xffff_0000_0000_0000),
+                white: Bitboard(0xffff),
+            },
+            occupied: Bitboard(0xffff_0000_0000_ffff),
+        }
+    }
+
     #[cfg(feature = "variant")]
     pub const fn racing_kings() -> Board {
         Board {
@@ -457,150 +571,6 @@ impl Board {
 
     pub fn iter(&self) -> Iter<'_> {
         self.into_iter()
-    }
-
-    /// Returns the chess960 starting position corresponding to the given Scharnagl.
-    ///
-    /// Use [`Board::CHESS960_STARTING_POS`] for all 960 starting positions, if
-    /// you need them in `const` context.
-    pub fn from_960_scharnagl(scharnagl: usize) -> Option<Board> {
-        Self::CHESS960_STARTING_POS.get(scharnagl).cloned()
-    }
-
-    /// All 960 chess960 starting positions, indexed by their Scharnagl number.
-    pub const CHESS960_STARTING_POS: [Board; 960] = {
-        let mut boards = [const { Board::empty() }; 960];
-        let mut i = 0;
-        while i < 960 {
-            boards[i as usize] = _chess960_pos(i);
-            i += 1;
-        }
-        boards
-    };
-}
-
-const fn _chess960_pos(scharnagl: u32) -> Board {
-    assert!(
-        scharnagl <= 959,
-        "chess960 position index not 0 <= scharnagl <= 959"
-    );
-
-    // ported from python-chess
-    // > See http://www.russellcottrell.com/Chess/Chess960.htm for
-    // > a description of the algorithm.
-
-    let bw = scharnagl % 4;
-    let mut n = scharnagl / 4;
-    let bb = n % 4;
-    n /= 4;
-    let q = n % 6;
-    n /= 6;
-
-    let mut n1 = 0;
-    let mut n2 = 0;
-    let mut i = 0;
-    while i < 4 {
-        let n1_val = i;
-        let n2_val = n as i32 + (3 - n1_val as i32) * (4 - n1_val as i32) / 2 - 5;
-        if (n1_val as i32) < n2_val && 1 <= n2_val && n2_val <= 4 {
-            n1 = n1_val;
-            n2 = n2_val as u32;
-            break;
-        }
-        i += 1;
-    }
-
-    // Bishops.
-    let bw_file = bw * 2 + 1;
-    let bb_file = bb * 2;
-    let bishops = Bitboard::from_file(File::new(bw_file))
-        .with_const(Bitboard::from_file(File::new(bb_file)))
-        .intersect_const(Bitboard::BACKRANKS);
-
-    // Queens.
-    let mut q_file = q;
-    let min_b = if bw_file < bb_file { bw_file } else { bb_file };
-    let max_b = if bw_file > bb_file { bw_file } else { bb_file };
-    if min_b <= q_file {
-        q_file += 1;
-    }
-    if max_b <= q_file {
-        q_file += 1;
-    }
-    let queens = Bitboard::from_file(File::new(q_file)).intersect_const(Bitboard::BACKRANKS);
-
-    let mut used_mask: u8 = (1 << bw_file) | (1 << bb_file) | (1 << q_file);
-
-    // Knights.
-    let mut knights = Bitboard::EMPTY;
-    let mut i = 0;
-    let mut n1_count = n1 as i32;
-    let mut n2_count = n2 as i32;
-    while i < 8 {
-        if (used_mask & (1 << i)) == 0 {
-            if n1_count == 0 || n2_count == 0 {
-                knights = knights.with_const(
-                    Bitboard::from_file(File::new(i)).intersect_const(Bitboard::BACKRANKS),
-                );
-                used_mask |= 1 << i;
-            }
-            n1_count -= 1;
-            n2_count -= 1;
-        }
-        i += 1;
-    }
-
-    // RKR.
-    let mut rooks = Bitboard::EMPTY;
-    let mut kings = Bitboard::EMPTY;
-
-    // First rook.
-    let mut i = 0;
-    while i < 8 {
-        if (used_mask & (1 << i)) == 0 {
-            rooks = Bitboard::from_file(File::new(i)).intersect_const(Bitboard::BACKRANKS);
-            used_mask |= 1 << i;
-            break;
-        }
-        i += 1;
-    }
-
-    // King.
-    let mut i = 1;
-    while i < 8 {
-        if (used_mask & (1 << i)) == 0 {
-            kings = Bitboard::from_file(File::new(i)).intersect_const(Bitboard::BACKRANKS);
-            used_mask |= 1 << i;
-            break;
-        }
-        i += 1;
-    }
-
-    // Second rook.
-    let mut i = 2;
-    while i < 8 {
-        if (used_mask & (1 << i)) == 0 {
-            rooks = rooks
-                .with_const(Bitboard::from_file(File::new(i)).intersect_const(Bitboard::BACKRANKS));
-            break;
-        }
-        i += 1;
-    }
-
-    let black = Bitboard::from_rank(Rank::Eighth).with_const(Bitboard::from_rank(Rank::Seventh));
-    let white = Bitboard::from_rank(Rank::First).with_const(Bitboard::from_rank(Rank::Second));
-
-    Board {
-        by_role: ByRole {
-            pawn: Bitboard::from_rank(Rank::Second).with_const(Bitboard::from_rank(Rank::Seventh)),
-            knight: knights,
-            bishop: bishops,
-            rook: rooks,
-            queen: queens,
-            king: kings,
-        },
-        by_color: ByColor { black, white },
-        occupied: black.with_const(white),
     }
 }
 
@@ -964,20 +934,6 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_chess960_pos() {
-        let board_0 = "bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR".parse().ok();
-        assert_eq!(Board::from_960_scharnagl(0), board_0);
-
-        let board_631 = "rnbkqrnb/pppppppp/8/8/8/8/PPPPPPPP/RNBKQRNB".parse().ok();
-        assert_eq!(Board::from_960_scharnagl(631), board_631);
-
-        assert_eq!(Board::from_960_scharnagl(518), Some(Board::default()));
-
-        let board_959 = "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB".parse().ok();
-        assert_eq!(Board::from_960_scharnagl(959), board_959);
-    }
-
     #[cfg(feature = "bincode")]
     #[test]
     fn test_bincode() {
@@ -990,5 +946,42 @@ mod tests {
         let (decoded, decoded_bytes): (Board, usize) =
             bincode::decode_from_slice(&buffer, config).unwrap();
         assert_eq!((&board, encoded_bytes), (&decoded, decoded_bytes));
+    }
+
+    #[test]
+    fn test_chess960() {
+        assert_eq!(
+            Board::chess960(0),
+            "bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR"
+                .parse()
+                .unwrap()
+        );
+
+        assert_eq!(
+            Board::chess960(631),
+            "rnbkqrnb/pppppppp/8/8/8/8/PPPPPPPP/RNBKQRNB"
+                .parse()
+                .unwrap()
+        );
+
+        assert_eq!(Board::chess960(518), Board::default());
+
+        assert_eq!(
+            Board::chess960(959),
+            "rkrnnqbb/pppppppp/8/8/8/8/PPPPPPPP/RKRNNQBB"
+                .parse()
+                .unwrap()
+        );
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn test_chess960_all() {
+        use std::collections::HashSet;
+
+        assert_eq!(
+            (0..960).map(Board::chess960).collect::<HashSet<_>>().len(),
+            960,
+        );
     }
 }
