@@ -62,7 +62,7 @@ jobs:
           tool: cargo-hack
       - uses: taiki-e/install-action@v2
         with:
-          tool: gungraun-runner@0.19.0,valgrind
+          tool: gungraun-runner@0.19.1,valgrind
         if: matrix.os == 'ubuntu-latest'
       - uses: actions/checkout@v6
       - uses: actions/cache@v5
