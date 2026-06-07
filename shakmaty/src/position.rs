@@ -4342,6 +4342,10 @@ mod tests {
                 PositionErrorKinds::IMPOSSIBLE_CHECK,
             ),
             (
+                "8/8/N7/2k5/N7/8/8/3K4 b - -",
+                PositionErrorKinds::IMPOSSIBLE_CHECK,
+            ),
+            (
                 "1n1b1Q2/1b4rp/1q5P/2Pppr2/p2kP1pR/2NP4/P2Bq1K1/RQ3Br1 w - -",
                 PositionErrorKinds::default(),
             ),
