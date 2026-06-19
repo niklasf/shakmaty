@@ -42,15 +42,14 @@
 
 #[macro_use]
 mod errors;
-pub mod filesystem;
+pub mod aio;
+mod blocking;
 mod material;
-mod table;
-mod tablebase;
 mod types;
 
 pub use crate::{
+    blocking::Tablebase,
     errors::{ProbeError, SyzygyError},
     material::Material,
-    tablebase::Tablebase,
     types::{AmbiguousWdl, Dtz, MaybeRounded, Metric, Syzygy, TableType, Wdl},
 };
