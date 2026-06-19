@@ -612,8 +612,8 @@ struct PairsData {
 
     /// Minimum length in bits of the Huffman symbols.
     min_symlen: u8,
-    /// Offset of the lowest symbols for each length.
-    lowest_sym: u64,
+    /// Lowest symbol for each length.
+    lowest_sym: Vec<u16>,
     /// 64-bit padded lowest symbols for each length.
     base: Vec<u64>,
     /// Number of values represented by a given Huffman symbol.
@@ -663,7 +663,7 @@ impl PairsData {
                     block_size: 0,
                     blocks_num: 0,
                     data: 0,
-                    lowest_sym: 0,
+                    lowest_sym: Vec::new(),
                     span: 0,
                     sparse_index: 0,
                     sparse_index_size: 0,
@@ -695,12 +695,12 @@ impl PairsData {
         ensure!(max_symlen >= min_symlen);
         let h = usize::from(max_symlen - min_symlen + 1);
 
-        let lowest_sym = ptr + 10;
+        let lowest_sym_ptr = ptr + 10;
 
         // Initialize base.
         let mut base = vec![0u64; h];
         for i in (0..h - 1).rev() {
-            let ptr = lowest_sym + i as u64 * 2;
+            let ptr = lowest_sym_ptr + i as u64 * 2;
 
             base[i] = u!(u!(
                 base[i + 1].checked_add(u64::from(raf.read_u16_le_at(ptr, ReadHint::Header)?))
@@ -713,6 +713,12 @@ impl PairsData {
 
         for (i, base) in base.iter_mut().enumerate() {
             *base = u!(base.checked_shl(64 - (u32::from(min_symlen) + i as u32)));
+        }
+
+        // Read the lowest symbol of each length.
+        let mut lowest_sym = vec![0u16; h];
+        for (i, sym) in lowest_sym.iter_mut().enumerate() {
+            *sym = raf.read_u16_le_at(lowest_sym_ptr + 2 * i as u64, ReadHint::Header)?;
         }
 
         // Initialize symbols.
@@ -1120,9 +1126,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
 
             sym = ((buf - d.base[len]) >> (64 - len - usize::from(d.min_symlen))) as u16;
-            sym += self
-                .raf
-                .read_u16_le_at(d.lowest_sym + 2 * len as u64, ReadHint::Header)?;
+            sym += d.lowest_sym[len];
 
             if lit_idx < i64::from(u!(d.symbols.get(usize::from(sym))).len) + 1 {
                 break;
