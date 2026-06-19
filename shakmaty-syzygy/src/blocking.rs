@@ -54,7 +54,7 @@ pub struct Tablebase<S> {
 }
 
 #[cfg(any(unix, windows))]
-impl Default for Tablebase<()> {
+impl<S> Default for Tablebase<S> {
     fn default() -> Self {
         Self::new()
     }
