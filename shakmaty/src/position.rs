@@ -954,7 +954,7 @@ impl Chess {
     }
 
     #[allow(clippy::type_complexity)]
-    fn from_setup_unchecked(
+    fn from_setup_internal(
         setup: Setup,
         mode: CastlingMode,
     ) -> (
@@ -1058,7 +1058,7 @@ impl Eq for Chess {}
 
 impl FromSetup for Chess {
     fn from_setup(setup: Setup, mode: CastlingMode) -> Result<Chess, PositionError<Chess>> {
-        let (pos, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
+        let (pos, _, _, errors) = Chess::from_setup_internal(setup, mode);
         PositionError { pos, errors }.strict()
     }
 }
@@ -1929,7 +1929,7 @@ pub(crate) mod variant {
             setup: Setup,
             mode: CastlingMode,
         ) -> Result<KingOfTheHill, PositionError<KingOfTheHill>> {
-            let (chess, _, _, errors) = Chess::from_setup_unchecked(setup, mode);
+            let (chess, _, _, errors) = Chess::from_setup_internal(setup, mode);
             PositionError {
                 errors,
                 pos: KingOfTheHill { chess },
@@ -2077,7 +2077,7 @@ pub(crate) mod variant {
             setup: Setup,
             mode: CastlingMode,
         ) -> Result<ThreeCheck, PositionError<ThreeCheck>> {
-            let (chess, _, remaining_checks, mut errors) = Chess::from_setup_unchecked(setup, mode);
+            let (chess, _, remaining_checks, mut errors) = Chess::from_setup_internal(setup, mode);
 
             let remaining_checks = remaining_checks.unwrap_or_default();
             if remaining_checks.iter().all(|remaining| remaining.is_zero()) {
@@ -2277,7 +2277,7 @@ pub(crate) mod variant {
                 & setup.board.occupied()
                 & !setup.board.pawns()
                 & !setup.board.kings();
-            let (chess, pockets, _, mut errors) = Chess::from_setup_unchecked(setup, mode);
+            let (chess, pockets, _, mut errors) = Chess::from_setup_internal(setup, mode);
             let pockets = pockets.unwrap_or_default();
 
             if pockets.white.king > 0 || pockets.black.king > 0 {
