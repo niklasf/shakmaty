@@ -1,5 +1,21 @@
 # Changelog for shakmaty
 
+## v0.30.1
+
+New features:
+
+- Add `Move::is_put()`.
+- Add `Piece::unicode_char()`.
+- Add `Board::chess960()` to construct Chess960 starting positions.
+- Add `Bitboard::EDGES` and `Bitboard::SIDES`.
+- Add inherent `magics` feature (enabled by default). With it disabled, sliding
+  piece attacks are generated using Hyperbola Quintessence instead of large
+  precomputed magic attack tables.
+
+Other changes:
+
+- MSRV is now `1.95`.
+
 ## v0.30.0
 
 Breaking changes:

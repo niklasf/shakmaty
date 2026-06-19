@@ -1,5 +1,10 @@
 # Changelog for shakmaty-syzygy
 
+## v0.28.1
+
+- Avoid syscalls when decompressing pairs, improving probe performance
+  (~10x with table in memory!).
+
 ## v0.28.0
 
 - Update shakmaty to `0.30`.

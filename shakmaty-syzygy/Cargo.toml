@@ -1,6 +1,6 @@
 [package]
 name = "shakmaty-syzygy"
-version = "0.28.0" # remember to update changelog
+version = "0.28.1" # remember to update changelog
 description = "Probe Syzygy endgame tablebases"
 readme = "README.md"
 categories = ["games"]
