@@ -24,7 +24,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: cargo hack check --all --feature-powerset --depth 2 --group-features std,default --ignore-unknown-features --all-targets
         name: check
       - run: cargo hack check --package shakmaty --feature-powerset --depth 2 --exclude-features std,default,arbitrary --target thumbv6m-none-eabi
@@ -32,7 +32,7 @@ jobs:
   check-z-direct-minimal-versions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@nightly
       - uses: taiki-e/install-action@v2
         with:
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: cargo doc --all-features
         env:
           RUSTDOCFLAGS: "-D warnings --cfg docs_rs"
@@ -64,8 +64,8 @@ jobs:
         with:
           tool: gungraun-runner@0.19.2,valgrind
         if: matrix.os == 'ubuntu-latest'
-      - uses: actions/checkout@v6
-      - uses: actions/cache@v5
+      - uses: actions/checkout@v7
+      - uses: actions/cache@v6
         id: cache
         with:
           path: shakmaty-syzygy/tables
@@ -86,7 +86,7 @@ jobs:
     steps:
       - uses: dtolnay/rust-toolchain@nightly
       - run: cargo install cargo-fuzz
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: cargo fuzz run bincode_roundtrip -- -max_total_time=60s
       - run: cargo fuzz run fen_from_ascii -- -max_total_time=10s
       - run: cargo fuzz run fen_from_setup -- -max_total_time=10s
