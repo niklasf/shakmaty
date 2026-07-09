@@ -353,10 +353,10 @@ impl Bitboard {
     /// ```
     #[inline]
     pub const fn first(self) -> Option<Square> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(Square::new(self.0.trailing_zeros()))
+        let Bitboard(mask) = self;
+        match mask.lowest_one() {
+            Some(index) => Some(Square::new(index)),
+            None => None,
         }
     }
 
@@ -417,7 +417,7 @@ impl Bitboard {
     #[inline]
     pub const fn isolate_first(self) -> Bitboard {
         let Bitboard(mask) = self;
-        Bitboard(mask & mask.wrapping_neg())
+        Bitboard(mask.isolate_lowest_one())
     }
 
     /// Removes and returns the last square, if any.
@@ -440,10 +440,10 @@ impl Bitboard {
     /// ```
     #[inline]
     pub const fn last(self) -> Option<Square> {
-        if let Some(index) = self.0.checked_ilog2() {
-            Some(Square::new(index))
-        } else {
-            None
+        let Bitboard(mask) = self;
+        match mask.highest_one() {
+            Some(index) => Some(Square::new(index)),
+            None => None,
         }
     }
 
@@ -477,7 +477,7 @@ impl Bitboard {
     #[inline]
     pub const fn without_last(self) -> Bitboard {
         let Bitboard(mask) = self;
-        Bitboard(mask & !((1u64 << 63).wrapping_shr(mask.leading_zeros())))
+        Bitboard(mask & !mask.isolate_highest_one())
     }
 
     /// Returns the bitboard with only the last square of `self`.
@@ -504,7 +504,7 @@ impl Bitboard {
     #[inline]
     pub const fn isolate_last(self) -> Bitboard {
         let Bitboard(mask) = self;
-        Bitboard(mask & ((1u64 << 63).wrapping_shr(mask.leading_zeros())))
+        Bitboard(mask.isolate_highest_one())
     }
 
     /// Returns the number of squares in `self`.
