@@ -3,42 +3,39 @@
 use std::{
     io,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
+use futures_util::future::FutureExt as _;
 use libfuzzer_sys::fuzz_target;
 use shakmaty::{CastlingMode, Chess, fen::Fen};
-use shakmaty_syzygy::{
-    Tablebase,
-    filesystem::{Filesystem, RandomAccessFile, ReadHint},
-};
+use shakmaty_syzygy::aio::{Filesystem, RandomAccessFile, ReadHint, Tablebase};
 
-struct FakeFilesystem {
-    data: Box<[u8]>,
+struct FakeFilesystem<'a> {
+    data: &'a [u8],
 }
 
-impl Filesystem for FakeFilesystem {
-    fn regular_file_size(&self, _path: &Path) -> io::Result<u64> {
-        Ok(self.data.len() as u64)
-    }
+impl<'a> Filesystem for FakeFilesystem<'a> {
+    type RandomAccessFile = FakeFile<'a>;
 
-    fn read_dir(&self, _path: &Path) -> io::Result<Vec<PathBuf>> {
+    async fn read_dir(&self, _path: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(vec!["KNvKP.rtbw".into()])
     }
 
-    fn open(&self, _path: &Path) -> io::Result<Box<dyn RandomAccessFile>> {
-        Ok(Box::new(FakeFile {
-            data: self.data.clone(),
-        }))
+    async fn regular_file_size(&self, _path: &Path) -> io::Result<u64> {
+        Ok(148048)
+    }
+
+    async fn open(&self, _path: &Path) -> io::Result<FakeFile<'a>> {
+        Ok(FakeFile { data: self.data })
     }
 }
 
-struct FakeFile {
-    data: Box<[u8]>,
+struct FakeFile<'a> {
+    data: &'a [u8],
 }
 
-impl RandomAccessFile for FakeFile {
-    fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
+impl RandomAccessFile for FakeFile<'_> {
+    async fn read_at(&self, buf: &mut [u8], offset: u64, _hint: ReadHint) -> io::Result<usize> {
         let offset = offset as usize;
         let end = offset + buf.len();
         buf.copy_from_slice(
@@ -57,6 +54,16 @@ fuzz_target!(|data: &[u8]| {
         .into_position(CastlingMode::Standard)
         .expect("valid position");
 
-    let tables = Tablebase::with_filesystem(Arc::new(FakeFilesystem { data: data.into() }));
-    let _ = tables.probe_wdl(&pos);
+    let mut tables = Tablebase::with_filesystem(FakeFilesystem { data });
+
+    assert_eq!(
+        tables
+            .add_directory("fake")
+            .now_or_never()
+            .expect("blocking")
+            .expect("add directory"),
+        1
+    );
+
+    let _ = tables.probe_wdl(&pos).now_or_never().expect("blocking");
 });

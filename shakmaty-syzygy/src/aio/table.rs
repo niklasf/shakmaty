@@ -4,11 +4,10 @@ use arrayvec::ArrayVec;
 use bitflags::bitflags;
 use byteorder::{BE, ByteOrder as _, LE, ReadBytesExt as _};
 use shakmaty::{Bitboard, Color, File, Piece, Position, Rank, Role, Square};
-use tracing::{trace, trace_span};
 
 use crate::{
+    aio::filesystem::{RandomAccessFile, ReadHint},
     errors::{ProbeError, ProbeResult},
-    filesystem::{RandomAccessFile, ReadHint},
     material::Material,
     types::{DecisiveWdl, MAX_PIECES, MaybeRounded, Metric, Pieces, Syzygy, Wdl},
 };
@@ -50,7 +49,7 @@ impl TableTag for DtzTag {
 
 bitflags! {
     /// Table layout flags.
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     struct Layout: u8 {
         /// Two sided table for non-symmetrical material configuration.
         const SPLIT = 1;
@@ -61,7 +60,7 @@ bitflags! {
 
 bitflags! {
     /// Subtable format flags.
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     struct Flag: u8 {
         /// DTZ table stores black to move.
         const STM = 1;
@@ -395,9 +394,9 @@ impl Consts {
 }
 
 /// Read the magic header bytes that identify a tablebase file.
-fn read_magic_header(raf: &dyn RandomAccessFile) -> ProbeResult<[u8; 4]> {
+async fn read_magic_header<R: RandomAccessFile>(raf: &R) -> ProbeResult<[u8; 4]> {
     let mut buf = [0; 4];
-    if let Err(error) = raf.read_exact_at(&mut buf, 0, ReadHint::Header) {
+    if let Err(error) = raf.read_exact_at(&mut buf, 0, ReadHint::Header).await {
         match error.kind() {
             io::ErrorKind::UnexpectedEof => Err(ProbeError::Magic { magic: buf }),
             _ => Err(ProbeError::Read { error }),
@@ -427,15 +426,15 @@ fn offdiag(sq: Square) -> bool {
 }
 
 /// Parse a piece list.
-fn parse_pieces(
-    raf: &dyn RandomAccessFile,
+async fn parse_pieces<R: RandomAccessFile>(
+    raf: &R,
     ptr: u64,
     count: usize,
     side: Color,
 ) -> ProbeResult<Pieces> {
     let mut buffer = [0; MAX_PIECES];
     let bytes = &mut buffer[..count];
-    raf.read_exact_at(bytes, ptr, ReadHint::Header)?;
+    raf.read_exact_at(bytes, ptr, ReadHint::Header).await?;
 
     let mut pieces = Pieces::new();
     for p in bytes {
@@ -544,7 +543,7 @@ impl GroupData {
 }
 
 /// Indexes into table of remapped DTZ values.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum DtzMap {
     /// Normal 8-bit DTZ map.
     Normal { map_ptr: u64, by_wdl: [u16; 4] },
@@ -553,7 +552,12 @@ enum DtzMap {
 }
 
 impl DtzMap {
-    fn read(&self, raf: &dyn RandomAccessFile, wdl: DecisiveWdl, res: u16) -> ProbeResult<u16> {
+    async fn read<R: RandomAccessFile>(
+        &self,
+        raf: &R,
+        wdl: DecisiveWdl,
+        res: u16,
+    ) -> ProbeResult<u16> {
         let wdl = match wdl {
             DecisiveWdl::Win => 0,
             DecisiveWdl::Loss => 1,
@@ -564,11 +568,11 @@ impl DtzMap {
         Ok(match *self {
             DtzMap::Normal { map_ptr, by_wdl } => {
                 let offset = map_ptr + u64::from(by_wdl[wdl]) + u64::from(res);
-                u16::from(raf.read_u8_at(offset, ReadHint::DtzMap)?)
+                u16::from(raf.read_u8_at(offset, ReadHint::DtzMap).await?)
             }
             DtzMap::Wide { map_ptr, by_wdl } => {
                 let offset = map_ptr + 2 * (u64::from(by_wdl[wdl]) + u64::from(res));
-                raf.read_u16_le_at(offset, ReadHint::DtzMap)?
+                raf.read_u16_le_at(offset, ReadHint::DtzMap).await?
             }
         })
     }
@@ -596,7 +600,7 @@ impl Symbol {
 }
 
 /// Description of encoding and compression.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct PairsData {
     /// Encoding flags.
     flags: Flag,
@@ -637,16 +641,16 @@ struct PairsData {
 }
 
 impl PairsData {
-    pub fn parse<S: Syzygy, T: TableTag>(
-        raf: &dyn RandomAccessFile,
+    pub async fn parse<T: TableTag, S: Syzygy, R: RandomAccessFile>(
+        raf: &R,
         mut ptr: u64,
         groups: GroupData,
     ) -> ProbeResult<(PairsData, u64)> {
-        let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr, ReadHint::Header)?);
+        let flags = Flag::from_bits_truncate(raf.read_u8_at(ptr, ReadHint::Header).await?);
 
         if flags.contains(Flag::SINGLE_VALUE) {
             let single_value = if T::METRIC == Metric::Wdl {
-                raf.read_u8_at(ptr + 1, ReadHint::Header)?
+                raf.read_u8_at(ptr + 1, ReadHint::Header).await?
             } else {
                 // http://www.talkchess.com/forum/viewtopic.php?p=698093#698093
                 u8::from(S::CAPTURES_COMPULSORY)
@@ -676,7 +680,8 @@ impl PairsData {
 
         // Read header.
         let mut header = [0; 10];
-        raf.read_exact_at(&mut header, ptr, ReadHint::Header)?;
+        raf.read_exact_at(&mut header, ptr, ReadHint::Header)
+            .await?;
 
         let tb_size = groups.factors[groups.lens.len()];
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
@@ -702,11 +707,11 @@ impl PairsData {
         for i in (0..h - 1).rev() {
             let ptr = lowest_sym_ptr + i as u64 * 2;
 
-            base[i] = u!(u!(
-                base[i + 1].checked_add(u64::from(raf.read_u16_le_at(ptr, ReadHint::Header)?))
-            )
-            .checked_sub(u64::from(raf.read_u16_le_at(ptr + 2, ReadHint::Header)?)))
-                / 2;
+            base[i] = u!(u!(base[i + 1]
+                .checked_add(u64::from(raf.read_u16_le_at(ptr, ReadHint::Header).await?)))
+            .checked_sub(u64::from(
+                raf.read_u16_le_at(ptr + 2, ReadHint::Header).await?
+            ))) / 2;
 
             ensure!(base[i] * 2 >= base[i + 1]);
         }
@@ -718,18 +723,20 @@ impl PairsData {
         // Read the lowest symbol of each length.
         let mut lowest_sym = vec![0u16; h];
         for (i, sym) in lowest_sym.iter_mut().enumerate() {
-            *sym = raf.read_u16_le_at(lowest_sym_ptr + 2 * i as u64, ReadHint::Header)?;
+            *sym = raf
+                .read_u16_le_at(lowest_sym_ptr + 2 * i as u64, ReadHint::Header)
+                .await?;
         }
 
         // Initialize symbols.
         ptr += 10 + h as u64 * 2;
-        let sym = raf.read_u16_le_at(ptr, ReadHint::Header)?;
+        let sym = raf.read_u16_le_at(ptr, ReadHint::Header).await?;
         ptr += 2;
         let btree = ptr;
         let mut symbols = vec![Symbol::new(); usize::from(sym)];
         let mut visited = vec![false; symbols.len()];
         for s in 0..sym {
-            read_symbols(raf, btree, &mut symbols, &mut visited, s, 16)?;
+            read_symbols(raf, btree, &mut symbols, &mut visited, s, 16).await?;
         }
         ptr += symbols.len() as u64 * 3 + (symbols.len() as u64 & 1);
 
@@ -764,8 +771,8 @@ impl PairsData {
 }
 
 /// Build the symbol table.
-fn read_symbols(
-    raf: &dyn RandomAccessFile,
+async fn read_symbols<R: RandomAccessFile>(
+    raf: &R,
     btree: u64,
     symbols: &mut Vec<Symbol>,
     visited: &mut [bool],
@@ -781,7 +788,8 @@ fn read_symbols(
         &mut symbol.lr[..],
         btree + 3 * u64::from(sym),
         ReadHint::Header,
-    )?;
+    )
+    .await?;
 
     if symbol.right() == 0xfff {
         symbol.len = 0;
@@ -789,8 +797,24 @@ fn read_symbols(
         // Guard against stack overflow.
         let depth = u!(depth.checked_sub(1));
 
-        read_symbols(raf, btree, symbols, visited, symbol.left(), depth)?;
-        read_symbols(raf, btree, symbols, visited, symbol.right(), depth)?;
+        Box::pin(read_symbols(
+            raf,
+            btree,
+            symbols,
+            visited,
+            symbol.left(),
+            depth,
+        ))
+        .await?;
+        Box::pin(read_symbols(
+            raf,
+            btree,
+            symbols,
+            visited,
+            symbol.right(),
+            depth,
+        ))
+        .await?;
 
         symbol.len = u!(u!(symbols[usize::from(symbol.left())]
             .len
@@ -804,7 +828,7 @@ fn read_symbols(
 }
 
 /// Descripton of encoding and compression for both sides of a table.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct FileData {
     sides: ArrayVec<PairsData, 2>,
 }
@@ -831,9 +855,9 @@ impl BlockLengthBuffer {
         }
     }
 
-    fn fill_buffer(
+    async fn fill_buffer<R: RandomAccessFile>(
         &mut self,
-        raf: &dyn RandomAccessFile,
+        raf: &R,
         d: &PairsData,
         first_block: u32,
     ) -> ProbeResult<u32> {
@@ -841,14 +865,15 @@ impl BlockLengthBuffer {
             &mut self.buffer[..],
             d.block_lengths + u64::from(first_block) * 2,
             ReadHint::BlockLengths,
-        )?;
+        )
+        .await?;
         self.first_block = Some(first_block);
         Ok(first_block)
     }
 
-    pub fn read(
+    pub async fn read<R: RandomAccessFile>(
         &mut self,
-        raf: &dyn RandomAccessFile,
+        raf: &R,
         d: &PairsData,
         block: u32,
         readahead: Readahead,
@@ -860,16 +885,19 @@ impl BlockLengthBuffer {
             {
                 first_block
             }
-            _ => self.fill_buffer(
-                raf,
-                d,
-                match readahead {
-                    Readahead::Forward => block,
-                    Readahead::Backward => {
-                        block.saturating_sub(BlockLengthBuffer::CACHED_BLOCKS - 1)
-                    }
-                },
-            )?,
+            _ => {
+                self.fill_buffer(
+                    raf,
+                    d,
+                    match readahead {
+                        Readahead::Forward => block,
+                        Readahead::Backward => {
+                            block.saturating_sub(BlockLengthBuffer::CACHED_BLOCKS - 1)
+                        }
+                    },
+                )
+                .await?
+            }
         };
         let index = (block - first_block) as usize * 2;
         Ok(LE::read_u16(&self.buffer[index..]))
@@ -877,18 +905,18 @@ impl BlockLengthBuffer {
 }
 
 /// A Syzygy table.
-struct Table<T: TableTag, P: Position + Syzygy> {
+struct Table<T, S, R> {
     is_wdl: PhantomData<T>,
-    syzygy: PhantomData<P>,
+    syzygy: PhantomData<S>,
 
-    raf: Box<dyn RandomAccessFile>,
+    raf: R,
 
     num_unique_pieces: usize,
     min_like_man: usize,
     files: ArrayVec<FileData, 4>,
 }
 
-impl<T: TableTag, P: Position + Syzygy> fmt::Debug for Table<T, P> {
+impl<T, S, R> fmt::Debug for Table<T, S, R> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Table")
             .field("num_unique_pieces", &self.num_unique_pieces)
@@ -898,7 +926,7 @@ impl<T: TableTag, P: Position + Syzygy> fmt::Debug for Table<T, P> {
     }
 }
 
-impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
+impl<T: TableTag, S: Syzygy, R: RandomAccessFile> Table<T, S, R> {
     /// Open a table, parse the header, the headers of the subtables and
     /// prepare meta data required for decompression.
     ///
@@ -906,8 +934,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     ///
     /// Panics if the `material` configuration is not supported by Syzygy
     /// tablebases (more than 7 pieces or side without pieces).
-    #[track_caller]
-    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<Table<T, S>> {
+    pub async fn new(raf: R, material: &Material) -> ProbeResult<Table<T, S, R>> {
         assert!(material.count() <= MAX_PIECES);
         assert!(material.by_color.white.count() >= 1);
         assert!(material.by_color.black.count() >= 1);
@@ -918,7 +945,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             Metric::Dtz => (S::TBZ.magic, S::PAWNLESS_TBZ.map(|t| t.magic)),
         };
 
-        let magic_header = read_magic_header(&*raf)?;
+        let magic_header = read_magic_header(&raf).await?;
         if magic != magic_header && (material.has_pawns() || pawnless_magic != Some(magic_header)) {
             return Err(ProbeError::Magic {
                 magic: magic_header,
@@ -926,7 +953,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Read layout flags.
-        let layout = Layout::from_bits_truncate(raf.read_u8_at(4, ReadHint::Header)?);
+        let layout = Layout::from_bits_truncate(raf.read_u8_at(4, ReadHint::Header).await?);
         let has_pawns = layout.contains(Layout::HAS_PAWNS);
         let split = layout.contains(Layout::SPLIT);
 
@@ -945,45 +972,45 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
         let mut ptr = 5;
 
-        let files = (0..num_files)
-            .map(|file| {
-                let order = [
-                    [
-                        raf.read_u8_at(ptr, ReadHint::Header)? & 0xf,
-                        if pp {
-                            raf.read_u8_at(ptr + 1, ReadHint::Header)? & 0xf
-                        } else {
-                            0xf
-                        },
-                    ],
-                    [
-                        raf.read_u8_at(ptr, ReadHint::Header)? >> 4,
-                        if pp {
-                            raf.read_u8_at(ptr + 1, ReadHint::Header)? >> 4
-                        } else {
-                            0xf
-                        },
-                    ],
-                ];
+        let mut files = ArrayVec::<ArrayVec<_, 2>, 4>::new();
+        for file in 0..num_files {
+            let order = [
+                [
+                    raf.read_u8_at(ptr, ReadHint::Header).await? & 0xf,
+                    if pp {
+                        raf.read_u8_at(ptr + 1, ReadHint::Header).await? & 0xf
+                    } else {
+                        0xf
+                    },
+                ],
+                [
+                    raf.read_u8_at(ptr, ReadHint::Header).await? >> 4,
+                    if pp {
+                        raf.read_u8_at(ptr + 1, ReadHint::Header).await? >> 4
+                    } else {
+                        0xf
+                    },
+                ],
+            ];
 
-                ptr += 1 + u64::from(pp);
+            ptr += 1 + u64::from(pp);
 
-                let sides = [Color::White, Color::Black]
-                    .iter()
-                    .take(num_sides)
-                    .map(|side| {
-                        let pieces = parse_pieces(&*raf, ptr, material.count(), *side)?;
-                        let key = Material::from_iter(pieces.clone());
-                        ensure!(&key == material || &key.into_swapped() == material);
-                        GroupData::new::<S>(pieces, order[side.fold_wb(0, 1)], file)
-                    })
-                    .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
+            let mut sides = ArrayVec::new();
+            for side in [Color::White, Color::Black].into_iter().take(num_sides) {
+                let pieces = parse_pieces(&raf, ptr, material.count(), side).await?;
+                let key = Material::from_iter(pieces.clone());
+                ensure!(&key == material || &key.into_swapped() == material);
+                sides.push(GroupData::new::<S>(
+                    pieces,
+                    order[side.fold_wb(0, 1)],
+                    file,
+                )?);
+            }
 
-                ptr += material.count() as u64;
+            ptr += material.count() as u64;
 
-                Ok(sides)
-            })
-            .collect::<ProbeResult<ArrayVec<_, 4>>>()?;
+            files.push(sides);
+        }
 
         ptr += ptr & 1;
 
@@ -999,30 +1026,27 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
 
         // Setup pairs.
-        let mut files = files
-            .into_iter()
-            .map(|file| {
-                let sides = file
-                    .into_iter()
-                    .map(|side| {
-                        let (mut pairs, next_ptr) = PairsData::parse::<S, T>(&*raf, ptr, side)?;
+        let mut collected_files = ArrayVec::<FileData, 4>::new();
+        for file in files {
+            let mut sides = ArrayVec::<_, 2>::new();
+            for side in file {
+                let (mut pairs, next_ptr) = PairsData::parse::<T, S, R>(&raf, ptr, side).await?;
 
-                        if T::METRIC == Metric::Dtz
-                            && S::CAPTURES_COMPULSORY
-                            && pairs.flags.contains(Flag::SINGLE_VALUE)
-                        {
-                            pairs.min_symlen = 1;
-                        }
+                if T::METRIC == Metric::Dtz
+                    && S::CAPTURES_COMPULSORY
+                    && pairs.flags.contains(Flag::SINGLE_VALUE)
+                {
+                    pairs.min_symlen = 1;
+                }
 
-                        ptr = next_ptr;
+                ptr = next_ptr;
 
-                        Ok(pairs)
-                    })
-                    .collect::<ProbeResult<ArrayVec<_, 2>>>()?;
+                sides.push(pairs);
+            }
 
-                Ok(FileData { sides })
-            })
-            .collect::<ProbeResult<ArrayVec<_, 4>>>()?;
+            collected_files.push(FileData { sides });
+        }
+        let mut files = collected_files;
 
         // Setup DTZ map.
         if T::METRIC == Metric::Dtz {
@@ -1034,13 +1058,14 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                     if file.sides[0].flags.contains(Flag::WIDE_DTZ) {
                         for idx in &mut by_wdl {
                             *idx = ((ptr - map_ptr + 2) / 2) as u16;
-                            ptr += u64::from(raf.read_u16_le_at(ptr, ReadHint::Header)?) * 2 + 2;
+                            ptr +=
+                                u64::from(raf.read_u16_le_at(ptr, ReadHint::Header).await?) * 2 + 2;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Wide { map_ptr, by_wdl });
                     } else {
                         for idx in &mut by_wdl {
                             *idx = (ptr - map_ptr + 1) as u16;
-                            ptr += u64::from(raf.read_u8_at(ptr, ReadHint::Header)?) + 1;
+                            ptr += u64::from(raf.read_u8_at(ptr, ReadHint::Header).await?) + 1;
                         }
                         file.sides[0].dtz_map = Some(DtzMap::Normal { map_ptr, by_wdl });
                     }
@@ -1073,8 +1098,6 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
             }
         }
 
-        trace!(%material, "table opened");
-
         // Result.
         Ok(Table {
             is_wdl: PhantomData,
@@ -1088,28 +1111,28 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
 
     /// Retrieves the value stored for `idx` by decompressing Huffman coded
     /// symbols stored in the corresponding block of the table.
-    fn decompress_pairs(&self, d: &PairsData, idx: u64) -> ProbeResult<u16> {
-        trace!(idx, "decompress pairs");
-
+    async fn decompress_pairs(&self, d: &PairsData, idx: u64) -> ProbeResult<u16> {
         // Special case: The table stores only a single value.
         if d.flags.contains(Flag::SINGLE_VALUE) {
             return Ok(u16::from(d.min_symlen));
         }
 
         // Use the sparse index to jump very close to the correct block.
-        let (block, lit_idx) = self.read_sparse_index(d, idx)?;
+        let (block, lit_idx) = self.read_sparse_index(d, idx).await?;
 
         // Now move forwards/backwards to find the correct block.
-        let (block, mut lit_idx) = self.read_block_lengths(d, block, lit_idx)?;
+        let (block, mut lit_idx) = self.read_block_lengths(d, block, lit_idx).await?;
 
         // Read block (and 4 bytes to allow a final symbol refill) into memory.
         let mut block_buffer = [0; MAX_BLOCK_SIZE + 4];
-        self.raf.read_exact_at(
-            &mut block_buffer[..(d.block_size as usize + 4)],
-            u!(d.data
-                .checked_add(u64::from(block) * u64::from(d.block_size))),
-            ReadHint::Data,
-        )?;
+        self.raf
+            .read_exact_at(
+                &mut block_buffer[..(d.block_size as usize + 4)],
+                u!(d.data
+                    .checked_add(u64::from(block) * u64::from(d.block_size))),
+                ReadHint::Data,
+            )
+            .await?;
         let mut cursor = &block_buffer[..(d.block_size as usize + 4)];
 
         // Find sym, the Huffman symbol that encodes the value for idx.
@@ -1143,7 +1166,6 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 buf |= u64::from(cursor.read_u32::<BE>()?) << (64 - buf_size);
             }
         }
-        trace!(sym, "symbol found");
 
         // Decompress Huffman symbol.
         let mut symbol = u!(d.symbols.get(usize::from(sym)));
@@ -1162,6 +1184,63 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         }
     }
 
+    async fn read_sparse_index(&self, d: &PairsData, idx: u64) -> ProbeResult<(u32, i64)> {
+        let main_idx = idx / u64::from(d.span);
+        ensure!(main_idx <= u64::from(u32::MAX));
+
+        let mut sparse_index_entry = [0; 4 + 2];
+        self.raf
+            .read_exact_at(
+                &mut sparse_index_entry[..],
+                d.sparse_index + 6 * main_idx,
+                ReadHint::SparseIndex,
+            )
+            .await?;
+        let block = LE::read_u32(&sparse_index_entry[..]);
+        let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
+
+        let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
+        lit_idx += offset;
+
+        Ok((block, lit_idx))
+    }
+
+    async fn read_block_lengths(
+        &self,
+        d: &PairsData,
+        mut block: u32,
+        mut lit_idx: i64,
+    ) -> ProbeResult<(u32, i64)> {
+        let mut buffer = BlockLengthBuffer::new();
+
+        if lit_idx < 0 {
+            // Backward scan.
+            while lit_idx < 0 {
+                block = u!(block.checked_sub(1));
+                lit_idx += i64::from(
+                    buffer
+                        .read(&self.raf, d, block, Readahead::Backward)
+                        .await?,
+                ) + 1;
+            }
+        } else {
+            // Forward scan.
+            loop {
+                let block_length =
+                    i64::from(buffer.read(&self.raf, d, block, Readahead::Forward).await?) + 1;
+                if lit_idx < block_length {
+                    break;
+                }
+                lit_idx -= block_length;
+                block = u!(block.checked_add(1));
+            }
+        }
+
+        Ok((block, lit_idx))
+    }
+}
+
+impl<T: TableTag, S: Syzygy + Position, R: RandomAccessFile> Table<T, S, R> {
     /// Given a position, determine the unique (modulo symmetries) index into
     /// the corresponding subtable.
     fn encode(&self, pos: &S) -> ProbeResult<Option<(&PairsData, u64)>> {
@@ -1433,133 +1512,94 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
         Ok(Some((side, idx)))
     }
 
-    fn read_sparse_index(&self, d: &PairsData, idx: u64) -> ProbeResult<(u32, i64)> {
-        let main_idx = idx / u64::from(d.span);
-        ensure!(main_idx <= u64::from(u32::MAX));
+    pub async fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
+        assert_eq!(T::METRIC, Metric::Wdl);
 
-        let mut sparse_index_entry = [0; 4 + 2];
-        self.raf.read_exact_at(
-            &mut sparse_index_entry[..],
-            d.sparse_index + 6 * main_idx,
-            ReadHint::SparseIndex,
-        )?;
-        let block = LE::read_u32(&sparse_index_entry[..]);
-        let offset = i64::from(LE::read_u16(&sparse_index_entry[4..]));
+        let (side, idx) = self.encode(pos)?.expect("wdl tables are two sided");
+        let decompressed = self.decompress_pairs(side, idx).await?;
 
-        let mut lit_idx = idx as i64 % i64::from(d.span) - i64::from(d.span) / 2;
-        lit_idx += offset;
-        trace!("sparse index read");
-
-        Ok((block, lit_idx))
+        Ok(match decompressed {
+            0 => Wdl::Loss,
+            1 => Wdl::BlessedLoss,
+            2 => Wdl::Draw,
+            3 => Wdl::CursedWin,
+            4 => Wdl::Win,
+            _ => throw!(),
+        })
     }
 
-    fn read_block_lengths(
+    pub async fn probe_dtz(
         &self,
-        d: &PairsData,
-        mut block: u32,
-        mut lit_idx: i64,
-    ) -> ProbeResult<(u32, i64)> {
-        let mut buffer = BlockLengthBuffer::new();
+        pos: &S,
+        wdl: DecisiveWdl,
+    ) -> ProbeResult<Option<MaybeRounded<u32>>> {
+        assert_eq!(T::METRIC, Metric::Dtz);
 
-        if lit_idx < 0 {
-            // Backward scan.
-            while lit_idx < 0 {
-                block = u!(block.checked_sub(1));
-                lit_idx += i64::from(buffer.read(&*self.raf, d, block, Readahead::Backward)?) + 1;
-            }
+        let Some((side, idx)) = self.encode(pos)? else {
+            return Ok(None); // check other side
+        };
+
+        let res = self.decompress_pairs(side, idx).await?;
+
+        let res = u32::from(match side.dtz_map {
+            None => res,
+            Some(ref map) => map.read(&self.raf, wdl, res).await?,
+        });
+
+        let stores_plies = match wdl {
+            DecisiveWdl::Win => side.flags.contains(Flag::WIN_PLIES),
+            DecisiveWdl::Loss => side.flags.contains(Flag::LOSS_PLIES),
+            DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
+        };
+
+        Ok(Some(if stores_plies {
+            MaybeRounded::Precise(res)
         } else {
-            // Forward scan.
-            loop {
-                let block_length =
-                    i64::from(buffer.read(&*self.raf, d, block, Readahead::Forward)?) + 1;
-                if lit_idx < block_length {
-                    break;
-                }
-                lit_idx -= block_length;
-                block = u!(block.checked_add(1));
-            }
-        }
-
-        trace!("block located");
-        Ok((block, lit_idx))
-    }
-
-    pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
-        trace_span!("wdl table").in_scope(|| {
-            assert_eq!(T::METRIC, Metric::Wdl);
-
-            let (side, idx) = self.encode(pos)?.expect("wdl tables are two sided");
-            let decompressed = self.decompress_pairs(side, idx)?;
-
-            Ok(match decompressed {
-                0 => Wdl::Loss,
-                1 => Wdl::BlessedLoss,
-                2 => Wdl::Draw,
-                3 => Wdl::CursedWin,
-                4 => Wdl::Win,
-                _ => throw!(),
-            })
-        })
-    }
-
-    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<MaybeRounded<u32>>> {
-        trace_span!("dtz table").in_scope(|| {
-            assert_eq!(T::METRIC, Metric::Dtz);
-
-            let Some((side, idx)) = self.encode(pos)? else {
-                return Ok(None); // check other side
-            };
-
-            let res = self.decompress_pairs(side, idx)?;
-
-            let res = u32::from(match side.dtz_map {
-                None => res,
-                Some(ref map) => map.read(&*self.raf, wdl, res)?,
-            });
-
-            let stores_plies = match wdl {
-                DecisiveWdl::Win => side.flags.contains(Flag::WIN_PLIES),
-                DecisiveWdl::Loss => side.flags.contains(Flag::LOSS_PLIES),
-                DecisiveWdl::CursedWin | DecisiveWdl::BlessedLoss => false,
-            };
-
-            Ok(Some(if stores_plies {
-                MaybeRounded::Precise(res)
-            } else {
-                MaybeRounded::Rounded(2 * res)
-            }))
-        })
+            MaybeRounded::Rounded(2 * res)
+        }))
     }
 }
 
 /// A WDL Table.
 #[derive(Debug)]
-pub struct WdlTable<S: Position + Syzygy> {
-    table: Table<WdlTag, S>,
+pub struct WdlTable<S, R> {
+    table: Table<WdlTag, S, R>,
 }
 
-impl<S: Position + Syzygy> WdlTable<S> {
-    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<WdlTable<S>> {
-        Table::new(raf, material).map(|table| WdlTable { table })
+impl<S: Syzygy, R: RandomAccessFile> WdlTable<S, R> {
+    pub async fn new(raf: R, material: &Material) -> ProbeResult<WdlTable<S, R>> {
+        Table::new(raf, material)
+            .await
+            .map(|table| WdlTable { table })
     }
+}
 
-    pub fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
-        self.table.probe_wdl(pos)
+impl<S: Syzygy + Position, R: RandomAccessFile> WdlTable<S, R> {
+    pub async fn probe_wdl(&self, pos: &S) -> ProbeResult<Wdl> {
+        self.table.probe_wdl(pos).await
     }
 }
 
 /// A DTZ Table.
 #[derive(Debug)]
-pub struct DtzTable<S: Position + Syzygy> {
-    table: Table<DtzTag, S>,
+pub struct DtzTable<S, R> {
+    table: Table<DtzTag, S, R>,
 }
 
-impl<S: Position + Syzygy> DtzTable<S> {
-    pub fn new(raf: Box<dyn RandomAccessFile>, material: &Material) -> ProbeResult<DtzTable<S>> {
-        Table::new(raf, material).map(|table| DtzTable { table })
+impl<S: Syzygy, R: RandomAccessFile> DtzTable<S, R> {
+    pub async fn new(raf: R, material: &Material) -> ProbeResult<DtzTable<S, R>> {
+        Table::new(raf, material)
+            .await
+            .map(|table| DtzTable { table })
     }
+}
 
-    pub fn probe_dtz(&self, pos: &S, wdl: DecisiveWdl) -> ProbeResult<Option<MaybeRounded<u32>>> {
-        self.table.probe_dtz(pos, wdl)
+impl<S: Syzygy + Position, R: RandomAccessFile> DtzTable<S, R> {
+    pub async fn probe_dtz(
+        &self,
+        pos: &S,
+        wdl: DecisiveWdl,
+    ) -> ProbeResult<Option<MaybeRounded<u32>>> {
+        self.table.probe_dtz(pos, wdl).await
     }
 }
