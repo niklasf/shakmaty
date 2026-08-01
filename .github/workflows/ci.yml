@@ -21,7 +21,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           targets: thumbv6m-none-eabi
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-hack
       - uses: actions/checkout@v7
@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@nightly
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-hack
       # exclude private crates and dev targets
@@ -57,10 +57,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: dtolnay/rust-toolchain@stable
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-hack
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: gungraun-runner@0.19.4,valgrind
         if: matrix.os == 'ubuntu-latest'
