@@ -682,7 +682,7 @@ impl PairsData {
         let block_size = u!(1u32.checked_shl(u32::from(header[1])));
         ensure!(block_size <= MAX_BLOCK_SIZE as u32);
         let span = u!(1u32.checked_shl(u32::from(header[2])));
-        let sparse_index_size = tb_size.div_ceil(u64::from(span)) as u32;
+        let sparse_index_size = u!(u32::try_from(tb_size.div_ceil(u64::from(span))).ok());
         let padding = header[3];
         let blocks_num = LE::read_u32(&header[4..]);
         let block_length_size = u!(blocks_num.checked_add(u32::from(padding)));
@@ -1461,6 +1461,7 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
     ) -> ProbeResult<(u32, i64)> {
         let mut buffer = BlockLengthBuffer::new();
 
+        ensure!(block < d.block_length_size);
         if lit_idx < 0 {
             // Backward scan.
             while lit_idx < 0 {
@@ -1477,8 +1478,11 @@ impl<T: TableTag, S: Position + Syzygy> Table<T, S> {
                 }
                 lit_idx -= block_length;
                 block = u!(block.checked_add(1));
+                ensure!(block < d.block_length_size);
             }
         }
+
+        ensure!(block < d.blocks_num); // Final check against unpadded number
 
         trace!("block located");
         Ok((block, lit_idx))
