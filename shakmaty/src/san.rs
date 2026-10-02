@@ -172,8 +172,8 @@ impl San {
                 to,
                 promotion,
             } => {
-                let mut legals = pos.san_candidates(role, to);
-                legals.retain(|m| match *m {
+                let legals = pos.san_candidates(role, to);
+                let mut matching = legals.iter().filter(|m| match **m {
                     Move::Normal {
                         from,
                         capture: c,
@@ -193,15 +193,11 @@ impl San {
                     }
                     _ => false,
                 });
-                legals
-                    .split_first()
-                    .map_or(Err(SanError::IllegalSan), |(m, others)| {
-                        if others.is_empty() {
-                            Ok(*m)
-                        } else {
-                            Err(SanError::AmbiguousSan)
-                        }
-                    })
+                match (matching.next(), matching.next()) {
+                    (Some(m), None) => Ok(*m),
+                    (Some(_), Some(_)) => Err(SanError::AmbiguousSan),
+                    (None, _) => Err(SanError::IllegalSan),
+                }
             }
             San::Castle(side) => pos
                 .castling_moves(side)
