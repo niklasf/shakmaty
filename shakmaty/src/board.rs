@@ -420,11 +420,22 @@ impl Board {
         self.occupied.toggle(sq);
     }
 
+    /// Removes a piece that is known to be on `sq`. Cheaper than
+    /// [`Board::discard_piece_at()`], because no lookup is required.
     #[inline]
-    pub(crate) fn set_new_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
-        assert!(self.occupied.insert(sq));
+    pub(crate) fn discard_known_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
+        //debug_assert_eq!(self.piece_at(sq), Some(Piece { color, role }));
         self.by_role.get_mut(role).toggle(sq);
         self.by_color.get_mut(color).toggle(sq);
+        self.occupied.toggle(sq);
+    }
+
+    #[inline]
+    pub(crate) fn set_new_piece_at(&mut self, sq: Square, Piece { color, role }: Piece) {
+        //assert!(self.occupied.insert(sq));
+        self.by_role.get_mut(role).toggle(sq);
+        self.by_color.get_mut(color).toggle(sq);
+        self.occupied.toggle(sq);
     }
 
     #[inline]
