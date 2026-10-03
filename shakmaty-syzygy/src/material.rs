@@ -1,12 +1,8 @@
-use std::{
-    cmp::Ordering,
-    fmt,
-    hash::{Hash, Hasher},
-};
+use std::{cmp::Ordering, fmt};
 
 use shakmaty::{Board, ByColor, ByRole, Piece, Role};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub(crate) struct MaterialSide {
     by_role: ByRole<u8>,
 }
@@ -37,21 +33,6 @@ impl MaterialSide {
 
     fn unique_roles(&self) -> usize {
         self.by_role.into_iter().filter(|c| *c == 1).count()
-    }
-}
-
-impl Hash for MaterialSide {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u64(u64::from_le_bytes([
-            self.by_role.pawn,
-            self.by_role.knight,
-            self.by_role.bishop,
-            self.by_role.rook,
-            self.by_role.queen,
-            self.by_role.king,
-            0,
-            0,
-        ]));
     }
 }
 

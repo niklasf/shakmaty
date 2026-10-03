@@ -3387,11 +3387,8 @@ fn do_move(
                 castles.discard_rook(to);
             }
 
-            if let Some(capture) = capture {
-                board.discard_known_piece_at(to, capture.of(!color));
-            }
-            board.discard_known_piece_at(from, role.of(color));
-            board.set_new_piece_at(to, promotion.unwrap_or(role).of(color));
+            board.discard_piece_at(from);
+            board.set_piece_at(to, promotion.map_or(role.of(color), |p| p.of(color)));
 
             let is_promoted = promoted.remove(from) || promotion.is_some();
             promoted.set(to, is_promoted);
@@ -3411,11 +3408,8 @@ fn do_move(
             castles.discard_color(color);
         }
         Move::EnPassant { from, to } => {
-            board.discard_known_piece_at(
-                Square::from_coords(to.file(), from.rank()),
-                (!color).pawn(),
-            );
-            board.discard_known_piece_at(from, color.pawn());
+            board.discard_piece_at(Square::from_coords(to.file(), from.rank())); // captured pawn
+            board.discard_piece_at(from);
             board.set_new_piece_at(to, color.pawn());
         }
         Move::Put { role, to } => {
