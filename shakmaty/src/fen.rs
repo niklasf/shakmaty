@@ -234,7 +234,7 @@ fn parse_remaining_checks(s: &[u8]) -> Option<ByColor<RemainingChecks>> {
             // format: +0+0
             ByColor {
                 white: RemainingChecks::new(3_u32.checked_sub(btoi::btou(white_given).ok()?)?),
-                black: RemainingChecks::new(3_u32.checked_sub(btoi::btoi(black_given).ok()?)?),
+                black: RemainingChecks::new(3_u32.checked_sub(btoi::btou(black_given).ok()?)?),
             }
         }
         (Some(white), Some(black), None) => {
@@ -1108,6 +1108,33 @@ mod tests {
         );
         assert_eq!(setup.halfmoves, 1);
         assert_eq!(setup.fullmoves.get(), 2);
+
+        let setup = "8/8/8/8/8/8/8/8 w - - +2+1 0 3"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_setup();
+        assert_eq!(
+            setup.remaining_checks,
+            Some(ByColor {
+                white: RemainingChecks::new(1),
+                black: RemainingChecks::new(2),
+            })
+        );
+        assert_eq!(setup.halfmoves, 0);
+        assert_eq!(setup.fullmoves.get(), 3);
+
+        "8/8/8/8/8/8/8/8 w - - ++0+1 0 1"
+            .parse::<Fen>()
+            .expect_err("extra white sign");
+        "8/8/8/8/8/8/8/8 w - - +0++1 0 1"
+            .parse::<Fen>()
+            .expect_err("extra black sign");
+        "8/8/8/8/8/8/8/8 w - - +-0+1 0 1"
+            .parse::<Fen>()
+            .expect_err("white minus");
+        "8/8/8/8/8/8/8/8 w - - +0+-1 0 1"
+            .parse::<Fen>()
+            .expect_err("black minus");
     }
 
     #[cfg(feature = "alloc")]
