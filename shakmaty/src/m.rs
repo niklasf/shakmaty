@@ -1,6 +1,7 @@
 use core::{
     fmt,
     fmt::{Display, Write as _},
+    mem::MaybeUninit,
 };
 
 use arrayvec::ArrayVec;
@@ -254,6 +255,29 @@ pub type MoveList = ArrayVec<
         }
     },
 >;
+
+/// Initializes a move list in a way that is amenable to return value
+/// optimization.
+#[inline(always)]
+pub(crate) fn build_move_list<A, F>(arg: A, f: F) -> MoveList
+where
+    F: FnOnce(A, &mut MoveList),
+{
+    let mut moves = MaybeUninit::uninit();
+
+    #[inline(never)]
+    fn init_move_list<A, F>(moves: &mut MaybeUninit<MoveList>, arg: A, f: F)
+    where
+        F: FnOnce(A, &mut MoveList),
+    {
+        f(arg, moves.write(MoveList::new()));
+    }
+
+    init_move_list(&mut moves, arg, f);
+
+    // SAFETY: init_move_list() immediately initializes moves.
+    unsafe { moves.assume_init() }
+}
 
 #[cfg(test)]
 mod tests {

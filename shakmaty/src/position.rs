@@ -12,6 +12,7 @@ use crate::{
     Color::{Black, White},
     EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square, attacks,
     bitboard::Direction,
+    m::{build_move_list},
     setup::EnPassant,
     zobrist::ZobristValue,
 };
@@ -1141,145 +1142,125 @@ impl Position for Chess {
     }
 
     fn legal_moves(&self) -> MoveList {
-        let mut moves = MoveList::new();
-
-        let king = self
-            .board()
-            .king_of(self.turn())
-            .expect("king in standard chess");
-
-        let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
-
-        let checkers = self.checkers();
-        if checkers.is_empty() {
-            let target = !self.us();
-            gen_non_king(self, target, &mut moves);
-            gen_safe_king(self, king, target, &mut moves);
-            gen_castling_moves(
-                self,
-                &self.castles,
-                king,
-                CastlingSide::KingSide,
-                &mut moves,
-            );
-            gen_castling_moves(
-                self,
-                &self.castles,
-                king,
-                CastlingSide::QueenSide,
-                &mut moves,
-            );
-        } else {
-            evasions(self, king, checkers, &mut moves);
-        }
-
-        let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.any() || has_ep {
-            moves.retain(|m| is_safe(self, king, *m, blockers));
-        }
-
-        moves
-    }
-
-    fn castling_moves(&self, side: CastlingSide) -> MoveList {
-        let mut moves = MoveList::new();
-        let king = self
-            .board()
-            .king_of(self.turn())
-            .expect("king in standard chess");
-        gen_castling_moves(self, &self.castles, king, side, &mut moves);
-        moves
-    }
-
-    fn en_passant_moves(&self) -> MoveList {
-        let mut moves = MoveList::new();
-
-        if gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves) {
+        build_move_list((), move |(), moves| {
             let king = self
                 .board()
                 .king_of(self.turn())
                 .expect("king in standard chess");
-            let blockers = slider_blockers(self.board(), self.them(), king);
-            moves.retain(|m| is_safe(self, king, *m, blockers));
-        }
 
-        moves
+            let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+
+            let checkers = self.checkers();
+            if checkers.is_empty() {
+                let target = !self.us();
+                gen_non_king(self, target, moves);
+                gen_safe_king(self, king, target, moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
+                gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
+            } else {
+                evasions(self, king, checkers, moves);
+            }
+
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            if blockers.any() || has_ep {
+                moves.retain(|m| is_safe(self, king, *m, blockers));
+            }
+        })
+    }
+
+    fn castling_moves(&self, side: CastlingSide) -> MoveList {
+        build_move_list((), move |(), moves| {
+            let king = self
+                .board()
+                .king_of(self.turn())
+                .expect("king in standard chess");
+            gen_castling_moves(self, &self.castles, king, side, moves);
+        })
+    }
+
+    fn en_passant_moves(&self) -> MoveList {
+        build_move_list((), move |(), moves| {
+            if gen_en_passant(self.board(), self.turn(), self.ep_square, moves) {
+                let king = self
+                    .board()
+                    .king_of(self.turn())
+                    .expect("king in standard chess");
+                let blockers = slider_blockers(self.board(), self.them(), king);
+                moves.retain(|m| is_safe(self, king, *m, blockers));
+            }
+        })
     }
 
     fn promotion_moves(&self) -> MoveList {
-        let mut moves = MoveList::new();
+        build_move_list((), move |(), moves| {
+            let king = self
+                .board()
+                .king_of(self.turn())
+                .expect("king in standard chess");
+            let checkers = self.checkers();
 
-        let king = self
-            .board()
-            .king_of(self.turn())
-            .expect("king in standard chess");
-        let checkers = self.checkers();
+            if checkers.is_empty() {
+                gen_pawn_moves(self, Bitboard::BACKRANKS, moves);
+            } else {
+                evasions(self, king, checkers, moves);
+                moves.retain(|m| m.is_promotion());
+            }
 
-        if checkers.is_empty() {
-            gen_pawn_moves(self, Bitboard::BACKRANKS, &mut moves);
-        } else {
-            evasions(self, king, checkers, &mut moves);
-            moves.retain(|m| m.is_promotion());
-        }
-
-        let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.any() {
-            moves.retain(|m| is_safe(self, king, *m, blockers));
-        }
-
-        moves
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            if blockers.any() {
+                moves.retain(|m| is_safe(self, king, *m, blockers));
+            }
+        })
     }
 
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
-        let mut moves = MoveList::new();
+        build_move_list((role, to), move |(role, to), moves| {
+            let king = self
+                .board()
+                .king_of(self.turn())
+                .expect("king in standard chess");
+            let checkers = self.checkers();
 
-        let king = self
-            .board()
-            .king_of(self.turn())
-            .expect("king in standard chess");
-        let checkers = self.checkers();
+            if checkers.is_empty() {
+                let piece_from = match role {
+                    Role::Pawn | Role::King => Bitboard(0),
+                    Role::Knight => attacks::knight_attacks(to),
+                    Role::Bishop => attacks::bishop_attacks(to, self.board().occupied()),
+                    Role::Rook => attacks::rook_attacks(to, self.board().occupied()),
+                    Role::Queen => attacks::queen_attacks(to, self.board().occupied()),
+                };
 
-        if checkers.is_empty() {
-            let piece_from = match role {
-                Role::Pawn | Role::King => Bitboard(0),
-                Role::Knight => attacks::knight_attacks(to),
-                Role::Bishop => attacks::bishop_attacks(to, self.board().occupied()),
-                Role::Rook => attacks::rook_attacks(to, self.board().occupied()),
-                Role::Queen => attacks::queen_attacks(to, self.board().occupied()),
-            };
+                if !self.us().contains(to) {
+                    match role {
+                        Role::Pawn => gen_pawn_moves(self, Bitboard::from_square(to), moves),
+                        Role::King => gen_safe_king(self, king, Bitboard::from_square(to), moves),
+                        _ => {}
+                    }
 
-            if !self.us().contains(to) {
-                match role {
-                    Role::Pawn => gen_pawn_moves(self, Bitboard::from_square(to), &mut moves),
-                    Role::King => gen_safe_king(self, king, Bitboard::from_square(to), &mut moves),
-                    _ => {}
-                }
-
-                (piece_from & self.our(role)).for_each(|from| {
-                    moves.push(Move::Normal {
-                        role,
-                        from,
-                        capture: self.board().role_at(to),
-                        to,
-                        promotion: None,
+                    (piece_from & self.our(role)).for_each(|from| {
+                        moves.push(Move::Normal {
+                            role,
+                            from,
+                            capture: self.board().role_at(to),
+                            to,
+                            promotion: None,
+                        });
                     });
-                });
+                }
+            } else {
+                evasions(self, king, checkers, moves);
+                filter_san_candidates(role, to, moves);
             }
-        } else {
-            evasions(self, king, checkers, &mut moves);
-            filter_san_candidates(role, to, &mut moves);
-        }
 
-        let has_ep = role == Role::Pawn
-            && self.ep_square.map(Square::from) == Some(to)
-            && gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
+            let has_ep = role == Role::Pawn
+                && self.ep_square.map(Square::from) == Some(to)
+                && gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
-        let blockers = slider_blockers(self.board(), self.them(), king);
-        if blockers.any() || has_ep {
-            moves.retain(|m| is_safe(self, king, *m, blockers));
-        }
-
-        moves
+            let blockers = slider_blockers(self.board(), self.them(), king);
+            if blockers.any() || has_ep {
+                moves.retain(|m| is_safe(self, king, *m, blockers));
+            }
+        })
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
@@ -1532,44 +1513,30 @@ pub(crate) mod variant {
         }
 
         fn legal_moves(&self) -> MoveList {
-            let mut moves = MoveList::new();
-
-            gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
-            gen_non_king(self, !self.us(), &mut moves);
-            KingTag::gen_moves(self, !self.board().occupied(), &mut moves);
-            if let Some(king) = self.board().king_of(self.turn()) {
-                gen_castling_moves(
-                    self,
-                    &self.castles,
-                    king,
-                    CastlingSide::KingSide,
-                    &mut moves,
-                );
-                gen_castling_moves(
-                    self,
-                    &self.castles,
-                    king,
-                    CastlingSide::QueenSide,
-                    &mut moves,
-                );
-            }
-
-            // Atomic move generation could be implemented more efficiently.
-            // For simplicity we filter all pseudo legal moves.
-            moves.retain(|m| {
-                let mut after = self.clone();
-                after.play_unchecked(*m);
-                if let Some(our_king) = after.board().king_of(self.turn()) {
-                    (after.board.kings() & after.board().by_color(!self.turn())).is_empty()
-                        || after
-                            .king_attackers(our_king, !self.turn(), after.board.occupied())
-                            .is_empty()
-                } else {
-                    false
+            build_move_list((), move |(), moves| {
+                gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
+                gen_non_king(self, !self.us(), moves);
+                KingTag::gen_moves(self, !self.board().occupied(), moves);
+                if let Some(king) = self.board().king_of(self.turn()) {
+                    gen_castling_moves(self, &self.castles, king, CastlingSide::KingSide, moves);
+                    gen_castling_moves(self, &self.castles, king, CastlingSide::QueenSide, moves);
                 }
-            });
 
-            moves
+                // Atomic move generation could be implemented more efficiently.
+                // For simplicity we filter all pseudo legal moves.
+                moves.retain(|m| {
+                    let mut after = self.clone();
+                    after.play_unchecked(*m);
+                    if let Some(our_king) = after.board().king_of(self.turn()) {
+                        (after.board.kings() & after.board().by_color(!self.turn())).is_empty()
+                            || after
+                                .king_attackers(our_king, !self.turn(), after.board.occupied())
+                                .is_empty()
+                    } else {
+                        false
+                    }
+                });
+            })
         }
 
         fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
@@ -1833,9 +1800,9 @@ pub(crate) mod variant {
         }
 
         fn en_passant_moves(&self) -> MoveList {
-            let mut moves = MoveList::new();
-            gen_en_passant(self.board(), self.turn, self.ep_square, &mut moves);
-            moves
+            build_move_list((), move |(), moves| {
+                gen_en_passant(self.board(), self.turn, self.ep_square, moves);
+            })
         }
 
         fn capture_moves(&self) -> MoveList {
@@ -2730,35 +2697,33 @@ pub(crate) mod variant {
         }
 
         fn legal_moves(&self) -> MoveList {
-            let mut moves = MoveList::new();
+            build_move_list((), move |(), moves| {
+                if self.is_variant_end() {
+                    return;
+                }
 
-            if self.is_variant_end() {
-                return moves;
-            }
+                // Generate all legal moves (no castling, no ep).
+                let target = !self.us();
+                gen_non_king(self, target, moves);
+                let king = self
+                    .board()
+                    .king_of(self.turn())
+                    .expect("king in racingkings");
+                gen_safe_king(self, king, target, moves);
 
-            // Generate all legal moves (no castling, no ep).
-            let target = !self.us();
-            gen_non_king(self, target, &mut moves);
-            let king = self
-                .board()
-                .king_of(self.turn())
-                .expect("king in racingkings");
-            gen_safe_king(self, king, target, &mut moves);
+                let blockers = slider_blockers(self.board(), self.them(), king);
+                if blockers.any() {
+                    moves.retain(|m| is_safe(self, king, *m, blockers));
+                }
 
-            let blockers = slider_blockers(self.board(), self.them(), king);
-            if blockers.any() {
-                moves.retain(|m| is_safe(self, king, *m, blockers));
-            }
-
-            // Do not allow giving check. This could be implemented more
-            // efficiently.
-            moves.retain(|m| {
-                let mut after = self.clone();
-                after.play_unchecked(*m);
-                !after.is_check()
-            });
-
-            moves
+                // Do not allow giving check. This could be implemented more
+                // efficiently.
+                moves.retain(|m| {
+                    let mut after = self.clone();
+                    after.play_unchecked(*m);
+                    !after.is_check()
+                });
+            })
         }
 
         fn has_insufficient_material(&self, _color: Color) -> bool {
@@ -3004,44 +2969,42 @@ pub(crate) mod variant {
         }
 
         fn legal_moves(&self) -> MoveList {
-            let mut moves = MoveList::new();
+            build_move_list((), move |(), moves| {
+                let king = self.board().king_of(self.turn());
+                let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, moves);
 
-            let king = self.board().king_of(self.turn());
-            let has_ep = gen_en_passant(self.board(), self.turn(), self.ep_square, &mut moves);
+                let checkers = self.checkers();
+                if checkers.is_empty() {
+                    let target = !self.us();
+                    gen_non_king(self, target, moves);
+                    if let Some(king) = king {
+                        gen_safe_king(self, king, target, moves);
+                        gen_castling_moves(
+                            self,
+                            &self.castles,
+                            king,
+                            CastlingSide::KingSide,
+                            moves,
+                        );
+                        gen_castling_moves(
+                            self,
+                            &self.castles,
+                            king,
+                            CastlingSide::QueenSide,
+                            moves,
+                        );
+                    }
+                } else {
+                    evasions(self, king.expect("king in check"), checkers, moves);
+                }
 
-            let checkers = self.checkers();
-            if checkers.is_empty() {
-                let target = !self.us();
-                gen_non_king(self, target, &mut moves);
                 if let Some(king) = king {
-                    gen_safe_king(self, king, target, &mut moves);
-                    gen_castling_moves(
-                        self,
-                        &self.castles,
-                        king,
-                        CastlingSide::KingSide,
-                        &mut moves,
-                    );
-                    gen_castling_moves(
-                        self,
-                        &self.castles,
-                        king,
-                        CastlingSide::QueenSide,
-                        &mut moves,
-                    );
+                    let blockers = slider_blockers(self.board(), self.them(), king);
+                    if blockers.any() || has_ep {
+                        moves.retain(|m| is_safe(self, king, *m, blockers));
+                    }
                 }
-            } else {
-                evasions(self, king.expect("king in check"), checkers, &mut moves);
-            }
-
-            if let Some(king) = king {
-                let blockers = slider_blockers(self.board(), self.them(), king);
-                if blockers.any() || has_ep {
-                    moves.retain(|m| is_safe(self, king, *m, blockers));
-                }
-            }
-
-            moves
+            })
         }
 
         fn is_variant_end(&self) -> bool {
