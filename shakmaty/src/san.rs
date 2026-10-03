@@ -54,10 +54,7 @@
 
 use core::{error, fmt, str::FromStr};
 
-use crate::{
-    CastlingSide, File, KnownOutcome, Move, MoveList, Outcome, Position, Rank, Role, Square,
-    util::AppendAscii,
-};
+use crate::{CastlingSide, File, Move, MoveList, Position, Rank, Role, Square, util::AppendAscii};
 
 /// Error when parsing a syntactically invalid SAN.
 #[derive(Clone, Debug)]
@@ -535,12 +532,15 @@ impl Suffix {
     }
 
     pub fn from_position<P: Position>(pos: &P) -> Option<Suffix> {
-        if matches!(pos.outcome(), Outcome::Known(KnownOutcome::Decisive { .. })) {
+        let variant_outcome = pos.variant_outcome();
+        if variant_outcome.is_decisive() {
             Some(Suffix::Checkmate)
-        } else if pos.checkers().any() {
-            Some(Suffix::Check)
-        } else {
+        } else if pos.checkers().is_empty() {
             None
+        } else if variant_outcome.is_unknown() && pos.legal_moves().is_empty() {
+            Some(Suffix::Checkmate)
+        } else {
+            Some(Suffix::Check)
         }
     }
 }

@@ -27,6 +27,14 @@ pub enum KnownOutcome {
 }
 
 impl KnownOutcome {
+    pub const fn is_decisive(self) -> bool {
+        matches!(self, KnownOutcome::Decisive { .. })
+    }
+
+    pub const fn is_draw(self) -> bool {
+        matches!(self, KnownOutcome::Draw)
+    }
+
     pub const fn from_winner(winner: Option<Color>) -> KnownOutcome {
         match winner {
             Some(winner) => KnownOutcome::Decisive { winner },
@@ -130,6 +138,14 @@ impl Outcome {
 
     pub const fn is_unknown(self) -> bool {
         matches!(self, Self::Unknown)
+    }
+
+    pub const fn is_decisive(self) -> bool {
+        matches!(self, Self::Known(KnownOutcome::Decisive { .. }))
+    }
+
+    pub const fn is_draw(self) -> bool {
+        matches!(self, Self::Known(KnownOutcome::Draw))
     }
 
     pub const fn winner(self) -> Option<Color> {
