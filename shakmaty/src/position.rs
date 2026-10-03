@@ -12,7 +12,7 @@ use crate::{
     Color::{Black, White},
     EnPassantMode, Move, MoveList, Piece, Rank, RemainingChecks, Role, Setup, Square, attacks,
     bitboard::Direction,
-    m::{build_move_list},
+    m::build_move_list,
     setup::EnPassant,
     zobrist::ZobristValue,
 };
@@ -543,37 +543,57 @@ pub trait Position {
     /// Generates a subset of legal moves: All piece moves and drops of type
     /// `role` to the square `to`, excluding castling moves.
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
-        let mut moves = self.legal_moves();
-        filter_san_candidates(role, to, &mut moves);
-        moves
+        build_move_list((role, to), move |(role, to), moves| {
+            for m in &self.legal_moves() {
+                if is_san_candidate(role, to, *m) {
+                    moves.push(*m);
+                }
+            }
+        })
     }
 
     /// Generates legal castling moves.
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
-        let mut moves = self.legal_moves();
-        moves.retain(|m| m.castling_side().is_some_and(|s| side == s));
-        moves
+        build_move_list(side, move |side, moves| {
+            for m in &self.legal_moves() {
+                if m.castling_side().is_some_and(|s| side == s) {
+                    moves.push(*m);
+                }
+            }
+        })
     }
 
     /// Generates en passant moves.
     fn en_passant_moves(&self) -> MoveList {
-        let mut moves = self.legal_moves();
-        moves.retain(|m| m.is_en_passant());
-        moves
+        build_move_list((), move |(), moves| {
+            for m in &self.legal_moves() {
+                if m.is_en_passant() {
+                    moves.push(*m);
+                }
+            }
+        })
     }
 
     /// Generates capture moves.
     fn capture_moves(&self) -> MoveList {
-        let mut moves = self.legal_moves();
-        moves.retain(|m| m.is_capture());
-        moves
+        build_move_list((), move |(), moves| {
+            for m in &self.legal_moves() {
+                if m.is_capture() {
+                    moves.push(*m);
+                }
+            }
+        })
     }
 
     /// Generate promotion moves.
     fn promotion_moves(&self) -> MoveList {
-        let mut moves = self.legal_moves();
-        moves.retain(|m| m.is_promotion());
-        moves
+        build_move_list((), move |(), moves| {
+            for m in &self.legal_moves() {
+                if m.is_promotion() {
+                    moves.push(*m);
+                }
+            }
+        })
     }
 
     /// Tests if a move is irreversible.
@@ -1249,7 +1269,7 @@ impl Position for Chess {
                 }
             } else {
                 evasions(self, king, checkers, moves);
-                filter_san_candidates(role, to, moves);
+                moves.retain(|m| is_san_candidate(role, to, *m));
             }
 
             let has_ep = role == Role::Pawn
@@ -1673,6 +1693,14 @@ pub(crate) mod variant {
                 fullmoves: NonZeroU32::MIN,
             }
         }
+
+        fn gen_captures(&self, moves: &mut MoveList) {
+            gen_en_passant(self.board(), self.turn, self.ep_square, moves);
+            let them = self.them();
+            gen_non_king(self, them, moves);
+            add_king_promotions(moves);
+            KingTag::gen_moves(self, them, moves);
+        }
     }
 
     impl Default for Antichess {
@@ -1806,25 +1834,20 @@ pub(crate) mod variant {
         }
 
         fn capture_moves(&self) -> MoveList {
-            let mut moves = self.en_passant_moves();
-            let them = self.them();
-            gen_non_king(self, them, &mut moves);
-            add_king_promotions(&mut moves);
-            KingTag::gen_moves(self, them, &mut moves);
-            moves
+            build_move_list((), move |(), moves| self.gen_captures(moves))
         }
 
         fn legal_moves(&self) -> MoveList {
-            let mut moves = self.capture_moves();
+            build_move_list((), move |(), moves| {
+                self.gen_captures(moves);
 
-            if moves.is_empty() {
-                // No compulsory captures. Generate everything else.
-                gen_non_king(self, !self.board().occupied(), &mut moves);
-                add_king_promotions(&mut moves);
-                KingTag::gen_moves(self, !self.board().occupied(), &mut moves);
-            }
-
-            moves
+                if moves.is_empty() {
+                    // No compulsory captures. Generate everything else.
+                    gen_non_king(self, !self.board().occupied(), moves);
+                    add_king_promotions(moves);
+                    KingTag::gen_moves(self, !self.board().occupied(), moves);
+                }
+            })
         }
 
         fn king_attackers(
@@ -2395,29 +2418,31 @@ pub(crate) mod variant {
         }
 
         fn legal_moves(&self) -> MoveList {
-            let mut moves = self.chess.legal_moves();
+            build_move_list((), move |(), moves| {
+                moves
+                    .try_extend_from_slice(&self.chess.legal_moves())
+                    .expect("same capacity");
 
-            let pocket = self.our_pocket();
-            let targets = self.legal_put_squares();
+                let pocket = self.our_pocket();
+                let targets = self.legal_put_squares();
 
-            for to in targets {
-                for role in [Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
-                    if *pocket.get(role) > 0 {
-                        moves.push(Move::Put { role, to });
+                for to in targets {
+                    for role in [Role::Knight, Role::Bishop, Role::Rook, Role::Queen] {
+                        if *pocket.get(role) > 0 {
+                            moves.push(Move::Put { role, to });
+                        }
                     }
                 }
-            }
 
-            if pocket.pawn > 0 {
-                for to in targets & !Bitboard::BACKRANKS {
-                    moves.push(Move::Put {
-                        role: Role::Pawn,
-                        to,
-                    });
+                if pocket.pawn > 0 {
+                    for to in targets & !Bitboard::BACKRANKS {
+                        moves.push(Move::Put {
+                            role: Role::Pawn,
+                            to,
+                        });
+                    }
                 }
-            }
-
-            moves
+            })
         }
 
         fn castling_moves(&self, side: CastlingSide) -> MoveList {
@@ -2429,16 +2454,18 @@ pub(crate) mod variant {
         }
 
         fn san_candidates(&self, role: Role, to: Square) -> MoveList {
-            let mut moves = self.chess.san_candidates(role, to);
+            build_move_list((role, to), move |(role, to), moves| {
+                moves
+                    .try_extend_from_slice(&self.chess.san_candidates(role, to))
+                    .expect("same capacity");
 
-            if *self.our_pocket().get(role) > 0
-                && self.legal_put_squares().contains(to)
-                && (role != Role::Pawn || !Bitboard::BACKRANKS.contains(to))
-            {
-                moves.push(Move::Put { role, to });
-            }
-
-            moves
+                if *self.our_pocket().get(role) > 0
+                    && self.legal_put_squares().contains(to)
+                    && (role != Role::Pawn || !Bitboard::BACKRANKS.contains(to))
+                {
+                    moves.push(Move::Put { role, to });
+                }
+            })
         }
 
         fn is_irreversible(&self, m: Move) -> bool {
@@ -3281,18 +3308,18 @@ pub(crate) mod variant {
     }
 
     fn add_king_promotions(moves: &mut MoveList) {
-        let mut king_promotions = MoveList::new();
-
-        for m in &moves[..] {
+        // Add a king promotion for each queen promotion that is already
+        // present in the move list.
+        for i in 0..moves.len() {
             if let Move::Normal {
                 role,
                 from,
                 capture,
                 to,
                 promotion: Some(Role::Queen),
-            } = *m
+            } = moves[i]
             {
-                king_promotions.push(Move::Normal {
+                moves.push(Move::Normal {
                     role,
                     from,
                     capture,
@@ -3301,8 +3328,6 @@ pub(crate) mod variant {
                 });
             }
         }
-
-        moves.extend(king_promotions);
     }
 }
 
@@ -3844,12 +3869,12 @@ fn is_safe<P: Position>(pos: &P, king: Square, m: Move, blockers: Bitboard) -> b
     }
 }
 
-fn filter_san_candidates(role: Role, to: Square, moves: &mut MoveList) {
-    moves.retain(|m| match *m {
+fn is_san_candidate(role: Role, to: Square, m: Move) -> bool {
+    match m {
         Move::Normal { role: r, to: t, .. } | Move::Put { role: r, to: t } => to == t && role == r,
         Move::EnPassant { to: t, .. } => role == Role::Pawn && t == to,
         Move::Castle { .. } => false,
-    });
+    }
 }
 
 #[cfg(test)]
