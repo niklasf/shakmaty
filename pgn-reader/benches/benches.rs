@@ -2,6 +2,7 @@ use std::{fs::File, ops::ControlFlow};
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
+use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
 
 const FIXTURES: [&str; 6] = [
     "lichess_db_10k.pgn",
@@ -105,6 +106,75 @@ fn bench_stats(c: &mut Criterion) {
     }
 }
 
+fn bench_validate(c: &mut Criterion) {
+    struct Validator;
+
+    impl Visitor for Validator {
+        type Tags = Option<Chess>;
+        type Movetext = Chess;
+        type Output = bool;
+
+        fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+            ControlFlow::Continue(None)
+        }
+
+        fn tag(
+            &mut self,
+            tags: &mut Self::Tags,
+            name: &[u8],
+            value: RawTag<'_>,
+        ) -> ControlFlow<Self::Output> {
+            if name == b"FEN" {
+                let Ok(fen) = Fen::from_ascii(value.as_bytes()) else {
+                    return ControlFlow::Break(false);
+                };
+                let Ok(pos) = fen.into_position(CastlingMode::Chess960) else {
+                    return ControlFlow::Break(false);
+                };
+                tags.replace(pos);
+            }
+            ControlFlow::Continue(())
+        }
+
+        fn begin_movetext(
+            &mut self,
+            tags: Self::Tags,
+        ) -> ControlFlow<Self::Output, Self::Movetext> {
+            ControlFlow::Continue(tags.unwrap_or_default())
+        }
+
+        fn san(
+            &mut self,
+            movetext: &mut Self::Movetext,
+            san_plus: SanPlus,
+        ) -> ControlFlow<Self::Output> {
+            match san_plus.san.to_move(movetext) {
+                Ok(m) => {
+                    movetext.play_unchecked(m);
+                    ControlFlow::Continue(())
+                }
+                Err(_) => ControlFlow::Break(false),
+            }
+        }
+
+        fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {
+            true
+        }
+    }
+
+    for fixture in FIXTURES {
+        c.bench_function(&format!("validate {fixture}"), |b| {
+            b.iter(|| {
+                let mut reader =
+                    Reader::new(File::open(format!("benches/{fixture}")).expect("open"));
+                for game in reader.read_games(&mut Validator) {
+                    assert!(game.expect("read game"), "invalid game in {fixture}");
+                }
+            })
+        });
+    }
+}
+
 fn bench_skip_all(c: &mut Criterion) {
     for fixture in FIXTURES {
         c.bench_function(&format!("skip all {fixture}"), |b| {
@@ -117,5 +187,5 @@ fn bench_skip_all(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, bench_stats, bench_skip_all);
+criterion_group!(benches, bench_stats, bench_validate, bench_skip_all);
 criterion_main!(benches);
