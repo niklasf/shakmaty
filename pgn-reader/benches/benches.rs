@@ -1,8 +1,8 @@
-use std::{fs::File, ops::ControlFlow};
+use std::{fs::File, hint::black_box, ops::ControlFlow};
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use pgn_reader::{Nag, Outcome, RawComment, RawTag, Reader, SanPlus, Visitor};
-use shakmaty::{CastlingMode, Chess, Position, fen::Fen};
+use shakmaty::{CastlingMode, Chess, Position, fen::Fen, san::San};
 
 const FIXTURES: [&str; 6] = [
     "lichess_db_10k.pgn",
@@ -106,6 +106,57 @@ fn bench_stats(c: &mut Criterion) {
     }
 }
 
+fn bench_collect(c: &mut Criterion) {
+    #[derive(Default)]
+    struct Collector {
+        sans: Vec<San>,
+        total: usize,
+    }
+
+    impl Visitor for Collector {
+        type Tags = ();
+        type Movetext = ();
+        type Output = ();
+
+        fn begin_tags(&mut self) -> ControlFlow<Self::Output, Self::Tags> {
+            ControlFlow::Continue(())
+        }
+
+        fn begin_movetext(
+            &mut self,
+            _tags: Self::Tags,
+        ) -> ControlFlow<Self::Output, Self::Movetext> {
+            self.sans.clear();
+            ControlFlow::Continue(())
+        }
+
+        fn san(
+            &mut self,
+            _movetext: &mut Self::Movetext,
+            san_plus: SanPlus,
+        ) -> ControlFlow<Self::Output> {
+            self.sans.push(san_plus.san);
+            ControlFlow::Continue(())
+        }
+
+        fn end_game(&mut self, _movetext: Self::Movetext) -> Self::Output {
+            self.total += black_box(&self.sans).len();
+        }
+    }
+
+    for fixture in FIXTURES {
+        c.bench_function(&format!("collect {fixture}"), |b| {
+            b.iter(|| {
+                let mut collector = Collector::default();
+                Reader::new(File::open(format!("benches/{fixture}")).expect("open"))
+                    .visit_all_games(&mut collector)
+                    .expect("visit all");
+                collector.total
+            })
+        });
+    }
+}
+
 fn bench_validate(c: &mut Criterion) {
     struct Validator;
 
@@ -187,5 +238,11 @@ fn bench_skip_all(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, bench_stats, bench_validate, bench_skip_all);
+criterion_group!(
+    benches,
+    bench_stats,    // count but discard moves
+    bench_collect,  // keep moves
+    bench_validate, // process moves
+    bench_skip_all,
+);
 criterion_main!(benches);

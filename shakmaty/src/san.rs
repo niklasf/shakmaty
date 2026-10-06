@@ -116,15 +116,7 @@ impl San {
     ///
     /// Returns [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<San, ParseSanError> {
-        let (san, n) = parser::with_window(ascii, |window| {
-            let (san, n) = parser::san(window)?;
-            let (_, n) = parser::suffix(window, n);
-            Ok((san, n))
-        })?;
-        if n != ascii.len() {
-            return Err(ParseSanError);
-        }
-        Ok(san)
+        SanPlus::from_ascii(ascii).map(|san_plus| san_plus.san)
     }
 
     /// Parses a move in SAN from the start of the given ASCII bytes. Does not
@@ -142,8 +134,10 @@ impl San {
     ///
     /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
     /// to `Nf3=` and then fails on `X`.
+    #[inline]
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(San, usize), ParseSanError> {
-        parser::with_window(ascii, parser::san)
+        let parsed = parser::san(parser::load_prefix(ascii), ascii)?;
+        Ok((parsed.san, parsed.len))
     }
 
     /// Converts a move to Standard Algebraic Notation.
@@ -563,8 +557,9 @@ impl SanPlus {
     ///
     /// Errors with [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<SanPlus, ParseSanError> {
-        let (san_plus, n) = parser::with_window(ascii, parser::san_plus)?;
-        if n != ascii.len() {
+        let parsed = parser::san(parser::load(ascii), ascii)?;
+        let (san_plus, len) = parser::with_suffix(parsed);
+        if len != ascii.len() {
             return Err(ParseSanError);
         }
         Ok(san_plus)
@@ -585,8 +580,10 @@ impl SanPlus {
     ///
     /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
     /// to `Nf3=` and then fails on `X`.
+    #[inline]
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
-        parser::with_window(ascii, parser::san_plus)
+        let parsed = parser::san(parser::load_prefix(ascii), ascii)?;
+        Ok(parser::with_suffix(parsed))
     }
 
     /// Converts a move to Standard Algebraic Notation including possible
@@ -700,27 +697,56 @@ impl<'de> serde::Deserialize<'de> for SanPlus {
     }
 }
 
+/// Optimized SAN parser.
+///
+/// Tested against a much simpler reference parser in the `san_from_ascii` fuzz
+/// target.
+///
+/// Optimized for latency on determining the token length, which is the critical
+/// path for PGN parsing.
 mod parser {
     use super::*;
 
-    const WINDOW: usize = "Pa1xb2=Q#".len();
+    /// Loads the first 8 bytes of `ascii` as a little endian integer, padded
+    /// with zeros.
+    #[inline(always)]
+    pub fn load(ascii: &[u8]) -> u64 {
+        match ascii.first_chunk() {
+            Some(chunk) => u64::from_le_bytes(*chunk),
+            None => load_short(ascii),
+        }
+    }
+
+    /// Like [`load()`], but optimized for callers that usually have more
+    /// input following the SAN.
+    #[inline(always)]
+    pub fn load_prefix(ascii: &[u8]) -> u64 {
+        #[cold]
+        #[inline(never)]
+        fn load_short_cold(ascii: &[u8]) -> u64 {
+            load_short(ascii)
+        }
+
+        match ascii.first_chunk() {
+            Some(chunk) => u64::from_le_bytes(*chunk),
+            None => load_short_cold(ascii),
+        }
+    }
 
     #[inline(always)]
-    pub fn with_window<T>(ascii: &[u8], f: impl FnOnce(&[u8; WINDOW]) -> T) -> T {
-        match ascii.first_chunk::<WINDOW>() {
-            Some(window) => f(window),
-            None => {
-                // Fragile branchless copy into padded buffer.
-                let mut padded = [0; WINDOW];
-                if let Some(last) = ascii.len().checked_sub(1) {
-                    for (i, byte) in padded.iter_mut().enumerate() {
-                        let ch = ascii[i.min(last)];
-                        *byte = if i <= last { ch } else { 0 };
-                    }
-                }
-                f(&padded)
-            }
-        }
+    fn load_short(ascii: &[u8]) -> u64 {
+        let Some(last) = ascii.len().checked_sub(2) else {
+            return ascii.first().map_or(0, |ch| u64::from(*ch));
+        };
+        // Lengths vary unpredictably between 2 and 8 - 1 - 2 = 5 bytes,
+        // so copying with a length dependent branch or memcpy() mispredicts.
+        // Instead, branchless overlapping reads of 2 bytes each, clamped to
+        // stay in bounds.
+        let pair = |i: usize| {
+            let i = i.min(last);
+            u64::from(u16::from_le_bytes([ascii[i], ascii[i + 1]])) << (8 * i)
+        };
+        pair(0) | pair(2) | pair(4) | pair(6)
     }
 
     const CLASS_OTHER: u8 = 0;
@@ -744,34 +770,30 @@ mod parser {
         table
     };
 
-    const LEAD_PAWN: u8 = 0;
-    const LEAD_SPECIAL: u8 = 7; // Castling or null move
-
-    /// Classifies the first byte.
-    static LEAD: [u8; 256] = {
-        let mut table = [LEAD_PAWN; 256];
-        table[b'P' as usize] = Role::Pawn as u8;
-        table[b'N' as usize] = Role::Knight as u8;
-        table[b'B' as usize] = Role::Bishop as u8;
-        table[b'R' as usize] = Role::Rook as u8;
-        table[b'Q' as usize] = Role::Queen as u8;
-        table[b'K' as usize] = Role::King as u8;
-        table[b'O' as usize] = LEAD_SPECIAL;
-        table[b'-' as usize] = LEAD_SPECIAL;
-        table[b'Z' as usize] = LEAD_SPECIAL;
+    /// The role indicated by the first byte, and if the first byte is a role
+    /// letter to be skipped.
+    static LEAD: [(Role, u8); 256] = {
+        let mut table = [(Role::Pawn, 0); 256];
+        table[b'P' as usize] = (Role::Pawn, 1);
+        table[b'N' as usize] = (Role::Knight, 1);
+        table[b'B' as usize] = (Role::Bishop, 1);
+        table[b'R' as usize] = (Role::Rook, 1);
+        table[b'Q' as usize] = (Role::Queen, 1);
+        table[b'K' as usize] = (Role::King, 1);
         table
     };
 
-    const SHAPE_VALID: u8 = 1 << 7;
-    const SHAPE_FILE: u8 = 1 << 6;
-    const SHAPE_RANK: u8 = 1 << 5;
-    const SHAPE_CAPTURE: u8 = 1 << 4;
-    const SHAPE_LEN: u8 = 0x0f;
+    const SHAPE_FILE: u8 = 1 << 0;
+    const SHAPE_RANK: u8 = 1 << 1;
+    const SHAPE_CAPTURE: u8 = 1 << 2;
+    const SHAPE_BITS: u8 = 7 << 3; // Number of bits, i.e., 8 times the length
 
     /// Parses the part of a normal move between the role and the promotion
     /// (`[file][rank][x]<file><rank>`), given the classes of the next 5 bytes,
     /// 2 bits each. Every byte that might continue the move is eagerly consumed
     /// without backtracking.
+    ///
+    /// Returns `0` if invalid.
     const fn shape(classes: usize) -> u8 {
         const fn class_at(classes: usize, i: usize) -> u8 {
             ((classes >> (2 * i)) & 3) as u8
@@ -803,11 +825,10 @@ mod parser {
         } else {
             return 0;
         };
-        SHAPE_VALID
-            | if file { SHAPE_FILE } else { 0 }
-            | if rank { SHAPE_RANK } else { 0 }
-            | if capture { SHAPE_CAPTURE } else { 0 }
-            | i as u8
+        (if file { SHAPE_FILE } else { 0 })
+            | (if rank { SHAPE_RANK } else { 0 })
+            | (if capture { SHAPE_CAPTURE } else { 0 })
+            | (i as u8) << 3
     }
 
     /// Look up table for [`shape()`].
@@ -821,53 +842,79 @@ mod parser {
         table
     };
 
-    #[inline]
-    fn file_at(window: &[u8; WINDOW], i: usize) -> File {
-        File::new(u32::from(window[i].wrapping_sub(b'a') & 7))
+    #[inline(always)]
+    fn class_at(w: u64, i: usize) -> usize {
+        usize::from(CLASS[usize::from((w >> (8 * i)) as u8)]) << (2 * i)
     }
 
-    #[inline]
-    fn rank_at(window: &[u8; WINDOW], i: usize) -> Rank {
-        Rank::new(u32::from(window[i].wrapping_sub(b'1') & 7))
+    /// Index of the file or rank given by the lowest byte of `w`.
+    #[inline(always)]
+    fn coord(w: u64) -> u32 {
+        // Both b'a' and b'1' are 1 modulo 8.
+        (w as u32).wrapping_sub(1) & 7
     }
 
-    #[inline]
-    pub fn san(window: &[u8; WINDOW]) -> Result<(San, usize), ParseSanError> {
-        let lead = LEAD[usize::from(window[0])];
-        if lead == LEAD_SPECIAL {
-            return special(window);
-        }
-        let i = usize::from(lead != LEAD_PAWN);
-        let role = Role::ALL[usize::from(lead.saturating_sub(1) % 6)];
+    pub struct Parsed {
+        pub san: San,
+        pub len: usize,
+        next_byte: u8, // or 0
+    }
 
-        if window[i] == b'@' {
-            let to = Square::from_ascii(&window[i + 1..i + 3]).map_err(|_| ParseSanError)?;
-            return Ok((San::Put { role, to }, i + 3));
+    /// Parses a SAN from the start of `ascii`, where `w` are the first 8 bytes
+    /// of `ascii` as loaded by [`load()`].
+    #[inline(always)]
+    pub fn san(w: u64, ascii: &[u8]) -> Result<Parsed, ParseSanError> {
+        let (role, skip) = LEAD[usize::from(w as u8)];
+
+        // Lookups do not depend on skip, so that they are not delayed.
+        let classes = class_at(w, 0)
+            | class_at(w, 1)
+            | class_at(w, 2)
+            | class_at(w, 3)
+            | class_at(w, 4)
+            | class_at(w, 5);
+        let shape = SHAPE[(classes >> (2 * skip)) & ((1 << (5 * 2)) - 1)];
+        if shape == 0 {
+            return special(w);
         }
 
-        let classes = (0..5).fold(0, |classes, j| {
-            classes | usize::from(CLASS[usize::from(window[i + j])]) << (2 * j)
-        });
-        let shape = SHAPE[classes & ((1 << (2 * 5)) - 1)];
-        if shape & SHAPE_VALID == 0 {
-            return Err(ParseSanError);
-        }
-        let file = (shape & SHAPE_FILE != 0).then(|| file_at(window, i));
-        let rank =
-            (shape & SHAPE_RANK != 0).then(|| rank_at(window, i + usize::from(file.is_some())));
-        let mut n = i + usize::from(shape & SHAPE_LEN);
-        let to = Square::from_coords(file_at(window, n - 2), rank_at(window, n - 1));
-
-        let promotion = if window[n] == b'=' {
-            let promotion = Role::from_char(char::from(window[n + 1])).ok_or(ParseSanError)?;
-            n += 2;
-            Some(promotion)
+        let w = w >> (8 * skip);
+        let bits = shape & SHAPE_BITS;
+        let has_file = shape & SHAPE_FILE != 0;
+        let has_rank = shape & SHAPE_RANK != 0;
+        let file = if has_file {
+            Some(File::new(coord(w)))
         } else {
             None
         };
+        let rank = if has_rank {
+            Some(Rank::new(coord(w >> (8 * usize::from(has_file)))))
+        } else {
+            None
+        };
+        let to = w >> (bits - 16);
+        let to = Square::from_coords(File::new(coord(to)), Rank::new(coord(to >> 8)));
 
-        Ok((
-            San::Normal {
+        let mut len = usize::from(skip) + usize::from(bits >> 3);
+        let w = w >> bits;
+        let mut next_byte = w as u8;
+        let mut promotion = None;
+        if next_byte == b'=' {
+            let Some(role) = Role::from_char(char::from((w >> 8) as u8)) else {
+                return Err(ParseSanError);
+            };
+            promotion = Some(role);
+            len += 2;
+            // Only the longest SANs (Pa2xb1=Q#) do not fit in 8 loaded bytes.
+            next_byte = if len < 8 {
+                (w >> 16) as u8
+            } else {
+                ascii.get(8).copied().unwrap_or(0)
+            };
+        }
+
+        Ok(Parsed {
+            san: San::Normal {
                 role,
                 file,
                 rank,
@@ -875,36 +922,59 @@ mod parser {
                 to,
                 promotion,
             },
-            n,
-        ))
+            len,
+            next_byte,
+        })
     }
 
-    #[cold]
-    fn special(window: &[u8; WINDOW]) -> Result<(San, usize), ParseSanError> {
-        match window {
-            [b'O', b'-', b'O', b'-', b'O', ..] => Ok((San::Castle(CastlingSide::QueenSide), 5)),
-            [b'O', b'-', b'O', b'-', ..] => Err(ParseSanError),
-            [b'O', b'-', b'O', ..] => Ok((San::Castle(CastlingSide::KingSide), 3)),
-            [b'-', b'-', ..] | [b'Z', b'0', ..] => Ok((San::Null, 2)),
-            _ => Err(ParseSanError),
+    /// Parses castling, null moves and drops.
+    #[inline(always)]
+    fn special(w: u64) -> Result<Parsed, ParseSanError> {
+        // Cold, but return value small enough to fit in registers.
+        #[cold]
+        #[inline(never)]
+        fn special(w: u64) -> Option<(San, u8)> {
+            let bytes = w.to_le_bytes();
+            Some(match bytes {
+                [b'O', b'-', b'O', b'-', b'O', ..] => (San::Castle(CastlingSide::QueenSide), 5),
+                [b'O', b'-', b'O', b'-', ..] => return None,
+                [b'O', b'-', b'O', ..] => (San::Castle(CastlingSide::KingSide), 3),
+                [b'-', b'-', ..] | [b'Z', b'0', ..] => (San::Null, 2),
+                _ => {
+                    let (role, skip) = LEAD[usize::from(bytes[0])];
+                    let i = usize::from(skip);
+                    if bytes[i] != b'@' {
+                        return None;
+                    }
+                    let to = Square::from_ascii(&bytes[i + 1..i + 3]).ok()?;
+                    (San::Put { role, to }, skip + 3)
+                }
+            })
         }
+
+        let (san, n) = special(w).ok_or(ParseSanError)?;
+        Ok(Parsed {
+            san,
+            len: usize::from(n),
+            next_byte: (w >> (8 * n)) as u8,
+        })
     }
 
-    #[inline]
-    pub fn suffix(window: &[u8; WINDOW], n: usize) -> (Option<Suffix>, usize) {
-        let suffix = match window[n] {
-            b'+' => Some(Suffix::Check),
-            b'#' => Some(Suffix::Checkmate),
-            _ => None,
-        };
-        (suffix, n + usize::from(suffix.is_some()))
-    }
+    #[inline(always)]
+    pub fn with_suffix(parsed: Parsed) -> (SanPlus, usize) {
+        static SUFFIX: [Option<Suffix>; 4] =
+            [None, Some(Suffix::Check), Some(Suffix::Checkmate), None];
 
-    #[inline]
-    pub fn san_plus(window: &[u8; WINDOW]) -> Result<(SanPlus, usize), ParseSanError> {
-        let (san, n) = san(window)?;
-        let (suffix, n) = suffix(window, n);
-        Ok((SanPlus { san, suffix }, n))
+        // Branchless.
+        let check = usize::from(parsed.next_byte == b'+');
+        let checkmate = usize::from(parsed.next_byte == b'#');
+        (
+            SanPlus {
+                san: parsed.san,
+                suffix: SUFFIX[check | checkmate << 1],
+            },
+            parsed.len + (check | checkmate),
+        )
     }
 }
 
@@ -937,6 +1007,57 @@ mod tests {
                 .expect("valid san")
                 .to_string();
             assert_eq!(*san, result, "read {san} write {result}");
+        }
+    }
+
+    #[test]
+    fn test_from_ascii_prefix() {
+        for (ascii, san_len, len) in [
+            ("e4 e5", 2, 2),
+            ("e4", 2, 2),
+            ("Nf3+ Nc6", 3, 4),
+            ("Nf3+", 3, 4),
+            ("Nf3?! e5", 3, 3),
+            ("Nf3+?! e5", 3, 4),
+            ("exd5) 4. c4", 4, 4),
+            ("exd5\n4. c4", 4, 4),
+            ("Qh7# 1-0", 3, 4),
+            ("e4e5 Nf3", 4, 4),
+            ("Nf3Nf6", 3, 3),
+            ("6h8#", 3, 4),
+            ("exd8=N+ Kf7", 6, 7),
+            ("Qa1xb2# 1-0", 6, 7),
+            ("Qa1xb2#", 6, 7),
+            ("a1xb2=Q+", 7, 8),
+            ("Pa1xb2=Q", 8, 8),
+            ("Pa1xb2=Q#", 8, 9),
+            ("Pa1xb2=Q# 1-0", 8, 9),
+            ("O-O", 3, 3),
+            ("O-O-O+ Kb8", 5, 6),
+            ("-- e5", 2, 2),
+            ("N@f3#!", 4, 5),
+            ("@e4", 3, 3),
+        ] {
+            let san_plus = ascii[..len].parse::<SanPlus>().expect("valid san plus");
+            assert_eq!(
+                San::from_ascii_prefix(ascii.as_bytes()).expect("valid san prefix"),
+                (san_plus.san, san_len),
+                "san prefix of {ascii}"
+            );
+            assert_eq!(
+                SanPlus::from_ascii_prefix(ascii.as_bytes()).expect("valid san plus prefix"),
+                (san_plus, len),
+                "san plus prefix of {ascii}"
+            );
+        }
+
+        for ascii in [
+            "", "e", "e9", "x", "N", "+", "-", "Nf3=X", "e8=", "Pa1xb2=", "Pa1xb2=!", "O-O-", "N@",
+        ] {
+            assert!(
+                SanPlus::from_ascii_prefix(ascii.as_bytes()).is_err(),
+                "invalid san plus prefix of {ascii}"
+            );
         }
     }
 

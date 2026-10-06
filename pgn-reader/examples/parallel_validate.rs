@@ -1,5 +1,5 @@
-// Validates moves in PGNs.
-// Usage: cargo run --release --example validate -- [PGN]...
+// Validates moves in PGNs, using multiple threads.
+// Usage: cargo run --release --example parallel_validate -- [PGN]...
 
 use std::{
     env,
