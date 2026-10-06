@@ -116,10 +116,12 @@ impl San {
     ///
     /// Returns [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<San, ParseSanError> {
-        let mut reader = Reader::new(ascii);
-        let san = reader.read_san().ok_or(ParseSanError)?;
-        let _ = reader.eat(b'+') || reader.eat(b'#');
-        if reader.remaining() != 0 {
+        let (san, n) = parser::with_window(ascii, |window| {
+            let (san, n) = parser::san(window)?;
+            let (_, n) = parser::suffix(window, n);
+            Ok((san, n))
+        })?;
+        if n != ascii.len() {
             return Err(ParseSanError);
         }
         Ok(san)
@@ -141,9 +143,7 @@ impl San {
     /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
     /// to `Nf3=` and then fails on `X`.
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(San, usize), ParseSanError> {
-        let mut reader = Reader::new(ascii);
-        let san = reader.read_san().ok_or(ParseSanError)?;
-        Ok((san, ascii.len() - reader.remaining()))
+        parser::with_window(ascii, parser::san)
     }
 
     /// Converts a move to Standard Algebraic Notation.
@@ -563,9 +563,8 @@ impl SanPlus {
     ///
     /// Errors with [`ParseSanError`] if `ascii` is not syntactically valid.
     pub fn from_ascii(ascii: &[u8]) -> Result<SanPlus, ParseSanError> {
-        let mut reader = Reader::new(ascii);
-        let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
-        if reader.remaining() != 0 {
+        let (san_plus, n) = parser::with_window(ascii, parser::san_plus)?;
+        if n != ascii.len() {
             return Err(ParseSanError);
         }
         Ok(san_plus)
@@ -587,9 +586,7 @@ impl SanPlus {
     /// For example, even though `Nf3=X` starts with `Nf3`, the parser commits
     /// to `Nf3=` and then fails on `X`.
     pub fn from_ascii_prefix(ascii: &[u8]) -> Result<(SanPlus, usize), ParseSanError> {
-        let mut reader = Reader::new(ascii);
-        let san_plus = reader.read_san_plus().ok_or(ParseSanError)?;
-        Ok((san_plus, ascii.len() - reader.remaining()))
+        parser::with_window(ascii, parser::san_plus)
     }
 
     /// Converts a move to Standard Algebraic Notation including possible
@@ -649,183 +646,6 @@ impl SanPlus {
     }
 }
 
-struct Reader<'a> {
-    bytes: &'a [u8],
-}
-
-impl Reader<'_> {
-    #[inline]
-    fn new(bytes: &[u8]) -> Reader<'_> {
-        Reader { bytes }
-    }
-
-    #[inline]
-    fn remaining(&self) -> usize {
-        self.bytes.len()
-    }
-
-    #[inline]
-    fn peek(&self) -> Option<u8> {
-        self.bytes.first().copied()
-    }
-
-    #[inline]
-    fn bump(&mut self) {
-        self.bytes = &self.bytes[1..];
-    }
-
-    #[inline]
-    fn eat(&mut self, byte: u8) -> bool {
-        if self.peek() == Some(byte) {
-            self.bump();
-            true
-        } else {
-            false
-        }
-    }
-
-    #[inline]
-    fn next(&mut self) -> Option<u8> {
-        let byte = self.peek();
-        if byte.is_some() {
-            self.bump();
-        }
-        byte
-    }
-
-    #[inline]
-    fn next_n(&mut self, n: usize) -> Option<&[u8]> {
-        let (head, tail) = self.bytes.split_at_checked(n)?;
-        self.bytes = tail;
-        Some(head)
-    }
-
-    fn read_square(&mut self) -> Option<Square> {
-        self.next_n(2)
-            .and_then(|bytes| Square::from_ascii(bytes).ok())
-    }
-
-    fn read_san(&mut self) -> Option<San> {
-        let role = match self.peek()? {
-            b'N' => {
-                self.bump();
-                Role::Knight
-            }
-            b'B' => {
-                self.bump();
-                Role::Bishop
-            }
-            b'R' => {
-                self.bump();
-                Role::Rook
-            }
-            b'Q' => {
-                self.bump();
-                Role::Queen
-            }
-            b'K' => {
-                self.bump();
-                Role::King
-            }
-            b'O' => {
-                self.bump();
-                if !self.eat(b'-') || !self.eat(b'O') {
-                    return None;
-                }
-                if !self.eat(b'-') {
-                    return Some(San::Castle(CastlingSide::KingSide));
-                }
-                if !self.eat(b'O') {
-                    return None;
-                }
-                return Some(San::Castle(CastlingSide::QueenSide));
-            }
-            b'-' => {
-                self.bump();
-                if self.eat(b'-') {
-                    return Some(San::Null);
-                } else {
-                    return None;
-                }
-            }
-            b'Z' => {
-                self.bump();
-                if self.eat(b'0') {
-                    return Some(San::Null);
-                } else {
-                    return None;
-                }
-            }
-            b'P' => {
-                self.bump();
-                Role::Pawn
-            }
-            _ => Role::Pawn,
-        };
-
-        Some(if self.eat(b'@') {
-            San::Put {
-                role,
-                to: self.read_square()?,
-            }
-        } else {
-            let file = File::from_char(char::from(self.peek()?));
-            if file.is_some() {
-                self.bump();
-            }
-
-            let rank = Rank::from_char(char::from(self.peek()?));
-            if rank.is_some() {
-                self.bump();
-            }
-
-            let (file, rank, capture, to) = if self.eat(b'x') {
-                (file, rank, true, self.read_square()?)
-            } else if let Some(to_file) = self.peek().and_then(|ch| File::from_char(char::from(ch)))
-            {
-                self.bump();
-                let to_rank = Rank::from_char(char::from(self.next()?))?;
-                (file, rank, false, Square::from_coords(to_file, to_rank))
-            } else {
-                (None, None, false, Square::from_coords(file?, rank?))
-            };
-
-            let promotion = if self.eat(b'=') {
-                Some(Role::from_char(char::from(self.next()?))?)
-            } else {
-                None
-            };
-
-            San::Normal {
-                role,
-                file,
-                rank,
-                capture,
-                to,
-                promotion,
-            }
-        })
-    }
-
-    fn read_san_plus(&mut self) -> Option<SanPlus> {
-        let san = self.read_san()?;
-
-        let suffix = match self.peek() {
-            Some(b'+') => {
-                self.bump();
-                Some(Suffix::Check)
-            }
-            Some(b'#') => {
-                self.bump();
-                Some(Suffix::Checkmate)
-            }
-            _ => None,
-        };
-
-        Some(SanPlus { san, suffix })
-    }
-}
-
 impl FromStr for SanPlus {
     type Err = ParseSanError;
 
@@ -877,6 +697,214 @@ impl<'de> serde::Deserialize<'de> for SanPlus {
         }
 
         deserializer.deserialize_str(SanPlusVisitor)
+    }
+}
+
+mod parser {
+    use super::*;
+
+    const WINDOW: usize = "Pa1xb2=Q#".len();
+
+    #[inline(always)]
+    pub fn with_window<T>(ascii: &[u8], f: impl FnOnce(&[u8; WINDOW]) -> T) -> T {
+        match ascii.first_chunk::<WINDOW>() {
+            Some(window) => f(window),
+            None => {
+                // Fragile branchless copy into padded buffer.
+                let mut padded = [0; WINDOW];
+                if let Some(last) = ascii.len().checked_sub(1) {
+                    for (i, byte) in padded.iter_mut().enumerate() {
+                        let ch = ascii[i.min(last)];
+                        *byte = if i <= last { ch } else { 0 };
+                    }
+                }
+                f(&padded)
+            }
+        }
+    }
+
+    const CLASS_OTHER: u8 = 0;
+    const CLASS_FILE: u8 = 1;
+    const CLASS_RANK: u8 = 2;
+    const CLASS_CAPTURE: u8 = 3;
+
+    /// Classifies bytes that can occur between the role and the promotion.
+    static CLASS: [u8; 256] = {
+        let mut table = [CLASS_OTHER; 256];
+        let mut ch = 0;
+        while ch < 256 {
+            table[ch] = match ch as u8 {
+                b'a'..=b'h' => CLASS_FILE,
+                b'1'..=b'8' => CLASS_RANK,
+                b'x' => CLASS_CAPTURE,
+                _ => CLASS_OTHER,
+            };
+            ch += 1;
+        }
+        table
+    };
+
+    const LEAD_PAWN: u8 = 0;
+    const LEAD_SPECIAL: u8 = 7; // Castling or null move
+
+    /// Classifies the first byte.
+    static LEAD: [u8; 256] = {
+        let mut table = [LEAD_PAWN; 256];
+        table[b'P' as usize] = Role::Pawn as u8;
+        table[b'N' as usize] = Role::Knight as u8;
+        table[b'B' as usize] = Role::Bishop as u8;
+        table[b'R' as usize] = Role::Rook as u8;
+        table[b'Q' as usize] = Role::Queen as u8;
+        table[b'K' as usize] = Role::King as u8;
+        table[b'O' as usize] = LEAD_SPECIAL;
+        table[b'-' as usize] = LEAD_SPECIAL;
+        table[b'Z' as usize] = LEAD_SPECIAL;
+        table
+    };
+
+    const SHAPE_VALID: u8 = 1 << 7;
+    const SHAPE_FILE: u8 = 1 << 6;
+    const SHAPE_RANK: u8 = 1 << 5;
+    const SHAPE_CAPTURE: u8 = 1 << 4;
+    const SHAPE_LEN: u8 = 0x0f;
+
+    /// Parses the part of a normal move between the role and the promotion
+    /// (`[file][rank][x]<file><rank>`), given the classes of the next 5 bytes,
+    /// 2 bits each. Every byte that might continue the move is eagerly consumed
+    /// without backtracking.
+    const fn shape(classes: usize) -> u8 {
+        const fn class_at(classes: usize, i: usize) -> u8 {
+            ((classes >> (2 * i)) & 3) as u8
+        }
+        let mut i = 0;
+        let file = class_at(classes, i) == CLASS_FILE;
+        if file {
+            i += 1;
+        }
+        let rank = class_at(classes, i) == CLASS_RANK;
+        if rank {
+            i += 1;
+        }
+        let (file, rank, capture) = if class_at(classes, i) == CLASS_CAPTURE {
+            if class_at(classes, i + 1) != CLASS_FILE || class_at(classes, i + 2) != CLASS_RANK {
+                return 0;
+            }
+            i += 3;
+            (file, rank, true)
+        } else if class_at(classes, i) == CLASS_FILE {
+            if class_at(classes, i + 1) != CLASS_RANK {
+                return 0;
+            }
+            i += 2;
+            (file, rank, false)
+        } else if file && rank {
+            // What looked like disambiguation is the destination.
+            (false, false, false)
+        } else {
+            return 0;
+        };
+        SHAPE_VALID
+            | if file { SHAPE_FILE } else { 0 }
+            | if rank { SHAPE_RANK } else { 0 }
+            | if capture { SHAPE_CAPTURE } else { 0 }
+            | i as u8
+    }
+
+    /// Look up table for [`shape()`].
+    static SHAPE: [u8; 1 << (5 * 2)] = {
+        let mut table = [0; 1 << (5 * 2)];
+        let mut classes = 0;
+        while classes < 1 << (5 * 2) {
+            table[classes] = shape(classes);
+            classes += 1;
+        }
+        table
+    };
+
+    #[inline]
+    fn file_at(window: &[u8; WINDOW], i: usize) -> File {
+        File::new(u32::from(window[i].wrapping_sub(b'a') & 7))
+    }
+
+    #[inline]
+    fn rank_at(window: &[u8; WINDOW], i: usize) -> Rank {
+        Rank::new(u32::from(window[i].wrapping_sub(b'1') & 7))
+    }
+
+    #[inline]
+    pub fn san(window: &[u8; WINDOW]) -> Result<(San, usize), ParseSanError> {
+        let lead = LEAD[usize::from(window[0])];
+        if lead == LEAD_SPECIAL {
+            return special(window);
+        }
+        let i = usize::from(lead != LEAD_PAWN);
+        let role = Role::ALL[usize::from(lead.saturating_sub(1) % 6)];
+
+        if window[i] == b'@' {
+            let to = Square::from_ascii(&window[i + 1..i + 3]).map_err(|_| ParseSanError)?;
+            return Ok((San::Put { role, to }, i + 3));
+        }
+
+        let classes = (0..5).fold(0, |classes, j| {
+            classes | usize::from(CLASS[usize::from(window[i + j])]) << (2 * j)
+        });
+        let shape = SHAPE[classes & ((1 << (2 * 5)) - 1)];
+        if shape & SHAPE_VALID == 0 {
+            return Err(ParseSanError);
+        }
+        let file = (shape & SHAPE_FILE != 0).then(|| file_at(window, i));
+        let rank =
+            (shape & SHAPE_RANK != 0).then(|| rank_at(window, i + usize::from(file.is_some())));
+        let mut n = i + usize::from(shape & SHAPE_LEN);
+        let to = Square::from_coords(file_at(window, n - 2), rank_at(window, n - 1));
+
+        let promotion = if window[n] == b'=' {
+            let promotion = Role::from_char(char::from(window[n + 1])).ok_or(ParseSanError)?;
+            n += 2;
+            Some(promotion)
+        } else {
+            None
+        };
+
+        Ok((
+            San::Normal {
+                role,
+                file,
+                rank,
+                capture: shape & SHAPE_CAPTURE != 0,
+                to,
+                promotion,
+            },
+            n,
+        ))
+    }
+
+    #[cold]
+    fn special(window: &[u8; WINDOW]) -> Result<(San, usize), ParseSanError> {
+        match window {
+            [b'O', b'-', b'O', b'-', b'O', ..] => Ok((San::Castle(CastlingSide::QueenSide), 5)),
+            [b'O', b'-', b'O', b'-', ..] => Err(ParseSanError),
+            [b'O', b'-', b'O', ..] => Ok((San::Castle(CastlingSide::KingSide), 3)),
+            [b'-', b'-', ..] | [b'Z', b'0', ..] => Ok((San::Null, 2)),
+            _ => Err(ParseSanError),
+        }
+    }
+
+    #[inline]
+    pub fn suffix(window: &[u8; WINDOW], n: usize) -> (Option<Suffix>, usize) {
+        let suffix = match window[n] {
+            b'+' => Some(Suffix::Check),
+            b'#' => Some(Suffix::Checkmate),
+            _ => None,
+        };
+        (suffix, n + usize::from(suffix.is_some()))
+    }
+
+    #[inline]
+    pub fn san_plus(window: &[u8; WINDOW]) -> Result<(SanPlus, usize), ParseSanError> {
+        let (san, n) = san(window)?;
+        let (suffix, n) = suffix(window, n);
+        Ok((SanPlus { san, suffix }, n))
     }
 }
 
