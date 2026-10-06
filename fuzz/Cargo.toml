@@ -79,3 +79,6 @@ name = "legals_are_legal"
 path = "fuzz_targets/legals_are_legal.rs"
 test = false
 bench = false
+
+[lints]
+workspace = true

@@ -73,11 +73,7 @@ cfg_select! {
         );
     }
     _ => {
-        criterion_group!(
-            benches,
-            bench_add_directory,
-            bench_probe_wdl
-        );
+        criterion_group!(benches, bench_add_directory, bench_probe_wdl);
     }
 }
 

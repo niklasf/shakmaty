@@ -402,12 +402,10 @@ mod hyperbola_quintessence {
 
 cfg_select! {
     feature = "magics" => {
-        pub use magics::bishop_attacks;
-        pub use magics::rook_attacks;
+        pub use magics::{bishop_attacks, rook_attacks};
     }
     _ => {
-        pub use hyperbola_quintessence::bishop_attacks;
-        pub use hyperbola_quintessence::rook_attacks;
+        pub use hyperbola_quintessence::{bishop_attacks, rook_attacks};
     }
 }
 
