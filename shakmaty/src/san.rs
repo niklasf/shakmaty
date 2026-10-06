@@ -738,8 +738,8 @@ mod parser {
         let Some(last) = ascii.len().checked_sub(2) else {
             return ascii.first().map_or(0, |ch| u64::from(*ch));
         };
-        // Lengths vary unpredictably between 2 and 8 - 1 - 2 = 5 bytes,
-        // so copying with a length dependent branch or memcpy() mispredicts.
+        // Lengths (0..=7 at this point) vary unpredictably, so copying with
+        // a length dependent branch or memcpy() mispredicts.
         // Instead, branchless overlapping reads of 2 bytes each, clamped to
         // stay in bounds.
         let pair = |i: usize| {
