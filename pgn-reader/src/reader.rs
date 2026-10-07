@@ -216,6 +216,22 @@ impl<R: Read> Reader<R> {
         false
     }
 
+    #[inline]
+    fn maybe_skip_move_number(&mut self) {
+        // Optimization: Skip a move number following in the buffer, if any.
+        // It might consume nothing, a partial move number, or the entire
+        // move number.
+        let data = self.buffer.data();
+        let mut n = 0;
+        while let Some(b'0'..=b'9') = data.get(n) {
+            n += 1;
+        }
+        while let Some(b'.' | b' ') = data.get(n) {
+            n += 1;
+        }
+        self.buffer.consume(n);
+    }
+
     fn skip_tags(&mut self) -> io::Result<()> {
         struct IgnoreTagsVisitor;
 
@@ -484,12 +500,7 @@ impl<R: Read> Reader<R> {
                             return Ok(cf);
                         }
                     } else {
-                        while let Some(b'0'..=b'9') = self.buffer.peek() {
-                            self.buffer.bump();
-                        }
-                        while let Some(b'.' | b' ') = self.buffer.peek() {
-                            self.buffer.bump();
-                        }
+                        self.maybe_skip_move_number();
                     }
                 }
                 b'\xc2' => {
@@ -504,12 +515,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'2'..=b'9' => {
                     self.buffer.bump();
-                    while let Some(b'0'..=b'9') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
-                    while let Some(b'.' | b' ') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
+                    self.maybe_skip_move_number();
                 }
                 b'(' => {
                     self.buffer.bump();
