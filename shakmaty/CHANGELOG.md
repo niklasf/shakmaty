@@ -1,5 +1,26 @@
 # Changelog for shakmaty
 
+## v0.30.2
+
+Performance improvements:
+
+- Optimized move generation (~1.1x for legal moves and SAN candidates by
+  fixing missed return value optimization of `MoveList`).
+- Optimized SAN parsing (~1.5x for
+  `{San,SanPlus}::{from_ascii,from_ascii_prefix}()`).
+- Optimized SAN writing (~3x on average for `SanPlus::from_move()`,
+  `SanPlus::from_move_and_play_unchecked()`, `Suffix::from_position()`).
+
+New features:
+
+- Add `Outcome::{is_decisive,is_draw}()` and
+  `KnownOutcome::{is_decisive,is_draw}()`.
+
+Other changes:
+
+- FEN parser now rejects extra sign in black's remaining checks field.
+- MSRV is now `1.97`.
+
 ## v0.30.1
 
 New features:

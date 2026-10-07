@@ -89,7 +89,7 @@ Documentation
 
 [Read the documentation](https://docs.rs/pgn-reader)
 
-Benchmarks (v0.28.0)
+Benchmarks (v0.29.1)
 --------------------
 
 Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2018-10.pgn.zst),
@@ -97,14 +97,15 @@ a very orderly PGN file with additional headers and many small comments
 for evaluations and clock times,
 containing 24,784,600 games, 50,307 MiB uncompressed on tmpfs,
 AMD Ryzen 9 9950X @ 4.3 GHz,
-compiled with Rust 1.88.0:
+compiled with Rust 1.99.0:
 
 Benchmark | Time | Throuhput (games) | Throughput (data)
 --- | ---: | ---: | ---:
-examples/stats.rs | 50.6 s | 489,814 /s | 994 MiB/s
-examples/validate.rs | 116.8 s | 212,197 /s | 431 MiB/s
-examples/parallel_validate.rs (1 + 3 threads) | 62.5 s | 396,554 /s | 805 MiB/s
-`grep -F "[Event " -c` | 24.0 s | 1,032,691 /s | 2,096 MiB/s
+examples/stats.rs | 26.2 s | 945,905 /s | 1,920 MiB/s
+examples/validate.rs | 84.5 s | 293,392 /s | 596 MiB/s
+examples/parallel_validate.rs (1 + 3 threads) | 35.3 s | 702,571 /s | 1,426 MiB/s
+`grep -F "[Event " -c` (GNU grep 3.12) | 24.8 s | 998,413 /s | 2,027 MiB/s
+`rg -F "[Event " -c` (ripgrep 15.2.0) | 4.6s | 5,340,358 /s | 10,840 MiB/s
 
 License
 -------
