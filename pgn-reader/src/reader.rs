@@ -326,8 +326,16 @@ impl<R: Read> Reader<R> {
                 &self.buffer.data()[..space],
                 RawTag(&self.buffer.data()[value_start..right_quote]),
             );
+
             self.buffer.consume(consumed);
-            self.skip_ket()?;
+
+            if self.buffer.data().starts_with(b"]\n[") {
+                // Fast path for the common case, equivalent to skip_ket().
+                self.buffer.consume(2);
+            } else {
+                self.skip_ket()?;
+            }
+
             if cf.is_break() {
                 return Ok(cf);
             }
