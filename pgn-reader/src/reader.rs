@@ -816,22 +816,32 @@ impl<R: Read, V: Visitor> Iterator for ReadGames<'_, R, V> {
 
 #[inline]
 fn is_token_end(byte: u8) -> bool {
-    matches!(
-        byte,
-        b' ' | b'\t'
-            | b'\n'
-            | b'\r'
-            | b'{'
-            | b'}'
-            | b'('
-            | b')'
-            | b'!'
-            | b'?'
-            | b'$'
-            | b';'
-            | b'.'
-            | b'*'
-    )
+    static TOKEN_END: [bool; 256] = {
+        let mut table = [false; 256];
+        let mut i = 0;
+        while i < 256 {
+            table[i] = matches!(
+                i as u8,
+                b' ' | b'\t'
+                    | b'\n'
+                    | b'\r'
+                    | b'{'
+                    | b'}'
+                    | b'('
+                    | b')'
+                    | b'!'
+                    | b'?'
+                    | b'$'
+                    | b';'
+                    | b'.'
+                    | b'*'
+            );
+            i += 1;
+        }
+        table
+    };
+
+    TOKEN_END[usize::from(byte)]
 }
 
 impl<R: Seek> Seek for Reader<R> {
