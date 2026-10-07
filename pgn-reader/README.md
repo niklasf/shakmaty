@@ -105,7 +105,7 @@ examples/stats.rs | 26.2 s | 945,905 /s | 1,920 MiB/s
 examples/validate.rs | 84.5 s | 293,392 /s | 596 MiB/s
 examples/parallel_validate.rs (1 + 3 threads) | 35.3 s | 702,571 /s | 1,426 MiB/s
 `grep -F "[Event " -c` (GNU grep 3.12) | 24.8 s | 998,413 /s | 2,027 MiB/s
-`rg -F "[Event " -c` (ripgrep 15.2.0) | 4.6s | 5,340,358 /s | 10,840 MiB/s
+`rg -F "[Event " -c` (ripgrep 15.2.0) | 4.6 s | 5,340,358 /s | 10,840 MiB/s
 
 License
 -------
