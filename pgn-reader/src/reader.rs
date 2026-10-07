@@ -402,7 +402,7 @@ impl<R: Read> Reader<R> {
                         } else if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
                             let cf = visitor
                                 .comment(movetext, RawComment(&self.buffer.data()[..right_brace]));
-                            // Consume at least the right brace, and (as on optimization only)
+                            // Consume at least the right brace, and (as an optimization only)
                             // some spaces.
                             let mut consumed = right_brace + 1;
                             while self.buffer.data().get(consumed) == Some(&b' ') {
