@@ -216,6 +216,22 @@ impl<R: Read> Reader<R> {
         false
     }
 
+    #[inline]
+    fn maybe_skip_move_number(&mut self) {
+        // Optimization: Skip a move number following in the buffer, if any.
+        // It might consume nothing, a partial move number, or the entire
+        // move number.
+        let data = self.buffer.data();
+        let mut n = 0;
+        while let Some(b'0'..=b'9') = data.get(n) {
+            n += 1;
+        }
+        while let Some(b'.' | b' ') = data.get(n) {
+            n += 1;
+        }
+        self.buffer.consume(n);
+    }
+
     fn skip_tags(&mut self) -> io::Result<()> {
         struct IgnoreTagsVisitor;
 
@@ -310,8 +326,16 @@ impl<R: Read> Reader<R> {
                 &self.buffer.data()[..space],
                 RawTag(&self.buffer.data()[value_start..right_quote]),
             );
+
             self.buffer.consume(consumed);
-            self.skip_ket()?;
+
+            if self.buffer.data().starts_with(b"]\n[") {
+                // Fast path for the common case, equivalent to skip_ket().
+                self.buffer.consume(2);
+            } else {
+                self.skip_ket()?;
+            }
+
             if cf.is_break() {
                 return Ok(cf);
             }
@@ -378,7 +402,13 @@ impl<R: Read> Reader<R> {
                         } else if let Some(right_brace) = memchr::memchr(b'}', self.buffer.data()) {
                             let cf = visitor
                                 .comment(movetext, RawComment(&self.buffer.data()[..right_brace]));
-                            self.buffer.consume(right_brace + 1);
+                            // Consume at least the right brace, and (as an optimization only)
+                            // some spaces.
+                            let mut consumed = right_brace + 1;
+                            while self.buffer.data().get(consumed) == Some(&b' ') {
+                                consumed += 1;
+                            }
+                            self.buffer.consume(consumed);
                             if cf.is_break() {
                                 return Ok(cf);
                             }
@@ -484,12 +514,7 @@ impl<R: Read> Reader<R> {
                             return Ok(cf);
                         }
                     } else {
-                        while let Some(b'0'..=b'9') = self.buffer.peek() {
-                            self.buffer.bump();
-                        }
-                        while let Some(b'.' | b' ') = self.buffer.peek() {
-                            self.buffer.bump();
-                        }
+                        self.maybe_skip_move_number();
                     }
                 }
                 b'\xc2' => {
@@ -504,12 +529,7 @@ impl<R: Read> Reader<R> {
                 }
                 b'2'..=b'9' => {
                     self.buffer.bump();
-                    while let Some(b'0'..=b'9') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
-                    while let Some(b'.' | b' ') = self.buffer.peek() {
-                        self.buffer.bump();
-                    }
+                    self.maybe_skip_move_number();
                 }
                 b'(' => {
                     self.buffer.bump();
@@ -796,22 +816,32 @@ impl<R: Read, V: Visitor> Iterator for ReadGames<'_, R, V> {
 
 #[inline]
 fn is_token_end(byte: u8) -> bool {
-    matches!(
-        byte,
-        b' ' | b'\t'
-            | b'\n'
-            | b'\r'
-            | b'{'
-            | b'}'
-            | b'('
-            | b')'
-            | b'!'
-            | b'?'
-            | b'$'
-            | b';'
-            | b'.'
-            | b'*'
-    )
+    static TOKEN_END: [bool; 256] = {
+        let mut table = [false; 256];
+        let mut i = 0;
+        while i < 256 {
+            table[i] = matches!(
+                i as u8,
+                b' ' | b'\t'
+                    | b'\n'
+                    | b'\r'
+                    | b'{'
+                    | b'}'
+                    | b'('
+                    | b')'
+                    | b'!'
+                    | b'?'
+                    | b'$'
+                    | b';'
+                    | b'.'
+                    | b'*'
+            );
+            i += 1;
+        }
+        table
+    };
+
+    TOKEN_END[usize::from(byte)]
 }
 
 impl<R: Seek> Seek for Reader<R> {
