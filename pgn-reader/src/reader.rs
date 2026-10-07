@@ -256,7 +256,7 @@ impl<R: Read> Reader<R> {
             }
         }
 
-        let _ = self.read_tags(&mut IgnoreTagsVisitor, &mut ())?;
+        let ControlFlow::Continue(()) = self.read_tags(&mut IgnoreTagsVisitor, &mut ())?;
         Ok(())
     }
 
@@ -1097,7 +1097,7 @@ mod tests {
         // splitting the sequence no matter where the beginning of the comment
         // occurs.
         let crabs: String = std::iter::repeat_n('🦀', 257).collect();
-        let pgn = format!("1. e4 {{{}}}", &crabs).into_bytes();
+        let pgn = format!("1. e4 {{{}}}", crabs).into_bytes();
         let mut reader = Reader::new(io::Cursor::new(pgn.as_slice()));
         let tokens = reader.read_game(&mut CollectTokens)?.expect("found game");
         let mut rebuilt = String::new();

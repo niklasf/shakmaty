@@ -697,12 +697,12 @@ impl Square {
 
     #[cfg(feature = "alloc")]
     pub fn append_to_string(&self, s: &mut alloc::string::String) {
-        let _ = self.append_to(s);
+        let Ok(()) = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
     pub fn append_ascii_to(&self, buf: &mut alloc::vec::Vec<u8>) {
-        let _ = self.append_to(buf);
+        let Ok(()) = self.append_to(buf);
     }
 }
 

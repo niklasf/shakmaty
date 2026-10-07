@@ -130,7 +130,7 @@ impl serde::Serialize for UciMove {
     {
         // Longest syntactically valid UCI move: a1a1q
         let mut s = arrayvec::ArrayString::<5>::new();
-        let _ = self.append_to(&mut s);
+        let Ok(()) = self.append_to(&mut s);
         serializer.serialize_str(&s)
     }
 }
@@ -475,12 +475,12 @@ impl UciMove {
 
     #[cfg(feature = "alloc")]
     pub fn append_to_string(self, s: &mut alloc::string::String) {
-        let _ = self.append_to(s);
+        let Ok(()) = self.append_to(s);
     }
 
     #[cfg(feature = "alloc")]
     pub fn append_ascii_to(self, buf: &mut alloc::vec::Vec<u8>) {
-        let _ = self.append_to(buf);
+        let Ok(()) = self.append_to(buf);
     }
 }
 
