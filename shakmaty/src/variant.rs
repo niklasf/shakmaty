@@ -283,120 +283,420 @@ impl VariantPosition {
         }
     }
 
-    fn borrow(&self) -> &dyn Position {
-        match *self {
-            VariantPosition::Chess(ref pos) => pos,
-            VariantPosition::Atomic(ref pos) => pos,
-            VariantPosition::Antichess(ref pos) => pos,
-            VariantPosition::KingOfTheHill(ref pos) => pos,
-            VariantPosition::ThreeCheck(ref pos) => pos,
-            VariantPosition::Crazyhouse(ref pos) => pos,
-            VariantPosition::RacingKings(ref pos) => pos,
-            VariantPosition::Horde(ref pos) => pos,
+    /// Borrows the position as a dynamically dispatched [`Position`].
+    pub fn as_dyn(&self) -> &dyn Position {
+        match self {
+            VariantPosition::Chess(pos) => pos,
+            VariantPosition::Atomic(pos) => pos,
+            VariantPosition::Antichess(pos) => pos,
+            VariantPosition::KingOfTheHill(pos) => pos,
+            VariantPosition::ThreeCheck(pos) => pos,
+            VariantPosition::Crazyhouse(pos) => pos,
+            VariantPosition::RacingKings(pos) => pos,
+            VariantPosition::Horde(pos) => pos,
         }
     }
 
-    fn borrow_mut(&mut self) -> &mut dyn Position {
-        match *self {
-            VariantPosition::Chess(ref mut pos) => pos,
-            VariantPosition::Atomic(ref mut pos) => pos,
-            VariantPosition::Antichess(ref mut pos) => pos,
-            VariantPosition::KingOfTheHill(ref mut pos) => pos,
-            VariantPosition::ThreeCheck(ref mut pos) => pos,
-            VariantPosition::Crazyhouse(ref mut pos) => pos,
-            VariantPosition::RacingKings(ref mut pos) => pos,
-            VariantPosition::Horde(ref mut pos) => pos,
+    /// Mutably borrows the position as a dynamically dispatched
+    /// [`Position`].
+    pub fn as_dyn_mut(&mut self) -> &mut dyn Position {
+        match self {
+            VariantPosition::Chess(pos) => pos,
+            VariantPosition::Atomic(pos) => pos,
+            VariantPosition::Antichess(pos) => pos,
+            VariantPosition::KingOfTheHill(pos) => pos,
+            VariantPosition::ThreeCheck(pos) => pos,
+            VariantPosition::Crazyhouse(pos) => pos,
+            VariantPosition::RacingKings(pos) => pos,
+            VariantPosition::Horde(pos) => pos,
+        }
+    }
+
+    /// Calls `f` with the concrete position of the variant.
+    ///
+    /// Dispatches on the variant once, so that `f` is monomorphized for each
+    /// variant and can use the [`Position`] methods without further dynamic
+    /// dispatch.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use shakmaty::{
+    ///     Position,
+    ///     variant::{Variant, VariantPosition, WithPosition},
+    /// };
+    ///
+    /// struct CountUs;
+    ///
+    /// impl WithPosition for CountUs {
+    ///     type Output = usize;
+    ///
+    ///     fn call<P: Position>(self, pos: &P) -> usize {
+    ///         pos.us().count()
+    ///     }
+    /// }
+    ///
+    /// let pos = VariantPosition::new(Variant::Horde);
+    /// assert_eq!(pos.with_position(CountUs), 36);
+    /// ```
+    #[inline]
+    pub fn with_position<F: WithPosition>(&self, f: F) -> F::Output {
+        match self {
+            VariantPosition::Chess(pos) => f.call(pos),
+            VariantPosition::Atomic(pos) => f.call(pos),
+            VariantPosition::Antichess(pos) => f.call(pos),
+            VariantPosition::KingOfTheHill(pos) => f.call(pos),
+            VariantPosition::ThreeCheck(pos) => f.call(pos),
+            VariantPosition::Crazyhouse(pos) => f.call(pos),
+            VariantPosition::RacingKings(pos) => f.call(pos),
+            VariantPosition::Horde(pos) => f.call(pos),
+        }
+    }
+
+    /// Calls `f` with the concrete position of the variant, mutably.
+    ///
+    /// See [`VariantPosition::with_position()`].
+    #[inline]
+    pub fn with_position_mut<F: WithPositionMut>(&mut self, f: F) -> F::Output {
+        match self {
+            VariantPosition::Chess(pos) => f.call(pos),
+            VariantPosition::Atomic(pos) => f.call(pos),
+            VariantPosition::Antichess(pos) => f.call(pos),
+            VariantPosition::KingOfTheHill(pos) => f.call(pos),
+            VariantPosition::ThreeCheck(pos) => f.call(pos),
+            VariantPosition::Crazyhouse(pos) => f.call(pos),
+            VariantPosition::RacingKings(pos) => f.call(pos),
+            VariantPosition::Horde(pos) => f.call(pos),
+        }
+    }
+
+    /// Calls `f` with the concrete position of the variant, by value.
+    ///
+    /// See [`VariantPosition::with_position()`].
+    #[inline]
+    pub fn into_with_position<F: WithPositionOwned>(self, f: F) -> F::Output {
+        match self {
+            VariantPosition::Chess(pos) => f.call(pos),
+            VariantPosition::Atomic(pos) => f.call(pos),
+            VariantPosition::Antichess(pos) => f.call(pos),
+            VariantPosition::KingOfTheHill(pos) => f.call(pos),
+            VariantPosition::ThreeCheck(pos) => f.call(pos),
+            VariantPosition::Crazyhouse(pos) => f.call(pos),
+            VariantPosition::RacingKings(pos) => f.call(pos),
+            VariantPosition::Horde(pos) => f.call(pos),
         }
     }
 }
 
+/// Operation on a position of any variant. See
+/// [`VariantPosition::with_position()`].
+pub trait WithPosition {
+    type Output;
+
+    fn call<P: Position>(self, pos: &P) -> Self::Output;
+}
+
+/// Operation on a mutable position of any variant. See
+/// [`VariantPosition::with_position_mut()`].
+pub trait WithPositionMut {
+    type Output;
+
+    fn call<P: Position>(self, pos: &mut P) -> Self::Output;
+}
+
+/// Operation consuming a position of any variant. See
+/// [`VariantPosition::into_with_position()`].
+pub trait WithPositionOwned {
+    type Output;
+
+    fn call<P: Position>(self, pos: P) -> Self::Output;
+}
+
 impl Position for VariantPosition {
     fn board(&self) -> &Board {
-        self.borrow().board()
+        match self {
+            VariantPosition::Chess(pos) => pos.board(),
+            VariantPosition::Atomic(pos) => pos.board(),
+            VariantPosition::Antichess(pos) => pos.board(),
+            VariantPosition::KingOfTheHill(pos) => pos.board(),
+            VariantPosition::ThreeCheck(pos) => pos.board(),
+            VariantPosition::Crazyhouse(pos) => pos.board(),
+            VariantPosition::RacingKings(pos) => pos.board(),
+            VariantPosition::Horde(pos) => pos.board(),
+        }
     }
 
     fn promoted(&self) -> Bitboard {
-        self.borrow().promoted()
+        match self {
+            VariantPosition::Chess(pos) => pos.promoted(),
+            VariantPosition::Atomic(pos) => pos.promoted(),
+            VariantPosition::Antichess(pos) => pos.promoted(),
+            VariantPosition::KingOfTheHill(pos) => pos.promoted(),
+            VariantPosition::ThreeCheck(pos) => pos.promoted(),
+            VariantPosition::Crazyhouse(pos) => pos.promoted(),
+            VariantPosition::RacingKings(pos) => pos.promoted(),
+            VariantPosition::Horde(pos) => pos.promoted(),
+        }
     }
 
     fn pockets(&self) -> Option<&ByColor<ByRole<u8>>> {
-        self.borrow().pockets()
+        match self {
+            VariantPosition::Chess(pos) => pos.pockets(),
+            VariantPosition::Atomic(pos) => pos.pockets(),
+            VariantPosition::Antichess(pos) => pos.pockets(),
+            VariantPosition::KingOfTheHill(pos) => pos.pockets(),
+            VariantPosition::ThreeCheck(pos) => pos.pockets(),
+            VariantPosition::Crazyhouse(pos) => pos.pockets(),
+            VariantPosition::RacingKings(pos) => pos.pockets(),
+            VariantPosition::Horde(pos) => pos.pockets(),
+        }
     }
 
     fn turn(&self) -> Color {
-        self.borrow().turn()
+        match self {
+            VariantPosition::Chess(pos) => pos.turn(),
+            VariantPosition::Atomic(pos) => pos.turn(),
+            VariantPosition::Antichess(pos) => pos.turn(),
+            VariantPosition::KingOfTheHill(pos) => pos.turn(),
+            VariantPosition::ThreeCheck(pos) => pos.turn(),
+            VariantPosition::Crazyhouse(pos) => pos.turn(),
+            VariantPosition::RacingKings(pos) => pos.turn(),
+            VariantPosition::Horde(pos) => pos.turn(),
+        }
     }
 
     fn castles(&self) -> &Castles {
-        self.borrow().castles()
+        match self {
+            VariantPosition::Chess(pos) => pos.castles(),
+            VariantPosition::Atomic(pos) => pos.castles(),
+            VariantPosition::Antichess(pos) => pos.castles(),
+            VariantPosition::KingOfTheHill(pos) => pos.castles(),
+            VariantPosition::ThreeCheck(pos) => pos.castles(),
+            VariantPosition::Crazyhouse(pos) => pos.castles(),
+            VariantPosition::RacingKings(pos) => pos.castles(),
+            VariantPosition::Horde(pos) => pos.castles(),
+        }
     }
 
     fn maybe_ep_square(&self) -> Option<Square> {
-        self.borrow().maybe_ep_square()
+        match self {
+            VariantPosition::Chess(pos) => pos.maybe_ep_square(),
+            VariantPosition::Atomic(pos) => pos.maybe_ep_square(),
+            VariantPosition::Antichess(pos) => pos.maybe_ep_square(),
+            VariantPosition::KingOfTheHill(pos) => pos.maybe_ep_square(),
+            VariantPosition::ThreeCheck(pos) => pos.maybe_ep_square(),
+            VariantPosition::Crazyhouse(pos) => pos.maybe_ep_square(),
+            VariantPosition::RacingKings(pos) => pos.maybe_ep_square(),
+            VariantPosition::Horde(pos) => pos.maybe_ep_square(),
+        }
     }
 
     fn remaining_checks(&self) -> Option<&ByColor<RemainingChecks>> {
-        self.borrow().remaining_checks()
+        match self {
+            VariantPosition::Chess(pos) => pos.remaining_checks(),
+            VariantPosition::Atomic(pos) => pos.remaining_checks(),
+            VariantPosition::Antichess(pos) => pos.remaining_checks(),
+            VariantPosition::KingOfTheHill(pos) => pos.remaining_checks(),
+            VariantPosition::ThreeCheck(pos) => pos.remaining_checks(),
+            VariantPosition::Crazyhouse(pos) => pos.remaining_checks(),
+            VariantPosition::RacingKings(pos) => pos.remaining_checks(),
+            VariantPosition::Horde(pos) => pos.remaining_checks(),
+        }
     }
 
     fn halfmoves(&self) -> u32 {
-        self.borrow().halfmoves()
+        match self {
+            VariantPosition::Chess(pos) => pos.halfmoves(),
+            VariantPosition::Atomic(pos) => pos.halfmoves(),
+            VariantPosition::Antichess(pos) => pos.halfmoves(),
+            VariantPosition::KingOfTheHill(pos) => pos.halfmoves(),
+            VariantPosition::ThreeCheck(pos) => pos.halfmoves(),
+            VariantPosition::Crazyhouse(pos) => pos.halfmoves(),
+            VariantPosition::RacingKings(pos) => pos.halfmoves(),
+            VariantPosition::Horde(pos) => pos.halfmoves(),
+        }
     }
 
     fn fullmoves(&self) -> NonZeroU32 {
-        self.borrow().fullmoves()
+        match self {
+            VariantPosition::Chess(pos) => pos.fullmoves(),
+            VariantPosition::Atomic(pos) => pos.fullmoves(),
+            VariantPosition::Antichess(pos) => pos.fullmoves(),
+            VariantPosition::KingOfTheHill(pos) => pos.fullmoves(),
+            VariantPosition::ThreeCheck(pos) => pos.fullmoves(),
+            VariantPosition::Crazyhouse(pos) => pos.fullmoves(),
+            VariantPosition::RacingKings(pos) => pos.fullmoves(),
+            VariantPosition::Horde(pos) => pos.fullmoves(),
+        }
     }
 
     fn to_setup(&self, mode: EnPassantMode) -> Setup {
-        self.borrow().to_setup(mode)
+        match self {
+            VariantPosition::Chess(pos) => pos.to_setup(mode),
+            VariantPosition::Atomic(pos) => pos.to_setup(mode),
+            VariantPosition::Antichess(pos) => pos.to_setup(mode),
+            VariantPosition::KingOfTheHill(pos) => pos.to_setup(mode),
+            VariantPosition::ThreeCheck(pos) => pos.to_setup(mode),
+            VariantPosition::Crazyhouse(pos) => pos.to_setup(mode),
+            VariantPosition::RacingKings(pos) => pos.to_setup(mode),
+            VariantPosition::Horde(pos) => pos.to_setup(mode),
+        }
     }
 
     fn legal_moves(&self) -> MoveList {
-        self.borrow().legal_moves()
+        match self {
+            VariantPosition::Chess(pos) => pos.legal_moves(),
+            VariantPosition::Atomic(pos) => pos.legal_moves(),
+            VariantPosition::Antichess(pos) => pos.legal_moves(),
+            VariantPosition::KingOfTheHill(pos) => pos.legal_moves(),
+            VariantPosition::ThreeCheck(pos) => pos.legal_moves(),
+            VariantPosition::Crazyhouse(pos) => pos.legal_moves(),
+            VariantPosition::RacingKings(pos) => pos.legal_moves(),
+            VariantPosition::Horde(pos) => pos.legal_moves(),
+        }
     }
 
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
-        self.borrow().san_candidates(role, to)
+        match self {
+            VariantPosition::Chess(pos) => pos.san_candidates(role, to),
+            VariantPosition::Atomic(pos) => pos.san_candidates(role, to),
+            VariantPosition::Antichess(pos) => pos.san_candidates(role, to),
+            VariantPosition::KingOfTheHill(pos) => pos.san_candidates(role, to),
+            VariantPosition::ThreeCheck(pos) => pos.san_candidates(role, to),
+            VariantPosition::Crazyhouse(pos) => pos.san_candidates(role, to),
+            VariantPosition::RacingKings(pos) => pos.san_candidates(role, to),
+            VariantPosition::Horde(pos) => pos.san_candidates(role, to),
+        }
     }
 
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
-        self.borrow().castling_moves(side)
+        match self {
+            VariantPosition::Chess(pos) => pos.castling_moves(side),
+            VariantPosition::Atomic(pos) => pos.castling_moves(side),
+            VariantPosition::Antichess(pos) => pos.castling_moves(side),
+            VariantPosition::KingOfTheHill(pos) => pos.castling_moves(side),
+            VariantPosition::ThreeCheck(pos) => pos.castling_moves(side),
+            VariantPosition::Crazyhouse(pos) => pos.castling_moves(side),
+            VariantPosition::RacingKings(pos) => pos.castling_moves(side),
+            VariantPosition::Horde(pos) => pos.castling_moves(side),
+        }
     }
 
     fn en_passant_moves(&self) -> MoveList {
-        self.borrow().en_passant_moves()
+        match self {
+            VariantPosition::Chess(pos) => pos.en_passant_moves(),
+            VariantPosition::Atomic(pos) => pos.en_passant_moves(),
+            VariantPosition::Antichess(pos) => pos.en_passant_moves(),
+            VariantPosition::KingOfTheHill(pos) => pos.en_passant_moves(),
+            VariantPosition::ThreeCheck(pos) => pos.en_passant_moves(),
+            VariantPosition::Crazyhouse(pos) => pos.en_passant_moves(),
+            VariantPosition::RacingKings(pos) => pos.en_passant_moves(),
+            VariantPosition::Horde(pos) => pos.en_passant_moves(),
+        }
     }
 
     fn capture_moves(&self) -> MoveList {
-        self.borrow().capture_moves()
+        match self {
+            VariantPosition::Chess(pos) => pos.capture_moves(),
+            VariantPosition::Atomic(pos) => pos.capture_moves(),
+            VariantPosition::Antichess(pos) => pos.capture_moves(),
+            VariantPosition::KingOfTheHill(pos) => pos.capture_moves(),
+            VariantPosition::ThreeCheck(pos) => pos.capture_moves(),
+            VariantPosition::Crazyhouse(pos) => pos.capture_moves(),
+            VariantPosition::RacingKings(pos) => pos.capture_moves(),
+            VariantPosition::Horde(pos) => pos.capture_moves(),
+        }
     }
 
     fn promotion_moves(&self) -> MoveList {
-        self.borrow().promotion_moves()
+        match self {
+            VariantPosition::Chess(pos) => pos.promotion_moves(),
+            VariantPosition::Atomic(pos) => pos.promotion_moves(),
+            VariantPosition::Antichess(pos) => pos.promotion_moves(),
+            VariantPosition::KingOfTheHill(pos) => pos.promotion_moves(),
+            VariantPosition::ThreeCheck(pos) => pos.promotion_moves(),
+            VariantPosition::Crazyhouse(pos) => pos.promotion_moves(),
+            VariantPosition::RacingKings(pos) => pos.promotion_moves(),
+            VariantPosition::Horde(pos) => pos.promotion_moves(),
+        }
     }
 
     fn is_irreversible(&self, m: Move) -> bool {
-        self.borrow().is_irreversible(m)
+        match self {
+            VariantPosition::Chess(pos) => pos.is_irreversible(m),
+            VariantPosition::Atomic(pos) => pos.is_irreversible(m),
+            VariantPosition::Antichess(pos) => pos.is_irreversible(m),
+            VariantPosition::KingOfTheHill(pos) => pos.is_irreversible(m),
+            VariantPosition::ThreeCheck(pos) => pos.is_irreversible(m),
+            VariantPosition::Crazyhouse(pos) => pos.is_irreversible(m),
+            VariantPosition::RacingKings(pos) => pos.is_irreversible(m),
+            VariantPosition::Horde(pos) => pos.is_irreversible(m),
+        }
     }
 
     fn king_attackers(&self, square: Square, attacker: Color, occupied: Bitboard) -> Bitboard {
-        self.borrow().king_attackers(square, attacker, occupied)
+        match self {
+            VariantPosition::Chess(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::Atomic(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::Antichess(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::KingOfTheHill(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::ThreeCheck(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::Crazyhouse(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::RacingKings(pos) => pos.king_attackers(square, attacker, occupied),
+            VariantPosition::Horde(pos) => pos.king_attackers(square, attacker, occupied),
+        }
     }
 
     fn is_variant_end(&self) -> bool {
-        self.borrow().is_variant_end()
+        match self {
+            VariantPosition::Chess(pos) => pos.is_variant_end(),
+            VariantPosition::Atomic(pos) => pos.is_variant_end(),
+            VariantPosition::Antichess(pos) => pos.is_variant_end(),
+            VariantPosition::KingOfTheHill(pos) => pos.is_variant_end(),
+            VariantPosition::ThreeCheck(pos) => pos.is_variant_end(),
+            VariantPosition::Crazyhouse(pos) => pos.is_variant_end(),
+            VariantPosition::RacingKings(pos) => pos.is_variant_end(),
+            VariantPosition::Horde(pos) => pos.is_variant_end(),
+        }
     }
 
     fn has_insufficient_material(&self, color: Color) -> bool {
-        self.borrow().has_insufficient_material(color)
+        match self {
+            VariantPosition::Chess(pos) => pos.has_insufficient_material(color),
+            VariantPosition::Atomic(pos) => pos.has_insufficient_material(color),
+            VariantPosition::Antichess(pos) => pos.has_insufficient_material(color),
+            VariantPosition::KingOfTheHill(pos) => pos.has_insufficient_material(color),
+            VariantPosition::ThreeCheck(pos) => pos.has_insufficient_material(color),
+            VariantPosition::Crazyhouse(pos) => pos.has_insufficient_material(color),
+            VariantPosition::RacingKings(pos) => pos.has_insufficient_material(color),
+            VariantPosition::Horde(pos) => pos.has_insufficient_material(color),
+        }
     }
 
     fn variant_outcome(&self) -> Outcome {
-        self.borrow().variant_outcome()
+        match self {
+            VariantPosition::Chess(pos) => pos.variant_outcome(),
+            VariantPosition::Atomic(pos) => pos.variant_outcome(),
+            VariantPosition::Antichess(pos) => pos.variant_outcome(),
+            VariantPosition::KingOfTheHill(pos) => pos.variant_outcome(),
+            VariantPosition::ThreeCheck(pos) => pos.variant_outcome(),
+            VariantPosition::Crazyhouse(pos) => pos.variant_outcome(),
+            VariantPosition::RacingKings(pos) => pos.variant_outcome(),
+            VariantPosition::Horde(pos) => pos.variant_outcome(),
+        }
     }
 
     fn play_unchecked(&mut self, m: Move) {
-        self.borrow_mut().play_unchecked(m);
+        match self {
+            VariantPosition::Chess(pos) => pos.play_unchecked(m),
+            VariantPosition::Atomic(pos) => pos.play_unchecked(m),
+            VariantPosition::Antichess(pos) => pos.play_unchecked(m),
+            VariantPosition::KingOfTheHill(pos) => pos.play_unchecked(m),
+            VariantPosition::ThreeCheck(pos) => pos.play_unchecked(m),
+            VariantPosition::Crazyhouse(pos) => pos.play_unchecked(m),
+            VariantPosition::RacingKings(pos) => pos.play_unchecked(m),
+            VariantPosition::Horde(pos) => pos.play_unchecked(m),
+        }
     }
 
     fn zobrist_hash<V: ZobristValue>(&self, mode: EnPassantMode) -> V {
