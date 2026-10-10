@@ -344,36 +344,57 @@ impl<R: Read> Reader<R> {
     }
 
     fn skip_movetext(&mut self) -> io::Result<()> {
-        while let &[ch, ..] = self.buffer.ensure_bytes(3, &mut self.reader)? {
-            self.buffer.bump();
+        let mut state = LineState::Moves;
 
-            match ch {
-                b'{' => {
-                    self.skip_until_after(b'}')?;
-                }
-                b';' => {
-                    self.skip_until(b'\n')?;
-                }
-                b'\n' => match self.buffer.peek() {
-                    Some(b'%') => {
-                        self.buffer.bump();
-                        self.skip_until(b'\n')?;
-                    }
-                    Some(b'\n' | b'[') => break,
-                    Some(b'\r') => {
-                        self.buffer.bump();
-                        if let Some(b'\n') = self.buffer.peek() {
-                            break;
-                        }
-                    }
-                    _ => continue,
-                },
-                _ => {
-                    if let Some(consumed) = memchr::memchr3(b'\n', b'{', b';', self.buffer.data()) {
-                        self.buffer.consume(consumed);
+        loop {
+            // For \n\r + 1 byte peek
+            let data = self.buffer.ensure_bytes(3, &mut self.reader)?;
+            if data.is_empty() {
+                break;
+            }
+
+            match state {
+                LineState::BraceComment => {
+                    if let Some(pos) = memchr::memchr(b'}', data) {
+                        self.buffer.consume(pos + 1);
+                        state = LineState::Moves;
                     } else {
                         self.buffer.clear();
                     }
+                }
+                LineState::LineComment => {
+                    if let Some(pos) = memchr::memchr(b'\n', data) {
+                        self.buffer.consume(pos);
+                        state = LineState::Moves;
+                    } else {
+                        self.buffer.clear();
+                    }
+                }
+                LineState::Moves if data[0] == b'\n' => {
+                    self.buffer.bump();
+                    match self.buffer.peek() {
+                        Some(b'%') => {
+                            self.buffer.bump();
+                            state = LineState::LineComment;
+                        }
+                        Some(b'\n' | b'[') => break,
+                        Some(b'\r') => {
+                            self.buffer.bump();
+                            if let Some(b'\n') = self.buffer.peek() {
+                                break;
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                LineState::Moves => {
+                    let end = memchr::memchr(b'\n', data).unwrap_or(data.len());
+                    state = skip_line(&data[..end]);
+                    if state == LineState::LineComment && end < data.len() {
+                        // The line comment ends at the newline.
+                        state = LineState::Moves;
+                    }
+                    self.buffer.consume(end);
                 }
             }
         }
@@ -811,6 +832,44 @@ impl<R: Read, V: Visitor> Iterator for ReadGames<'_, R, V> {
             Ok(None) => None,
             Err(err) => Some(Err(err)),
         }
+    }
+}
+
+/// Lexer state for skipping lines.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum LineState {
+    /// Outside of comments.
+    Moves,
+    /// Inside a `{` comment, that ends at the next `}`.
+    BraceComment,
+    /// Inside a `;` or `%` comment, that ends at the next newline.
+    LineComment,
+}
+
+/// Determines the state at the end of `line` (which contains no newline),
+/// starting outside of comments.
+fn skip_line(mut line: &[u8]) -> LineState {
+    loop {
+        let Some(semicolon) = memchr::memchr(b';', line) else {
+            return brace_state(line);
+        };
+        if brace_state(&line[..semicolon]) == LineState::Moves {
+            return LineState::LineComment;
+        }
+        // The semicolon is inside a brace comment. Continue after it.
+        match memchr::memchr(b'}', &line[semicolon + 1..]) {
+            Some(close) => line = &line[semicolon + 1 + close + 1..],
+            None => return LineState::BraceComment,
+        }
+    }
+}
+
+/// Determines the state at the end of a span without any `;`,
+/// starting outside of comments.
+fn brace_state(span_without_semicolon: &[u8]) -> LineState {
+    match memchr::memrchr2(b'{', b'}', span_without_semicolon) {
+        Some(pos) if span_without_semicolon[pos] == b'{' => LineState::BraceComment,
+        _ => LineState::Moves,
     }
 }
 
