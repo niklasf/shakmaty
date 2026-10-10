@@ -17,6 +17,7 @@ use crate::{RawTag, Skip, Visitor, buffer::Buffer, comment::RawComment, nag::Nag
 #[derive(Debug, Clone)]
 pub struct ReaderBuilder<R> {
     reader: R,
+    min_buffer_capacity: usize,
     tag_line_bytes: usize,
     movetext_token_bytes: usize,
 }
@@ -27,9 +28,19 @@ impl<R: Read> ReaderBuilder<R> {
     pub fn new(reader: R) -> Self {
         ReaderBuilder {
             reader,
+            min_buffer_capacity: 16384,
             tag_line_bytes: 255,
             movetext_token_bytes: 255,
         }
+    }
+
+    /// Configure the buffer to have a capacity of *at least* the given
+    /// number of bytes.
+    ///
+    /// Defaults to `16384` bytes.
+    pub fn with_minimum_buffer_capacity(mut self, bytes: usize) -> Self {
+        self.min_buffer_capacity = bytes;
+        self
     }
 
     /// Configure the buffer to support *at least* the given tag line length.
@@ -59,7 +70,7 @@ impl<R: Read> ReaderBuilder<R> {
             tag_line_bytes: self.tag_line_bytes,
             movetext_token_bytes: self.movetext_token_bytes,
             buffer: Buffer::with_capacity(max(
-                1 << 14,
+                max(self.min_buffer_capacity, 1 << 9),
                 max(self.tag_line_bytes, self.movetext_token_bytes).next_power_of_two() * 2,
             )),
             pending_skip_tags: false,
@@ -806,6 +817,24 @@ impl<R: Read> Reader<R> {
     /// The currently buffered bytes.
     pub fn buffer(&self) -> &[u8] {
         self.buffer.data()
+    }
+
+    /// The capacity of the internal buffer.
+    pub fn capacity(&self) -> usize {
+        self.buffer.capacity()
+    }
+
+    /// Get a reference to the underlying reader.
+    pub fn get_ref(&self) -> &R {
+        &self.reader
+    }
+
+    /// Get a mutable reference to the underlying reader.
+    ///
+    /// It is inadvisable to read from the underlying reader, because
+    /// some bytes may have already been buffered ([`Reader::buffer()`]).
+    pub fn get_mut(&mut self) -> &mut R {
+        &mut self.reader
     }
 
     /// Discard the remaining bytes in the buffer ([`Reader::buffer()`]) and
