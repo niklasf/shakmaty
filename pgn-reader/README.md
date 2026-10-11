@@ -101,12 +101,13 @@ compiled with Rust 1.99.0:
 
 Benchmark | Time | Throuhput (games) | Throughput (data)
 --- | ---: | ---: | ---:
-`rg -F "[Event " -c` (ripgrep 15.2.0) | 3.7 s | 6,716,694 /s | 13,633 MiB/s
-examples/count_games.rs | 7.0 s | 3,515,546 /s | 7,136 MiB/s
-`grep -F "[Event " -c` (GNU grep 3.12) | 23.6 s | 1,048,418 /s | 2,128 MiB/s
-examples/stats.rs | 24.2 s | 1,022,467 /s | 2,075 MiB/s
-examples/parallel_validate.rs (1 + 3 threads) | 33.5 s | 740,060 /s | 1,502 MiB/s
-examples/validate.rs | 81.0 s | 305,983 /s | 621 MiB/s
+`rg -F "[Event " -c` (ripgrep 15.2.0) | 3.5 s | 7,127,342 /s | 14,467 MiB/s
+`rg --no-mmap -F "[Event " -c` (ripgrep 15.2.0) | 4.1 s | 6,071,169 /s | 12,323 MiB/s
+examples/count_games.rs | 7.0 s | 3,527,533 /s | 7,160 MiB/s
+examples/parallel_validate.rs (1 + 8 threads) | 12.3 s | 2,014,482 /s | 4,089 MiB/s
+`grep -F "[Event " -c` (GNU grep 3.12) | 23.6 s | 1,050,763 /s | 2,133 MiB/s
+examples/stats.rs | 24.3 s | 1,018,586 /s | 2,067 MiB/s
+examples/validate.rs | 81.2 s | 305,380 /s | 620 MiB/s
 
 License
 -------
