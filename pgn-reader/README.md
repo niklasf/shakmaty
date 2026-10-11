@@ -89,8 +89,8 @@ Documentation
 
 [Read the documentation](https://docs.rs/pgn-reader)
 
-Benchmarks (v0.29.2-dev)
-------------------------
+Benchmarks (unreleased)
+-----------------------
 
 Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2018-10.pgn.zst),
 a very orderly PGN file with additional headers and many small comments

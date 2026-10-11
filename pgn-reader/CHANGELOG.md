@@ -1,5 +1,13 @@
 # Changelog for pgn-reader
 
+## Unreleased
+
+- Major peformance improvements for `Reader::skip_game()`.
+  The `parallel_validate` example now shows how skipping can be used to
+  correctly chunk at game boundaries and offload parsing to multiple threads.
+- Add `Reader::{get_ref,get_mut}()` for access to the underlying reader.
+- Add `ReaderBuilder::with_minimum_buffer_capacity()` and `Reader::capacity()`.
+
 ## v0.29.1
 
 - Performance improvements on well-formatted PGN files. Stacks with

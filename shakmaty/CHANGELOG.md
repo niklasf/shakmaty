@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## Unreleased
+
+New features:
+
+- Add `VariantPosition::{with_position,with_position_mut,into_with_position}()`
+  for static dispatch.
+
 ## v0.30.2
 
 Performance improvements:
