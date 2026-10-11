@@ -89,8 +89,8 @@ Documentation
 
 [Read the documentation](https://docs.rs/pgn-reader)
 
-Benchmarks (v0.29.1)
---------------------
+Benchmarks (v0.29.2-dev)
+------------------------
 
 Run with [lichess_db_standard_rated_2018-10.pgn](https://database.lichess.org/standard/lichess_db_standard_rated_2018-10.pgn.zst),
 a very orderly PGN file with additional headers and many small comments
@@ -101,11 +101,12 @@ compiled with Rust 1.99.0:
 
 Benchmark | Time | Throuhput (games) | Throughput (data)
 --- | ---: | ---: | ---:
-examples/stats.rs | 26.2 s | 945,905 /s | 1,920 MiB/s
-examples/validate.rs | 84.5 s | 293,392 /s | 596 MiB/s
-examples/parallel_validate.rs (1 + 3 threads) | 35.3 s | 702,571 /s | 1,426 MiB/s
-`grep -F "[Event " -c` (GNU grep 3.12) | 24.8 s | 998,413 /s | 2,027 MiB/s
-`rg -F "[Event " -c` (ripgrep 15.2.0) | 4.6 s | 5,340,358 /s | 10,840 MiB/s
+`rg -F "[Event " -c` (ripgrep 15.2.0) | 3.7 s | 6,716,694 /s | 13,633 MiB/s
+examples/count_games.rs | 7.0 s | 3,515,546 /s | 7,136 MiB/s
+`grep -F "[Event " -c` (GNU grep 3.12) | 23.6 s | 1,048,418 /s | 2,128 MiB/s
+examples/stats.rs | 24.2 s | 1,022,467 /s | 2,075 MiB/s
+examples/parallel_validate.rs (1 + 3 threads) | 33.5 s | 740,060 /s | 1,502 MiB/s
+examples/validate.rs | 81.0 s | 305,983 /s | 621 MiB/s
 
 License
 -------
