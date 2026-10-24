@@ -540,6 +540,31 @@ pub trait Position {
     /// Generates all legal moves.
     fn legal_moves(&self) -> MoveList;
 
+    /// The number of legal moves that sort strictly before `m` when all legal
+    /// moves are ordered by `(origin square, destination square, promotion)`.
+    ///
+    /// Drops have no origin and sort after all board moves; castling moves use
+    /// the king's square and the rook's square, like [`Move::from()`] and
+    /// [`Move::to()`]. This is the zero-based index of `m` in that ordering.
+    /// `m` must be legal in this position.
+    ///
+    /// The default implementation generates and scans every legal move; some
+    /// positions override it with a version that only counts.
+    fn legal_move_rank(&self, m: Move) -> usize {
+        let key = |m: &Move| {
+            (
+                m.from().map_or(64, |sq| sq as u8),
+                m.to() as u8,
+                m.promotion().map_or(0, |role| role as u8),
+            )
+        };
+        let target = key(&m);
+        self.legal_moves()
+            .iter()
+            .filter(|candidate| key(candidate) < target)
+            .count()
+    }
+
     /// Generates a subset of legal moves: All piece moves and drops of type
     /// `role` to the square `to`, excluding castling moves.
     fn san_candidates(&self, role: Role, to: Square) -> MoveList {
@@ -1186,6 +1211,10 @@ impl Position for Chess {
                 moves.retain(|m| is_safe(self, king, *m, blockers));
             }
         })
+    }
+
+    fn legal_move_rank(&self, m: Move) -> usize {
+        chess_legal_move_rank(self, m)
     }
 
     fn castling_moves(&self, side: CastlingSide) -> MoveList {
@@ -3548,6 +3577,121 @@ const fn is_standard_material(board: &Board, color: Color) -> bool {
     board.pawns().intersect_const(our).count() + promoted_pieces <= 8
 }
 
+/// Counting version of the generic `legal_move_rank` for standard chess: no
+/// `Move` is built and nothing is pushed. It mirrors `Chess::legal_moves`
+/// (evasions, pins through `slider_blockers`, en passant and castling) one
+/// origin square at a time, and every origin sorting before `m` is counted by
+/// the number of its legal destinations.
+fn chess_legal_move_rank(pos: &Chess, m: Move) -> usize {
+    let board = pos.board();
+    let turn = pos.turn();
+    let king = board.king_of(turn).expect("king in standard chess");
+    let checkers = pos.checkers();
+    let blockers = slider_blockers(board, pos.them(), king);
+    let occupied = board.occupied();
+
+    // Where a non-king piece may land (only the checking piece or the squares
+    // between it and the king when in check, nothing at all in a double check).
+    let target = if checkers.is_empty() {
+        !pos.us()
+    } else if let Some(checker) = checkers.single_square() {
+        attacks::between(king, checker).with(checker)
+    } else {
+        Bitboard(0)
+    };
+
+    // Legal destinations of the king, including castling (the rook's square).
+    let king_destinations = || {
+        let mut destinations = Bitboard(0);
+        let mut king_target = !pos.us();
+        if checkers.is_empty() {
+            for side in [CastlingSide::KingSide, CastlingSide::QueenSide] {
+                if pos.castles.rook(turn, side).is_some() {
+                    if let Some(Move::Castle { rook, .. }) = pos.castling_moves(side).first() {
+                        destinations.add(*rook);
+                    }
+                }
+            }
+        } else {
+            let mut attacked = Bitboard(0);
+            (checkers & board.sliders()).for_each(|checker| {
+                attacked |= attacks::ray(checker, king) ^ checker;
+            });
+            king_target &= !attacked;
+        }
+        (attacks::king_attacks(king) & king_target).for_each(|to| {
+            if board.attacks_to(to, !turn, occupied).is_empty() {
+                destinations.add(to);
+            }
+        });
+        destinations
+    };
+
+    // Legal destinations of the piece on `from`; en passant included.
+    let destinations = |from: Square, role: Role| -> Bitboard {
+        if role == Role::King {
+            return king_destinations();
+        }
+        let mut reach = match role {
+            Role::Pawn => {
+                let single = Bitboard::from_square(from).shift(turn.fold_wb(8, -8)) & !occupied;
+                let double = single.shift(turn.fold_wb(8, -8))
+                    & turn.fold_wb(Bitboard::SOUTH, Bitboard::NORTH)
+                    & !occupied;
+                (attacks::pawn_attacks(turn, from) & pos.them()) | single | double
+            }
+            Role::Knight => attacks::knight_attacks(from),
+            Role::Bishop => attacks::bishop_attacks(from, occupied),
+            Role::Rook => attacks::rook_attacks(from, occupied),
+            _ => attacks::queen_attacks(from, occupied),
+        } & target;
+        if blockers.contains(from) {
+            reach &= attacks::ray(king, from);
+        }
+        if role == Role::Pawn {
+            if let Some(EnPassant(to)) = pos.ep_square {
+                if attacks::pawn_attacks(turn, from).contains(to)
+                    && is_safe(pos, king, Move::EnPassant { from, to }, blockers)
+                {
+                    reach.add(to);
+                }
+            }
+        }
+        reach
+    };
+
+    // Promotions give four moves per destination on the back ranks.
+    let weight = |reach: Bitboard, role: Role| {
+        reach.count()
+            + if role == Role::Pawn {
+                3 * (reach & Bitboard::BACKRANKS).count()
+            } else {
+                0
+            }
+    };
+
+    let from = m.from().expect("no drops in standard chess");
+    let below = |sq: Square| Bitboard((1_u64 << (sq as u32)) - 1);
+
+    let mut rank = 0;
+    (pos.us() & below(from)).for_each(|origin| {
+        let role = board.role_at(origin).expect("our piece");
+        rank += weight(destinations(origin, role), role);
+    });
+
+    // Same origin: only destinations (and promotions) that sort before `m`.
+    let role = board.role_at(from).expect("our piece");
+    let earlier = destinations(from, role) & below(m.to());
+    rank += weight(earlier, role);
+    if role == Role::Pawn {
+        if let Some(promotion) = m.promotion() {
+            // Promotion roles sort Knight < Bishop < Rook < Queen.
+            rank += promotion as usize - Role::Knight as usize;
+        }
+    }
+    rank
+}
+
 fn gen_non_king<P: Position>(pos: &P, target: Bitboard, moves: &mut MoveList) {
     gen_pawn_moves(pos, target, moves);
     KnightTag::gen_moves(pos, target, moves);
@@ -3890,6 +4034,100 @@ mod tests {
             .expect("valid fen")
             .into_position::<T>(CastlingMode::Chess960)
             .expect("legal position")
+    }
+
+    /// Sort order used by `legal_move_rank`.
+    fn brute_force_rank(pos: &Chess, m: Move) -> usize {
+        let key = |m: &Move| {
+            (
+                m.from().map_or(64, |sq| sq as u8),
+                m.to() as u8,
+                m.promotion().map_or(0, |role| role as u8),
+            )
+        };
+        pos.legal_moves()
+            .iter()
+            .filter(|c| key(c) < key(&m))
+            .count()
+    }
+
+    fn check_ranks(pos: &Chess, depth: u32) {
+        let moves = pos.legal_moves();
+        for m in &moves {
+            assert_eq!(
+                pos.legal_move_rank(*m),
+                brute_force_rank(pos, *m),
+                "{:?} in {}",
+                m,
+                crate::fen::Epd::from_position(pos, EnPassantMode::Legal)
+            );
+        }
+        if depth > 0 {
+            for m in &moves {
+                let mut next = pos.clone();
+                next.play_unchecked(*m);
+                check_ranks(&next, depth - 1);
+            }
+        }
+    }
+
+    #[test]
+    fn test_legal_move_rank_matches_sorted_legal_moves() {
+        for (fen, depth) in [
+            (
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                3,
+            ),
+            // Kiwipete: castling, pins, en passant, promotions after a few plies.
+            (
+                "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+                3,
+            ),
+            ("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", 4),
+            (
+                "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+                3,
+            ),
+            (
+                "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+                3,
+            ),
+            (
+                "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
+                2,
+            ),
+            // En passant that would expose the king along the rank.
+            ("8/8/8/KPp4r/8/8/8/7k w - c6 0 1", 3),
+            // Double check, promotions with captures, many queens.
+            ("4k3/8/8/8/1b6/8/3r4/4K3 w - - 0 1", 3),
+            ("1n2k3/P7/8/8/8/8/8/4K3 w - - 0 1", 3),
+            ("R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1", 1),
+        ] {
+            check_ranks(&setup_fen::<Chess>(fen), depth);
+        }
+    }
+
+    #[test]
+    fn test_legal_move_rank_along_random_games() {
+        // Small deterministic xorshift so the test needs no dependencies.
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for _ in 0..300 {
+            let mut pos = Chess::default();
+            for _ in 0..200 {
+                let moves = pos.legal_moves();
+                if moves.is_empty() {
+                    break;
+                }
+                check_ranks(&pos, 0);
+                pos.play_unchecked(moves[(next() % moves.len() as u64) as usize]);
+            }
+        }
     }
 
     #[test]
