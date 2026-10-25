@@ -6,6 +6,7 @@ New features:
 
 - Add `VariantPosition::{with_position,with_position_mut,into_with_position}()`
   for static dispatch.
+- Add `{ByColor,ByRole,ByCastlingSide}::{try_map,try_new_with}()`.
 
 ## v0.30.2
 

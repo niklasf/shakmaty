@@ -1,4 +1,8 @@
-use core::{array, convert::identity, mem, ops};
+use core::{
+    array,
+    convert::{Infallible, identity},
+    mem, ops,
+};
 
 use crate::{Color, File, Square};
 
@@ -115,10 +119,19 @@ impl<T> ByCastlingSide<T> {
     where
         F: FnMut(CastlingSide) -> T,
     {
-        ByCastlingSide {
-            king_side: init(CastlingSide::KingSide),
-            queen_side: init(CastlingSide::QueenSide),
-        }
+        let Ok(res) = ByCastlingSide::try_new_with(|k| Ok::<_, Infallible>(init(k)));
+        res
+    }
+
+    #[inline]
+    pub fn try_new_with<F, E>(mut init: F) -> Result<ByCastlingSide<T>, E>
+    where
+        F: FnMut(CastlingSide) -> Result<T, E>,
+    {
+        Ok(ByCastlingSide {
+            king_side: init(CastlingSide::KingSide)?,
+            queen_side: init(CastlingSide::QueenSide)?,
+        })
     }
 
     #[inline]
@@ -163,10 +176,19 @@ impl<T> ByCastlingSide<T> {
     where
         F: FnMut(T) -> U,
     {
-        ByCastlingSide {
-            king_side: f(self.king_side),
-            queen_side: f(self.queen_side),
-        }
+        let Ok(res) = self.try_map(|v| Ok::<_, Infallible>(f(v)));
+        res
+    }
+
+    #[inline]
+    pub fn try_map<U, E, F>(self, mut f: F) -> Result<ByCastlingSide<U>, E>
+    where
+        F: FnMut(T) -> Result<U, E>,
+    {
+        Ok(ByCastlingSide {
+            king_side: f(self.king_side)?,
+            queen_side: f(self.queen_side)?,
+        })
     }
 
     #[inline]

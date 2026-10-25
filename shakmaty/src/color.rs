@@ -1,6 +1,11 @@
 //! White or black.
 
-use core::{array, convert::identity, error, fmt, mem, num, ops, str::FromStr};
+use core::{
+    array,
+    convert::{Infallible, identity},
+    error, fmt, mem, num, ops,
+    str::FromStr,
+};
 
 use crate::{ByRole, Piece, Rank, Role, util::out_of_range_error};
 
@@ -214,10 +219,19 @@ impl<T> ByColor<T> {
     where
         F: FnMut(Color) -> T,
     {
-        ByColor {
-            white: init(Color::White),
-            black: init(Color::Black),
-        }
+        let Ok(res) = ByColor::try_new_with(|k| Ok::<_, Infallible>(init(k)));
+        res
+    }
+
+    #[inline]
+    pub fn try_new_with<F, E>(mut init: F) -> Result<ByColor<T>, E>
+    where
+        F: FnMut(Color) -> Result<T, E>,
+    {
+        Ok(ByColor {
+            white: init(Color::White)?,
+            black: init(Color::Black)?,
+        })
     }
 
     #[inline]
@@ -262,10 +276,19 @@ impl<T> ByColor<T> {
     where
         F: FnMut(T) -> U,
     {
-        ByColor {
-            white: f(self.white),
-            black: f(self.black),
-        }
+        let Ok(res) = self.try_map(|v| Ok::<_, Infallible>(f(v)));
+        res
+    }
+
+    #[inline]
+    pub fn try_map<U, E, F>(self, mut f: F) -> Result<ByColor<U>, E>
+    where
+        F: FnMut(T) -> Result<U, E>,
+    {
+        Ok(ByColor {
+            white: f(self.white)?,
+            black: f(self.black)?,
+        })
     }
 
     #[inline]

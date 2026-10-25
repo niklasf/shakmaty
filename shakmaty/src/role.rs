@@ -1,4 +1,8 @@
-use core::{array, convert::identity, num, ops, ptr};
+use core::{
+    array,
+    convert::{Infallible, identity},
+    num, ops, ptr,
+};
 
 use crate::{ByColor, Color, Piece, util::out_of_range_error};
 
@@ -176,18 +180,28 @@ pub struct ByRole<T> {
 }
 
 impl<T> ByRole<T> {
+    #[inline]
     pub fn new_with<F>(mut init: F) -> ByRole<T>
     where
         F: FnMut(Role) -> T,
     {
-        ByRole {
-            pawn: init(Role::Pawn),
-            knight: init(Role::Knight),
-            bishop: init(Role::Bishop),
-            rook: init(Role::Rook),
-            queen: init(Role::Queen),
-            king: init(Role::King),
-        }
+        let Ok(res) = ByRole::try_new_with(|k| Ok::<_, Infallible>(init(k)));
+        res
+    }
+
+    #[inline]
+    pub fn try_new_with<F, E>(mut init: F) -> Result<ByRole<T>, E>
+    where
+        F: FnMut(Role) -> Result<T, E>,
+    {
+        Ok(ByRole {
+            pawn: init(Role::Pawn)?,
+            knight: init(Role::Knight)?,
+            bishop: init(Role::Bishop)?,
+            rook: init(Role::Rook)?,
+            queen: init(Role::Queen)?,
+            king: init(Role::King)?,
+        })
     }
 
     #[inline]
@@ -220,14 +234,23 @@ impl<T> ByRole<T> {
     where
         F: FnMut(T) -> U,
     {
-        ByRole {
-            pawn: f(self.pawn),
-            knight: f(self.knight),
-            bishop: f(self.bishop),
-            rook: f(self.rook),
-            queen: f(self.queen),
-            king: f(self.king),
-        }
+        let Ok(res) = self.try_map(|v| Ok::<_, Infallible>(f(v)));
+        res
+    }
+
+    #[inline]
+    pub fn try_map<U, E, F>(self, mut f: F) -> Result<ByRole<U>, E>
+    where
+        F: FnMut(T) -> Result<U, E>,
+    {
+        Ok(ByRole {
+            pawn: f(self.pawn)?,
+            knight: f(self.knight)?,
+            bishop: f(self.bishop)?,
+            rook: f(self.rook)?,
+            queen: f(self.queen)?,
+            king: f(self.king)?,
+        })
     }
 
     #[inline]
