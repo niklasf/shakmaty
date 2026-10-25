@@ -9,8 +9,7 @@ New features:
 - Add `{ByColor,ByRole,ByCastlingSide}::{try_map,try_new_with}()`.
 - `Position::update_zobrist_hash()` now also handles castling, king and rook
   moves, en passant captures and most double pawn pushes incrementally
-  (in Chess, King of the Hill, Antichess, Horde, Crazyhouse, and for
-  non-captures in Atomic).
+  (in Chess, King of the Hill, Antichess, Horde, Crazyhouse and Atomic).
 
 ## v0.30.2
 

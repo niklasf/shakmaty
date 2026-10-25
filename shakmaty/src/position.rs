@@ -1648,26 +1648,73 @@ pub(crate) mod variant {
 
         fn update_zobrist_hash<V: ZobristValue>(
             &self,
-            current: V,
+            mut current: V,
             m: Move,
             mode: EnPassantMode,
         ) -> Option<V> {
+            current = do_update_zobrist_hash(
+                current,
+                self.turn,
+                &self.board,
+                &self.castles,
+                self.ep_square(mode),
+                m,
+                mode,
+            )?;
+
             match m {
-                // Do not try to resolve explosions
                 Move::Normal {
-                    capture: Some(_), ..
+                    role,
+                    from,
+                    capture: Some(_),
+                    to,
+                    promotion,
+                } => {
+                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
+                    current ^= self.zobrist_for_explosion(from, to);
                 }
-                | Move::EnPassant { .. } => None,
-                _ => do_update_zobrist_hash(
-                    current,
-                    self.turn,
-                    &self.board,
-                    &self.castles,
-                    self.ep_square(mode),
-                    m,
-                    mode,
-                ),
+                Move::EnPassant { from, to } => {
+                    current ^= V::zobrist_for_piece(to, self.turn.pawn());
+                    current ^= self.zobrist_for_explosion(from, to);
+                }
+                Move::Normal { .. } | Move::Castle { .. } | Move::Put { .. } => {}
             }
+
+            Some(current)
+        }
+    }
+
+    impl Atomic {
+        fn zobrist_for_explosion<V: ZobristValue>(&self, from: Square, to: Square) -> V {
+            let mut zobrist = V::default();
+
+            let explosion_radius = attacks::king_attacks(to)
+                & self.board.occupied()
+                & !self.board.pawns()
+                & !Bitboard::from_square(from);
+
+            // All castling rights of the opponent are lost if their king
+            // explodes. However, the one belonging to a captured rook is
+            // already accounted for.
+            let opponent_king_explodes = (explosion_radius & self.board.kings()).any();
+            if opponent_king_explodes {
+                zobrist ^= zobrist_for_castling_color(&self.castles, !self.turn);
+                zobrist ^= zobrist_for_castling_rook(&self.castles, !self.turn, to);
+            }
+
+            for explosion in explosion_radius {
+                let piece = self
+                    .board
+                    .piece_at(explosion)
+                    .expect("explosion radius restricted to occupied squares");
+                zobrist ^= V::zobrist_for_piece(explosion, piece);
+                if piece.role == Role::Rook && !(opponent_king_explodes && piece.color != self.turn)
+                {
+                    zobrist ^= zobrist_for_castling_rook(&self.castles, piece.color, explosion);
+                }
+            }
+
+            zobrist
         }
     }
 
