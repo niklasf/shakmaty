@@ -1662,59 +1662,49 @@ pub(crate) mod variant {
                 mode,
             )?;
 
-            match m {
+            let (from, to, capturer) = match m {
                 Move::Normal {
                     role,
                     from,
                     capture: Some(_),
                     to,
                     promotion,
-                } => {
-                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
-                    current ^= self.zobrist_for_explosion(from, to);
+                } => (from, to, promotion.unwrap_or(role).of(self.turn)),
+                Move::EnPassant { from, to } => (from, to, self.turn.pawn()),
+                Move::Normal { .. } | Move::Castle { .. } | Move::Put { .. } => {
+                    return Some(current);
                 }
-                Move::EnPassant { from, to } => {
-                    current ^= V::zobrist_for_piece(to, self.turn.pawn());
-                    current ^= self.zobrist_for_explosion(from, to);
-                }
-                Move::Normal { .. } | Move::Castle { .. } | Move::Put { .. } => {}
-            }
+            };
 
-            Some(current)
-        }
-    }
+            // The capturing piece explodes.
+            current ^= V::zobrist_for_piece(to, capturer);
 
-    impl Atomic {
-        fn zobrist_for_explosion<V: ZobristValue>(&self, from: Square, to: Square) -> V {
-            let mut zobrist = V::default();
+            // Castling rights after the move itself, already accounted for.
+            let mut castles_before = self.castles.clone();
+            castles_before.discard_rook(from);
+            castles_before.discard_rook(to);
+            let mut castles_after = castles_before.clone();
 
+            // Surrounding non-pawn pieces explode.
             let explosion_radius = attacks::king_attacks(to)
                 & self.board.occupied()
                 & !self.board.pawns()
                 & !Bitboard::from_square(from);
-
-            // All castling rights of the opponent are lost if their king
-            // explodes. However, the one belonging to a captured rook is
-            // already accounted for.
-            let opponent_king_explodes = (explosion_radius & self.board.kings()).any();
-            if opponent_king_explodes {
-                zobrist ^= zobrist_for_castling_color(&self.castles, !self.turn);
-                zobrist ^= zobrist_for_castling_rook(&self.castles, !self.turn, to);
-            }
-
             for explosion in explosion_radius {
                 let piece = self
                     .board
                     .piece_at(explosion)
                     .expect("explosion radius restricted to occupied squares");
-                zobrist ^= V::zobrist_for_piece(explosion, piece);
-                if piece.role == Role::Rook && !(opponent_king_explodes && piece.color != self.turn)
-                {
-                    zobrist ^= zobrist_for_castling_rook(&self.castles, piece.color, explosion);
+                current ^= V::zobrist_for_piece(explosion, piece);
+                castles_after.discard_rook(explosion);
+                if piece.role == Role::King {
+                    castles_after.discard_color(piece.color);
                 }
             }
 
-            zobrist
+            current ^= zobrist_for_castling_diff(&castles_before, &castles_after);
+
+            Some(current)
         }
     }
 
@@ -3648,6 +3638,18 @@ fn zobrist_for_castling_color<V: ZobristValue>(castles: &Castles, color: Color) 
     for side in CastlingSide::ALL {
         if castles.has(color, side) {
             zobrist ^= V::zobrist_for_castling_right(color, side);
+        }
+    }
+    zobrist
+}
+
+fn zobrist_for_castling_diff<V: ZobristValue>(before: &Castles, after: &Castles) -> V {
+    let mut zobrist = V::default();
+    for color in Color::ALL {
+        for side in CastlingSide::ALL {
+            if before.has(color, side) != after.has(color, side) {
+                zobrist ^= V::zobrist_for_castling_right(color, side);
+            }
         }
     }
     zobrist
