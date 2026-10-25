@@ -7,6 +7,9 @@ New features:
 - Add `VariantPosition::{with_position,with_position_mut,into_with_position}()`
   for static dispatch.
 - Add `{ByColor,ByRole,ByCastlingSide}::{try_map,try_new_with}()`.
+- `Position::update_zobrist_hash()` now also handles castling, king and rook
+  moves, en passant captures and most double pawn pushes incrementally
+  (in Chess, King of the Hill, Antichess and Horde).
 
 ## v0.30.2
 

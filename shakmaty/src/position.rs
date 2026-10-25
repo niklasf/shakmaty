@@ -1330,9 +1330,17 @@ impl Position for Chess {
         &self,
         current: V,
         m: Move,
-        _mode: EnPassantMode,
+        mode: EnPassantMode,
     ) -> Option<V> {
-        do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+        do_update_zobrist_hash(
+            current,
+            self.turn,
+            &self.board,
+            &self.castles,
+            self.ep_square(mode),
+            m,
+            mode,
+        )
     }
 }
 
@@ -1910,9 +1918,17 @@ pub(crate) mod variant {
             &self,
             current: V,
             m: Move,
-            _mode: EnPassantMode,
+            mode: EnPassantMode,
         ) -> Option<V> {
-            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+            do_update_zobrist_hash(
+                current,
+                self.turn,
+                &self.board,
+                &self.castles,
+                self.ep_square(mode),
+                m,
+                mode,
+            )
         }
     }
 
@@ -3301,9 +3317,17 @@ pub(crate) mod variant {
             &self,
             current: V,
             m: Move,
-            _mode: EnPassantMode,
+            mode: EnPassantMode,
         ) -> Option<V> {
-            do_update_zobrist_hash(current, m, self.turn, &self.castles, self.ep_square)
+            do_update_zobrist_hash(
+                current,
+                self.turn,
+                &self.board,
+                &self.castles,
+                self.ep_square(mode),
+                m,
+                mode,
+            )
         }
     }
 
@@ -3487,13 +3511,17 @@ fn validate<P: Position>(pos: &P, ep_square: Option<EnPassant>) -> PositionError
 
 fn do_update_zobrist_hash<V: ZobristValue>(
     mut current: V,
-    m: Move,
     turn: Color,
+    board: &Board,
     castles: &Castles,
-    ep_square: Option<EnPassant>,
+    ep_square: Option<Square>,
+    m: Move,
+    mode: EnPassantMode,
 ) -> Option<V> {
-    if ep_square.is_some() {
-        return None;
+    current ^= V::zobrist_for_white_turn();
+
+    if let Some(ep_square) = ep_square {
+        current ^= V::zobrist_for_en_passant_file(ep_square.file());
     }
 
     match m {
@@ -3503,21 +3531,93 @@ fn do_update_zobrist_hash<V: ZobristValue>(
             capture,
             to,
             promotion,
-        } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-            && role != Role::King
-            && !castles.castling_rights().contains(from)
-            && !castles.castling_rights().contains(to) =>
-        {
-            current ^= V::zobrist_for_white_turn();
+        } => {
             current ^= V::zobrist_for_piece(from, role.of(turn));
             current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(turn));
             if let Some(capture) = capture {
                 current ^= V::zobrist_for_piece(to, capture.of(!turn));
+                if capture == Role::Rook {
+                    current ^= zobrist_for_castling_rook(castles, !turn, to);
+                }
             }
+
+            if role == Role::King {
+                current ^= zobrist_for_castling_color(castles, turn);
+            } else if role == Role::Rook {
+                current ^= zobrist_for_castling_rook(castles, turn, from);
+            }
+
+            if role == Role::Pawn
+                && Square::abs_diff(from, to) == 16
+                && from.rank() == turn.fold_wb(Rank::Second, Rank::Seventh)
+            {
+                let ep_square =
+                    Square::from_coords(from.file(), turn.fold_wb(Rank::Third, Rank::Sixth));
+                let capturers =
+                    attacks::pawn_attacks(turn, ep_square) & board.by_piece(Role::Pawn.of(!turn));
+                let hashed = match mode {
+                    EnPassantMode::Always => true,
+                    EnPassantMode::PseudoLegal => capturers.any(),
+                    EnPassantMode::Legal => {
+                        if capturers.any() {
+                            // Legality of the en passant capture would require
+                            // the resulting position.
+                            return None;
+                        }
+                        false
+                    }
+                };
+                if hashed {
+                    current ^= V::zobrist_for_en_passant_file(ep_square.file());
+                }
+            }
+
             Some(current)
         }
-        _ => None,
+        Move::Castle { king, rook } => {
+            let side = CastlingSide::from_queen_side(rook < king);
+            current ^= V::zobrist_for_piece(king, turn.king());
+            current ^= V::zobrist_for_piece(rook, turn.rook());
+            current ^= V::zobrist_for_piece(
+                Square::from_coords(side.rook_to_file(), rook.rank()),
+                turn.rook(),
+            );
+            current ^= V::zobrist_for_piece(
+                Square::from_coords(side.king_to_file(), king.rank()),
+                turn.king(),
+            );
+            current ^= zobrist_for_castling_color(castles, turn);
+            Some(current)
+        }
+        Move::EnPassant { from, to } => {
+            current ^=
+                V::zobrist_for_piece(Square::from_coords(to.file(), from.rank()), (!turn).pawn());
+            current ^= V::zobrist_for_piece(from, turn.pawn());
+            current ^= V::zobrist_for_piece(to, turn.pawn());
+            Some(current)
+        }
+        Move::Put { .. } => None,
     }
+}
+
+fn zobrist_for_castling_color<V: ZobristValue>(castles: &Castles, color: Color) -> V {
+    let mut zobrist = V::default();
+    for side in CastlingSide::ALL {
+        if castles.has(color, side) {
+            zobrist ^= V::zobrist_for_castling_right(color, side);
+        }
+    }
+    zobrist
+}
+
+fn zobrist_for_castling_rook<V: ZobristValue>(castles: &Castles, color: Color, rook: Square) -> V {
+    let mut zobrist = V::default();
+    for side in CastlingSide::ALL {
+        if castles.rook(color, side) == Some(rook) {
+            zobrist ^= V::zobrist_for_castling_right(color, side);
+        }
+    }
+    zobrist
 }
 
 const fn is_standard_material(board: &Board, color: Color) -> bool {
