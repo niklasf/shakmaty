@@ -267,8 +267,20 @@ impl<T> ByColor<T> {
     where
         F: FnMut(T),
     {
-        f(self.white);
-        f(self.black);
+        let Ok(()) = self.try_for_each(|v| {
+            f(v);
+            Ok::<_, Infallible>(())
+        });
+    }
+
+    #[inline]
+    pub fn try_for_each<E, F>(self, mut f: F) -> Result<(), E>
+    where
+        F: FnMut(T) -> Result<(), E>,
+    {
+        f(self.white)?;
+        f(self.black)?;
+        Ok(())
     }
 
     #[inline]

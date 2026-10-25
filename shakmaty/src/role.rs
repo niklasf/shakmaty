@@ -221,12 +221,24 @@ impl<T> ByRole<T> {
     where
         F: FnMut(T),
     {
-        f(self.pawn);
-        f(self.knight);
-        f(self.bishop);
-        f(self.rook);
-        f(self.queen);
-        f(self.king);
+        let Ok(()) = self.try_for_each(|v| {
+            f(v);
+            Ok::<_, Infallible>(())
+        });
+    }
+
+    #[inline]
+    pub fn try_for_each<E, F>(self, mut f: F) -> Result<(), E>
+    where
+        F: FnMut(T) -> Result<(), E>,
+    {
+        f(self.pawn)?;
+        f(self.knight)?;
+        f(self.bishop)?;
+        f(self.rook)?;
+        f(self.queen)?;
+        f(self.king)?;
+        Ok(())
     }
 
     #[inline]

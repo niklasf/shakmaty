@@ -167,8 +167,20 @@ impl<T> ByCastlingSide<T> {
     where
         F: FnMut(T),
     {
-        f(self.king_side);
-        f(self.queen_side);
+        let Ok(()) = self.try_for_each(|v| {
+            f(v);
+            Ok::<_, Infallible>(())
+        });
+    }
+
+    #[inline]
+    pub fn try_for_each<E, F>(self, mut f: F) -> Result<(), E>
+    where
+        F: FnMut(T) -> Result<(), E>,
+    {
+        f(self.king_side)?;
+        f(self.queen_side)?;
+        Ok(())
     }
 
     #[inline]
