@@ -1648,32 +1648,25 @@ pub(crate) mod variant {
 
         fn update_zobrist_hash<V: ZobristValue>(
             &self,
-            mut current: V,
+            current: V,
             m: Move,
-            _mode: EnPassantMode,
+            mode: EnPassantMode,
         ) -> Option<V> {
-            if self.ep_square.is_some() {
-                return None;
-            }
-
             match m {
+                // Do not try to resolve explosions
                 Move::Normal {
-                    role,
-                    from,
-                    capture: None, // Do not try to resolve explosions
-                    to,
-                    promotion,
-                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-                    && role != Role::King
-                    && !self.castles.castling_rights().contains(from)
-                    && !self.castles.castling_rights().contains(to) =>
-                {
-                    current ^= V::zobrist_for_white_turn();
-                    current ^= V::zobrist_for_piece(from, role.of(self.turn));
-                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn));
-                    Some(current)
+                    capture: Some(_), ..
                 }
-                _ => None,
+                | Move::EnPassant { .. } => None,
+                _ => do_update_zobrist_hash(
+                    current,
+                    self.turn,
+                    &self.board,
+                    &self.castles,
+                    self.ep_square(mode),
+                    m,
+                    mode,
+                ),
             }
         }
     }
@@ -2523,38 +2516,43 @@ pub(crate) mod variant {
             &self,
             mut current: V,
             m: Move,
-            _mode: EnPassantMode,
+            mode: EnPassantMode,
         ) -> Option<V> {
-            if self.chess.ep_square.is_some() {
-                return None;
-            }
+            let turn = self.turn();
+            let pocket_delta = |role: Role, delta: i8| -> V {
+                let pocket_pieces = self.pockets[turn][role];
+                let mut zobrist = V::zobrist_for_pocket(turn, role, pocket_pieces);
+                zobrist ^=
+                    V::zobrist_for_pocket(turn, role, pocket_pieces.wrapping_add_signed(delta));
+                zobrist
+            };
+
+            current = do_update_zobrist_hash(
+                current,
+                turn,
+                &self.chess.board,
+                &self.chess.castles,
+                self.ep_square(mode),
+                m,
+                mode,
+            )?;
 
             match m {
                 Move::Normal {
-                    role,
                     from,
                     capture,
                     to,
                     promotion,
-                } if (role != Role::Pawn || Square::abs_diff(from, to) != 16)
-                    && role != Role::King
-                    && !self.castles().castling_rights().contains(from)
-                    && !self.castles().castling_rights().contains(to) =>
-                {
-                    current ^= V::zobrist_for_white_turn();
-                    current ^= V::zobrist_for_piece(from, role.of(self.turn()));
-                    current ^= V::zobrist_for_piece(to, promotion.unwrap_or(role).of(self.turn()));
+                    ..
+                } => {
                     if let Some(capture) = capture {
-                        current ^= V::zobrist_for_piece(to, capture.of(!self.turn()));
                         let capture = if self.promoted.contains(to) {
                             current ^= V::zobrist_for_promoted(to);
                             Role::Pawn
                         } else {
                             capture
                         };
-                        let pocket_pieces = self.pockets[self.turn()][capture];
-                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces);
-                        current ^= V::zobrist_for_pocket(self.turn(), capture, pocket_pieces + 1);
+                        current ^= pocket_delta(capture, 1);
                     }
                     if self.promoted.contains(from) {
                         current ^= V::zobrist_for_promoted(from);
@@ -2562,18 +2560,13 @@ pub(crate) mod variant {
                     if self.promoted.contains(from) || promotion.is_some() {
                         current ^= V::zobrist_for_promoted(to);
                     }
-                    Some(current)
                 }
-                Move::Put { role, to } => {
-                    current ^= V::zobrist_for_white_turn();
-                    current ^= V::zobrist_for_piece(to, role.of(self.turn()));
-                    let pocket_pieces = self.pockets[self.turn()][role];
-                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces);
-                    current ^= V::zobrist_for_pocket(self.turn(), role, pocket_pieces - 1);
-                    Some(current)
-                }
-                _ => None,
+                Move::EnPassant { .. } => current ^= pocket_delta(Role::Pawn, 1),
+                Move::Put { role, .. } => current ^= pocket_delta(role, -1),
+                Move::Castle { .. } => {}
             }
+
+            Some(current)
         }
     }
 
@@ -3596,7 +3589,10 @@ fn do_update_zobrist_hash<V: ZobristValue>(
             current ^= V::zobrist_for_piece(to, turn.pawn());
             Some(current)
         }
-        Move::Put { .. } => None,
+        Move::Put { role, to } => {
+            current ^= V::zobrist_for_piece(to, role.of(turn));
+            Some(current)
+        }
     }
 }
 
