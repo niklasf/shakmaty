@@ -1708,6 +1708,18 @@ pub(crate) mod variant {
         }
     }
 
+    fn zobrist_for_castling_diff<V: ZobristValue>(before: &Castles, after: &Castles) -> V {
+        let mut zobrist = V::default();
+        for color in Color::ALL {
+            for side in CastlingSide::ALL {
+                if before.has(color, side) != after.has(color, side) {
+                    zobrist ^= V::zobrist_for_castling_right(color, side);
+                }
+            }
+        }
+        zobrist
+    }
+
     /// An Antichess position. Antichess is also known as Giveaway, but players
     /// start without castling rights.
     #[derive(Clone, Debug)]
@@ -3638,18 +3650,6 @@ fn zobrist_for_castling_color<V: ZobristValue>(castles: &Castles, color: Color) 
     for side in CastlingSide::ALL {
         if castles.has(color, side) {
             zobrist ^= V::zobrist_for_castling_right(color, side);
-        }
-    }
-    zobrist
-}
-
-fn zobrist_for_castling_diff<V: ZobristValue>(before: &Castles, after: &Castles) -> V {
-    let mut zobrist = V::default();
-    for color in Color::ALL {
-        for side in CastlingSide::ALL {
-            if before.has(color, side) != after.has(color, side) {
-                zobrist ^= V::zobrist_for_castling_right(color, side);
-            }
         }
     }
     zobrist
