@@ -1301,7 +1301,7 @@ const fn nth_broadword(mask: u64, n: usize) -> Option<u32> {
     s = (s + (s >> 4)) & 0x0f0f_0f0f_0f0f_0f0f;
     let p = s.wrapping_mul(L8); // Prefix sums, total in top byte
 
-    if n >= 64 || n as u64 >= p >> 56 {
+    if n as u64 >= p >> 56 {
         return None;
     }
     let n = n as u32;
