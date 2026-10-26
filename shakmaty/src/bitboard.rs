@@ -562,22 +562,17 @@ impl Bitboard {
     /// ```
     #[inline]
     pub const fn nth(self, n: usize) -> Option<Square> {
-        if n >= self.count() {
-            return None;
-        }
-
-        #[inline]
-        const fn at_most(mask: u64, t: u32, n: u32) -> u32 {
-            ((mask & ((1 << t) - 1)).count_ones() <= n) as u32
-        }
-
         let Bitboard(mask) = self;
-        let n = n as u32;
-
-        let mut p = 16 * (at_most(mask, 16, n) + at_most(mask, 32, n) + at_most(mask, 48, n));
-        p += 4 * (at_most(mask, p + 4, n) + at_most(mask, p + 8, n) + at_most(mask, p + 12, n));
-        p += at_most(mask, p + 1, n) + at_most(mask, p + 2, n) + at_most(mask, p + 3, n);
-        Some(Square::new(p))
+        match cfg_select! {
+            any(
+                all(target_arch = "x86_64", target_feature = "popcnt"),
+                all(target_arch = "riscv64", target_feature = "zbb"),
+            ) => nth_popcount(mask, n),
+            _ => nth_broadword(mask, n),
+        } {
+            Some(sq) => Some(Square::new(sq)),
+            None => None,
+        }
     }
 
     /// An iterator over the subsets of this bitboard.
@@ -1276,6 +1271,59 @@ impl<Config> bincode::Decode<Config> for Bitboard {
 #[cfg(feature = "bincode")]
 bincode::impl_borrow_decode!(Bitboard);
 
+#[inline]
+#[allow(dead_code)] // Depending on target
+const fn nth_popcount(mask: u64, n: usize) -> Option<u32> {
+    if n >= mask.count_ones() as usize {
+        return None;
+    }
+
+    #[inline]
+    const fn at_most(mask: u64, t: u32, n: u32) -> u32 {
+        ((mask & ((1 << t) - 1)).count_ones() <= n) as u32
+    }
+
+    let n = n as u32;
+    let mut p = 16 * (at_most(mask, 16, n) + at_most(mask, 32, n) + at_most(mask, 48, n));
+    p += 4 * (at_most(mask, p + 4, n) + at_most(mask, p + 8, n) + at_most(mask, p + 12, n));
+    p += at_most(mask, p + 1, n) + at_most(mask, p + 2, n) + at_most(mask, p + 3, n);
+    Some(p)
+}
+
+#[inline]
+#[allow(dead_code)] // Depending on target
+const fn nth_broadword(mask: u64, n: usize) -> Option<u32> {
+    const L8: u64 = 0x0101_0101_0101_0101; // Low bit of every byte
+    const H8: u64 = 0x8080_8080_8080_8080; // Top bit of every byte
+
+    let mut s = mask - ((mask >> 1) & 0x5555_5555_5555_5555);
+    s = (s & 0x3333_3333_3333_3333) + ((s >> 2) & 0x3333_3333_3333_3333);
+    s = (s + (s >> 4)) & 0x0f0f_0f0f_0f0f_0f0f;
+    let p = s.wrapping_mul(L8); // Prefix sums, total in top byte
+
+    if n >= 64 || n as u64 >= p >> 56 {
+        return None;
+    }
+    let n = n as u32;
+
+    // The first byte where the top bit is absent contains the n-th square.
+    let le = (((n as u64) * L8) | H8) - p;
+    let j = ((le & H8) >> 7).wrapping_mul(L8) >> 56;
+    let shift = 8 * j as u32;
+
+    let before = ((p << 8) >> shift) as u32 & 0xff;
+    let r = n - before;
+
+    let b = (mask >> shift) & 0xff;
+    let t = (b * L8) & 0x8040_2010_0804_0201;
+    let t = ((t + 0x7f7f_7f7f_7f7f_7f7f) & H8) >> 7;
+    let q = t.wrapping_mul(L8);
+    let le = (((r as u64) * L8) | H8) - q;
+    let k = ((le & H8) >> 7).wrapping_mul(L8) >> 56;
+
+    Some(shift + k as u32)
+}
+
 /// Iterator over the squares of a [`Bitboard`].
 #[derive(Debug, Default, Clone)]
 pub struct IntoIter(Bitboard);
@@ -1404,6 +1452,7 @@ impl FusedIterator for CarryRippler {}
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
+    use arrayvec::ArrayVec;
 
     use super::*;
 
@@ -1441,6 +1490,36 @@ mod tests {
         assert_eq!(Bitboard::FULL.nth(64), None);
         assert_eq!(Bitboard::FULL.nth(usize::MAX), None);
         assert_eq!(Bitboard::CORNERS.nth(3), Some(Square::H8));
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore)]
+    fn test_nth_model() {
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for i in 0..10_000 {
+            let mut mask = u64::MAX;
+            for _ in 0..1 + i % 4 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                mask &= state;
+            }
+            let bb = Bitboard(mask);
+            let model = ArrayVec::<Square, 64>::from_iter(bb);
+
+            for n in (0..=64).chain([128, usize::MAX]) {
+                let expected = model.get(n).copied();
+                assert_eq!(bb.nth(n), expected, "{bb:?} nth {n}");
+                assert_eq!(nth_popcount(mask, n), expected.map(u32::from));
+                assert_eq!(nth_broadword(mask, n), expected.map(u32::from));
+
+                assert_eq!(model.iter().nth(n).copied(), bb.into_iter().nth(n));
+                assert_eq!(
+                    model.iter().nth_back(n).copied(),
+                    bb.into_iter().nth_back(n)
+                );
+            }
+        }
     }
 
     #[test]
