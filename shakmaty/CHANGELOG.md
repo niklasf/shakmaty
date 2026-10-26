@@ -11,6 +11,11 @@ New features:
   moves, en passant captures and most double pawn pushes incrementally
   (in Chess, King of the Hill, Antichess, Horde, Crazyhouse and Atomic).
 
+Performance improvements:
+
+- Optimize `Position::play_unchecked()` (~1.1x when purely replaying moves,
+  negligible when combined with work like PGN parsing).
+
 ## v0.30.2
 
 Performance improvements:

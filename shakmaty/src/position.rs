@@ -3398,6 +3398,7 @@ pub(crate) mod variant {
 }
 
 #[allow(clippy::too_many_arguments)] // But typesafe
+#[inline] // Only relevant when variants enabled
 fn do_move(
     board: &mut Board,
     promoted: &mut Bitboard,
@@ -3425,20 +3426,29 @@ fn do_move(
             to,
             promotion,
         } => {
-            if role == Role::Pawn && to - from == 16 && from.rank() == Rank::Second {
-                *ep_square = from.offset(8).map(EnPassant);
-            } else if role == Role::Pawn && from - to == 16 && from.rank() == Rank::Seventh {
-                *ep_square = from.offset(-8).map(EnPassant);
+            // Deliberately fused with &, to make a single rarely taken branch.
+            let double_push = (role == Role::Pawn)
+                & (from.rank() == color.fold_wb(Rank::Second, Rank::Seventh))
+                & (to.rank() == color.fold_wb(Rank::Fourth, Rank::Fifth));
+            if double_push {
+                *ep_square = Some(EnPassant(Square::from_coords(
+                    from.file(),
+                    color.fold_wb(Rank::Third, Rank::Sixth),
+                )));
             }
 
-            if role == Role::King {
-                castles.discard_color(color);
-            } else if role == Role::Rook {
-                castles.discard_rook(from);
-            }
+            // More predictable with extra check, as most king and rook moves
+            // are played when castling rights are already lost.
+            if !castles.is_empty() {
+                if role == Role::King {
+                    castles.discard_color(color);
+                } else if role == Role::Rook {
+                    castles.discard_rook(from);
+                }
 
-            if capture == Some(Role::Rook) {
-                castles.discard_rook(to);
+                if capture == Some(Role::Rook) {
+                    castles.discard_rook(to);
+                }
             }
 
             board.discard_piece_at(from);
