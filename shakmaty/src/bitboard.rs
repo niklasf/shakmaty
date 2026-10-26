@@ -547,6 +547,39 @@ impl Bitboard {
         }
     }
 
+    /// Returns the `n`-th square, if any.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use shakmaty::{Bitboard, Square};
+    ///
+    /// assert_eq!(Bitboard::CORNERS.nth(0), Some(Square::A1));
+    /// assert_eq!(Bitboard::CORNERS.nth(1), Some(Square::H1));
+    /// assert_eq!(Bitboard::CORNERS.nth(2), Some(Square::A8));
+    /// assert_eq!(Bitboard::CORNERS.nth(3), Some(Square::H8));
+    /// assert_eq!(Bitboard::CORNERS.nth(4), None);
+    /// ```
+    #[inline]
+    pub const fn nth(self, n: usize) -> Option<Square> {
+        if n >= self.count() {
+            return None;
+        }
+
+        #[inline]
+        const fn at_most(mask: u64, t: u32, n: u32) -> u32 {
+            ((mask & ((1 << t) - 1)).count_ones() <= n) as u32
+        }
+
+        let Bitboard(mask) = self;
+        let n = n as u32;
+
+        let mut p = 16 * (at_most(mask, 16, n) + at_most(mask, 32, n) + at_most(mask, 48, n));
+        p += 4 * (at_most(mask, p + 4, n) + at_most(mask, p + 8, n) + at_most(mask, p + 12, n));
+        p += at_most(mask, p + 1, n) + at_most(mask, p + 2, n) + at_most(mask, p + 3, n);
+        Some(Square::new(p))
+    }
+
     /// An iterator over the subsets of this bitboard.
     ///
     /// # Examples
@@ -1272,6 +1305,17 @@ impl Iterator for IntoIter {
     }
 
     #[inline]
+    fn nth(&mut self, n: usize) -> Option<Square> {
+        let square = self.0.nth(n);
+        self.0 = match square {
+            // Discard the returned square and all squares before it.
+            Some(square) => Bitboard(self.0.0 & !(2_u64 << u32::from(square)).wrapping_sub(1)),
+            None => Bitboard::EMPTY,
+        };
+        square
+    }
+
+    #[inline]
     fn fold<B, F>(self, init: B, mut f: F) -> B
     where
         F: FnMut(B, Square) -> B,
@@ -1297,6 +1341,18 @@ impl DoubleEndedIterator for IntoIter {
     #[inline]
     fn next_back(&mut self) -> Option<Square> {
         self.0.pop_back()
+    }
+
+    #[inline]
+    fn nth_back(&mut self, n: usize) -> Option<Square> {
+        // Wraps to an index >= count if n >= count, so nth() returns None.
+        let square = self.0.nth(self.0.count().wrapping_sub(n).wrapping_sub(1));
+        self.0 = match square {
+            // Discard the returned square and all squares after it.
+            Some(square) => Bitboard(self.0.0 & ((1_u64 << u32::from(square)) - 1)),
+            None => Bitboard::EMPTY,
+        };
+        square
     }
 }
 
@@ -1375,6 +1431,47 @@ mod tests {
             Some(Square::H1)
         );
         assert_eq!(Bitboard(0).last(), None);
+    }
+
+    #[test]
+    fn test_nth() {
+        assert_eq!(Bitboard::EMPTY.nth(0), None);
+        assert_eq!(Bitboard::FULL.nth(0), Some(Square::A1));
+        assert_eq!(Bitboard::FULL.nth(63), Some(Square::H8));
+        assert_eq!(Bitboard::FULL.nth(64), None);
+        assert_eq!(Bitboard::FULL.nth(usize::MAX), None);
+        assert_eq!(Bitboard::CORNERS.nth(3), Some(Square::H8));
+    }
+
+    #[test]
+    #[allow(clippy::iter_nth_zero)]
+    fn test_into_iter_nth() {
+        let bb = Bitboard(0x8000_0000_0012_0401); // A1, C2, B3, E3, H8
+        let mut iter = bb.into_iter();
+        assert_eq!(iter.nth(1), Some(Square::C2));
+        assert_eq!(iter.next(), Some(Square::B3));
+        assert_eq!(iter.nth(1), Some(Square::H8));
+        assert_eq!(iter.next(), None);
+
+        let mut iter = bb.into_iter();
+        assert_eq!(iter.nth(5), None);
+        assert_eq!(iter.next(), None);
+
+        let mut iter = bb.into_iter();
+        assert_eq!(iter.nth_back(1), Some(Square::E3));
+        assert_eq!(iter.next_back(), Some(Square::B3));
+        assert_eq!(iter.nth(0), Some(Square::A1));
+        assert_eq!(iter.nth_back(0), Some(Square::C2));
+        assert_eq!(iter.nth_back(0), None);
+        assert_eq!(iter.next(), None);
+
+        let mut iter = bb.into_iter();
+        assert_eq!(iter.nth_back(5), None);
+        assert_eq!(iter.next_back(), None);
+
+        assert_eq!(bb.into_iter().nth_back(usize::MAX), None);
+        assert_eq!(bb.into_iter().nth_back(usize::MAX - 1), None);
+        assert_eq!(Bitboard::EMPTY.into_iter().nth_back(0), None);
     }
 
     #[test]

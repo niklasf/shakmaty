@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use gungraun::{library_benchmark, library_benchmark_group, main};
 use shakmaty::{
-    CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
+    Bitboard, CastlingMode, Chess, EnPassantMode, Move, Position, Role, Setup, Square,
     fen::Fen,
     packed::{PackedSetup, PackedUciMove},
     perft,
@@ -148,6 +148,22 @@ fn bench_packed_uci_roundtrip() {
     }
 }
 
+#[library_benchmark]
+fn bench_bitboard_nth() -> usize {
+    let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+    let mut sum = 0;
+    for _ in 0..1000 {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        let bb = black_box(Bitboard(state & (state >> 1))); // ~16 squares
+        for n in 0..bb.count() {
+            sum += usize::from(bb.nth(black_box(n)).expect("in range"));
+        }
+    }
+    sum
+}
+
 library_benchmark_group!(
     name = benches;
     benchmarks =
@@ -160,6 +176,7 @@ library_benchmark_group!(
         bench_fen_roundtrip,
         bench_packed_setup_roundtrip,
         bench_packed_uci_roundtrip,
+        bench_bitboard_nth,
 );
 
 main!(library_benchmark_groups = benches);
