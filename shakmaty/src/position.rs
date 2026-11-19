@@ -2967,6 +2967,8 @@ pub(crate) mod variant {
                 errors |= PositionErrorKinds::MISSING_KING;
             } else if pos.board().kings().more_than_one() {
                 errors |= PositionErrorKinds::TOO_MANY_KINGS;
+            } else if pos.board().king_of(Black).is_none() {
+                errors |= PositionErrorKinds::MISSING_KING | PositionErrorKinds::TOO_MANY_KINGS;
             }
 
             for color in Color::ALL {
