@@ -1,6 +1,6 @@
 # Changelog for shakmaty
 
-## Unreleased
+## v0.30.3
 
 New features:
 

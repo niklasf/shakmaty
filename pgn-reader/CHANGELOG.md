@@ -1,6 +1,6 @@
 # Changelog for pgn-reader
 
-## Unreleased
+## v0.29.2
 
 - Major peformance improvements for `Reader::skip_game()`.
   The `parallel_validate` example now shows how skipping can be used to
