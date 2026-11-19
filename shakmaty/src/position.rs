@@ -912,15 +912,18 @@ enum PositionMutation {
 
 #[cfg(feature = "arbitrary")]
 fn arbitrary_position<P>(
-    mutations: impl IntoIterator<Item = arbitrary::Result<PositionMutation>>,
+    u: &mut arbitrary::Unstructured<'_>,
+    mutations: usize,
 ) -> arbitrary::Result<P>
 where
     P: Position + FromSetup + Default,
 {
     let mut pos = P::default();
-    for mutation in mutations {
-        let mutation = mutation?;
-        match mutation {
+    for _ in 0..mutations {
+        if u.is_empty() {
+            break;
+        }
+        match u.arbitrary()? {
             PositionMutation::LegalMove { idx } => {
                 let moves = pos.legal_moves();
                 if let Some(idx) = usize::from(idx).checked_rem(moves.len()) {
@@ -1103,11 +1106,12 @@ impl FromSetup for Chess {
 #[cfg(feature = "arbitrary")]
 impl arbitrary::Arbitrary<'_> for Chess {
     fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-        arbitrary_position(u.arbitrary_iter()?)
+        let mutations = u.arbitrary_len::<PositionMutation>()?;
+        arbitrary_position(u, mutations)
     }
 
-    fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-        arbitrary_position(u.arbitrary_take_rest_iter()?)
+    fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+        arbitrary_position(&mut u, usize::MAX)
     }
 }
 
@@ -1458,11 +1462,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Atomic {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -1819,11 +1824,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Antichess {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -2005,11 +2011,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for KingOfTheHill {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -2162,11 +2169,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for ThreeCheck {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -2394,11 +2402,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Crazyhouse {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -2723,11 +2732,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for RacingKings {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 
@@ -2995,11 +3005,12 @@ pub(crate) mod variant {
     #[cfg(feature = "arbitrary")]
     impl arbitrary::Arbitrary<'_> for Horde {
         fn arbitrary(u: &mut arbitrary::Unstructured) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_iter()?)
+            let mutations = u.arbitrary_len::<PositionMutation>()?;
+            arbitrary_position(u, mutations)
         }
 
-        fn arbitrary_take_rest(u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
-            arbitrary_position(u.arbitrary_take_rest_iter()?)
+        fn arbitrary_take_rest(mut u: arbitrary::Unstructured<'_>) -> arbitrary::Result<Self> {
+            arbitrary_position(&mut u, usize::MAX)
         }
     }
 

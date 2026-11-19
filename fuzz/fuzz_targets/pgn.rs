@@ -166,26 +166,26 @@ impl Visitor for BreakOnToken {
 }
 
 #[derive(Arbitrary)]
-struct TestCase {
-    pgn: Vec<u8>,
+struct TestCase<'a> {
     left_visitor: BreakOnToken,
     right_visitor: BreakOnToken,
+    pgn: &'a [u8],
 }
 
-impl fmt::Debug for TestCase {
+impl fmt::Debug for TestCase<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TestCase")
-            .field("pgn", &String::from_utf8_lossy(&self.pgn))
             .field("left_visitor", &self.left_visitor)
             .field("right_visitor", &self.right_visitor)
+            .field("pgn", &String::from_utf8_lossy(self.pgn))
             .finish()
     }
 }
 
-fuzz_target!(|data: TestCase| {
+fuzz_target!(|data: TestCase<'_>| {
     let mut data = data;
-    let mut left_reader = Reader::new(io::Cursor::new(&data.pgn));
-    let mut right_reader = Reader::new(io::Cursor::new(&data.pgn));
+    let mut left_reader = Reader::new(io::Cursor::new(data.pgn));
+    let mut right_reader = Reader::new(io::Cursor::new(data.pgn));
 
     // Read first game with different visitors.
     if left_reader.read_game(&mut data.left_visitor).is_err() {

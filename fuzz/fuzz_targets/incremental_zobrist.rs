@@ -5,18 +5,18 @@ use libfuzzer_sys::fuzz_target;
 use shakmaty::{EnPassantMode, Position, variant::VariantPosition, zobrist::Zobrist64};
 
 #[derive(Debug, Arbitrary)]
-struct Data {
+struct Data<'a> {
     mode: EnPassantMode,
     pos: VariantPosition,
-    move_indexes: Vec<u8>,
+    move_indexes: &'a [u8],
 }
 
-fuzz_target!(|data: Data| {
+fuzz_target!(|data: Data<'_>| {
     let mut data = data;
 
     let mut hash = Some(data.pos.zobrist_hash::<Zobrist64>(data.mode));
 
-    for index in &data.move_indexes {
+    for index in data.move_indexes {
         if let Some(hash) = hash {
             assert_eq!(hash, data.pos.zobrist_hash(data.mode));
         }

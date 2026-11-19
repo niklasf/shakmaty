@@ -1452,6 +1452,7 @@ impl FusedIterator for CarryRippler {}
 mod tests {
     #[cfg(feature = "alloc")]
     use alloc::format;
+
     use arrayvec::ArrayVec;
 
     use super::*;
