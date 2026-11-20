@@ -307,15 +307,25 @@ impl<R: Read> Reader<R> {
 
             let value_start = left_quote + 1;
             let mut right_quote = value_start;
-            let consumed = loop {
+            let (consumed, ket_skipped) = loop {
                 match memchr::memchr3(b'\\', b'"', b'\n', &self.buffer.data()[right_quote..]) {
                     Some(delta) if self.buffer.data()[right_quote + delta] == b'"' => {
                         right_quote += delta;
-                        break right_quote + 1;
+                        let rest = &self.buffer.data()[right_quote + 1..];
+                        if rest.starts_with(b"]\n[") {
+                            // Fast path for the common case, equivalent to
+                            // skip_ket().
+                            break (right_quote + 3, true);
+                        }
+                        if is_closing_quote(rest) {
+                            break (right_quote + 1, false);
+                        }
+                        // Tolerate unescaped quote inside tag value.
+                        right_quote += 1;
                     }
                     Some(delta) if self.buffer.data()[right_quote + delta] == b'\n' => {
                         right_quote += delta;
-                        break right_quote;
+                        break (right_quote, false);
                     }
                     Some(delta) => {
                         // Skip escaped character.
@@ -340,10 +350,7 @@ impl<R: Read> Reader<R> {
 
             self.buffer.consume(consumed);
 
-            if self.buffer.data().starts_with(b"]\n[") {
-                // Fast path for the common case, equivalent to skip_ket().
-                self.buffer.consume(2);
-            } else {
+            if !ket_skipped {
                 self.skip_ket()?;
             }
 
@@ -972,12 +979,22 @@ impl<R: Seek> Seek for Reader<R> {
     }
 }
 
-// Helper function for handling comments that don't fit in the movetext token
-// buffer. When we encounter these, we'll call `Vistor::comment` several times
-// with roughly buffer-sized chunks, but we want to avoid putting chunk
-// boundaries in the middle of a multibyte UTF-8 sequence. We don't assume or
-// require that the PGN is UTF-8 encoded at all. To prevent an infinite loop,
-// we avoid ever turning a non-empty slice into an empty one.
+/// A quote closes a tag value only if it is followed by `]`, the end of the
+/// line, or the end of the input (ignoring horizontal whitespace).
+#[inline]
+fn is_closing_quote(rest: &[u8]) -> bool {
+    matches!(
+        rest.iter().find(|&&ch| !matches!(ch, b' ' | b'\t' | b'\r')),
+        None | Some(b']' | b'\n')
+    )
+}
+
+/// Helper function for handling comments that don't fit in the movetext token
+/// buffer. When we encounter these, we'll call `Vistor::comment` several times
+/// with roughly buffer-sized chunks, but we want to avoid putting chunk
+/// boundaries in the middle of a multibyte UTF-8 sequence. We don't assume or
+/// require that the PGN is UTF-8 encoded at all. To prevent an infinite loop,
+/// we avoid ever turning a non-empty slice into an empty one.
 fn trim_partial_utf8(buf: &[u8]) -> &[u8] {
     let scan_start = buf.len().saturating_sub(4);
     let Some(last_start_byte) = (scan_start..buf.len())
@@ -1236,6 +1253,55 @@ mod tests {
                 Token::BeginTags,
                 Token::Tag(b"Five".into(), b"5".into()),
                 Token::BeginMovetext,
+                Token::EndGame,
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_unescaped_quotes_in_tag_value() -> io::Result<()> {
+        let pgn = br#"[WhiteTeam "United States "B" Olympiad"]
+[BlackTeam "United States "A" Olympiad"]
+[Site "a "b" c" ]
+[Annotator "The "Annotator""]
+[Round ""]
+[A "a "b" c"] [B "d"][C "e "f""] [D "g" ]
+[Event "x "y"
+
+1. e4 "#;
+
+        let game = Reader::new(io::Cursor::new(pgn))
+            .read_game(&mut CollectTokens)?
+            .expect("found game");
+
+        assert_eq!(
+            game,
+            &[
+                Token::BeginTags,
+                Token::Tag(b"WhiteTeam".into(), b"United States \"B\" Olympiad".into()),
+                Token::Tag(b"BlackTeam".into(), b"United States \"A\" Olympiad".into()),
+                Token::Tag(b"Site".into(), b"a \"b\" c".into()),
+                Token::Tag(b"Annotator".into(), b"The \"Annotator\"".into()),
+                Token::Tag(b"Round".into(), b"".into()),
+                Token::Tag(b"A".into(), b"a \"b\" c".into()),
+                Token::Tag(b"B".into(), b"d".into()),
+                Token::Tag(b"C".into(), b"e \"f\"".into()),
+                Token::Tag(b"D".into(), b"g".into()),
+                Token::Tag(b"Event".into(), b"x \"y".into()),
+                Token::BeginMovetext,
+                Token::San(SanPlus {
+                    san: San::Normal {
+                        role: Role::Pawn,
+                        file: None,
+                        rank: None,
+                        capture: false,
+                        to: Square::E4,
+                        promotion: None
+                    },
+                    suffix: None
+                }),
                 Token::EndGame,
             ]
         );
