@@ -4415,16 +4415,12 @@ mod tests {
     fn test_antichess_empty_side_setup() {
         use super::variant::Antichess;
 
-        for fen in [
-            // The side that just lost all pieces must be to move.
-            "8/8/8/8/8/8/8/K7 w - - 0 1",
-            "1b6/8/8/8/8/8/8/8 b - - 0 1",
-        ] {
+        for fen in ["8/8/8/8/8/8/8/K7 w - - 0 1", "1b6/8/8/8/8/8/8/8 b - - 0 1"] {
             let err = fen
                 .parse::<Fen>()
                 .expect("valid fen")
                 .into_position::<Antichess>(CastlingMode::Standard)
-                .expect_err("empty side not to move");
+                .expect_err("the side that just lost all pieces must be to move");
             assert_eq!(err.kinds(), PositionErrorKinds::VARIANT, "{fen}");
         }
 
