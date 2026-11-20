@@ -1817,6 +1817,10 @@ pub(crate) mod variant {
                 - PositionErrorKinds::OPPOSITE_CHECK
                 - PositionErrorKinds::IMPOSSIBLE_CHECK;
 
+            if pos.them().is_empty() {
+                errors |= PositionErrorKinds::VARIANT;
+            }
+
             PositionError { pos, errors }.strict()
         }
     }
@@ -4404,6 +4408,38 @@ mod tests {
                 "{possible_winner} can not win {fen}"
             );
         }
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_antichess_empty_side_setup() {
+        use super::variant::Antichess;
+
+        for fen in [
+            // The side that just lost all pieces must be to move.
+            "8/8/8/8/8/8/8/K7 w - - 0 1",
+            "1b6/8/8/8/8/8/8/8 b - - 0 1",
+        ] {
+            let err = fen
+                .parse::<Fen>()
+                .expect("valid fen")
+                .into_position::<Antichess>(CastlingMode::Standard)
+                .expect_err("empty side not to move");
+            assert_eq!(err.kinds(), PositionErrorKinds::VARIANT, "{fen}");
+        }
+
+        let pos: Antichess = "8/8/8/8/8/8/8/k7 w - - 0 1"
+            .parse::<Fen>()
+            .expect("valid fen")
+            .into_position(CastlingMode::Standard)
+            .expect("valid position");
+        assert!(pos.is_variant_end());
+        assert_eq!(
+            pos.outcome(),
+            Outcome::Known(KnownOutcome::Decisive {
+                winner: Color::White
+            })
+        );
     }
 
     #[test]
