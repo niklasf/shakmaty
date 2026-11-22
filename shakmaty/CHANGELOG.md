@@ -1,5 +1,12 @@
 # Changelog for shakmaty
 
+## Unreleased
+
+Breaking changes:
+
+- `PackedSetup` changes the encoding of remaining checks in Three-check to
+  actually match Lichess. Existing data needs unpacking with 0.30.x.
+
 ## v0.30.3
 
 New features:

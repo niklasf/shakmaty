@@ -272,11 +272,12 @@ impl PackedSetup {
         }
 
         if variant == VARIANT_THREECHECK {
-            let remaining_checks = setup.remaining_checks.unwrap_or_default();
-            writer.write_nibbles_unchecked(
-                remaining_checks.white.into(),
-                remaining_checks.black.into(),
-            );
+            let received_checks = setup
+                .remaining_checks
+                .unwrap_or_default()
+                .into_swapped()
+                .map(|remaining| 3 - u8::from(remaining));
+            writer.write_nibbles_unchecked(received_checks.white, received_checks.black);
         } else if setup.remaining_checks.is_some() {
             return Err(PackSetupError::RemainingChecks);
         }
@@ -417,11 +418,13 @@ impl PackedSetup {
         }
 
         if variant == VARIANT_THREECHECK {
-            let (lo, hi) = reader.read_nibbles();
-            setup.remaining_checks = Some(ByColor {
-                white: lo.try_into().map_err(|_| UnpackSetupError { _priv: () })?,
-                black: hi.try_into().map_err(|_| UnpackSetupError { _priv: () })?,
-            });
+            let (white, black) = reader.read_nibbles();
+            setup.remaining_checks = Some(
+                ByColor { white, black }
+                    .into_swapped()
+                    .try_map(|received| (3 - i32::from(received)).try_into())
+                    .map_err(|_| UnpackSetupError { _priv: () })?,
+            );
         }
 
         Ok((setup, variant))
