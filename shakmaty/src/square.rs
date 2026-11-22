@@ -549,6 +549,7 @@ impl Square {
     /// assert_eq!(Square::A8.flip_vertical(), Square::A1);
     /// assert_eq!(Square::D3.flip_vertical(), Square::D6);
     /// ```
+    #[doc(alias = "mirror")]
     #[must_use]
     #[inline]
     pub const fn flip_vertical(self) -> Square {

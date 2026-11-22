@@ -625,6 +625,7 @@ impl Bitboard {
     /// // . 1 . . . 1 . .
     /// // . 1 1 1 1 . . .
     /// ```
+    #[doc(alias = "mirror")]
     #[must_use]
     #[inline]
     pub const fn flip_vertical(self) -> Bitboard {
