@@ -3692,11 +3692,12 @@ fn zobrist_for_castling_rook<V: ZobristValue>(castles: &Castles, color: Color, r
 
 const fn is_standard_material(board: &Board, color: Color) -> bool {
     let our = board.by_color(color);
-    let promoted_pieces = board
-        .queens()
-        .intersect_const(our)
-        .count()
-        .saturating_sub(1)
+    let promoted_pieces = board.kings().intersect_const(our).count().saturating_sub(1)
+        + board
+            .queens()
+            .intersect_const(our)
+            .count()
+            .saturating_sub(1)
         + board.rooks().intersect_const(our).count().saturating_sub(2)
         + board
             .knights()
@@ -4407,6 +4408,36 @@ mod tests {
                 pos.has_insufficient_material(!possible_winner),
                 "{possible_winner} can not win {fen}"
             );
+        }
+    }
+
+    #[cfg(feature = "variant")]
+    #[test]
+    fn test_antichess_promoted_kings_setup() {
+        use super::variant::Antichess;
+
+        // Every king beyond the first must have been promoted from a pawn.
+        for fen in [
+            "4k3/8/8/8/8/K7/PPPPPPPP/RNBKKBNR w - - 0 1",
+            "4k3/8/8/8/8/8/PPPPPPPP/RNBQKKNR w - - 0 1",
+        ] {
+            let err = fen
+                .parse::<Fen>()
+                .expect("valid fen")
+                .into_position::<Antichess>(CastlingMode::Standard)
+                .expect_err("too much material");
+            assert_eq!(err.kinds(), PositionErrorKinds::TOO_MUCH_MATERIAL, "{fen}");
+        }
+
+        for fen in [
+            "4k3/8/8/8/8/K7/PPPPPPP1/RNBQKBNR w - - 0 1",
+            "4k3/8/8/8/8/8/8/KKKKKKKK w - - 0 1",
+            "4k3/8/8/8/8/8/PPPPPPPP/RNBQ1BNR w - - 0 1",
+        ] {
+            fen.parse::<Fen>()
+                .expect("valid fen")
+                .into_position::<Antichess>(CastlingMode::Standard)
+                .unwrap_or_else(|err| panic!("{fen}: {err}"));
         }
     }
 
