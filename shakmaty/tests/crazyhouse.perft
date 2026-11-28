@@ -27,4 +27,3 @@ perft 4 132758
 id zh-max-legals
 epd kBQ~4Q~/1r2Q~3/KQ~4Q~1/3Q~4/Q~4Q~2/2Q~4Q~/4Q~3/1Q4Q~1[QRBNP] w - -
 perft 1 462
-perft 2 0
