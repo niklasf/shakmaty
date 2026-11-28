@@ -249,9 +249,12 @@ impl Display for Move {
 pub type MoveList = ArrayVec<
     Move,
     {
+        // Lower bounds via the given FENs, upper bounds proven by integer
+        // programming using the technique from
+        // https://lichess.org/@/Tobs40/blog/why-a-reachable-position-can-have-at-most-218-playable-moves/a5xdxeqs.
         cfg_select! {
-            feature = "variant" => 270 + 6 * 6 * 5,
-            _ => 270, // kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
+            feature = "variant" => 462, // kBQ4Q/1r2Q3/KQ4Q1/3Q4/Q4Q2/2Q4Q/4Q3/1Q4Q1[QRBNP] w - -
+            _ => 271, // kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/BQQQQQQK w - -
         }
     },
 >;

@@ -196,6 +196,6 @@ perft 2 99
 perft 3 19073
 
 id max-legals-too-much-material
-epd kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/KQQQQQQQ w - -
-perft 1 270
+epd kBQQQQQQ/BR5Q/Q6Q/Q6Q/Q6Q/Q6Q/Q6Q/BQQQQQQK w - -
+perft 1 271
 perft 2 0
