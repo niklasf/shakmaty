@@ -19,7 +19,7 @@ use crate::{
 /// A compactly encoded board, standard chess setup, or variant setup.
 ///
 /// Maximum size is 24 bytes for standard legal chess positions without move
-/// counters. Maximum size is 64 bytes for not strictly legal variant positions
+/// counters. Maximum size is 69 bytes for not strictly legal variant positions
 /// with move counters.
 ///
 /// # Packing
@@ -64,7 +64,9 @@ impl PackedSetup {
         5 /* halfmoves */ +
         5 /* ply */ +
         1 /* variant */ +
-        5 + 8 /* crazyhouse pockets and promoted pieces */;
+        5 /* crazyhouse pockets (low nibbles) */ +
+        8 /* crazyhouse promoted pieces */ +
+        5 /* crazyhouse pockets (high nibbles) */;
 
     /// Construct a compactly packed equivalent of [`Setup::empty()`].
     pub const fn empty() -> PackedSetup {
@@ -162,7 +164,6 @@ impl PackedSetup {
     /// * Not all castling rights have matching unmoved rooks.
     /// * Has remaining checks for Three-check, but variant is not Three-Check.
     /// * Has Crazyhouse pockets, but variant is not Crazyhouse.
-    /// * Has more than 15 Crazyhouse pocket pieces of any type and color.
     /// * Has Crazyhouse pockets containing kings.
     #[cfg(feature = "variant")]
     pub fn pack_variant(setup: &Setup, variant: Variant) -> Result<PackedSetup, PackSetupError> {
@@ -254,17 +255,12 @@ impl PackedSetup {
             if pockets.white.king > 0 || pockets.black.king > 0 {
                 return Err(PackSetupError::Pockets);
             }
-            for by_color in pockets.transpose_piece().into_iter().take(5) {
-                writer
-                    .write_nibbles(by_color.white, by_color.black)
-                    .map_err(|()| PackSetupError::Pockets)?;
-            }
             if !setup.promoted.is_subset(setup.board.occupied()) {
                 return Err(PackSetupError::Promoted);
             }
-            if setup.promoted.any() {
-                writer.write_u64(setup.promoted.into());
-            }
+            writer.write_pockets(pockets.map(|pocket| pocket.map(|n| n & 0xf)));
+            writer.write_u64(setup.promoted.into());
+            writer.write_pockets(pockets.map(|pocket| pocket.map(|n| n >> 4)));
         } else if setup.pockets.is_some() {
             return Err(PackSetupError::Pockets);
         } else if setup.promoted.any() {
@@ -388,33 +384,16 @@ impl PackedSetup {
             .ok_or(UnpackSetupError { _priv: () })?;
 
         if variant == VARIANT_CRAZYHOUSE {
-            let (wp, bp) = reader.read_nibbles();
-            let (wn, bn) = reader.read_nibbles();
-            let (wb, bb) = reader.read_nibbles();
-            let (wr, br) = reader.read_nibbles();
-            let (wq, bq) = reader.read_nibbles();
-            setup.pockets = Some(ByColor {
-                white: ByRole {
-                    pawn: wp,
-                    knight: wn,
-                    bishop: wb,
-                    rook: wr,
-                    queen: wq,
-                    king: 0,
-                },
-                black: ByRole {
-                    pawn: bp,
-                    knight: bn,
-                    bishop: bb,
-                    rook: br,
-                    queen: bq,
-                    king: 0,
-                },
-            });
+            let lo = reader.read_pockets();
             setup.promoted = Bitboard(reader.read_u64());
             if !setup.promoted.is_subset(setup.board.occupied()) {
                 return Err(UnpackSetupError { _priv: () });
             }
+            let hi = reader.read_pockets();
+            setup.pockets = Some(
+                lo.zip(hi)
+                    .map(|(lo, hi)| lo.zip(hi).map(|(lo, hi)| lo | (hi << 4))),
+            );
         }
 
         if variant == VARIANT_THREECHECK {
@@ -805,12 +784,9 @@ impl Writer<'_> {
         self.write_u8(lo | (hi << 4))
     }
 
-    fn write_nibbles(&mut self, lo: u8, hi: u8) -> Result<(), ()> {
-        if lo & 0xf == lo && hi & 0xf == hi {
-            self.write_nibbles_unchecked(lo, hi);
-            Ok(())
-        } else {
-            Err(())
+    fn write_pockets(&mut self, nibbles: ByColor<ByRole<u8>>) {
+        for by_color in nibbles.transpose_piece().into_iter().take(5) {
+            self.write_nibbles_unchecked(by_color.white, by_color.black);
         }
     }
 
@@ -848,6 +824,32 @@ impl Reader<'_> {
     fn read_nibbles(&mut self) -> (u8, u8) {
         let n = self.read_u8();
         (n & 0xf, n >> 4)
+    }
+
+    fn read_pockets(&mut self) -> ByColor<ByRole<u8>> {
+        let (wp, bp) = self.read_nibbles();
+        let (wn, bn) = self.read_nibbles();
+        let (wb, bb) = self.read_nibbles();
+        let (wr, br) = self.read_nibbles();
+        let (wq, bq) = self.read_nibbles();
+        ByColor {
+            white: ByRole {
+                pawn: wp,
+                knight: wn,
+                bishop: wb,
+                rook: wr,
+                queen: wq,
+                king: 0,
+            },
+            black: ByRole {
+                pawn: bp,
+                knight: bn,
+                bishop: bb,
+                rook: br,
+                queen: bq,
+                king: 0,
+            },
+        }
     }
 
     fn read_leb128(&mut self, max_bytes: usize) -> u64 {
