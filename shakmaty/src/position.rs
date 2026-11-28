@@ -904,10 +904,24 @@ pub trait Position {
 #[cfg(feature = "arbitrary")]
 #[derive(arbitrary::Arbitrary)]
 enum PositionMutation {
-    LegalMove { idx: u8 },
-    DiscardPieceAt { sq: Square },
-    SetPieceAt { sq: Square, piece: Piece },
-    ToggleCastles { rooks: Bitboard, mode: CastlingMode },
+    LegalMove {
+        idx: u8,
+    },
+    DiscardPieceAt {
+        sq: Square,
+    },
+    SetPieceAt {
+        sq: Square,
+        piece: Piece,
+        promoted: bool,
+    },
+    SwapTurn,
+    ToggleCastles {
+        rooks: Bitboard,
+        mode: CastlingMode,
+    },
+    SetRemainingChecks(ByColor<RemainingChecks>),
+    SetPockets(ByColor<ByRole<u8>>),
 }
 
 #[cfg(feature = "arbitrary")]
@@ -941,14 +955,26 @@ where
                     pos = updated_pos;
                 }
             }
-            PositionMutation::SetPieceAt { sq, piece } => {
+            PositionMutation::SetPieceAt {
+                sq,
+                piece,
+                promoted,
+            } => {
                 let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
                 setup.board.set_piece_at(sq, piece);
+                setup.promoted.set(sq, promoted);
                 if let Ok(updated_pos) = setup
                     .position(pos.castles().mode())
                     .or_else(PositionError::ignore_invalid_castling_rights)
                     .or_else(PositionError::ignore_invalid_ep_square)
                 {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::SwapTurn => {
+                let mut setup = pos.to_setup(EnPassantMode::Always);
+                setup.swap_turn();
+                if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
                     pos = updated_pos;
                 }
             }
@@ -958,8 +984,21 @@ where
                 if let Ok(updated_pos) = setup
                     .position(mode)
                     .or_else(PositionError::ignore_invalid_castling_rights)
-                    .or_else(PositionError::ignore_invalid_ep_square)
                 {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::SetRemainingChecks(remaining_checks) => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.remaining_checks = Some(remaining_checks);
+                if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
+                    pos = updated_pos;
+                }
+            }
+            PositionMutation::SetPockets(pockets) => {
+                let mut setup = pos.to_setup(EnPassantMode::PseudoLegal);
+                setup.pockets = Some(pockets);
+                if let Ok(updated_pos) = setup.position(pos.castles().mode()) {
                     pos = updated_pos;
                 }
             }
