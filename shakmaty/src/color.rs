@@ -40,7 +40,8 @@ impl Color {
         })
     }
 
-    const fn name(self) -> &'static str {
+    /// `white` or `black`.
+    pub const fn name(self) -> &'static str {
         match self {
             Color::Black => "black",
             Color::White => "white",

@@ -69,15 +69,7 @@ impl Role {
         Piece { color, role: self }
     }
 
-    /// Gets the English letter for the piece type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use shakmaty::Role;
-    ///
-    /// assert_eq!(Role::Rook.char(), 'r');
-    /// ```
+    /// `p`, `n`, `b`, `r`, `q`, `k`.
     pub const fn char(self) -> char {
         match self {
             Role::Pawn => 'p',
@@ -89,15 +81,7 @@ impl Role {
         }
     }
 
-    /// Gets the uppercase English letter for the piece type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use shakmaty::Role;
-    ///
-    /// assert_eq!(Role::Rook.upper_char(), 'R');
-    /// ```
+    /// `P`, `N`, `B`, `R`, `Q`, `K`.
     pub const fn upper_char(self) -> char {
         match self {
             Role::Pawn => 'P',
@@ -106,6 +90,18 @@ impl Role {
             Role::Rook => 'R',
             Role::Queen => 'Q',
             Role::King => 'K',
+        }
+    }
+
+    /// `pawn`, ..., `king`.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Role::Pawn => "pawn",
+            Role::Knight => "knight",
+            Role::Bishop => "bishop",
+            Role::Rook => "rook",
+            Role::Queen => "queen",
+            Role::King => "king",
         }
     }
 
